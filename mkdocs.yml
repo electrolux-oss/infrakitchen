@@ -1,0 +1,21 @@
+site_name: InfraKitchen
+site_url: https://electrolux-oss.github.io/infrakitchen
+
+theme:
+  name: material
+  custom_dir: docs-overrides
+  logo: assets/images/ik-logo.png
+  favicon: assets/images/ik-logo.png
+  palette:
+    - media: 'docsprefers-color-scheme: light'
+      scheme: default
+      primary: white
+
+plugins: []
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/electrolux-oss
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/infrakitchen
