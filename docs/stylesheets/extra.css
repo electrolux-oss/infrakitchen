@@ -1,0 +1,92 @@
+body, 
+.md-typeset, 
+h1, h2, h3, h4, h5, h6 {
+  color: #D7FFCF !important;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+body {
+  background-color: #1E1E1E !important;
+}
+
+.md-header {
+  background-color: #2E3B2C !important;
+  color: #D7FFCF !important;
+}
+
+.md-header .md-header__title,
+.md-header .md-header__topic,
+.md-header .md-tabs {
+  color: inherit !important;
+}
+
+a {
+  color: #A5FF9C;
+}
+
+code, pre {
+  background-color: #1a1a1a;
+  color: #D7FFCF;
+}
+
+/* Buttons */
+button,
+.md-button,
+.md-typeset .md-button {
+  background-color: #131313 !important;
+  color: #D7FFCF !important;
+  border: 1px solid #D7FFCF !important;
+  border-radius: 0;
+  padding: 0.5em 1em;
+  font-family: inherit;
+}
+
+/* Hover effect */
+button:hover,
+.md-button:hover,
+.md-typeset .md-button:hover {
+  background-color: #D7FFCF !important;
+  color: #131313 !important;
+  border-color: #D7FFCF !important;
+  cursor: pointer;
+}
+
+button:hover svg,
+.md-button:hover svg,
+.md-typeset .md-button:hover svg {
+    background-color: #D7FFCF !important;
+}
+
+/* Icons */
+.md-icon,
+button .md-icon,
+a .md-icon,
+.nav-icon,
+[role="button"] .md-icon,
+svg {
+  color: #D7FFCF !important;
+  fill: #D7FFCF !important;
+  background-color: #131313 !important;
+}
+
+/* Highlights */
+.highlight {
+  background: #6FFFE9 !important;
+  color: #131313 !important;
+}
+
+/* Scroll icon */
+.scroll-icon {
+  background-color: #131313 !important;
+  border: 1px solid #D7FFCF !important;
+}
+
+/* Secondary section */
+.secondary-section {
+  border-top: 1px solid #D7FFCF !important;
+}
+
+/* Card */
+.card {
+  background-color: #131313 !important;
+}
