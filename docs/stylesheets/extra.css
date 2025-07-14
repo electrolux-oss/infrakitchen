@@ -33,28 +33,28 @@ body {
 button,
 .md-button,
 .md-typeset .md-button {
-  background-color: #131313 !important;
-  color: #D7FFCF !important;
-  border: 1px solid #D7FFCF !important;
+  background-color: #131313;
+  color: #D7FFCF;
+  border: 1px solid #D7FFCF;
   padding: 0.5em 1em;
   font-family: inherit;
   border-radius: 0;
 }
 
-/* Hover effect */
-button:hover,
-.md-button:hover,
-.md-typeset .md-button:hover {
-  background-color: #D7FFCF !important;
-  color: #131313 !important;
-  border-color: #D7FFCF !important;
+/* Hover and focus effect */
+button:hover, button:focus,
+.md-button:hover, .md-button:focus,
+.md-typeset .md-button:hover, .md-typeset .md-button:focus {
+  background-color: #D7FFCF;
+  color: #131313;
+  border-color: #D7FFCF;
   cursor: pointer;
 }
 
 button:hover svg,
 .md-button:hover svg,
 .md-typeset .md-button:hover svg {
-    background-color: #D7FFCF !important;
+    background-color: #D7FFCF;
 }
 
 /* Icons */
@@ -64,23 +64,23 @@ a .md-icon,
 .nav-icon,
 [role="button"] .md-icon,
 svg {
-  color: #D7FFCF !important;
-  fill: #D7FFCF !important;
+  color: #D7FFCF;
+  fill: #D7FFCF;
 }
 
 .md-typeset .md-button--primary span>svg {
   width: 1.5em;
   height: 1.5em;
   display: block;
-  fill: currentColor !important;
-  color: currentColor !important;
-  stroke: currentColor !important;
+  fill: currentColor;
+  color: currentColor;
+  stroke: currentColor;
 }
 
 /* Highlights */
 .highlight {
-  background: #6FFFE9 !important;
-  color: #131313 !important;
+  background: #6FFFE9;
+  color: #131313;
   padding: 2px 6px;
   margin: 0px 1px;
   border-radius: 4px;
@@ -90,13 +90,35 @@ svg {
 
 /* Scroll icon */
 .scroll-icon {
-  background-color: #131313 !important;
-  border: 1px solid #D7FFCF !important;
+  background-color: #131313;
+  border: 1px solid #D7FFCF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s;
+  font-size: 2rem;
+}
+
+.scroll-icon:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  background: #f5f5f5;
+}
+
+.scroll-icon svg {
+  width: 32px;
+  height: 32px;
+  display: block;
 }
 
 /* Secondary section */
 .secondary-section {
-  border-top: 1px solid #D7FFCF !important;
+  border-top: 1px solid #D7FFCF;
 }
 
 @media screen and (max-width: 1012px) {
@@ -364,32 +386,6 @@ svg {
 .scroll-list::-webkit-scrollbar-thumb {
   background: #bbb;
   border-radius: 4px;
-}
-
-.scroll-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  min-height: 48px;
-  width: 48px;
-  height: 48px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.2s;
-  font-size: 2rem;
-}
-
-.scroll-icon:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  background: #f5f5f5;
-}
-
-.scroll-icon svg {
-  width: 32px;
-  height: 32px;
-  display: block;
 }
 
 .diagram-wrapper {
