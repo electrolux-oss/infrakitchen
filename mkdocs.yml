@@ -3,10 +3,11 @@ site_url: https://electrolux-oss.github.io/infrakitchen
 
 theme:
   name: material
-  font:
-    text: "Space Grotesk"
-    code: "Space Grotesk"
   custom_dir: docs-overrides
+  palette:
+    - media: "docsprefers-color-scheme: light"
+      scheme: default
+      primary: white
   logo: assets/images/ik-logo.png
   favicon: assets/images/ik-logo.png
 
@@ -18,6 +19,3 @@ extra:
       link: https://github.com/electrolux-oss
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/infrakitchen
-
-extra_css:
-  - stylesheets/extra.css
