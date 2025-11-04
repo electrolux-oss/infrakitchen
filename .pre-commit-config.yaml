@@ -1,0 +1,44 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: ^(mkdocs.yml)
+      - id: check-added-large-files
+        exclude: "ui/.yarn/releases/yarn-4.4.1.cjs"
+
+  - repo: local
+    hooks:
+      - id: format
+        name: run format
+        entry: ./scripts/run_ruff_formatting.sh
+        language: system
+        verbose: true
+        pass_filenames: false
+
+      - id: tests
+        name: run tests
+        entry: ./scripts/run_python_tests.sh
+        language: system
+        verbose: true
+        pass_filenames: false
+
+      - id: types
+        name: run types check
+        entry: ./scripts/check_python_types.sh
+        language: system
+        verbose: true
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: yarn-format-lint-type-check
+        name: Run yarn format, lint, and type-check
+        entry: ./scripts/run_typescript_linter.sh
+        language: system
+        verbose: true

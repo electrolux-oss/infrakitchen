@@ -1,0 +1,7 @@
+{
+  "exclude": [
+    "**/__pycache__",
+    "*.venv/"
+  ],
+  "failOnWarnings": false
+}

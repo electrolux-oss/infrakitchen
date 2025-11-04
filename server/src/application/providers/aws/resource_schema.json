@@ -1,0 +1,79 @@
+{
+  "aws_vpc": {
+    "api_type": "ec2",
+    "cloud_id": "VpcId",
+    "multiple": "Vpcs",
+    "single": "Vpc",
+    "ResourceType": "vpc",
+    "create_function": "create_vpc",
+    "delete_function": "delete_vpc",
+    "list_function": "describe_vpcs"
+  },
+  "aws_elasticache": {
+    "api_type": "elasticache",
+    "cloud_id": "CacheClusterId",
+    "multiple": "CacheClusters",
+    "single": "CacheCluster",
+    "ResourceType": "elasticache",
+    "create_function": "create_cache_cluster",
+    "delete_function": "delete_cache_cluster",
+    "list_function": "describe_cache_clusters"
+  },
+  "aws_ec2": {
+    "api_type": "ec2",
+    "cloud_id": "InstanceId",
+    "multiple": "Instances",
+    "single": "Instance",
+    "ResourceType": "ec2",
+    "create_function": "create_instance",
+    "delete_function": "terminate_instance",
+    "list_function": "describe_instances"
+  },
+  "aws_rds": {
+    "api_type": "rds",
+    "cloud_id": "DBInstanceIdentifier",
+    "multiple": "DBInstances",
+    "single": "DBInstance",
+    "ResourceType": "rds",
+    "create_function": "create_db_instance",
+    "delete_function": "delete_db_instance",
+    "list_function": "describe_db_instances"
+  },
+  "aws_s3": {
+    "region_type": "global",
+    "api_type": "s3",
+    "cloud_id": "Name",
+    "multiple": "Buckets",
+    "single": "Bucket",
+    "ResourceType": "s3",
+    "create_function": "create_bucket",
+    "delete_function": "delete_bucket",
+    "list_function": "list_buckets"
+  },
+  "aws_region": {
+    "region_type": "global",
+    "api_type": "account",
+    "cloud_id": "RegionName",
+    "multiple": "Regions",
+    "single": "Region",
+    "ResourceType": "regions",
+    "create_function": "create_region",
+    "delete_function": "delete_region",
+    "list_function": "list_regions"
+  },
+  "aws_eks": {
+    "region_type": "regional",
+    "api_type": "eks",
+    "cloud_id": "Name",
+    "multiple": "clusters",
+    "single": "cluster",
+    "ResourceType": "eks",
+    "create_function": "create_cluster",
+    "delete_function": "delete_cluster",
+    "describe_function": "describe_cluster",
+    "describe_function_args": [
+      "name"
+    ],
+    "list_function": "list_clusters"
+  }
+}

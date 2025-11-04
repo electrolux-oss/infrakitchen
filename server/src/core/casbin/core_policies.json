@@ -1,0 +1,38 @@
+[
+  {
+    "subject": "default",
+    "object": "*",
+    "action": "read",
+    "object_type": "resource"
+  },
+  {
+    "subject": "default",
+    "object": "tree",
+    "action": "read",
+    "object_type": "api"
+  },
+  {
+    "subject": "default",
+    "object": "schema",
+    "action": "read",
+    "object_type": "api"
+  },
+  {
+    "subject": "default",
+    "object": "labels",
+    "action": "read",
+    "object_type": "api"
+  },
+  {
+    "subject": "default",
+    "object": "variables",
+    "action": "read",
+    "object_type": "api"
+  },
+  {
+    "subject": "super",
+    "object": "*",
+    "action": "admin",
+    "object_type": ""
+  }
+]

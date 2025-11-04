@@ -1,0 +1,125 @@
+# Core Concepts
+
+InfraKitchen introduces several key concepts that work together to enable self-service infrastructure provisioning. This page explains each concept and how they relate to each other.
+
+---
+
+## 🔌 Integration
+
+An **Integration** stores the credentials and configuration needed to connect to external systems.
+
+### Types of Integrations
+
+- **Cloud Providers:** AWS, Azure, Google Cloud, MongoDB Atlas, Datadog
+
+- **Git Providers:** GitHub, Bitbucket, Azure DevOps
+
+- **Auth Providers:** GitHub OAuth, Microsoft OAuth, Backstage integration, Service Accounts
+
+**Learn more:** [Integrations Documentation](../integrations/overview.md)
+
+---
+
+## 📝 Template
+
+A **Template** defines a logical unit of infrastructure. Templates are organized hierarchically and represent components like AWS Accounts, VPCs, EKS Clusters, or RDS databases.
+
+### Template Hierarchy Example
+
+```
+AWS Account (abstract)
+├── AWS Region (abstract)
+│   ├── VPC (concrete)
+│   │   ├── EKS Cluster (concrete)
+│   │   ├── RDS Database (concrete)
+│   │   └── Application Load Balancer (concrete)
+│   └── S3 Bucket (concrete)
+```
+
+**Learn more:** [Templates Documentation](templates/overview.md)
+
+---
+
+## 📦 Source Code
+
+InfraKitchen embraces Infrastructure-as-Code (IaC). **Source Code** refers to a Git repository containing Terraform/OpenTofu modules.
+
+### Source Code Components
+
+1. **Repository URL** - Where the IaC code is stored
+2. **Git Provider Integration** - Credentials to access the repository
+3. **Multiple Modules** - One repository can contain multiple infrastructure modules
+
+**Example:**
+
+```
+Repository: github.com/myorg/terraform-modules
+├── aws-vpc/
+├── aws-eks/
+└── aws-rds/
+```
+
+---
+
+## 🏷️ Source Code Version
+
+A **Source Code Version** links a specific Template to a specific version of IaC code in a repository.
+
+### Components
+
+```yaml
+Template: Production VPC
+Source Code: github.com/myorg/terraform-modules
+Tag/Branch: v1.2.0
+Module Path: aws-vpc/
+```
+
+---
+
+## 📦 Resource
+
+A **Resource** is an actual instance of infrastructure, created from a Template and Source Code Version.
+
+### Resource Properties
+
+```yaml
+ID: res-abc123
+Name: production-vpc-us-east-1
+Template: Production VPC
+Parent Resource: aws-account-prod
+Source Code Version: v1.2.0
+State: provisioned
+Status: done
+
+Variables:
+  vpc_name: 'production-vpc'
+  cidr_block: '10.0.0.0/16'
+
+Outputs:
+  vpc_id: 'vpc-0123456789'
+  availability_zones: ['us-east-1a', 'us-east-1b']
+```
+
+**Learn more:** [Resources Documentation](resources/overview.md)
+
+---
+
+## 💼 Workspace
+
+A **Workspace** is a Git repository where InfraKitchen can automatically sync generated Terraform code.
+
+### Structure
+
+```
+workspace-repo/
+├── production-vpc/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── production-eks/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+```
+
+**Learn more:** [Workspaces Documentation](workspaces/overview.md)
