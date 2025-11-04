@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+.idea/
+test.py
+build/
+.DS_Store
+.install
+.venv
+.pytest_cache/
+.vscode/
+.ruff_cache/
+.pdm*
+.env_local
+.coverage
+.mypy_cache/
+test_ssh*
+src/*.egg-info/

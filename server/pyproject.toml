@@ -1,0 +1,144 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+]
+
+# Same as Black.
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.12
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E", "F", "B", "Q", "UP"]
+extend-select = ["T201", "E501"]
+ignore = []
+flake8-bugbear.extend-immutable-calls = [
+  "Depends",
+  "fastapi.Depends",
+  "Security",
+  "fastapi.Security",
+  "fastapi.Body",
+  "fastapi.security.HTTPBearer",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.black]
+line-length = 120
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"src/**/test_*.py" = ["F811"]
+"src/**/*_test.py" = ["F811"]
+
+[project.scripts]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+
+[project]
+name = "infrakitchen"
+version = "0.0.1"
+description = "Infrastructure provisioning service"
+authors = [{ name = "SRE team", email = "sre@electrolux.com" }]
+dependencies = [
+  "python-dotenv>=1.0.1",
+  "fastapi>=0.119.1",
+  "Werkzeug>=3.1.3",
+  "pydantic>=2.12.3",
+  "uvicorn[standard]>=0.35.0",
+  "aio-pika>=9.5.7",
+  "python-hcl2>=7.3.1",
+  "aiofiles>=24.1.0",
+  "hvac>=2.3.0",
+  "httpx>=0.28.1",
+  "aioboto3>=15.1.0",
+  "xmltodict>=0.14.2",
+  "python-lorem>=1.3.0.post3",
+  "fastapi-sso>=0.18.0",
+  "casbin>=1.43.0",
+  "pyjwt>=2.10.1",
+  "cryptography>=45.0.6",
+  "sqlalchemy[asyncio]>=2.0.43",
+  "alembic>=1.16.4",
+  "asyncpg>=0.30.0",
+  "sqlalchemy-utils>=0.41.2",
+  "casbin-async-sqlalchemy-adapter>=1.10.0",
+  "pydantic-settings>=2.10.1",
+  "apscheduler>=3.11.0",
+  "kubernetes-asyncio>=33.3.0",
+  "google-cloud-storage>=3.3.0",
+  "google-cloud-resource-manager>=1.14.2",
+]
+requires-python = "==3.14.*"
+readme = "README.md"
+license = { text = "Apache 2.0" }
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+  "ruff>=0.12.9",
+  "black>=25.1.0",
+  "click==8.2.1",                                                                                # hard pin to avoid bug with mkdocs
+  "setuptools>=80.9.0",
+  "uvicorn>=0.35.0",
+  "pytest-asyncio>=1.1.0",
+  "watchdog>=6.0.0",
+  "types-aiofiles>=24.1.0.20250809",
+  "pre-commit>=4.3.0",
+  "botocore-stubs>=1.38.46",
+  "boto3-stubs[essential]>=1.40.14",
+  "basedpyright>=1.31.3",
+  "kubernetes_asyncio-stubs @ git+https://github.com/kialo/kubernetes_asyncio-stubs.git@29.0.1",
+  "mkdocs-material>=9.6.22",
+  "mkdocs-glightbox>=0.5.1",
+]

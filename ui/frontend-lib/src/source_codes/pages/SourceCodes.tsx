@@ -1,0 +1,220 @@
+import { useState, useCallback, useEffect, useMemo } from "react";
+
+import { useNavigate } from "react-router";
+
+import {
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+
+import { IconField } from "../../common";
+import { EntityCard } from "../../common/components/EntityCard";
+import { FilterPanel } from "../../common/components/FilterPanel";
+import { useConfig } from "../../common/context/ConfigContext";
+import { useFilterState } from "../../common/hooks/useFilterState";
+import { notifyError } from "../../common/hooks/useNotification";
+import PageContainer from "../../common/PageContainer";
+import StatusChip from "../../common/StatusChip";
+import {
+  formatTimeAgo,
+  getProviderDisplayName,
+  getRepoNameFromUrl,
+} from "../../common/utils";
+import { SourceCodeResponse } from "../types";
+
+export const SourceCodesPage = () => {
+  const { ikApi, linkPrefix } = useConfig();
+  const [sourceCodes, setSourceCodes] = useState<SourceCodeResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [labels, setLabels] = useState<string[]>([]);
+  const navigate = useNavigate();
+
+  const entityName = "source_code";
+
+  const { search, selectedFilters } = useFilterState({
+    storageKey: "filter_source_codes",
+  });
+
+  const fetchSourceCodes = useCallback(async () => {
+    const apiFilters: Record<string, any> = {};
+    if (selectedFilters && selectedFilters.length > 0) {
+      apiFilters["labels__contains_all"] = selectedFilters;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await ikApi.getList("source_codes", {
+        pagination: { page: 1, perPage: 1000 },
+        sort: { field: "updated_at", order: "DESC" },
+        filter: apiFilters,
+        fields: [
+          "id",
+          "identifier",
+          "description",
+          "source_code_url",
+          "source_code_provider",
+          "status",
+          "labels",
+          "updated_at",
+        ],
+      });
+      setSourceCodes(response.data || []);
+    } catch (e: any) {
+      setError(e.message || "Failed to fetch Source Codes");
+      notifyError(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [ikApi, selectedFilters]);
+
+  useEffect(() => {
+    ikApi.get("labels/source_code").then((response: string[]) => {
+      setLabels(response);
+    });
+  }, [ikApi]);
+
+  useEffect(() => {
+    fetchSourceCodes();
+  }, [fetchSourceCodes]);
+
+  const filteredSourceCodes = useMemo(
+    () =>
+      sourceCodes.filter((sourceCode) => {
+        const s = search.toLowerCase();
+        return (
+          !s ||
+          sourceCode.identifier.toLowerCase().includes(s) ||
+          sourceCode.description.toLowerCase().includes(s)
+        );
+      }),
+    [sourceCodes, search],
+  );
+
+  const actions = (
+    <Button
+      variant="outlined"
+      onClick={() => navigate(`${linkPrefix}source_codes/create`)}
+    >
+      Import
+    </Button>
+  );
+
+  const sourceCodeCardFields = (sourceCode: SourceCodeResponse) => {
+    return (
+      <>
+        <Box>
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Provider
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            {IconField(sourceCode.source_code_provider)}
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+              {getProviderDisplayName(sourceCode.source_code_provider)}
+            </Typography>
+          </Box>
+        </Box>
+        <Box>
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Status
+          </Typography>
+          <StatusChip status={sourceCode.status} />
+        </Box>
+        <Box sx={{ textAlign: "right" }}>
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Last Updated
+          </Typography>
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+            {formatTimeAgo(sourceCode.updated_at)}
+          </Typography>
+        </Box>
+      </>
+    );
+  };
+
+  if (loading) {
+    return (
+      <PageContainer title="Code Repositories" actions={actions}>
+        <Box sx={{ width: "100%", py: 4 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "50vh",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        </Box>
+      </PageContainer>
+    );
+  }
+  if (error) {
+    return (
+      <PageContainer title="Code Repositories" actions={actions}>
+        <Box sx={{ width: "100%", py: 4 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+          <Button variant="outlined" onClick={fetchSourceCodes}>
+            Retry
+          </Button>
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  return (
+    <PageContainer title="Code Repositories" actions={actions}>
+      <Box sx={{ width: "100%" }}>
+        <FilterPanel
+          dropdownOptions={labels}
+          filterStorageKey={`filter_${entityName}s`}
+          filterName={"labels"}
+          searchName={"name"}
+        />
+        {filteredSourceCodes.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <Typography variant="h5">
+              {sourceCodes.length === 0
+                ? "No source codes available"
+                : "No source codes match your filters"}
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              "--card-min-width": { xs: "260px", sm: "300px", md: "340px" },
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
+              gap: 3,
+              width: "100%",
+              alignItems: "stretch",
+              mt: 4,
+            }}
+          >
+            {filteredSourceCodes.map((sourceCode) => (
+              <EntityCard
+                key={sourceCode.id}
+                name={getRepoNameFromUrl(sourceCode.source_code_url)}
+                description={sourceCode.description}
+                detailsUrl={`${linkPrefix}source_codes/${sourceCode.id}`}
+                createUrl={`${linkPrefix}source_code_versions/create`}
+                labels={sourceCode.labels}
+                createButtonName={"Create Version"}
+                entityFields={sourceCodeCardFields(sourceCode)}
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
+    </PageContainer>
+  );
+};
+
+SourceCodesPage.path = "/source_codes";

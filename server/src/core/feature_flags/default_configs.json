@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Approval Flow",
+    "enabled": true
+  },
+  {
+    "name": "Demo Mode",
+    "enabled": false
+  }
+]

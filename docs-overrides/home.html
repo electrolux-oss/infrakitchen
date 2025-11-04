@@ -270,21 +270,6 @@
     border-radius: 4px;
   }
 
-  .em {
-    font-weight: bold;
-  }
-
-  .highlight {
-    transition: color 125ms;
-    background: rgba(0, 0, 0, 0.05) none repeat scroll 0% 0%;
-    color: var(--md-typeset-a-color);
-    padding: 2px 6px;
-    margin: 0px 1px;
-    border-radius: 4px;
-    display: inline;
-    font-weight: 600;
-  }
-
   .component-wrapper p a {
     transition: color 125ms;
     background: rgba(0, 0, 0, 0.05) none repeat scroll 0% 0%;
@@ -356,17 +341,6 @@
     height: 32px;
     display: block;
   }
-
-  .md-typeset .md-button--primary span>svg {
-    width: 1.5em;
-    height: 1.5em;
-    display: block;
-    fill: currentColor !important;
-    color: currentColor !important;
-    stroke: currentColor !important;
-    transition: fill 0.2s, color 0.2s, stroke 0.2s;
-  }
-
   .version-label {
     transition: color 125ms;
     background: rgba(33, 150, 243, 0.1);
@@ -392,20 +366,12 @@
             class="em">InfraKitchen</span> empowers you to manage your infrastructure with the same level of
           expertise and care.
         </p>
-        <p><i>We're open sourcing <span class="em">InfraKitchen</span> in November 2025. Join our community for updates!</i></p>
-        <a href="https://github.com/electrolux-oss/infrakitchen" target="_blank" class="md-button md-button--primary"
-          style="margin-right: 1rem; display: inline-flex; align-items: center;">
-          <span style="display:inline-flex; align-items:center; margin-right:0.5em;">
-            {% include ".icons/material/github.svg" %}
-          </span>
-          Follow us on GitHub
-        </a>
-        <a href="https://www.linkedin.com/company/infrakitchen" target="_blank" class="md-button md-button--primary"
-          style="display: inline-flex; align-items: center;">
-          <span style="display:inline-flex; align-items:center; margin-right:0.5em;">
-            {% include ".icons/fontawesome/brands/linkedin.svg" %}
-          </span>
-          Follow us on LinkedIn
+        <a href="{{config.site_url}}getting-started/quick-start" title="Get Started" class="md-button md-button--primary">
+          Get started
+          <svg width="11" height="10" viewBox="0 0 11 10" fill="none" style="margin-left:2px">
+            <path d="M1 5.16772H9.5M9.5 5.16772L6.5 1.66772M9.5 5.16772L6.5 8.66772" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+          </svg>
         </a>
       </div>
     </div>
@@ -439,10 +405,8 @@
         <div class="first-column">
           <h3>Reusable infrastructure templates</h3>
           <p>
-            <span class="em">Platform Team</span> defines the infrastructure in reusable <span
-              class="highlight">templates</span>.
-            <span class="em">Developers</span> use standardized templates to create infrastructure <span
-              class="highlight">blueprints</span>.
+            <span class="em">Platform Team</span> defines the infrastructure in reusable <a href="{{config.site_url}}core-concepts/templates/overview">templates</a>.
+            <span class="em">Developers</span> use standardized templates to create infrastructure blueprints.
           </p>
           <p>
             Developers are empowered to focus on building features, while the platform team ensures the infrastructure
@@ -458,47 +422,53 @@
       <div class="component-wrapper" style="display: block;">
         <h4></h4>
         <div class="responsive-grid">
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/material/file-code-outline.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}core-concepts/templates/overview">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/material/file-code-outline.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Templates</h5>
+                <p>
+                  Define your infrastructure as code in reusable templates.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Templates</h5>
-              <p>
-                Define your infrastructure as code in reusable templates.
-              </p>
+          </a>
+
+          <div class="card-wrapper" style="cursor: default;">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/simple/blueprint.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Blueprints <span class="version-label">v2</span></h5>
+                <p>
+                  Use templates to create infrastructure blueprints.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/simple/blueprint.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}core-concepts/templates/overview">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/material/puzzle.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Customize</h5>
+                <p>
+                  Define custom templates to extend the platform.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Blueprints <span class="version-label">v2</span></h5>
-              <p>
-                Use templates to create infrastructure blueprints.
-              </p>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/material/puzzle.svg" %}
-              </span>
-            </div>
-            <div class="card-content">
-              <h5>Customize</h5>
-              <p>
-                Define custom templates to extend the platform.
-              </p>
-            </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>
@@ -513,10 +483,10 @@
         <div class="second-column">
           <h3>Continuous delivery</h3>
           <p>
-            <span class="em">InfraKitchen</span> automatically generates infrastructure code upon resource provisioning and opens <span class="highlight">pull requests</span>.
+            <span class="em">InfraKitchen</span> automatically generates infrastructure code upon resource provisioning and opens pull requests.
           </p>
           <p>
-            After approval, <span class="highlight">deploy</span> changes with <span class="em">InfraKitchen</span> or stick with your current
+            After approval, deploy changes with <span class="em">InfraKitchen</span> or stick with your current
             automation tools — whatever works best for you.
           </p>
         </div>
@@ -524,48 +494,54 @@
       <div class="component-wrapper" style="display: block;">
         <h4></h4>
         <div class="responsive-grid">
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/simple/git.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}core-concepts/workspaces/overview/#pull-request-flow">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/simple/git.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Pull requests</h5>
+                <p>
+                  Infrastructure changes are proposed as pull requests for review.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Pull requests</h5>
-              <p>
-                Infrastructure changes are proposed as pull requests for review.
-              </p>
-            </div>
-          </div>
+          </a>
 
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/material/cloud-outline.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}integrations/cloud/overview">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/material/cloud-outline.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Multi-cloud</h5>
+                <p>
+                  Deploy to multiple cloud providers, including AWS, Azure, and Google Cloud.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Multi-cloud</h5>
-              <p>
-                Deploy to multiple cloud providers, including AWS, Azure, and Google Cloud.
-              </p>
-            </div>
-          </div>
+          </a>
 
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/octicons/versions-16.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}core-concepts/templates/overview/#template-variables-and-source-code-versions">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/octicons/versions-16.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Versioning</h5>
+                </h5>
+                <p>
+                  Infrastructure changes are versioned and can be rolled back.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Versioning</h5>
-              </h5>
-              <p>
-                Infrastructure changes are versioned and can be rolled back.
-              </p>
-            </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>
@@ -575,11 +551,11 @@
         <div class="first-column">
           <h3>Operations</h3>
           <p>
-            <span class="em">InfraKitchen</span> provides <span class="highlight">audit</span> and operational tools to help you
+            <span class="em">InfraKitchen</span> provides <a href="{{config.site_url}}operations/activity/audit">audit</a> and operational tools to help you
             manage your infrastructure.
           </p>
           <p>
-            <span class="em">InfraKitchen</span> also supports integration with your AI agent via <span class="highlight">MCP Server</span>.
+            <span class="em">InfraKitchen</span> also supports integration with your AI agent via MCP Server.
           </p>
         </div>
         <div class="second-column">
@@ -591,47 +567,53 @@
       <div class="component-wrapper" style="display: block;">
         <h4></h4>
         <div class="responsive-grid">
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/material/robot-outline.svg" %}
-              </span>
-            </div>
-            <div class="card-content">
-              <h5>MCP <span class="version-label">v2</span></h5>
-              <p>
-                MCP Server for your AI Agent to manage infrastructure.
-              </p>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/simple/kubernetes.svg" %}
-              </span>
-            </div>
-            <div class="card-content">
-              <h5>Kubernetes workload</h5>
-              <p>
-                Kubernetes integration for managing containerized applications.
-              </p>
+          <div class="card-wrapper" style="cursor: default;">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/material/robot-outline.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>MCP <span class="version-label">v2</span></h5>
+                <p>
+                  MCP Server for your AI Agent to manage infrastructure.
+                </p>
+              </div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="logo">
-              <span class="twemoji">
-                {% include ".icons/material/magnify-expand.svg" %}
-              </span>
+          <a class="card-wrapper" href="{{config.site_url}}operations/kubernetes">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/simple/kubernetes.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Kubernetes workload</h5>
+                <p>
+                  Kubernetes integration for managing containerized applications.
+                </p>
+              </div>
             </div>
-            <div class="card-content">
-              <h5>Audit</h5>
-              <p>
-                View logs to understand what changes were made.
-              </p>
+          </a>
+
+          <a class="card-wrapper" href="{{config.site_url}}operations/activity/audit">
+            <div class="card">
+              <div class="logo">
+                <span class="twemoji">
+                  {% include ".icons/material/magnify-expand.svg" %}
+                </span>
+              </div>
+              <div class="card-content">
+                <h5>Audit</h5>
+                <p>
+                  View logs to understand what changes were made.
+                </p>
+              </div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>
