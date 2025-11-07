@@ -1,0 +1,69 @@
+name: PR Checker
+on:
+  workflow_dispatch:
+
+  pull_request:
+    branches:
+      - "main"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend_any_changed }}
+      frontend: ${{ steps.filter.outputs.frontend_any_changed }}
+      charts: ${{ steps.filter.outputs.charts_any_changed }}
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: tj-actions/changed-files@v47
+        id: filter
+        with:
+          files_yaml: |
+            backend:
+              - server/**
+              - VERSION
+            frontend:
+              - ui/**
+              - VERSION
+
+  lint-python:
+    name: Lint Python code
+    if: ${{ needs.changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          working-directory: server
+
+      - name: Run python-linter
+        run: |
+          ./scripts/check_python_types.sh
+          echo "check formatting"
+          ./scripts/check_ruff_formatting.sh
+
+      - name: Run python-tests
+        run: |
+          ./scripts/run_python_tests.sh
+
+  lint-ui:
+    name: Lint UI code
+    if: ${{ needs.changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Run ESLint
+        run: ./scripts/check_typescript.sh
