@@ -13,8 +13,6 @@
     <a href="https://opensource.electrolux.one/infrakitchen/getting-started/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/core-concepts/overview/">Core Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
 </p>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/uDNhjWzcoKk?si=q5zRE1C2_4CJHMVc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
 ## How to Use InfraKitchen in Your Organization
 
 InfraKitchen helps teams move beyond **infrastructure operational bottlenecks** by enabling a platform engineering approach. Using InfraKitchen is simple and flexible across different roles and workflows:
