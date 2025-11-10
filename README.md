@@ -13,6 +13,10 @@
     <a href="https://opensource.electrolux.one/infrakitchen/getting-started/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/core-concepts/overview/">Core Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
 </p>
 
+
+https://github.com/user-attachments/assets/642df5d3-a944-43a3-ac63-1d6e386c71b3
+
+
 ## How to Use InfraKitchen in Your Organization
 
 InfraKitchen helps teams move beyond **infrastructure operational bottlenecks** by enabling a platform engineering approach. Using InfraKitchen is simple and flexible across different roles and workflows:
