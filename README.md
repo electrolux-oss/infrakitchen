@@ -13,9 +13,7 @@
     <a href="https://opensource.electrolux.one/infrakitchen/getting-started/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/core-concepts/overview/">Core Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
 </p>
 
-
-https://github.com/user-attachments/assets/642df5d3-a944-43a3-ac63-1d6e386c71b3
-
+![ik_template_demo](https://github.com/user-attachments/assets/195ed8d2-fc83-4412-96a8-4d4ac8836dad)
 
 ## How to Use InfraKitchen in Your Organization
 
