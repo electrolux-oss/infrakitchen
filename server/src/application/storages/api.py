@@ -1,3 +1,4 @@
+from typing import Any
 from application.storages.service import StorageService
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
@@ -28,7 +29,7 @@ async def get_by_id(storage_id: str, service: StorageService = Depends(get_stora
 
 @router.get(
     "/storages",
-    response_model=list[StorageResponse],
+    response_model=list[dict[str, Any]],
     response_description="Get all storages",
     status_code=http_status.HTTP_200_OK,
 )
@@ -37,7 +38,7 @@ async def get_all(
     service: StorageService = Depends(get_storage_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    filter, range_, sort, _ = query_parts
+    filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
     if total == 0:
@@ -46,7 +47,11 @@ async def get_all(
         result = list(await service.get_all(filter=filter, range=range_, sort=sort))
     headers = {"Content-Range": f"storages 0-{len(result)}/{total}"}
     response.headers.update(headers)
-    return result
+
+    if fields:
+        fields.append("_entity_name")
+        return [res.model_dump(include=set(fields)) for res in result]
+    return [res.model_dump() for res in result]
 
 
 @router.post(
