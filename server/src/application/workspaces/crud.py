@@ -9,6 +9,7 @@ from application.resources.model import Resource
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Workspace
 
@@ -18,6 +19,9 @@ class WorkspaceCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, workspace_id: str | UUID) -> Workspace | None:
+        if not is_valid_uuid(workspace_id):
+            raise ValueError(f"Invalid UUID: {workspace_id}")
+
         statement = (
             select(Workspace).where(Workspace.id == workspace_id).join(User, Workspace.created_by == User.id)
         ).join(Integration, Workspace.integration_id == Integration.id)

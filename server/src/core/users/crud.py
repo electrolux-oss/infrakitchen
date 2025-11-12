@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import User
 
@@ -16,6 +17,9 @@ class UserCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, user_id: str | UUID) -> User | None:
+        if not is_valid_uuid(user_id):
+            raise ValueError(f"Invalid UUID: {user_id}")
+
         statement = select(User).where(User.id == user_id)
         statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
         result = await self.session.execute(statement)

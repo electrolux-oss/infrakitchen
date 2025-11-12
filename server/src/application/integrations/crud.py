@@ -21,7 +21,9 @@ class IntegrationCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, integration_id: str | UUID) -> Integration | None:
-        assert is_valid_uuid(integration_id), "Integration ID must be a valid UUID"
+        if not is_valid_uuid(integration_id):
+            raise ValueError(f"Invalid UUID: {integration_id}")
+
         statement = (
             select(Integration).where(Integration.id == integration_id).join(User, Integration.created_by == User.id)
         )

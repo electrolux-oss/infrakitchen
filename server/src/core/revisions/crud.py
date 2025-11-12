@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Revision
 
@@ -15,6 +16,9 @@ class RevisionCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, revision_id: str | UUID) -> Revision | None:
+        if not is_valid_uuid(revision_id):
+            raise ValueError(f"Invalid UUID: {revision_id}")
+
         statement = select(Revision).where(Revision.id == revision_id)
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()

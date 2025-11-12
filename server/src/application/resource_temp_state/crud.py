@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import select
 from sqlalchemy.sql.functions import func
 
+from core.utils.model_tools import is_valid_uuid
+
 from .model import ResourceTempState
 from core.database import evaluate_sqlalchemy_filters
 
@@ -14,11 +16,17 @@ class ResourceTempStateCrud:
         self.session: AsyncSession = session
 
     async def get_by_id(self, resource_id: UUID | str) -> ResourceTempState | None:
+        if not is_valid_uuid(resource_id):
+            raise ValueError(f"Invalid UUID: {resource_id}")
+
         statement = select(ResourceTempState).where(ResourceTempState.id == resource_id)
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
     async def get_by_resource_id(self, resource_id: UUID | str) -> ResourceTempState | None:
+        if not is_valid_uuid(resource_id):
+            raise ValueError(f"Invalid UUID: {resource_id}")
+
         statement = select(ResourceTempState).where(ResourceTempState.resource_id == resource_id)
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()

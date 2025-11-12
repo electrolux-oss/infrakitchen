@@ -11,6 +11,7 @@ from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Template
 
@@ -20,6 +21,9 @@ class TemplateCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, template_id: str | UUID) -> Template | None:
+        if not is_valid_uuid(template_id):
+            raise ValueError(f"Invalid UUID: {template_id}")
+
         statement = select(Template).where(Template.id == template_id).join(User, Template.created_by == User.id)
         statement = statement.options(selectinload(Template.children), selectinload(Template.parents))
         result = await self.session.execute(statement)

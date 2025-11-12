@@ -5,6 +5,7 @@ from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Worker
 
@@ -14,6 +15,9 @@ class WorkerCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, entity_id: str | UUID) -> Worker | None:
+        if not is_valid_uuid(entity_id):
+            raise ValueError(f"Invalid UUID: {entity_id}")
+
         statement = select(Worker).where(Worker.id == entity_id)
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()

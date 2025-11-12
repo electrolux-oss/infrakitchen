@@ -9,6 +9,7 @@ from application.resources.model import Resource
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Storage
 
@@ -18,6 +19,9 @@ class StorageCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, storage_id: str | UUID) -> Storage | None:
+        if not is_valid_uuid(storage_id):
+            raise ValueError(f"Invalid UUID: {storage_id}")
+
         statement = (select(Storage).where(Storage.id == storage_id).join(User, Storage.created_by == User.id)).join(
             Integration, Storage.integration_id == Integration.id
         )

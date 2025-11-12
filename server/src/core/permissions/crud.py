@@ -18,6 +18,9 @@ class PermissionCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, permission_id: str | UUID) -> Permission | None:
+        if not is_valid_uuid(permission_id):
+            raise ValueError(f"Invalid UUID: {permission_id}")
+
         statement = (
             select(Permission).where(Permission.id == permission_id).outerjoin(User, Permission.created_by == User.id)
         )

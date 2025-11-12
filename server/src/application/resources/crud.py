@@ -11,6 +11,7 @@ from application.storages.model import Storage
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Resource
 
@@ -20,6 +21,9 @@ class ResourceCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, resource_id: str | UUID) -> Resource | None:
+        if not is_valid_uuid(resource_id):
+            raise ValueError(f"Invalid UUID: {resource_id}")
+
         statement = (
             select(Resource)
             .where(Resource.id == resource_id)

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.users.model import User
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import AuditLog
 
@@ -15,6 +16,9 @@ class AuditLogCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, entity_id: str | UUID) -> AuditLog | None:
+        if not is_valid_uuid(entity_id):
+            raise ValueError(f"Invalid UUID: {entity_id}")
+
         statement = select(AuditLog).where(AuditLog.id == entity_id).join(User, AuditLog.user_id == User.id)
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()

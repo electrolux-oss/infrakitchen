@@ -9,6 +9,7 @@ from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import SourceCode
 
@@ -18,6 +19,9 @@ class SourceCodeCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, source_code_id: str | UUID) -> SourceCode | None:
+        if not is_valid_uuid(source_code_id):
+            raise ValueError(f"Invalid UUID: {source_code_id}")
+
         statement = (
             select(SourceCode)
             .where(SourceCode.id == source_code_id)

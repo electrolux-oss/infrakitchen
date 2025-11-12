@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters
+from core.utils.model_tools import is_valid_uuid
 
 from .model import AuthProvider
 
@@ -16,6 +17,9 @@ class AuthProviderCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, auth_provider_id: str | UUID) -> AuthProvider | None:
+        if not is_valid_uuid(auth_provider_id):
+            raise ValueError(f"Invalid UUID: {auth_provider_id}")
+
         statement = (
             select(AuthProvider)
             .where(AuthProvider.id == auth_provider_id)
