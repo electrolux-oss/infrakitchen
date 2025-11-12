@@ -57,7 +57,9 @@ def evaluate_sqlalchemy_sorting(
     column = getattr(model, field_name, None)
 
     if column is None:
-        raise ValueError(f"Invalid field name: {field_name} in sorting")
+        return statement
+        # TODO: need to check UI and fix query there
+        # raise ValueError(f"Invalid field name: {field_name} in sorting")
 
     match direction.lower():
         case "asc" | "ASC":
