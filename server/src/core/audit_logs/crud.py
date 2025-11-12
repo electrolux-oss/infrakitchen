@@ -1,11 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.users.model import User
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 from core.utils.model_tools import is_valid_uuid
 
 from .model import AuditLog
@@ -29,26 +29,10 @@ class AuditLogCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[AuditLog]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(AuditLog, query)
         statement = select(AuditLog)
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(AuditLog, field):
-                sort_column = getattr(AuditLog, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(AuditLog, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(AuditLog, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         statement = statement.join(User, AuditLog.user_id == User.id)
         result = await self.session.execute(statement)
@@ -56,12 +40,7 @@ class AuditLogCRUD:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(AuditLog)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(AuditLog, query)
-        if filters:
-            statement = statement.where(*filters)
-
+        statement = evaluate_sqlalchemy_filters(AuditLog, statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

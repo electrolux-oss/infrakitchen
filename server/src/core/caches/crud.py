@@ -1,11 +1,10 @@
 from typing import Any
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_sorting
 
 from .model import Cache
 
@@ -26,18 +25,8 @@ class CacheCRUD:
         sort: tuple[str, str] | None = None,
     ) -> Cache | None:
         statement = select(Cache)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Cache, query)
-        if filters:
-            statement = statement.where(*filters)
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(User, field):
-                sort_column = getattr(Cache, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
+        statement = evaluate_sqlalchemy_filters(Cache, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(Cache, statement, sort)
         result = await self.session.execute(statement)
         return result.scalars().first()
 

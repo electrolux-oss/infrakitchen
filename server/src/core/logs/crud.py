@@ -1,10 +1,10 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Log
@@ -28,38 +28,17 @@ class LogCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Log]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Log, query)
         statement = select(Log)
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(Log, field):
-                sort_column = getattr(Log, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(Log, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(Log, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(Log)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Log, query)
-        if filters:
-            statement = statement.where(*filters)
-
+        statement = evaluate_sqlalchemy_filters(Log, statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

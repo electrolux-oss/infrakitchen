@@ -8,7 +8,7 @@ from sqlalchemy.sql.functions import func
 from core.utils.model_tools import is_valid_uuid
 
 from .model import ResourceTempState
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 
 
 class ResourceTempStateCrud:
@@ -37,35 +37,17 @@ class ResourceTempStateCrud:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[ResourceTempState]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(ResourceTempState, query)
         statement = select(ResourceTempState)
-        if filters:
-            statement = statement.where(*filters)
-
-        if sort:
-            field, direction = sort
-            if hasattr(ResourceTempState, field):
-                sort_column = getattr(ResourceTempStateCrud, field)
-                statement = statement.order_by(sort_column.asc() if direction.upper() == "ASC" else sort_column.desc())
-
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)
+        statement = evaluate_sqlalchemy_filters(ResourceTempState, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(ResourceTempState, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(ResourceTempState)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(ResourceTempState, query)
-        if filters:
-            statement = statement.where(*filters)
+        statement = evaluate_sqlalchemy_filters(ResourceTempState, statement, filter)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

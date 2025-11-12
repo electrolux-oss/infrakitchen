@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, literal, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import union_all
 
@@ -10,7 +10,7 @@ from application.source_codes.model import SourceCode
 from application.storages.model import Storage
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Integration
@@ -36,38 +36,17 @@ class IntegrationCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Integration]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Integration, query)
         statement = select(Integration).join(User, Integration.created_by == User.id)
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(Integration, field):
-                sort_column = getattr(Integration, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(Integration, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(Integration, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(Integration)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Integration, query)
-        if filters:
-            statement = statement.where(*filters)
+        statement = evaluate_sqlalchemy_filters(Integration, statement, filter)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

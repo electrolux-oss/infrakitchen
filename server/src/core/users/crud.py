@@ -1,12 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 from core.utils.model_tools import is_valid_uuid
 
 from .model import User
@@ -31,17 +31,8 @@ class UserCRUD:
         sort: tuple[str, str] | None = None,
     ) -> User | None:
         statement = select(User)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(User, query)
-        if filters:
-            statement = statement.where(*filters)
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(User, field):
-                sort_column = getattr(User, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
+        statement = evaluate_sqlalchemy_filters(User, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(User, statement, sort)
 
         statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
         result = await self.session.execute(statement)
@@ -53,40 +44,18 @@ class UserCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[User]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(User, query)
         statement = select(User)
+        statement = evaluate_sqlalchemy_filters(User, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(User, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(User, field):
-                sort_column = getattr(User, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
-
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(User)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(User, query)
-        if filters:
-            statement = statement.where(*filters)
+        statement = evaluate_sqlalchemy_filters(User, statement, filter)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

@@ -5,6 +5,7 @@ from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm.query import inspect
+from sqlalchemy.sql.selectable import Select
 
 from core.base_models import Base
 from core.utils.json_encoder import JsonEncoder
@@ -39,11 +40,61 @@ def to_dict(obj: Base) -> dict[str, Any]:
     return values
 
 
-def evaluate_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryExpression[Any] | ColumnElement[Any]]:
+def evaluate_sqlalchemy_sorting(
+    model: type,
+    statement: Select[Any],
+    sort: tuple[str, str] | None = None,
+) -> Select[Any]:
+    """
+    Converts a generic API sorting tuple into SQLAlchemy sorting.
+    """
+    sorting: list[ColumnElement[Any]] = []
+
+    if sort is None:
+        return statement
+
+    field_name, direction = sort
+    column = getattr(model, field_name, None)
+
+    if column is None:
+        raise ValueError(f"Invalid field name: {field_name} in sorting")
+
+    match direction.lower():
+        case "asc" | "ASC":
+            sorting.append(column.asc())
+        case "desc" | "DESC":
+            sorting.append(column.desc())
+        case _:
+            raise ValueError(f"Unsupported sorting direction: {direction}")
+
+    if sorting:
+        statement = statement.order_by(*sorting)
+
+    return statement
+
+
+def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int] | None = None) -> Select[Any]:
+    """
+    Applies pagination to a SQLAlchemy statement.
+    """
+    if range:
+        skip, end = range
+        limit = end - skip
+        statement = statement.offset(skip).limit(limit)
+    else:
+        statement = statement.limit(100)  # default limit
+
+    return statement
+
+
+def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[str, Any] | None) -> Select[Any]:
     """
     Converts a generic API filter dict with operators into SQLAlchemy filters.
     """
     filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
+
+    if body is None:
+        return statement
 
     for key, value in body.items():
         field_name = key
@@ -111,4 +162,6 @@ def evaluate_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[Binar
             case _:
                 raise ValueError(f"Unsupported operator: {operator} in filter")
 
-    return filters
+    if filters:
+        statement = statement.where(*filters)
+    return statement
