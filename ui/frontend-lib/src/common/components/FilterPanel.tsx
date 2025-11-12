@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import {
   Autocomplete,
   Box,
@@ -27,12 +29,8 @@ export const inputBaseHeightStyles = {
   alignItems: "center",
 };
 
-export const FilterPanel = ({
-  dropdownOptions = [],
-  filterName,
-  searchName,
-  filterStorageKey,
-}: FilterPanelProps) => {
+export const FilterPanel = memo((props: FilterPanelProps) => {
+  const { dropdownOptions, filterName, searchName, filterStorageKey } = props;
   const { search, setSearch, selectedFilters, setSelectedFilters } =
     useFilterState({
       storageKey: filterStorageKey,
@@ -189,4 +187,6 @@ export const FilterPanel = ({
       </Card>
     </Box>
   );
-};
+});
+
+FilterPanel.displayName = "FilterPanel";

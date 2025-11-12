@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import { Box } from "@mui/material";
 import {
@@ -32,6 +32,17 @@ interface DataGridState {
   paginationModel: GridPaginationModel;
 }
 
+interface StoredFilterState {
+  search?: string;
+  selectedFilters?: string[];
+}
+
+const toQuickFilterTokens = (value: string) =>
+  value
+    .split(" ")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const {
     title,
@@ -45,18 +56,23 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   } = props;
 
   const { ikApi } = useConfig();
-  const { get, setKey } = useLocalStorage<Record<string, DataGridState>>();
+  const { get, setKey } = useLocalStorage<Record<string, unknown>>();
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<IkEntity[]>([]);
   const [totalRows, setTotalRows] = useState(0);
 
+  const filterStorageKey = `filter_${entityName}s`;
+  const savedFilterState = get(filterStorageKey) as
+    | StoredFilterState
+    | undefined;
+
   const { search, selectedFilters } = useFilterState({
-    storageKey: `filter_${entityName}s`,
+    storageKey: filterStorageKey,
   });
 
   const storageKey = `entityTable_${entityName}`;
-  const savedState = get(storageKey);
+  const savedState = get(storageKey) as DataGridState | undefined;
 
   const [sortModel, setSortModel] = useState<GridSortModel>(
     savedState?.sortModel || [],
@@ -68,20 +84,51 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
-    quickFilterValues: [],
+    quickFilterValues: toQuickFilterTokens(search ?? ""),
   });
 
-  // This will filter entities based on the search input
-  // after a short delay to avoid excessive re-renders
+  const savedSelectedFiltersKey = JSON.stringify(
+    savedFilterState?.selectedFilters ?? [],
+  );
+  const selectedFiltersKey = JSON.stringify(selectedFilters ?? []);
+  const savedSearchValue = savedFilterState?.search ?? "";
+  const expectedQuickFiltersKey = JSON.stringify(
+    toQuickFilterTokens(savedSearchValue ?? ""),
+  );
+  const currentQuickFiltersKey = JSON.stringify(
+    filterModel.quickFilterValues ?? [],
+  );
+
+  const shouldDelayInitialFetch = Boolean(
+    (filterName && (savedFilterState?.selectedFilters?.length ?? 0) > 0) ||
+      (searchName && savedSearchValue.trim().length > 0),
+  );
+
+  const [filtersReady, setFiltersReady] = useState<boolean>(
+    () => !shouldDelayInitialFetch,
+  );
+
   useEffect(() => {
     const id = setTimeout(() => {
-      const tokens = search
-        .split(" ")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      setPaginationModel((prev) => ({ ...prev, page: 0 }));
-      setFilterModel((prev) => ({ ...prev, quickFilterValues: tokens }));
-    }, 150);
+      const tokens = toQuickFilterTokens(search ?? "");
+
+      setPaginationModel((prev) => {
+        if (prev.page !== 0) {
+          return { ...prev, page: 0 };
+        }
+        return prev;
+      });
+
+      setFilterModel((prev) => {
+        const oldTokensString = prev.quickFilterValues?.join(",") || "";
+        const newTokensString = tokens.join(",") || "";
+
+        if (oldTokensString !== newTokensString) {
+          return { ...prev, quickFilterValues: tokens };
+        }
+        return prev;
+      });
+    }, 500);
     return () => clearTimeout(id);
   }, [search]);
 
@@ -96,69 +143,108 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     setPaginationModel(newPaginationModel);
   };
 
-  const fetchFilteredData = useCallback(async () => {
-    const { page, pageSize } = paginationModel;
-    let sort: GridSortItem;
-    if (sortModel.length === 0) {
-      sort = { field: "created_at", sort: "desc" };
-    } else {
-      sort = sortModel[0] as GridSortItem;
-    }
-    const quickFilterValues = filterModel.quickFilterValues;
-
-    const apiSort = sort
-      ? {
-          field: sort.field,
-          order: sort.sort?.toUpperCase() as "ASC" | "DESC",
-        }
-      : { field: "created_at", order: "DESC" as "ASC" | "DESC" };
-
-    const apiFilters: Record<string, any> = {};
-    if (filterName && selectedFilters && selectedFilters.length > 0) {
-      apiFilters[`${filterName}${filterOperator ?? ""}`] = selectedFilters;
+  useEffect(() => {
+    if (filtersReady) {
+      return;
     }
 
-    if (searchName && quickFilterValues && quickFilterValues.length > 0) {
-      apiFilters[`${searchName}__like`] = quickFilterValues.join(" ");
+    if (!shouldDelayInitialFetch) {
+      setFiltersReady(true);
+      return;
     }
 
-    setLoading(true);
-    try {
-      const response = await ikApi.getList(`${entityName}s`, {
-        filter: apiFilters,
-        pagination: { page: page + 1, perPage: pageSize },
-        sort: apiSort,
-        fields: fields,
-      });
-      setData(response.data);
-      setTotalRows(response.total ? response.total : 0);
-    } catch (e) {
-      notifyError(e);
-    } finally {
-      setLoading(false);
-    }
+    const filtersMatch = savedSelectedFiltersKey === selectedFiltersKey;
+    const searchMatch = savedSearchValue === (search ?? "");
+    const quickFiltersMatch =
+      expectedQuickFiltersKey === currentQuickFiltersKey;
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (filtersMatch && searchMatch && quickFiltersMatch) {
+      setFiltersReady(true);
+    }
+  }, [
+    filtersReady,
+    shouldDelayInitialFetch,
+    savedSelectedFiltersKey,
+    selectedFiltersKey,
+    savedSearchValue,
+    search,
+    expectedQuickFiltersKey,
+    currentQuickFiltersKey,
+  ]);
+
+  const quickFilterValues = filterModel.quickFilterValues;
+  const paginationPage = paginationModel.page;
+  const paginationPageSize = paginationModel.pageSize;
+
+  const fetchFilteredData = useMemo(() => {
+    return async () => {
+      const page = paginationPage;
+      const pageSize = paginationPageSize;
+
+      const apiFilters: Record<string, any> = {};
+
+      if (filterName && selectedFilters && selectedFilters.length > 0) {
+        apiFilters[`${filterName}${filterOperator ?? ""}`] = selectedFilters;
+      }
+
+      if (searchName && quickFilterValues && quickFilterValues.length > 0) {
+        apiFilters[`${searchName}__like`] = quickFilterValues.join(" ");
+      }
+
+      let sort: GridSortItem;
+      if (sortModel.length === 0) {
+        sort = { field: "created_at", sort: "desc" };
+      } else {
+        sort = sortModel[0] as GridSortItem;
+      }
+
+      const apiSort = sort
+        ? {
+            field: sort.field,
+            order: sort.sort?.toUpperCase() as "ASC" | "DESC",
+          }
+        : { field: "created_at", order: "DESC" as "ASC" | "DESC" };
+
+      setLoading(true);
+      try {
+        const response = await ikApi.getList(`${entityName}s`, {
+          filter: apiFilters,
+          pagination: { page: page + 1, perPage: pageSize },
+          sort: apiSort,
+          fields: fields,
+        });
+        setData(response.data);
+        setTotalRows(response.total ? response.total : 0);
+      } catch (e) {
+        notifyError(e);
+      } finally {
+        setLoading(false);
+      }
+    };
   }, [
     ikApi,
     entityName,
-    paginationModel,
-    sortModel,
-    filterModel,
+    fields,
+    paginationPage,
+    paginationPageSize,
+    quickFilterValues,
     filterName,
     searchName,
     filterOperator,
     selectedFilters,
+    sortModel,
   ]);
 
   useEffect(() => {
+    if (!filtersReady) {
+      return;
+    }
     fetchFilteredData();
-  }, [fetchFilteredData]);
+  }, [fetchFilteredData, filtersReady]);
 
   useEffect(() => {
     setKey(storageKey, { sortModel, paginationModel });
   }, [sortModel, paginationModel, storageKey, setKey]);
-
   return (
     <>
       <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
