@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, literal, select, case
+from sqlalchemy import func, literal, select, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -10,7 +10,8 @@ from application.resources.model import Resource
 from application.source_codes.model import SourceCode
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.utils.model_tools import is_valid_uuid
 
 from .model import SourceCodeVersion, SourceConfig, SourceOutputConfig
 
@@ -20,6 +21,9 @@ class SourceCodeVersionCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, source_code_version_id: str | UUID) -> SourceCodeVersion | None:
+        if not is_valid_uuid(source_code_version_id):
+            raise ValueError(f"Invalid UUID: {source_code_version_id}")
+
         statement = (
             (
                 select(SourceCodeVersion)
@@ -38,8 +42,6 @@ class SourceCodeVersionCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[SourceCodeVersion]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCodeVersion, query)
         statement = (
             select(SourceCodeVersion)
             .join(User, SourceCodeVersion.created_by == User.id)
@@ -47,35 +49,16 @@ class SourceCodeVersionCRUD:
             .join(SourceCode, SourceCodeVersion.source_code_id == SourceCode.id)
         )
 
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(SourceCodeVersion, field):
-                sort_column = getattr(SourceCodeVersion, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(SourceCodeVersion, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(SourceCodeVersion, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(SourceCodeVersion)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCodeVersion, query)
-        if filters:
-            statement = statement.where(*filters)
-
+        statement = evaluate_sqlalchemy_filters(SourceCodeVersion, statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 
@@ -117,36 +100,6 @@ class SourceCodeVersionCRUD:
         await self.session.refresh(source_code_version)
 
     # Variable Configs ant Output Configs
-    async def get_configs_all(
-        self,
-        filter: dict[str, Any] | None = None,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[SourceConfig]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCodeVersion, query)
-        statement = select(SourceConfig)
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(SourceCodeVersion, field):
-                sort_column = getattr(SourceCodeVersion, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)
-        result = await self.session.execute(statement)
-        return list(result.scalars().all())
-
     async def get_configs_by_scv_id(self, source_code_version_id: str | UUID) -> list[SourceConfig]:
         statement = (
             select(SourceConfig)
@@ -203,6 +156,9 @@ class SourceCodeVersionCRUD:
         return list(result.unique().scalars().all())
 
     async def get_by_id_with_configs(self, source_code_version_id: str | UUID) -> SourceCodeVersion | None:
+        if not is_valid_uuid(source_code_version_id):
+            raise ValueError(f"Invalid UUID: {source_code_version_id}")
+
         statement = (
             select(SourceCodeVersion)
             .where(SourceCodeVersion.id == source_code_version_id)

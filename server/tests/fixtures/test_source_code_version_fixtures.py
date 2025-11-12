@@ -31,7 +31,6 @@ def mock_source_code_version_crud():
     crud.update = AsyncMock()
     crud.patch = AsyncMock()
     crud.delete = AsyncMock()
-    crud.get_configs_all = AsyncMock()
     crud.get_configs_by_scv_id = AsyncMock()
     crud.get_config_by_id = AsyncMock()
     crud.create_config = AsyncMock()

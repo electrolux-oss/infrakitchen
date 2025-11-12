@@ -99,7 +99,7 @@ export const useSourceCodeVersionConfig = ({
     ikApi
       .getList("source_code_versions", {
         pagination: { page: 1, perPage: 1000 },
-        sort: { field: "identifier", order: "ASC" },
+        sort: { field: "source_code_folder", order: "ASC" },
         fields: [
           "id",
           "identifier",

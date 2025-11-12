@@ -1,14 +1,15 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, literal, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.utils.model_tools import is_valid_uuid
 
 from .model import SourceCode
 
@@ -18,6 +19,9 @@ class SourceCodeCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, source_code_id: str | UUID) -> SourceCode | None:
+        if not is_valid_uuid(source_code_id):
+            raise ValueError(f"Invalid UUID: {source_code_id}")
+
         statement = (
             select(SourceCode)
             .where(SourceCode.id == source_code_id)
@@ -37,17 +41,8 @@ class SourceCodeCRUD:
             .join(User, SourceCode.created_by == User.id)
             .outerjoin(Integration, SourceCode.integration_id == Integration.id)
         )
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCode, query)
-        if filters:
-            statement = statement.where(*filters)
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(SourceCode, field):
-                sort_column = getattr(SourceCode, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
+        statement = evaluate_sqlalchemy_filters(SourceCode, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(SourceCode, statement, sort)
 
         result = await self.session.execute(statement)
         return result.scalars().first()
@@ -58,42 +53,21 @@ class SourceCodeCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[SourceCode]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCode, query)
         statement = (
             select(SourceCode)
             .join(User, SourceCode.created_by == User.id)
             .outerjoin(Integration, SourceCode.integration_id == Integration.id)
         )
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(SourceCode, field):
-                sort_column = getattr(SourceCode, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(SourceCode, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(SourceCode, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(SourceCode)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(SourceCode, query)
-        if filters:
-            statement = statement.where(*filters)
+        statement = evaluate_sqlalchemy_filters(SourceCode, statement, filter)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

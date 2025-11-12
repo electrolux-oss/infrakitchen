@@ -1,14 +1,15 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, literal, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.resources.model import Resource
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Storage
 
@@ -18,6 +19,9 @@ class StorageCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, storage_id: str | UUID) -> Storage | None:
+        if not is_valid_uuid(storage_id):
+            raise ValueError(f"Invalid UUID: {storage_id}")
+
         statement = (select(Storage).where(Storage.id == storage_id).join(User, Storage.created_by == User.id)).join(
             Integration, Storage.integration_id == Integration.id
         )
@@ -30,43 +34,21 @@ class StorageCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Storage]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Storage, query)
         statement = (
             select(Storage)
             .join(User, Storage.created_by == User.id)
             .join(Integration, Storage.integration_id == Integration.id)
         )
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(Storage, field):
-                sort_column = getattr(Storage, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(Storage, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(Storage, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(Storage)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Storage, query)
-        if filters:
-            statement = statement.where(*filters)
-
+        statement = evaluate_sqlalchemy_filters(Storage, statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import case, asc, desc, func, select, text
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -10,7 +10,8 @@ from application.source_code_versions.model import SourceCodeVersion
 from application.storages.model import Storage
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Resource
 
@@ -20,6 +21,9 @@ class ResourceCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, resource_id: str | UUID) -> Resource | None:
+        if not is_valid_uuid(resource_id):
+            raise ValueError(f"Invalid UUID: {resource_id}")
+
         statement = (
             select(Resource)
             .where(Resource.id == resource_id)
@@ -39,32 +43,15 @@ class ResourceCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Resource]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Resource, query)
         statement = (
             select(Resource)
             .join(User, Resource.created_by == User.id)
             .outerjoin(Storage, Resource.storage_id == Storage.id)
             .outerjoin(SourceCodeVersion, Resource.source_code_version_id == SourceCodeVersion.id)
         )
-
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(Resource, field):
-                sort_column = getattr(Resource, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_sorting(Resource, statement, sort)
+        statement = evaluate_sqlalchemy_filters(Resource, statement, filter)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         statement = statement.options(
             selectinload(Resource.integration_ids), selectinload(Resource.children), selectinload(Resource.parents)
@@ -75,12 +62,7 @@ class ResourceCRUD:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(Resource)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Resource, query)
-        if filters:
-            statement = statement.where(*filters)
-
+        statement = evaluate_sqlalchemy_filters(Resource, statement, filter)
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 

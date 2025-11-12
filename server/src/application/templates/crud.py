@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import asc, desc, func, literal, select, text
+from sqlalchemy import func, literal, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import union_all
@@ -10,7 +10,8 @@ from application.resources.model import Resource
 from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.utils.model_tools import is_valid_uuid
 
 from .model import Template
 
@@ -20,6 +21,9 @@ class TemplateCRUD:
         self.session: AsyncSession = session
 
     async def get_by_id(self, template_id: str | UUID) -> Template | None:
+        if not is_valid_uuid(template_id):
+            raise ValueError(f"Invalid UUID: {template_id}")
+
         statement = select(Template).where(Template.id == template_id).join(User, Template.created_by == User.id)
         statement = statement.options(selectinload(Template.children), selectinload(Template.parents))
         result = await self.session.execute(statement)
@@ -31,26 +35,10 @@ class TemplateCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Template]:
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Template, query)
         statement = select(Template)
-        if filters:
-            statement = statement.where(*filters)
-
-        # Apply sorting
-        if sort:
-            field, direction = sort
-            if hasattr(Template, field):
-                sort_column = getattr(Template, field)
-                statement = statement.order_by(asc(sort_column) if direction.upper() == "ASC" else desc(sort_column))
-
-        # Apply pagination
-        if range:
-            skip, end = range
-            limit = end - skip
-            statement = statement.offset(skip).limit(limit)
-        else:
-            statement = statement.limit(100)  # default limit
+        statement = evaluate_sqlalchemy_filters(Template, statement, filter)
+        statement = evaluate_sqlalchemy_sorting(Template, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
 
         statement = statement.options(selectinload(Template.children), selectinload(Template.parents)).join(
             User, Template.created_by == User.id
@@ -60,11 +48,7 @@ class TemplateCRUD:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         statement = select(func.count()).select_from(Template)
-
-        query = filter or {}
-        filters = evaluate_sqlalchemy_filters(Template, query)
-        if filters:
-            statement = statement.where(*filters)
+        statement = evaluate_sqlalchemy_filters(Template, statement, filter)
 
         result = await self.session.execute(statement)
         return result.scalar_one() or 0

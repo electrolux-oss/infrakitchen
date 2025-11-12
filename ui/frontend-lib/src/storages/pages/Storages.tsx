@@ -93,6 +93,16 @@ export const StoragesPage = () => {
         entityName="storage"
         columns={columns}
         filters={labels}
+        fields={[
+          "id",
+          "name",
+          "status",
+          "storage_provider",
+          "storage_type",
+          "created_at",
+          "updated_at",
+          "labels",
+        ]}
         filterName="labels"
         filterOperator="__contains_all"
         searchName="name"
