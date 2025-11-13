@@ -39,7 +39,7 @@ export const SourceCodeVersionsPage = () => {
         },
       },
       {
-        field: "template",
+        field: "template_id",
         headerName: "Template",
         flex: 1,
         valueGetter: (value: any) => value?.identifier || value?.name || "",
@@ -49,7 +49,7 @@ export const SourceCodeVersionsPage = () => {
         },
       },
       {
-        field: "source_code",
+        field: "source_code_id",
         headerName: "Code Repository",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {

@@ -70,7 +70,7 @@ export const FilterPanel = memo((props: FilterPanelProps) => {
                   <TextField
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    label="Search"
+                    label={`Search by ${searchName}`}
                     size="small"
                     slotProps={{ input: { spellCheck: false } }}
                     sx={{

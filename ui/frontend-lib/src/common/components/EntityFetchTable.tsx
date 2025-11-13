@@ -221,9 +221,9 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
         setLoading(false);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     ikApi,
+    fields,
     entityName,
     paginationPage,
     paginationPageSize,

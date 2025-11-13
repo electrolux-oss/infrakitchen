@@ -4,6 +4,7 @@ from typing import Any, TypeVar
 from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import RelationshipProperty
 from sqlalchemy.orm.query import inspect
 from sqlalchemy.sql.selectable import Select
 
@@ -40,6 +41,17 @@ def to_dict(obj: Base) -> dict[str, Any]:
     return values
 
 
+def is_column_relationship(model: type, attr_name: str) -> bool:
+    if attr_name not in model.__mapper__.all_orm_descriptors:
+        return False
+
+    attr = model.__mapper__.get_property(attr_name)
+
+    is_relationship = isinstance(attr, RelationshipProperty)
+
+    return is_relationship
+
+
 def evaluate_sqlalchemy_sorting(
     model: type,
     statement: Select[Any],
@@ -60,6 +72,9 @@ def evaluate_sqlalchemy_sorting(
         return statement
         # TODO: need to check UI and fix query there
         # raise ValueError(f"Invalid field name: {field_name} in sorting")
+
+    if is_column_relationship(model, field_name) is True:
+        raise ValueError(f"Cannot sort by relationship field: {field_name}")
 
     match direction.lower():
         case "asc" | "ASC":

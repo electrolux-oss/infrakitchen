@@ -78,6 +78,14 @@ export const UsersPage = () => {
         entityName="user"
         columns={columns}
         searchName="identifier"
+        fields={[
+          "id",
+          "identifier",
+          "display_name",
+          "email",
+          "provider",
+          "created_at",
+        ]}
       />
     </PageContainer>
   );

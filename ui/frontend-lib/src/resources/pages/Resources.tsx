@@ -36,7 +36,7 @@ export const ResourcesPage = () => {
         },
       },
       {
-        field: "template",
+        field: "template_id",
         headerName: "Template",
         flex: 1,
         valueGetter: (value: any) => value?.name || "",
@@ -46,7 +46,7 @@ export const ResourcesPage = () => {
         },
       },
       {
-        field: "version",
+        field: "source_code_version_id",
         headerName: "Source Code Version",
         flex: 1,
         valueGetter: (value: any, row: any) =>
