@@ -70,6 +70,7 @@ export const AuditLogsPage = () => {
         columns={columns}
         filters={filters}
         filterName="action"
+        fields={["id", "user_id", "action", "model", "entity_id", "created_at"]}
       />
     </PageContainer>
   );

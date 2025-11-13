@@ -79,6 +79,14 @@ export const AuthProvidersPage = () => {
         title="Auth Providers"
         entityName="auth_provider"
         columns={columns}
+        fields={[
+          "id",
+          "name",
+          "description",
+          "auth_provider",
+          "enabled",
+          "created_at",
+        ]}
       />
     </PageContainer>
   );

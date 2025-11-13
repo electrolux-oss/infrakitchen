@@ -97,6 +97,7 @@ export const StoragesPage = () => {
           "id",
           "name",
           "status",
+          "state",
           "storage_provider",
           "storage_type",
           "created_at",

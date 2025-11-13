@@ -79,6 +79,15 @@ export const TasksPage = () => {
         columns={columns}
         filters={entities}
         filterName="entity"
+        fields={[
+          "id",
+          "entity",
+          "entity_id",
+          "status",
+          "state",
+          "created_at",
+          "updated_at",
+        ]}
       />
     </PageContainer>
   );
