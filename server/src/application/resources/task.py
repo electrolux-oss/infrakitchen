@@ -85,7 +85,6 @@ class ResourceTask:
 
     # workflow states
     async def start_pipeline(self):
-        """Default pipeline"""
         self.logger.debug(
             f"Starting pipeline for {self.resource_instance} {self.resource_instance.id} with action {self.action}"
         )

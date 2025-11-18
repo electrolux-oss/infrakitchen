@@ -55,7 +55,6 @@ class StorageTask:
 
     # workflow states
     async def start_pipeline(self):
-        """Default pipeline"""
         self.logger.debug(
             f"Starting pipeline for {self.storage_instance} {self.storage_instance.id} with action {self.action}"  # noqa
         )
