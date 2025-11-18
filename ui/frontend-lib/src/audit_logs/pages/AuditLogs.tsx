@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -13,13 +13,39 @@ import PageContainer from "../../common/PageContainer";
 
 export const AuditLogsPage = () => {
   const { ikApi } = useConfig();
-  const [filters, setFilters] = useState<string[]>([]);
+  const [actions, setActions] = useState<string[]>([]);
 
   useEffect(() => {
     ikApi.get("audit_logs/actions").then((response) => {
-      setFilters(response);
+      setActions(response);
     });
   }, [ikApi]);
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "action",
+        type: "autocomplete" as const,
+        label: "Action",
+        options: actions,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [actions],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.action && filterValues.action.length > 0) {
+      apiFilters["action__in"] = filterValues.action;
+    }
+
+    return apiFilters;
+  };
 
   const columns = useMemo(
     () => [
@@ -68,9 +94,9 @@ export const AuditLogsPage = () => {
         title="Audit Log"
         entityName="audit_log"
         columns={columns}
-        filters={filters}
-        filterName="action"
         fields={["id", "user_id", "action", "model", "entity_id", "created_at"]}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
       />
     </PageContainer>
   );

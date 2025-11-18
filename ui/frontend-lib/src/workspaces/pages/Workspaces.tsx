@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -27,6 +27,42 @@ export const WorkspacesPage = () => {
       setLabels(response);
     });
   }, [ikApi]);
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "name",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+      {
+        id: "labels",
+        type: "autocomplete" as const,
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.name && filterValues.name.trim().length > 0) {
+      apiFilters["name__like"] = filterValues.name;
+    }
+
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
+    }
+
+    return apiFilters;
+  };
 
   const columns = useMemo(
     () => [
@@ -91,7 +127,8 @@ export const WorkspacesPage = () => {
         title="Workspaces"
         entityName="workspace"
         columns={columns}
-        filters={labels}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
         fields={[
           "id",
           "name",
@@ -101,9 +138,6 @@ export const WorkspacesPage = () => {
           "updated_at",
           "labels",
         ]}
-        filterName="labels"
-        filterOperator="__contains_all"
-        searchName="name"
       />
     </PageContainer>
   );

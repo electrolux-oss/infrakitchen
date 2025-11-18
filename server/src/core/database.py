@@ -107,6 +107,8 @@ def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int
 def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[str, Any] | None) -> Select[Any]:
     """
     Converts a generic API filter dict with operators into SQLAlchemy filters.
+    Supports nested relationship filtering using double underscore notation.
+    Example: template__name__in will filter by the template's name field using has() for relationships.
     """
     filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
 
@@ -114,15 +116,61 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
         return statement
 
     for key, value in body.items():
-        field_name = key
         operator = "eq"
+        column = None
 
+        # Handle double-underscore syntax for operators and nested relationships
         if "__" in key:
-            field_name, operator = key.split("__", 1)
+            parts = key.split("__")
+            potential_operator = parts[-1]
 
-        column = getattr(model, field_name, None)
+            # Check if last part is a valid operator
+            if potential_operator in ["contains_all", "any", "eq", "like", "in"]:
+                operator = potential_operator
+                field_path = parts[:-1]
+            else:
+                # No operator, treat entire key as field path with default 'eq'
+                field_path = parts
+
+            # Handle nested relationship filtering (e.g., template__name__in)
+            if len(field_path) > 1:
+                relationship_attr = getattr(model, field_path[0], None)
+                if relationship_attr is None:
+                    raise ValueError(f"Invalid field name: {field_path[0]} in filter")
+
+                # Verify this is a relationship
+                if not hasattr(relationship_attr.property, "mapper"):
+                    raise ValueError(f"Field {field_path[0]} is not a relationship")
+
+                # Get the related model and field
+                related_model = relationship_attr.property.mapper.class_
+                related_column = getattr(related_model, field_path[1], None)
+                if related_column is None:
+                    raise ValueError(f"Invalid field name: {field_path[1]} in related model")
+
+                # Build filter using has() for the relationship
+                relation_filter = None
+                if operator == "in" and isinstance(value, list) and value:
+                    relation_filter = related_column.in_(value)
+                elif operator == "eq":
+                    relation_filter = related_column == value
+                elif operator == "like":
+                    relation_filter = related_column.ilike(f"%{value}%")
+                else:
+                    raise ValueError(f"Operator {operator} not supported for nested relationships")
+
+                if relation_filter is not None:
+                    filters.append(relationship_attr.has(relation_filter))
+                continue
+            else:
+                # Simple field with operator (e.g., name__like)
+                column = getattr(model, field_path[0], None)
+        else:
+            # No operator, direct field access
+            column = getattr(model, key, None)
+
         if column is None:
-            raise ValueError(f"Invalid field name: {field_name} in filter")
+            raise ValueError(f"Invalid field name: {key} in filter")
 
         match operator:
             case "contains_all":
@@ -176,6 +224,13 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                 filters.append(column == value)
             case "like":
                 filters.append(column.ilike(f"%{value}%"))
+            case "in":
+                # Support for IN operator with list of values
+                if isinstance(value, list) and value:
+                    filters.append(column.in_(value))
+                else:
+                    # If not a list or empty, treat as eq
+                    filters.append(column == value)
             case _:
                 raise ValueError(f"Unsupported operator: {operator} in filter")
 

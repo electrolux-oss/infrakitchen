@@ -2,82 +2,107 @@ import { useState, useEffect, useCallback } from "react";
 
 import { useLocalStorage } from "../context/UIStateContext";
 
-interface FilterState {
-  search: string;
-  selectedFilters: string[];
+/**
+ * Filter state interface supporting multiple arbitrary filters
+ */
+export interface MultiFilterState {
+  [filterId: string]: any;
 }
 
-interface UseFilterStateOptions {
-  storageKey?: string;
+interface UseMultiFilterStateOptions {
+  storageKey: string;
+  initialValues?: MultiFilterState;
+}
+
+interface UseMultiFilterStateReturn {
+  filterValues: MultiFilterState;
+  setFilterValue: (filterId: string, value: any) => void;
+  setFilterValues: (values: MultiFilterState) => void;
+  resetFilters: () => void;
+  resetFilter: (filterId: string) => void;
+  hasActiveFilters: boolean;
 }
 
 /**
- * Hook to manage filter state with localStorage persistence.
- * Automatically syncs state across multiple instances using the same storageKey.
+ * Hook to manage multiple filters with localStorage persistence.
+ * Supports arbitrary filter types and values.
  */
-export function useFilterState(options?: UseFilterStateOptions) {
-  const { storageKey } = options || {};
+export function useMultiFilterState(
+  options: UseMultiFilterStateOptions,
+): UseMultiFilterStateReturn {
+  const { storageKey, initialValues = {} } = options;
   const {
     get,
     setKey,
     value: contextValue,
-  } = useLocalStorage<Record<string, FilterState>>();
+  } = useLocalStorage<Record<string, MultiFilterState>>();
 
-  // Initialize from localStorage
+  // Initialize from localStorage or use initial values
   const getInitialState = useCallback(() => {
-    if (!storageKey) {
-      return { search: "", selectedFilters: [] };
-    }
-
     const savedState = get(storageKey);
-    if (savedState) {
-      return {
-        search: savedState.search || "",
-        selectedFilters: savedState.selectedFilters || [],
-      };
+    if (savedState && Object.keys(savedState).length > 0) {
+      return savedState;
     }
+    return initialValues;
+  }, [storageKey, get, initialValues]);
 
-    return { search: "", selectedFilters: [] };
-  }, [storageKey, get]);
-
-  const [search, setSearch] = useState<string>(() => getInitialState().search);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>(
-    () => getInitialState().selectedFilters,
+  const [filterValues, setFilterValuesState] = useState<MultiFilterState>(() =>
+    getInitialState(),
   );
 
   // Sync with localStorage context when it changes (enables multi-instance sync)
   useEffect(() => {
-    if (!storageKey) return;
-
     const stored = contextValue?.[storageKey];
-    if (stored) {
-      if (stored.search !== search) {
-        setSearch(stored.search || "");
-      }
-      if (
-        JSON.stringify(stored.selectedFilters) !==
-        JSON.stringify(selectedFilters)
-      ) {
-        setSelectedFilters(stored.selectedFilters || []);
-      }
+    if (stored && JSON.stringify(stored) !== JSON.stringify(filterValues)) {
+      setFilterValuesState(stored);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextValue, storageKey]); // Intentionally not including search/selectedFilters to avoid loops
+  }, [contextValue, storageKey]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
-    if (!storageKey) return;
+    setKey(storageKey, filterValues);
+  }, [filterValues, storageKey, setKey]);
 
-    setKey(storageKey, {
-      search,
-      selectedFilters,
+  const setFilterValue = useCallback((filterId: string, value: any) => {
+    setFilterValuesState((prev) => ({
+      ...prev,
+      [filterId]: value,
+    }));
+  }, []);
+
+  const setFilterValues = useCallback((values: MultiFilterState) => {
+    setFilterValuesState(values);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setFilterValuesState(initialValues);
+  }, [initialValues]);
+
+  const resetFilter = useCallback((filterId: string) => {
+    setFilterValuesState((prev) => {
+      const updated = { ...prev };
+      delete updated[filterId];
+      return updated;
     });
-  }, [search, selectedFilters, storageKey, setKey]);
+  }, []);
+
+  const hasActiveFilters = Object.values(filterValues).some((value) => {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    if (typeof value === "string") {
+      return value.trim().length > 0;
+    }
+    return value !== null && value !== undefined;
+  });
 
   return {
-    search,
-    setSearch,
-    selectedFilters,
-    setSelectedFilters,
+    filterValues,
+    setFilterValue,
+    setFilterValues,
+    resetFilters,
+    resetFilter,
+    hasActiveFilters,
   };
 }

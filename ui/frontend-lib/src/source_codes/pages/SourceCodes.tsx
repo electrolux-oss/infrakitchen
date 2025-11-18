@@ -10,11 +10,11 @@ import {
   Alert,
 } from "@mui/material";
 
-import { IconField } from "../../common";
+import { IconField, FilterConfig } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
-import { FilterPanel } from "../../common/components/FilterPanel";
+import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
-import { useFilterState } from "../../common/hooks/useFilterState";
+import { useMultiFilterState } from "../../common/hooks/useFilterState";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -35,14 +35,15 @@ export const SourceCodesPage = () => {
 
   const entityName = "source_code";
 
-  const { search, selectedFilters } = useFilterState({
+  const { filterValues } = useMultiFilterState({
     storageKey: "filter_source_codes",
+    initialValues: {},
   });
 
   const fetchSourceCodes = useCallback(async () => {
     const apiFilters: Record<string, any> = {};
-    if (selectedFilters && selectedFilters.length > 0) {
-      apiFilters["labels__contains_all"] = selectedFilters;
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
     }
     setLoading(true);
     setError(null);
@@ -69,7 +70,7 @@ export const SourceCodesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [ikApi, selectedFilters]);
+  }, [ikApi, filterValues.labels]);
 
   useEffect(() => {
     ikApi.get("labels/source_code").then((response: string[]) => {
@@ -84,14 +85,35 @@ export const SourceCodesPage = () => {
   const filteredSourceCodes = useMemo(
     () =>
       sourceCodes.filter((sourceCode) => {
-        const s = search.toLowerCase();
+        const s = (filterValues.name || "").toLowerCase();
         return (
           !s ||
           sourceCode.identifier.toLowerCase().includes(s) ||
           sourceCode.description.toLowerCase().includes(s)
         );
       }),
-    [sourceCodes, search],
+    [sourceCodes, filterValues.name],
+  );
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "name",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+      {
+        id: "labels",
+        type: "autocomplete" as const,
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
   );
 
   const actions = (
@@ -172,10 +194,8 @@ export const SourceCodesPage = () => {
     <PageContainer title="Code Repositories" actions={actions}>
       <Box sx={{ width: "100%" }}>
         <FilterPanel
-          dropdownOptions={labels}
-          filterStorageKey={`filter_${entityName}s`}
-          filterName={"labels"}
-          searchName={"name"}
+          filters={filterConfigs}
+          storageKey={`filter_${entityName}s`}
         />
         {filteredSourceCodes.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
