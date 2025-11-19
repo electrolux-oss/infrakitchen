@@ -4,6 +4,7 @@ from fastapi import Depends
 from core.audit_logs.handler import AuditLogHandler
 from core.database import SessionLocal
 from core.revisions.handler import RevisionHandler
+from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import IntegrationCRUD
@@ -29,4 +30,5 @@ def get_integration_service(
         revision_handler=revision_handler,
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,
+        task_service=get_task_service(session=session),
     )
