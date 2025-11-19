@@ -420,7 +420,14 @@ class TestUpdate:
 
 class TestDelete:
     @pytest.mark.asyncio
-    async def test_delete_success(self, mock_workspace_service, mock_workspace_crud):
+    async def test_delete_success(
+        self,
+        mock_workspace_service,
+        mock_workspace_crud,
+        mock_audit_log_handler,
+        mock_log_crud,
+        mock_task_entity_crud,
+    ):
         workspace_id = uuid4()
         existing_workspace = Workspace(
             id=workspace_id,
@@ -433,10 +440,22 @@ class TestDelete:
 
         mock_workspace_crud.get_by_id.assert_awaited_once_with(workspace_id)
         mock_workspace_crud.delete.assert_awaited_once_with(existing_workspace)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            existing_workspace.id, existing_workspace.created_by, ModelActions.DELETE
+        )
+        mock_log_crud.delete_by_entity_id.assert_awaited_once_with(workspace_id)
+        mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(workspace_id)
 
     @pytest.mark.asyncio
-    async def test_delete_workspace_does_not_exist(self, mock_workspace_service, mock_workspace_crud):
+    async def test_delete_workspace_does_not_exist(
+        self, mock_workspace_service, mock_workspace_crud, mock_audit_log_handler, mock_log_crud, mock_task_entity_crud
+    ):
         mock_workspace_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Workspace not found"):
             await mock_workspace_service.delete(workspace_id=WORKSPACE_ID)
+        mock_workspace_crud.get_by_id.assert_awaited_once_with(WORKSPACE_ID)
+        mock_workspace_crud.delete.assert_not_awaited()
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+        mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()

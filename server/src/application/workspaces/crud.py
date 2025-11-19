@@ -68,9 +68,9 @@ class WorkspaceCRUD:
         await self.session.delete(workspace)
 
     async def get_dependencies(self, existing_workspace: Workspace) -> list[Any]:
-        resource_statement = select(Resource.id.label("id"), literal("resource").label("type")).where(
-            Resource.workspace_id == existing_workspace.id
-        )
+        resource_statement = select(
+            Resource.id.label("id"), Resource.name.label("name"), literal("resource").label("type")
+        ).where(Resource.workspace_id == existing_workspace.id)
         result = await self.session.execute(resource_statement)
         return list(result.fetchall())
 
