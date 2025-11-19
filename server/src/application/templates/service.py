@@ -114,15 +114,11 @@ class TemplateService:
             # If the template is disabled, we can move it back
             existing_template.status = ModelStatus.ENABLED
 
+        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.UPDATE)
         await self.crud.update(existing_template, body)
 
-        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.UPDATE)
-
-        existing_template = await self.crud.get_by_id(existing_template.id)
-        if not existing_template:
-            raise EntityNotFound("Template not found after update")
-
         await self.revision_handler.handle_revision(existing_template)
+        await self.crud.refresh(existing_template)
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return response
@@ -187,6 +183,8 @@ class TemplateService:
                 metadata=dependencies_to_raise,
             )
 
+        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.DELETE)
+        await self.revision_handler.delete_revisions(template_id)
         await self.crud.delete(existing_template)
 
     async def get_tree(
