@@ -8,7 +8,9 @@ from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
 from core.database import to_dict
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
+from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
+from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
 from core.utils.event_sender import EventSender
 from .crud import SourceCodeCRUD
@@ -32,11 +34,15 @@ class SourceCodeService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
+        log_service: LogService,
+        task_service: TaskEntityService,
     ):
         self.crud: SourceCodeCRUD = crud
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
+        self.log_service: LogService = log_service
+        self.task_service: TaskEntityService = task_service
 
     async def get_dto_by_id(self, source_code_id: str | UUID) -> SourceCodeDTO | None:
         source_code = await self.crud.get_by_id(source_code_id)
@@ -177,6 +183,11 @@ class SourceCodeService:
                     for dependency in dependencies
                 ],
             )
+
+        await self.audit_log_handler.create_log(source_code_id, requester.id, ModelActions.DELETE)
+        await self.revision_handler.delete_revisions(source_code_id)
+        await self.log_service.delete_by_entity_id(source_code_id)
+        await self.task_service.delete_by_entity_id(source_code_id)
 
         await self.crud.delete(existing_source_code)
 

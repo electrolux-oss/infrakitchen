@@ -33,12 +33,16 @@ def mock_source_code_service(
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
+    mock_log_service,
+    mock_task_entity_service,
 ):
     return SourceCodeService(
         crud=mock_source_code_crud,
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
+        log_service=mock_log_service,
+        task_service=mock_task_entity_service,
     )
 
 
