@@ -6,6 +6,7 @@ from uuid import UUID
 
 from application.resources.functions import (
     add_resource_parent_policy,
+    delete_resource_policies,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
     validate_resource_variables_on_patch,
@@ -558,6 +559,7 @@ class ResourceService:
         await self.revision_handler.delete_revisions(resource_id)
         await self.log_service.delete_by_entity_id(resource_id)
         await self.task_service.delete_by_entity_id(resource_id)
+        await delete_resource_policies(resource_id, self.permission_service)
         await self.crud.delete(existing_resource)
 
     async def get_tree(
