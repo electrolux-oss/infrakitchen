@@ -86,7 +86,7 @@ class GithubAuthentication:
                     headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
                 )
             if r.status_code == 401:
-                raise CloudWrongCredentials("Invalid GitHub token (401 Unauthorized).")
+                raise CloudWrongCredentials(message="Invalid GitHub token (401 Unauthorized).", metadata=[r.json()])
             if r.status_code != 200:
                 raise CloudWrongCredentials(f"GitHub token validation failed (status {r.status_code}).")
             data = r.json()
@@ -180,11 +180,8 @@ class GithubProvider(IntegrationProvider, GithubAuthentication):
 
     @override
     async def is_valid(self) -> bool:
-        try:
-            await self.verify_auth()
-            return True
-        except CloudWrongCredentials:
-            raise
+        await self.verify_auth()
+        return True
 
 
 class GithubSshProvider(IntegrationProvider, GithubAuthentication):

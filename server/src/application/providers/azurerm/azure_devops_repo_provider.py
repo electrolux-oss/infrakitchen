@@ -11,7 +11,7 @@ from application.integrations.schema import AzureReposIntegrationConfig, AzureRe
 from application.providers.azurerm.azure_devops_api import AzureDevopsApi
 from core.adapters.provider_adapters import IntegrationProvider
 from core.custom_entity_log_controller import EntityLogger
-from core.errors import CloudWrongCredentials
+from core.errors import CloudWrongCredentials, EntityNotFound
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.tools.git_client import GitClient
 
@@ -122,6 +122,16 @@ class AzureRepoSourceCode(IntegrationProvider, AzureRepoAuthentication):
         azure_devops_api = AzureDevopsApi(self.environment_variables)
         try:
             return await azure_devops_api.get_projects() is not None
+        except EntityNotFound as e:
+            raise CloudWrongCredentials(
+                "Resource not found. Please check your Azure Devops organization and access token.",
+                metadata=[{"cloud_message": str(e)}],
+            ) from e
+        except ValueError as e:
+            raise CloudWrongCredentials(
+                "Validation failed. Please check your Azure Devops access token.",
+                metadata=[{"cloud_message": str(e)}],
+            ) from e
         except Exception as e:
             raise CloudWrongCredentials(f"Azure Devops validation failed: {e}") from e
 
@@ -217,7 +227,8 @@ class AzureRepoSourceCodeSsh(IntegrationProvider, AzureRepoAuthentication):
                     or "access denied" in stderr_text
                 ):
                     raise CloudWrongCredentials(
-                        "SSH key authentication failed. Please verify the key is correctly added to your Azure Repos account."  # noqa
+                        "SSH key authentication failed",
+                        metadata=[{"ssh_stderr": stderr_text, "ssh_stdout": stdout_text}],
                     )
 
                 if (
@@ -225,7 +236,10 @@ class AzureRepoSourceCodeSsh(IntegrationProvider, AzureRepoAuthentication):
                     or "connection timed out" in stderr_text
                     or "network is unreachable" in stderr_text
                 ):
-                    raise CloudWrongCredentials("Unable to connect to Azure. Please check your network connectivity.")
+                    raise CloudWrongCredentials(
+                        "SSH connection error. Please check your network connectivity to Azure Repos.",
+                        metadata=[{"ssh_stderr": stderr_text, "ssh_stdout": stdout_text}],
+                    )  # noqa
 
                 # If we get here, authentication might have succeeded but we got an unexpected response
                 self.logger.warning(
@@ -247,7 +261,7 @@ class AzureRepoSourceCodeSsh(IntegrationProvider, AzureRepoAuthentication):
                 if tmp_filename.exists():
                     tmp_filename.unlink()
 
-        except CloudWrongCredentials:
-            raise
+        except CloudWrongCredentials as e:
+            raise e
         except Exception as e:
             raise CloudWrongCredentials(f"SSH key validation error: {e}") from e

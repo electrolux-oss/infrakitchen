@@ -9,7 +9,6 @@ class AzureDevopsApi(AzureDevopsClient):
     def __init__(self, environment_variables: dict[str, str]):
         super().__init__(environment_variables)
 
-    @cache_decorator(avoid_args=True, ttl=3600)
     async def get_projects(self) -> list[AzureDevOpsProject]:
         """
         Fetches all projects in the Azure DevOps organization.

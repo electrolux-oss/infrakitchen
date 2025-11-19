@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from pydantic import BaseModel
 
-from core.errors import AccessUnauthorized, EntityExistsError, EntityNotFound
+from core.errors import AccessUnauthorized, CloudWrongCredentials, EntityExistsError, EntityNotFound
 
 logger = logging.getLogger("azure_devops_client")
 
@@ -39,6 +39,10 @@ class AzureDevopsClient:
     def _error_handling(response: httpx.Response) -> None:
         if response.status_code == 403:
             raise AccessUnauthorized(f"Unauthorized {response.status_code}: {response.text}")
+        elif response.status_code == 401:
+            raise CloudWrongCredentials(
+                "Wrong credentials", metadata=[{"status_code": response.status_code, "cloud_response": response.text}]
+            )
         elif response.status_code == 404:
             raise EntityNotFound(f"Not found: {response.text}")
         elif response.status_code == 409:

@@ -35,6 +35,11 @@ class AzurermAuthentication:
             self.environment_variables["ARM_CLIENT_SECRET"] = self.client_secret
             self.environment_variables["ARM_TENANT_ID"] = self.tenant_id
             self.environment_variables["ARM_SUBSCRIPTION_ID"] = self.subscription_id
+            # Also set the AZURE_ prefixed variables for compatibility
+            self.environment_variables["AZURE_CLIENT_ID"] = self.client_id
+            self.environment_variables["AZURE_CLIENT_SECRET"] = self.client_secret
+            self.environment_variables["AZURE_TENANT_ID"] = self.tenant_id
+            self.environment_variables["AZURE_SUBSCRIPTION_ID"] = self.subscription_id
         else:
             self.logger.error("No valid authentication method provided for Azure Resource Manager.")
             raise CloudWrongCredentials("No valid authentication method provided for Azure Resource Manager.")
@@ -58,10 +63,8 @@ class AzurermProvider(IntegrationProvider, AzurermAuthentication):
     @override
     async def is_valid(self) -> bool:
         azure_api_client = await self.get_api_client()
-        try:
-            await azure_api_client.get_azure_token()
-            if azure_api_client.headers.get("Authorization"):
-                return True
-            raise CloudWrongCredentials("Failed to get Azure token")
-        except Exception as e:
-            raise CloudWrongCredentials(e) from e
+        await azure_api_client.get_azure_token()
+        if azure_api_client.headers.get("Authorization"):
+            return True
+
+        raise CloudWrongCredentials("Failed to authenticate with Azure Resource Manager.")
