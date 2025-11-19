@@ -23,3 +23,6 @@ class TaskEntityService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def delete_by_entity_id(self, entity_id: str) -> None:
+        await self.crud.delete_by_entity_id(entity_id)

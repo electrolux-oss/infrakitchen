@@ -54,3 +54,6 @@ class RevisionService:
             )
             for revision in revisions
         ]
+
+    async def delete_by_entity_id(self, entity_id: str) -> None:
+        await self.crud.delete_by_entity_id(entity_id)

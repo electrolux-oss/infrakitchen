@@ -2,14 +2,15 @@ from datetime import datetime
 import uuid
 
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
+
+from core.base_models import BaseModel
 
 
 class RevisionResponse(BaseModel):
-    id: uuid.UUID = Field(...)
-    model: str = Field(..., title="Model name")
-    data: dict[str, Any] = Field(..., title="Data")
-    entity_id: str | uuid.UUID = Field(..., title="Entity ID")
+    model: str = Field(...)
+    data: dict[str, Any] = Field(...)
+    entity_id: str | uuid.UUID = Field(...)
     created_at: datetime = Field(default_factory=datetime.now, frozen=True)
     updated_at: datetime = Field(default_factory=datetime.now)
     revision_number: int = Field(default=1)
@@ -21,13 +22,21 @@ class RevisionResponse(BaseModel):
         return "revision"
 
 
+class RevisionCreate(BaseModel):
+    model: str = Field(...)
+    data: dict[str, Any] = Field(default_factory=dict)
+    entity_id: str | uuid.UUID = Field(...)
+    revision_number: int = Field(default=1)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class RevisionShort(BaseModel):
-    id: uuid.UUID = Field(...)
-    model: str = Field(..., title="Model name")
-    entity_id: str | uuid.UUID = Field(..., title="Entity ID")
+    model: str = Field(...)
+    entity_id: str | uuid.UUID = Field(...)
     revision_number: int = Field(default=1)
     created_at: datetime = Field(default_factory=datetime.now)
-    name: str | None = Field(default=None, title="Optional name for the revision")
-    description: str | None = Field(default=None, title="Optional description for the revision")
+    name: str | None = Field(default=None)
+    description: str | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)

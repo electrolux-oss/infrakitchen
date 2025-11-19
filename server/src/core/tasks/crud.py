@@ -58,3 +58,13 @@ class TaskEntityCRUD:
         self.session.add(db_task)
         await self.session.flush()
         return db_task
+
+    async def delete_by_entity_id(self, entity_id: str | UUID) -> None:
+        if not is_valid_uuid(entity_id):
+            raise ValueError(f"Invalid UUID: {entity_id}")
+
+        statement = select(TaskEntity).where(TaskEntity.entity_id == entity_id)
+        result = await self.session.execute(statement)
+        tasks = result.scalars().all()
+        for task in tasks:
+            await self.session.delete(task)
