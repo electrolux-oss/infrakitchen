@@ -395,27 +395,48 @@ class TestDelete:
             (ModelState.PROVISION, ModelStatus.APPROVAL_PENDING),
         ],
     )
-    async def test_delete_success(self, state, status, mock_resource_service, mock_resource_crud, mocked_resource):
+    async def test_delete_success(
+        self,
+        state,
+        status,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
+        mock_user_dto,
+    ):
         existing_resource = mocked_resource
         existing_resource.state = state
         existing_resource.status = status
 
         mock_resource_crud.get_by_id.return_value = existing_resource
-        requester = Mock(spec=UserDTO)
-
-        await mock_resource_service.delete(resource_id=existing_resource.id, requester=requester)
+        await mock_resource_service.delete(resource_id=existing_resource.id, requester=mock_user_dto)
 
         mock_resource_crud.get_by_id.assert_awaited_once_with(existing_resource.id)
         mock_resource_crud.delete.assert_awaited_once_with(existing_resource)
+        mock_log_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
+        mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_resource.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            existing_resource.id, mock_user_dto.id, ModelActions.DELETE
+        )
+        mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
 
     @pytest.mark.asyncio
-    async def test_delete_resource_does_not_exist(self, mock_resource_service, mock_resource_crud):
+    async def test_delete_resource_does_not_exist(
+        self, mock_resource_service, mock_resource_crud, mock_log_crud, mock_revision_handler, mock_audit_log_handler
+    ):
         requester = Mock(spec=UserDTO)
 
         mock_resource_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Resource not found"):
             await mock_resource_service.delete(resource_id=RESOURCE_ID, requester=requester)
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
 
 
 class TestGetTree:

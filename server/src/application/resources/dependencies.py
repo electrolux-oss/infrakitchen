@@ -7,8 +7,10 @@ from application.templates.dependencies import get_template_service
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.audit_logs.handler import AuditLogHandler
 from core.database import SessionLocal
+from core.logs.dependencies import get_log_service
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
+from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import ResourceCRUD
@@ -44,4 +46,6 @@ def get_resource_service(
         workspace_event_sender=workspace_event_sender,
         audit_log_handler=audit_log_handler,
         resource_temp_state_handler=resource_temp_state_handler,
+        log_service=get_log_service(session=session),
+        task_service=get_task_service(session=session),
     )

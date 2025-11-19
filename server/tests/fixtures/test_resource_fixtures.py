@@ -36,6 +36,8 @@ def mock_resource_service(
     mock_integration_crud,
     mock_permission_service,
     mocked_resource_temp_state_handler,
+    mock_log_service,
+    mock_task_entity_service,
 ):
     return ResourceService(
         crud=mock_resource_crud,
@@ -49,6 +51,8 @@ def mock_resource_service(
         storage_service=mock_storage_service,
         permission_service=mock_permission_service,
         resource_temp_state_handler=mocked_resource_temp_state_handler,
+        log_service=mock_log_service,
+        task_service=mock_task_entity_service,
     )
 
 

@@ -25,9 +25,11 @@ from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
 from core.database import to_dict
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
+from core.logs.service import LogService
 from core.permissions.service import PermissionService
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.revisions.handler import RevisionHandler
+from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
@@ -74,6 +76,8 @@ class ResourceService:
         workspace_event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
         resource_temp_state_handler: ResourceTempStateHandler,
+        log_service: LogService,
+        task_service: TaskEntityService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -86,6 +90,8 @@ class ResourceService:
         self.workspace_event_sender: EventSender = workspace_event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.resource_temp_state_handler: ResourceTempStateHandler = resource_temp_state_handler
+        self.log_service: LogService = log_service
+        self.task_service: TaskEntityService = task_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -548,6 +554,10 @@ class ResourceService:
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=existing_resource.id)
 
         await delete_entity(existing_resource)
+        await self.audit_log_handler.create_log(resource_id, requester.id, ModelActions.DELETE)
+        await self.revision_handler.delete_revisions(resource_id)
+        await self.log_service.delete_by_entity_id(resource_id)
+        await self.task_service.delete_by_entity_id(resource_id)
         await self.crud.delete(existing_resource)
 
     async def get_tree(
