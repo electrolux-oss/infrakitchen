@@ -458,7 +458,16 @@ class TestPatch:
 
 class TestDelete:
     @pytest.mark.asyncio
-    async def test_delete_success(self, mock_storage_service, mock_storage_crud):
+    async def test_delete_success(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mock_log_crud,
+        mock_user_dto,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
+    ):
         existing_storage = Storage(
             id=uuid4(),
             name="Test Storage",
@@ -466,21 +475,39 @@ class TestDelete:
             state=ModelState.DESTROYED,
         )
         mock_storage_crud.get_by_id.return_value = existing_storage
-        requester = Mock(spec=UserDTO)
 
-        await mock_storage_service.delete(storage_id=STORAGE_ID, requester=requester)
+        await mock_storage_service.delete(storage_id=existing_storage.id, requester=mock_user_dto)
 
-        mock_storage_crud.get_by_id.assert_awaited_once_with(STORAGE_ID)
+        mock_storage_crud.get_by_id.assert_awaited_once_with(existing_storage.id)
         mock_storage_crud.delete.assert_awaited_once_with(existing_storage)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            existing_storage.id, mock_user_dto.id, ModelActions.DELETE
+        )
+        mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_storage.id)
+        mock_log_crud.delete_by_entity_id.assert_awaited_once_with(existing_storage.id)
+        mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_storage.id)
 
     @pytest.mark.asyncio
-    async def test_delete_storage_does_not_exist(self, mock_storage_service, mock_storage_crud):
+    async def test_delete_storage_does_not_exist(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
+    ):
         requester = Mock(spec=UserDTO)
 
         mock_storage_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Storage not found"):
             await mock_storage_service.delete(storage_id=STORAGE_ID, requester=requester)
+
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+        mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()
 
 
 class TestGetStorageActions:

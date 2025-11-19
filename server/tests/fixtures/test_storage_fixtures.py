@@ -31,6 +31,8 @@ def mock_storage_service(
     mock_event_sender,
     mock_audit_log_handler,
     mock_integration_service,
+    mock_log_service,
+    mock_task_entity_service,
 ):
     return StorageService(
         crud=mock_storage_crud,
@@ -38,6 +40,8 @@ def mock_storage_service(
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
+        log_service=mock_log_service,
+        task_service=mock_task_entity_service,
     )
 
 
