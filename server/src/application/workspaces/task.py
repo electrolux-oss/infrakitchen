@@ -55,7 +55,7 @@ class WorkspaceTask:
 
     # workflow states
     async def start_pipeline(self):
-        """Default pipeline"""
+        self.logger.make_expired()
         self.logger.debug(
             f"Starting pipeline for {self.workspace_instance} {self.workspace_instance.id} with action {self.action}"
         )

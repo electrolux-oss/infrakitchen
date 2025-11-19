@@ -49,7 +49,7 @@ class SourceCodeTask:
 
     # workflow states
     async def start_pipeline(self):
-        """Default pipeline"""
+        self.logger.make_expired()
         self.logger.debug(
             f"Starting pipeline for {self.source_code_instance} {self.source_code_instance.id} with action {self.action}"  # noqa
         )
