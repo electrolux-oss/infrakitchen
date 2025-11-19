@@ -64,6 +64,7 @@ nav:
       # - Blueprints: core-concepts/blueprints/overview.md - we do not support it yet
   - Integrations:
       - Overview: integrations/overview.md
+      - Troubleshooting: integrations/troubleshooting.md
       - Git Providers:
           - Overview: integrations/git/overview.md
           - GitHub: integrations/git/github.md

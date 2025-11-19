@@ -848,12 +848,10 @@ class TestValidateConnection:
             {"aws": Mock(return_value=mock_provider_instance)},
         )
 
-        result = await mock_integration_service.validate(integration_config=configuration, integration_provider="aws")
+        with pytest.raises(CloudWrongCredentials) as exc_info:
+            await mock_integration_service.validate(integration_config=configuration, integration_provider="aws")
 
-        expected_response = IntegrationValidationResponse(is_valid=False, message="Invalid AWS credentials")
-
-        assert result.is_valid == expected_response.is_valid
-        assert result.message == expected_response.message
+        assert str(exc_info.value) == "Invalid AWS credentials"
 
         mock_provider_instance.authenticate.assert_awaited_once()
         mock_provider_instance.is_valid.assert_awaited_once()
@@ -924,12 +922,8 @@ class TestValidateConnection:
             {"vault": Mock(return_value=mock_provider_instance)},
         )
 
-        result = await mock_integration_service.validate(integration_config=configuration, integration_provider="vault")
-
-        expected_response = IntegrationValidationResponse(is_valid=False, message="Invalid Vault credentials")
-
-        assert result.is_valid == expected_response.is_valid
-        assert result.message == expected_response.message
-
+        with pytest.raises(CloudWrongCredentials) as exc_info:
+            await mock_integration_service.validate(integration_config=configuration, integration_provider="vault")
+        assert str(exc_info.value) == "Invalid Vault credentials"
         mock_provider_instance.authenticate.assert_awaited_once()
         mock_provider_instance.is_valid.assert_awaited_once()

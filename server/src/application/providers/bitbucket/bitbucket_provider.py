@@ -123,8 +123,10 @@ class BitbucketProvider(IntegrationProvider, BitbucketAuthentication):
         bitbucket_api_client = await self.get_api_client()
         try:
             return await bitbucket_api_client.get_user_orgs() is not None
+        except CloudWrongCredentials as e:
+            raise e
         except Exception as e:
-            raise CloudWrongCredentials(e) from e
+            raise CloudWrongCredentials("Bitbucket validation error", metadata=[{"error": e}]) from e
 
 
 class BitbucketSshProvider(IntegrationProvider, BitbucketAuthentication):
@@ -204,6 +206,12 @@ class BitbucketSshProvider(IntegrationProvider, BitbucketAuthentication):
                 stdout_text = stdout.decode("utf-8").lower()
 
                 # Check for Bitbucket success indicators
+                if "invalid format" in stderr_text:
+                    raise CloudWrongCredentials(
+                        "SSH key format is invalid. Please ensure the key is in the correct PEM format.",
+                        metadata=[{"ssh_stderr": stderr_text, "ssh_stdout": stdout_text}],
+                    )
+
                 if (
                     process.returncode == 0
                     or "logged in as" in stderr_text
@@ -219,7 +227,8 @@ class BitbucketSshProvider(IntegrationProvider, BitbucketAuthentication):
                     or "access denied" in stderr_text
                 ):
                     raise CloudWrongCredentials(
-                        "SSH key authentication failed. Please verify the key is correctly added to your Bitbucket account."  # noqa
+                        "SSH key authentication failed. Please verify the key is correctly added to your Bitbucket account.",  # noqa
+                        metadata=[{"ssh_stderr": stderr_text, "ssh_stdout": stdout_text}],
                     )
 
                 if (
@@ -228,7 +237,8 @@ class BitbucketSshProvider(IntegrationProvider, BitbucketAuthentication):
                     or "network is unreachable" in stderr_text
                 ):
                     raise CloudWrongCredentials(
-                        "Unable to connect to Bitbucket. Please check your network connectivity."
+                        "Unable to connect to Bitbucket. Please check your network connectivity.",
+                        metadata=[{"ssh_stderr": stderr_text, "ssh_stdout": stdout_text}],
                     )
 
                 # If we get here, check the output for any success indicators

@@ -103,8 +103,10 @@ async def test_bitbucket_provider_is_valid_get_user_orgs_exception(mock_entity_l
     provider = BitbucketProvider(configuration=configuration)
     monkeypatch.setattr(provider, "get_api_client", mock_get_api_client)
 
-    with pytest.raises(CloudWrongCredentials, match="API error"):
+    with pytest.raises(CloudWrongCredentials) as exc_info:
         await provider.is_valid()
+
+    assert str(exc_info.value) == "Bitbucket validation error"
 
 
 @pytest.mark.asyncio

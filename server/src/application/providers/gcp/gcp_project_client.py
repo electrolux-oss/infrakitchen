@@ -1,3 +1,4 @@
+from json import JSONDecodeError
 from google.cloud.resourcemanager_v3 import ProjectsClient, Project
 from google.oauth2 import service_account
 
@@ -7,9 +8,15 @@ class GcpProjectClient:
 
     def __init__(self, environment_variables: dict[str, str]) -> None:
         self.environment_variables = environment_variables
-        self.credentials: service_account.Credentials = service_account.Credentials.from_service_account_file(
-            self.environment_variables.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-        )
+        try:
+            self.credentials: service_account.Credentials = service_account.Credentials.from_service_account_file(
+                self.environment_variables.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+            )
+        except JSONDecodeError as e:
+            raise ValueError("Invalid GCP credentials provided. Credentials must be a valid JSON file.") from e
+        except Exception as e:
+            raise ValueError("Error loading GCP credentials.") from e
+
         self.project_id: str = self.environment_variables.get("GOOGLE_PROJECT", "")
         if not self.project_id or not self.credentials:
             raise ValueError("No valid GCP project ID or credentials provided.")

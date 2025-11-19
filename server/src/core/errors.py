@@ -77,7 +77,11 @@ class CloudExecutionError(Exception):
 
 
 class CloudWrongCredentials(Exception):
-    pass
+    def __init__(self, message: str, metadata: list[dict[str, Any]] | None = None):
+        self.message = message
+        self.error_code = "CREDENTIALS_ERROR"
+        self.metadata = metadata if metadata is not None else []
+        super().__init__(self.message)
 
 
 class EntityWrongState(Exception):

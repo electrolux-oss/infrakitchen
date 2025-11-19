@@ -56,7 +56,4 @@ class MongodbAtlasProvider(IntegrationProvider, MongodbAtlasAuthentication):
     @override
     async def is_valid(self) -> bool:
         mongodb_atlas_client = MongoAtlasClient(self.environment_variables)
-        try:
-            return await mongodb_atlas_client.get_organizations() is not None
-        except Exception as e:
-            raise CloudWrongCredentials("Failed to validate MongoDB Atlas connection.") from e
+        return await mongodb_atlas_client.get_organizations() is not None

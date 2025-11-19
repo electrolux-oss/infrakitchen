@@ -189,10 +189,15 @@ async def not_found_error_handler(request: Request, exc: EntityNotFound):
 
 @app.exception_handler(CloudWrongCredentials)
 async def wrong_credentials_error_handler(request: Request, exc: CloudWrongCredentials):
-    logger.error(f"CloudWrongCredentials: {exc}")
+    response_content = {
+        "message": exc.message,
+        "error_code": exc.error_code,
+        "metadata": json.loads(json.dumps(exc.metadata, cls=JsonEncoder)),
+    }
+    logger.error(f"CloudWrongCredentials: {response_content}")
     return JSONResponse(
         status_code=401,
-        content={"message": f"{exc}"},
+        content=response_content,
     )
 
 

@@ -6,6 +6,7 @@ import {
   NotificationContent,
   DependencyError,
 } from "../components/notifications";
+import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
 
 interface NotifyOptions {
   persist?: boolean;
@@ -17,8 +18,16 @@ interface NotifyOptions {
   preventDuplicate?: boolean;
 }
 
+function getMessage(message: any) {
+  try {
+    return JSON.stringify(message, null, 2);
+  } catch {
+    return String(message);
+  }
+}
+
 export const notify = (
-  message: string,
+  message: any,
   variant: SnackbarVariant,
   options?: NotifyOptions,
 ) => {
@@ -42,7 +51,7 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
   let displayMessage: string;
 
   if (error instanceof ApiClientError) {
-    displayMessage = `${error.status} ${error.message}`;
+    displayMessage = `${error.status} ${getMessage(error.message)}`;
     if (error.error_code === "DEPENDENCY_ERROR") {
       enqueueSnackbar(displayMessage, {
         anchorOrigin: {
@@ -53,6 +62,25 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
         ...options,
         content: (key) => (
           <DependencyError
+            id={key}
+            message={displayMessage}
+            metadata={error.metadata}
+          />
+        ),
+      });
+    } else if (
+      error.error_code &&
+      error.error_code.toUpperCase() !== "UNKNOWN_ERROR"
+    ) {
+      enqueueSnackbar(displayMessage, {
+        anchorOrigin: {
+          vertical: "bottom",
+          horizontal: "right",
+        },
+        persist: true,
+        ...options,
+        content: (key) => (
+          <ErrorWithStatusCode
             id={key}
             message={displayMessage}
             metadata={error.metadata}

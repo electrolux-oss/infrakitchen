@@ -5,8 +5,8 @@ from typing import Any
 
 from core.errors import (
     AccessDenied,
-    AccessUnauthorized,
     CloudExecutionError,
+    CloudWrongCredentials,
     EntityExistsError,
     EntityNotFound,
     EntityValueError,
@@ -43,7 +43,7 @@ class MongoAtlasClient:
             elif response["error"] == 409:
                 raise EntityExistsError(response)
             elif response["error"] == 401:
-                raise AccessUnauthorized(response)
+                raise CloudWrongCredentials("Unauthorized access to MongoDB Atlas", metadata=[response])
             elif response["error"] == 403:
                 raise AccessDenied(response)
             elif response["error"] == 500:

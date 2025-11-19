@@ -72,4 +72,4 @@ class GcpProvider(IntegrationProvider, GcpAuthentication):
         try:
             return await gcp_project_client.get_project() is not None
         except Exception as e:
-            raise CloudWrongCredentials(f"Validation failed: {e}") from e
+            raise CloudWrongCredentials("Invalid Gcp credentials", metadata=[{"cloud_message": str(e)}]) from e

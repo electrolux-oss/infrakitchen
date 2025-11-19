@@ -5,7 +5,7 @@ import httpx
 import base64
 from pydantic import BaseModel
 
-from core.errors import AccessUnauthorized, EntityExistsError, EntityNotFound
+from core.errors import AccessUnauthorized, CloudWrongCredentials, EntityExistsError, EntityNotFound
 
 logger = logging.getLogger("bitbucket_client")
 
@@ -50,6 +50,10 @@ class BitbucketClient:
     def _error_handling(response: httpx.Response) -> None:
         if response.status_code == 403:
             raise AccessUnauthorized(f"Unauthorized {response.status_code}: {response.text}")
+        elif response.status_code == 401:
+            raise CloudWrongCredentials(
+                "Wrong credentials", metadata=[{"response_text": response.text, "status_code": response.status_code}]
+            )
         elif response.status_code == 404:
             raise EntityNotFound(f"Not found: {response.text}")
         elif response.status_code == 409:

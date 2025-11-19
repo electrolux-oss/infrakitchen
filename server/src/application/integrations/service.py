@@ -249,8 +249,7 @@ class IntegrationService:
             integration_is_valid = await provider_adapter_instance.is_valid()
             message = "Validation successful" if integration_is_valid else "Validation failed"
         except CloudWrongCredentials as e:
-            integration_is_valid = False
-            message = str(e)
+            raise e
         except Exception as e:
             logger.error(f"Unexpected error during connection validation: {e}", exc_info=True)
             integration_is_valid = False

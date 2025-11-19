@@ -224,4 +224,6 @@ class AwsProvider(IntegrationProvider, AwsAuthentication):
             sts_client = AwsSts(self.environment_variables)
             return await sts_client.get_caller_identity() is not None
         except AccessDenied as e:
-            raise CloudWrongCredentials(f"Failed to validate AWS connection: {e}") from e
+            raise CloudWrongCredentials(
+                "Failed to validate AWS connection", metadata=[{"cloud_message": str(e)}]
+            ) from e

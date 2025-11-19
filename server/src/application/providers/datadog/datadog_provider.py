@@ -59,4 +59,4 @@ class DatadogProvider(IntegrationProvider, DatadogAuthentication):
         try:
             return await datadog_client.get("/api/v1/validate") is not None
         except Exception as e:
-            raise CloudWrongCredentials(f"Validation failed: {e}") from e
+            raise CloudWrongCredentials("Datadog credentials are invalid.", metadata=[{"cloud_message": str(e)}]) from e

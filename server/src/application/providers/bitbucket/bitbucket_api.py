@@ -9,7 +9,6 @@ class BitbucketApi(BitbucketClient):
     def __init__(self, environment_variables: dict[str, str]):
         super().__init__(environment_variables)
 
-    @cache_decorator(avoid_args=True, ttl=3600)  # Cache for 1 hour
     async def get_user_orgs(self) -> list[Any]:
         result = await self.get("workspaces")
         if result.values:
