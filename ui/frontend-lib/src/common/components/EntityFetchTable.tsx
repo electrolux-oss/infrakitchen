@@ -48,18 +48,14 @@ function buildDefaultApiFilters(
     }
 
     if (config.type === "search") {
-      // Search filters use __like operator
       apiFilters[`${config.id}__like`] = value;
     } else if (config.type === "autocomplete") {
       if (config.multiple) {
-        // Multi-select autocomplete uses __contains_all
         apiFilters[`${config.id}__contains_all`] = value;
       } else {
-        // Single-select autocomplete uses direct equality
         apiFilters[config.id] = value;
       }
     } else {
-      // Default: direct value assignment
       apiFilters[config.id] = value;
     }
   });
@@ -136,10 +132,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
       if (filterConfigs) {
         if (buildApiFilters) {
-          // Use custom filter builder
           apiFilters = buildApiFilters(currentFilterValues);
         } else {
-          // Use default filter builder
           apiFilters = buildDefaultApiFilters(
             currentFilterValues,
             filterConfigs,
