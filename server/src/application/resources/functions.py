@@ -18,6 +18,7 @@ from application.source_code_versions.schema import (
     SourceCodeVersionWithConfigs,
 )
 from core.casbin.enforcer import CasbinEnforcer
+from core.permissions.service import PermissionService
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,13 @@ async def add_resource_parent_policy(
                 logger.info(f"Added policy {parent_policy[0]} {resource_id} {parent_policy[2]} resource")
             else:
                 logger.warning(f"Policy {parent_policy[0]} {resource_id} {parent_policy[2]} resource already exists")
+
+
+async def delete_resource_policies(
+    resource_id: str | UUID,
+    permission_service: PermissionService,
+) -> None:
+    await permission_service.delete_resource_permissions(resource_id)
 
 
 def get_resource_variable_schema(

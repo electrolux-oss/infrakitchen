@@ -183,8 +183,19 @@ class PermissionCRUD:
 
         return existing_permission
 
-    async def delete(self, permission: Permission) -> None:
-        await self.session.delete(permission)
+    async def delete_resource_permissions(self, resource_id: str | UUID) -> None:
+        if not is_valid_uuid(resource_id):
+            raise ValueError(f"Invalid UUID: {resource_id}")
 
-    async def refresh(self, permission: Permission) -> None:
-        await self.session.refresh(permission)
+        statement = (
+            select(Permission)
+            .where(
+                Permission.v1 == f"resource:{resource_id}",
+            )
+            .outerjoin(User, Permission.created_by == User.id)
+        )
+        result = await self.session.execute(statement)
+        permissions = result.scalars().all()
+
+        for permission in permissions:
+            await self.session.delete(permission)

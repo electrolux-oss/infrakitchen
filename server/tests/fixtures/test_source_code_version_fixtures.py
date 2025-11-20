@@ -50,6 +50,8 @@ def mock_source_code_version_service(
     mock_event_sender,
     mock_audit_log_handler,
     mock_source_code_service,
+    mock_log_service,
+    mock_task_entity_service,
 ):
     return SourceCodeVersionService(
         template_service=mock_template_service,
@@ -58,6 +60,8 @@ def mock_source_code_version_service(
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
+        log_service=mock_log_service,
+        task_service=mock_task_entity_service,
     )
 
 

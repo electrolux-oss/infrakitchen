@@ -5,7 +5,9 @@ from application.source_codes.dependencies import get_source_code_service
 from application.templates.dependencies import get_template_service
 from core.audit_logs.handler import AuditLogHandler
 from core.database import SessionLocal
+from core.logs.dependencies import get_log_service
 from core.revisions.handler import RevisionHandler
+from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import SourceCodeVersionCRUD
@@ -33,4 +35,6 @@ def get_source_code_version_service(
         revision_handler=revision_handler,
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,
+        log_service=get_log_service(session=session),
+        task_service=get_task_service(session=session),
     )

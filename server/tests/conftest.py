@@ -14,13 +14,14 @@ from .fixtures.test_template_fixtures import (
     many_template_response,
     mocked_template,
 )
-from .fixtures.test_entity_logger_fixtures import mock_entity_logger
+from .fixtures.test_entity_logger_fixtures import mock_entity_logger, mock_log_crud, mock_log_service
 from .fixtures.test_handlers_fixtures import (
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
     mock_task_handler,
 )
+from .fixtures.test_entity_tasks_fixtures import mock_task_entity_crud, mock_task_entity_service
 from .fixtures.test_integration_fixtures import (
     mock_integration_crud,
     mock_integration_service,
@@ -100,6 +101,10 @@ __all__ = [
     "mocked_template",
     "many_template_response",
     "mock_entity_logger",
+    "mock_log_crud",
+    "mock_log_service",
+    "mock_task_entity_crud",
+    "mock_task_entity_service",
     "mock_user_crud",
     "mock_user_service",
     "mocked_user_response",

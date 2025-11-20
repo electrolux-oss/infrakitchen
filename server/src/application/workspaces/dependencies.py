@@ -3,6 +3,8 @@ from fastapi import Depends
 
 from core.audit_logs.handler import AuditLogHandler
 from core.database import SessionLocal
+from core.logs.dependencies import get_log_service
+from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import WorkspaceCRUD
@@ -26,4 +28,6 @@ def get_workspace_service(
         crud=WorkspaceCRUD(session=session),
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,
+        log_service=get_log_service(session=session),
+        task_service=get_task_service(session=session),
     )

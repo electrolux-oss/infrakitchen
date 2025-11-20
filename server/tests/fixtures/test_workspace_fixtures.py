@@ -29,11 +29,15 @@ def mock_workspace_service(
     mock_workspace_crud,
     mock_event_sender,
     mock_audit_log_handler,
+    mock_log_service,
+    mock_task_entity_service,
 ):
     return WorkspaceService(
         crud=mock_workspace_crud,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
+        log_service=mock_log_service,
+        task_service=mock_task_entity_service,
     )
 
 

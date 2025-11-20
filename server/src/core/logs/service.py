@@ -30,3 +30,6 @@ class LogService:
         """
         result = await self.crud.get_logs_execution_time(entity_id, trace_id)
         return list(LogResponse.model_validate(log) for log in result)
+
+    async def delete_by_entity_id(self, entity_id: str) -> None:
+        await self.crud.delete_by_entity_id(entity_id)

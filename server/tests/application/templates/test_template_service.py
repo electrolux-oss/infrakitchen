@@ -476,7 +476,14 @@ class TestPatch:
 
 class TestDelete:
     @pytest.mark.asyncio
-    async def test_delete_success(self, mock_template_service, mock_template_crud):
+    async def test_delete_success(
+        self,
+        mock_template_service,
+        mock_template_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_user_dto,
+    ):
         existing_template = Template(
             id=uuid4(),
             name="Test Template",
@@ -484,16 +491,25 @@ class TestDelete:
             status=ModelStatus.DISABLED,
         )
         mock_template_crud.get_by_id.return_value = existing_template
-        requester = Mock(spec=UserDTO)
 
-        await mock_template_service.delete(template_id=TEMPLATE_ID, requester=requester)
+        await mock_template_service.delete(template_id=existing_template.id, requester=mock_user_dto)
 
-        mock_template_crud.get_by_id.assert_awaited_once_with(TEMPLATE_ID)
+        mock_template_crud.get_by_id.assert_awaited_once_with(existing_template.id)
         mock_template_crud.delete.assert_awaited_once_with(existing_template)
+        mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_template.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            existing_template.id, mock_user_dto.id, ModelActions.DELETE
+        )
 
     @pytest.mark.asyncio
     async def test_delete_error_has_children(
-        self, mock_template_service, mock_template_crud, mocked_template, mocked_user
+        self,
+        mock_template_service,
+        mock_template_crud,
+        mocked_template,
+        mocked_user,
+        mock_revision_handler,
+        mock_audit_log_handler,
     ):
         dependency_template = Mock(
             id=uuid4(),
@@ -513,15 +529,22 @@ class TestDelete:
         assert len(exc.value.metadata) == 1
 
         mock_template_crud.get_by_id.assert_awaited_once_with(mocked_template.id)
+        mock_template_crud.get_dependencies.assert_awaited_once_with(mocked_template)
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_delete_template_does_not_exist(self, mock_template_service, mock_template_crud):
+    async def test_delete_template_does_not_exist(
+        self, mock_template_service, mock_template_crud, mock_revision_handler, mock_audit_log_handler
+    ):
         requester = Mock(spec=UserDTO)
 
         mock_template_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Template not found"):
             await mock_template_service.delete(template_id=TEMPLATE_ID, requester=requester)
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
 
 
 class TestGetTree:

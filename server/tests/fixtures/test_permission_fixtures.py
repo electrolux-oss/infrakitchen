@@ -18,8 +18,7 @@ def mock_permission_crud():
     crud.count = AsyncMock()
     crud.create = AsyncMock()
     crud.update = AsyncMock()
-    crud.delete = AsyncMock()
-    crud.refresh = AsyncMock()
+    crud.delete_resource_permissions = AsyncMock()
     return crud
 
 

@@ -3,7 +3,9 @@ from typing import Any
 
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
-from core.errors import EntityNotFound
+from core.errors import DependencyError, EntityNotFound
+from core.logs.service import LogService
+from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
@@ -34,10 +36,14 @@ class WorkspaceService:
         crud: WorkspaceCRUD,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
+        log_service: LogService,
+        task_service: TaskEntityService,
     ):
         self.crud: WorkspaceCRUD = crud
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
+        self.log_service: LogService = log_service
+        self.task_service: TaskEntityService = task_service
 
     async def get_by_id(self, workspace_id: str) -> WorkspaceResponse | None:
         workspace = await self.crud.get_by_id(workspace_id)
@@ -116,8 +122,25 @@ class WorkspaceService:
             raise EntityNotFound("Workspace not found")
 
         dependencies = await self.crud.get_dependencies(existing_workspace)
+
         if dependencies:
-            raise ValueError("Cannot delete a workspace that has dependencies")
+            raise DependencyError(
+                "Cannot delete a source_code that has dependencies",
+                metadata=[
+                    {
+                        "id": dependency.id,
+                        "name": dependency.name,
+                        "_entity_name": dependency.type,
+                    }
+                    for dependency in dependencies
+                ],
+            )
+
+        await self.audit_log_handler.create_log(
+            existing_workspace.id, existing_workspace.created_by, ModelActions.DELETE
+        )
+        await self.log_service.delete_by_entity_id(workspace_id)
+        await self.task_service.delete_by_entity_id(workspace_id)
         await self.crud.delete(existing_workspace)
 
     async def get_actions(self, workspace_id: str, requester: UserDTO) -> list[str]:

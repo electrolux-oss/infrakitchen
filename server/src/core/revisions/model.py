@@ -1,8 +1,9 @@
 from datetime import datetime
 import uuid
 
+from pydantic import ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column
-from ..base_models import Base
+from ..base_models import Base, BaseModel
 
 
 from typing import Any
@@ -21,3 +22,14 @@ class Revision(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now(), onupdate=func.now())
     revision_number: Mapped[int] = mapped_column()
+
+
+class RevisionDTO(BaseModel):
+    model: str = Field(...)
+    data: dict[str, Any] = Field(default_factory=dict)
+    entity_id: str | uuid.UUID = Field(...)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    revision_number: int = Field(...)
+
+    model_config = ConfigDict(from_attributes=True)

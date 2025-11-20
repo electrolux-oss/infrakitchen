@@ -59,3 +59,10 @@ class LogCRUD:
             )
         result = await self.session.execute(statement)
         return list(result.scalars().all())
+
+    async def delete_by_entity_id(self, entity_id: str) -> None:
+        statement = select(Log).where(Log.entity_id == entity_id)
+        result = await self.session.execute(statement)
+        logs = result.scalars().all()
+        for log in logs:
+            await self.session.delete(log)

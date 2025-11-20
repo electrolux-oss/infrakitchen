@@ -2,22 +2,21 @@ import json
 import logging
 from typing import Any
 from uuid import UUID
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.base_models import BaseRevision
 from core.database import to_dict
 from core.models.encrypted_secret import mask_secret_values
+from core.revisions.crud import RevisionCRUD
+from core.revisions.schema import RevisionCreate
 from core.utils.json_encoder import JsonEncoder
-
-from .model import Revision
 
 logger = logging.getLogger(__name__)
 
 
 class RevisionHandler:
     def __init__(self, session: AsyncSession, entity_name: str, original_entity_instance: dict[str, Any] | None = None):
-        self.session: AsyncSession = session
+        self.crud: RevisionCRUD = RevisionCRUD(session)
         self.entity_name: str = entity_name
         self.original_entity_instance_dump: dict[str, Any] | None = original_entity_instance
 
@@ -42,18 +41,7 @@ class RevisionHandler:
                 del data[key]
 
     async def get_next_revision(self, entity_id: UUID | str) -> int:
-        statement = (
-            select(Revision)
-            .where(
-                Revision.model == self.entity_name,
-                Revision.entity_id == str(entity_id),
-            )
-            .order_by(Revision.revision_number.desc())
-            .limit(1)
-        )
-        result = await self.session.execute(statement)
-        revision = result.scalar_one_or_none()
-
+        revision = await self.crud.get_next_revision(entity_id, self.entity_name)
         if revision:
             return revision.revision_number + 1
         return 1
@@ -74,12 +62,15 @@ class RevisionHandler:
                 logger.info("No changes detected, skipping revision")
                 return
         revision_number = await self.get_next_revision(entity_instance.id)
-        revision = Revision(
+        revision = RevisionCreate(
             model=self.entity_name,
             revision_number=revision_number,
             entity_id=entity_instance.id,
             data=json.loads(json.dumps(dumped_model, cls=JsonEncoder)),
         )
-
+        body = revision.model_dump(exclude_unset=True)
         entity_instance.revision_number = revision.revision_number
-        self.session.add(revision)
+        await self.crud.create(body)
+
+    async def delete_revisions(self, entity_id: UUID | str) -> None:
+        await self.crud.delete_by_entity_id(entity_id)

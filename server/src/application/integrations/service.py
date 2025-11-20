@@ -12,6 +12,7 @@ from core.constants.model import ModelActions
 from core.database import to_dict
 from core.errors import CannotProceed, CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
+from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
@@ -47,11 +48,13 @@ class IntegrationService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
+        task_service: TaskEntityService,
     ):
         self.crud: IntegrationCRUD = crud
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
+        self.task_service: TaskEntityService = task_service
 
     async def get_dto_by_id(self, integration_id: str | UUID) -> IntegrationDTO | None:
         integration = await self.crud.get_by_id(integration_id)
@@ -192,6 +195,9 @@ class IntegrationService:
                 metadata=dependencies_to_raise,
             )
 
+        await self.audit_log_handler.create_log(integration_id, requester.id, ModelActions.DELETE)
+        await self.revision_handler.delete_revisions(integration_id)
+        await self.task_service.delete_by_entity_id(integration_id)
         await self.crud.delete(existing_integration)
 
     async def get_actions(self, integration_id: str, requester: UserDTO) -> list[str]:

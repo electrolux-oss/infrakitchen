@@ -381,7 +381,15 @@ class TestPatch:
 class TestDelete:
     @pytest.mark.asyncio
     async def test_delete_success(
-        self, mocked_source_code, mock_source_code_crud, mock_source_code_service, mock_user_dto
+        self,
+        mocked_source_code,
+        mock_source_code_crud,
+        mock_source_code_service,
+        mock_user_dto,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
     ):
         mocked_source_code.status = ModelStatus.DISABLED
 
@@ -392,9 +400,24 @@ class TestDelete:
 
         mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_source_code_crud.delete.assert_awaited_once_with(mocked_source_code)
+        mock_log_crud.delete_by_entity_id.assert_awaited_once_with(mocked_source_code.id)
+        mock_revision_handler.delete_revisions.assert_awaited_once_with(mocked_source_code.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            mocked_source_code.id, mock_user_dto.id, ModelActions.DELETE
+        )
+        mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(mocked_source_code.id)
 
     @pytest.mark.asyncio
-    async def test_delete_not_found(self, mock_source_code_service, mock_source_code_crud, mock_user_dto):
+    async def test_delete_not_found(
+        self,
+        mock_source_code_service,
+        mock_source_code_crud,
+        mock_user_dto,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
+    ):
         mock_source_code_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="SourceCode not found"):
@@ -402,10 +425,22 @@ class TestDelete:
 
         mock_source_code_crud.get_by_id.assert_awaited_once_with("invalid_id")
         mock_source_code_crud.delete.assert_not_awaited()
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+        mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_delete_error_wrong_state(
-        self, mocked_source_code, mock_source_code_service, mock_source_code_crud, mock_user_dto
+        self,
+        mocked_source_code,
+        mock_source_code_service,
+        mock_source_code_crud,
+        mock_user_dto,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
     ):
         mocked_source_code.status = ModelStatus.DONE
         mock_source_code_crud.get_by_id.return_value = mocked_source_code
@@ -416,6 +451,10 @@ class TestDelete:
         assert str(exc.value) == "Entity has wrong status for deletion ModelStatus.DONE"
         mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_source_code_crud.delete.assert_not_awaited()
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+        mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_delete_error_with_dependencies(
@@ -424,6 +463,10 @@ class TestDelete:
         mock_user_dto,
         mocked_source_code,
         mock_source_code_crud,
+        mock_log_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_task_entity_crud,
     ):
         mocked_source_code.status = ModelStatus.DISABLED
 
@@ -439,6 +482,12 @@ class TestDelete:
             await mock_source_code_service.delete(source_code_id=mocked_source_code.id, requester=mock_user_dto)
 
         assert len(exc.value.metadata) == 1
+        mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
+        mock_source_code_crud.delete.assert_not_awaited()
+        mock_log_crud.delete_by_entity_id.assert_not_awaited()
+        mock_revision_handler.delete_revisions.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_not_awaited()
+        mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()
 
 
 class TestGetIntegrationActions:
