@@ -3,3 +3,6 @@ export * from "./DialogSlider";
 export * from "./ExpandableCard";
 export * from "./notifications";
 export * from "./inputs";
+export * from "./filter_panel/FilterConfig";
+export * from "./filter_panel/FilterComponents";
+export * from "./filter_panel/FilterRenderer";

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -18,6 +18,30 @@ export const UsersPage = () => {
   const { linkPrefix } = useConfig();
 
   const navigate = useNavigate();
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "identifier",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+    ],
+    [],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.identifier && filterValues.identifier.trim().length > 0) {
+      apiFilters["identifier__like"] = filterValues.identifier;
+    }
+
+    return apiFilters;
+  };
 
   const columns = useMemo(
     () => [
@@ -77,7 +101,6 @@ export const UsersPage = () => {
         title="Users"
         entityName="user"
         columns={columns}
-        searchName="identifier"
         fields={[
           "id",
           "identifier",
@@ -86,6 +109,8 @@ export const UsersPage = () => {
           "provider",
           "created_at",
         ]}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
       />
     </PageContainer>
   );

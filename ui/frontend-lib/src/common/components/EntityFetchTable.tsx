@@ -10,21 +10,20 @@ import { GridSortItem } from "@mui/x-data-grid/models/gridSortModel";
 
 import { useConfig, useLocalStorage } from "..";
 import { IkEntity } from "../../types";
-import { useFilterState } from "../hooks/useFilterState";
+import { useMultiFilterState } from "../hooks/useFilterState";
 import { notifyError } from "../hooks/useNotification";
 
 import { EntityTable } from "./EntityTable";
-import { FilterPanel } from "./FilterPanel";
+import { FilterConfig } from "./filter_panel/FilterConfig";
+import { FilterPanel } from "./filter_panel/FilterPanel";
 
 interface EntityFetchTableProps {
   title: string;
   columns: any;
   entityName?: string;
-  filters?: string[];
-  filterName?: string;
-  filterOperator?: string;
   fields?: string[];
-  searchName?: string;
+  filterConfigs?: FilterConfig[];
+  buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
 }
 
 interface DataGridState {
@@ -32,27 +31,46 @@ interface DataGridState {
   paginationModel: GridPaginationModel;
 }
 
-interface StoredFilterState {
-  search?: string;
-  selectedFilters?: string[];
-}
+function buildDefaultApiFilters(
+  filterValues: Record<string, any>,
+  filterConfigs: FilterConfig[],
+): Record<string, any> {
+  const apiFilters: Record<string, any> = {};
 
-const toQuickFilterTokens = (value: string) =>
-  value
-    .split(" ")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  filterConfigs.forEach((config) => {
+    const value = filterValues[config.id];
+
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+      return;
+    }
+
+    if (config.type === "search") {
+      apiFilters[`${config.id}__like`] = value;
+    } else if (config.type === "autocomplete") {
+      if (config.multiple) {
+        apiFilters[`${config.id}__contains_all`] = value;
+      } else {
+        apiFilters[config.id] = value;
+      }
+    } else {
+      apiFilters[config.id] = value;
+    }
+  });
+
+  return apiFilters;
+}
 
 export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const {
     title,
     columns,
     entityName,
-    filterName,
-    searchName,
-    filters = [],
     fields = [],
-    filterOperator,
+    filterConfigs,
+    buildApiFilters,
   } = props;
 
   const { ikApi } = useConfig();
@@ -63,13 +81,17 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const [totalRows, setTotalRows] = useState(0);
 
   const filterStorageKey = `filter_${entityName}s`;
-  const savedFilterState = get(filterStorageKey) as
-    | StoredFilterState
-    | undefined;
+  const hasFilters = Boolean(filterConfigs && filterConfigs.length > 0);
 
-  const { search, selectedFilters } = useFilterState({
+  const multiFilterState = useMultiFilterState({
     storageKey: filterStorageKey,
+    initialValues: {},
   });
+
+  const currentFilterValues = useMemo(
+    () => (hasFilters ? multiFilterState.filterValues : {}),
+    [hasFilters, multiFilterState.filterValues],
+  );
 
   const storageKey = `entityTable_${entityName}`;
   const savedState = get(storageKey) as DataGridState | undefined;
@@ -84,53 +106,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
-    quickFilterValues: toQuickFilterTokens(search ?? ""),
+    quickFilterValues: [],
   });
-
-  const savedSelectedFiltersKey = JSON.stringify(
-    savedFilterState?.selectedFilters ?? [],
-  );
-  const selectedFiltersKey = JSON.stringify(selectedFilters ?? []);
-  const savedSearchValue = savedFilterState?.search ?? "";
-  const expectedQuickFiltersKey = JSON.stringify(
-    toQuickFilterTokens(savedSearchValue ?? ""),
-  );
-  const currentQuickFiltersKey = JSON.stringify(
-    filterModel.quickFilterValues ?? [],
-  );
-
-  const shouldDelayInitialFetch = Boolean(
-    (filterName && (savedFilterState?.selectedFilters?.length ?? 0) > 0) ||
-      (searchName && savedSearchValue.trim().length > 0),
-  );
-
-  const [filtersReady, setFiltersReady] = useState<boolean>(
-    () => !shouldDelayInitialFetch,
-  );
-
-  useEffect(() => {
-    const id = setTimeout(() => {
-      const tokens = toQuickFilterTokens(search ?? "");
-
-      setPaginationModel((prev) => {
-        if (prev.page !== 0) {
-          return { ...prev, page: 0 };
-        }
-        return prev;
-      });
-
-      setFilterModel((prev) => {
-        const oldTokensString = prev.quickFilterValues?.join(",") || "";
-        const newTokensString = tokens.join(",") || "";
-
-        if (oldTokensString !== newTokensString) {
-          return { ...prev, quickFilterValues: tokens };
-        }
-        return prev;
-      });
-    }, 500);
-    return () => clearTimeout(id);
-  }, [search]);
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
@@ -143,36 +120,6 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     setPaginationModel(newPaginationModel);
   };
 
-  useEffect(() => {
-    if (filtersReady) {
-      return;
-    }
-
-    if (!shouldDelayInitialFetch) {
-      setFiltersReady(true);
-      return;
-    }
-
-    const filtersMatch = savedSelectedFiltersKey === selectedFiltersKey;
-    const searchMatch = savedSearchValue === (search ?? "");
-    const quickFiltersMatch =
-      expectedQuickFiltersKey === currentQuickFiltersKey;
-
-    if (filtersMatch && searchMatch && quickFiltersMatch) {
-      setFiltersReady(true);
-    }
-  }, [
-    filtersReady,
-    shouldDelayInitialFetch,
-    savedSelectedFiltersKey,
-    selectedFiltersKey,
-    savedSearchValue,
-    search,
-    expectedQuickFiltersKey,
-    currentQuickFiltersKey,
-  ]);
-
-  const quickFilterValues = filterModel.quickFilterValues;
   const paginationPage = paginationModel.page;
   const paginationPageSize = paginationModel.pageSize;
 
@@ -181,14 +128,17 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
       const page = paginationPage;
       const pageSize = paginationPageSize;
 
-      const apiFilters: Record<string, any> = {};
+      let apiFilters: Record<string, any> = {};
 
-      if (filterName && selectedFilters && selectedFilters.length > 0) {
-        apiFilters[`${filterName}${filterOperator ?? ""}`] = selectedFilters;
-      }
-
-      if (searchName && quickFilterValues && quickFilterValues.length > 0) {
-        apiFilters[`${searchName}__like`] = quickFilterValues.join(" ");
+      if (filterConfigs) {
+        if (buildApiFilters) {
+          apiFilters = buildApiFilters(currentFilterValues);
+        } else {
+          apiFilters = buildDefaultApiFilters(
+            currentFilterValues,
+            filterConfigs,
+          );
+        }
       }
 
       let sort: GridSortItem;
@@ -227,34 +177,27 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     entityName,
     paginationPage,
     paginationPageSize,
-    quickFilterValues,
-    filterName,
-    searchName,
-    filterOperator,
-    selectedFilters,
     sortModel,
+    filterConfigs,
+    buildApiFilters,
+    currentFilterValues,
   ]);
 
   useEffect(() => {
-    if (!filtersReady) {
-      return;
-    }
     fetchFilteredData();
-  }, [fetchFilteredData, filtersReady]);
+  }, [fetchFilteredData]);
 
   useEffect(() => {
     setKey(storageKey, { sortModel, paginationModel });
   }, [sortModel, paginationModel, storageKey, setKey]);
+
+  const showFilters = filterConfigs && filterConfigs.length > 0;
+
   return (
     <>
       <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
-        {(filterName || searchName) && (
-          <FilterPanel
-            dropdownOptions={filters}
-            filterStorageKey={`filter_${entityName}s`}
-            filterName={filterName}
-            searchName={searchName}
-          />
+        {showFilters && (
+          <FilterPanel filters={filterConfigs} storageKey={filterStorageKey} />
         )}
         <EntityTable
           entityName={title}

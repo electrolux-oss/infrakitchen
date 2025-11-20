@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -27,6 +27,42 @@ export const StoragesPage = () => {
       setLabels(response);
     });
   }, [ikApi]);
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "name",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+      {
+        id: "labels",
+        type: "autocomplete" as const,
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.name && filterValues.name.trim().length > 0) {
+      apiFilters["name__like"] = filterValues.name;
+    }
+
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
+    }
+
+    return apiFilters;
+  };
 
   const columns = useMemo(
     () => [
@@ -92,7 +128,6 @@ export const StoragesPage = () => {
         title="Storages"
         entityName="storage"
         columns={columns}
-        filters={labels}
         fields={[
           "id",
           "name",
@@ -104,9 +139,8 @@ export const StoragesPage = () => {
           "updated_at",
           "labels",
         ]}
-        filterName="labels"
-        filterOperator="__contains_all"
-        searchName="name"
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
       />
     </PageContainer>
   );

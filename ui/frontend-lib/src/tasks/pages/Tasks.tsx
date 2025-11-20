@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Link } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import { getDateValue } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
@@ -22,6 +22,32 @@ export const TasksPage = () => {
       setEntities(response.data);
     });
   }, [ikApi]);
+
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "entity",
+        type: "autocomplete" as const,
+        label: "Entity Type",
+        options: entities,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [entities],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.entity && filterValues.entity.length > 0) {
+      apiFilters["entity__in"] = filterValues.entity;
+    }
+
+    return apiFilters;
+  };
 
   const columns = useMemo(
     () => [
@@ -77,8 +103,6 @@ export const TasksPage = () => {
         title="Tasks"
         entityName="task"
         columns={columns}
-        filters={entities}
-        filterName="entity"
         fields={[
           "id",
           "entity",
@@ -88,6 +112,8 @@ export const TasksPage = () => {
           "created_at",
           "updated_at",
         ]}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
       />
     </PageContainer>
   );

@@ -10,11 +10,11 @@ import {
   Typography,
 } from "@mui/material";
 
+import { FilterConfig } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
-import { FilterPanel } from "../../common/components/FilterPanel";
+import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-import { useFilterState } from "../../common/hooks/useFilterState";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { TemplateResponse } from "../types";
@@ -25,20 +25,21 @@ export const TemplatesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
   const entityName = "template";
 
-  const { search, selectedFilters } = useFilterState({
-    storageKey: `filter_${entityName}s`,
-  });
-
   const fetchTemplates = useCallback(async () => {
     const apiFilters: Record<string, any> = {};
-    if (selectedFilters && selectedFilters.length > 0) {
-      apiFilters["labels__contains_all"] = selectedFilters;
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
     }
-    setLoading(true);
+
+    if (isInitialLoad) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const response = await ikApi.getList("templates", {
@@ -47,13 +48,21 @@ export const TemplatesPage = () => {
         filter: apiFilters,
       });
       setTemplates(response.data || []);
+      setIsInitialLoad(false);
     } catch (error: any) {
       setError(error.message || "Failed to fetch templates");
       notifyError(error);
     } finally {
       setLoading(false);
     }
-  }, [ikApi, selectedFilters]);
+  }, [ikApi, filterValues.labels, isInitialLoad]);
+
+  const handleFilterChange = useCallback(
+    (newFilterValues: Record<string, any>) => {
+      setFilterValues(newFilterValues);
+    },
+    [],
+  );
 
   useEffect(() => {
     ikApi.get("labels/template").then((response: string[]) => {
@@ -68,14 +77,34 @@ export const TemplatesPage = () => {
   const filteredTemplates = useMemo(
     () =>
       templates.filter((t) => {
-        const s = search.toLowerCase();
+        const s = (filterValues.name || "").toLowerCase();
         return (
           !s ||
           t.name.toLowerCase().includes(s) ||
           t.description.toLowerCase().includes(s)
         );
       }),
-    [templates, search],
+    [templates, filterValues.name],
+  );
+
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "name",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+      {
+        id: "labels",
+        type: "autocomplete" as const,
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
   );
 
   const actions = (
@@ -132,10 +161,9 @@ export const TemplatesPage = () => {
     <PageContainer title="Infrastructure Templates" actions={actions}>
       <Box sx={{ width: "100%" }}>
         <FilterPanel
-          dropdownOptions={labels}
-          filterStorageKey={`filter_${entityName}s`}
-          filterName={"labels"}
-          searchName={"name"}
+          filters={filterConfigs}
+          storageKey={`filter_${entityName}s`}
+          onFilterChange={handleFilterChange}
         />
         {loading ? (
           <Box

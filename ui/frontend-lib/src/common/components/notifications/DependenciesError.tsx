@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { useSnackbar, SnackbarContent } from "notistack";
 
 import { IkEntity } from "../../../types";
+import { ExpandIconButton } from "../buttons/ExpandIconButton";
 import { GetEntityLink } from "../CommonField";
 
 interface DependencyErrorProps {
@@ -29,16 +30,6 @@ const StyledCardActions = styled(CardActions)({
   padding: "8px 8px 8px 16px",
   justifyContent: "space-between",
 });
-
-const ExpandIconButton = styled(IconButton)<{ expanded: boolean }>(
-  ({ theme, expanded }) => ({
-    padding: "8px 8px",
-    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-    transition: theme.transitions.create("transform", {
-      duration: theme.transitions.duration.shortest,
-    }),
-  }),
-);
 
 export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
   (props, ref) => {

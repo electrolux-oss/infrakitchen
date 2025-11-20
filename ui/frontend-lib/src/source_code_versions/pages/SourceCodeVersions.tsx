@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -76,6 +76,32 @@ export const SourceCodeVersionsPage = () => {
     [],
   );
 
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "labels",
+        type: "autocomplete" as const,
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
+  );
+
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
+    }
+
+    return apiFilters;
+  };
+
   return (
     <PageContainer
       title="Code Versions"
@@ -93,7 +119,8 @@ export const SourceCodeVersionsPage = () => {
         title="Code Versions"
         entityName="source_code_version"
         columns={columns}
-        filters={labels}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
         fields={[
           "id",
           "identifier",
@@ -102,8 +129,6 @@ export const SourceCodeVersionsPage = () => {
           "status",
           "created_at",
         ]}
-        filterName="labels"
-        filterOperator="__contains_all"
       />
     </PageContainer>
   );

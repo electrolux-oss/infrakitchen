@@ -10,6 +10,8 @@ import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useSnackbar, SnackbarContent } from "notistack";
 
+import { ExpandIconButton } from "../buttons/ExpandIconButton";
+
 interface ErrorWithCodeProps {
   id: string | number;
   message: string;
@@ -26,16 +28,6 @@ const StyledCardActions = styled(CardActions)({
   padding: "8px 8px 8px 16px",
   justifyContent: "space-between",
 });
-
-const ExpandIconButton = styled(IconButton)<{ expanded: boolean }>(
-  ({ theme, expanded }) => ({
-    padding: "8px 8px",
-    transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-    transition: theme.transitions.create("transform", {
-      duration: theme.transitions.duration.shortest,
-    }),
-  }),
-);
 
 export const ErrorWithStatusCode = forwardRef<
   HTMLDivElement,
