@@ -1,8 +1,3 @@
-/**
- * Individual filter components for the FilterPanel.
- * Each component handles a specific filter type.
- */
-
 import { Autocomplete, Chip, TextField } from "@mui/material";
 
 import { AutocompleteFilterConfig, SearchFilterConfig } from "./FilterConfig";

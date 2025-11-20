@@ -1,8 +1,3 @@
-/**
- * FilterRenderer - Factory component that renders the appropriate filter
- * based on the filter configuration type.
- */
-
 import { useEffect, useState } from "react";
 
 import { Box, CircularProgress } from "@mui/material";
@@ -24,7 +19,6 @@ export const FilterRenderer = ({
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load options for autocomplete filters
   useEffect(() => {
     if (config.type === "autocomplete") {
       const loadOptions = async () => {
