@@ -14,7 +14,6 @@ import { IconField, FilterConfig } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
-import { useMultiFilterState } from "../../common/hooks/useFilterState";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -31,24 +30,31 @@ export const SourceCodesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
   const entityName = "source_code";
 
-  const { filterValues } = useMultiFilterState({
-    storageKey: "filter_source_codes",
-    initialValues: {},
-  });
+  const handleFilterChange = useCallback(
+    (newFilterValues: Record<string, any>) => {
+      setFilterValues(newFilterValues);
+    },
+    [],
+  );
 
-  const fetchSourceCodes = useCallback(async () => {
+  const fetchSourceCodes = useCallback(() => {
     const apiFilters: Record<string, any> = {};
     if (filterValues.labels && filterValues.labels.length > 0) {
       apiFilters["labels__contains_all"] = filterValues.labels;
     }
-    setLoading(true);
+
+    if (isInitialLoad) {
+      setLoading(true);
+    }
     setError(null);
-    try {
-      const response = await ikApi.getList("source_codes", {
+    ikApi
+      .getList("source_codes", {
         pagination: { page: 1, perPage: 1000 },
         sort: { field: "updated_at", order: "DESC" },
         filter: apiFilters,
@@ -62,15 +68,19 @@ export const SourceCodesPage = () => {
           "labels",
           "updated_at",
         ],
+      })
+      .then((response) => {
+        setSourceCodes(response.data || []);
+        setIsInitialLoad(false);
+      })
+      .catch((e: any) => {
+        setError(e.message || "Failed to fetch Source Codes");
+        notifyError(e);
+      })
+      .finally(() => {
+        setLoading(false);
       });
-      setSourceCodes(response.data || []);
-    } catch (e: any) {
-      setError(e.message || "Failed to fetch Source Codes");
-      notifyError(e);
-    } finally {
-      setLoading(false);
-    }
-  }, [ikApi, filterValues.labels]);
+  }, [ikApi, filterValues.labels, isInitialLoad]);
 
   useEffect(() => {
     ikApi.get("labels/source_code").then((response: string[]) => {
@@ -78,6 +88,7 @@ export const SourceCodesPage = () => {
     });
   }, [ikApi]);
 
+  // Fetch data when component mounts or when label filter changes
   useEffect(() => {
     fetchSourceCodes();
   }, [fetchSourceCodes]);
@@ -196,6 +207,7 @@ export const SourceCodesPage = () => {
         <FilterPanel
           filters={filterConfigs}
           storageKey={`filter_${entityName}s`}
+          onFilterChange={handleFilterChange}
         />
         {filteredSourceCodes.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>

@@ -15,7 +15,6 @@ import { EntityCard } from "../../common/components/EntityCard";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-import { useMultiFilterState } from "../../common/hooks/useFilterState";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { TemplateResponse } from "../types";
@@ -26,21 +25,21 @@ export const TemplatesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
+  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
 
   const entityName = "template";
-
-  const { filterValues } = useMultiFilterState({
-    storageKey: `filter_${entityName}s`,
-    initialValues: {},
-  });
 
   const fetchTemplates = useCallback(async () => {
     const apiFilters: Record<string, any> = {};
     if (filterValues.labels && filterValues.labels.length > 0) {
       apiFilters["labels__contains_all"] = filterValues.labels;
     }
-    setLoading(true);
+
+    if (isInitialLoad) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const response = await ikApi.getList("templates", {
@@ -49,13 +48,21 @@ export const TemplatesPage = () => {
         filter: apiFilters,
       });
       setTemplates(response.data || []);
+      setIsInitialLoad(false);
     } catch (error: any) {
       setError(error.message || "Failed to fetch templates");
       notifyError(error);
     } finally {
       setLoading(false);
     }
-  }, [ikApi, filterValues.labels]);
+  }, [ikApi, filterValues.labels, isInitialLoad]);
+
+  const handleFilterChange = useCallback(
+    (newFilterValues: Record<string, any>) => {
+      setFilterValues(newFilterValues);
+    },
+    [],
+  );
 
   useEffect(() => {
     ikApi.get("labels/template").then((response: string[]) => {
@@ -156,6 +163,7 @@ export const TemplatesPage = () => {
         <FilterPanel
           filters={filterConfigs}
           storageKey={`filter_${entityName}s`}
+          onFilterChange={handleFilterChange}
         />
         {loading ? (
           <Box
