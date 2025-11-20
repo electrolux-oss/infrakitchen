@@ -53,6 +53,9 @@ export const FilterPanel = memo((props: FilterPanelProps) => {
                 "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
               gap: 2,
               alignItems: "end",
+              "& > *": {
+                maxWidth: "550px",
+              },
             }}
           >
             {filters.map((config: FilterConfig) => (
