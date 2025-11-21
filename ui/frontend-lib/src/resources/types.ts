@@ -84,6 +84,8 @@ export interface ResourceVariableSchema {
   description: string;
   options: string[];
   required: boolean;
+  restricted: boolean;
+  sensitive: boolean;
   frozen: boolean;
   unique: boolean;
   value: any | null;

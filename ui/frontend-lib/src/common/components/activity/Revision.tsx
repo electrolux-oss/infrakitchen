@@ -70,7 +70,10 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   }, [ikApi, resourceId]);
 
   useEffect(() => {
-    if (!revisions.length) return;
+    if (!revisions.length) {
+      setLoading(false);
+      return;
+    }
     const nums = revisions.map((r) => r.revision_number).sort((a, b) => a - b);
     setRevisionNumbers(nums);
 
@@ -91,7 +94,10 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   }, [revisions, resourceRevision]);
 
   useEffect(() => {
-    if (!selectedRevisionLeft || !selectedRevisionRight) return;
+    if (!selectedRevisionLeft || !selectedRevisionRight) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     Promise.all([
       ikApi.get(`revisions/${resourceId}/${selectedRevisionLeft}`),

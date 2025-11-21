@@ -70,6 +70,8 @@ const SourceCodeVersionConfigContent = (props: {
         default: config.default,
         frozen: config.frozen,
         unique: config.unique,
+        restricted: config.restricted,
+        sensitive: config.sensitive,
         options: config.options,
         reference_id: config.reference ? config.reference.id : null,
         reference: config.reference,
@@ -101,6 +103,7 @@ const SourceCodeVersionConfigContent = (props: {
         default: config.default,
         frozen: config.frozen,
         unique: config.unique,
+        restricted: config.restricted,
         options: config.options,
         reference_id: config.reference ? config.reference.id : null,
       }));
@@ -124,6 +127,7 @@ const SourceCodeVersionConfigContent = (props: {
               JSON.stringify(original.default) ||
             formConfig.frozen !== original.frozen ||
             formConfig.unique !== original.unique ||
+            formConfig.restricted !== original.restricted ||
             JSON.stringify(formConfig.options) !==
               JSON.stringify(original.options) ||
             formConfig.reference_id !== original.reference_id
@@ -144,6 +148,7 @@ const SourceCodeVersionConfigContent = (props: {
             default: config.default,
             frozen: config.frozen,
             unique: config.unique,
+            restricted: config.restricted,
             options: config.options,
             reference_id: config.reference_id,
           }),

@@ -12,6 +12,7 @@ from application.source_code_versions.schema import (
     SourceConfigCreate,
     SourceOutputConfigCreate,
 )
+from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.model import SourceCodeDTO
 from core.adapters.provider_adapters import IntegrationProvider
 from core.constants.model import ModelActions, ModelStatus
@@ -34,6 +35,7 @@ class SourceCodeVersionTask:
         self,
         session: AsyncSession,
         crud_source_code_version: SourceCodeVersionCRUD,
+        source_code_version_service: SourceCodeVersionService,
         source_code_version_instance: SourceCodeVersion,
         source_code_instance: SourceCodeDTO,
         task_handler: TaskHandler,
@@ -45,6 +47,7 @@ class SourceCodeVersionTask:
     ) -> None:
         self.session: AsyncSession = session
         self.crud_source_code_version: SourceCodeVersionCRUD = crud_source_code_version
+        self.source_code_version_service: SourceCodeVersionService = source_code_version_service
         self.event_sender: EventSender = event_sender
         self.logger: EntityLogger = logger
         self.source_code_version_instance: SourceCodeVersion = source_code_version_instance
@@ -78,6 +81,7 @@ class SourceCodeVersionTask:
         """Generate configs and outputs for the source code version"""
         self.logger.info(f"Generating configs for {self.source_code_version_instance.id}")
 
+        configs: list[SourceConfigCreate] = []
         for idx, v in enumerate(variables):
             config = SourceConfigCreate(
                 index=idx,
@@ -87,12 +91,15 @@ class SourceCodeVersionTask:
                 type=v.type,
                 required=True if v.default is None else False,
                 default=v.default,
+                sensitive=v.sensitive,
                 frozen=False,
                 unique=False,
                 options=[],
             )
-            _ = await self.crud_source_code_version.create_config(config.model_dump(exclude_unset=True))
+            configs.append(config)
+        _ = await self.source_code_version_service.create_configs(configs)
 
+        foroutputs: list[SourceOutputConfigCreate] = []
         for idx, o in enumerate(outputs):
             output = SourceOutputConfigCreate(
                 index=idx,
@@ -100,7 +107,8 @@ class SourceCodeVersionTask:
                 name=o.name,
                 description=o.description,
             )
-            _ = await self.crud_source_code_version.create_output_config(output.model_dump(exclude_unset=True))
+            foroutputs.append(output)
+        _ = await self.source_code_version_service.create_output_configs(foroutputs)
 
     async def init_workspace(self):
         self.logger.info(f"Init workspace at {self.workspace_root}")
@@ -172,7 +180,7 @@ class SourceCodeVersionTask:
             self.logger.info(f"Variables found: {len(self.source_code_version_instance.variables)}")
             self.logger.info(f"Outputs found: {len(self.source_code_version_instance.outputs)}")
 
-            if not await self.crud_source_code_version.get_configs_by_scv_id(self.source_code_version_instance.id):
+            if not await self.source_code_version_service.get_configs_by_scv_id(self.source_code_version_instance.id):
                 self.logger.info("Variable configs are not found, generating default ones based on the variables")
                 await self.generate_configs_and_outputs(vars, outpts)
             await self.session.commit()

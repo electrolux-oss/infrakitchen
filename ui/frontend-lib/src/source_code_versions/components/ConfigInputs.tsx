@@ -56,8 +56,10 @@ const JsonInput: React.FC<JsonInputProps> = ({ field }) => {
 export const DefaultValueInput = (props: {
   config_type: string;
   field: any;
+  error?: boolean;
+  helperText?: string;
 }) => {
-  const { config_type, field } = props;
+  const { config_type, field, error, helperText } = props;
 
   switch (config_type) {
     case "string":
@@ -69,6 +71,8 @@ export const DefaultValueInput = (props: {
           variant="outlined"
           fullWidth
           margin="normal"
+          error={error}
+          helperText={helperText}
         />
       );
 
@@ -86,6 +90,8 @@ export const DefaultValueInput = (props: {
           variant="outlined"
           fullWidth
           margin="normal"
+          error={error}
+          helperText={helperText}
         />
       );
 
@@ -131,6 +137,8 @@ export const DefaultValueInput = (props: {
           variant="outlined"
           fullWidth
           margin="normal"
+          error={error}
+          helperText={helperText}
         />
       );
   }

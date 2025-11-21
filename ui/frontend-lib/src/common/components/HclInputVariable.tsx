@@ -9,6 +9,8 @@ interface HclInputVariableProps {
     original_type?: string;
     description?: string;
     required?: boolean;
+    restricted?: boolean;
+    sensitive?: boolean;
     default?: any;
     source?: string;
   };
@@ -140,6 +142,26 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               size="small"
               color="info"
               variant="outlined"
+            />
+          )}
+
+          {variable.restricted && (
+            <Chip
+              label="restricted"
+              size="small"
+              color="error"
+              variant="outlined"
+              sx={{ ml: 1 }}
+            />
+          )}
+
+          {variable.sensitive && (
+            <Chip
+              label="sensitive"
+              size="small"
+              color="secondary"
+              variant="outlined"
+              sx={{ ml: 1 }}
             />
           )}
 

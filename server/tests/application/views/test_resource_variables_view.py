@@ -48,6 +48,8 @@ mocked_variables_schema = [
         "options": [],
         "reference": None,
         "required": True,
+        "restricted": False,
+        "sensitive": False,
         "type": "array[string]",
         "unique": False,
         "value": ["test"],

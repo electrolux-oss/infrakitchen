@@ -46,8 +46,13 @@ export const HclItemList: React.FC<HclItemListProps> = ({
       (item) => item.required || item.default === undefined,
     ).length;
 
+    const restrictedCount = items.filter((item) => item.restricted).length;
+    const sensitiveCount = items.filter((item) => item.sensitive).length;
+
     return {
       required: requiredCount,
+      restricted: restrictedCount,
+      sensitive: sensitiveCount,
       optional: items.length - requiredCount,
     };
   }, [items, type]);
@@ -112,6 +117,18 @@ export const HclItemList: React.FC<HclItemListProps> = ({
                 label={`${variableCounts.optional} optional`}
                 size="small"
                 color="info"
+                variant="outlined"
+              />
+              <Chip
+                label={`${variableCounts.restricted} restricted`}
+                size="small"
+                color="error"
+                variant="outlined"
+              />
+              <Chip
+                label={`${variableCounts.sensitive} sensitive`}
+                size="small"
+                color="secondary"
                 variant="outlined"
               />
             </Stack>

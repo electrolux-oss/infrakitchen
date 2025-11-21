@@ -56,6 +56,7 @@ export interface VariableInput {
   description: string;
   required: boolean;
   default: any;
+  sensitive: boolean;
 }
 
 export interface VariableOutput {
@@ -82,6 +83,8 @@ export interface SourceConfigResponse extends Record<string, any> {
   default: any;
   frozen: boolean;
   unique: boolean;
+  restricted: boolean;
+  sensitive: boolean;
   name: string;
   description: string;
   type: string;
@@ -94,6 +97,7 @@ export interface SourceConfigUpdate extends Record<string, any> {
   default: any;
   frozen: boolean;
   unique: boolean;
+  restricted: boolean;
   options: string[];
   reference_id: string | null;
 }

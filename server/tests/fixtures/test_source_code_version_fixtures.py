@@ -206,6 +206,15 @@ def mocked_source_config():
         type="string",
         description="Source Code Config",
         required=False,
+        index=0,
+        sensitive=False,
+        restricted=False,
+        frozen=False,
+        unique=False,
+        options=[],
+        default="default_value",
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
     )
 
 
@@ -217,6 +226,8 @@ def mocked_source_config_response():
         name="source_code_config",
         type="string",
         description="Source Code Config",
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
     )
 
 
