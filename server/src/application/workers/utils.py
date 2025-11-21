@@ -83,6 +83,7 @@ async def get_source_code_version_task(
     return SourceCodeVersionTask(
         session=session,
         crud_source_code_version=crud_source_code_version,
+        source_code_version_service=get_source_code_version_service(session=session),
         source_code_version_instance=source_code_version_instance,
         source_code_instance=source_code_instance,
         task_handler=task_handler,

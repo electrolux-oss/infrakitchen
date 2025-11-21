@@ -24,6 +24,7 @@ class VariableModel(BaseModel):
     # when `required` is False, it means the default value is `None` (null in Terraform)
     default: Any | None = Field(default=None)
     description: str = Field(default="")
+    sensitive: bool = Field(default=False)
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
@@ -52,6 +53,7 @@ class VariableModel(BaseModel):
             original_type=variable.get("original_type", None),
             required=required,
             default=variable.get("default", None),
+            sensitive=variable.get("sensitive", False),
             description=variable.get("description", ""),
         )
 
@@ -104,6 +106,7 @@ class VariableConfigModel(BaseModel):
         default (Any): The default value of the variable.
         frozen (bool): Indicates if the variable is frozen.
         unique (bool): Indicates if the variable is unique.
+        sensitive (bool): Indicates if the variable is sensitive.
         description (str): The description of the variable.
         disabled (bool): Indicates if the variable is disabled and variable can not be modified by user.
         inherited (bool): Indicates if the variable is inherited output from parent resource.
@@ -117,6 +120,8 @@ class VariableConfigModel(BaseModel):
     default: Any = Field(default=None)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    sensitive: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     description: str = Field(default="")
     disabled: bool = Field(default=False)
     inherited: bool = Field(default=False)
@@ -231,6 +236,8 @@ class SourceConfigShort(BaseModel):
     type: str = Field(...)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    sensitive: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     default: Any | None = Field(default=None)
     options: list[str] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
@@ -243,6 +250,8 @@ class SourceConfigResponse(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.now, frozen=True)
     source_code_version_id: uuid.UUID = Field(...)
     required: bool = Field(default=False)
+    sensitive: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     default: Any | None = Field(default=None)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
@@ -265,6 +274,8 @@ class SourceConfigCreate(BaseModel):
     default: Any | None = Field(default=None)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    sensitive: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     name: str = Field(...)
     description: str = Field(...)
     type: str = Field(...)
@@ -281,6 +292,7 @@ class SourceConfigUpdate(BaseModel):
     default: Any | None = Field(default=None)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     options: list[str] = Field(default_factory=list)
     reference_id: uuid.UUID | None = Field(default=None)
 
@@ -297,6 +309,7 @@ class SourceConfigUpdateWithId(BaseModel):
     default: Any | None = Field(default=None)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     options: list[str] = Field(default_factory=list)
     reference_id: uuid.UUID | None = Field(default=None)
 

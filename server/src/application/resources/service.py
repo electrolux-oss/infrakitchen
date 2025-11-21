@@ -9,7 +9,7 @@ from application.resources.functions import (
     delete_resource_policies,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
-    validate_resource_variables_on_patch,
+    update_resource_variables_on_patch,
 )
 from application.resources.model import Resource, ResourceDTO
 from application.source_code_versions.service import SourceCodeVersionService
@@ -135,8 +135,6 @@ class ResourceService:
         if allowed_parent_states is None:
             allowed_parent_states = [ModelState.PROVISIONED]
 
-        body = resource.model_dump(exclude_unset=True)
-
         template = await self.template_service.get_by_id(resource.template_id)
         if template is None:
             raise EntityNotFound("Template not found")
@@ -158,9 +156,7 @@ class ResourceService:
             if parent.state not in allowed_parent_states:
                 raise EntityWrongState(f"Parent resource {parent.template} ID: {parent.id} has {parent.state} state.")
 
-        if template.abstract is True:
-            body["abstract"] = True
-        else:
+        if template.abstract is False:
             # validate configuration variables
             if resource.source_code_version_id:
                 source_code_version_id = resource.source_code_version_id
@@ -209,6 +205,10 @@ class ResourceService:
                 if resource.storage_path is None or resource.storage_path == "":
                     raise ValueError("Storage path is required for non-abstract resources with storage")
 
+        body = resource.model_dump(exclude_unset=True)
+        if template.abstract is True:
+            body["abstract"] = True
+
         body["created_by"] = requester.id
         new_resource = await self.crud.create(body)
         new_resource.state = ModelState.PROVISION
@@ -243,7 +243,6 @@ class ResourceService:
         :param requester: User who updates the resource
         :return: Updated resource
         """
-        body = resource.model_dump(exclude_unset=True)
         existing_resource = await self.crud.get_by_id(resource_id)
 
         if not existing_resource:
@@ -263,7 +262,7 @@ class ResourceService:
             # validate configuration variables
             if resource.source_code_version_id:
                 source_code_version_id = resource.source_code_version_id
-                source_code_version = await self.service_source_code_version.get_by_id(str(source_code_version_id))
+                source_code_version = await self.service_source_code_version.get_by_id(source_code_version_id)
                 if source_code_version is None:
                     raise ValueError("Invalid source_code version ID")
 
@@ -278,11 +277,13 @@ class ResourceService:
                     resource_ids=[p.id for p in existing_resource_pydantic.parents],
                 )
 
-                await validate_resource_variables_on_patch(
+                await update_resource_variables_on_patch(
                     schema=resource_variables_schema,
                     resource=existing_resource_pydantic,
                     patched_resource=resource,
                 )
+
+        body = resource.model_dump(exclude_unset=True)
 
         if (
             existing_resource_pydantic.status == ModelStatus.APPROVAL_PENDING

@@ -7,7 +7,7 @@ from application.resources.functions import (
     check_unique_variables,
     check_variable_type,
     validate_resource_variables_on_create,
-    validate_resource_variables_on_patch,
+    update_resource_variables_on_patch,
 )
 from application.resources.schema import (
     ResourceCreate,
@@ -178,7 +178,7 @@ async def test_validate_resource_variables_missing_required():
     schema = [ResourceVariableSchema(name="env", type="string", required=True)]
     resource = ResourceCreate(name="test", template_id=uuid4(), variables=[])  # Missing 'env'
 
-    with pytest.raises(ValueError, match=r"Variable 'env' is required"):
+    with pytest.raises(ValueError, match=r"Variable 'env' is missing in the resource."):
         await validate_resource_variables_on_create(schema, resource, [])
 
 
@@ -244,7 +244,7 @@ async def test_validate_resource_variables_patch_success_no_change(resource_resp
         variables=[Variables(name="env", value="prod")]  # same value
     )
 
-    await validate_resource_variables_on_patch(schema, old, update)
+    await update_resource_variables_on_patch(schema, old, update)
 
 
 @pytest.mark.asyncio
@@ -256,7 +256,7 @@ async def test_validate_resource_variables_patch_success_valid_change(resource_r
     old.variables = [Variables(name="replicas", value=2)]
     update = ResourcePatch(variables=[Variables(name="replicas", value=3)])
 
-    await validate_resource_variables_on_patch(schema, old, update)
+    await update_resource_variables_on_patch(schema, old, update)
 
 
 @pytest.mark.asyncio
@@ -267,7 +267,7 @@ async def test_validate_resource_variables_patch_frozen_change(resource_response
     update = ResourcePatch(variables=[Variables(name="env", value="staging")])
 
     with pytest.raises(ValueError, match=r"Variable 'env' is frozen and cannot be changed"):
-        await validate_resource_variables_on_patch(schema, old, update)
+        await update_resource_variables_on_patch(schema, old, update)
 
 
 @pytest.mark.asyncio
@@ -278,7 +278,7 @@ async def test_validate_resource_variables_patch_invalid_type(resource_response)
     update = ResourcePatch(variables=[Variables(name="replicas", value="wrong-type")])
 
     with pytest.raises(ValueError, match=r"Variable 'replicas' has an invalid type. Expected number."):
-        await validate_resource_variables_on_patch(schema, old, update)
+        await update_resource_variables_on_patch(schema, old, update)
 
 
 @pytest.mark.asyncio
@@ -289,4 +289,4 @@ async def test_validate_resource_variables_patch_invalid_option(resource_respons
     update = ResourcePatch(variables=[Variables(name="color", value="yellow")])
 
     with pytest.raises(ValueError, match=r"Variable 'color' has an invalid value. Expected one of"):
-        await validate_resource_variables_on_patch(schema, old, update)
+        await update_resource_variables_on_patch(schema, old, update)

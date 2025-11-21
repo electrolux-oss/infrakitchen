@@ -14,6 +14,9 @@ export const ResourceVariableForm = (props: {
   const { index, variable, edit_mode = false } = props;
   const { control } = useFormContext();
 
+  if (variable.restricted) return null;
+  if (variable.sensitive) return null;
+
   return (
     <TableRow>
       <TableCell sx={{ width: "320px" }}>

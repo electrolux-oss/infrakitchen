@@ -262,6 +262,7 @@ class TestCreate:
             "source_code_version_id": source_code_version_response.id,
             "storage_id": storage_response.id,
             "storage_path": "path/to/storage",
+            "variables": [],
         }
         requester = mocked_user_response
 

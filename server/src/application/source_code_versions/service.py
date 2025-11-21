@@ -283,7 +283,7 @@ class SourceCodeVersionService:
         await self.task_service.delete_by_entity_id(source_code_version_id)
         await self.crud.delete(existing_source_code_version)
 
-    async def get_configs_by_scv_id(self, source_code_version_id: str) -> list[SourceConfigResponse]:
+    async def get_configs_by_scv_id(self, source_code_version_id: str | UUID) -> list[SourceConfigResponse]:
         """
         Get all configs for a source code version.
         :param source_code_version_id: ID of the source code version
@@ -303,7 +303,7 @@ class SourceCodeVersionService:
             raise EntityNotFound("SourceCodeVersionConfig not found")
         return SourceConfigResponse.model_validate(config)
 
-    async def create_configs(self, configs: list[SourceConfigCreate]) -> list[SourceConfig]:
+    async def create_configs(self, configs: list[SourceConfigCreate]) -> list[SourceConfigResponse]:
         """
         Create new source code version configs.
         :param body: List of SourceConfigCreate to create
@@ -313,7 +313,7 @@ class SourceCodeVersionService:
         for c in configs:
             config = await self.crud.create_config(c.model_dump(exclude_unset=True))
             result.append(config)
-        return result
+        return [SourceConfigResponse.model_validate(config) for config in result]
 
     async def update_config(self, config_id: str, config: SourceConfigUpdate) -> SourceConfigResponse:
         """
@@ -346,6 +346,9 @@ class SourceCodeVersionService:
         for config in configs:
             if config.id not in existing_configs_dict:
                 raise EntityNotFound(f"SourceCodeVersionConfig with id {config.id} not found")
+
+            if config.required and config.restricted and not config.default:
+                raise ValueError("Restricted config must have a value if it is required")
 
             body = config.model_dump(exclude_unset=True)
             verify_config_type(body, expected_type=existing_configs_dict[config.id].type)

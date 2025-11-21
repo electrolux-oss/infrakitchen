@@ -6,7 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 
 from application.templates.schema import TemplateShort
 from application.integrations.schema import IntegrationShort
-from application.source_code_versions.model import SourceCodeVersionDTO
 from application.source_code_versions.schema import SourceCodeVersionShort, SourceOutputConfigShort
 from application.workspaces.schema import WorkspaceShort
 from core.constants.model import ModelState, ModelStatus
@@ -175,10 +174,10 @@ class ResourceCreate(BaseModel):
 
 class ResourcePatch(BaseModel):
     description: str | None = Field(default="")
-    source_code_version_id: uuid.UUID | SourceCodeVersionDTO | None = Field(
+    source_code_version_id: uuid.UUID | None = Field(
         default=None,
     )
-    integration_ids: list[uuid.UUID | IntegrationShort] | None = Field(
+    integration_ids: list[uuid.UUID] | None = Field(
         default=[],
     )
     variables: list[Variables] | None = Field(default=[])
@@ -235,6 +234,8 @@ class ResourceVariableSchema(BaseModel):
     required: bool = Field(default=False)
     frozen: bool = Field(default=False)
     unique: bool = Field(default=False)
+    sensitive: bool = Field(default=False)
+    restricted: bool = Field(default=False)
     value: Any | None = Field(default=None)
     index: int = Field(default=0)
     reference: SourceOutputConfigShort | None = Field(default=None)
