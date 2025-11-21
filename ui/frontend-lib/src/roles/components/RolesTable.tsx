@@ -10,7 +10,7 @@ export const RoleTable = (props: { roles: string[]; loading?: boolean }) => {
   if (!roles) return <Alert severity="info">No roles available</Alert>;
   return (
     <Box sx={{ width: "100%", typography: "body1" }}>
-      <Card sx={{ margin: 1 }}>
+      <Card>
         {roles.length > 0 ? (
           <>
             <CardContent>
