@@ -2,7 +2,7 @@ import re
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.users.model import User
@@ -199,3 +199,19 @@ class PermissionCRUD:
 
         for permission in permissions:
             await self.session.delete(permission)
+
+    async def get_users_by_role(self, role_name: str) -> list[User]:
+        user_id_expr = func.split_part(Permission.v0, ":", 2)
+
+        statement = (
+            select(User)
+            .join(Permission, cast(User.id, String) == user_id_expr)
+            .where(
+                Permission.ptype == "g",
+                Permission.v1 == role_name,
+                Permission.v0.like("user:%"),
+            )
+        )
+
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())

@@ -8,6 +8,7 @@ from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 
 from .service import PermissionService
 from .dependencies import get_permission_service
+from ..users.schema import UserShort
 
 router = APIRouter()
 
@@ -87,6 +88,18 @@ async def get_user_policies(user_id: str, service: PermissionService = Depends(g
 async def get_role_permissions(role_name: str, service: PermissionService = Depends(get_permission_service)):
     policies = await service.get_role_permissions(role_name)
     return policies
+
+
+# Users with assigned role
+@router.get(
+    "/permissions/role/{role_name}/users",
+    response_model=list[UserShort],
+    response_description="Get users by role",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_users_by_role(role_name: str, service: PermissionService = Depends(get_permission_service)):
+    users = await service.get_users_by_role(role_name)
+    return users
 
 
 # Entity permissions
