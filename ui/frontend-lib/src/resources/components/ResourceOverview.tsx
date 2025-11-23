@@ -43,14 +43,24 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       />
       {resource.parents.length > 0 && (
         <CommonField
-          name={"Parents"}
+          name={`Parents (${resource.parents.length})`}
           value={
-            <Box display="flex" gap={1}>
-              {resource.parents.map((parent) => (
-                <span key={parent.id}>
-                  <GetReferenceUrlValue {...parent} />
-                </span>
-              ))}
+            <Box
+              gap={1}
+              maxHeight={150}
+              sx={{ overflowY: "auto", p: 1, border: "1px solid #eee" }}
+            >
+              {resource.parents.map((parent) => {
+                const display_name = `${parent.template.name} (${parent.name})`;
+                return (
+                  <Box key={parent.id} sx={{ flexShrink: 0 }}>
+                    <GetReferenceUrlValue
+                      {...parent}
+                      display_name={display_name}
+                    />
+                  </Box>
+                );
+              })}
             </Box>
           }
           size={6}
@@ -58,14 +68,24 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       )}
       {resource.children.length > 0 && (
         <CommonField
-          name={"Children"}
+          name={`Children (${resource.children.length})`}
           value={
-            <Box display="flex" gap={1}>
-              {resource.children.map((child) => (
-                <span key={child.id}>
-                  <GetReferenceUrlValue {...child} />
-                </span>
-              ))}
+            <Box
+              gap={1}
+              maxHeight={150}
+              sx={{ overflowY: "auto", p: 1, border: "1px solid #eee" }}
+            >
+              {resource.children.map((child) => {
+                const display_name = `${child.template.name} (${child.name})`;
+                return (
+                  <Box key={child.id} sx={{ flexShrink: 0 }}>
+                    <GetReferenceUrlValue
+                      {...child}
+                      display_name={display_name}
+                    />
+                  </Box>
+                );
+              })}
             </Box>
           }
           size={6}
