@@ -11,6 +11,7 @@ import { WorkspaceShort } from "../workspaces/types";
 export interface ResourceShort {
   id: string;
   name: string;
+  template: TemplateShort;
   _entity_name: string;
 }
 

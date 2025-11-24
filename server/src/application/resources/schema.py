@@ -66,6 +66,8 @@ class ResourceShort(BaseModel):
         frozen=True,
     )
 
+    template: TemplateShort = Field(...)
+
     model_config = ConfigDict(from_attributes=True)
 
     @computed_field
