@@ -1,6 +1,6 @@
 import { RolePage } from "./pages/Role";
-import { RolesPage } from "./pages/Roles";
 import { RoleCreatePage } from "./pages/RoleCreate";
+import { RolesPage } from "./pages/Roles";
 
 export const roleRoutes = [
   {
