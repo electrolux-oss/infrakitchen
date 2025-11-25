@@ -21,7 +21,7 @@ from .schema import (
     UserRoleRequest,
 )
 from core.users.model import UserDTO
-
+from ..users.schema import UserShort
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +257,10 @@ class PermissionService:
     async def get_role_permissions(self, role_name: str) -> list[PermissionResponse]:
         policies = await self.crud.get_all(filter={"ptype": "p", "v0": role_name})
         return [PermissionResponse.model_validate(policy) for policy in policies]
+
+    async def get_users_by_role(self, role_name: str) -> list[UserShort]:
+        users = await self.crud.get_users_by_role(role_name)
+        return [UserShort.model_validate(user) for user in users]
 
     # Entity permissions
     async def get_entity_permissions(self, entity_name: str, entity_id: str) -> list[PermissionResponse]:

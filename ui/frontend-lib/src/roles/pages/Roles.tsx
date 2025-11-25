@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 
-import { Box } from "@mui/material";
+import { useNavigate } from "react-router";
+
+import { Box, Button } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
@@ -8,7 +10,9 @@ import PageContainer from "../../common/PageContainer";
 import { RoleTable } from "../components/RolesTable";
 
 export const RolesPage = () => {
-  const { ikApi } = useConfig();
+  const { ikApi, linkPrefix } = useConfig();
+
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<string[]>([]);
@@ -34,7 +38,18 @@ export const RolesPage = () => {
   }, [fetchRoles]);
 
   return (
-    <PageContainer title="Roles">
+    <PageContainer
+      title="Roles"
+      actions={
+        <Button
+          variant="outlined"
+          color="primary"
+          onClick={() => navigate(`${linkPrefix}roles/create`)}
+        >
+          Create
+        </Button>
+      }
+    >
       <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
         <RoleTable roles={data} loading={loading} />
       </Box>

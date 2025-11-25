@@ -1,6 +1,7 @@
 import { Alert, Box } from "@mui/material";
 
 import { RoleOverview } from "./RoleOverview";
+import { RoleUsersTable } from "./RoleUsersTable";
 
 export interface RoleContentProps {
   role: string | undefined;
@@ -12,6 +13,7 @@ export const RoleContent = (props: RoleContentProps) => {
   return (
     <Box
       sx={{
+        width: 1000,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -19,6 +21,7 @@ export const RoleContent = (props: RoleContentProps) => {
       }}
     >
       <RoleOverview role={role} />
+      <RoleUsersTable role={role} />
     </Box>
   );
 };
