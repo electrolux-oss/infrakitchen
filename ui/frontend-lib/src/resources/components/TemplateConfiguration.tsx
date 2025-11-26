@@ -79,13 +79,28 @@ export const TemplateConfiguration = ({
           <CommonField
             name={"Integrations"}
             value={
-              <Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {resource.integration_ids.map((parent) => (
                   <span key={parent.id}>
                     <GetReferenceUrlValue
                       {...parent}
                       urlProvider={parent.integration_provider}
                     />
+                  </span>
+                ))}
+              </Box>
+            }
+            size={6}
+          />
+        )}
+        {resource.secret_ids.length > 0 && (
+          <CommonField
+            name={"Secrets"}
+            value={
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {resource.secret_ids.map((parent) => (
+                  <span key={parent.id}>
+                    <GetReferenceUrlValue {...parent} />
                   </span>
                 ))}
               </Box>

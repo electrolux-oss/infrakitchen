@@ -114,6 +114,7 @@ dependencies = [
   "kubernetes-asyncio>=33.3.0",
   "google-cloud-storage>=3.3.0",
   "google-cloud-resource-manager>=1.14.2",
+  "google-cloud-secret-manager>=2.25.0",
 ]
 requires-python = "==3.14.*"
 readme = "README.md"

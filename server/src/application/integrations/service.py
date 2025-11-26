@@ -4,13 +4,13 @@ from uuid import UUID
 
 
 from core import EncryptedSecretStr
-from core.adapters.provider_adapters import IntegrationProvider, SecretProviderAdapter
+from core.adapters.functions import get_integration_adapter
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants import ModelStatus
 from core.constants.model import ModelActions
 from core.database import to_dict
-from core.errors import CannotProceed, CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
+from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
@@ -23,17 +23,6 @@ from .schema import IntegrationCreate, IntegrationResponse, IntegrationUpdate, I
 from ..utils.constants import MASKED_VALUE
 
 logger = logging.getLogger(__name__)
-
-
-async def get_adapter(provider: str, config: Any) -> IntegrationProvider | SecretProviderAdapter:
-    provider_adapter_cls = IntegrationProvider.adapters.get(provider)
-    secret_provider_adapter_cls = SecretProviderAdapter.adapters.get(provider)
-    if provider_adapter_cls:
-        return provider_adapter_cls(configuration=config)
-    if secret_provider_adapter_cls:
-        return secret_provider_adapter_cls(configuration=config)
-
-    raise CannotProceed(f"Provider {provider} is not supported")
 
 
 class IntegrationService:
@@ -97,8 +86,6 @@ class IntegrationService:
         elif integration.integration_type == "git":
             if integration.integration_provider not in source_code_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(source_code_providers)}")
-        elif integration.integration_type == "credentials":
-            pass
 
         body = model_db_dump(integration)
         body["created_by"] = requester.id
@@ -250,7 +237,7 @@ class IntegrationService:
 
     async def validate(self, integration_config: Any, integration_provider: str) -> IntegrationValidationResponse:
         try:
-            provider_adapter_instance = await get_adapter(integration_provider, integration_config)
+            provider_adapter_instance = await get_integration_adapter(integration_provider, integration_config)
             await provider_adapter_instance.authenticate()
             integration_is_valid = await provider_adapter_instance.is_valid()
             message = "Validation successful" if integration_is_valid else "Validation failed"

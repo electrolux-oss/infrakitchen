@@ -6,6 +6,7 @@ INFRA_ENTITIES = [
     "source_code_version",
     "integration",
     "storage",
+    "secret",
     "log",
     "task",
     "constant",

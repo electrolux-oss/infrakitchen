@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Any, Literal
 from uuid import UUID
 
+from application.integrations.service import IntegrationService
 from application.resources.functions import (
     add_resource_parent_policy,
     delete_resource_policies,
@@ -53,7 +54,6 @@ from .schema import (
     ResourceWithConfigs,
     ResourcePatch,
 )
-from ..integrations.crud import IntegrationCRUD
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class ResourceService:
         self,
         crud: ResourceCRUD,
         template_service: TemplateService,
-        crud_integration: IntegrationCRUD,
+        integration_service: IntegrationService,
         permission_service: PermissionService,
         service_source_code_version: SourceCodeVersionService,
         storage_service: StorageService,
@@ -82,7 +82,7 @@ class ResourceService:
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
-        self.crud_integration: IntegrationCRUD = crud_integration
+        self.integration_service: IntegrationService = integration_service
         self.permission_service: PermissionService = permission_service
         self.service_source_code_version: SourceCodeVersionService = service_source_code_version
         self.storage_service: StorageService = storage_service
@@ -777,7 +777,8 @@ class ResourceService:
 
         resources_metadata: dict[str, Any] = dict()
 
-        assert resource.integration_ids is not None, f"Resource with id {resource_id} has no integration_ids"
+        if resource.integration_ids is None:
+            raise EntityNotFound(f"Resource with id {resource_id} has no integration_ids")
 
         comp = await self.template_service.get_by_id(resource.template.id)
 
@@ -789,7 +790,9 @@ class ResourceService:
         assert template.cloud_resource_types is not None, f"Template with id {template.id} has no cloud_resource_types"
         assert len(template.cloud_resource_types) > 0, f"Template with id {template.id} has no cloud_resource_types"
 
-        integrations = await self.crud_integration.get_all(filter={"id": [str(i.id) for i in resource.integration_ids]})
+        integrations = await self.integration_service.get_all(
+            filter={"id": [str(i.id) for i in resource.integration_ids]}
+        )
         if not integrations:
             raise EntityNotFound("Integrations not found")
 

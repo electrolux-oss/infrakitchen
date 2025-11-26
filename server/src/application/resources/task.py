@@ -10,6 +10,7 @@ from application.integrations.model import IntegrationDTO
 from application.resources.crud import ResourceCRUD
 from application.resources.functions import get_merged_tags
 from application.resources.service import ResourceService
+from application.secrets.model import SecretDTO
 from application.source_code_versions.model import SourceCodeVersionDTO
 from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.model import SourceCodeDTO
@@ -46,6 +47,7 @@ class ResourceTask:
         source_code_version_service: SourceCodeVersionService,
         task_handler: TaskHandler,
         logger: EntityLogger,
+        secret_manager: SecretManager,
         user: UserDTO,
         event_sender: EventSender,
         workspace_event_sender: EventSender,
@@ -75,11 +77,7 @@ class ResourceTask:
             logger=logger,
             workspace_root=self.workspace_root,
         )
-        self.secret_manager: SecretManager = SecretManager(
-            model_instance=resource_instance,
-            logger=logger,
-            workspace_root=self.workspace_root,
-        )
+        self.secret_manager: SecretManager = secret_manager
         self.environment_variables: dict[str, str] = {}
         self.workspace_path: str | None = None
 
@@ -146,6 +144,7 @@ class ResourceTask:
 
         integrations = self.resource_instance.integration_ids
 
+        # get integrations and set environment variables
         for integration in integrations:
             integration_pydantic = IntegrationDTO.model_validate(integration)
 
@@ -173,8 +172,10 @@ class ResourceTask:
                     repo_name="source_code_repo",
                 )
 
-            if integration.integration_type == "credentials":
-                await self.secret_manager.get_credentials(integration_pydantic, self.environment_variables)
+        # get secrets
+        for secret in self.resource_instance.secret_ids:
+            pydantic_secret = SecretDTO.model_validate(secret)
+            await self.secret_manager.get_credentials(pydantic_secret, self.environment_variables)
 
         if not self.source_code_instance.integration:
             provider_adapter: type[IntegrationProvider] | None = IntegrationProvider.adapters.get("public")

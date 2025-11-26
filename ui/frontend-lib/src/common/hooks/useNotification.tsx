@@ -33,7 +33,7 @@ export const notify = (
 ) => {
   enqueueSnackbar(message, {
     variant: variant,
-    autoHideDuration: variant === "error" ? 30000 : 3000,
+    autoHideDuration: 5000,
     anchorOrigin: { vertical: "top", horizontal: "right" },
     ...options,
 

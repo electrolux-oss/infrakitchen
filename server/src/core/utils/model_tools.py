@@ -52,7 +52,7 @@ def to_json_serializable(obj: Any) -> Any:
 
 
 def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
-    model: TPydanticBaseModel, exclude_fields=None
+    model: TPydanticBaseModel, exclude_fields=None, **kwargs
 ) -> dict[str, Any]:
     """
     Dump the model's data into a dictionary suitable for database storage.
@@ -61,6 +61,7 @@ def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
     Args:
         model (TPydanticBaseModel): The Pydantic model instance to dump.
         exclude_fields (set[str], optional): A set of field names to exclude from the dump.
+        kwargs: Additional keyword arguments to pass to the model_dump method.
 
     Returns:
         dict[str, Any]: A dictionary containing the mongo model's data.
@@ -68,5 +69,5 @@ def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
     if exclude_fields is None:
         exclude_fields = {"_entity_name"}
 
-    self_dict = model.model_dump(by_alias=True, exclude=exclude_fields)
+    self_dict = model.model_dump(by_alias=True, exclude=exclude_fields, **kwargs)
     return to_json_serializable(self_dict)

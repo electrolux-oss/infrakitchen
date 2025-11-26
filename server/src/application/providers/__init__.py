@@ -10,7 +10,6 @@ from .github.github_provider import GithubProvider, GithubSshProvider
 from .azurerm.azure_devops_repo_provider import AzureRepoSourceCode
 from .datadog.datadog_provider import DatadogProvider
 from .mongo_atlas import MongodbAtlasProvider
-from .vault_provider import VaultProviderAdapter
 from .public.public_provider import PublicProvider
 from .tf_storage_providers.aws_storage_provider import AwsTfStorage
 from .tf_storage_providers.azure_storage_provider import AzurermTfStorage
@@ -28,7 +27,6 @@ __all__ = [
     "AzureRepoSourceCode",
     "AzurermTfStorage",
     "AwsTfStorage",
-    "VaultProviderAdapter",
     "MongodbAtlasProvider",
     "AzurermProvider",
     "DatadogProvider",

@@ -84,6 +84,12 @@ nav:
           - Backstage: integrations/auth/backstage.md
           - Service Account: integrations/auth/service-account.md
           - Guest: integrations/auth/guest.md
+  - Secrets:
+      - Overview: secrets/overview.md
+      - Providers:
+          - AWS Secrets Manager: secrets/providers/aws.md
+          - GCP Secret Manager: secrets/providers/gcp.md
+          - Custom Secrets: secrets/providers/custom.md
   - Operations:
       - Kubernetes: operations/kubernetes.md
       - Activity:

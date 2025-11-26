@@ -19,7 +19,6 @@ integration_provider_type = Literal[
     "github_ssh",
     "bitbucket",
     "bitbucket_ssh",
-    "vault",
     "mongodb_atlas",
     "datadog",
 ]
@@ -135,15 +134,6 @@ class BitbucketSshIntegrationConfig(BaseModel):
         return [("bitbucket_ssh_private_key", self.bitbucket_ssh_private_key)] if self.bitbucket_ssh_private_key else []
 
 
-class VaultIntegrationConfig(BaseModel):
-    vault_domain: str = Field(...)
-    vault_token: EncryptedSecretStr = Field(...)
-    integration_provider: Literal["vault"] = Field(default="vault", frozen=True)
-
-    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
-        return [("vault_token", self.vault_token)]
-
-
 class IntegrationResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
@@ -159,7 +149,7 @@ class IntegrationResponse(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git", "credentials"] = Field(..., frozen=True)
+    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: Annotated[
@@ -173,7 +163,6 @@ class IntegrationResponse(BaseModel):
         | GithubSshIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
-        | VaultIntegrationConfig
         | DatadogIntegrationConfig,
         Field(discriminator="integration_provider"),
     ] = Field(...)
@@ -190,7 +179,7 @@ class IntegrationResponse(BaseModel):
 class IntegrationCreate(BaseModel):
     name: str = Field(...)
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git", "credentials"] = Field(..., frozen=True)
+    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: Annotated[
@@ -204,7 +193,6 @@ class IntegrationCreate(BaseModel):
         | GithubSshIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
-        | VaultIntegrationConfig
         | DatadogIntegrationConfig,
         Field(discriminator="integration_provider"),
     ] = Field(...)
@@ -250,7 +238,6 @@ class IntegrationUpdate(BaseModel):
             | GithubSshIntegrationConfig
             | BitbucketIntegrationConfig
             | BitbucketSshIntegrationConfig
-            | VaultIntegrationConfig
             | DatadogIntegrationConfig,
             Field(discriminator="integration_provider"),
         ]
@@ -271,7 +258,7 @@ class IntegrationShort(BaseModel):
 
 
 class IntegrationValidationRequest(BaseModel):
-    integration_type: Literal["cloud", "git", "credentials"] = Field(..., frozen=True)
+    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
 
     configuration: Annotated[
@@ -285,7 +272,6 @@ class IntegrationValidationRequest(BaseModel):
         | GithubSshIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
-        | VaultIntegrationConfig
         | DatadogIntegrationConfig,
         Field(discriminator="integration_provider"),
     ] = Field(...)

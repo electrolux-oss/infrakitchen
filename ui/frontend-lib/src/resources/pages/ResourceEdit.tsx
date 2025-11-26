@@ -54,6 +54,7 @@ export const ResourceEditPageInner = (props: {
       return {
         description: entity.description,
         integration_ids: entity.integration_ids.map((i) => i.id),
+        secret_ids: entity.secret_ids.map((s) => s.id),
         source_code_version_id: entity.source_code_version?.id || null,
         dependency_config: entity.dependency_config,
         dependency_tags: entity.dependency_tags,
@@ -343,6 +344,29 @@ export const ResourceEditPageInner = (props: {
                     />
                   )}
                 />
+                <Controller
+                  name="secret_ids"
+                  control={control}
+                  render={({ field }) => (
+                    <ArrayReferenceInput
+                      {...field}
+                      ikApi={ikApi}
+                      entity_name="secrets"
+                      buffer={buffer}
+                      setBuffer={setBuffer}
+                      error={!!errors.secret_ids}
+                      helpertext={
+                        errors.secret_ids
+                          ? errors.secret_ids.message
+                          : "Select Secret for the resource"
+                      }
+                      value={field.value}
+                      label="Secrets"
+                      multiple
+                    />
+                  )}
+                />
+
                 <Controller
                   name="labels"
                   control={control}

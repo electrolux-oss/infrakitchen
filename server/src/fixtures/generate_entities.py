@@ -412,7 +412,7 @@ async def insert_integrations(session: AsyncSession, env: str, user: UserDTO):
         ),
     }
 
-    integration_types: dict[str, Literal["cloud", "git", "credentials"]] = {
+    integration_types: dict[str, Literal["cloud", "git"]] = {
         "aws": "cloud",
         "azurerm": "cloud",
         "github": "git",
@@ -425,7 +425,7 @@ async def insert_integrations(session: AsyncSession, env: str, user: UserDTO):
             description=get_sentence(),
             integration_type=integration_types[provider],
             integration_provider=cast(
-                Literal["aws", "azurerm", "azure_devops", "github", "bitbucket", "vault", "mongodb_atlas", "datadog"],
+                Literal["aws", "azurerm", "azure_devops", "github", "bitbucket", "mongodb_atlas", "datadog"],
                 provider,
             ),
             configuration=config,

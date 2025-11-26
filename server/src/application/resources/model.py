@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
+from application.secrets.model import Secret, SecretDTO
 from application.templates.model import Template, TemplateDTO
 from application.integrations.model import Integration, IntegrationDTO
 from application.source_code_versions.model import SourceCodeVersion, SourceCodeVersionDTO
@@ -34,6 +35,13 @@ resource_integrations = Table(
     Column("integration_id", ForeignKey("integrations.id", ondelete="CASCADE"), primary_key=True),
 )
 
+resource_secrets = Table(
+    "resource_secrets",
+    Base.metadata,
+    Column("resource_id", ForeignKey("resources.id", ondelete="CASCADE"), primary_key=True),
+    Column("secret_id", ForeignKey("secrets.id", ondelete="CASCADE"), primary_key=True),
+)
+
 
 class Resource(BaseEntity):
     __tablename__: str = "resources"
@@ -50,6 +58,7 @@ class Resource(BaseEntity):
     )
     source_code_version: Mapped[SourceCodeVersion | None] = relationship("SourceCodeVersion", lazy="joined")
     integration_ids: Mapped[list[Integration]] = relationship(secondary=resource_integrations)
+    secret_ids: Mapped[list[Secret]] = relationship(secondary=resource_secrets)
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("storages.id"), nullable=True)
     storage: Mapped[Storage] = relationship("Storage", lazy="joined")
     storage_path: Mapped[str | None] = mapped_column(nullable=True)
@@ -135,6 +144,10 @@ class ResourceDTO(BaseModel):
     source_code_version: SourceCodeVersionDTO | None = Field(default=None)
 
     integration_ids: list[uuid.UUID | IntegrationDTO] = Field(
+        default=[],
+    )
+
+    secret_ids: list[uuid.UUID | SecretDTO] = Field(
         default=[],
     )
 

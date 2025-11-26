@@ -26,7 +26,6 @@ from .schema import (
     GithubSshIntegrationConfig,
     BitbucketIntegrationConfig,
     BitbucketSshIntegrationConfig,
-    VaultIntegrationConfig,
     DatadogIntegrationConfig,
 )
 
@@ -81,7 +80,7 @@ class IntegrationDTO(BaseModel):
         ...,
     )
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git", "credentials"] = Field(..., frozen=True)
+    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: Annotated[
@@ -95,7 +94,6 @@ class IntegrationDTO(BaseModel):
         | GithubSshIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
-        | VaultIntegrationConfig
         | DatadogIntegrationConfig,
         Field(discriminator="integration_provider"),
     ] = Field(...)

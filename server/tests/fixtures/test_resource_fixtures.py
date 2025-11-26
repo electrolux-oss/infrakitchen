@@ -33,7 +33,7 @@ def mock_resource_service(
     mock_audit_log_handler,
     mock_source_code_version_service,
     mock_storage_service,
-    mock_integration_crud,
+    mock_integration_service,
     mock_permission_service,
     mocked_resource_temp_state_handler,
     mock_log_service,
@@ -46,7 +46,7 @@ def mock_resource_service(
         workspace_event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
         template_service=mock_template_service,
-        crud_integration=mock_integration_crud,
+        integration_service=mock_integration_service,
         service_source_code_version=mock_source_code_version_service,
         storage_service=mock_storage_service,
         permission_service=mock_permission_service,
@@ -73,6 +73,7 @@ def resource_response(
         storage=storage_response,
         storage_path="path/to/storage",
         integration_ids=[mocked_integration_response],
+        secret_ids=[],
         creator=mocked_user_response,
         variables=[
             Variables(
@@ -123,6 +124,7 @@ def mocked_resource(
         storage_id=storage_response.id,
         storage_path="path/to/storage",
         integration_ids=[mocked_integration],
+        secret_ids=[],
         creator=mocked_user,
         created_by=mocked_user.id,
         revision_number=1,

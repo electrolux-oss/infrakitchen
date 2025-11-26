@@ -145,6 +145,7 @@ class TestPatch:
             description="desc",
             source_code_version_id=uuid4(),
             integration_ids=[uuid4()],
+            secret_ids=[],
             labels=["label1"],
             workspace_id=uuid4(),
             variables=[],
