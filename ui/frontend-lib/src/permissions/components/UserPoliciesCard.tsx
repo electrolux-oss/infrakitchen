@@ -50,7 +50,6 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
   const get_policy_list = useCallback(() => {
     if (!user_id) return;
 
-    setLoading(true);
     ikApi
       .get(`permissions/user/${user_id}/policies`)
       .then((response) => {
