@@ -1,5 +1,6 @@
 export * from "./GlobalNotificationPopup";
 export * from "./DialogSlider";
+export * from "./CommonDialog";
 export * from "./ExpandableCard";
 export * from "./notifications";
 export * from "./inputs";

@@ -171,6 +171,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Execution"
         content="Do you want to execute it?"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.EXECUTE}
@@ -188,6 +189,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Retry"
         content="Do you want to execute it again?"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.RETRY}
@@ -205,6 +207,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Sync"
         content="Do you want to sync it?"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.SYNC}
@@ -222,6 +225,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Dry-run"
         content="Dry-run will not change entities, it only provides the logs"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.DRYRUN}
@@ -238,6 +242,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Dry-run with Temp State"
         content="Dry-run will not change entities, it only provides the logs"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.DRYRUN_WITH_TEMP_STATE}
@@ -255,6 +260,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request re-create"
         content="Re-create will return entity back. Do you want to approve the request?"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.RECREATE}
@@ -269,6 +275,7 @@ export function EntityActions(props: EntityActionsProps) {
       <CommonDialog
         title="Request Enable"
         content="Do you want to enable this entity?"
+        maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.ENABLE}

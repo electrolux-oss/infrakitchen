@@ -109,7 +109,29 @@ export const AdminPage = () => {
   };
 
   return (
-    <PageContainer title="Administration">
+    <PageContainer
+      title="Administration"
+      bottomActions={
+        <>
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={handleSaveAll}
+            disabled={loading || !hasUnsavedChanges()}
+          >
+            Save
+          </Button>
+          <Button
+            variant="outlined"
+            size="medium"
+            onClick={handleFeatureFlagReload}
+            disabled={loading}
+          >
+            Reload
+          </Button>
+        </>
+      }
+    >
       <Box sx={{ width: "100%", maxWidth: 1200 }}>
         <Box
           sx={{
@@ -217,33 +239,6 @@ export const AdminPage = () => {
               </Grid>
             ))}
           </Grid>
-
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 16,
-              right: 16,
-              display: "flex",
-              gap: 1,
-            }}
-          >
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={handleSaveAll}
-              disabled={loading || !hasUnsavedChanges()}
-            >
-              Save
-            </Button>
-            <Button
-              variant="outlined"
-              size="medium"
-              onClick={handleFeatureFlagReload}
-              disabled={loading}
-            >
-              Reload
-            </Button>
-          </Box>
         </Box>
       </Box>
     </PageContainer>
