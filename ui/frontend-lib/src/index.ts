@@ -8,6 +8,7 @@ export * from "./common";
 export * from "./source_codes";
 export * from "./source_code_versions";
 export * from "./storages";
+export * from "./secrets";
 export * from "./users";
 export * from "./auth_providers";
 export * from "./workspaces";

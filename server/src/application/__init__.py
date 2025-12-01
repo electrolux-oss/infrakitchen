@@ -11,6 +11,7 @@ from .source_code_versions import (
 from .resources import DependencyConfig, DependencyTag, Outputs, ResourceDTO, Variables
 from .resource_temp_state.model import ResourceTempState
 from .storages import StorageDTO
+from .secrets import SecretDTO
 from .workspaces import WorkspaceDTO
 from .tools.cloud_api_manager import CloudApiManager
 from .tools.secret_manager import SecretManager
@@ -29,6 +30,7 @@ __all__ = [
     "SourceCodeDTO",
     "SourceCodeVersionDTO",
     "StorageDTO",
+    "SecretDTO",
     "VariableConfigModel",
     "VariableModel",
     "VariableReferenceModel",

@@ -18,7 +18,7 @@ class AwsClient:
         environment_variables: dict[str, str],
         region: str | None = None,
         api_type: Literal[
-            "ec2", "iam", "sts", "ecr", "s3", "dynamodb", "elasticache", "kafka", "eks", "account"
+            "ec2", "iam", "sts", "ecr", "s3", "dynamodb", "elasticache", "kafka", "eks", "account", "secretsmanager"
         ] = "ec2",
     ):
         self.aws_access_key_id: str | None = environment_variables.get("AWS_ACCESS_KEY_ID")
@@ -107,3 +107,8 @@ class AwsEksClient(AwsClient):
 class AwsAccountClient(AwsClient):
     def __init__(self, environment_variables: dict[str, str]):
         super().__init__(environment_variables, api_type="account")
+
+
+class AwsSecretManagerClient(AwsClient):
+    def __init__(self, environment_variables: dict[str, str], region: str):
+        super().__init__(environment_variables, region, api_type="secretsmanager")

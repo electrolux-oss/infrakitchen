@@ -32,6 +32,7 @@ from ..source_codes import api as source_codes_api
 from ..integrations import api as integrations_api
 from ..source_code_versions import api as source_code_versions_api
 from ..storages import api as storages_api
+from ..secrets import api as secrets_api
 from ..workspaces import api as workspaces_api
 from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
@@ -121,6 +122,11 @@ api.include_router(
 
 api.include_router(
     storages_api.router,
+    tags=["Core"],
+)
+
+api.include_router(
+    secrets_api.router,
     tags=["Core"],
 )
 

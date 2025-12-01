@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.integrations.dependencies import get_integration_service
 from application.resources.crud import ResourceCRUD
 from application.resources.dependencies import get_resource_service
 from application.resources.task import ResourceTask
@@ -13,6 +14,7 @@ from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.task import SourceCodeTask
 from application.storages.crud import StorageCRUD
 from application.storages.task import StorageTask
+from application.tools.secret_manager import get_secret_manager
 from application.workspaces.crud import WorkspaceCRUD
 from application.workspaces.task import WorkspaceTask
 from core import EntityLogger
@@ -151,6 +153,17 @@ async def get_resource_task(
     task_handler = TaskHandler(
         TaskEntityCRUD(session=session), entity_name="resource", entity_id=resource_instance.id, user=user
     )
+    r_logger = EntityLogger(
+        entity_name="resource",
+        entity_id=resource_instance.id,
+        revision_number=int(resource_instance.revision_number),
+        trace_id=trace_id,
+    )
+
+    secret_manager = get_secret_manager(
+        logger=r_logger,
+        integration_service=get_integration_service(session=session),
+    )
 
     return ResourceTask(
         session=session,
@@ -160,12 +173,8 @@ async def get_resource_task(
         resource_temp_state_instance=temp_state_instance_pydantic,
         source_code_version_service=source_code_version_service,
         task_handler=task_handler,
-        logger=EntityLogger(
-            entity_name="resource",
-            entity_id=resource_instance.id,
-            revision_number=int(resource_instance.revision_number),
-            trace_id=trace_id,
-        ),
+        logger=r_logger,
+        secret_manager=secret_manager,
         user=user,
         event_sender=event_sender,
         workspace_event_sender=workspace_event_sender,

@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from fastapi import Depends
 
+from application.integrations.dependencies import get_integration_service
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
@@ -15,7 +16,6 @@ from core.utils.event_sender import EventSender
 
 from .crud import ResourceCRUD
 from .service import ResourceService
-from ..integrations.crud import IntegrationCRUD
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +37,7 @@ def get_resource_service(
     return ResourceService(
         crud=ResourceCRUD(session=session),
         template_service=get_template_service(session=session),
-        crud_integration=IntegrationCRUD(session=session),
+        integration_service=get_integration_service(session=session),
         permission_service=get_permission_service(session=session),
         service_source_code_version=get_source_code_version_service(session=session),
         storage_service=get_storage_service(session=session),

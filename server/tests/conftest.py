@@ -74,6 +74,12 @@ from .fixtures.test_storage_fixtures import (
     storage_response,
     mocked_storage,
 )
+from .fixtures.test_secret_fixtures import (
+    mock_secret_crud,
+    mock_secret_service,
+    mocked_secret_response,
+    mocked_secret,
+)
 from .fixtures.test_task_worker_fixutres import (
     mock_task_controller,
     mock_task_controller_factory,
@@ -127,6 +133,10 @@ __all__ = [
     "mock_storage_service",
     "storage_response",
     "mocked_storage",
+    "mock_secret_crud",
+    "mock_secret_service",
+    "mocked_secret_response",
+    "mocked_secret",
     "mock_resource_crud",
     "mock_resource_service",
     "resource_response",

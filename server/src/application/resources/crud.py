@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from application.integrations.model import Integration
+from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
 from application.storages.model import Storage
 from core.users.model import User
@@ -32,7 +33,10 @@ class ResourceCRUD:
             .outerjoin(SourceCodeVersion, Resource.source_code_version_id == SourceCodeVersion.id)
         )
         statement = statement.options(
-            selectinload(Resource.integration_ids), selectinload(Resource.children), selectinload(Resource.parents)
+            selectinload(Resource.integration_ids),
+            selectinload(Resource.children),
+            selectinload(Resource.parents),
+            selectinload(Resource.secret_ids),
         )
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
@@ -54,7 +58,10 @@ class ResourceCRUD:
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
         statement = statement.options(
-            selectinload(Resource.integration_ids), selectinload(Resource.children), selectinload(Resource.parents)
+            selectinload(Resource.integration_ids),
+            selectinload(Resource.children),
+            selectinload(Resource.parents),
+            selectinload(Resource.secret_ids),
         )
 
         result = await self.session.execute(statement)
@@ -70,6 +77,7 @@ class ResourceCRUD:
         parents = body.pop("parents", [])
         children = body.pop("children", [])
         integration_ids = body.pop("integration_ids", [])
+        secret_ids = body.pop("secret_ids", [])
 
         db_resource = Resource(**body)
         if integration_ids:
@@ -77,6 +85,11 @@ class ResourceCRUD:
                 select(Integration).where(Integration.id.in_(integration_ids))
             )
             db_resource.integration_ids = list(integration_objs.scalars().all())
+
+        if secret_ids:
+            secret_objs = await self.session.execute(select(Secret).where(Secret.id.in_(secret_ids)))
+            db_resource.secret_ids = list(secret_objs.scalars().all())
+
         self.session.add(db_resource)
         await self.session.flush()
 
@@ -98,7 +111,7 @@ class ResourceCRUD:
 
     async def update(self, existing_resource: Resource, body: dict[str, Any]) -> Resource:
         for key, value in body.items():
-            if key not in {"integration_ids", "parents", "children"} and hasattr(existing_resource, key):
+            if key not in {"integration_ids", "parents", "children", "secret_ids"} and hasattr(existing_resource, key):
                 setattr(existing_resource, key, value)
 
         if body.get("integration_ids") == []:
@@ -113,6 +126,17 @@ class ResourceCRUD:
                 raise ValueError("Some integration ids were not found")
 
             existing_resource.integration_ids = list(integrations)
+
+        if body.get("secret_ids") == []:
+            existing_resource.secret_ids = []
+        elif body.get("secret_ids"):
+            secret_ids = body.pop("secret_ids")
+            secret_objects = await self.session.execute(select(Secret).where(Secret.id.in_(secret_ids)))
+            secrets = secret_objects.scalars().all()
+            if not len(secret_ids) == len(secrets):
+                raise ValueError("Some secret ids were not found")
+
+            existing_resource.secret_ids = list(secrets)
 
         if body.get("parents") == []:
             existing_resource.parents = []

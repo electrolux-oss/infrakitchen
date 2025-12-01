@@ -7,6 +7,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CodeIcon from "@mui/icons-material/Code";
 import HistoryIcon from "@mui/icons-material/History";
 import HubIcon from "@mui/icons-material/Hub";
+import KeyIcon from "@mui/icons-material/Key";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import PeopleIcon from "@mui/icons-material/People";
@@ -204,6 +205,13 @@ export default function DashboardSidebar({
             icon={<StorageIcon />}
             href="/storages"
             selected={!!matchPath("/storages/*", pathname)}
+          />
+          <DashboardSidebarPageItem
+            id="secrets"
+            title="Secrets"
+            icon={<KeyIcon />}
+            href="/secrets"
+            selected={!!matchPath("/secrets/*", pathname)}
           />
 
           <DashboardSidebarDividerItem />

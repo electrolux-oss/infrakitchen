@@ -455,6 +455,31 @@ const ResourceCreatePageInner = () => {
                 )}
               />
 
+              <Controller
+                name="secret_ids"
+                control={control}
+                render={({ field }) => (
+                  <ArrayReferenceInput
+                    {...field}
+                    ikApi={ikApi}
+                    entity_name="secrets"
+                    showFields={["name", "secret_provider"]}
+                    buffer={buffer}
+                    setBuffer={setBuffer}
+                    error={!!errors.secret_ids}
+                    helpertext={
+                      errors.secret_ids
+                        ? (errors.secret_ids as any).message
+                        : "Select Secrets"
+                    }
+                    value={field.value}
+                    label="Select Secrets"
+                    multiple
+                    fullWidth
+                  />
+                )}
+              />
+
               {watchedIntegrationIds.length > 0 && (
                 <Controller
                   name="storage_id"

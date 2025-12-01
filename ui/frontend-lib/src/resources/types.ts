@@ -1,4 +1,5 @@
 import { IntegrationShort } from "../integrations/types";
+import { SecretShort } from "../secrets/types";
 import {
   SourceCodeVersionShort,
   SourceOutputConfigShort,
@@ -48,6 +49,7 @@ export interface ResourceResponse {
   creator: UserShort | null;
   template: TemplateShort;
   integration_ids: IntegrationShort[];
+  secret_ids: SecretShort[];
   storage: StorageShort | null;
   source_code_version: SourceCodeVersionShort | null;
   storage_path: string | null;
@@ -69,6 +71,7 @@ export interface ResourceCreate {
   storage_id: string | null;
   source_code_version_id: string | null;
   integration_ids: string[];
+  secret_ids: string[];
   storage_path: string | null;
   variables: ResourceVariableSchema[];
   outputs: object[];
@@ -98,6 +101,7 @@ export interface ResourceUpdate {
   description: string;
   source_code_version_id: string | null;
   integration_ids: string[];
+  secret_ids: string[];
   variables: ResourceVariableSchema[];
   dependency_tags: object[];
   dependency_config: object[];

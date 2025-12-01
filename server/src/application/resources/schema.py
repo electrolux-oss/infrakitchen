@@ -4,6 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
 from application.integrations.schema import IntegrationShort
 from application.source_code_versions.schema import SourceCodeVersionShort, SourceOutputConfigShort
@@ -114,6 +115,10 @@ class ResourceResponse(BaseModel):
         default=[],
     )
 
+    secret_ids: list[SecretShort] = Field(
+        default=[],
+    )
+
     storage: StorageShort | None = Field(...)
     storage_path: str | None = Field(
         default=None,
@@ -153,6 +158,10 @@ class ResourceCreate(BaseModel):
         default=[],
     )
 
+    secret_ids: list[uuid.UUID] = Field(
+        default=[],
+    )
+
     storage_id: uuid.UUID | StorageShort | None = Field(
         default=None,
     )
@@ -182,6 +191,9 @@ class ResourcePatch(BaseModel):
     integration_ids: list[uuid.UUID] | None = Field(
         default=[],
     )
+    secret_ids: list[uuid.UUID] | None = Field(
+        default=[],
+    )
     variables: list[Variables] | None = Field(default=[])
     dependency_tags: list[DependencyTag] | None = Field(default_factory=list)
     dependency_config: list[DependencyConfig] | None = Field(default_factory=list)
@@ -196,6 +208,7 @@ class ResourcePatch(BaseModel):
             "description",
             "source_code_version_id",
             "integration_ids",
+            "secret_ids",
             "variables",
             "dependency_tags",
             "dependency_config",

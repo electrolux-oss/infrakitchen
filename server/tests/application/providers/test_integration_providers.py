@@ -4,15 +4,11 @@ import pytest
 
 from application.integrations.schema import (
     AWSIntegrationConfig,
-    VaultIntegrationConfig,
 )
-from application.providers.vault_provider import VaultProviderAdapter
 
 from application.providers import (
     AwsProvider,
-    SecretProviderAdapter,
 )
-from application.providers.aws.aws_provider import AwsAuthentication
 from core.adapters.provider_adapters import IntegrationProvider
 
 
@@ -27,11 +23,12 @@ async def get_account_session(self, region_name: str = "us-east-1"):
     )
 
 
-AwsAuthentication.get_account_session = get_account_session  # type: ignore[method-assign]
-
-
 @pytest.mark.asyncio
-async def test_cloud_providers():
+async def test_cloud_providers(monkeypatch):
+    monkeypatch.setattr(
+        "application.providers.aws.aws_provider.AwsAuthentication.get_account_session",
+        get_account_session,
+    )
     aws_provider: type[AwsProvider] = IntegrationProvider.adapters["aws"]
     kwargs: dict[str, Any] = dict()  # test evnironment variables
     assert aws_provider.__integration_provider_name__ == "aws"
@@ -57,22 +54,3 @@ async def test_cloud_providers():
     await provider_instance.authenticate()
     assert provider_instance.environment_variables["AWS_ACCESS_KEY_ID"] == "test_key"
     assert provider_instance.environment_variables["AWS_SECRET_ACCESS_KEY"] == "test_secret"
-
-
-@pytest.mark.asyncio
-async def test_secret_providers():
-    vault_provider: type[VaultProviderAdapter] = SecretProviderAdapter.adapters["vault"]
-    kwargs: dict[str, Any] = dict()
-    assert vault_provider.__secret_provider_adapter_name__ == "vault"
-    configuration: VaultIntegrationConfig = VaultIntegrationConfig.model_validate(
-        {
-            "vault_domain": "test_domain",
-            "vault_token": "test_token",
-        }
-    )
-    kwargs["configuration"] = configuration
-    provider_instance: VaultProviderAdapter = vault_provider(**kwargs)
-    assert provider_instance.vault_domain == "test_domain"
-
-    await provider_instance.authenticate()
-    assert provider_instance.environment_variables["VAULT_TOKEN"] == "test_token"

@@ -23,19 +23,19 @@ class SecretProviderAdapter:
         super().__init_subclass__(**kwargs)
         cls.adapters[cls.__secret_provider_adapter_name__] = cls
 
-    async def authenticate(self) -> None:
-        """Authenticate with the secret provider.
-
-        Must be implemented by subclasses.
-        """
-        pass
-
-    async def is_valid(self) -> bool:
+    async def is_valid(self) -> str:
         """Validate the connection to the secret provider.
 
         Must be implemented by subclasses.
         """
         raise NotImplementedError("Subclasses must implement is_valid method.")
+
+    async def add_secrets_to_env(self, **kwargs) -> None:
+        """Add secrets to environment variables.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement add_secrets_to_env method.")
 
 
 class StorageProviderAdapter:

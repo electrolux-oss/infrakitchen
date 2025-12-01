@@ -226,7 +226,7 @@ class StorageService:
         actions: list[str] = []
         storage = await self.crud.get_by_id(storage_id)
         if not storage:
-            raise EntityNotFound("Source Code not found")
+            raise EntityNotFound("Storage not found")
 
         if storage.status in [ModelStatus.IN_PROGRESS]:
             return []
