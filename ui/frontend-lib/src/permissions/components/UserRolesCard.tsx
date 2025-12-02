@@ -23,7 +23,7 @@ import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
 import { PermissionActionButton } from "./PermissionActionButton";
-import { UserRoleCreateDialog } from "./UserRoleCreate";
+import { UserRoleCreateDialog } from "./UserRoleCreateDialog";
 
 interface UserRolesCardProps {
   user_id: string;

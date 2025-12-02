@@ -27,7 +27,7 @@ import { notifyError } from "../../common/hooks/useNotification";
 import { PermissionResponse } from "../types";
 
 import { PermissionActionButton } from "./PermissionActionButton";
-import { UserPolicyCreateDialog } from "./UserPolicyCreate";
+import { UserPolicyCreateDialog } from "./UserPolicyCreateDialog";
 
 export const UserPoliciesCard = (props: { user_id: string }) => {
   const { user_id } = props;
