@@ -381,6 +381,9 @@ export const inputsCustomizations: Components<Theme> = {
           },
         },
       }),
+      paper: ({ theme }) => ({
+        boxShadow: theme.shadows[8],
+      }),
     },
   },
   MuiInputBase: {
