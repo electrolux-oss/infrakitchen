@@ -23,7 +23,7 @@ import {
   Stack,
 } from "@mui/material";
 
-import { useConfig, DialogSlider } from "../../../../common";
+import { useConfig, CommonDialog } from "../../../../common";
 import { notify, notifyError } from "../../../../common/hooks/useNotification";
 
 interface PodDetailsDialogProps {
@@ -362,53 +362,57 @@ export const PodDetailsDialog = (props: PodDetailsDialogProps) => {
   ]);
 
   return (
-    <DialogSlider
+    <CommonDialog
       open={open}
       onClose={onClose}
       title={`Pods for Deployment: **${deploymentName}**`}
-    >
-      <>
-        {loadingPods && (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-            <CircularProgress />
-          </Box>
-        )}
-        {errorPods && (
-          <Alert severity="error">
-            <Typography variant="body2">
-              Error fetching pods for **{deploymentName}**: {errorPods.message}
-            </Typography>
-          </Alert>
-        )}
-        {!loadingPods && !errorPods && (
-          <>
-            {pods.length > 0 ? (
-              <TableContainer>
-                <Table stickyHeader aria-label="pods table">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: "40px" }} />{" "}
-                      {/* For expand icon */}
-                      <TableCell>Pod Name</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {pods.map((pod) => (
-                      <PodRow key={pod?.metadata.uid} pod={pod} {...props} />
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                No pods found for this deployment.
+      maxWidth="lg"
+      actions={null}
+      content={
+        <>
+          {loadingPods && (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+              <CircularProgress />
+            </Box>
+          )}
+          {errorPods && (
+            <Alert severity="error">
+              <Typography variant="body2">
+                Error fetching pods for **{deploymentName}**:{" "}
+                {errorPods.message}
               </Typography>
-            )}
-          </>
-        )}
-      </>
-    </DialogSlider>
+            </Alert>
+          )}
+          {!loadingPods && !errorPods && (
+            <>
+              {pods.length > 0 ? (
+                <TableContainer>
+                  <Table stickyHeader aria-label="pods table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: "40px" }} />{" "}
+                        {/* For expand icon */}
+                        <TableCell>Pod Name</TableCell>
+                        <TableCell align="center">Status</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {pods.map((pod) => (
+                        <PodRow key={pod?.metadata.uid} pod={pod} {...props} />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No pods found for this deployment.
+                </Typography>
+              )}
+            </>
+          )}
+        </>
+      }
+    />
   );
 };

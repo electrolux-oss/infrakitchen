@@ -17,7 +17,7 @@ import {
   Radio,
 } from "@mui/material";
 
-import { DialogSlider } from "../../common/components/DialogSlider";
+import { CommonDialog } from "../../common/components/CommonDialog";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -26,6 +26,12 @@ import { IkEntity } from "../../types";
 interface PolicyCreateProps {
   role_name: string;
   onClose?: () => void;
+  onSubmit: (data: FormValues) => void;
+  control: any;
+  errors: any;
+  handleSubmit: any;
+  watch: any;
+  setValue: any;
 }
 
 interface FormValues {
@@ -45,24 +51,8 @@ const actions = [
 ];
 
 export const RolePolicyCreate = (props: PolicyCreateProps) => {
-  const { role_name, onClose } = props;
+  const { onSubmit, control, errors, handleSubmit, watch, setValue } = props;
   const { ikApi } = useConfig();
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-    setValue,
-  } = useForm<FormValues>({
-    mode: "onChange",
-    defaultValues: {
-      casbin_type: "resource_policy",
-      resource: "",
-      action: "read",
-      role: role_name,
-      selectedApiPermissions: [],
-    },
-  });
 
   const watchedCasbinType = watch("casbin_type");
   const [roleType, setRoleType] = useState<string>();
@@ -101,75 +91,8 @@ export const RolePolicyCreate = (props: PolicyCreateProps) => {
     }
   }, [roleType, ikApi]);
 
-  const onSubmit = useCallback(
-    async (data: FormValues) => {
-      try {
-        if (data.casbin_type === "api_policy") {
-          if (
-            !data.selectedApiPermissions ||
-            data.selectedApiPermissions.length === 0
-          ) {
-            notifyError(new Error("No API permissions selected."));
-            return;
-          }
-
-          const promises = [];
-          for (const apiPerm of data.selectedApiPermissions) {
-            if (apiPerm.actions.length === 0) {
-              notify(
-                `No actions selected for API: ${apiPerm.api}. Skipping.`,
-                "warning",
-              );
-              continue;
-            }
-            const action = apiPerm.actions[0];
-            promises.push(
-              ikApi.postRaw("permissions", {
-                casbin_type: "api_policy",
-                role: data.role,
-                api: apiPerm.api,
-                action: action,
-              }),
-            );
-          }
-          await Promise.all(promises);
-          notify(
-            `API policies created successfully for role: ${data.role}`,
-            "success",
-          );
-          onClose?.();
-        } else if (data.casbin_type === "resource_policy") {
-          if (!data.resource) {
-            notifyError(new Error("Resource is required for resource policy."));
-            return;
-          }
-          if (!data.action) {
-            notifyError(new Error("Action is required for resource policy."));
-            return;
-          }
-          const response = await ikApi.postRaw("permissions", {
-            casbin_type: data.casbin_type,
-            role: data.role,
-            resource: data.resource,
-            action: data.action,
-          });
-          if (response.id) {
-            notify(
-              `Resource policy created successfully: ${response.role}`,
-              "success",
-            );
-            onClose?.();
-          }
-        }
-      } catch (error: any) {
-        notifyError(error);
-      }
-    },
-    [ikApi, onClose],
-  );
-
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
+    <Box sx={{ mt: 2 }}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="casbin_type"
@@ -227,7 +150,7 @@ export const RolePolicyCreate = (props: PolicyCreateProps) => {
 
               const handleActionChange = (apiName: string, action: string) => {
                 const updatedPermissions = currentSelectedApiPermissions?.map(
-                  (p) => {
+                  (p: { api: string; actions: string[] }) => {
                     if (p.api === apiName) {
                       return { ...p, actions: [action] };
                     }
@@ -250,11 +173,13 @@ export const RolePolicyCreate = (props: PolicyCreateProps) => {
                     )}
                     {entities.map((apiName) => {
                       const isApiSelected = currentSelectedApiPermissions?.some(
-                        (p) => p.api === apiName,
+                        (p: { api: string; actions: string[] }) =>
+                          p.api === apiName,
                       );
                       const selectedActionsForApi =
                         currentSelectedApiPermissions?.find(
-                          (p) => p.api === apiName,
+                          (p: { api: string; actions: string[] }) =>
+                            p.api === apiName,
                         )?.actions || [];
 
                       return (
@@ -373,15 +298,6 @@ export const RolePolicyCreate = (props: PolicyCreateProps) => {
             />
           </>
         )}
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2, py: 1.5, px: 4, borderRadius: "8px" }}
-        >
-          Submit
-        </Button>
       </form>
     </Box>
   );
@@ -395,10 +311,117 @@ interface RolePolicyCreateProps {
 
 export const RolePolicyCreateDialog = (props: RolePolicyCreateProps) => {
   const { role_name, onClose, open } = props;
+  const { ikApi } = useConfig();
+  const {
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useForm<FormValues>({
+    mode: "onChange",
+    defaultValues: {
+      casbin_type: "resource_policy",
+      resource: "",
+      action: "read",
+      role: role_name,
+      selectedApiPermissions: [],
+    },
+  });
+
+  const onSubmit = useCallback(
+    async (data: FormValues) => {
+      try {
+        if (data.casbin_type === "api_policy") {
+          if (
+            !data.selectedApiPermissions ||
+            data.selectedApiPermissions.length === 0
+          ) {
+            notifyError(new Error("No API permissions selected."));
+            return;
+          }
+
+          const promises = [];
+          for (const apiPerm of data.selectedApiPermissions) {
+            if (apiPerm.actions.length === 0) {
+              notify(
+                `No actions selected for API: ${apiPerm.api}. Skipping.`,
+                "warning",
+              );
+              continue;
+            }
+            const action = apiPerm.actions[0];
+            promises.push(
+              ikApi.postRaw("permissions", {
+                casbin_type: "api_policy",
+                role: data.role,
+                api: apiPerm.api,
+                action: action,
+              }),
+            );
+          }
+          await Promise.all(promises);
+          notify(
+            `API policies created successfully for role: ${data.role}`,
+            "success",
+          );
+          onClose?.();
+        } else if (data.casbin_type === "resource_policy") {
+          if (!data.resource) {
+            notifyError(new Error("Resource is required for resource policy."));
+            return;
+          }
+          if (!data.action) {
+            notifyError(new Error("Action is required for resource policy."));
+            return;
+          }
+          const response = await ikApi.postRaw("permissions", {
+            casbin_type: data.casbin_type,
+            role: data.role,
+            resource: data.resource,
+            action: data.action,
+          });
+          if (response.id) {
+            notify(
+              `Resource policy created successfully: ${response.role}`,
+              "success",
+            );
+            onClose?.();
+          }
+        }
+      } catch (error: any) {
+        notifyError(error);
+      }
+    },
+    [ikApi, onClose],
+  );
 
   return (
-    <DialogSlider open={open} onClose={onClose} title="Assign Resource Policy">
-      <RolePolicyCreate role_name={role_name} onClose={onClose} />
-    </DialogSlider>
+    <CommonDialog
+      open={open}
+      onClose={onClose}
+      title="Assign Resource Policy"
+      content={
+        <RolePolicyCreate
+          role_name={role_name}
+          onClose={onClose}
+          onSubmit={onSubmit}
+          control={control}
+          errors={errors}
+          handleSubmit={handleSubmit}
+          watch={watch}
+          setValue={setValue}
+        />
+      }
+      actions={
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSubmit(onSubmit)}
+        >
+          Submit
+        </Button>
+      }
+    />
   );
 };

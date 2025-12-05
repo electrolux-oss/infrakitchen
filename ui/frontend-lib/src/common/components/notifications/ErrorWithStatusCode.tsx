@@ -54,22 +54,24 @@ export const ErrorWithStatusCode = forwardRef<
           boxShadow: 3,
         }}
       >
-        <StyledCardActions>
+        <StyledCardActions style={{ minWidth: 360 }}>
           <Typography variant="body1" sx={{ fontWeight: "bold" }} color="error">
             {message}
           </Typography>
 
-          <ExpandIconButton
-            aria-label="Show details"
-            expanded={expanded}
-            onClick={handleExpandClick}
-          >
-            <ExpandMoreIcon />
-          </ExpandIconButton>
+          <Box sx={{ display: "flex", gap: 1, marginLeft: "auto" }}>
+            <ExpandIconButton
+              aria-label="Show details"
+              expanded={expanded}
+              onClick={handleExpandClick}
+            >
+              <ExpandMoreIcon />
+            </ExpandIconButton>
 
-          <IconButton sx={{ padding: "8px 8px" }} onClick={handleDismiss}>
-            <CloseIcon />
-          </IconButton>
+            <IconButton sx={{ padding: "8px 8px" }} onClick={handleDismiss}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </StyledCardActions>
 
         <Collapse in={expanded} timeout="auto" unmountOnExit>

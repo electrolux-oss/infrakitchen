@@ -14,8 +14,8 @@ import {
 } from "@mui/material";
 
 import { LogEntity, RevisionResponse } from "../../types";
+import { CommonDialog } from "../components/CommonDialog";
 import { getDateValue } from "../components/CommonField";
-import { DialogSlider } from "../components/DialogSlider";
 import { useConfig } from "../context/ConfigContext";
 
 import { LogView } from "./LogView";
@@ -123,17 +123,20 @@ export const LogList = (props: { entity_id: string }) => {
               >
                 Revision
               </Button>
-              <DialogSlider
+              <CommonDialog
                 open={open}
                 onClose={handleRevisionCloseDialog}
                 title="Revision Details"
-              >
-                {revision && (
-                  <Box sx={{ padding: 2 }}>
-                    <pre>{JSON.stringify(revision, null, 2)}</pre>
-                  </Box>
-                )}
-              </DialogSlider>
+                maxWidth="md"
+                content={
+                  revision && (
+                    <Box sx={{ padding: 2 }}>
+                      <pre>{JSON.stringify(revision, null, 2)}</pre>
+                    </Box>
+                  )
+                }
+                actions={null}
+              />
             </>
           )}
         </Box>

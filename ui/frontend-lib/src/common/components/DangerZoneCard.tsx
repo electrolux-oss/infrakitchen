@@ -117,6 +117,7 @@ export const DangerZoneCard = () => {
         )}
       </CardActions>
       <CommonDialog
+        maxWidth="xs"
         title={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WarningIcon color="error" />
@@ -169,6 +170,7 @@ export const DangerZoneCard = () => {
         }
       />
       <CommonDialog
+        maxWidth="xs"
         title={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WarningIcon color="error" />
@@ -201,6 +203,7 @@ export const DangerZoneCard = () => {
         }
       />
       <CommonDialog
+        maxWidth="xs"
         title={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <WarningIcon color="error" />
