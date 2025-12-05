@@ -365,7 +365,14 @@ export const inputsCustomizations: Components<Theme> = {
     styleOverrides: {
       root: ({ theme }) => ({
         "& .MuiOutlinedInput-root": {
-          // padding: 0,
+          display: "flex",
+          alignItems: "center",
+          minHeight: "2.5rem",
+          height: "auto",
+          padding: "7px 12px",
+          "& .MuiAutocomplete-input": {
+            padding: 0,
+          },
           "& .MuiAutocomplete-endAdornment": {
             right: 0,
             "& .MuiButtonBase-root": {

@@ -95,7 +95,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
               height: "auto",
               paddingTop: "6px",
               paddingBottom: "6px",
-              alignItems: "flex-start",
+              alignItems: "center",
             },
             "& .MuiAutocomplete-tagContainer": {
               flexWrap: "wrap",
