@@ -37,6 +37,7 @@ from ..workspaces import api as workspaces_api
 from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
 from ..views import config_view as config
+from ..views import user_permission_view as user
 
 api = APIRouter(dependencies=[Depends(get_logged_user), Depends(check_api_permission)])
 
@@ -204,4 +205,5 @@ main_router = APIRouter(prefix="/api")
 main_router.include_router(api)
 main_router.include_router(auth_router)
 main_router.include_router(config.router)
+main_router.include_router(user.router)
 main_router.include_router(websocket)

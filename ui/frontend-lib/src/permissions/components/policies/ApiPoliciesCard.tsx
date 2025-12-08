@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { PermissionWrapper } from "../../../common";
 import {
   GetEntityLink,
   getDateValue,
@@ -84,7 +85,12 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         sortable: false,
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <DeletePermissionButton permission_id={params.value} />
+          <PermissionWrapper
+            requiredPermission="api:permission"
+            permissionAction="admin"
+          >
+            <DeletePermissionButton permission_id={params.value} />
+          </PermissionWrapper>
         ),
       },
     ],
@@ -97,18 +103,23 @@ export const ApiPoliciesCard = (props: { role: string }) => {
       expanded={true}
       id="role-api-policies"
     >
-      <Button
-        variant="outlined"
-        onClick={() => handleOpenDialog()}
-        startIcon={<Icon icon="icon-park-outline:add" />}
+      <PermissionWrapper
+        requiredPermission="api:permission"
+        permissionAction="write"
       >
-        Add Api Policy
-      </Button>
-      <PolicyApiCreateDialog
-        role_name={role}
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-      />
+        <Button
+          variant="outlined"
+          onClick={() => handleOpenDialog()}
+          startIcon={<Icon icon="icon-park-outline:add" />}
+        >
+          Add Api Policy
+        </Button>
+        <PolicyApiCreateDialog
+          role_name={role}
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+        />
+      </PermissionWrapper>
       <EntityFetchTable
         title="Api Policies"
         entityName={`permissions/role/${role}/api/policie`}

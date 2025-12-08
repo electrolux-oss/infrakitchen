@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
+import { PermissionWrapper, useConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -66,13 +66,18 @@ export const AuthProvidersPage = () => {
     <PageContainer
       title="Auth Providers"
       actions={
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
+        <PermissionWrapper
+          requiredPermission="api:auth_provider"
+          permissionAction="write"
         >
-          Create
-        </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
+          >
+            Create
+          </Button>
+        </PermissionWrapper>
       }
     >
       <EntityFetchTable

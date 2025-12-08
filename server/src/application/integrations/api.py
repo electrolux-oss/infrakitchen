@@ -3,8 +3,9 @@ from fastapi import status as http_status
 
 from application.integrations.service import IntegrationService
 from core.base_models import PatchBodyModel
+from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
-from core.users.functions import user_has_access_to_resource
+from core.users.functions import user_has_access_to_api, user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .dependencies import get_integration_service
@@ -142,8 +143,12 @@ async def get_actions(
     status_code=http_status.HTTP_200_OK,
 )
 async def validate_on_create(
-    body: IntegrationValidationRequest, service: IntegrationService = Depends(get_integration_service)
+    request: Request, body: IntegrationValidationRequest, service: IntegrationService = Depends(get_integration_service)
 ):
+    requester: UserDTO = request.state.user
+    if not await user_has_access_to_api(requester, "integration", action="write"):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     return await service.validate(integration_config=body.configuration, integration_provider=body.integration_provider)
 
 
@@ -152,7 +157,19 @@ async def validate_on_create(
     response_model=IntegrationValidationResponse,
     status_code=http_status.HTTP_200_OK,
 )
-async def validate(integration_id: str, service: IntegrationService = Depends(get_integration_service)):
+async def validate(
+    request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)
+):
+    requester: UserDTO = request.state.user
+    casbin_enforcer = CasbinEnforcer()
+    if casbin_enforcer.enforcer is None:
+        _ = await casbin_enforcer.get_enforcer()
+    if casbin_enforcer.enforcer is None:
+        raise HTTPException(status_code=500, detail="Casbin enforcer is not initialized")
+    requester: UserDTO = request.state.user
+    if not await casbin_enforcer.enforce_casbin_user(requester.id, "integration", "write", object_type="api"):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     integration = await service.get_by_id(integration_id=integration_id)
     if not integration:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Integration not found")

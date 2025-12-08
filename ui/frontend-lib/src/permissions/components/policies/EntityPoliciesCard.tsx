@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { PermissionWrapper } from "../../../common";
 import {
   GetEntityLink,
   getDateValue,
@@ -106,7 +107,12 @@ export const EntityPoliciesCard = (props: {
         sortable: false,
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <DeletePermissionButton permission_id={params.value} />
+          <PermissionWrapper
+            requiredPermission="api:permission"
+            permissionAction="admin"
+          >
+            <DeletePermissionButton permission_id={params.value} />
+          </PermissionWrapper>
         ),
       },
     ],
@@ -119,32 +125,37 @@ export const EntityPoliciesCard = (props: {
       expanded={true}
       id="role-policies"
     >
-      <Button
-        variant="outlined"
-        onClick={() => handleOpenDialog()}
-        startIcon={<Icon icon="icon-park-outline:add" />}
+      <PermissionWrapper
+        requiredPermission={"api:permission"}
+        permissionAction="write"
       >
-        Add Role
-      </Button>
-      <EntityPolicyRoleCreateDialog
-        entity_id={entity_id}
-        entity_name={entity_name}
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-      />
-      <Button
-        variant="outlined"
-        onClick={() => handleOpenUserDialog()}
-        startIcon={<Icon icon="icon-park-outline:add" />}
-      >
-        Add User
-      </Button>
-      <UserPolicyEntityCreateDialog
-        entity_id={entity_id}
-        entity_name={entity_name}
-        open={isUserDialogOpen}
-        onClose={handleCloseUserDialog}
-      />
+        <Button
+          variant="outlined"
+          onClick={() => handleOpenDialog()}
+          startIcon={<Icon icon="icon-park-outline:add" />}
+        >
+          Add Role
+        </Button>
+        <EntityPolicyRoleCreateDialog
+          entity_id={entity_id}
+          entity_name={entity_name}
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+        />
+        <Button
+          variant="outlined"
+          onClick={() => handleOpenUserDialog()}
+          startIcon={<Icon icon="icon-park-outline:add" />}
+        >
+          Add User
+        </Button>
+        <UserPolicyEntityCreateDialog
+          entity_id={entity_id}
+          entity_name={entity_name}
+          open={isUserDialogOpen}
+          onClose={handleCloseUserDialog}
+        />
+      </PermissionWrapper>
       <EntityFetchTable
         title={`${capitalizeFirstLetter(entity_name)} Policies`}
         entityName={`permissions/${entity_name}/${entity_id}/policie`}

@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router";
 
 import { Button } from "@mui/material";
 
-import { LogLiveTail, useConfig } from "../../common";
+import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ResourceContent } from "../components/ResourceContent";
@@ -24,9 +24,14 @@ export const ResourcePage = () => {
       <EntityContainer
         title={"Resource Overview"}
         actions={
-          <Button variant="outlined" onClick={handleMetadata}>
-            Metadata
-          </Button>
+          <PermissionWrapper
+            requiredPermission="api:resource"
+            permissionAction="write"
+          >
+            <Button variant="outlined" onClick={handleMetadata}>
+              Metadata
+            </Button>
+          </PermissionWrapper>
         }
       >
         <ResourceReviewView />

@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { PermissionWrapper } from "../../../common";
 import {
   GetEntityLink,
   getDateValue,
@@ -62,7 +63,12 @@ export const UserRolesCard = (props: { user_id: string }) => {
         headerName: "Delete",
         sortable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <DeletePermissionButton permission_id={params.value} />
+          <PermissionWrapper
+            requiredPermission="api:permission"
+            permissionAction="admin"
+          >
+            <DeletePermissionButton permission_id={params.value} />
+          </PermissionWrapper>
         ),
       },
     ],
@@ -75,19 +81,24 @@ export const UserRolesCard = (props: { user_id: string }) => {
       expanded={true}
       id="user-roles-card"
     >
-      <Button
-        variant="outlined"
-        onClick={() => handleOpenDialog()}
-        startIcon={<Icon icon="icon-park-outline:add" />}
+      <PermissionWrapper
+        requiredPermission="api:permission"
+        permissionAction="write"
       >
-        Add Role
-      </Button>
+        <Button
+          variant="outlined"
+          onClick={() => handleOpenDialog()}
+          startIcon={<Icon icon="icon-park-outline:add" />}
+        >
+          Add Role
+        </Button>
 
-      <UserRoleCreateDialog
-        user_id={user_id}
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-      />
+        <UserRoleCreateDialog
+          user_id={user_id}
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+        />
+      </PermissionWrapper>
 
       <EntityFetchTable
         title="User Roles"

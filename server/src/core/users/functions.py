@@ -32,6 +32,32 @@ async def user_has_access_to_resource(user: UserDTO | None, resource_id: str | U
     return False
 
 
+async def user_has_access_to_api(user: UserDTO | None, api: str, action: str) -> bool:
+    if user is None:
+        return False
+
+    user_id = user.id
+    if user.primary_account:
+        user_id = user.primary_account[0].id if user.primary_account else user.id
+
+    casbin_enforcer = CasbinEnforcer()
+    if casbin_enforcer.enforcer is None:
+        _ = await casbin_enforcer.get_enforcer()
+    assert casbin_enforcer.enforcer is not None, "Casbin enforcer is not initialized"
+
+    act_mapping = {
+        "write": ["write", "admin"],
+        "read": ["read", "write", "admin"],
+        "admin": ["admin"],
+    }
+
+    for act in act_mapping[action]:
+        if await casbin_enforcer.enforce_casbin_user(user_id, api, act, object_type="api") is True:
+            return True
+
+    return False
+
+
 async def user_entity_permissions(user: UserDTO | None, entity_id: str | UUID) -> list[str]:
     if user is None:
         raise ValueError("User must not be None and must have an ID")

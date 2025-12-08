@@ -1,3 +1,4 @@
+from datetime import datetime
 from http import HTTPStatus
 from uuid import uuid4, UUID
 
@@ -7,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from application.resources.api import router
 from application.resources.dependencies import get_resource_service
-from application.resources.schema import ResourceTreeResponse
+from application.resources.schema import ResourceTreeResponse, UserResourceResponse
 from core import UserDTO
 
 RESOURCE_ID = "res123"
@@ -24,6 +25,7 @@ class MockResourceService:
         patched=None,
         tree=None,
         actions=None,
+        policies=None,
     ):
         self._return_value = return_value
         self._total = total
@@ -33,6 +35,7 @@ class MockResourceService:
         self._patched = patched
         self._tree = tree
         self._actions = actions
+        self._policies = policies or []
 
     async def get_by_id(self, resource_id: str):
         return self._return_value
@@ -63,6 +66,9 @@ class MockResourceService:
 
     async def get_actions(self, resource_id, requester):
         return self._actions
+
+    async def get_user_resource_policies(self, user_id: str):
+        return self._policies
 
 
 @pytest.fixture(autouse=True)
@@ -490,3 +496,41 @@ class TestResourceTree:
 
         assert response.status_code == HTTPStatus.OK
         assert json_response["name"] == "tree1"
+
+
+# Permissions
+class TestGetUserResourcesPolicies:
+    USER_ID = str(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_get_user_resources_success(self, client_with_user, override_service):
+        mock_user_policy_data = UserResourceResponse(
+            id=uuid4(),
+            resource_id=uuid4(),
+            resource_name="resource",
+            action="read",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+        mock_resources = [mock_user_policy_data, mock_user_policy_data]
+
+        service = MockResourceService(policies=mock_resources)
+        override_service(service)
+
+        response = client_with_user.get(f"/resources/permissions/user/{self.USER_ID}/policies")
+        json_response = response.json()
+
+        assert response.status_code == HTTPStatus.OK
+        assert len(json_response) == 2
+        assert json_response[0]["resource_name"] == "resource"
+
+    @pytest.mark.asyncio
+    async def test_get_user_resources_empty(self, client_with_user, override_service):
+        service = MockResourceService(policies=[])
+        override_service(service)
+
+        response = client_with_user.get(f"/resources/permissions/user/{self.USER_ID}/policies")
+        json_response = response.json()
+
+        assert response.status_code == HTTPStatus.OK
+        assert len(json_response) == 0

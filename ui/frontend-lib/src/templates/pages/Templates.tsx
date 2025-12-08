@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { FilterConfig } from "../../common";
+import { FilterConfig, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -109,19 +109,24 @@ export const TemplatesPage = () => {
 
   const actions = (
     <Box>
-      <Button
-        variant="outlined"
-        onClick={() => navigate(`${linkPrefix}templates/create`)}
+      <PermissionWrapper
+        requiredPermission="api:template"
+        permissionAction="write"
       >
-        Create
-      </Button>
-      <Button
-        variant="outlined"
-        onClick={() => navigate(`${linkPrefix}templates/import`)}
-        sx={{ ml: 1 }}
-      >
-        Import
-      </Button>
+        <Button
+          variant="outlined"
+          onClick={() => navigate(`${linkPrefix}templates/create`)}
+        >
+          Create
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={() => navigate(`${linkPrefix}templates/import`)}
+          sx={{ ml: 1 }}
+        >
+          Import
+        </Button>
+      </PermissionWrapper>
     </Box>
   );
 
@@ -200,6 +205,7 @@ export const TemplatesPage = () => {
               return (
                 <EntityCard
                   key={template.id}
+                  entity_name="template"
                   name={template.name}
                   description={template.description}
                   status={template.status}

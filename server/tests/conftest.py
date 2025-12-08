@@ -36,6 +36,9 @@ from .fixtures.test_permission_fixtures import (
     mocked_permission_response,
     mocked_role_permission,
     mocked_policy_permission,
+    mock_policy_data,
+    mock_role_data,
+    override_permission_service,
 )
 from .fixtures.test_resource_fixtures import (
     mock_resource_crud,
@@ -150,6 +153,9 @@ __all__ = [
     "mocked_permission_response",
     "mocked_role_permission",
     "mocked_policy_permission",
+    "mock_policy_data",
+    "mock_role_data",
+    "override_permission_service",
     "mocked_integration",
     "integration_responses_array",
     "mock_user_dto",

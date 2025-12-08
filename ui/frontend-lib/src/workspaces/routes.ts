@@ -9,25 +9,37 @@ export const workspaceRoutes = [
   {
     path: WorkspacesPage.path,
     Component: WorkspacesPage,
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
   },
   {
     path: WorkspaceCreatePage.path,
     Component: WorkspaceCreatePage,
+    requiredPermission: "api:workspace",
+    permissionAction: "write",
   },
   {
     path: WorkspacePage.path,
     Component: WorkspacePage,
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
   },
   {
     path: WorkspaceEditPage.path,
     Component: WorkspaceEditPage,
+    requiredPermission: "api:workspace",
+    permissionAction: "write",
   },
   {
     path: WorkspaceActivityPage.path,
     Component: WorkspaceActivityPage,
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
   },
   {
     path: WorkspaceMetadataPage.path,
     Component: WorkspaceMetadataPage,
+    requiredPermission: "api:workspace",
+    permissionAction: "read",
   },
 ];

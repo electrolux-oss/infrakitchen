@@ -5,7 +5,7 @@ from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.users.functions import user_has_access_to_resource
+from core.users.functions import user_has_access_to_api, user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import SecretCreate, SecretResponse, SecretUpdate, SecretValidationResponse
@@ -134,7 +134,12 @@ async def get_actions(request: Request, secret_id: str, service: SecretService =
     response_model=SecretValidationResponse,
     status_code=http_status.HTTP_200_OK,
 )
-async def validate_on_create(body: SecretCreate, service: SecretService = Depends(get_secret_service)):
+async def validate_on_create(
+    request: Request, body: SecretCreate, service: SecretService = Depends(get_secret_service)
+):
+    requester: UserDTO = request.state.user
+    if not await user_has_access_to_api(requester, "secret", action="write"):
+        raise HTTPException(status_code=403, detail="Access denied")
     return await service.validate(secret=body)
 
 
@@ -143,7 +148,11 @@ async def validate_on_create(body: SecretCreate, service: SecretService = Depend
     response_model=SecretValidationResponse,
     status_code=http_status.HTTP_200_OK,
 )
-async def validate(secret_id: str, service: SecretService = Depends(get_secret_service)):
+async def validate(request: Request, secret_id: str, service: SecretService = Depends(get_secret_service)):
+    requester: UserDTO = request.state.user
+    if not await user_has_access_to_resource(requester, secret_id, action="write"):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     secret = await service.get_by_id(secret_id=secret_id)
     if not secret:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Secret not found")

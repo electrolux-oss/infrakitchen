@@ -166,6 +166,39 @@ class PermissionService:
         users = await self.crud.get_users_by_role(role_name, **kwargs)
         return [RoleUsersResponse.model_validate(user) for user in users]
 
+    async def get_user_policies(self, user_id: str | UUID) -> dict[str, str]:
+        def filter_policies(policies: list[list[str]]) -> dict[str, str]:
+            filtered: dict[str, str] = {}
+            for policy in policies:
+                action = policy[2]
+                entity = policy[1]
+                if filtered.get(entity) is None:
+                    filtered[entity] = action
+                else:
+                    # Keep the highest permission level
+                    if action == "admin":
+                        filtered[entity] = "admin"
+                        continue
+
+                    if filtered[entity] == "admin":
+                        continue
+
+                    if action == "write":
+                        filtered[entity] = action
+                        continue
+
+                    if filtered[entity] != "read" and action == "read":
+                        continue
+                    filtered[entity] = action
+            return filtered
+
+        if self.casbin_enforcer.enforcer is None:
+            _ = await self.casbin_enforcer.get_enforcer()
+        if not self.casbin_enforcer.enforcer:
+            raise RuntimeError("Casbin enforcer is not initialized")
+        policies = await self.casbin_enforcer.enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
+        return filter_policies(policies)
+
     async def delete(self, permission_id: str, requester: UserDTO) -> None:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()

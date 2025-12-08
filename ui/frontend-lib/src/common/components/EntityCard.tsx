@@ -14,9 +14,11 @@ import {
 } from "@mui/material";
 
 import StatusChip from "../../common/StatusChip";
+import { PermissionWrapper } from "../wrappers";
 
 export interface EntityCardProps {
   name: string;
+  entity_name: string;
   description: string;
   detailsUrl: string;
   createUrl?: string;
@@ -37,6 +39,7 @@ export const EntityCard = ({
   createButtonName,
   entityFields,
   status,
+  entity_name,
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -72,7 +75,7 @@ export const EntityCard = ({
               {name}
             </Typography>
           </Box>
-          {status && <StatusChip status={status} size="small" />}
+          {status && <StatusChip status={status} />}
         </Box>
         <Typography variant="body2" sx={{ mb: 2 }}>
           {description || "No description"}
@@ -104,14 +107,19 @@ export const EntityCard = ({
             View Details
           </Button>
           {createButtonName && (
-            <Button
-              fullWidth
-              size="small"
-              variant="contained"
-              onClick={handleCreateClick}
+            <PermissionWrapper
+              requiredPermission={`api:${entity_name}`}
+              permissionAction="write"
             >
-              {createButtonName}
-            </Button>
+              <Button
+                fullWidth
+                size="small"
+                variant="contained"
+                onClick={handleCreateClick}
+              >
+                {createButtonName}
+              </Button>
+            </PermissionWrapper>
           )}
         </Box>
       </CardActions>

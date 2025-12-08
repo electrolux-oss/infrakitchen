@@ -10,7 +10,7 @@ import {
   Alert,
 } from "@mui/material";
 
-import { IconField, FilterConfig } from "../../common";
+import { IconField, FilterConfig, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -128,12 +128,17 @@ export const SourceCodesPage = () => {
   );
 
   const actions = (
-    <Button
-      variant="outlined"
-      onClick={() => navigate(`${linkPrefix}source_codes/create`)}
+    <PermissionWrapper
+      requiredPermission="api:source_code"
+      permissionAction="write"
     >
-      Import
-    </Button>
+      <Button
+        variant="outlined"
+        onClick={() => navigate(`${linkPrefix}source_codes/create`)}
+      >
+        Import
+      </Button>
+    </PermissionWrapper>
   );
 
   const sourceCodeCardFields = (sourceCode: SourceCodeResponse) => {
@@ -233,6 +238,7 @@ export const SourceCodesPage = () => {
             {filteredSourceCodes.map((sourceCode) => (
               <EntityCard
                 key={sourceCode.id}
+                entity_name="source_code"
                 name={getRepoNameFromUrl(sourceCode.source_code_url)}
                 description={sourceCode.description}
                 detailsUrl={`${linkPrefix}source_codes/${sourceCode.id}`}
