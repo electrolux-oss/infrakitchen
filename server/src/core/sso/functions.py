@@ -12,6 +12,7 @@ from jwt.algorithms import ECAlgorithm
 
 from core.casbin.enforcer import CasbinEnforcer
 from core.config import Settings
+from core.errors import EntityExistsError
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider, UserResponse
@@ -38,11 +39,12 @@ async def check_api_permission(request: Request):
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
         _ = await casbin_enforcer.get_enforcer()
-    assert casbin_enforcer.enforcer is not None, "Casbin enforcer is not initialized"
+    if casbin_enforcer.enforcer is None:
+        raise HTTPException(status_code=500, detail="Casbin enforcer is not initialized")
 
-    user: UserDTO = request.state.user
-    assert user is not None, "User is not set in request state"
-    assert user.id is not None, "User ID is not set in request state"
+    user: UserDTO | None = request.state.user
+    if user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     if user.deactivated is True:
         raise HTTPException(status_code=403, detail="Forbidden. User is deactivated")
@@ -53,7 +55,7 @@ async def check_api_permission(request: Request):
 
     match = re.search(r"/api/([^/?]+)", request.url.path)
     if match:
-        entity = match.group(1)
+        entity = match.group(1).removesuffix("s")  # singular form
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -212,7 +214,10 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
                 UserCreateWithProvider(identifier=user_id, provider="backstage")
             )
 
-            _ = await service.casbin_enforcer.add_casbin_user_role(user.id, "default")
+            try:
+                _ = await service.permission_service.assign_user_to_role("default", user.id)
+            except EntityExistsError:
+                pass  # User is already assigned to the role
 
             return user
     except Exception as error:

@@ -1,41 +1,64 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Box, Button } from "@mui/material";
+import { Button } from "@mui/material";
+import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig } from "../../common";
-import { notifyError } from "../../common/hooks/useNotification";
+import { useConfig, FilterConfig } from "../../common";
+import { GetEntityLink } from "../../common/components/CommonField";
+import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { RoleTable } from "../components/RolesTable";
 
 export const RolesPage = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { linkPrefix } = useConfig();
 
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<string[]>([]);
+  // Configure filters
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "v1",
+        type: "search" as const,
+        label: "Search",
+        width: 420,
+      },
+    ],
+    [],
+  );
 
-  const fetchRoles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await ikApi.getList("permissions/roles", {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "name", order: "ASC" },
-      });
-      setData(response.data);
-    } catch (error: any) {
-      notifyError(error);
-      // errorApi.post(error);
-    } finally {
-      setLoading(false);
+  // Build API filters
+  const buildApiFilters = (filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
+
+    if (filterValues.v1 && filterValues.v1.trim().length > 0) {
+      apiFilters["v1__like"] = filterValues.v1;
     }
-  }, [ikApi, setData, setLoading]);
 
-  useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
+    return apiFilters;
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        field: "id",
+        headerName: "Role Name",
+        sortable: false,
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+          return (
+            <GetEntityLink
+              _entity_name={"role"}
+              identifier={params.row.v1}
+              id={params.row.v1}
+            />
+          );
+        },
+      },
+    ],
+    [],
+  );
 
   return (
     <PageContainer
@@ -50,9 +73,14 @@ export const RolesPage = () => {
         </Button>
       }
     >
-      <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
-        <RoleTable roles={data} loading={loading} />
-      </Box>
+      <EntityFetchTable
+        title="Roles"
+        entityName="permissions/role"
+        columns={columns}
+        fields={["id"]}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
+      />
     </PageContainer>
   );
 };

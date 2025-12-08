@@ -7,8 +7,6 @@ import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { PermissionResponse } from "../types";
 
-import { RoleCard } from "./RoleCard";
-
 export interface PermissionAboutProps {
   permission: PermissionResponse;
 }
@@ -55,9 +53,6 @@ export const PermissionOverview = ({ permission }: PermissionAboutProps) => {
         name={"Last Updated"}
         value={<RelativeTime date={permission.updated_at} />}
       />
-      {permission.ptype == "g" && permission.v1 && (
-        <RoleCard role_name={permission.v1} />
-      )}
     </OverviewCard>
   );
 };

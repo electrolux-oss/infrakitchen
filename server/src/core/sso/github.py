@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from fastapi_sso.sso.github import GithubSSO
 
 from core.config import Settings
+from core.errors import EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
 
@@ -26,7 +27,8 @@ async def get_github_sso(service: SSOService) -> GithubSSO:
 
     github_provider = github_providers[0]
 
-    assert isinstance(github_provider.configuration, GithubProviderConfig)
+    if not isinstance(github_provider.configuration, GithubProviderConfig):
+        raise ValueError("Invalid Github provider configuration")
 
     GITHUB_CLIENT_ID = github_provider.configuration.client_id
     GITHUB_CLIENT_SECRET = github_provider.configuration.client_secret.get_decrypted_value()
@@ -152,12 +154,21 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
         if not any(user_from_provider["email"].endswith(f"@{domain}") for domain in github_provider.filter_by_domain):
             raise HTTPException(status_code=401, detail="Authentication failed")
 
-    assert github_sso.refresh_token is not None, "Refresh token is required. Check your app configuration."
+    if not github_sso.refresh_token:
+        raise HTTPException(status_code=500, detail="Refresh token is required. Check your app configuration.")
 
     user = await service.user_service.create_user_if_not_exists(
         UserCreateWithProvider.model_validate(user_from_provider)
     )
-    _ = await service.casbin_enforcer.add_casbin_user_role(user.id, "default")
+
+    existing_roles = await service.casbin_enforcer.get_user_roles(user.id)
+    reload_permission = False
+    try:
+        if "default" not in existing_roles:
+            reload_permission = True
+            _ = await service.permission_service.assign_user_to_role("default", user.id, reload_permission=False)
+    except EntityExistsError:
+        pass  # User is already assigned to the role
 
     response = RedirectResponse(url="/")
     response.set_cookie(
@@ -173,4 +184,8 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
         requester_id=user.id,
         action="login",
     )
+
+    if reload_permission:
+        await service.permission_service.crud.session.commit()
+        await service.casbin_enforcer.send_reload_event()
     return response

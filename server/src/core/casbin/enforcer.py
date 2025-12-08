@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import uuid
 from typing import Any
 
@@ -61,117 +60,6 @@ class CasbinEnforcer(metaclass=SingletonMeta):
         event_message.exchange_type = ExchangeType.FANOUT
         await self.rabbitmq.send_message(event_message)
 
-    async def add_casbin_policy(
-        self,
-        subject: str,
-        object: uuid.UUID | str | None = None,
-        action: str = "read",
-        object_type: str | None = None,
-        send_reload_event: bool = True,
-        object_id: str | None = None,
-    ) -> None:
-        assert action in allowed_actions, f"Action {action} is not allowed"
-
-        enforcer = await self.get_enforcer()
-        if not re.match(r"^[a-z_]+$", subject):
-            raise ValueError("Subject must be a string of lowercase letters and (_, *)")
-
-        if not object_id and not object:
-            raise ValueError("Either object or object_id must be provided")
-
-        if not object_id:
-            if is_valid_uuid(object):
-                if object_type:
-                    object_id = f"{object_type}:{object}"
-                else:
-                    object_id = f"resource:{object}"
-            elif isinstance(object, str):
-                if not re.match(r"^[a-z_*]+$", object):
-                    raise ValueError("Object must be a string of lowercase letters and (_, *)")
-
-                if object_type:
-                    object_id = f"{object_type}:{object}"
-                else:
-                    object_id = object
-            else:
-                raise ValueError("Casbin object must be a string or UUID")
-
-        result = await enforcer.add_policy(subject, object_id, action)
-        if result is True and send_reload_event is True:
-            await self.send_reload_event()
-
-    async def add_casbin_user_policy(
-        self,
-        user_id: str | uuid.UUID,
-        object: uuid.UUID | str,
-        action: str = "read",
-        object_type: str | None = None,
-        send_reload_event: bool = True,
-    ) -> None:
-        assert action in allowed_actions, f"Action {action} is not allowed"
-
-        enforcer = await self.get_enforcer()
-
-        if is_valid_uuid(user_id):
-            subject_id = f"user:{user_id}"
-        else:
-            raise ValueError("User ID must be a UUID")
-
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-        elif isinstance(object, str):
-            if not re.match(r"^[a-z_*]+$", object):
-                raise ValueError("Object must be a string of lowercase letters and (_, *)")
-
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
-        else:
-            raise ValueError("Casbin object must be a string or UUID")
-
-        result = await enforcer.add_policy(subject_id, object_id, action)
-        if result is True and send_reload_event is True:
-            await self.send_reload_event()
-
-    async def add_casbin_user_role(
-        self,
-        user_id: str | uuid.UUID,
-        object: str | uuid.UUID,
-        object_type: str | None = None,
-        send_reload_event: bool = True,
-    ) -> bool:
-        enforcer = await self.get_enforcer()
-        if is_valid_uuid(user_id):
-            subject_id = f"user:{user_id}"
-        else:
-            raise ValueError("User ID must be a UUID")
-
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-        elif isinstance(object, str):
-            if not re.match(r"^[a-z_*]+$", object):
-                raise ValueError("Object must be a string of lowercase letters and (_, *)")
-
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
-        else:
-            raise ValueError("Casbin object must be a string or UUID")
-
-        result = await enforcer.add_role_for_user(subject_id, object_id)
-        if result is True and send_reload_event is True:
-            await self.send_reload_event()
-
-        return result
-
     async def enforce_casbin_user(
         self,
         user_id: str | uuid.UUID,
@@ -205,7 +93,8 @@ class CasbinEnforcer(metaclass=SingletonMeta):
         return False
 
     async def get_user_roles(self, user_id: str | uuid.UUID) -> list[str]:
-        assert is_valid_uuid(user_id), "User ID must be a UUID"
+        if is_valid_uuid(user_id) is False:
+            raise ValueError("User ID must be a valid UUID")
         enforcer = await self.get_enforcer()
         return list(set([role[1] for role in enforcer.get_filtered_named_grouping_policy("g", 0, f"user:{user_id}")]))
 

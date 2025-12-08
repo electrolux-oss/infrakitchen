@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 from uuid import UUID
 
@@ -6,22 +7,20 @@ from uuid import UUID
 from core.audit_logs.handler import AuditLogHandler
 from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
-from core.errors import AccessDenied, EntityNotFound
+from core.errors import EntityExistsError, EntityNotFound
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_entity_permissions, user_is_super_admin
+from core.users.functions import user_entity_permissions
 from core.utils.model_tools import is_valid_uuid
 from .crud import PermissionCRUD
 from core.users.service import UserService
 from .schema import (
-    ApiPolicyRequest,
+    ApiPolicyCreate,
+    EntityPolicyCreate,
     PermissionCreate,
     PermissionResponse,
-    ResourcePolicyRequest,
-    ResourceUserPolicyRequest,
-    UserRoleRequest,
+    RoleUsersResponse,
 )
 from core.users.model import UserDTO
-from ..users.schema import UserShort
 
 logger = logging.getLogger(__name__)
 
@@ -55,171 +54,132 @@ class PermissionService:
         if permission is None:
             return None
 
-        if self.casbin_enforcer.enforcer is None:
-            _ = await self.casbin_enforcer.get_enforcer()
-        if self.casbin_enforcer.enforcer is None:
-            raise ValueError("Casbin enforcer is not initialized")
-
-        users = await self.casbin_enforcer.enforcer.get_users_for_role(permission.v1)
         result = PermissionResponse.model_validate(permission)
-        result.users = users
         return result
 
     async def get_all(self, **kwargs) -> list[PermissionResponse]:
         permissions = await self.crud.get_all(**kwargs)
         return [PermissionResponse.model_validate(permission) for permission in permissions]
 
-    async def get_all_subjects(self) -> list[str]:
-        if self.casbin_enforcer.enforcer is None:
-            _ = await self.casbin_enforcer.get_enforcer()
-
-        if self.casbin_enforcer.enforcer is None:
-            raise ValueError("Casbin enforcer is not initialized")
-
-        enforcer = self.casbin_enforcer.enforcer
-        result: list[str] = [sub for sub in enforcer.get_all_roles()]
-        return result
-
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
-    async def create(self, body: PermissionCreate, requester: UserDTO) -> PermissionResponse:
-        """
-        Create a new permission based on the casbin_type logic.
-        """
+    # Role methods
+    async def count_roles(self, filter: dict[str, Any] | None = None) -> int:
+        return await self.crud.count_roles(filter=filter)
+
+    async def create_role(
+        self, role_name: str, user_id: UUID | str, requester: UserDTO | None = None, reload_permission: bool = True
+    ) -> PermissionResponse:
+        if not re.match(r"^[a-z_]+$", role_name):
+            raise ValueError("Role name must be a string of lowercase letters and (_)")
+
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
 
-        if self.casbin_enforcer.enforcer is None:
-            raise ValueError("Casbin enforcer is not initialized")
+        existing_role = await self.crud.get_all(filter={"ptype": "g", "v1": role_name})
+        if existing_role:
+            raise EntityExistsError(f"Role {role_name} already exists")
 
-        if isinstance(body, UserRoleRequest):
-            if await user_is_super_admin(requester) is False:
-                raise AccessDenied("Access denied")
+        user = await self.user_service.get_by_id(user_id)
+        if user is None:
+            raise EntityNotFound("User not found")
 
-            user = await self.user_service.get_by_id(body.user_id)
-            if user is None:
-                raise EntityNotFound("User not found")
+        permission = PermissionCreate(
+            ptype="g",
+            v0=f"user:{user.id}",
+            v1=role_name,
+            created_by=requester.id if requester else None,
+        )
 
-            result = await self.crud.get_casbin_user_role_model(user.id, body.role.lower())
-            if result is not None:
-                raise ValueError("Role already exists")
+        new_role = await self.crud.create(permission.model_dump())
+        result = await self.crud.get_by_id(new_role.id)
 
-            await self.casbin_enforcer.add_casbin_user_role(user.id, body.role.lower())
+        if requester:
+            await self.audit_log_handler.create_log(new_role.id, requester.id, ModelActions.CREATE)
 
-            result = await self.crud.get_casbin_user_role_model(user.id, body.role.lower())
-
-        elif isinstance(body, ApiPolicyRequest):
-            if await user_is_super_admin(requester) is False:
-                raise AccessDenied("Access denied")
-
-            result = await self.crud.get_casbin_policy_model(
-                body.role.lower(), body.api.lower(), body.action, object_type="api"
-            )
-            if result is not None:
-                raise ValueError("Policy already exists")
-
-            await self.casbin_enforcer.add_casbin_policy(
-                body.role.lower(), body.api.lower(), body.action, object_type="api"
-            )
-
-            result = await self.crud.get_casbin_policy_model(
-                body.role.lower(), body.api.lower(), body.action, object_type="api"
-            )
-
-        elif isinstance(body, ResourcePolicyRequest):
-            if (
-                await self.casbin_enforcer.enforce_casbin_user(
-                    requester.id, body.resource, "admin", object_type="resource"
-                )
-                is not True
-            ):
-                raise AccessDenied("Access denied")
-            result = await self.crud.get_casbin_policy_model(
-                body.role.lower(), body.resource.lower(), body.action, object_type="resource"
-            )
-
-            if result is not None:
-                raise ValueError("Policy already exists")
-
-            await self.casbin_enforcer.add_casbin_policy(
-                body.role.lower(), body.resource.lower(), body.action, object_type="resource"
-            )
-
-            result = await self.crud.get_casbin_policy_model(
-                body.role.lower(), body.resource.lower(), body.action, object_type="resource"
-            )
-
-        elif isinstance(body, ResourceUserPolicyRequest):
-            if (
-                await self.casbin_enforcer.enforce_casbin_user(
-                    requester.id, body.resource, "admin", object_type="resource"
-                )
-                is not True
-            ):
-                raise AccessDenied("Access denied")
-
-            user = await self.user_service.get_by_id(body.user_id)
-            if user is None:
-                raise EntityNotFound("User not found")
-
-            result = await self.crud.get_casbin_user_policy_model(
-                user.id, body.resource.lower(), body.action, object_type="resource"
-            )
-
-            if result is not None:
-                raise ValueError("Policy already exists")
-
-            await self.casbin_enforcer.add_casbin_user_policy(
-                user.id, body.resource.lower(), body.action, object_type="resource"
-            )
-
-            result = await self.crud.get_casbin_user_policy_model(
-                user.id, body.resource.lower(), body.action, object_type="resource"
-            )
-
-        else:
-            raise ValueError("Invalid casbin_type")
-
-        # Update created_by and fetch updated object
-        if result is None:
-            raise ValueError("Permission was not created")
-        new_permission = await self.crud.update(result, {"created_by": requester.id})
-        result = await self.crud.get_by_id(new_permission.id)
-
-        await self.audit_log_handler.create_log(new_permission.id, requester.id, ModelActions.CREATE)
-
+        if reload_permission:
+            await self.casbin_enforcer.send_reload_event()
         return PermissionResponse.model_validate(result)
+
+    async def assign_user_to_role(
+        self,
+        role_name: str,
+        user_id: UUID | str,
+        requester: UserDTO | None = None,
+        reload_permission: bool = True,
+    ) -> PermissionResponse:
+        if not re.match(r"^[a-z_]+$", role_name):
+            raise ValueError("Role name must be a string of lowercase letters and (_)")
+
+        if self.casbin_enforcer.enforcer is None:
+            _ = await self.casbin_enforcer.get_enforcer()
+
+        existing_assignment = await self.crud.get_all(filter={"ptype": "g", "v0": f"user:{user_id}", "v1": role_name})
+
+        if existing_assignment:
+            raise EntityExistsError(f"User {user_id} is already assigned to role {role_name}")
+
+        user = await self.user_service.get_by_id(user_id)
+        if user is None:
+            raise EntityNotFound("User not found")
+
+        existing_role = await self.crud.get_all(filter={"ptype": "g", "v1": role_name})
+        if not existing_role:
+            raise EntityNotFound(f"Role {role_name} not found")
+
+        permission = PermissionCreate(
+            ptype="g",
+            v0=f"user:{user.id}",
+            v1=role_name,
+            created_by=requester.id if requester else None,
+        )
+
+        new_assignment = await self.crud.create(permission.model_dump())
+        result = await self.crud.get_by_id(new_assignment.id)
+
+        if requester:
+            await self.audit_log_handler.create_log(new_assignment.id, requester.id, ModelActions.CREATE)
+
+        if reload_permission:
+            await self.casbin_enforcer.send_reload_event()
+        return PermissionResponse.model_validate(result)
+
+    async def get_all_roles(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+    ) -> list[PermissionResponse]:
+        roles = await self.crud.get_all_roles(filter=filter, range=range)
+        return [PermissionResponse.model_validate(role) for role in roles]
+
+    async def get_role_api_permissions(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[PermissionResponse]:
+        policies = await self.crud.get_api_policies_by_role(role_name, range=range, sort=sort)
+        return [PermissionResponse.model_validate(policy) for policy in policies]
+
+    async def get_users_by_role(self, role_name: str, **kwargs) -> list[RoleUsersResponse]:
+        users = await self.crud.get_users_by_role(role_name, **kwargs)
+        return [RoleUsersResponse.model_validate(user) for user in users]
 
     async def delete(self, permission_id: str, requester: UserDTO) -> None:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
 
-        if self.casbin_enforcer.enforcer is None:
-            raise ValueError("Casbin enforcer is not initialized")
-        enforcer = self.casbin_enforcer.enforcer
-
         existing_permission = await self.crud.get_by_id(permission_id)
         if not existing_permission:
             raise EntityNotFound("Permission not found")
 
-        if existing_permission.ptype == "g":
-            if await enforcer.delete_role_for_user(existing_permission.v0, existing_permission.v1) is False:
-                raise EntityNotFound("Role not found")
-        elif existing_permission.ptype == "p":
-            if (
-                await enforcer.remove_policy(existing_permission.v0, existing_permission.v1, existing_permission.v2)
-                is False
-            ):
-                raise EntityNotFound("Policy not found")
-        else:
-            raise ValueError("Invalid ptype")
-
+        await self.crud.delete(existing_permission)
         await self.casbin_enforcer.send_reload_event()
         await self.audit_log_handler.create_log(existing_permission.id, requester.id, ModelActions.DELETE)
 
-    async def delete_resource_permissions(self, resource_id: str | UUID) -> None:
-        await self.crud.delete_resource_permissions(resource_id)
+    async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
+        await self.crud.delete_entity_permissions(entity_name, entity_id)
 
     async def get_actions(self, role_id: str, requester: UserDTO) -> list[str]:
         """
@@ -240,28 +200,6 @@ class PermissionService:
 
         return actions
 
-    # User permissions
-    async def get_user_roles(self, user_id: str) -> list[PermissionResponse]:
-        roles = await self.crud.get_all(filter={"ptype": "g", "v0": f"user:{user_id}"})
-        return [PermissionResponse.model_validate(role) for role in roles]
-
-    async def get_user_policies(self, user_id: str) -> list[PermissionResponse]:
-        policies = await self.crud.get_all(filter={"ptype": "p", "v0": f"user:{user_id}"})
-        return [PermissionResponse.model_validate(policy) for policy in policies]
-
-    # Role information
-    async def get_all_roles(self) -> set[str]:
-        roles = await self.crud.get_all(filter={"ptype": "g"})
-        return set([role.v1 for role in roles if role.v1 is not None])
-
-    async def get_role_permissions(self, role_name: str) -> list[PermissionResponse]:
-        policies = await self.crud.get_all(filter={"ptype": "p", "v0": role_name})
-        return [PermissionResponse.model_validate(policy) for policy in policies]
-
-    async def get_users_by_role(self, role_name: str) -> list[UserShort]:
-        users = await self.crud.get_users_by_role(role_name)
-        return [UserShort.model_validate(user) for user in users]
-
     # Entity permissions
     async def get_entity_permissions(self, entity_name: str, entity_id: str) -> list[PermissionResponse]:
         if not is_valid_uuid(entity_id):
@@ -269,3 +207,111 @@ class PermissionService:
 
         policies = await self.crud.get_all(filter={"ptype": "p", "v1": f"{entity_name}:{entity_id}"})
         return [PermissionResponse.model_validate(policy) for policy in policies]
+
+    # Api Policies
+    async def create_api_policy(
+        self,
+        body: ApiPolicyCreate,
+        requester: UserDTO | None = None,
+        reload_permission: bool = True,
+    ) -> PermissionResponse:
+        if self.casbin_enforcer.enforcer is None:
+            _ = await self.casbin_enforcer.get_enforcer()
+
+        existing_policy = await self.crud.get_all(
+            filter={
+                "ptype": "p",
+                "v0": body.role.lower(),
+                "v1": f"api:{body.api}".lower(),
+                "v2": body.action,
+            }
+        )
+        if existing_policy:
+            raise EntityExistsError(f"Api policy for {body.api} already exists")
+
+        permission = PermissionCreate(
+            ptype="p",
+            v0=body.role.lower(),
+            v1=f"api:{body.api}".lower(),
+            v2=body.action,
+            created_by=requester.id if requester else None,
+        )
+
+        new_permission = await self.crud.create(permission.model_dump())
+        result = await self.crud.get_by_id(new_permission.id)
+
+        if requester:
+            await self.audit_log_handler.create_log(new_permission.id, requester.id, ModelActions.CREATE)
+
+        if reload_permission:
+            await self.casbin_enforcer.send_reload_event()
+
+        return PermissionResponse.model_validate(result)
+
+    async def create_entity_policy(
+        self,
+        body: EntityPolicyCreate,
+        requester: UserDTO,
+    ) -> PermissionResponse:
+        if self.casbin_enforcer.enforcer is None:
+            _ = await self.casbin_enforcer.get_enforcer()
+
+        if body.role:
+            existing_policy = await self.crud.get_all(
+                filter={
+                    "ptype": "p",
+                    "v0": body.role.lower(),
+                    "v1": f"{body.entity_name}:{body.entity_id}".lower(),
+                    "v2": body.action,
+                }
+            )
+        elif body.user_id:
+            existing_policy = await self.crud.get_all(
+                filter={
+                    "ptype": "p",
+                    "v0": f"user:{body.user_id}",
+                    "v1": f"{body.entity_name}:{body.entity_id}".lower(),
+                    "v2": body.action,
+                }
+            )
+        else:
+            raise ValueError("Either role or user_id must be provided")
+
+        if existing_policy:
+            raise EntityExistsError("Policy already exists")
+
+        if body.role:
+            existing_role = await self.crud.get_all(filter={"ptype": "g", "v1": body.role})
+            if not existing_role:
+                raise EntityNotFound(f"Role {body.role} not found")
+
+            permission = PermissionCreate(
+                ptype="p",
+                v0=body.role.lower(),
+                v1=f"{body.entity_name}:{body.entity_id}".lower(),
+                v2=body.action,
+                created_by=requester.id,
+            )
+        elif body.user_id:
+            user = await self.user_service.get_by_id(body.user_id)
+            if user is None:
+                raise EntityNotFound("User not found")
+
+            permission = PermissionCreate(
+                ptype="p",
+                v0=f"user:{user.id}",
+                v1=f"{body.entity_name}:{body.entity_id}".lower(),
+                v2=body.action,
+                created_by=requester.id,
+            )
+        else:
+            raise ValueError("Either role or user_id must be provided")
+
+        # Update created_by and fetch updated object
+        new_permission = await self.crud.create(permission.model_dump())
+        result = await self.crud.get_by_id(new_permission.id)
+
+        await self.audit_log_handler.create_log(new_permission.id, requester.id, ModelActions.CREATE)
+        await self.casbin_enforcer.send_reload_event()
+
+        return PermissionResponse.model_validate(result)

@@ -1,21 +1,19 @@
-import json
 import logging
-import os
 from contextlib import asynccontextmanager
+from typing import cast
 
-from core.audit_logs.handler import AuditLogHandler
-from core.auth_providers.crud import AuthProviderCRUD
+from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.schema import AuthProviderCreate, GuestProviderConfig
-from core.auth_providers.service import AuthProviderService
 from core.casbin.enforcer import CasbinEnforcer
 from core.database import SessionLocal
 from core.feature_flags.feature_flag_manager import reload_feature_flags_configs, init_feature_flags
-from core.users.crud import UserCRUD
+from core.permissions.dependencies import get_permission_service
+from core.permissions.schema import ActionLiteral, ApiPolicyCreate
+from core.permissions.service import PermissionService
+from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
 from core.users.schema import UserCreateWithProvider
-from core.users.service import UserService
 from core.utils.entities import get_all_entities, get_infra_entities
-from core.utils.event_sender import EventSender
 
 logger = logging.getLogger(__name__)
 
@@ -28,18 +26,9 @@ async def get_async_session():
 
 async def init_app():
     async with get_async_session() as session:
-        user_service = UserService(
-            crud=UserCRUD(session),
-        )
-
-        event_sender = EventSender(entity_name="auth_provider")
-        audit_log_handler = AuditLogHandler(session=session, entity_name="auth_provider")
-        auth_provider_service = AuthProviderService(
-            crud=AuthProviderCRUD(session),
-            event_sender=event_sender,
-            audit_log_handler=audit_log_handler,
-        )
-
+        user_service = get_user_service(session=session)
+        auth_provider_service = get_auth_provider_service(session=session)
+        permission_service = get_permission_service(session=session)
         guest_user = UserCreateWithProvider(
             email="guest_super@example.com",
             identifier="guest_super",
@@ -50,7 +39,8 @@ async def init_app():
         )
 
         user = await user_service.create_user_if_not_exists(guest_user)
-        assert user.id is not None, "User ID should not be None"
+        if user.id is None:
+            raise ValueError("Failed to create or retrieve the guest user.")
 
         providers = await auth_provider_service.count()
         if not providers:
@@ -75,49 +65,46 @@ async def init_app():
     await enforcer.get_enforcer()
     assert enforcer.enforcer is not None, "Enforcer should not be None"
 
-    await load_entity_policies(enforcer, "default")
-    await load_entity_policies(enforcer, "infra")
-    await load_core_policies(enforcer)
+    await create_default_roles(permission_service, UserDTO.model_validate(user))
+    await load_api_policies(permission_service, "default")
+    await load_api_policies(permission_service, "infra")
+    await create_super_policy(permission_service)
+    await session.commit()
 
     await enforcer.enforcer.load_policy()
 
 
-async def load_entity_policies(enforcer, entity_type):
-    existing_policies = await enforcer.get_all_policies(v0_value_to_filter=entity_type)
-    entities = get_infra_entities() if entity_type == "infra" else get_all_entities()
+async def create_default_roles(permission_service: PermissionService, user: UserDTO):
+    default_roles = ["default", "infra", "super"]
+    for role in default_roles:
+        existing_default_role = await permission_service.get_all_roles(filter={"v1": role})
+        if not existing_default_role:
+            await permission_service.create_role(role, user_id=user.id, reload_permission=False)
 
-    entities_policies = {(entity_type, f"api:{entity}s", "read") for entity in entities}
+
+async def load_api_policies(permission_service: PermissionService, role_name: str):
+    existing_permissions = await permission_service.get_role_api_permissions(role_name)
+    apis = get_infra_entities() if role_name == "infra" else get_all_entities()
+    apis += ["variable", "label", "tree", "schema"]
+
+    entities_policies = {(role_name, f"api:{entity}", "read") for entity in apis}
+    existing_policies = set((policy.v0, policy.v1, policy.v2) for policy in existing_permissions)
+
     policies_to_add = entities_policies.difference(existing_policies)
 
     for policy in policies_to_add:
         logger.debug("Adding policy:", policy)
-        await enforcer.add_casbin_policy(
-            subject=entity_type, object_id=policy[1], action="read", send_reload_event=False
+        p = ApiPolicyCreate(
+            role=role_name,
+            api=policy[1].replace("api:", ""),
+            action=cast(ActionLiteral, policy[2]),
         )
+        await permission_service.create_api_policy(p, reload_permission=False)
 
 
-async def load_core_policies(enforcer):
-    existing_policies = await enforcer.get_all_policies()
-    core_policies = set()
-
-    root_dir = os.path.dirname(os.path.realpath(__file__))
-
-    policy_file_path = os.path.join(root_dir, "..", "core/casbin/core_policies.json")
-    with open(policy_file_path) as json_policies_definition:
-        policies_definition = json.load(json_policies_definition)
-        for definition in policies_definition:
-            subject = definition["subject"]
-            object = definition["object"]
-            action = definition["action"]
-            object_type = definition.get("object_type")
-
-            object_id = f"{object_type}:{object}" if object_type else object
-            policy_definition = (subject, object_id, action)
-            core_policies.add(policy_definition)
-
-    policies_to_add = core_policies.difference(existing_policies)
-    for policy in policies_to_add:
-        logger.debug("Adding policy:", policy)
-        await enforcer.add_casbin_policy(
-            subject=policy[0], object_id=policy[1], action=policy[2], send_reload_event=False
-        )
+async def create_super_policy(permission_service: PermissionService):
+    existing_permissions = await permission_service.get_all(
+        filter={"v0": "super", "ptype": "p", "v1": "*", "v2": "admin"}
+    )
+    if not existing_permissions:
+        await permission_service.crud.create({"ptype": "p", "v0": "super", "v1": "*", "v2": "admin"})

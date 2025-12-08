@@ -33,8 +33,9 @@ from .fixtures.test_integration_fixtures import (
 from .fixtures.test_permission_fixtures import (
     mock_permission_crud,
     mock_permission_service,
-    permission_response,
-    permission,
+    mocked_permission_response,
+    mocked_role_permission,
+    mocked_policy_permission,
 )
 from .fixtures.test_resource_fixtures import (
     mock_resource_crud,
@@ -146,8 +147,9 @@ __all__ = [
     "mock_casbin",
     "mock_permission_crud",
     "mock_permission_service",
-    "permission_response",
-    "permission",
+    "mocked_permission_response",
+    "mocked_role_permission",
+    "mocked_policy_permission",
     "mocked_integration",
     "integration_responses_array",
     "mock_user_dto",

@@ -23,6 +23,7 @@ interface EntityFetchTableProps {
   entityName?: string;
   fields?: string[];
   filterConfigs?: FilterConfig[];
+  defaultFilter?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
 }
 
@@ -70,6 +71,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     entityName,
     fields = [],
     filterConfigs,
+    defaultFilter,
     buildApiFilters,
   } = props;
 
@@ -139,6 +141,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
             filterConfigs,
           );
         }
+      } else if (defaultFilter) {
+        apiFilters = { ...defaultFilter };
       }
 
       let sort: GridSortItem;
@@ -181,6 +185,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     filterConfigs,
     buildApiFilters,
     currentFilterValues,
+    defaultFilter,
   ]);
 
   useEffect(() => {

@@ -5,6 +5,8 @@ from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
+from core.permissions.dependencies import get_permission_service
+from core.permissions.service import PermissionService
 from core.users.functions import user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
@@ -13,6 +15,8 @@ from .schema import (
     ResourceResponse,
     ResourceTreeResponse,
     ResourcePatch,
+    RoleResourcesResponse,
+    UserResourceResponse,
 )
 from .dependencies import get_resource_service
 
@@ -159,3 +163,42 @@ async def get_metadata(
 ):
     metadata = await service.metadata(resource_id=resource_id)
     return metadata
+
+
+# Permissions
+@router.get(
+    "/resources/permissions/user/{user_id}/policies",
+    response_model=list[UserResourceResponse],
+    response_description="Get user resource policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_user_resources(user_id: str, service: ResourceService = Depends(get_resource_service)):
+    resources = await service.get_user_resource_policies(user_id)
+    return resources
+
+
+@router.get(
+    "/resources/permissions/role/{role_name}/policies",
+    response_model=list[RoleResourcesResponse],
+    response_description="Get role policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_resource_role_permissions(
+    response: Response,
+    role_name: str,
+    service: ResourceService = Depends(get_resource_service),
+    permission_service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+
+    total = await permission_service.count(filter={"v0": role_name, "ptype": "p", "v1__like": "resource:"})
+
+    if total == 0:
+        result = []
+    else:
+        result = await service.get_role_permissions(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"policies 0-{len(result)}/{total}"}
+    response.headers.update(headers)
+
+    return result

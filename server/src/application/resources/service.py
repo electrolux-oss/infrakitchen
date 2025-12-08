@@ -53,6 +53,8 @@ from .schema import (
     ResourceVariableSchema,
     ResourceWithConfigs,
     ResourcePatch,
+    RoleResourcesResponse,
+    UserResourceResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -227,7 +229,8 @@ class ResourceService:
         await add_resource_parent_policy(
             resource_id=new_resource.id,
             parent_ids=[p.id for p in new_resource.parents],
-            casbin_enforcer=self.permission_service.casbin_enforcer,
+            permission_service=self.permission_service,
+            requester=requester,
         )
 
         if response.workspace is not None:
@@ -826,3 +829,20 @@ class ResourceService:
                     resources_metadata[cr] = cloud_resources
 
         return resources_metadata
+
+    # Permissions
+    async def get_user_resource_policies(
+        self,
+        user_id: str,
+    ) -> list[UserResourceResponse]:
+        policies = await self.crud.get_user_resource_policies(user_id)
+        return [UserResourceResponse.model_validate(policy) for policy in policies]
+
+    async def get_role_permissions(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[RoleResourcesResponse]:
+        policies = await self.crud.get_resource_policies_by_role(role_name, range=range, sort=sort)
+        return [RoleResourcesResponse.model_validate(policy) for policy in policies]

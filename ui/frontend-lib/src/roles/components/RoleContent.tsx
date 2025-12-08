@@ -1,7 +1,8 @@
 import { Alert, Box } from "@mui/material";
 
-import { RoleOverview } from "./RoleOverview";
-import { RoleUsersTable } from "./RoleUsersTable";
+import { ApiPoliciesCard } from "../../permissions/components/policies/ApiPoliciesCard";
+import { EntityRolePoliciesCard } from "../../permissions/components/policies/EntityRolePoliciesCard";
+import { RoleUsersCard } from "../../permissions/components/roles/RoleUsersCard";
 
 export interface RoleContentProps {
   role: string | undefined;
@@ -20,8 +21,9 @@ export const RoleContent = (props: RoleContentProps) => {
         gap: 2,
       }}
     >
-      <RoleOverview role={role} />
-      <RoleUsersTable role={role} />
+      <EntityRolePoliciesCard role={role} />
+      <ApiPoliciesCard role={role} />
+      <RoleUsersCard role={role} />
     </Box>
   );
 };

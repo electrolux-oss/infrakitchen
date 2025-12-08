@@ -3,7 +3,7 @@ from typing import Any
 from uuid import UUID
 
 
-from core import EncryptedSecretStr
+from core.models.encrypted_secret import EncryptedSecretStr
 from core.adapters.functions import get_integration_adapter
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel

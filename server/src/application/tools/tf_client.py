@@ -5,7 +5,7 @@ from typing import Any
 
 import aiofiles
 
-from core import EntityLogger
+from core.custom_entity_log_controller import EntityLogger
 from core.errors import ShellExecutionError
 
 from core.tools.shell_client import ShellScriptClient

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 import logging
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 
@@ -18,8 +18,10 @@ from application.resources.schema import (
 from application.source_code_versions.schema import (
     SourceCodeVersionWithConfigs,
 )
-from core.casbin.enforcer import CasbinEnforcer
+from core.errors import EntityExistsError
+from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
+from core.users.model import UserDTO
 
 logger = logging.getLogger(__name__)
 
@@ -54,32 +56,35 @@ def get_merged_tags(parents: list[ResourceWithConfigs]) -> dict[str, str]:
 
 
 async def add_resource_parent_policy(
-    resource_id: str | UUID,
-    parent_ids: list[str | UUID],
-    casbin_enforcer: CasbinEnforcer,
+    resource_id: UUID, parent_ids: list[str | UUID], permission_service: PermissionService, requester: UserDTO
 ) -> None:
-    enforcer = await casbin_enforcer.get_enforcer()
+    if not parent_ids:
+        return
+    policy_filter = {"v1__in": [f"resource:{parent_id}" for parent_id in parent_ids]}
+    parent_policies = await permission_service.get_all(filter=policy_filter)
 
-    for parent in parent_ids:
-        parent_policies = enforcer.get_filtered_named_policy("p", 1, f"resource:{parent}")
-        for parent_policy in parent_policies:
-            if parent_policy[0].startswith("user:"):
-                continue
+    for parent_policy in parent_policies:
+        if parent_policy.v0 is not None and parent_policy.v0.startswith("user:"):
+            continue
+        policy = EntityPolicyCreate(
+            role=parent_policy.v0,
+            entity_id=resource_id,
+            entity_name="resource",
+            action=cast(ActionLiteral, parent_policy.v2),
+        )
 
-            result = await casbin_enforcer.add_casbin_policy(
-                parent_policy[0], resource_id, action=parent_policy[2], object_type="resource"
-            )
-            if result:
-                logger.info(f"Added policy {parent_policy[0]} {resource_id} {parent_policy[2]} resource")
-            else:
-                logger.warning(f"Policy {parent_policy[0]} {resource_id} {parent_policy[2]} resource already exists")
+        try:
+            await permission_service.create_entity_policy(policy, requester=requester)
+            logger.info(f"Added policy {parent_policy.v0} {resource_id} resource")
+        except EntityExistsError as e:
+            logger.warning(e)
 
 
 async def delete_resource_policies(
     resource_id: str | UUID,
     permission_service: PermissionService,
 ) -> None:
-    await permission_service.delete_resource_permissions(resource_id)
+    await permission_service.delete_entity_permissions("resource", resource_id)
 
 
 def get_resource_variable_schema(

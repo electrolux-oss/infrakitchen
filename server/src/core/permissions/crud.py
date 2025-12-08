@@ -1,4 +1,3 @@
-import re
 from typing import Any
 from uuid import UUID
 
@@ -47,150 +46,31 @@ class PermissionCRUD:
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 
-    async def get_casbin_user_policy_model(
-        self,
-        user_id: str | UUID,
-        object: UUID | str,
-        action: str = "read",
-        object_type: str | None = None,
-    ) -> Permission | None:
-        subject_id = f"user:{user_id}"
-
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-        elif isinstance(object, str):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
+    async def count_roles(self, filter: dict[str, Any] | None = None) -> int:
+        if not filter:
+            filter = {"ptype": "g"}
         else:
-            raise ValueError("Casbin object must be a string or UUID")
+            filter["ptype"] = "g"
 
-        statement = select(Permission).where(
-            Permission.ptype == "p",
-            Permission.v0 == subject_id,
-            Permission.v1 == object_id,
-            Permission.v2 == action,
-        )
+        statement = select(func.count(func.distinct(Permission.v1))).select_from(Permission)
+        statement = evaluate_sqlalchemy_filters(Permission, statement, filter)
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        return result.scalar_one() or 0
 
-    async def get_casbin_policy_model(
-        self,
-        subject: str,
-        object: UUID | str,
-        action: str = "read",
-        object_type: str | None = None,
-    ) -> Permission | None:
-        subject_id = f"{subject}"
+    async def create(self, body: dict[str, Any]) -> Permission:
+        permission = Permission(**body)
+        self.session.add(permission)
+        await self.session.flush()
+        return permission
 
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-        elif isinstance(object, str):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
-        else:
-            raise ValueError("Casbin object must be a string or UUID")
-
-        statement = select(Permission).where(
-            Permission.ptype == "p",
-            Permission.v0 == subject_id,
-            Permission.v1 == object_id,
-            Permission.v2 == action,
-        )
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
-
-    async def get_casbin_user_role_model(
-        self,
-        user_id: str | UUID,
-        object: str | UUID,
-        object_type: str | None = None,
-    ) -> Permission | None:
-        subject_id = f"user:{user_id}"
-
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-        elif isinstance(object, str):
-            if not re.match(r"^[a-z_*]+$", object):
-                raise ValueError("Object must be a string of lowercase letters and (_, *)")
-
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
-        else:
-            raise ValueError("Casbin object must be a string or UUID")
-
-        statement = select(Permission).where(
-            Permission.ptype == "g",
-            Permission.v0 == subject_id,
-            Permission.v1 == object_id,
-        )
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
-
-    async def get_casbin_role_model(
-        self,
-        subject: str,
-        object: str | UUID,
-        subject_type: str = "role",
-        object_type: str | None = None,
-    ) -> Permission | None:
-        if not re.match(r"^[a-z_]+$", subject):
-            raise ValueError("Subject must be a string of lowercase letters and _")
-        subject_id = f"{subject_type}:{subject}"
-
-        if is_valid_uuid(object):
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = f"resource:{object}"
-
-        elif isinstance(object, str):
-            if not re.match(r"^[a-z_*]+$", object):
-                raise ValueError("Object must be a string of lowercase letters and (_, *)")
-
-            if object_type:
-                object_id = f"{object_type}:{object}"
-            else:
-                object_id = object
-        else:
-            raise ValueError("Casbin object must be a string or UUID")
-
-        statement = select(Permission).where(
-            Permission.ptype == "g",
-            Permission.v0 == subject_id,
-            Permission.v1 == object_id,
-        )
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
-
-    async def update(self, existing_permission: Permission, body: dict[str, Any]) -> Permission:
-        for key, value in body.items():
-            setattr(existing_permission, key, value)
-
-        return existing_permission
-
-    async def delete_resource_permissions(self, resource_id: str | UUID) -> None:
-        if not is_valid_uuid(resource_id):
-            raise ValueError(f"Invalid UUID: {resource_id}")
+    async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
+        if not is_valid_uuid(entity_id):
+            raise ValueError(f"Invalid UUID: {entity_id}")
 
         statement = (
             select(Permission)
             .where(
-                Permission.v1 == f"resource:{resource_id}",
+                Permission.v1 == f"{entity_name}:{entity_id}",
             )
             .outerjoin(User, Permission.created_by == User.id)
         )
@@ -200,11 +80,46 @@ class PermissionCRUD:
         for permission in permissions:
             await self.session.delete(permission)
 
-    async def get_users_by_role(self, role_name: str) -> list[User]:
+    async def delete(self, permission: Permission) -> None:
+        await self.session.delete(permission)
+
+    async def get_all_roles(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+    ) -> list[Permission]:
+        if not filter:
+            filter = {"ptype": "g"}
+        else:
+            filter["ptype"] = "g"
+
+        statement = select(Permission).outerjoin(User, Permission.created_by == User.id).distinct(Permission.v1)
+        statement = evaluate_sqlalchemy_filters(Permission, statement, filter)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def get_users_by_role(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Any]:
         user_id_expr = func.split_part(Permission.v0, ":", 2)
 
         statement = (
-            select(User)
+            select(
+                User.id.label("user_id"),
+                User.identifier.label("identifier"),
+                User.email.label("email"),
+                User.provider.label("provider"),
+                User.display_name.label("display_name"),
+                Permission.v1.label("role"),
+                Permission.id.label("id"),
+                Permission.created_at.label("created_at"),
+                Permission.updated_at.label("updated_at"),
+            )
             .join(Permission, cast(User.id, String) == user_id_expr)
             .where(
                 Permission.ptype == "g",
@@ -213,5 +128,28 @@ class PermissionCRUD:
             )
         )
 
+        statement = evaluate_sqlalchemy_sorting(User, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+        result = await self.session.execute(statement)
+        return list(result.fetchall())
+
+    async def get_api_policies_by_role(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Permission]:
+        statement = (
+            select(Permission)
+            .where(
+                Permission.ptype == "p",
+                Permission.v1.like("api:%"),
+                Permission.v0 == role_name,
+            )
+            .outerjoin(User, Permission.created_by == User.id)
+        )
+
+        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
         result = await self.session.execute(statement)
         return list(result.scalars().all())

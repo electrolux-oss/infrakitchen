@@ -1,5 +1,4 @@
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
-import { EntityPoliciesCard } from "../../permissions/components/PolicyCard";
+import { EntityPoliciesCard } from "../../permissions/components/policies/EntityPoliciesCard";
 import { ResourceResponse } from "../types";
 
 export interface AdvancedSettingsProps {
@@ -8,11 +7,9 @@ export interface AdvancedSettingsProps {
 
 export const ResourcePermissions = ({ resource }: AdvancedSettingsProps) => {
   return (
-    <PropertyCollapseCard title="Permissions" id="resource-permissions">
-      <EntityPoliciesCard
-        entity_id={resource.id}
-        entity_name={resource._entity_name}
-      />
-    </PropertyCollapseCard>
+    <EntityPoliciesCard
+      entity_id={resource.id}
+      entity_name={resource._entity_name}
+    />
   );
 };
