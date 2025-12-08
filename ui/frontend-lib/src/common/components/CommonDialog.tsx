@@ -17,6 +17,8 @@ interface CommonDialogProps {
   content: ReactNode;
   actions: ReactNode;
   onClose: () => void;
+  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false;
+  fullWidth?: boolean;
 }
 
 export const CommonDialog: React.FC<CommonDialogProps> = ({
@@ -25,9 +27,16 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
   content,
   actions,
   onClose,
+  maxWidth = "sm",
+  fullWidth = true,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={maxWidth}
+      fullWidth={fullWidth}
+    >
       <DialogTitle
         sx={{
           display: "flex",
@@ -45,7 +54,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ minWidth: 400 }}>
+      <DialogContent dividers sx={{ minWidth: { xs: 300, sm: 400 } }}>
         <Typography component="span">{content}</Typography>
       </DialogContent>
       <DialogActions>

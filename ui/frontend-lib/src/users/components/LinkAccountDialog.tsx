@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 
 import { Box, Button } from "@mui/material";
 
-import { DialogSlider, useConfig } from "../../common";
+import { CommonDialog, useConfig } from "../../common";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
@@ -14,6 +14,10 @@ interface PolicyCreateProps {
   primary_account?: string;
   secondary_account?: string;
   onClose?: () => void;
+  onSubmit: (data: any) => void;
+  control: any;
+  errors: any;
+  handleSubmit: any;
 }
 
 interface FormValues {
@@ -22,48 +26,15 @@ interface FormValues {
 }
 
 export const LinkUserAccount = (props: PolicyCreateProps) => {
-  const { primary_account, secondary_account, onClose } = props;
+  const { control, errors } = props;
   const { ikApi } = useConfig();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormValues>({
-    mode: "onChange",
-    defaultValues: {
-      primary_account: primary_account,
-      secondary_account: secondary_account,
-    },
-  });
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
 
-  const onSubmit = useCallback(
-    (data: any) => {
-      ikApi
-        .postRaw(
-          `users/${data.primary_account}/link/${data.secondary_account}`,
-          {},
-        )
-        .then((response: UserResponse) => {
-          if (response.id) {
-            notify("User accounts linked successfully", "success");
-            onClose?.();
-
-            return response;
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        });
-    },
-    [ikApi, onClose],
-  );
-
   return (
-    <Box sx={{ width: "50%", mt: 4 }}>
+    <Box sx={{ width: "100%" }}>
       <form>
         <Controller
           name="secondary_account"
@@ -90,14 +61,6 @@ export const LinkUserAccount = (props: PolicyCreateProps) => {
             />
           )}
         />
-
-        <Button
-          type="submit"
-          variant="contained"
-          onClick={handleSubmit(onSubmit)}
-        >
-          Submit
-        </Button>
       </form>
     </Box>
   );
@@ -111,11 +74,64 @@ interface AddPrimaryAccountProps {
 }
 
 export const LinkUserDialog = (props: AddPrimaryAccountProps) => {
-  const { onClose, open } = props;
+  const { onClose, open, primary_account, secondary_account } = props;
+  const { ikApi } = useConfig();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    mode: "onChange",
+    defaultValues: {
+      primary_account: primary_account,
+      secondary_account: secondary_account,
+    },
+  });
+
+  const onSubmit = useCallback(
+    (data: any) => {
+      ikApi
+        .postRaw(
+          `users/${data.primary_account}/link/${data.secondary_account}`,
+          {},
+        )
+        .then((response: UserResponse) => {
+          if (response.id) {
+            notify("User accounts linked successfully", "success");
+            onClose?.();
+
+            return response;
+          }
+        })
+        .catch((error: any) => {
+          notifyError(error);
+        });
+    },
+    [ikApi, onClose],
+  );
 
   return (
-    <DialogSlider open={open} onClose={onClose} title="Link User Account">
-      <LinkUserAccount {...props} />
-    </DialogSlider>
+    <CommonDialog
+      open={open}
+      onClose={onClose}
+      title="Link User Account"
+      maxWidth="sm"
+      content={
+        <LinkUserAccount
+          primary_account={primary_account}
+          secondary_account={secondary_account}
+          onClose={onClose}
+          onSubmit={onSubmit}
+          control={control}
+          errors={errors}
+          handleSubmit={handleSubmit}
+        />
+      }
+      actions={
+        <Button variant="contained" onClick={handleSubmit(onSubmit)}>
+          Link Account
+        </Button>
+      }
+    />
   );
 };
