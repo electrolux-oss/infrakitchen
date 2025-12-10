@@ -3,7 +3,7 @@ from fastapi import status as http_status
 
 from core.revisions.service import RevisionService
 from core.users.model import UserDTO
-from core.users.functions import user_has_access_to_resource
+from core.users.functions import user_has_access_to_entity
 from .schema import RevisionResponse, RevisionShort
 from .dependencies import get_revision_service
 
@@ -22,7 +22,7 @@ async def get_all_entity_revisions(
     service: RevisionService = Depends(get_revision_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, entity_id, action="write"):
+    if not await user_has_access_to_entity(requester, entity_id, action="write", entity_name="resource"):
         raise HTTPException(status_code=403, detail="Access denied")
 
     revision = await service.get_entity_all_revisions(entity_id=entity_id)
@@ -42,7 +42,7 @@ async def get_entity_revision_by_number(
     service: RevisionService = Depends(get_revision_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, entity_id, action="write"):
+    if not await user_has_access_to_entity(requester, entity_id, action="write", entity_name="resource"):
         raise HTTPException(status_code=403, detail="Access denied")
 
     revision = await service.get_entity_revision(entity_id=entity_id, revision_number=revision_number)

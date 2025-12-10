@@ -15,6 +15,7 @@ from core.config import Settings
 from core.errors import EntityExistsError
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
+from core.users.functions import user_has_access_to_api
 from core.users.schema import UserCreateWithProvider, UserResponse
 from core.utils.json_encoder import JsonEncoder
 
@@ -27,7 +28,7 @@ request_action_mapping = {
     "GET": ["read", "write", "admin"],
     "POST": ["write", "admin"],
     "PUT": ["write", "admin"],
-    "PATCH": ["admin"],
+    "PATCH": ["write", "admin"],
     "DELETE": ["write", "admin"],
 }
 
@@ -49,33 +50,22 @@ async def check_api_permission(request: Request):
     if user.deactivated is True:
         raise HTTPException(status_code=403, detail="Forbidden. User is deactivated")
 
-    primary_account = user.primary_account[0] if user.primary_account else None
-    if primary_account and primary_account.deactivated is True:
-        raise HTTPException(status_code=403, detail="Forbidden. User's primary account is deactivated")
-
     match = re.search(r"/api/([^/?]+)", request.url.path)
     if match:
         entity = match.group(1).removesuffix("s")  # singular form
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    if entity == "resources" or entity == "resource_temp_state":
-        # resources has own permission control system `user_has_access_to_resource` function
-        if primary_account:
-            if await casbin_enforcer.enforce_casbin_user(primary_account.id, entity, "read", object_type="resource"):
-                return
-
-        elif await casbin_enforcer.enforce_casbin_user(user.id, entity, "read", object_type="api"):
+    if entity == "resource" or entity == "resource_temp_state":
+        # resources has own permission control system `user_has_access_to_entity` function
+        if await user_has_access_to_api(user, "resource", "read"):
             return
 
     if request.method not in request_action_mapping:
         raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden for {entity}")
 
     for method in request_action_mapping[request.method]:
-        if primary_account:
-            if await casbin_enforcer.enforce_casbin_user(primary_account.id, entity, method, object_type="api"):
-                return
-        elif await casbin_enforcer.enforce_casbin_user(user.id, entity, method, object_type="api"):
+        if await user_has_access_to_api(user, entity, method):
             return
 
     raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden")

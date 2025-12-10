@@ -3,9 +3,8 @@ from fastapi import status as http_status
 
 from application.integrations.service import IntegrationService
 from core.base_models import PatchBodyModel
-from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
-from core.users.functions import user_has_access_to_api, user_has_access_to_resource
+from core.users.functions import user_has_access_to_api
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .dependencies import get_integration_service
@@ -86,9 +85,8 @@ async def update(
     service: IntegrationService = Depends(get_integration_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, integration_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.EDIT not in await service.get_actions(integration_id=integration_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
     entity = await service.update(integration_id=integration_id, integration=body, requester=requester)
     return entity
 
@@ -104,12 +102,11 @@ async def patch_action(
 ):
     requester: UserDTO = request.state.user
     actions_list = list(map(lambda x: x.value, ModelActions))
-    if not await user_has_access_to_resource(requester, integration_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
     if body.action not in actions_list:
         raise HTTPException(status_code=400, detail="Invalid action")
 
+    if body.action not in await service.get_actions(integration_id=integration_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
     entity = await service.patch(integration_id=integration_id, body=body, requester=requester)
 
     return entity
@@ -118,9 +115,8 @@ async def patch_action(
 @router.delete("/integrations/{integration_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 async def delete(request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, integration_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.DELETE not in await service.get_actions(integration_id=integration_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
     await service.delete(integration_id=integration_id, requester=requester)
 
 
@@ -161,13 +157,7 @@ async def validate(
     request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)
 ):
     requester: UserDTO = request.state.user
-    casbin_enforcer = CasbinEnforcer()
-    if casbin_enforcer.enforcer is None:
-        _ = await casbin_enforcer.get_enforcer()
-    if casbin_enforcer.enforcer is None:
-        raise HTTPException(status_code=500, detail="Casbin enforcer is not initialized")
-    requester: UserDTO = request.state.user
-    if not await casbin_enforcer.enforce_casbin_user(requester.id, "integration", "write", object_type="api"):
+    if not await user_has_access_to_api(requester, "integration", action="write"):
         raise HTTPException(status_code=403, detail="Access denied")
 
     integration = await service.get_by_id(integration_id=integration_id)

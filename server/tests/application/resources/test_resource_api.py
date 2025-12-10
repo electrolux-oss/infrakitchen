@@ -1,6 +1,6 @@
 from datetime import datetime
 from http import HTTPStatus
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from application.resources.api import router
 from application.resources.dependencies import get_resource_service
 from application.resources.schema import ResourceTreeResponse, UserResourceResponse
-from core import UserDTO
+from core.constants.model import ModelActions
 
 RESOURCE_ID = "res123"
 
@@ -175,17 +175,12 @@ class TestCreate:
 
 
 class TestResourcePatch:
-    def test_patch_description_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_description_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "description": "new_description",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
@@ -195,16 +190,11 @@ class TestResourcePatch:
         assert json_response["name"] == resource_response.name
         assert json_response["id"] == str(resource_response.id)
 
-    def test_patch_description_null_error(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_description_null_error(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "description": None,
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-
         service = MockResourceService(patched=resource_response)
         override_service(service)
 
@@ -212,14 +202,9 @@ class TestResourcePatch:
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert "At least one field must be provided in ResourcePatch" in response.text
 
-    def test_patch_all_fields_are_null_error(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_all_fields_are_null_error(self, client_with_user, resource_response, override_service):
         resource_patch = {}
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-
         service = MockResourceService(patched=resource_response)
         override_service(service)
 
@@ -227,143 +212,105 @@ class TestResourcePatch:
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert "At least one field must be provided in ResourcePatch" in response.text
 
-    def test_patch_source_code_version_id_success(
-        self, client_with_user, resource_response, override_service, monkeypatch
-    ):
+    def test_patch_source_code_version_id_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "source_code_version_id": str(uuid4()),
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_integration_ids_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_integration_ids_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "integration_ids": [str(uuid4())],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_variables_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_variables_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "variables": [{"name": "var1", "value": "val1"}],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_dependency_tags_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_dependency_tags_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "dependency_tags": [{"name": "tag1", "value": "val1"}],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_dependency_config_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_dependency_config_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "dependency_config": [{"name": "cfg1", "value": "val1"}],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_labels_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_labels_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "labels": ["label1", "label2"],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_workspace_id_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_workspace_id_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "workspace_id": str(uuid4()),
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_invalid_type_error(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_invalid_type_error(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "labels": 123,
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
         service = MockResourceService(patched=resource_response)
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
-    def test_patch_multiple_fields_success(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_multiple_fields_success(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "description": "desc",
             "labels": ["label1"],
             "workspace_id": str(uuid4()),
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_empty_lists_error(self, client_with_user, resource_response, override_service, monkeypatch):
+    def test_patch_empty_lists_error(self, client_with_user, resource_response, override_service):
         resource_patch = {
             "labels": [],
             "dependency_tags": [],
@@ -372,58 +319,40 @@ class TestResourcePatch:
             "variables": [],
         }
 
-        async def mock_user_has_access_to_resource(user, resource_id, action):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
 
 
 class TestResourceActionsPatch:
-    def test_patch_forbidden(self, client_with_user, monkeypatch):
+    def test_patch_forbidden(self, client_with_user, override_service):
         resource_patch = {
             "action": "create",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
+        override_service(MockResourceService(actions=[]))
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}/actions", json=resource_patch)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action create"}
 
-    def test_patch_value_error(self, client_with_user, monkeypatch):
+    def test_patch_value_error(self, client_with_user):
         resource_patch = {
             "action": "unknown",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}/actions", json=resource_patch)
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.json() == {"detail": "Invalid action"}
 
-    def test_patch_success(self, client_with_user, override_service, monkeypatch, resource_response):
+    def test_patch_success(self, client_with_user, override_service, resource_response):
         resource_patch = {
             "action": "create",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.CREATE])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}/actions", json=resource_patch)
@@ -435,24 +364,16 @@ class TestResourceActionsPatch:
 
 
 class TestResourceDelete:
-    def test_delete_forbidden(self, client_with_user, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
+    def test_delete_forbidden(self, client_with_user, override_service):
+        override_service(MockResourceService(actions=[]))
 
         response = client_with_user.delete(f"/resources/{RESOURCE_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_delete_success(self, client_with_user, override_service, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr("application.resources.api.user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockResourceService()
+    def test_delete_success(self, client_with_user, override_service):
+        service = MockResourceService(actions=[ModelActions.DELETE])
         override_service(service)
 
         response = client_with_user.delete(f"/resources/{RESOURCE_ID}")

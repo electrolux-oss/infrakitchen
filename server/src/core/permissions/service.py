@@ -9,7 +9,7 @@ from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
 from core.errors import EntityExistsError, EntityNotFound
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.model_tools import is_valid_uuid
 from .crud import PermissionCRUD
 from core.users.service import UserService
@@ -166,39 +166,6 @@ class PermissionService:
         users = await self.crud.get_users_by_role(role_name, **kwargs)
         return [RoleUsersResponse.model_validate(user) for user in users]
 
-    async def get_user_policies(self, user_id: str | UUID) -> dict[str, str]:
-        def filter_policies(policies: list[list[str]]) -> dict[str, str]:
-            filtered: dict[str, str] = {}
-            for policy in policies:
-                action = policy[2]
-                entity = policy[1]
-                if filtered.get(entity) is None:
-                    filtered[entity] = action
-                else:
-                    # Keep the highest permission level
-                    if action == "admin":
-                        filtered[entity] = "admin"
-                        continue
-
-                    if filtered[entity] == "admin":
-                        continue
-
-                    if action == "write":
-                        filtered[entity] = action
-                        continue
-
-                    if filtered[entity] != "read" and action == "read":
-                        continue
-                    filtered[entity] = action
-            return filtered
-
-        if self.casbin_enforcer.enforcer is None:
-            _ = await self.casbin_enforcer.get_enforcer()
-        if not self.casbin_enforcer.enforcer:
-            raise RuntimeError("Casbin enforcer is not initialized")
-        policies = await self.casbin_enforcer.enforcer.get_implicit_permissions_for_user(f"user:{user_id}")
-        return filter_policies(policies)
-
     async def delete(self, permission_id: str, requester: UserDTO) -> None:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
@@ -214,18 +181,22 @@ class PermissionService:
     async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
         await self.crud.delete_entity_permissions(entity_name, entity_id)
 
-    async def get_actions(self, role_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, permission_id: str, requester: UserDTO) -> list[str]:
         """
         Get all actions available for the permission.
         :param role_id: ID of the role
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, role_id)
+        apis = await user_api_permission(requester, "permission")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:permission"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 
         actions: list[str] = []
-        role = await self.crud.get_by_id(role_id)
+        role = await self.crud.get_by_id(permission_id)
         if not role:
             raise EntityNotFound("Role not found")
         actions.append(ModelActions.EDIT)

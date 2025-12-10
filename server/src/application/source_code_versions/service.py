@@ -14,7 +14,7 @@ from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import valid_uuid
 from .crud import SourceCodeVersionCRUD
@@ -397,7 +397,11 @@ class SourceCodeVersionService:
         :param source_code_version_id: ID of the source code version
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, source_code_version_id)
+        apis = await user_api_permission(requester, "source_code_version")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:source_code_version"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 

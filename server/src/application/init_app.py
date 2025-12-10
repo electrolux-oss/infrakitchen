@@ -13,7 +13,7 @@ from core.permissions.service import PermissionService
 from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
 from core.users.schema import UserCreateWithProvider
-from core.utils.entities import get_infra_entities
+from core.utils.entities import DEFAULT_ENTITIES, INFRA_ENTITIES
 
 logger = logging.getLogger(__name__)
 
@@ -83,9 +83,15 @@ async def create_default_roles(permission_service: PermissionService, user: User
 
 
 async def load_api_policies(permission_service: PermissionService, role_name: str):
-    action = "read" if role_name == "default" else "write"
     existing_permissions = await permission_service.get_role_api_permissions(role_name)
-    apis = get_infra_entities()
+    if role_name == "default":
+        action = "read"
+        apis = DEFAULT_ENTITIES
+    elif role_name == "infra":
+        action = "admin"
+        apis = INFRA_ENTITIES
+    else:
+        return
 
     entities_policies = {(role_name, f"api:{entity}", action) for entity in apis}
     existing_policies = set((policy.v0, policy.v1, policy.v2) for policy in existing_permissions)

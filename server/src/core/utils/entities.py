@@ -1,4 +1,4 @@
-INFRA_ENTITIES = [
+DEFAULT_ENTITIES = [
     "template",
     "resource",
     "resource_temp_state",
@@ -27,10 +27,15 @@ ADMIN_ENTITIES = [
     "auth_provider",
 ]
 
+INFRA_ENTITIES = [
+    "template",
+    "source_code",
+    "source_code_version",
+    "integration",
+    "secret",
+    "storage",
+]
+
 
 def get_all_entities():
-    return INFRA_ENTITIES + ADMIN_ENTITIES
-
-
-def get_infra_entities():
-    return INFRA_ENTITIES
+    return DEFAULT_ENTITIES + ADMIN_ENTITIES

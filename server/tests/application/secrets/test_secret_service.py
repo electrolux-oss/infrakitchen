@@ -496,8 +496,46 @@ class TestDelete:
 
 class TestGetSecretActions:
     @pytest.mark.asyncio
-    async def test_get_actions_for_enabled_not_admin(
+    @pytest.mark.parametrize(
+        "status,user_permissions,expected_actions",
+        [
+            (
+                ModelStatus.ENABLED,
+                {"api:secret": "write"},
+                [],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {"api:secret": "admin"},
+                [ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:secret": "write"},
+                [],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:secret": "admin"},
+                [ModelActions.DELETE, ModelActions.ENABLE],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {"api:secret": "read"},
+                [],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {},
+                [],
+            ),
+        ],
+    )
+    async def test_get_workspace_actions(
         self,
+        status,
+        user_permissions,
+        expected_actions,
         mock_secret_service,
         mock_secret_crud,
         mocked_secret,
@@ -506,93 +544,17 @@ class TestGetSecretActions:
         mock_user_permissions,
     ):
         mock_user_permissions(
-            ["write"],
+            user_permissions,
             monkeypatch,
-            "application.secrets.service.user_entity_permissions",
+            "application.secrets.service.user_api_permission",
         )
 
-        mocked_secret.status = ModelStatus.ENABLED
+        mocked_secret.status = status
         mock_secret_crud.get_by_id.return_value = mocked_secret
 
         result = await mock_secret_service.get_actions(secret_id=mocked_secret.id, requester=mock_user_dto)
 
-        assert result == []
-        mock_secret_crud.get_by_id.assert_awaited_once_with(mocked_secret.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_enabled_admin(
-        self,
-        mock_secret_service,
-        mock_secret_crud,
-        mocked_secret,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["write", "admin"], monkeypatch, "application.secrets.service.user_entity_permissions")
-
-        existing_secret = mocked_secret
-        existing_secret.status = ModelStatus.ENABLED
-        mock_secret_crud.get_by_id.return_value = existing_secret
-
-        result = await mock_secret_service.get_actions(secret_id=mocked_secret.id, requester=mock_user_dto)
-
-        assert result == [ModelActions.EDIT, ModelActions.DISABLE]
-        mock_secret_crud.get_by_id.assert_awaited_once_with(mocked_secret.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_disabled_not_admin(
-        self,
-        mock_secret_service,
-        mock_secret_crud,
-        mocked_secret,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["write"], monkeypatch, "application.secrets.service.user_entity_permissions")
-
-        mocked_secret.status = ModelStatus.DISABLED
-        mock_secret_crud.get_by_id.return_value = mocked_secret
-
-        result = await mock_secret_service.get_actions(secret_id=mocked_secret.id, requester=mock_user_dto)
-
-        assert result == []
-        mock_secret_crud.get_by_id.assert_awaited_once_with(mocked_secret.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_disabled_admin(
-        self,
-        mock_secret_service,
-        mock_secret_crud,
-        mocked_secret,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["write", "admin"], monkeypatch, "application.secrets.service.user_entity_permissions")
-
-        mocked_secret.status = ModelStatus.DISABLED
-        mock_secret_crud.get_by_id.return_value = mocked_secret
-
-        result = await mock_secret_service.get_actions(secret_id=mocked_secret.id, requester=mock_user_dto)
-
-        assert result == [ModelActions.DELETE, ModelActions.ENABLE]
-        mock_secret_crud.get_by_id.assert_awaited_once_with(mocked_secret.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_user_has_read_permissions(
-        self,
-        mock_secret_service,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["read"], monkeypatch, "application.secrets.service.user_entity_permissions")
-
-        result = await mock_secret_service.get_actions(secret_id=SECRET_ID, requester=mock_user_dto)
-
-        assert result == []
+        assert result == expected_actions
 
 
 class TestValidateConfiguration:

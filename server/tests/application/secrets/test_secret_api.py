@@ -9,8 +9,8 @@ from application.secrets.api import router
 from application.secrets.dependencies import get_secret_service
 from application.secrets.schema import SecretUpdate, SecretCreate
 from core import UserDTO
-import application.secrets.api as api_secret
 from core.base_models import PatchBodyModel
+from core.constants.model import ModelActions
 
 secret_ID = "abc123"
 
@@ -202,7 +202,7 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_forbidden(self, client_with_user, monkeypatch):
+    def test_update_forbidden(self, client_with_user, override_service):
         secret_update = {
             "name": "Test Secret 1",
             "description": "New description",
@@ -212,18 +212,15 @@ class TestUpdate:
             "labels": [],
             "model_config": {},
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockSecretService(actions=[])
+        override_service(service)
 
         response = client_with_user.patch(f"/secrets/{secret_ID}", json=secret_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
-    def test_update_success(self, client_with_user, override_service, monkeypatch, mocked_secret_response):
+    def test_update_success(self, client_with_user, override_service, mocked_secret_response):
         secret_update = {
             "name": "Test Secret 1",
             "description": "New description",
@@ -234,12 +231,7 @@ class TestUpdate:
             "model_config": {},
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockSecretService(updated_secret=mocked_secret_response)
+        service = MockSecretService(updated_secret=mocked_secret_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/secrets/{secret_ID}", json=secret_update)
@@ -251,47 +243,36 @@ class TestUpdate:
 
 
 class TestPatchAction:
-    def test_patch_action_forbidden(self, client_with_user, monkeypatch):
+    def test_patch_action_forbidden(self, client_with_user, override_service):
         secret_patch = {
             "action": "create",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockSecretService(actions=[])
+        override_service(service)
 
         response = client_with_user.patch(f"/secrets/{secret_ID}/actions", json=secret_patch)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action create"}
 
-    def test_patch_action_value_error(self, client_with_user, monkeypatch):
+    def test_patch_action_value_error(self, client_with_user, override_service):
         secret_patch = {
             "action": "unknown",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockSecretService(actions=[ModelActions.CREATE])
+        override_service(service)
 
         response = client_with_user.patch(f"/secrets/{secret_ID}/actions", json=secret_patch)
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.json() == {"detail": "Invalid action"}
 
-    def test_patch_action_success(self, client_with_user, override_service, monkeypatch, mocked_secret_response):
+    def test_patch_action_success(self, client_with_user, override_service, mocked_secret_response):
         secret_patch = {
             "action": "create",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockSecretService(patch_secret=mocked_secret_response)
+        service = MockSecretService(patch_secret=mocked_secret_response, actions=[ModelActions.CREATE])
         override_service(service)
 
         response = client_with_user.patch(f"/secrets/{secret_ID}/actions", json=secret_patch)
@@ -303,24 +284,16 @@ class TestPatchAction:
 
 
 class TestDelete:
-    def test_delete_forbidden(self, client_with_user, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
+    def test_delete_forbidden(self, client_with_user, override_service):
+        service = MockSecretService(actions=[])
+        override_service(service)
         response = client_with_user.delete(f"/secrets/{secret_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_delete_success(self, client_with_user, override_service, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_secret, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockSecretService()
+    def test_delete_success(self, client_with_user, override_service):
+        service = MockSecretService(actions=[ModelActions.DELETE])
         override_service(service)
 
         response = client_with_user.delete(f"/secrets/{secret_ID}")

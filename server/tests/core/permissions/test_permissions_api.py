@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from http import HTTPStatus
 
+from core.constants.model import ModelActions
 from core.permissions.api import router
 from core.permissions.schema import RoleUsersResponse
 from core.users.model import UserDTO
@@ -48,13 +49,13 @@ def mock_user_super_admin(monkeypatch):
     async def mock_is_super_admin(user: UserDTO) -> bool:
         return user.identifier == "super_admin"
 
-    async def mock_has_access(user: UserDTO, resource_id: str, action: str) -> bool:
+    async def mock_has_access(user: UserDTO, resource_id: str, action: str, entity_name: str) -> bool:
         if action == "admin":
             return user.identifier != "regular_user"
         return True
 
     monkeypatch.setattr("core.permissions.api.user_is_super_admin", mock_is_super_admin)
-    monkeypatch.setattr("core.permissions.api.user_has_access_to_resource", mock_has_access)
+    monkeypatch.setattr("core.permissions.api.user_has_access_to_entity", mock_has_access)
 
 
 MOCK_SUPER_ADMIN_USER = UserDTO(id=uuid.uuid4(), identifier="super_admin", provider="test_provider")
@@ -369,7 +370,7 @@ class TestDeletePermission:
     ENTITY_ID = str(uuid.uuid4())
 
     def test_delete_success(self, client, override_permission_service, mock_user_super_admin):
-        service = MockPermissionsService()
+        service = MockPermissionsService(actions=[ModelActions.DELETE])
         override_permission_service(service)
 
         response = client.delete(f"/permissions/{self.ENTITY_ID}")
@@ -382,13 +383,13 @@ class TestDeletePermission:
             request.state.user = MOCK_REGULAR_USER
             return await call_next(request)
 
-        service = MockPermissionsService()
+        service = MockPermissionsService(actions=[])
         override_permission_service(service)
 
         response = client_without_user.delete(f"/permissions/{self.ENTITY_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json()["detail"] == "Access denied"
+        assert response.json()["detail"] == "Access denied for action delete"
 
 
 class TestGetActions:

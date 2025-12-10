@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
+from core.constants.model import ModelActions
 from core.permissions.schema import (
     ApiPolicyCreate,
     EntityPolicyCreate,
@@ -8,7 +9,7 @@ from core.permissions.schema import (
     RoleUsersResponse,
     RoleCreate,
 )
-from core.users.functions import user_has_access_to_resource, user_is_super_admin
+from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 
@@ -218,19 +219,21 @@ async def create_entity_policy(
     request: Request, body: EntityPolicyCreate, service: PermissionService = Depends(get_permission_service)
 ):
     requester: UserDTO = request.state.user
+    if await user_has_access_to_entity(requester, body.entity_id, "admin", body.entity_name) is False:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     entity = await service.create_entity_policy(body=body, requester=requester)
 
     return entity
 
 
-@router.delete("/permissions/{entity_id}", status_code=http_status.HTTP_204_NO_CONTENT)
-async def delete(request: Request, entity_id: str, service: PermissionService = Depends(get_permission_service)):
+@router.delete("/permissions/{permission_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+async def delete(request: Request, permission_id: str, service: PermissionService = Depends(get_permission_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, entity_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if ModelActions.DELETE not in await service.get_actions(permission_id=permission_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
 
-    await service.delete(permission_id=entity_id, requester=requester)
+    await service.delete(permission_id=permission_id, requester=requester)
 
 
 @router.get(

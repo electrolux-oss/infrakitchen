@@ -7,7 +7,6 @@ from fastapi import status as http_status
 
 from core.permissions.dependencies import get_permission_service
 from core.permissions.service import PermissionService
-from core.users.functions import user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
@@ -90,9 +89,8 @@ async def patch(
     service: ResourceService = Depends(get_resource_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, resource_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.EDIT not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
     entity = await service.patch(resource_id=resource_id, resource=body, requester=requester)
     return entity
 
@@ -106,11 +104,11 @@ async def patch_action(
 ):
     requester: UserDTO = request.state.user
     actions_list = list(map(lambda x: x.value, ModelActions))
-    if not await user_has_access_to_resource(requester, resource_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
     if body.action not in actions_list:
         raise HTTPException(status_code=400, detail="Invalid action")
+
+    if body.action not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
 
     entity = await service.patch_action(resource_id=resource_id, body=body, requester=requester)
 
@@ -120,9 +118,8 @@ async def patch_action(
 @router.delete("/resources/{resource_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 async def delete(request: Request, resource_id: str, service: ResourceService = Depends(get_resource_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, resource_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.DELETE not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
     await service.delete(resource_id=resource_id, requester=requester)
 
 

@@ -98,7 +98,7 @@ class MockPermissionsService:
     async def delete(self, permission_id: str, requester: UserDTO):
         pass
 
-    async def get_actions(self, entity_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, permission_id: str, requester: UserDTO) -> list[str]:
         return self._actions
 
 

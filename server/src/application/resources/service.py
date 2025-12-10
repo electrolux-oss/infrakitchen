@@ -687,7 +687,7 @@ class ResourceService:
         :param resource_id: ID of the resource
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, resource_id)
+        requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 
