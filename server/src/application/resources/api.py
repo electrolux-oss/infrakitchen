@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
 from core.permissions.dependencies import get_permission_service
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
@@ -199,3 +201,23 @@ async def get_resource_role_permissions(
     response.headers.update(headers)
 
     return result
+
+
+@router.post(
+    "/resources/permissions",
+    response_model=list[PermissionResponse],
+    response_description="Sync role permissions with resources",
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_role_resource_permissions(
+    request: Request,
+    resource_policy: EntityPolicyCreate,
+    service: ResourceService = Depends(get_resource_service),
+):
+    requester: UserDTO = request.state.user
+
+    requester_permissions = await user_entity_permissions(requester, resource_policy.entity_id, "resource")
+    if "admin" not in requester_permissions:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await service.create_resource_policy(resource_policy, requester=requester)

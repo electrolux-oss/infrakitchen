@@ -77,11 +77,13 @@ export const AuditLogsPage = () => {
         sortable: true,
         valueGetter: (value: string) => value,
         renderCell: (params: GridRenderCellParams) => {
-          return GetEntityLink({
-            id: params.row.entity_id,
-            _entity_name: params.row.model,
-            name: params.row.model,
-          });
+          return (
+            <GetEntityLink
+              id={params.row.entity_id}
+              _entity_name={params.row.model}
+              name={params.row.model}
+            />
+          );
         },
       },
     ],

@@ -5,7 +5,9 @@ import { Controller, useForm } from "react-hook-form";
 import {
   Box,
   Button,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
@@ -47,6 +49,7 @@ export const EntityRolePolicyCreateCard = (
       entity_id: entity_id,
       entity_name: entity_name,
       action: "read",
+      inherits_children: false,
     },
   });
 
@@ -87,21 +90,20 @@ export const EntityRolePolicyCreateCard = (
         }
 
         const response = await ikApi.postRaw(
-          "permissions/policy/entity",
+          `${entity_name}s/permissions`,
           payload,
         );
-        if (response.id) {
-          notify(
-            `Resource policy created successfully: ${response.v1} - ${response.v2}`,
-            "success",
-          );
+        if (response.length > 0) {
+          notify(`Resource policy created successfully`, "success");
           onClose?.();
+        } else {
+          notify("Nothing to create.", "info");
         }
       } catch (error: any) {
         notifyError(error);
       }
     },
-    [ikApi, onClose, buffer, role_name, entity_id],
+    [ikApi, onClose, buffer, role_name, entity_id, entity_name],
   );
 
   return (
@@ -181,6 +183,18 @@ export const EntityRolePolicyCreateCard = (
             </FormControl>
           )}
         />
+        {entity_id && !role_name && (
+          <Controller
+            name="inherits_children"
+            control={control}
+            render={({ field }) => (
+              <FormControlLabel
+                control={<Checkbox {...field} checked={field.value} />}
+                label="Inherit to Child Resources"
+              />
+            )}
+          />
+        )}
 
         <Button
           type="submit"

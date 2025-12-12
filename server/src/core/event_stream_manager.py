@@ -42,6 +42,7 @@ async def rabbitmq_consumer():
                 enforcer = CasbinEnforcer().enforcer
                 if not enforcer:
                     raise ValueError("Enforcer is not initialized")
+                await asyncio.sleep(1)  # Small delay to ensure DB transactions are committed
                 await enforcer.load_policy()
             else:
                 logger.debug(f"Sending message to eventstream: {msg}")

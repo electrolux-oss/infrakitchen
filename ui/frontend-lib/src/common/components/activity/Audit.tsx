@@ -6,12 +6,14 @@ import {
   GridFilterModel,
   GridSortModel,
   GridPaginationModel,
+  GridRenderCellParams,
+  GridColDef,
 } from "@mui/x-data-grid";
 
 import { useConfig } from "../../../common";
 import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
-import { getDateValue } from "../CommonField";
+import { getDateValue, GetReferenceUrlValue } from "../CommonField";
 
 export interface AuditProps {
   entityId: string;
@@ -116,7 +118,7 @@ export const Audit = ({ entityId }: AuditProps) => {
       });
   }, [ikApi, entityId]);
 
-  const columns = useMemo(
+  const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
       {
         field: "created_at",
@@ -125,11 +127,16 @@ export const Audit = ({ entityId }: AuditProps) => {
         valueFormatter: (value: string) => getDateValue(value),
       },
       {
-        field: "creator.display_name",
+        field: "creator",
         headerName: "User",
         flex: 1,
-        valueGetter: (value: string, row: AuditLogEntity) =>
-          row.creator?.display_name || "Unknown user",
+        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+          if (!params.row.creator) {
+            return "System";
+          }
+          const creatorData = params.row.creator;
+          return <GetReferenceUrlValue {...creatorData} />;
+        },
       },
       {
         field: "action",

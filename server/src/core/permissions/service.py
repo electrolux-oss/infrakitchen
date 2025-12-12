@@ -175,8 +175,8 @@ class PermissionService:
             raise EntityNotFound("Permission not found")
 
         await self.crud.delete(existing_permission)
-        await self.casbin_enforcer.send_reload_event()
         await self.audit_log_handler.create_log(existing_permission.id, requester.id, ModelActions.DELETE)
+        await self.casbin_enforcer.send_reload_event()
 
     async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
         await self.crud.delete_entity_permissions(entity_name, entity_id)
@@ -256,6 +256,7 @@ class PermissionService:
         self,
         body: EntityPolicyCreate,
         requester: UserDTO,
+        reload_permission: bool = True,
     ) -> PermissionResponse:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
@@ -316,6 +317,9 @@ class PermissionService:
         result = await self.crud.get_by_id(new_permission.id)
 
         await self.audit_log_handler.create_log(new_permission.id, requester.id, ModelActions.CREATE)
-        await self.casbin_enforcer.send_reload_event()
-
+        if reload_permission:
+            await self.casbin_enforcer.send_reload_event()
         return PermissionResponse.model_validate(result)
+
+    async def commit(self) -> None:
+        await self.crud.session.commit()

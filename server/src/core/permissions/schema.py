@@ -69,6 +69,7 @@ class EntityPolicyCreate(BaseModel):
     entity_id: uuid.UUID
     entity_name: str
     action: ActionLiteral
+    inherits_children: bool = Field(default=False)
 
     @model_validator(mode="after")
     def validate_role_name(self) -> Self:

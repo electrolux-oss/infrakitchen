@@ -45,7 +45,7 @@ export const SourceCodeVersionsPage = () => {
         valueGetter: (value: any) => value?.identifier || value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
-          return GetReferenceUrlValue(template);
+          return <GetReferenceUrlValue {...template} />;
         },
       },
       {
@@ -54,7 +54,7 @@ export const SourceCodeVersionsPage = () => {
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
           const sourceCode = params.row.source_code;
-          return GetReferenceUrlValue(sourceCode);
+          return <GetReferenceUrlValue {...sourceCode} />;
         },
       },
       {

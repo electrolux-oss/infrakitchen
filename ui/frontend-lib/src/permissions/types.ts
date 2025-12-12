@@ -21,6 +21,7 @@ export interface EntityPolicyCreate {
   entity_id: string;
   entity_name: string;
   action: string;
+  inherits_children: boolean;
 }
 
 export interface ResourceUserPolicyCreate {

@@ -71,7 +71,7 @@ export const WorkspacesPage = () => {
         headerName: "Name",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
-          return GetEntityLink(params.row);
+          return <GetEntityLink {...params.row} />;
         },
       },
       {

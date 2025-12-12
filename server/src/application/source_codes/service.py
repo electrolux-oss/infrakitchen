@@ -197,7 +197,7 @@ class SourceCodeService:
         :param source_code_id: ID of the source_code
         :return: List of actions
         """
-        apis = await user_api_permission(requester, "source_code_version")
+        apis = await user_api_permission(requester, "source_code")
         if not apis:
             return []
         requester_permissions = [apis["api:source_code"]]

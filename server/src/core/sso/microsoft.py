@@ -171,13 +171,12 @@ async def microsoft_callback(
         secure=True,
         expires=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30),
     )  # This cookie will make sure the user is authenticated
-    assert user.id is not None, "User ID should not be None"
     await service.audit_log_handler.create_log(
         entity_id=user.id,
         requester_id=user.id,
         action="login",
     )
     if reload_permission:
-        await service.permission_service.crud.session.commit()
+        await service.permission_service.commit()
         await service.casbin_enforcer.send_reload_event()
     return response

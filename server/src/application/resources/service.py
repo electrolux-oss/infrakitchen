@@ -26,8 +26,9 @@ from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
 from core.database import to_dict
-from core.errors import DependencyError, EntityNotFound, EntityWrongState
+from core.errors import DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.revisions.handler import RevisionHandler
@@ -236,6 +237,7 @@ class ResourceService:
         if response.workspace is not None:
             await self.workspace_event_sender.send_task(response.id, requester=requester, action=ModelActions.CREATE)
 
+        await self.permission_service.casbin_enforcer.send_reload_event()
         return response
 
     async def patch(self, resource_id: str, resource: ResourcePatch, requester: UserDTO) -> ResourceResponse:
@@ -710,10 +712,12 @@ class ResourceService:
 
         if resource_temp_state:
             actions.append("has_temporary_state")
+            actions.append("dryrun_with_temp_state")
 
         if resource.status == ModelStatus.APPROVAL_PENDING:
             if user_is_admin:
                 actions.append(ModelActions.APPROVE)
+                actions.append(ModelActions.REJECT)
             actions.append(ModelActions.DRYRUN)
             actions.append(ModelActions.DOWNLOAD)
             actions.append(ModelActions.EDIT)
@@ -732,6 +736,7 @@ class ResourceService:
 
             if resource_temp_state is not None and user_is_admin:
                 actions.append(ModelActions.APPROVE)
+                actions.append(ModelActions.REJECT)
         elif resource.state == ModelState.PROVISION:
             actions.append(ModelActions.EXECUTE)
             actions.append(ModelActions.DOWNLOAD)
@@ -741,6 +746,7 @@ class ResourceService:
                 actions.append(ModelActions.DELETE)
             if resource_temp_state is not None and user_is_admin:
                 actions.append(ModelActions.APPROVE)
+                actions.append(ModelActions.REJECT)
         elif resource.state == ModelState.DESTROYED:
             if resource.status == ModelStatus.DONE:
                 actions.append(ModelActions.RECREATE)
@@ -846,3 +852,47 @@ class ResourceService:
     ) -> list[RoleResourcesResponse]:
         policies = await self.crud.get_resource_policies_by_role(role_name, range=range, sort=sort)
         return [RoleResourcesResponse.model_validate(policy) for policy in policies]
+
+    async def create_resource_policy(
+        self,
+        resource_policy: EntityPolicyCreate,
+        requester: UserDTO,
+    ) -> list[PermissionResponse]:
+        inherit = resource_policy.inherits_children
+        resource = await self.get_by_id(resource_policy.entity_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {resource_policy.entity_id} not found")
+
+        if inherit:
+            # create policies for resource and all its children
+            policies: list[PermissionResponse] = []
+            resource_tree = await self.crud.get_tree_to_children(str(resource.id))
+            resource_ids = []
+            for node in resource_tree:
+                if node["id"] not in resource_ids:
+                    resource_ids.append(node["id"])
+
+            for res_id in resource_ids:
+                try:
+                    policy = await self.permission_service.create_entity_policy(
+                        EntityPolicyCreate(
+                            role=resource_policy.role,
+                            entity_id=res_id,
+                            entity_name="resource",
+                            action=resource_policy.action,
+                        ),
+                        requester,
+                        reload_permission=False,
+                    )
+                    policies.append(PermissionResponse.model_validate(policy))
+                except EntityExistsError:
+                    # skip existing policies
+                    continue
+            await self.permission_service.casbin_enforcer.send_reload_event()
+            return policies
+        # create policy
+        policies: list[PermissionResponse] = []
+        policy = await self.permission_service.create_entity_policy(resource_policy, requester, reload_permission=False)
+        policies.append(PermissionResponse.model_validate(policy))
+        await self.permission_service.casbin_enforcer.send_reload_event()
+        return policies

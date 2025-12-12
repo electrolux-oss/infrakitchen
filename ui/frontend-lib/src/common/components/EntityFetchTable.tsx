@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 
 import { Box } from "@mui/material";
 import {
+  GridColDef,
   GridFilterModel,
   GridPaginationModel,
   GridSortModel,
@@ -19,7 +20,7 @@ import { FilterPanel } from "./filter_panel/FilterPanel";
 
 interface EntityFetchTableProps {
   title: string;
-  columns: any;
+  columns: GridColDef<any>[];
   entityName?: string;
   fields?: string[];
   filterConfigs?: FilterConfig[];
