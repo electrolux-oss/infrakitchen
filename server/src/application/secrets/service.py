@@ -12,7 +12,7 @@ from core.base_models import PatchBodyModel
 from core.database import to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import SecretCRUD
@@ -187,7 +187,11 @@ class SecretService:
         :param secret_id: ID of the secret
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, secret_id)
+        apis = await user_api_permission(requester, "secret")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:secret"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 

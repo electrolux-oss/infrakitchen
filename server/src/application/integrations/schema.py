@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
-from core import EncryptedSecretStr
+from core.models.encrypted_secret import EncryptedSecretStr
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
 

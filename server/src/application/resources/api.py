@@ -5,7 +5,10 @@ from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.users.functions import user_has_access_to_resource
+from core.permissions.dependencies import get_permission_service
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.service import PermissionService
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
@@ -13,6 +16,8 @@ from .schema import (
     ResourceResponse,
     ResourceTreeResponse,
     ResourcePatch,
+    RoleResourcesResponse,
+    UserResourceResponse,
 )
 from .dependencies import get_resource_service
 
@@ -86,9 +91,8 @@ async def patch(
     service: ResourceService = Depends(get_resource_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, resource_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.EDIT not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
     entity = await service.patch(resource_id=resource_id, resource=body, requester=requester)
     return entity
 
@@ -102,11 +106,11 @@ async def patch_action(
 ):
     requester: UserDTO = request.state.user
     actions_list = list(map(lambda x: x.value, ModelActions))
-    if not await user_has_access_to_resource(requester, resource_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
     if body.action not in actions_list:
         raise HTTPException(status_code=400, detail="Invalid action")
+
+    if body.action not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
 
     entity = await service.patch_action(resource_id=resource_id, body=body, requester=requester)
 
@@ -116,9 +120,8 @@ async def patch_action(
 @router.delete("/resources/{resource_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 async def delete(request: Request, resource_id: str, service: ResourceService = Depends(get_resource_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, resource_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.DELETE not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
     await service.delete(resource_id=resource_id, requester=requester)
 
 
@@ -159,3 +162,62 @@ async def get_metadata(
 ):
     metadata = await service.metadata(resource_id=resource_id)
     return metadata
+
+
+# Permissions
+@router.get(
+    "/resources/permissions/user/{user_id}/policies",
+    response_model=list[UserResourceResponse],
+    response_description="Get user resource policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_user_resources(user_id: str, service: ResourceService = Depends(get_resource_service)):
+    resources = await service.get_user_resource_policies(user_id)
+    return resources
+
+
+@router.get(
+    "/resources/permissions/role/{role_name}/policies",
+    response_model=list[RoleResourcesResponse],
+    response_description="Get role policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_resource_role_permissions(
+    response: Response,
+    role_name: str,
+    service: ResourceService = Depends(get_resource_service),
+    permission_service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+
+    total = await permission_service.count(filter={"v0": role_name, "ptype": "p", "v1__like": "resource:"})
+
+    if total == 0:
+        result = []
+    else:
+        result = await service.get_role_permissions(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"policies 0-{len(result)}/{total}"}
+    response.headers.update(headers)
+
+    return result
+
+
+@router.post(
+    "/resources/permissions",
+    response_model=list[PermissionResponse],
+    response_description="Sync role permissions with resources",
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_role_resource_permissions(
+    request: Request,
+    resource_policy: EntityPolicyCreate,
+    service: ResourceService = Depends(get_resource_service),
+):
+    requester: UserDTO = request.state.user
+
+    requester_permissions = await user_entity_permissions(requester, resource_policy.entity_id, "resource")
+    if "admin" not in requester_permissions:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await service.create_resource_policy(resource_policy, requester=requester)

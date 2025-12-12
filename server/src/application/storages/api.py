@@ -5,7 +5,6 @@ from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.users.functions import user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import StorageCreate, StorageResponse, StorageUpdate
@@ -82,8 +81,8 @@ async def update(
     service: StorageService = Depends(get_storage_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, storage_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if ModelActions.EDIT not in await service.get_actions(storage_id=storage_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
     entity = await service.update(storage_id=storage_id, storage=body, requester=requester)
     return entity
@@ -98,11 +97,11 @@ async def patch_action(
 ):
     requester: UserDTO = request.state.user
     actions_list = list(map(lambda x: x.value, ModelActions))
-    if not await user_has_access_to_resource(requester, storage_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
     if body.action not in actions_list:
         raise HTTPException(status_code=400, detail="Invalid action")
+
+    if body.action not in await service.get_actions(storage_id=storage_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
 
     entity = await service.patch_action(storage_id=storage_id, body=body, requester=requester)
 
@@ -112,8 +111,8 @@ async def patch_action(
 @router.delete("/storages/{storage_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 async def delete(request: Request, storage_id: str, service: StorageService = Depends(get_storage_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, storage_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if ModelActions.DELETE not in await service.get_actions(storage_id=storage_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
 
     await service.delete(storage_id=storage_id, requester=requester)
 

@@ -7,7 +7,7 @@ from core.database import SessionLocal
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
 
-from ..users import UserDTO
+from core.users import UserDTO
 from core.sso.functions import get_logged_user
 
 from .github import github_refresh_token

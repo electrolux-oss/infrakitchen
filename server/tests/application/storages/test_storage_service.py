@@ -519,47 +519,67 @@ class TestGetStorageActions:
             (
                 ModelState.PROVISION,
                 ModelStatus.IN_PROGRESS,
-                ["read", "write", "admin"],
+                {"api:storage": "admin"},
                 [],
             ),
             # Read permission only
             (
                 ModelStatus.DONE,
                 ModelState.PROVISIONED,
-                ["read"],
+                {"api:storage": "read"},
                 [],
             ),
             # Write permission
             (
                 ModelStatus.DONE,
                 ModelState.PROVISIONED,
-                ["read", "write"],
+                {"api:storage": "write"},
                 [ModelActions.DESTROY, ModelActions.EDIT, ModelActions.EXECUTE],
             ),
             (
                 ModelStatus.READY,
                 ModelState.PROVISION,
-                ["read", "write"],
+                {"api:storage": "write"},
                 [ModelActions.EDIT, ModelActions.EXECUTE, ModelActions.DELETE],
             ),
             (
                 ModelStatus.DONE,
                 ModelState.DESTROYED,
-                ["read", "write"],
+                {"api:storage": "write"},
                 [ModelActions.RECREATE],
             ),
-            (ModelStatus.DONE, ModelState.DESTROYED, ["read", "write"], [ModelActions.RECREATE]),
-            (ModelStatus.ERROR, ModelState.DESTROY, ["read", "write"], [ModelActions.RECREATE, ModelActions.EXECUTE]),
-            (ModelStatus.READY, ModelState.DESTROY, ["read", "write"], [ModelActions.RECREATE, ModelActions.EXECUTE]),
+            (ModelStatus.DONE, ModelState.DESTROYED, {"api:storage": "write"}, [ModelActions.RECREATE]),
+            (
+                ModelStatus.ERROR,
+                ModelState.DESTROY,
+                {"api:storage": "write"},
+                [ModelActions.RECREATE, ModelActions.EXECUTE],
+            ),
+            (
+                ModelStatus.READY,
+                ModelState.DESTROY,
+                {"api:storage": "write"},
+                [ModelActions.RECREATE, ModelActions.EXECUTE],
+            ),
             # Admin permission
             (
                 ModelStatus.DONE,
                 ModelState.DESTROYED,
-                ["read", "write", "admin"],
+                {"api:storage": "admin"},
                 [ModelActions.RECREATE, ModelActions.DELETE],
             ),
-            (ModelStatus.ERROR, ModelState.DESTROY, ["read", "write"], [ModelActions.RECREATE, ModelActions.EXECUTE]),
-            (ModelStatus.READY, ModelState.DESTROY, ["read", "write"], [ModelActions.RECREATE, ModelActions.EXECUTE]),
+            (
+                ModelStatus.ERROR,
+                ModelState.DESTROY,
+                {"api:storage": "write"},
+                [ModelActions.RECREATE, ModelActions.EXECUTE],
+            ),
+            (
+                ModelStatus.READY,
+                ModelState.DESTROY,
+                {"api:storage": "write"},
+                [ModelActions.RECREATE, ModelActions.EXECUTE],
+            ),
         ],
     )
     async def test_get_storage_user_actions(
@@ -583,7 +603,11 @@ class TestGetStorageActions:
         existing_storage.state = state
 
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = None
-        mock_user_permissions(user_permissions, monkeypatch, "application.storages.service.user_entity_permissions")
+        mock_user_permissions(
+            user_permissions,
+            monkeypatch,
+            "application.storages.service.user_api_permission",
+        )
         mock_storage_crud.get_by_id.return_value = mocked_storage
 
         result = await mock_storage_service.get_actions(storage_id=mocked_storage.id, requester=mock_user_dto)

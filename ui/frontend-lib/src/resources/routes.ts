@@ -9,25 +9,37 @@ export const resourceRoutes = [
   {
     path: ResourcesPage.path,
     Component: ResourcesPage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
   {
     path: ResourcePage.path,
     Component: ResourcePage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
   {
     path: ResourceActivityPage.path,
     Component: ResourceActivityPage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
   {
     path: ResourceCreatePage.path,
     Component: ResourceCreatePage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
   {
     path: ResourceEditPage.path,
     Component: ResourceEditPage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
   {
     path: ResourceMetadataPage.path,
     Component: ResourceMetadataPage,
+    requiredPermission: "api:resource",
+    permissionAction: "read",
   },
 ];

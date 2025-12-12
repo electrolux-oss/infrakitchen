@@ -2,8 +2,8 @@ import { Box } from "@mui/material";
 
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { UserPoliciesCard } from "../../permissions/components/UserPoliciesCard";
-import { UserRolesCard } from "../../permissions/components/UserRolesCard";
+import { UserPoliciesCard } from "../../permissions/components/policies/UserPoliciesCard";
+import { UserRolesCard } from "../../permissions/components/roles/UserRolesCard";
 
 import { UserConfiguration } from "./UserConfiguration";
 import { UserOverview } from "./UserOverview";

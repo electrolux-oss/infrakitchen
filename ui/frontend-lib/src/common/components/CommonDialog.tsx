@@ -15,7 +15,7 @@ interface CommonDialogProps {
   open: boolean;
   title: ReactNode;
   content: ReactNode;
-  actions: ReactNode;
+  actions?: ReactNode;
   onClose: () => void;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false;
   fullWidth?: boolean;

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 
 import { Typography, Button, Grid, Box, Chip } from "@mui/material";
 
+import { PermissionWrapper } from "../../common";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -124,16 +125,21 @@ const ListIntegrationsPage = () => {
                     >
                       View Provider
                     </Button>
-                    <Button
-                      size="small"
-                      onClick={() =>
-                        navigate(
-                          `${linkPrefix}integrations/${provider.slug}/setup`,
-                        )
-                      }
+                    <PermissionWrapper
+                      requiredPermission="api:integration"
+                      permissionAction="write"
                     >
-                      Create Integration
-                    </Button>
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          navigate(
+                            `${linkPrefix}integrations/${provider.slug}/setup`,
+                          )
+                        }
+                      >
+                        Create Integration
+                      </Button>
+                    </PermissionWrapper>
                   </Box>
                   <Grid container direction="column" spacing={2}>
                     {integrations.map((integration) => (
@@ -169,15 +175,22 @@ const ListIntegrationsPage = () => {
         title={`${providerObject.name} Integrations`}
         onBack={() => navigate(`${linkPrefix}integrations`)}
         actions={
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() =>
-              navigate(`${linkPrefix}integrations/${providerObject.slug}/setup`)
-            }
+          <PermissionWrapper
+            requiredPermission="api:integration"
+            permissionAction="write"
           >
-            Create
-          </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() =>
+                navigate(
+                  `${linkPrefix}integrations/${providerObject.slug}/setup`,
+                )
+              }
+            >
+              Create
+            </Button>
+          </PermissionWrapper>
         }
       >
         {loading && (

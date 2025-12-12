@@ -38,7 +38,7 @@ from core.rabbitmq import RabbitMQConnection
 from core.base_models import Base, MessageModel
 from application.source_code_versions.model import SourceCodeVersion
 from application.source_codes.model import SourceCode
-from core import EntityLogger
+from core.custom_entity_log_controller import EntityLogger
 from core.constants import ModelState, ModelStatus
 from core.database import SessionLocal, engine
 from core.users.model import UserDTO

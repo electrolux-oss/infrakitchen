@@ -3,27 +3,11 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import {
   ConfigProvider,
   EventProvider,
-  GettingStartedPage,
-  administrationRoutes,
-  auditLogsRoutes,
-  authProviderRoutes,
-  templateRoutes,
-  integrationRoutes,
-  resourceRoutes,
-  storageRoutes,
-  sourceCodeRoutes,
-  sourceCodeVersionRoutes,
-  taskRoutes,
-  workspaceRoutes,
-  workerRoutes,
-  usersRoutes,
-  roleRoutes,
-  permissionRoutes,
-  secretRoutes,
   NotificationProvider,
   GlobalNotificationPopup,
   LocalStorageProvider,
   RouterSnackbarWrapper,
+  PermissionProvider,
 } from "@electrolux-oss/infrakitchen";
 import CssBaseline from "@mui/material/CssBaseline";
 
@@ -34,62 +18,43 @@ import {
   ikDataProvider,
 } from "./base/data/DataProvider";
 import DashboardLayout from "./base/layout/DashboardLayout";
+import { useFilteredProtectedRoutes } from "./filterRoutes";
 import ProtectedRoute from "./routes";
 import SignInSide from "./sign-in-side/SignInSide";
 import AppTheme from "./theme/AppTheme";
 
-const router = createBrowserRouter([
-  {
-    // Public route for the login page
-    path: "/login",
-    Component: SignInSide,
-  },
-  {
-    element: <ProtectedRoute />,
-    children: [
-      {
-        element: <RouterSnackbarWrapper />,
-        children: [
-          {
-            Component: DashboardLayout,
-            children: [
-              ...administrationRoutes,
-              ...auditLogsRoutes,
-              ...authProviderRoutes,
-              ...templateRoutes,
-              ...integrationRoutes,
-              ...resourceRoutes,
-              ...storageRoutes,
-              ...secretRoutes,
-              ...sourceCodeRoutes,
-              ...sourceCodeVersionRoutes,
-              ...taskRoutes,
-              ...workspaceRoutes,
-              ...usersRoutes,
-              ...roleRoutes,
-              ...permissionRoutes,
-              ...workerRoutes,
-              {
-                path: GettingStartedPage.path,
-                Component: GettingStartedPage,
-              },
-              {
-                path: "*",
-                Component: GettingStartedPage,
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-]);
+const PermissionFilteredRouter = () => {
+  const accessibleRoutes = useFilteredProtectedRoutes();
+
+  const router = createBrowserRouter([
+    {
+      path: "/login",
+      Component: SignInSide,
+    },
+    {
+      element: <ProtectedRoute />,
+      children: [
+        {
+          element: <RouterSnackbarWrapper />,
+          children: [
+            {
+              Component: DashboardLayout,
+              children: accessibleRoutes,
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+
+  return <RouterProvider router={router} />;
+};
 
 export function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme>
-        <RouterProvider router={router} />
+        <PermissionFilteredRouter />
         <GlobalNotificationPopup />
       </CssBaseline>
     </AppTheme>
@@ -106,11 +71,13 @@ export const AppWrapper = () => {
     <LocalStorageProvider>
       <ConfigProvider initialIkApi={dataProvider}>
         <AuthProvider>
-          <EventProvider>
-            <NotificationProvider>
-              <InfrakitchenApp />
-            </NotificationProvider>
-          </EventProvider>
+          <PermissionProvider>
+            <EventProvider>
+              <NotificationProvider>
+                <InfrakitchenApp />
+              </NotificationProvider>
+            </EventProvider>
+          </PermissionProvider>
         </AuthProvider>
       </ConfigProvider>
     </LocalStorageProvider>

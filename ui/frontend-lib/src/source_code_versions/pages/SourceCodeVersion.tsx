@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router";
 
 import { Button } from "@mui/material";
 
-import { LogLiveTail, useConfig } from "../../common";
+import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { SourceCodeVersionContent } from "../components/SourceCodeVersionContent";
@@ -27,9 +27,14 @@ export const SourceCodeVersionPage = () => {
       <EntityContainer
         title={"Code Version Overview"}
         actions={
-          <Button variant="outlined" onClick={handleConfig}>
-            Manage Configurations
-          </Button>
+          <PermissionWrapper
+            requiredPermission="api:source_code_version"
+            permissionAction="write"
+          >
+            <Button variant="outlined" onClick={handleConfig}>
+              Manage Configurations
+            </Button>
+          </PermissionWrapper>
         }
       >
         <SourceCodeVersionContent />

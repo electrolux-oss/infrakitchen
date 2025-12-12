@@ -6,7 +6,7 @@ from core.constants.model import ModelActions
 from core.errors import DependencyError, EntityNotFound
 from core.logs.service import LogService
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import WorkspaceCRUD
@@ -150,7 +150,11 @@ class WorkspaceService:
         :param workspace_id: ID of the workspace
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, workspace_id)
+        apis = await user_api_permission(requester, "workspace")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:workspace"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 

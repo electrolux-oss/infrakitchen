@@ -1,41 +1,45 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.permissions.schema import PermissionCreate, PermissionResponse
-from core.users.functions import user_has_access_to_resource
+from core.constants.model import ModelActions
+from core.permissions.schema import (
+    ApiPolicyCreate,
+    EntityPolicyCreate,
+    PermissionResponse,
+    RoleUsersResponse,
+    RoleCreate,
+)
+from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 
 from .service import PermissionService
 from .dependencies import get_permission_service
-from ..users.schema import UserShort
 
 router = APIRouter()
 
 
 @router.get(
-    "/permissions/get_all_subjects",
-    response_description="Return full list of available roles",
-    response_model=list[str],
-)
-async def get_all_subjects(response: Response, service: PermissionService = Depends(get_permission_service)):
-    subjects = await service.get_all_subjects()
-
-    headers = {"Content-Range": f"roles 0-{len(subjects)}/{len(subjects)}"}
-    response.headers.update(headers)
-    return subjects
-
-
-@router.get(
     "/permissions/roles",
-    response_model=list[str],
+    response_model=list[PermissionResponse],
     response_description="Get all roles",
     status_code=http_status.HTTP_200_OK,
 )
-async def get_all_roles(response: Response, service: PermissionService = Depends(get_permission_service)):
-    roles = await service.get_all_roles()
+async def get_all_roles(
+    response: Response,
+    service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    filter, range_, _, _ = query_parts
 
-    headers = {"Content-Range": f"roles 0-{len(roles)}/{len(roles)}"}
+    total = await service.count_roles(filter=filter)
+
+    if total == 0:
+        roles = []
+    else:
+        roles = await service.get_all_roles(filter=filter, range=range_)
+
+    headers = {"Content-Range": f"roles 0-{len(roles)}/{total}"}
     response.headers.update(headers)
     return roles
 
@@ -46,7 +50,7 @@ async def get_all_roles(response: Response, service: PermissionService = Depends
     response_description="Get one role by id",
     status_code=http_status.HTTP_200_OK,
 )
-async def get_by_id(request: Request, entity_id: str, service: PermissionService = Depends(get_permission_service)):
+async def get_by_id(entity_id: str, service: PermissionService = Depends(get_permission_service)):
     entity = await service.get_by_id(permission_id=entity_id)
 
     if not entity:
@@ -62,43 +66,76 @@ async def get_by_id(request: Request, entity_id: str, service: PermissionService
     response_description="Get user permissions",
     status_code=http_status.HTTP_200_OK,
 )
-async def get_user_roles(user_id: str, service: PermissionService = Depends(get_permission_service)):
-    roles = await service.get_user_roles(user_id)
+async def get_user_roles(
+    response: Response,
+    user_id: str,
+    service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, _, _ = query_parts
+    filter = {"ptype": "g", "v0": f"user:{user_id}"}
+
+    total = await service.count(filter=filter)
+
+    if total == 0:
+        roles = []
+    else:
+        roles = await service.get_all(filter=filter, range=range_)
+
+    headers = {"Content-Range": f"roles 0-{len(roles)}/{total}"}
+    response.headers.update(headers)
+
     return roles
-
-
-@router.get(
-    "/permissions/user/{user_id}/policies",
-    response_model=list[PermissionResponse],
-    response_description="Get user policies",
-    status_code=http_status.HTTP_200_OK,
-)
-async def get_user_policies(user_id: str, service: PermissionService = Depends(get_permission_service)):
-    policies = await service.get_user_policies(user_id)
-    return policies
 
 
 # Role permissions
 @router.get(
-    "/permissions/role/{role_name}/policies",
+    "/permissions/role/{role_name}/api/policies",
     response_model=list[PermissionResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
 )
-async def get_role_permissions(role_name: str, service: PermissionService = Depends(get_permission_service)):
-    policies = await service.get_role_permissions(role_name)
-    return policies
+async def get_role_api_permissions(
+    response: Response,
+    role_name: str,
+    service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+
+    total = await service.count(filter={"v0": role_name, "ptype": "p", "v1__like": "api:"})
+
+    if total == 0:
+        result = []
+    else:
+        result = await service.get_role_api_permissions(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"policies 0-{len(result)}/{total}"}
+    response.headers.update(headers)
+
+    return result
 
 
 # Users with assigned role
 @router.get(
     "/permissions/role/{role_name}/users",
-    response_model=list[UserShort],
+    response_model=list[RoleUsersResponse],
     response_description="Get users by role",
     status_code=http_status.HTTP_200_OK,
 )
-async def get_users_by_role(role_name: str, service: PermissionService = Depends(get_permission_service)):
-    users = await service.get_users_by_role(role_name)
+async def get_users_by_role(
+    response: Response,
+    role_name: str,
+    service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+    total = await service.count(filter={"v1": role_name, "ptype": "g", "v0__like": "user:%"})
+    if total == 0:
+        users = []
+    else:
+        users = await service.get_users_by_role(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"users 0-{len(users)}/{total}"}
+    response.headers.update(headers)
     return users
 
 
@@ -118,51 +155,85 @@ async def get_entity_permissions(
     return policies
 
 
-@router.get(
-    "/permissions",
-    response_model=list[PermissionResponse],
-    response_description="Get all roles",
-    response_model_by_alias=False,
-    status_code=http_status.HTTP_200_OK,
-)
-async def get_all(
-    response: Response,
-    service: PermissionService = Depends(get_permission_service),
-    query_parts: QueryParamsType = Depends(parse_query_params),
-):
-    filter, range_, sort, _ = query_parts
-    total = await service.count(filter=filter)
-
-    if total == 0:
-        result = []
-    else:
-        result = list(await service.get_all(filter=filter, range=range_, sort=sort))
-    headers = {"Content-Range": f"roles 0-{len(result)}/{total}"}
-    response.headers.update(headers)
-    return result
-
-
 @router.post(
-    "/permissions",
+    "/permissions/role",
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
 )
-async def post(request: Request, body: PermissionCreate, service: PermissionService = Depends(get_permission_service)):
+async def create_role(request: Request, body: RoleCreate, service: PermissionService = Depends(get_permission_service)):
     requester: UserDTO = request.state.user
+    if await user_is_super_admin(requester) is False:
+        raise HTTPException(status_code=403, detail="Access denied")
 
-    entity = await service.create(body=body, requester=requester)
+    entity = await service.create_role(role_name=body.role, user_id=body.user_id, requester=requester)
 
     return entity
 
 
-@router.delete("/permissions/{entity_id}", status_code=http_status.HTTP_204_NO_CONTENT)
-async def delete(request: Request, entity_id: str, service: PermissionService = Depends(get_permission_service)):
+@router.post(
+    "/permissions/role/{role_name}/{user_id}",
+    response_model=PermissionResponse,
+    response_model_by_alias=False,
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def assign_user_to_role(
+    request: Request, role_name: str, user_id: str, service: PermissionService = Depends(get_permission_service)
+):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, entity_id, action="admin"):
+
+    if await user_is_super_admin(requester) is False:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    await service.delete(permission_id=entity_id, requester=requester)
+    entity = await service.assign_user_to_role(role_name=role_name, user_id=user_id, requester=requester)
+
+    return entity
+
+
+@router.post(
+    "/permissions/policy/api",
+    response_model=PermissionResponse,
+    response_model_by_alias=False,
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_api_policy(
+    request: Request, body: ApiPolicyCreate, service: PermissionService = Depends(get_permission_service)
+):
+    requester: UserDTO = request.state.user
+
+    if await user_is_super_admin(requester) is False:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    entity = await service.create_api_policy(body=body, requester=requester)
+
+    return entity
+
+
+@router.post(
+    "/permissions/policy/entity",
+    response_model=PermissionResponse,
+    response_model_by_alias=False,
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_entity_policy(
+    request: Request, body: EntityPolicyCreate, service: PermissionService = Depends(get_permission_service)
+):
+    requester: UserDTO = request.state.user
+    if await user_has_access_to_entity(requester, body.entity_id, "admin", body.entity_name) is False:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    entity = await service.create_entity_policy(body=body, requester=requester)
+
+    return entity
+
+
+@router.delete("/permissions/{permission_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+async def delete(request: Request, permission_id: str, service: PermissionService = Depends(get_permission_service)):
+    requester: UserDTO = request.state.user
+    if ModelActions.DELETE not in await service.get_actions(permission_id=permission_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
+
+    await service.delete(permission_id=permission_id, requester=requester)
 
 
 @router.get(
@@ -172,7 +243,7 @@ async def delete(request: Request, entity_id: str, service: PermissionService = 
     status_code=http_status.HTTP_200_OK,
 )
 async def get_actions(request: Request, entity_id: str, service: PermissionService = Depends(get_permission_service)):
-    requester = request.state.user
+    requester: UserDTO = request.state.user
 
     actions = await service.get_actions(entity_id, requester=requester)
     return actions

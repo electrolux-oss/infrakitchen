@@ -5,7 +5,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import application.source_code_versions.api as api_integration
 from application.source_code_versions.api import router
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.source_code_versions.schema import SourceCodeVersionResponse, SourceConfigUpdate
@@ -13,10 +12,11 @@ from core.constants.model import ModelActions
 
 
 class MockSourceCodeVersionsService:
-    def __init__(self, return_value=None, items=None, total=0):
+    def __init__(self, return_value=None, items=None, actions=None, total=0):
         self._return_value = return_value
         self._items = items or []
         self._total = total
+        self._actions = actions or []
 
     async def get_by_id(self, source_code_version_id: str):
         return self._return_value
@@ -40,7 +40,7 @@ class MockSourceCodeVersionsService:
         pass
 
     async def get_actions(self, *args, **kwargs):
-        return self._return_value
+        return self._actions
 
     async def get_configs_by_scv_id(self, source_code_version_id: str):
         return self._return_value
@@ -211,10 +211,10 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_success(
-        self, client_with_user, override_service, mocked_source_code_versions_response, mock_user_has_access_to_resource
-    ):
-        service = MockSourceCodeVersionsService(return_value=mocked_source_code_versions_response)
+    def test_update_success(self, client_with_user, override_service, mocked_source_code_versions_response):
+        service = MockSourceCodeVersionsService(
+            return_value=mocked_source_code_versions_response, actions=[ModelActions.EDIT]
+        )
         override_service(service)
 
         source_code_version_id = str(mocked_source_code_versions_response.id)
@@ -223,8 +223,6 @@ class TestUpdate:
             "source_code_version": "v1.0.1",
             "labels": ["updated_label"],
         }
-
-        mock_user_has_access_to_resource(True, api_integration)
 
         response = client_with_user.patch(
             f"/source_code_versions/{source_code_version_id}",
@@ -236,55 +234,53 @@ class TestUpdate:
         assert json_response["id"] == str(mocked_source_code_versions_response.id)
         assert json_response["source_code_folder"] == mocked_source_code_versions_response.source_code_folder
 
-    def test_update_forbidden(self, client_without_user, override_service, mock_user_has_access_to_resource):
+    def test_update_forbidden(self, client_without_user, override_service):
         source_code_version_id = str(uuid4())
         source_code_version_update_body = {
             "source_code_folder": "updated_folder",
             "source_code_version": "v1.0.1",
             "labels": ["updated_label"],
         }
-        override_service(MockSourceCodeVersionsService(return_value=None))
-        mock_user_has_access_to_resource(False, api_integration)
+        override_service(MockSourceCodeVersionsService(return_value=None, actions=[]))
 
         response = client_without_user.patch(
             f"/source_code_versions/{source_code_version_id}",
             json=source_code_version_update_body,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
 
 class TestPatchAction:
-    def test_patch_action_success(
-        self, client_with_user, override_service, mocked_source_code_versions_response, mock_user_has_access_to_resource
-    ):
+    def test_patch_action_success(self, client_with_user, override_service, mocked_source_code_versions_response):
         source_code_version_patch = {"action": ModelActions.DELETE}
-        mock_user_has_access_to_resource(True, api_integration)
 
-        override_service(MockSourceCodeVersionsService(return_value=mocked_source_code_versions_response))
+        override_service(
+            MockSourceCodeVersionsService(
+                return_value=mocked_source_code_versions_response, actions=[ModelActions.DELETE]
+            )
+        )
 
         response = client_with_user.patch(
             f"/source_code_versions/{mocked_source_code_versions_response.id}/actions", json=source_code_version_patch
         )
         assert response.status_code == HTTPStatus.OK
 
-    def test_patch_action_forbidden(self, client_without_user, override_service, mock_user_has_access_to_resource):
+    def test_patch_action_forbidden(self, client_without_user, override_service):
         source_code_version_id = str(uuid4())
         source_code_version_patch = {"action": ModelActions.DELETE}
-        override_service(MockSourceCodeVersionsService(return_value=None))
-        mock_user_has_access_to_resource(False, api_integration)
+        override_service(MockSourceCodeVersionsService(return_value=None, actions=[]))
 
         response = client_without_user.patch(
             f"/source_code_versions/{source_code_version_id}/actions", json=source_code_version_patch
         )
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_patch_action_invalid_action(self, client_with_user, override_service, mock_user_has_access_to_resource):
+    def test_patch_action_invalid_action(self, client_with_user, override_service):
         source_code_version_patch = {"action": "invalid_action"}
 
-        override_service(MockSourceCodeVersionsService(return_value=None))
-        mock_user_has_access_to_resource(True, api_integration)
+        override_service(MockSourceCodeVersionsService(return_value=None, actions=[]))
 
         response = client_with_user.patch(
             f"/source_code_versions/{str(uuid4())}/actions", json=source_code_version_patch
@@ -294,31 +290,26 @@ class TestPatchAction:
 
 
 class TestDelete:
-    def test_delete_success(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockSourceCodeVersionsService())
+    def test_delete_success(self, client_with_user, override_service):
+        override_service(MockSourceCodeVersionsService(actions=[ModelActions.DELETE]))
 
         response = client_with_user.delete(f"/source_code_versions/{str(uuid4())}")
 
         assert response.status_code == HTTPStatus.NO_CONTENT
         assert response.content == b""
 
-    def test_delete_forbidden(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(False, api_integration)
-        override_service(MockSourceCodeVersionsService())
+    def test_delete_forbidden(self, client_with_user, override_service):
+        override_service(MockSourceCodeVersionsService(actions=[]))
 
         response = client_with_user.delete(f"/source_code_versions/{str(uuid4())}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
 
 class TestGetActions:
-    def test_get_actions_success(
-        self, client_with_user, override_service, mocked_source_code_versions_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockSourceCodeVersionsService(return_value=["read", "write", "admin"]))
+    def test_get_actions_success(self, client_with_user, override_service):
+        override_service(MockSourceCodeVersionsService(actions=["read", "write", "admin"]))
 
         response = client_with_user.get(f"/source_code_versions/{str(uuid4())}/actions")
         assert response.status_code == HTTPStatus.OK
@@ -326,10 +317,7 @@ class TestGetActions:
 
 
 class TestGetConfigs:
-    def test_get_configs_success(
-        self, client_with_user, override_service, mocked_source_config_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
+    def test_get_configs_success(self, client_with_user, override_service, mocked_source_config_response):
         override_service(MockSourceCodeVersionsService(return_value=[mocked_source_config_response]))
 
         response = client_with_user.get(f"/source_code_versions/{str(mocked_source_config_response.id)}/configs")
@@ -341,10 +329,7 @@ class TestGetConfigs:
 
 
 class TestGetConfigById:
-    def test_get_config_by_id_success(
-        self, client_with_user, override_service, mocked_source_config_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
+    def test_get_config_by_id_success(self, client_with_user, override_service, mocked_source_config_response):
         override_service(MockSourceCodeVersionsService(return_value=mocked_source_config_response))
 
         source_code_version_id = uuid4()
@@ -357,8 +342,7 @@ class TestGetConfigById:
         assert json_response["id"] == str(mocked_source_config_response.id)
         assert json_response["name"] == mocked_source_config_response.name
 
-    def test_get_config_by_id_not_found(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(True, api_integration)
+    def test_get_config_by_id_not_found(self, client_with_user, override_service):
         override_service(MockSourceCodeVersionsService(return_value=None))
 
         response = client_with_user.get(f"/source_code_versions/{str(uuid4())}/configs/{str(uuid4())}")
@@ -367,10 +351,7 @@ class TestGetConfigById:
 
 
 class TestUpdateConfigById:
-    def test_update_config_by_id_success(
-        self, client_with_user, override_service, mocked_source_config_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
+    def test_update_config_by_id_success(self, client_with_user, override_service, mocked_source_config_response):
         source_config_update_body = {
             "required": True,
         }
@@ -378,7 +359,9 @@ class TestUpdateConfigById:
         updated_source_config_response = mocked_source_config_response
         updated_source_config_response.required = source_config_update_body["required"]
 
-        override_service(MockSourceCodeVersionsService(return_value=updated_source_config_response))
+        override_service(
+            MockSourceCodeVersionsService(return_value=updated_source_config_response, actions=[ModelActions.EDIT])
+        )
 
         source_code_version_id = uuid4()
         response = client_with_user.put(
@@ -392,20 +375,15 @@ class TestUpdateConfigById:
         assert json_response["name"] == mocked_source_config_response.name
         assert json_response["required"] == updated_source_config_response.required
 
-    def test_update_config_by_id_user_forbidden(self, client_without_user, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(False, api_integration)
-
+    def test_update_config_by_id_user_forbidden(self, client_without_user, override_service):
+        override_service(MockSourceCodeVersionsService(return_value=None, actions=[]))
         response = client_without_user.put(f"/source_code_versions/{str(uuid4())}/configs/{str(uuid4())}", json={})
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
 
 class TestUpdateConfigs:
-    def test_update_configs_success(
-        self, client_with_user, override_service, mocked_source_config_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
-
+    def test_update_configs_success(self, client_with_user, override_service, mocked_source_config_response):
         # Create a list of updated configs
         config_updates = [
             {
@@ -417,7 +395,7 @@ class TestUpdateConfigs:
         ]
 
         updated_configs = [mocked_source_config_response]
-        override_service(MockSourceCodeVersionsService(return_value=updated_configs))
+        override_service(MockSourceCodeVersionsService(return_value=updated_configs, actions=[ModelActions.EDIT]))
 
         source_code_version_id = uuid4()
         response = client_with_user.put(
@@ -432,11 +410,7 @@ class TestUpdateConfigs:
         assert json_response[0]["id"] == str(mocked_source_config_response.id)
         assert json_response[0]["name"] == mocked_source_config_response.name
 
-    def test_update_configs_multiple_success(
-        self, client_with_user, override_service, mocked_source_config_response, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
-
+    def test_update_configs_multiple_success(self, client_with_user, override_service, mocked_source_config_response):
         second_config = mocked_source_config_response
         second_config.id = uuid4()
         second_config.name = "second_config"
@@ -455,7 +429,7 @@ class TestUpdateConfigs:
         ]
 
         updated_configs = [mocked_source_config_response, second_config]
-        override_service(MockSourceCodeVersionsService(return_value=updated_configs))
+        override_service(MockSourceCodeVersionsService(return_value=updated_configs, actions=[ModelActions.EDIT]))
 
         source_code_version_id = uuid4()
         response = client_with_user.put(
@@ -470,11 +444,9 @@ class TestUpdateConfigs:
         assert json_response[0]["id"] == str(mocked_source_config_response.id)
         assert json_response[1]["id"] == str(second_config.id)
 
-    def test_update_configs_empty_list(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(True, api_integration)
-
+    def test_update_configs_empty_list(self, client_with_user, override_service):
         config_updates = []
-        override_service(MockSourceCodeVersionsService(return_value=[]))
+        override_service(MockSourceCodeVersionsService(return_value=[], actions=[ModelActions.EDIT]))
 
         source_code_version_id = uuid4()
         response = client_with_user.put(
@@ -486,8 +458,8 @@ class TestUpdateConfigs:
         assert response.status_code == HTTPStatus.OK
         assert json_response == []
 
-    def test_update_configs_user_forbidden(self, client_without_user, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(False, api_integration)
+    def test_update_configs_user_forbidden(self, client_without_user, override_service):
+        override_service(MockSourceCodeVersionsService(return_value=None, actions=[]))
 
         config_updates = [
             {
@@ -501,11 +473,10 @@ class TestUpdateConfigs:
             json=config_updates,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
-    def test_update_configs_access_denied(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(False, api_integration)
-        override_service(MockSourceCodeVersionsService(return_value=[]))
+    def test_update_configs_access_denied(self, client_with_user, override_service):
+        override_service(MockSourceCodeVersionsService(return_value=[], actions=[]))
 
         config_updates = [
             {
@@ -520,7 +491,7 @@ class TestUpdateConfigs:
             json=config_updates,
         )
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
 
 class TestGetOutputs:
@@ -529,9 +500,7 @@ class TestGetOutputs:
         client_with_user,
         override_service,
         mocked_source_output_configs_response,
-        mock_user_has_access_to_resource,
     ):
-        mock_user_has_access_to_resource(True, api_integration)
         override_service(MockSourceCodeVersionsService(return_value=[mocked_source_output_configs_response]))
 
         response = client_with_user.get(

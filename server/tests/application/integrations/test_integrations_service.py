@@ -578,8 +578,46 @@ class TestDelete:
 
 class TestGetIntegrationActions:
     @pytest.mark.asyncio
-    async def test_get_actions_for_enabled_not_admin(
+    @pytest.mark.parametrize(
+        "status,user_permissions,expected_actions",
+        [
+            (
+                ModelStatus.ENABLED,
+                {"api:integration": "write"},
+                [],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {"api:integration": "admin"},
+                [ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:integration": "write"},
+                [],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:integration": "admin"},
+                [ModelActions.DELETE, ModelActions.ENABLE],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {"api:integration": "read"},
+                [],
+            ),
+            (
+                ModelStatus.ENABLED,
+                {},
+                [],
+            ),
+        ],
+    )
+    async def test_get_integration_actions(
         self,
+        status,
+        user_permissions,
+        expected_actions,
         mock_integration_service,
         mock_integration_crud,
         mocked_integration,
@@ -588,105 +626,19 @@ class TestGetIntegrationActions:
         mock_user_permissions,
     ):
         mock_user_permissions(
-            ["write"],
+            user_permissions,
             monkeypatch,
-            "application.integrations.service.user_entity_permissions",
+            "application.integrations.service.user_api_permission",
         )
 
-        mocked_integration.status = ModelStatus.ENABLED
+        mocked_integration.status = status
         mock_integration_crud.get_by_id.return_value = mocked_integration
 
         result = await mock_integration_service.get_actions(
             integration_id=mocked_integration.id, requester=mock_user_dto
         )
 
-        assert result == []
-        mock_integration_crud.get_by_id.assert_awaited_once_with(mocked_integration.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_enabled_admin(
-        self,
-        mock_integration_service,
-        mock_integration_crud,
-        mocked_integration,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(
-            ["write", "admin"], monkeypatch, "application.integrations.service.user_entity_permissions"
-        )
-
-        existing_integration = mocked_integration
-        existing_integration.status = ModelStatus.ENABLED
-        mock_integration_crud.get_by_id.return_value = existing_integration
-
-        result = await mock_integration_service.get_actions(
-            integration_id=mocked_integration.id, requester=mock_user_dto
-        )
-
-        assert result == [ModelActions.EDIT, ModelActions.DISABLE]
-        mock_integration_crud.get_by_id.assert_awaited_once_with(mocked_integration.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_disabled_not_admin(
-        self,
-        mock_integration_service,
-        mock_integration_crud,
-        mocked_integration,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["write"], monkeypatch, "application.integrations.service.user_entity_permissions")
-
-        mocked_integration.status = ModelStatus.DISABLED
-        mock_integration_crud.get_by_id.return_value = mocked_integration
-
-        result = await mock_integration_service.get_actions(
-            integration_id=mocked_integration.id, requester=mock_user_dto
-        )
-
-        assert result == []
-        mock_integration_crud.get_by_id.assert_awaited_once_with(mocked_integration.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_disabled_admin(
-        self,
-        mock_integration_service,
-        mock_integration_crud,
-        mocked_integration,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(
-            ["write", "admin"], monkeypatch, "application.integrations.service.user_entity_permissions"
-        )
-
-        mocked_integration.status = ModelStatus.DISABLED
-        mock_integration_crud.get_by_id.return_value = mocked_integration
-
-        result = await mock_integration_service.get_actions(
-            integration_id=mocked_integration.id, requester=mock_user_dto
-        )
-
-        assert result == [ModelActions.DELETE, ModelActions.ENABLE]
-        mock_integration_crud.get_by_id.assert_awaited_once_with(mocked_integration.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_user_has_read_permissions(
-        self,
-        mock_integration_service,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["read"], monkeypatch, "application.integrations.service.user_entity_permissions")
-
-        result = await mock_integration_service.get_actions(integration_id=INTEGRATION_ID, requester=mock_user_dto)
-
-        assert result == []
+        assert result == expected_actions
 
 
 class TestValidateConfiguration:

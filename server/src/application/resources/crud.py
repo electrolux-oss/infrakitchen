@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import case, func, select, text
+from sqlalchemy import String, case, func, select, text, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -9,6 +9,7 @@ from application.integrations.model import Integration
 from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
 from application.storages.model import Storage
+from core.permissions.model import Permission
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
@@ -311,3 +312,68 @@ class ResourceCRUD:
 
     async def refresh(self, resource: Resource) -> None:
         await self.session.refresh(resource)
+
+    async def get_resource_policies_by_role(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Any]:
+        resource_id_expr = func.split_part(Permission.v1, ":", 2)
+        statement = (
+            select(
+                Resource.id.label("resource_id"),
+                Resource.name.label("resource_name"),
+                Permission.v0.label("role"),
+                Permission.v2.label("action"),
+                Permission.id.label("id"),
+                Permission.created_at.label("created_at"),
+                Permission.updated_at.label("updated_at"),
+            )
+            .join(
+                Permission,
+                cast(Resource.id, String) == resource_id_expr,
+            )
+            .where(
+                Permission.ptype == "p",
+                Permission.v1.like("resource:%"),
+                Permission.v0 == role_name,
+            )
+        )
+
+        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+        result = await self.session.execute(statement)
+        return list(result.fetchall())
+
+    async def get_user_resource_policies(
+        self,
+        user_id: str | UUID,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Any]:
+        resource_id_expr = func.split_part(Permission.v1, ":", 2)
+        statement = (
+            select(
+                Resource.id.label("resource_id"),
+                Resource.name.label("resource_name"),
+                Permission.v2.label("action"),
+                Permission.id.label("id"),
+                Permission.created_at.label("created_at"),
+                Permission.updated_at.label("updated_at"),
+            )
+            .join(
+                Permission,
+                cast(Resource.id, String) == resource_id_expr,
+            )
+            .where(
+                Permission.ptype == "p",
+                Permission.v1.like("resource:%"),
+                Permission.v0 == f"user:{user_id}",
+            )
+        )
+
+        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+        result = await self.session.execute(statement)
+        return list(result.fetchall())

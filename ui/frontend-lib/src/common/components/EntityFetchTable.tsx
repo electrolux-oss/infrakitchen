@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 
 import { Box } from "@mui/material";
 import {
+  GridColDef,
   GridFilterModel,
   GridPaginationModel,
   GridSortModel,
@@ -19,10 +20,11 @@ import { FilterPanel } from "./filter_panel/FilterPanel";
 
 interface EntityFetchTableProps {
   title: string;
-  columns: any;
+  columns: GridColDef<any>[];
   entityName?: string;
   fields?: string[];
   filterConfigs?: FilterConfig[];
+  defaultFilter?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
 }
 
@@ -70,6 +72,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     entityName,
     fields = [],
     filterConfigs,
+    defaultFilter,
     buildApiFilters,
   } = props;
 
@@ -139,6 +142,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
             filterConfigs,
           );
         }
+      } else if (defaultFilter) {
+        apiFilters = { ...defaultFilter };
       }
 
       let sort: GridSortItem;
@@ -181,6 +186,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     filterConfigs,
     buildApiFilters,
     currentFilterValues,
+    defaultFilter,
   ]);
 
   useEffect(() => {

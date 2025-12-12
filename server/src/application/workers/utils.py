@@ -17,7 +17,7 @@ from application.storages.task import StorageTask
 from application.tools.secret_manager import get_secret_manager
 from application.workspaces.crud import WorkspaceCRUD
 from application.workspaces.task import WorkspaceTask
-from core import EntityLogger
+from core.custom_entity_log_controller import EntityLogger
 from core.constants.model import ModelActions
 from core.errors import CannotProceed
 from application.resource_temp_state.crud import ResourceTempStateCrud

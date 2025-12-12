@@ -3,7 +3,7 @@ from typing import Any
 from uuid import UUID
 
 
-from core import EncryptedSecretStr
+from core.models.encrypted_secret import EncryptedSecretStr
 from core.adapters.functions import get_integration_adapter
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
@@ -13,7 +13,7 @@ from core.database import to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
@@ -193,7 +193,11 @@ class IntegrationService:
         :param integration_id: ID of the integration
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, integration_id)
+        apis = await user_api_permission(requester, "integration")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:integration"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 

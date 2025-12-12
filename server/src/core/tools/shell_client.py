@@ -3,7 +3,7 @@ import logging
 import tempfile
 import os
 
-from core import EntityLogger
+from core.custom_entity_log_controller import EntityLogger
 from core.errors import ShellExecutionError
 
 log = logging.getLogger("sh_client")

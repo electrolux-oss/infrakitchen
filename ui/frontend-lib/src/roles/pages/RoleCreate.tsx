@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, SyntheticEvent } from "react";
+import { useState, useCallback } from "react";
 
 import {
   useForm,
@@ -8,13 +8,16 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, Autocomplete } from "@mui/material";
+import { Box, TextField, Button } from "@mui/material";
 
+import ReferenceSearchInput from "../../common/components/inputs/ReferenceSearchInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { RoleCreate, User } from "../types";
+import { PermissionResponse } from "../../permissions/types";
+import { IkEntity } from "../../types";
+import { RoleCreate } from "../types";
 
 const RoleCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -27,13 +30,19 @@ const RoleCreatePageInner = () => {
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}roles`);
 
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
+
   const handleSave = useCallback(
     (data: RoleCreate) => {
       ikApi
-        .postRaw("permissions", data)
-        .then((response: { id: string }) => {
+        .postRaw(`permissions/role`, data)
+        .then((response: PermissionResponse) => {
           if (response.id) {
-            notify(`Role created successfully: ${data.role}`, "success");
+            notify(`Role created successfully: ${response.v1}`, "success");
+
+            navigate(`${linkPrefix}roles/${response.v1}`);
             return response;
           }
         })
@@ -41,21 +50,8 @@ const RoleCreatePageInner = () => {
           notifyError(error);
         });
     },
-    [ikApi],
+    [ikApi, navigate, linkPrefix],
   );
-
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    ikApi
-      .get("users")
-      .then((response) => {
-        setUsers(response);
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
-  }, [ikApi]);
 
   return (
     <PageContainer
@@ -114,34 +110,19 @@ const RoleCreatePageInner = () => {
               control={control}
               rules={{ required: "User is required" }}
               render={({ field }) => (
-                <Autocomplete
+                <ReferenceSearchInput
                   {...field}
-                  id="user-autocomplete"
-                  options={users}
-                  getOptionLabel={(u: User) => u.identifier}
-                  isOptionEqualToValue={(o, v) => o.id === v.id}
-                  value={users.find((u) => u.id === field.value) || null}
-                  onChange={(
-                    _event: SyntheticEvent,
-                    selectedUser: User | null,
-                  ) => {
-                    field.onChange(selectedUser ? selectedUser.id : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="User name"
-                      variant="outlined"
-                      error={!!errors.user_id}
-                      helperText={
-                        errors.user_id
-                          ? errors.user_id.message
-                          : "Select user to assign this role"
-                      }
-                      fullWidth
-                      margin="normal"
-                    />
-                  )}
+                  ikApi={ikApi}
+                  entity_name="users"
+                  showFields={["identifier", "provider"]}
+                  searchField="identifier"
+                  error={!!errors.user_id}
+                  helpertext={errors.user_id ? errors.user_id.message : ""}
+                  buffer={buffer}
+                  setBuffer={setBuffer}
+                  value={field.value}
+                  label="Select User"
+                  sx={{ mb: 3 }}
                 />
               )}
             />
@@ -155,7 +136,6 @@ const RoleCreatePageInner = () => {
 const RoleCreatePage = () => {
   const form = useForm<RoleCreate>({
     defaultValues: {
-      casbin_type: "user_role",
       role: "",
       user_id: "",
     },

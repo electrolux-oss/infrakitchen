@@ -5,8 +5,7 @@ from core.audit_logs.handler import AuditLogHandler
 from core.casbin.enforcer import CasbinEnforcer
 from core.database import SessionLocal
 from core.revisions.handler import RevisionHandler
-from core.users.crud import UserCRUD
-from core.users.service import UserService
+from core.users.dependencies import get_user_service
 
 from .crud import PermissionCRUD
 from .service import PermissionService
@@ -31,8 +30,5 @@ def get_permission_service(
         revision_handler=revision_handler,
         audit_log_handler=audit_log_handler,
         casbin_enforcer=casbin_enforcer,
-        user_service=UserService(
-            crud=UserCRUD(session=session),
-            audit_log_handler=audit_log_handler,
-        ),
+        user_service=get_user_service(session=session),
     )

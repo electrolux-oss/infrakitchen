@@ -5,7 +5,6 @@ from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.users.functions import user_has_access_to_resource
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
@@ -96,8 +95,10 @@ async def update(
     service: SourceCodeVersionService = Depends(get_source_code_version_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, source_code_version_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if ModelActions.EDIT not in await service.get_actions(
+        source_code_version_id=source_code_version_id, requester=requester
+    ):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
     entity = await service.update(
         source_code_version_id=source_code_version_id, source_code_version=body, requester=requester
@@ -118,11 +119,12 @@ async def patch_action(
 ):
     requester: UserDTO = request.state.user
     actions_list = list(map(lambda x: x.value, ModelActions))
-    if not await user_has_access_to_resource(requester, source_code_version_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
 
     if body.action not in actions_list:
         raise HTTPException(status_code=400, detail="Invalid action")
+
+    if body.action not in await service.get_actions(source_code_version_id=source_code_version_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
 
     entity = await service.patch(source_code_version_id=source_code_version_id, body=body, requester=requester)
 
@@ -136,8 +138,11 @@ async def delete(
     service: SourceCodeVersionService = Depends(get_source_code_version_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, source_code_version_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
+
+    if ModelActions.DELETE not in await service.get_actions(
+        source_code_version_id=source_code_version_id, requester=requester
+    ):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
 
     await service.delete(source_code_version_id=source_code_version_id, requester=requester)
 
@@ -205,8 +210,11 @@ async def update_config_by_id(
     service: SourceCodeVersionService = Depends(get_source_code_version_service),
 ) -> SourceConfigResponse:
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, source_code_version_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
+
+    if ModelActions.EDIT not in await service.get_actions(
+        source_code_version_id=source_code_version_id, requester=requester
+    ):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
     config = await service.update_config(config_id=config_id, config=body)
     return SourceConfigResponse.model_validate(config)
@@ -225,8 +233,11 @@ async def update_configs(
     service: SourceCodeVersionService = Depends(get_source_code_version_service),
 ) -> list[SourceConfigResponse]:
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, source_code_version_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
+
+    if ModelActions.EDIT not in await service.get_actions(
+        source_code_version_id=source_code_version_id, requester=requester
+    ):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
     return await service.update_configs(source_code_version_id=source_code_version_id, configs=body)
 

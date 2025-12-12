@@ -9,7 +9,7 @@ from core.base_models import PatchBodyModel
 from core.database import to_dict
 from core.errors import DependencyError, EntityWrongState, EntityNotFound
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from .crud import TemplateCRUD
 from .schema import TemplateCreate, TemplateResponse, TemplateShort, TemplateTreeResponse, TemplateUpdate
@@ -237,7 +237,11 @@ class TemplateService:
         :param template_id: ID of the template
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, template_id)
+        apis = await user_api_permission(requester, "template")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:template"]]
+
         if "admin" not in requester_permissions:
             return []
 

@@ -10,7 +10,7 @@ from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
+from core.users.functions import user_api_permission
 from core.utils.entity_state_handler import delete_entity, execute_entity, recreate_entity
 from core.utils.event_sender import EventSender
 from .crud import StorageCRUD
@@ -219,7 +219,11 @@ class StorageService:
         :param storage_id: ID of the storage
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, storage_id)
+        apis = await user_api_permission(requester, "storage")
+        if not apis:
+            return []
+        requester_permissions = [apis["api:storage"]]
+
         if "write" not in requester_permissions and "admin" not in requester_permissions:
             return []
 

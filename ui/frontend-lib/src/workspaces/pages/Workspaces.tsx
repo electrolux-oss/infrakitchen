@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig } from "../../common";
+import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -71,7 +71,7 @@ export const WorkspacesPage = () => {
         headerName: "Name",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
-          return GetEntityLink(params.row);
+          return <GetEntityLink {...params.row} />;
         },
       },
       {
@@ -114,13 +114,18 @@ export const WorkspacesPage = () => {
     <PageContainer
       title="Workspaces"
       actions={
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => navigate(`${linkPrefix}workspaces/create`)}
+        <PermissionWrapper
+          requiredPermission="api:workspace"
+          permissionAction="write"
         >
-          Create
-        </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate(`${linkPrefix}workspaces/create`)}
+          >
+            Create
+          </Button>
+        </PermissionWrapper>
       }
     >
       <EntityFetchTable

@@ -268,3 +268,30 @@ class ResourceTreeResponse(BaseModel):
 
 
 ResourceTreeResponse.model_rebuild()
+
+
+class RoleResourcesResponse(BaseModel):
+    id: uuid.UUID
+    resource_id: uuid.UUID
+    resource_name: str
+    role: str
+    action: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
+class UserResourceResponse(BaseModel):
+    id: uuid.UUID
+    resource_id: uuid.UUID
+    resource_name: str
+    action: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )

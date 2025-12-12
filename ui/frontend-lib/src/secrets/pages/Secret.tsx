@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 
 import { Button } from "@mui/material";
 
-import { LogLiveTail, useConfig } from "../../common";
+import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -48,13 +48,18 @@ export const SecretPage = () => {
       <EntityContainer
         title={"Secret Overview"}
         actions={
-          <Button
-            variant="outlined"
-            onClick={handleValidation}
-            disabled={loading}
+          <PermissionWrapper
+            requiredPermission="api:secret"
+            permissionAction="write"
           >
-            {loading ? "Validating..." : "Validate"}
-          </Button>
+            <Button
+              variant="outlined"
+              onClick={handleValidation}
+              disabled={loading}
+            >
+              {loading ? "Validating..." : "Validate"}
+            </Button>
+          </PermissionWrapper>
         }
       >
         <SecretContent />

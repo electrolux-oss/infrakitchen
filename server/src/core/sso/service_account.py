@@ -17,9 +17,8 @@ async def service_account_token(body: dict[str, Any] = Body(...), service: SSOSe
     if len(ik_sa_provider) == 0 or not ik_sa_provider[0].enabled:
         raise HTTPException(status_code=401, detail="Service Account login is disabled")
 
-    assert body is not None, "body is required"
-    assert body.get("identifier") is not None, "identifier is required"
-    assert body.get("password") is not None, "password is required"
+    if body.get("identifier") is None and body.get("password") is None:
+        raise HTTPException(status_code=400, detail="identifier and password are required")
 
     user = await service.user_service.get_user_by_identifier(body["identifier"])
 

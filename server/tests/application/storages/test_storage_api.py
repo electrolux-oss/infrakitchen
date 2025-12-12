@@ -9,8 +9,8 @@ from application.storages.api import router
 from application.storages.dependencies import get_storage_service
 from application.storages.schema import StorageUpdate, StorageCreate
 from core import UserDTO
-import application.storages.api as api_storage
 from core.base_models import PatchBodyModel
+from core.constants.model import ModelActions
 
 storage_ID = "abc123"
 
@@ -202,7 +202,7 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_forbidden(self, client_with_user, monkeypatch):
+    def test_update_forbidden(self, client_with_user, override_service):
         storage_update = {
             "name": "Test Storage 1",
             "description": "New description",
@@ -212,18 +212,15 @@ class TestUpdate:
             "labels": [],
             "model_config": {},
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockStorageService(actions=[])
+        override_service(service)
 
         response = client_with_user.patch(f"/storages/{storage_ID}", json=storage_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
-    def test_update_success(self, client_with_user, override_service, monkeypatch, storage_response):
+    def test_update_success(self, client_with_user, override_service, storage_response):
         storage_update = {
             "name": "Test Storage 1",
             "description": "New description",
@@ -234,12 +231,7 @@ class TestUpdate:
             "model_config": {},
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockStorageService(updated_storage=storage_response)
+        service = MockStorageService(updated_storage=storage_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/storages/{storage_ID}", json=storage_update)
@@ -251,47 +243,34 @@ class TestUpdate:
 
 
 class TestPatchAction:
-    def test_patch_action_forbidden(self, client_with_user, monkeypatch):
+    def test_patch_action_forbidden(self, client_with_user, override_service):
         storage_patch = {
             "action": "create",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockStorageService(actions=[])
+        override_service(service)
 
         response = client_with_user.patch(f"/storages/{storage_ID}/actions", json=storage_patch)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action create"}
 
-    def test_patch_action_value_error(self, client_with_user, monkeypatch):
+    def test_patch_action_value_error(self, client_with_user):
         storage_patch = {
             "action": "unknown",
         }
-
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
 
         response = client_with_user.patch(f"/storages/{storage_ID}/actions", json=storage_patch)
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.json() == {"detail": "Invalid action"}
 
-    def test_patch_action_success(self, client_with_user, override_service, monkeypatch, storage_response):
+    def test_patch_action_success(self, client_with_user, override_service, storage_response):
         storage_patch = {
             "action": "create",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockStorageService(patch_storage=storage_response)
+        service = MockStorageService(patch_storage=storage_response, actions=[ModelActions.CREATE])
         override_service(service)
 
         response = client_with_user.patch(f"/storages/{storage_ID}/actions", json=storage_patch)
@@ -303,24 +282,17 @@ class TestPatchAction:
 
 
 class TestDelete:
-    def test_delete_forbidden(self, client_with_user, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
+    def test_delete_forbidden(self, client_with_user, override_service):
+        service = MockStorageService(actions=[])
+        override_service(service)
 
         response = client_with_user.delete(f"/storages/{storage_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_delete_success(self, client_with_user, override_service, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_storage, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockStorageService()
+    def test_delete_success(self, client_with_user, override_service):
+        service = MockStorageService(actions=[ModelActions.DELETE])
         override_service(service)
 
         response = client_with_user.delete(f"/storages/{storage_ID}")

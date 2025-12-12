@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.users.functions import user_has_access_to_resource
+from core.constants.model import ModelActions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import WorkspaceCreate, WorkspaceResponse, WorkspaceUpdate
@@ -80,8 +80,8 @@ async def update(
     service: WorkspaceService = Depends(get_workspace_service),
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, workspace_id, action="write"):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if ModelActions.EDIT not in await service.get_actions(workspace_id=workspace_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
     entity = await service.update(workspace_id=workspace_id, workspace=body, requester=requester)
     return entity
@@ -90,9 +90,8 @@ async def update(
 @router.delete("/workspaces/{workspace_id}", status_code=http_status.HTTP_204_NO_CONTENT)
 async def delete(request: Request, workspace_id: str, service: WorkspaceService = Depends(get_workspace_service)):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_resource(requester, workspace_id, action="admin"):
-        raise HTTPException(status_code=403, detail="Access denied")
-
+    if ModelActions.DELETE not in await service.get_actions(workspace_id=workspace_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.DELETE.value}")
     await service.delete(workspace_id=workspace_id)
 
 

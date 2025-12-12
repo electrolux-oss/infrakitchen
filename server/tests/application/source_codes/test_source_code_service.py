@@ -492,8 +492,46 @@ class TestDelete:
 
 class TestGetIntegrationActions:
     @pytest.mark.asyncio
-    async def test_get_actions_not_admin(
+    @pytest.mark.parametrize(
+        "status,user_permissions,expected_actions",
+        [
+            (
+                ModelStatus.READY,
+                {"api:source_code": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.IN_PROGRESS,
+                {"api:source_code": "admin"},
+                [],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:source_code": "admin"},
+                [ModelActions.ENABLE, ModelActions.DELETE],
+            ),
+            (
+                ModelStatus.DONE,
+                {"api:source_code": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.DONE,
+                {"api:source_code": "read"},
+                [],
+            ),
+            (
+                ModelStatus.ERROR,
+                {"api:source_code": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+        ],
+    )
+    async def test_get_source_code_actions(
         self,
+        status,
+        user_permissions,
+        expected_actions,
         mock_source_code_service,
         mock_source_code_crud,
         mocked_source_code,
@@ -501,95 +539,17 @@ class TestGetIntegrationActions:
         mock_user_dto,
         mock_user_permissions,
     ):
-        mock_user_permissions(["write"], monkeypatch, "application.source_codes.service.user_entity_permissions")
-        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_user_permissions(
+            user_permissions,
+            monkeypatch,
+            "application.source_codes.service.user_api_permission",
+        )
+        existing_source_code = mocked_source_code
+        existing_source_code.status = status
+        mock_source_code_crud.get_by_id.return_value = existing_source_code
 
         result = await mock_source_code_service.get_actions(
             source_code_id=mocked_source_code.id, requester=mock_user_dto
         )
 
-        assert result == []
-        mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_normal_state_admin(
-        self,
-        mock_source_code_service,
-        mock_source_code_crud,
-        mocked_source_code,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["admin"], monkeypatch, "application.source_codes.service.user_entity_permissions")
-        existing_source_code = mocked_source_code
-        existing_source_code.status = ModelStatus.READY
-        mock_source_code_crud.get_by_id.return_value = existing_source_code
-
-        result = await mock_source_code_service.get_actions(
-            source_code_id=existing_source_code.id, requester=mock_user_dto
-        )
-
-        assert result == ["sync", ModelActions.EDIT, ModelActions.DISABLE]
-        mock_source_code_crud.get_by_id.assert_awaited_once_with(existing_source_code.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_in_progress_admin(
-        self,
-        mock_source_code_service,
-        mock_source_code_crud,
-        mocked_source_code,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["admin"], monkeypatch, "application.source_codes.service.user_entity_permissions")
-        existing_source_code = mocked_source_code
-        existing_source_code.status = ModelStatus.IN_PROGRESS
-        mock_source_code_crud.get_by_id.return_value = existing_source_code
-
-        result = await mock_source_code_service.get_actions(
-            source_code_id=existing_source_code.id, requester=mock_user_dto
-        )
-
-        assert result == []
-        mock_source_code_crud.get_by_id.assert_awaited_once_with(existing_source_code.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_for_disabled_admin(
-        self,
-        mock_source_code_service,
-        mock_source_code_crud,
-        mocked_source_code,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["admin"], monkeypatch, "application.source_codes.service.user_entity_permissions")
-        existing_source_code = mocked_source_code
-        existing_source_code.status = ModelStatus.DISABLED
-        mock_source_code_crud.get_by_id.return_value = existing_source_code
-
-        result = await mock_source_code_service.get_actions(
-            source_code_id=existing_source_code.id, requester=mock_user_dto
-        )
-
-        assert result == [ModelActions.ENABLE, ModelActions.DELETE]
-        mock_source_code_crud.get_by_id.assert_awaited_once_with(existing_source_code.id)
-
-    @pytest.mark.asyncio
-    async def test_get_actions_user_has_read_permissions(
-        self,
-        mock_source_code_service,
-        mocked_source_code,
-        monkeypatch,
-        mock_user_dto,
-        mock_user_permissions,
-    ):
-        mock_user_permissions(["read"], monkeypatch, "application.source_codes.service.user_entity_permissions")
-
-        result = await mock_source_code_service.get_actions(
-            source_code_id=mocked_source_code.id, requester=mock_user_dto
-        )
-
-        assert result == []
+        assert result == expected_actions
