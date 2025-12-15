@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
@@ -205,6 +205,7 @@ class TemplateService:
         for raw_node in tree:
             node = TemplateTreeResponse(
                 id=raw_node["id"],
+                node_id=uuid4(),
                 name=raw_node["name"],
                 status=raw_node["status"],
                 children=[],

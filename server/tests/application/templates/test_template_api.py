@@ -328,7 +328,7 @@ class TestGetPermissions:
 
 class TestTree:
     def test_get_tree_success(self, client_with_user, override_service):
-        template_tree_response = TemplateTreeResponse(id=uuid4(), name="tree1", status="", children=[])
+        template_tree_response = TemplateTreeResponse(id=uuid4(), node_id=uuid4(), name="tree1", status="", children=[])
         service = MockTemplateService(tree=template_tree_response)
         override_service(service)
 

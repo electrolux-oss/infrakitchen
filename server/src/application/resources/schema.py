@@ -262,6 +262,7 @@ class ResourceTreeResponse(BaseModel):
     state: str
     status: str
     template_name: str
+    node_id: uuid.UUID
     children: list["ResourceTreeResponse"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)

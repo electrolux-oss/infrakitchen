@@ -13,7 +13,7 @@ import { TreeResponse } from "./types";
 
 export interface TreeViewItemProps {
   entity_name: string;
-  tree?: TreeResponse;
+  tree: TreeResponse;
   setExpanded: Dispatch<React.SetStateAction<string[]>>;
   setSelected: Dispatch<React.SetStateAction<string[]>>;
   selected: string[];
@@ -47,9 +47,7 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
   };
 
   const StyledTreeItem = (style_props: any) => {
-    const { nodeId, item, ...others } = style_props;
-
-    const originalId = nodeId.split("/").pop() || nodeId;
+    const { nodeId, entity_id, item, ...others } = style_props;
 
     const status = String(item.status || "").toLowerCase();
     const state = String(item.state || "").toLowerCase();
@@ -83,7 +81,7 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
               />
             </Tooltip>
             <Link
-              href={`${linkPrefix}${entity_name}s/${originalId}`}
+              href={`${linkPrefix}${entity_name}s/${entity_id}`}
               target="_blank"
               sx={{ display: "inline-flex" }}
               aria-label={`Open ${item.name} ${entity_name} in new tab`}
@@ -97,12 +95,12 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
     );
   };
 
-  const getTreeItems = (node: any, parent: string = "") => {
-    const id = parent ? `${parent}/${node.id}` : node.id;
+  const getTreeItems = (node: TreeResponse) => {
+    const id = node.node_id;
     allNodeIds.push(id);
     return (
-      <StyledTreeItem key={id} nodeId={id} item={node}>
-        {node.children?.map((child: any) => getTreeItems(child, id))}
+      <StyledTreeItem key={id} nodeId={id} entity_id={node.id} item={node}>
+        {node.children?.map((child: TreeResponse) => getTreeItems(child))}
       </StyledTreeItem>
     );
   };

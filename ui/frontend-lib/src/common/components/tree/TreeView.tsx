@@ -21,7 +21,7 @@ export const EntityTreeView = ({ entity_id, entity_name }: TreeViewProps) => {
   useEffect(() => {
     ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
       setTree(tree);
-      setSelected([tree.id]);
+      setSelected([tree.node_id]);
     });
   }, [entity_id, entity_name, ikApi]);
 

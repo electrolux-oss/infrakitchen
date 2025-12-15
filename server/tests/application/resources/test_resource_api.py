@@ -407,7 +407,7 @@ class TestResourceGetPermissions:
 class TestResourceTree:
     def test_get_tree_success(self, client_with_user, override_service):
         resource_tree_response = ResourceTreeResponse(
-            id=uuid4(), name="tree1", status="", state="", children=[], template_name="template1"
+            id=uuid4(), node_id=uuid4(), name="tree1", status="", state="", children=[], template_name="template1"
         )
         service = MockResourceService(tree=resource_tree_response)
         override_service(service)

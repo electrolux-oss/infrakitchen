@@ -1,5 +1,6 @@
 export interface TreeResponse {
   id: string;
+  node_id: string;
   name: string;
   state: string;
   status: string;
