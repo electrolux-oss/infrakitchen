@@ -12,8 +12,10 @@ from jwt.algorithms import ECAlgorithm
 
 from core.casbin.enforcer import CasbinEnforcer
 from core.config import Settings
+from core.errors import EntityExistsError
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
+from core.users.functions import user_has_access_to_api
 from core.users.schema import UserCreateWithProvider, UserResponse
 from core.utils.json_encoder import JsonEncoder
 
@@ -26,7 +28,7 @@ request_action_mapping = {
     "GET": ["read", "write", "admin"],
     "POST": ["write", "admin"],
     "PUT": ["write", "admin"],
-    "PATCH": ["admin"],
+    "PATCH": ["write", "admin"],
     "DELETE": ["write", "admin"],
 }
 
@@ -38,42 +40,32 @@ async def check_api_permission(request: Request):
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
         _ = await casbin_enforcer.get_enforcer()
-    assert casbin_enforcer.enforcer is not None, "Casbin enforcer is not initialized"
+    if casbin_enforcer.enforcer is None:
+        raise HTTPException(status_code=500, detail="Casbin enforcer is not initialized")
 
-    user: UserDTO = request.state.user
-    assert user is not None, "User is not set in request state"
-    assert user.id is not None, "User ID is not set in request state"
+    user: UserDTO | None = request.state.user
+    if user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     if user.deactivated is True:
         raise HTTPException(status_code=403, detail="Forbidden. User is deactivated")
 
-    primary_account = user.primary_account[0] if user.primary_account else None
-    if primary_account and primary_account.deactivated is True:
-        raise HTTPException(status_code=403, detail="Forbidden. User's primary account is deactivated")
-
     match = re.search(r"/api/([^/?]+)", request.url.path)
     if match:
-        entity = match.group(1)
+        entity = match.group(1).removesuffix("s")  # singular form
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    if entity == "resources" or entity == "resource_temp_state":
-        # resources has own permission control system `user_has_access_to_resource` function
-        if primary_account:
-            if await casbin_enforcer.enforce_casbin_user(primary_account.id, entity, "read", object_type="resource"):
-                return
-
-        elif await casbin_enforcer.enforce_casbin_user(user.id, entity, "read", object_type="api"):
+    if entity == "resource" or entity == "resource_temp_state":
+        # resources has own permission control system `user_has_access_to_entity` function
+        if await user_has_access_to_api(user, "resource", "read"):
             return
 
     if request.method not in request_action_mapping:
         raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden for {entity}")
 
     for method in request_action_mapping[request.method]:
-        if primary_account:
-            if await casbin_enforcer.enforce_casbin_user(primary_account.id, entity, method, object_type="api"):
-                return
-        elif await casbin_enforcer.enforce_casbin_user(user.id, entity, method, object_type="api"):
+        if await user_has_access_to_api(user, entity, method):
             return
 
     raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden")
@@ -212,7 +204,10 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
                 UserCreateWithProvider(identifier=user_id, provider="backstage")
             )
 
-            _ = await service.casbin_enforcer.add_casbin_user_role(user.id, "default")
+            try:
+                _ = await service.permission_service.assign_user_to_role("default", user.id)
+            except EntityExistsError:
+                pass  # User is already assigned to the role
 
             return user
     except Exception as error:

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi_sso.sso.microsoft import MicrosoftSSO
 
+from core.errors import EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
 
@@ -149,9 +150,18 @@ async def microsoft_callback(
             raise HTTPException(status_code=401, detail="Authentication failed")
 
     user = await service.user_service.create_user_if_not_exists(UserCreateWithProvider(**user_from_provider))
-    _ = await service.casbin_enforcer.add_casbin_user_role(user.id, "default")
+    existing_roles = await service.casbin_enforcer.get_user_roles(user.id)
+    reload_permission = False
 
-    assert microsoft_sso.refresh_token is not None, "Refresh token is required. Check your app configuration."
+    try:
+        if "default" not in existing_roles:
+            _ = await service.permission_service.assign_user_to_role("default", user.id, reload_permission=False)
+            reload_permission = True
+    except EntityExistsError:
+        pass  # User is already assigned to the role
+
+    if not microsoft_sso.refresh_token:
+        raise HTTPException(status_code=500, detail="Refresh token is required. Check your app configuration.")
 
     response = RedirectResponse(url="/")
     response.set_cookie(
@@ -161,10 +171,12 @@ async def microsoft_callback(
         secure=True,
         expires=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30),
     )  # This cookie will make sure the user is authenticated
-    assert user.id is not None, "User ID should not be None"
     await service.audit_log_handler.create_log(
         entity_id=user.id,
         requester_id=user.id,
         action="login",
     )
+    if reload_permission:
+        await service.permission_service.commit()
+        await service.casbin_enforcer.send_reload_event()
     return response

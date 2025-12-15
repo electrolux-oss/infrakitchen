@@ -4,11 +4,12 @@ import {
   GridFilterModel,
   GridSortModel,
   GridPaginationModel,
+  GridColDef,
 } from "@mui/x-data-grid";
 
 export interface ResourceTableProps {
   entityName: string;
-  columns: any;
+  columns: GridColDef<any>[];
   entities: any[];
   loading: boolean;
   totalRows: number;

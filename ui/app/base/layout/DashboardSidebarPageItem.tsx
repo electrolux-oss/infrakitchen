@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
+import { usePermissionProvider } from "@electrolux-oss/infrakitchen";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -29,6 +30,7 @@ export interface DashboardSidebarPageItemProps {
   selected?: boolean;
   disabled?: boolean;
   nestedNavigation?: React.ReactNode;
+  permissionKey?: string;
 }
 
 export default function DashboardSidebarPageItem({
@@ -42,6 +44,7 @@ export default function DashboardSidebarPageItem({
   selected = false,
   disabled = false,
   nestedNavigation,
+  permissionKey,
 }: DashboardSidebarPageItemProps) {
   const sidebarContext = React.useContext(DashboardSidebarContext);
   if (!sidebarContext) {
@@ -55,6 +58,7 @@ export default function DashboardSidebarPageItem({
   } = sidebarContext;
 
   const [isHovered, setIsHovered] = React.useState(false);
+  const permissions = usePermissionProvider().permissions;
 
   const handleClick = React.useCallback(() => {
     if (onPageItemClick) {
@@ -99,6 +103,14 @@ export default function DashboardSidebarPageItem({
       hasDrawerTransitions: false,
     };
   }, [onPageItemClick]);
+
+  if (
+    permissionKey &&
+    !permissions[`api:${permissionKey}`] &&
+    !permissions["*"]
+  ) {
+    return null;
+  }
 
   return (
     <React.Fragment>

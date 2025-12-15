@@ -5,7 +5,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import application.integrations.api as api_integration
 from application.integrations.api import router
 from application.integrations.dependencies import get_integration_service
 from application.integrations.schema import IntegrationUpdate
@@ -25,6 +24,7 @@ class MockIntegrationService:
         updated_integration=None,
         created_integration=None,
         patched_integration=None,
+        actions=None,
     ):
         self._return_value = return_value
         self._total = total
@@ -33,6 +33,7 @@ class MockIntegrationService:
         self._created_integration = created_integration
         self._updated_integration = updated_integration
         self._patched_integration = patched_integration
+        self._actions = actions
 
     async def get_by_id(self, integration_id: str):
         return self._return_value
@@ -56,7 +57,7 @@ class MockIntegrationService:
         pass
 
     async def get_actions(self, *args, **kwargs):
-        return self._return_value
+        return self._actions
 
 
 @pytest.fixture(autouse=True)
@@ -192,27 +193,25 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_forbidden(self, client_with_user, override_service, monkeypatch, mock_user_has_access_to_resource):
+    def test_update_forbidden(self, client_with_user, override_service):
         integration_update = {
             "name": "Updated Integration",
             "description": "Updated description",
             "labels": ["updated_label"],
         }
 
-        override_service(MockIntegrationService(return_value=None))
-        mock_user_has_access_to_resource(False, api_integration)
+        override_service(MockIntegrationService(return_value=None, actions=[]))
 
         response = client_with_user.patch(f"/integrations/{INTEGRATION_ID}", json=integration_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
     def test_update_success(
         self,
         client_with_user,
         override_service,
         mocked_integration_response,
-        mock_user_has_access_to_resource,
     ):
         integration_update = {
             "name": "test_integration",
@@ -228,8 +227,9 @@ class TestUpdate:
             },
         }
 
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockIntegrationService(updated_integration=mocked_integration_response))
+        override_service(
+            MockIntegrationService(updated_integration=mocked_integration_response, actions=[ModelActions.EDIT])
+        )
 
         response = client_with_user.patch(f"/integrations/{INTEGRATION_ID}", json=integration_update)
         json_response = response.json()
@@ -240,21 +240,15 @@ class TestUpdate:
 
 
 class TestPatchActions:
-    def test_patch_action_forbidden(
-        self, client_with_user, override_service, monkeypatch, mock_user_has_access_to_resource
-    ):
-        integration_patch = {"action": "unknown"}
-        override_service(MockIntegrationService(return_value=None))
-        mock_user_has_access_to_resource(False, api_integration)
+    def test_patch_action_forbidden(self, client_with_user, override_service):
+        integration_patch = {"action": ModelActions.DISABLE}
+        override_service(MockIntegrationService(return_value=None, actions=[ModelActions.EDIT]))
         response = client_with_user.patch(f"/integrations/{INTEGRATION_ID}/actions", json=integration_patch)
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action disable"}
 
-    def test_patch_action_value_error(
-        self, client_with_user, override_service, monkeypatch, mock_user_has_access_to_resource
-    ):
+    def test_patch_action_value_error(self, client_with_user):
         integration_patch = {"action": "unknown_action"}
-        mock_user_has_access_to_resource(True, api_integration)
         response = client_with_user.patch(f"/integrations/{INTEGRATION_ID}/actions", json=integration_patch)
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.json() == {"detail": "Invalid action"}
@@ -264,11 +258,11 @@ class TestPatchActions:
         client_with_user,
         override_service,
         mocked_integration_response,
-        mock_user_has_access_to_resource,
     ):
         integration_patch = {"action": ModelActions.DELETE}
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockIntegrationService(patched_integration=mocked_integration_response))
+        override_service(
+            MockIntegrationService(patched_integration=mocked_integration_response, actions=[ModelActions.DELETE])
+        )
         response = client_with_user.patch(f"/integrations/{INTEGRATION_ID}/actions", json=integration_patch)
         json_response = response.json()
         assert response.status_code == HTTPStatus.OK
@@ -278,32 +272,25 @@ class TestPatchActions:
 
 class TestDelete:
     def test_delete_forbidden(self, client_with_user, override_service, mock_user_has_access_to_resource):
-        mock_user_has_access_to_resource(False, api_integration)
-        override_service(MockIntegrationService())
+        override_service(MockIntegrationService(actions=[]))
         response = client_with_user.delete(f"/integrations/{INTEGRATION_ID}")
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
     def test_delete_success(
         self,
         client_with_user,
         override_service,
-        mocked_integration_response,
-        mock_user_has_access_to_resource,
     ):
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockIntegrationService())
+        override_service(MockIntegrationService(actions=[ModelActions.DELETE]))
         response = client_with_user.delete(f"/integrations/{INTEGRATION_ID}")
         assert response.status_code == HTTPStatus.NO_CONTENT
         assert not response.content
 
 
 class TestGetActions:
-    def test_get_actions_success(
-        self, client_with_user, override_service, monkeypatch, mock_user_has_access_to_resource
-    ):
-        mock_user_has_access_to_resource(True, api_integration)
-        override_service(MockIntegrationService(return_value=["read", "write"]))
+    def test_get_actions_success(self, client_with_user, override_service):
+        override_service(MockIntegrationService(actions=["read", "write"]))
 
         response = client_with_user.get(f"/integrations/{INTEGRATION_ID}/actions")
 

@@ -1,4 +1,4 @@
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI
@@ -9,8 +9,8 @@ from application.templates.api import router
 from application.templates.dependencies import get_template_service
 from application.templates.schema import TemplateResponse, TemplateUpdate, TemplateCreate, TemplateTreeResponse
 from core import UserDTO
-import application.templates.api as api_template
 from core.base_models import PatchBodyModel
+from core.constants.model import ModelActions
 
 TEMPLATE_ID = "abc123"
 
@@ -202,7 +202,7 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_forbidden(self, client_with_user, monkeypatch):
+    def test_update_forbidden(self, client_with_user, override_service):
         template_update = {
             "name": "Test Template 1",
             "description": "New description",
@@ -213,17 +213,14 @@ class TestUpdate:
             "model_config": {},
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
+        service = MockTemplateService(actions=[])
+        override_service(service)
         response = client_with_user.patch(f"/templates/{TEMPLATE_ID}", json=template_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
-    def test_update_success(self, client_with_user, override_service, monkeypatch, template_response):
+    def test_update_success(self, client_with_user, override_service, template_response):
         template_update = {
             "name": "Test Template 1",
             "description": "New description",
@@ -234,12 +231,7 @@ class TestUpdate:
             "model_config": {},
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockTemplateService(updated_template=template_response)
+        service = MockTemplateService(updated_template=template_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/templates/{TEMPLATE_ID}", json=template_update)
@@ -251,47 +243,38 @@ class TestUpdate:
 
 
 class TestPatchAction:
-    def test_patch_action_forbidden(self, client_with_user, monkeypatch):
+    def test_patch_action_forbidden(self, client_with_user, override_service):
         template_patch = {
             "action": "create",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockTemplateService(actions=[])
+        override_service(service)
 
         response = client_with_user.patch(f"/templates/{TEMPLATE_ID}/actions", json=template_patch)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action create"}
 
-    def test_patch_action_value_error(self, client_with_user, monkeypatch):
+    def test_patch_action_value_error(self, client_with_user, override_service):
         template_patch = {
             "action": "unknown",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockTemplateService(actions=[ModelActions.CREATE])
+        override_service(service)
 
         response = client_with_user.patch(f"/templates/{TEMPLATE_ID}/actions", json=template_patch)
 
         assert response.status_code == HTTPStatus.BAD_REQUEST
         assert response.json() == {"detail": "Invalid action"}
 
-    def test_patch_action_success(self, client_with_user, override_service, monkeypatch, template_response):
+    def test_patch_action_success(self, client_with_user, override_service, template_response):
         template_patch = {
             "action": "create",
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockTemplateService(patch_template=template_response)
+        service = MockTemplateService(patch_template=template_response, actions=[ModelActions.CREATE])
         override_service(service)
 
         response = client_with_user.patch(f"/templates/{TEMPLATE_ID}/actions", json=template_patch)
@@ -303,24 +286,16 @@ class TestPatchAction:
 
 
 class TestDelete:
-    def test_delete_forbidden(self, client_with_user, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
+    def test_delete_forbidden(self, client_with_user, override_service):
+        service = MockTemplateService(actions=[])
+        override_service(service)
         response = client_with_user.delete(f"/templates/{TEMPLATE_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_delete_success(self, client_with_user, override_service, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_template, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockTemplateService()
+    def test_delete_success(self, client_with_user, override_service):
+        service = MockTemplateService(actions=[ModelActions.DELETE])
         override_service(service)
 
         response = client_with_user.delete(f"/templates/{TEMPLATE_ID}")

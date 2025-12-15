@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button, Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig } from "../../common";
+import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -112,13 +112,18 @@ export const SecretsPage = () => {
     <PageContainer
       title="Secrets"
       actions={
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => navigate(`${linkPrefix}secrets/create`)}
+        <PermissionWrapper
+          requiredPermission="api:secret"
+          permissionAction="write"
         >
-          Create
-        </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate(`${linkPrefix}secrets/create`)}
+          >
+            Create
+          </Button>
+        </PermissionWrapper>
       }
     >
       <EntityFetchTable

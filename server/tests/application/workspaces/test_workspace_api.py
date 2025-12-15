@@ -9,7 +9,7 @@ from application.workspaces.api import router
 from application.workspaces.dependencies import get_workspace_service
 from application.workspaces.schema import WorkspaceUpdate, WorkspaceCreate
 from core import UserDTO
-import application.workspaces.api as api_workspace
+from core.constants.model import ModelActions
 
 WORKSPACE_ID = "abc123"
 
@@ -219,36 +219,29 @@ class TestCreate:
 
 
 class TestUpdate:
-    def test_update_forbidden(self, client_with_user, monkeypatch):
+    def test_update_forbidden(self, client_with_user, override_service):
         workspace_update = {
             "name": "Test Workspace Updated",
             "description": "New description",
             "labels": ["label1", "label2"],
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_workspace, "user_has_access_to_resource", mock_user_has_access_to_resource)
+        service = MockWorkspaceService(actions=[])
+        override_service(service)
 
         response = client_with_user.put(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action edit"}
 
-    def test_update_success(self, client_with_user, override_service, monkeypatch, workspace_response):
+    def test_update_success(self, client_with_user, override_service, workspace_response):
         workspace_update = {
             "name": "Test Workspace Updated",
             "description": "New description",
             "labels": ["label1", "label2"],
         }
 
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_workspace, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockWorkspaceService(updated_workspace=workspace_response)
+        service = MockWorkspaceService(updated_workspace=workspace_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.put(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
@@ -260,24 +253,17 @@ class TestUpdate:
 
 
 class TestDelete:
-    def test_delete_forbidden(self, client_with_user, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return False
-
-        monkeypatch.setattr(api_workspace, "user_has_access_to_resource", mock_user_has_access_to_resource)
+    def test_delete_forbidden(self, client_with_user, override_service):
+        service = MockWorkspaceService(actions=[])
+        override_service(service)
 
         response = client_with_user.delete(f"/workspaces/{WORKSPACE_ID}")
 
         assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied"}
+        assert response.json() == {"detail": "Access denied for action delete"}
 
-    def test_delete_success(self, client_with_user, override_service, monkeypatch):
-        async def mock_user_has_access_to_resource(user: UserDTO, resource_id: str | UUID, action: str):
-            return True
-
-        monkeypatch.setattr(api_workspace, "user_has_access_to_resource", mock_user_has_access_to_resource)
-
-        service = MockWorkspaceService()
+    def test_delete_success(self, client_with_user, override_service):
+        service = MockWorkspaceService(actions=[ModelActions.DELETE])
         override_service(service)
 
         response = client_with_user.delete(f"/workspaces/{WORKSPACE_ID}")
@@ -285,7 +271,7 @@ class TestDelete:
         assert response.status_code == HTTPStatus.NO_CONTENT
 
 
-class TestGetPermissions:
+class TestGetActions:
     def test_get_actions_success(self, client_with_user, override_service):
         service = MockWorkspaceService(actions=["read", "write"])
         override_service(service)

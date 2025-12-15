@@ -4,5 +4,7 @@ export const taskRoutes = [
   {
     path: TasksPage.path,
     Component: TasksPage,
+    requiredPermission: "api:task",
+    permissionAction: "read",
   },
 ];

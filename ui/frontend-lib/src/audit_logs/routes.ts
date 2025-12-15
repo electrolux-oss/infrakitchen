@@ -4,5 +4,7 @@ export const auditLogsRoutes = [
   {
     path: AuditLogsPage.path,
     Component: AuditLogsPage,
+    requiredPermission: "api:audit_log",
+    permissionAction: "read",
   },
 ];

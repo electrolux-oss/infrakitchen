@@ -40,7 +40,9 @@ async def rabbitmq_consumer():
             if decoded_json_message.get("_metadata", {}).get("event") == "reload_policies":
                 logger.debug("Got event to reload policies")
                 enforcer = CasbinEnforcer().enforcer
-                assert enforcer is not None, "Enforcer is None"
+                if not enforcer:
+                    raise ValueError("Enforcer is not initialized")
+                await asyncio.sleep(1)  # Small delay to ensure DB transactions are committed
                 await enforcer.load_policy()
             else:
                 logger.debug(f"Sending message to eventstream: {msg}")

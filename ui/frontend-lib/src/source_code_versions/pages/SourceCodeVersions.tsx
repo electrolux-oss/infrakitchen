@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig } from "../../common";
+import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
@@ -45,7 +45,7 @@ export const SourceCodeVersionsPage = () => {
         valueGetter: (value: any) => value?.identifier || value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
-          return GetReferenceUrlValue(template);
+          return <GetReferenceUrlValue {...template} />;
         },
       },
       {
@@ -54,7 +54,7 @@ export const SourceCodeVersionsPage = () => {
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
           const sourceCode = params.row.source_code;
-          return GetReferenceUrlValue(sourceCode);
+          return <GetReferenceUrlValue {...sourceCode} />;
         },
       },
       {
@@ -106,13 +106,18 @@ export const SourceCodeVersionsPage = () => {
     <PageContainer
       title="Code Versions"
       actions={
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
+        <PermissionWrapper
+          requiredPermission="api:source_code_version"
+          permissionAction="write"
         >
-          Create
-        </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
+          >
+            Create
+          </Button>
+        </PermissionWrapper>
       }
     >
       <EntityFetchTable

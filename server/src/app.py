@@ -96,11 +96,23 @@ async def healthcheck():
 # error handling
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
-    exc_body = json.loads(json.dumps(exc._errors, cls=JsonEncoder))
+    if isinstance(exc._errors, list):
+        exc_body = []
+        for err in exc._errors:
+            if isinstance(err, dict):
+                exc_body.append(err)
+            else:
+                exc_body.append(json.loads(json.dumps(err, cls=JsonEncoder)))
+
+    else:
+        exc_body = json.loads(json.dumps(exc._errors, cls=JsonEncoder))
+
     if exc_body and isinstance(exc_body, list):
         for err in exc_body:
             # Hide the input value in the error message
             err.pop("input", None)
+            # Hide the context to avoid leaking sensitive information
+            err.pop("ctx", None)
 
     logger.error(f"RequestValidationError: {exc}")
     return JSONResponse(

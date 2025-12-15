@@ -27,7 +27,7 @@ from .cloud_resources import CloudResourceModel
 from .logs import LogDTO
 from .tasks import TaskEntityModel
 from .users import UserDTO
-from .users.functions import user_has_access_to_resource
+from .users.functions import user_has_access_to_entity
 from .revisions.model import Revision
 from .workers import WorkerDTO
 from .rabbitmq import RabbitMQConnection
@@ -65,7 +65,7 @@ __all__ = [
     "get_logged_user",
     "get_user_from_token",
     "check_api_permission",
-    "user_has_access_to_resource",
+    "user_has_access_to_entity",
     "PermissionDTO",
     "EncryptedSecretStr",
     "FeatureFlag",

@@ -9,11 +9,9 @@ import HistoryIcon from "@mui/icons-material/History";
 import HubIcon from "@mui/icons-material/Hub";
 import KeyIcon from "@mui/icons-material/Key";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import StorageIcon from "@mui/icons-material/Storage";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import { Avatar, Stack, Typography } from "@mui/material";
 import Box from "@mui/material/Box";
@@ -27,6 +25,7 @@ import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 import { useAuth } from "../auth/AuthContext";
 
+import { DashboardAdminSidebar } from "./DashboardAdminSidebar";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
 import DashboardSidebarHeaderItem from "./DashboardSidebarHeaderItem";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
@@ -150,6 +149,7 @@ export default function DashboardSidebar({
             icon={<Icon icon="noto:fork-and-knife" width="20" height="20" />}
             href="/integrations"
             selected={!!matchPath("/integrations/*", pathname)}
+            permissionKey="integration"
           />
           <DashboardSidebarPageItem
             id="templates"
@@ -157,6 +157,7 @@ export default function DashboardSidebar({
             icon={<Icon icon="noto:canned-food" width="20" height="20" />}
             href="/templates"
             selected={!!matchPath("/templates/*", pathname)}
+            permissionKey="template"
           />
           <DashboardSidebarPageItem
             id="resources"
@@ -166,6 +167,7 @@ export default function DashboardSidebar({
             }
             href="/resources"
             selected={!!matchPath("/resources/*", pathname)}
+            permissionKey="resource"
           />
 
           <DashboardSidebarDividerItem />
@@ -177,6 +179,7 @@ export default function DashboardSidebar({
             icon={<CodeIcon />}
             href="/source_codes"
             selected={!!matchPath("/source_codes/*", pathname)}
+            permissionKey="source_code"
           />
           <DashboardSidebarPageItem
             id="source_code_versions"
@@ -184,6 +187,7 @@ export default function DashboardSidebar({
             icon={<HistoryIcon />}
             href="/source_code_versions"
             selected={!!matchPath("/source_code_versions/*", pathname)}
+            permissionKey="source_code_version"
           />
           <DashboardSidebarPageItem
             id="workspaces"
@@ -191,6 +195,7 @@ export default function DashboardSidebar({
             icon={<WorkspacesIcon />}
             href="/workspaces"
             selected={!!matchPath("/workspaces/*", pathname)}
+            permissionKey="workspace"
           />
           <DashboardSidebarPageItem
             id="tasks"
@@ -198,6 +203,7 @@ export default function DashboardSidebar({
             icon={<PlaylistAddCheckIcon />}
             href="/tasks"
             selected={!!matchPath("/tasks/*", pathname)}
+            permissionKey="task"
           />
           <DashboardSidebarPageItem
             id="storages"
@@ -205,6 +211,7 @@ export default function DashboardSidebar({
             icon={<StorageIcon />}
             href="/storages"
             selected={!!matchPath("/storages/*", pathname)}
+            permissionKey="storage"
           />
           <DashboardSidebarPageItem
             id="secrets"
@@ -212,18 +219,15 @@ export default function DashboardSidebar({
             icon={<KeyIcon />}
             href="/secrets"
             selected={!!matchPath("/secrets/*", pathname)}
+            permissionKey="secret"
           />
-
-          <DashboardSidebarDividerItem />
-          <DashboardSidebarHeaderItem>
-            Administration
-          </DashboardSidebarHeaderItem>
           <DashboardSidebarPageItem
             id="users"
             title="Users"
             icon={<PeopleIcon />}
             href="/users"
             selected={!!matchPath("/users/*", pathname)}
+            permissionKey="user"
           />
           <DashboardSidebarPageItem
             id="roles"
@@ -231,6 +235,7 @@ export default function DashboardSidebar({
             icon={<AccountCircleIcon />}
             href="/roles"
             selected={!!matchPath("/roles/*", pathname)}
+            permissionKey="permission"
           />
           <DashboardSidebarPageItem
             id="audit_logs"
@@ -238,20 +243,7 @@ export default function DashboardSidebar({
             icon={<ListAltIcon />}
             href="/audit_logs"
             selected={!!matchPath("/audit_logs/*", pathname)}
-          />
-          <DashboardSidebarPageItem
-            id="auth_providers"
-            title="Auth Providers"
-            icon={<VerifiedUserIcon />}
-            href="/auth_providers"
-            selected={!!matchPath("/auth_providers/*", pathname)}
-          />
-          <DashboardSidebarPageItem
-            id="admin"
-            title="Settings"
-            icon={<MiscellaneousServicesIcon />}
-            href="/admin"
-            selected={!!matchPath("/admin/*", pathname)}
+            permissionKey="audit_log"
           />
           <DashboardSidebarPageItem
             id="workers"
@@ -259,7 +251,9 @@ export default function DashboardSidebar({
             icon={<HubIcon />}
             href="/workers"
             selected={!!matchPath("/workers/*", pathname)}
+            permissionKey="worker"
           />
+          <DashboardAdminSidebar />
 
           {user && (
             <Stack

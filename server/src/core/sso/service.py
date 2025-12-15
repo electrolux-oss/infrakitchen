@@ -1,6 +1,8 @@
 from core.audit_logs.handler import AuditLogHandler
 from core.auth_providers.service import AuthProviderService
 from core.casbin.enforcer import CasbinEnforcer
+
+from core.permissions.service import PermissionService
 from core.users.service import UserService
 
 
@@ -15,9 +17,11 @@ class SSOService:
         user_service: UserService,
         auth_provider_service: AuthProviderService,
         audit_log_handler: AuditLogHandler,
+        permission_service: PermissionService,
         casbin_enforcer: CasbinEnforcer,
     ):
         self.user_service: UserService = user_service
         self.auth_provider_service: AuthProviderService = auth_provider_service
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.casbin_enforcer: CasbinEnforcer = casbin_enforcer
+        self.permission_service: PermissionService = permission_service

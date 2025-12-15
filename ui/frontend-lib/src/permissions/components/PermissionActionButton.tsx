@@ -1,31 +1,45 @@
 import { useState } from "react";
 
-import { Icon } from "@iconify/react";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import { Button, IconButton, Stack } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Button,
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  CircularProgress,
+  Stack,
+} from "@mui/material";
 
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 
-interface DeletePermissionButtonProps {
+interface DeletePermissionActionButtonProps {
   permission_id: string;
   onDelete?: () => void;
 }
 
-export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
+export const DeletePermissionButton = (
+  props: DeletePermissionActionButtonProps,
+) => {
   const { permission_id, onDelete } = props;
-  const { ikApi, linkPrefix } = useConfig();
+  const { ikApi } = useConfig();
 
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleInitiateDeleteConfirmation = () => {
-    setIsConfirmingDelete(true);
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
   };
 
-  const handleCancelDelete = () => {
-    setIsConfirmingDelete(false);
+  const handleCloseDialog = () => {
+    if (!isLoading) {
+      setOpenDialog(false);
+    }
   };
 
   const handleDeletePermission = () => {
@@ -41,56 +55,76 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
         if (onDelete) {
           onDelete();
         }
+        setOpenDialog(false);
       })
       .catch((error) => {
         notifyError(error);
+      })
+      .finally(() => {
         setIsLoading(false);
       });
   };
 
   return (
     <>
-      {isConfirmingDelete ? (
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            color="success"
-            size="small"
-            startIcon={<CheckIcon />}
-            onClick={() => handleDeletePermission()}
-            sx={{ textTransform: "none", fontWeight: "bold" }}
-            disabled={isLoading}
-          >
-            Approve
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            size="small"
-            startIcon={<CloseIcon />}
-            onClick={handleCancelDelete}
-            sx={{ textTransform: "none", fontWeight: "bold" }}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-        </Stack>
-      ) : (
-        <>
-          <IconButton
-            title="Link to Permission"
-            href={`${linkPrefix}permissions/${permission_id}`}
-          >
-            <Icon icon="quill:link-out" />
-          </IconButton>
-          <IconButton
-            title="Delete Permission"
-            onClick={handleInitiateDeleteConfirmation}
-          >
-            <Icon icon="ep:delete" />
-          </IconButton>
-        </>
-      )}
+      <IconButton
+        title={`Delete Permission`}
+        onClick={handleOpenDialog}
+        color="error"
+        size="small"
+      >
+        <DeleteIcon fontSize="small" />
+      </IconButton>
+
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle
+          id="alert-dialog-title"
+          sx={{ color: "error.main", fontWeight: "bold" }}
+        >
+          {"Confirm Deletion"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to permanently delete? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={handleCloseDialog}
+              startIcon={<CloseIcon />}
+              disabled={isLoading}
+              sx={{ textTransform: "none", fontWeight: "bold" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDeletePermission}
+              startIcon={
+                isLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : (
+                  <CheckIcon />
+                )
+              }
+              disabled={isLoading}
+              sx={{ textTransform: "none", fontWeight: "bold" }}
+            >
+              {isLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </Stack>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
