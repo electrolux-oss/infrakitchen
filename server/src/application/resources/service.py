@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from typing import Any, Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
 from application.resources.functions import (
@@ -591,6 +591,7 @@ class ResourceService:
         for raw_node in tree:
             node = ResourceTreeResponse(
                 id=raw_node["id"],
+                node_id=uuid4(),
                 name=raw_node["name"],
                 state=raw_node["state"],
                 status=raw_node["status"],

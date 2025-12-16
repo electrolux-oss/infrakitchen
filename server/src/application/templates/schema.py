@@ -123,6 +123,7 @@ class TemplateTreeResponse(BaseModel):
     id: uuid.UUID
     name: str
     status: str
+    node_id: uuid.UUID
     children: list["TemplateTreeResponse"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
