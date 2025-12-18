@@ -46,7 +46,6 @@ mocked_variables_schema = [
         "index": 0,
         "name": "k8s_namespace_cloud_test_var",
         "options": [],
-        "reference": None,
         "required": True,
         "restricted": False,
         "sensitive": False,

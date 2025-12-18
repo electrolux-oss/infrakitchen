@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 from application.templates.service import TemplateService
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
@@ -28,7 +28,7 @@ async def get_by_id(template_id: str, service: TemplateService = Depends(get_tem
 
 @router.get(
     "/templates",
-    response_model=list[TemplateResponse],
+    response_model=list[dict[str, Any]],
     response_description="Get all templates",
     status_code=http_status.HTTP_200_OK,
 )
@@ -37,7 +37,7 @@ async def get_all(
     service: TemplateService = Depends(get_template_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    filter, range_, sort, _ = query_parts
+    filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
     if total == 0:
@@ -47,7 +47,11 @@ async def get_all(
 
     headers = {"Content-Range": f"templates 0-{len(result)}/{total}"}
     response.headers.update(headers)
-    return result
+
+    if fields:
+        fields.append("_entity_name")
+        return [res.model_dump(include=set(fields)) for res in result]
+    return [res.model_dump() for res in result]
 
 
 @router.post(
@@ -132,7 +136,6 @@ async def get_actions(request: Request, template_id: str, service: TemplateServi
     status_code=http_status.HTTP_200_OK,
 )
 async def get_tree(
-    request: Request,
     template_id: str,
     direction: Literal["parents", "children"],
     service: TemplateService = Depends(get_template_service),

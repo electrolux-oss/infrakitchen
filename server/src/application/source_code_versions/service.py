@@ -3,7 +3,12 @@ from typing import Any
 from uuid import UUID
 
 from application.source_code_versions.functions import verify_config_type
-from application.source_code_versions.model import SourceCodeVersionDTO, SourceConfig, SourceOutputConfig
+from application.source_code_versions.model import (
+    SourceCodeVersionDTO,
+    SourceConfig,
+    SourceConfigTemplateReference,
+    SourceOutputConfig,
+)
 from application.source_codes.service import SourceCodeService
 from application.templates.service import TemplateService
 from core.audit_logs.handler import AuditLogHandler
@@ -26,6 +31,8 @@ from .schema import (
     SourceCodeVersionWithConfigs,
     SourceConfigCreate,
     SourceConfigResponse,
+    SourceConfigTemplateReferenceCreate,
+    SourceConfigTemplateReferenceResponse,
     SourceConfigUpdate,
     SourceConfigUpdateWithId,
     SourceOutputConfigCreate,
@@ -330,6 +337,65 @@ class SourceCodeVersionService:
         await self.crud.update_config(existing_config, body)
         return SourceConfigResponse.model_validate(existing_config)
 
+    async def update_template_references(self, template_references: list[SourceConfigTemplateReferenceCreate]) -> None:
+        """
+        Update or create template references for source code version configs.
+        Delete existing references if output_config_name or reference_template_id is None.
+        :param template_references: List of SourceConfigTemplateReferenceCreate to create
+        :return: None
+        """
+
+        def get_existing_reference(
+            reference: SourceConfigTemplateReferenceCreate,
+            existing_references: list[SourceConfigTemplateReference],
+        ) -> SourceConfigTemplateReference | None:
+            for er in existing_references:
+                if er.template_id == reference.template_id and er.input_config_name == reference.input_config_name:
+                    return er
+            return None
+
+        existing_references = await self.crud.get_reference_output_configs_by_template_id(
+            template_references[0].template_id
+        )
+        for tr in template_references:
+            existing_reference = get_existing_reference(tr, existing_references)
+            if existing_reference:
+                if tr.output_config_name is None or tr.reference_template_id is None:
+                    await self.crud.delete_template_references(existing_reference)
+                elif (
+                    existing_reference.output_config_name != tr.output_config_name
+                    or existing_reference.reference_template_id != tr.reference_template_id
+                ):
+                    if not await self.template_service.get_by_id(tr.reference_template_id):
+                        raise EntityNotFound(f"Template reference not found with id {tr.reference_template_id}")
+
+                    template_outputs = await self.get_output_configs_by_template_id(tr.reference_template_id)
+                    output_config_names = [output.name for output in template_outputs]
+                    if tr.output_config_name not in output_config_names:
+                        raise EntityNotFound(
+                            f"Output config with name {tr.output_config_name} not found in template "
+                            f"{tr.reference_template_id}"
+                        )
+                    await self.crud.update_template_references(
+                        existing_reference,
+                        tr.model_dump(exclude_unset=True),
+                    )
+            else:
+                if tr.output_config_name is None or tr.reference_template_id is None:
+                    continue
+                if not await self.template_service.get_by_id(tr.reference_template_id):
+                    raise EntityNotFound(f"Template reference not found with id {tr.reference_template_id}")
+
+                template_outputs = await self.get_output_configs_by_template_id(tr.reference_template_id)
+                output_config_names = [output.name for output in template_outputs]
+                if tr.output_config_name not in output_config_names:
+                    raise EntityNotFound(
+                        f"Output config with name {tr.output_config_name} not found in template "
+                        f"{tr.reference_template_id}"
+                    )
+
+                await self.crud.create_template_references(tr.model_dump(exclude_unset=True))
+
     async def update_configs(
         self, source_code_version_id: str, configs: list[SourceConfigUpdateWithId]
     ) -> list[SourceConfigResponse]:
@@ -342,10 +408,20 @@ class SourceCodeVersionService:
         existing_configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
         existing_configs_dict = {config.id: config for config in existing_configs}
         updated_configs: list[SourceConfigResponse] = []
+        template_references_to_create: list[SourceConfigTemplateReferenceCreate] = []
+        template_id = None
+        template = await self.template_service.get_by_id(configs[0].template_id)
+        if not template:
+            raise EntityNotFound("Template not found")
 
         for config in configs:
             if config.id not in existing_configs_dict:
                 raise EntityNotFound(f"SourceCodeVersionConfig with id {config.id} not found")
+
+            if not template_id:
+                template_id = config.template_id
+            elif template_id != config.template_id:
+                raise ValueError("All configs must belong to the same template")
 
             if config.required and config.restricted and not config.default:
                 raise ValueError("Restricted config must have a value if it is required")
@@ -354,6 +430,19 @@ class SourceCodeVersionService:
             verify_config_type(body, expected_type=existing_configs_dict[config.id].type)
             await self.crud.update_config(existing_configs_dict[config.id], body)
             updated_configs.append(SourceConfigResponse.model_validate(existing_configs_dict[config.id]))
+
+            # Handle template references
+            pydantic_config = SourceConfigResponse.model_validate(existing_configs_dict[config.id])
+            template_reference = SourceConfigTemplateReferenceCreate(
+                template_id=template_id,
+                reference_template_id=config.reference_template_id,
+                input_config_name=pydantic_config.name,
+                output_config_name=config.output_config_name,
+            )
+            template_references_to_create.append(template_reference)
+
+        if template_references_to_create:
+            await self.update_template_references(template_references=template_references_to_create)
 
         return updated_configs
 
@@ -365,6 +454,26 @@ class SourceCodeVersionService:
         """
         configs = await self.crud.get_output_by_scv_id(source_code_version_id)
         return [SourceOutputConfigResponse.model_validate(config) for config in configs]
+
+    async def get_output_configs_by_template_id(self, template_id: str | UUID) -> list[SourceOutputConfigResponse]:
+        """
+        Get all output configs for a template.
+        :param template_id: ID of the template
+        :return: List of SourceOutputConfigResponse
+        """
+        configs = await self.crud.get_output_by_template_id(template_id)
+        return [SourceOutputConfigResponse.model_validate(config) for config in configs]
+
+    async def get_template_config_references_by_template_id(
+        self, template_id: str | UUID
+    ) -> list[SourceConfigTemplateReferenceResponse]:
+        """
+        Get all output configs for a template.
+        :param template_id: ID of the template
+        :return: List of SourceConfigTemplateAssociationResponse
+        """
+        references = await self.crud.get_reference_output_configs_by_template_id(template_id)
+        return [SourceConfigTemplateReferenceResponse.model_validate(reference) for reference in references]
 
     async def create_output_configs(self, body: list[SourceOutputConfigCreate]) -> list[SourceOutputConfig]:
         """

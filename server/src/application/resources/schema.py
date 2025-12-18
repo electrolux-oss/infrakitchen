@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
 from application.integrations.schema import IntegrationShort
-from application.source_code_versions.schema import SourceCodeVersionShort, SourceOutputConfigShort
+from application.source_code_versions.schema import SourceCodeVersionShort
 from application.workspaces.schema import WorkspaceShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
@@ -253,7 +253,6 @@ class ResourceVariableSchema(BaseModel):
     restricted: bool = Field(default=False)
     value: Any | None = Field(default=None)
     index: int = Field(default=0)
-    reference: SourceOutputConfigShort | None = Field(default=None)
 
 
 class ResourceTreeResponse(BaseModel):

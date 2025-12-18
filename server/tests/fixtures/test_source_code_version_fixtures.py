@@ -15,10 +15,58 @@ from application.source_code_versions.model import (
 from application.source_code_versions.schema import (
     SourceCodeVersionResponse,
     SourceConfigResponse,
+    SourceConfigUpdate,
     SourceOutputConfigResponse,
 )
 from application.source_code_versions.service import SourceCodeVersionService
 from core.constants import ModelStatus
+
+
+class MockSourceCodeVersionsService:
+    def __init__(self, return_value=None, items=None, actions=None, total=0):
+        self._return_value = return_value
+        self._items = items or []
+        self._total = total
+        self._actions = actions or []
+
+    async def get_by_id(self, source_code_version_id: str):
+        return self._return_value
+
+    async def get_all(self, *args, **kwargs):
+        return self._items
+
+    async def count(self, filter=None):
+        return self._total
+
+    async def create(self, *args, **kwargs):
+        return self._return_value
+
+    async def update(self, *args, **kwargs):
+        return self._return_value
+
+    async def patch(self, *args, **kwargs):
+        return self._return_value
+
+    async def delete(self, *args, **kwargs):
+        pass
+
+    async def get_actions(self, *args, **kwargs):
+        return self._actions
+
+    async def get_configs_by_scv_id(self, source_code_version_id: str):
+        return self._return_value
+
+    async def get_config_by_id(self, config_id: str):
+        return self._return_value
+
+    async def update_config(self, config_id: str, config: SourceConfigUpdate):
+        return self._return_value
+
+    async def update_configs(self, source_code_version_id: str, configs):
+        return self._return_value
+
+    async def get_output_configs_by_scv_id(self, source_code_version_id: str):
+        return self._return_value
 
 
 @pytest.fixture
@@ -198,10 +246,10 @@ def mocked_source_code_versions_response(mocked_user_response, mocked_source_cod
 
 
 @pytest.fixture
-def mocked_source_config():
+def mocked_source_config(source_code_version):
     return SourceConfig(
         id=uuid4(),
-        source_code_version_id=uuid4(),
+        source_code_version_id=source_code_version.id,
         name="source_code_config",
         type="string",
         description="Source Code Config",
@@ -219,10 +267,10 @@ def mocked_source_config():
 
 
 @pytest.fixture
-def mocked_source_config_response():
+def mocked_source_config_response(mocked_source_code_versions_response):
     return SourceConfigResponse(
         id=uuid4(),
-        source_code_version_id=uuid4(),
+        source_code_version_id=mocked_source_code_versions_response.id,
         name="source_code_config",
         type="string",
         description="Source Code Config",

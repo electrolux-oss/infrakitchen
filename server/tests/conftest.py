@@ -62,6 +62,7 @@ from .fixtures.test_source_code_fixtures import (
     mocked_source_code_task,
 )
 from .fixtures.test_source_code_version_fixtures import (
+    MockSourceCodeVersionsService,
     mock_source_code_version_crud,
     mock_source_code_version_service,
     source_code_version_response,
@@ -128,6 +129,7 @@ __all__ = [
     "mocked_source_code",
     "mocked_source_code_task",
     "mock_source_code_version_crud",
+    "MockSourceCodeVersionsService",
     "mock_source_code_version_service",
     "source_code_version_response",
     "source_code_version",

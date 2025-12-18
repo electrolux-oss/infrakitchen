@@ -4,7 +4,7 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import Enum as SQLAlchemyEnum, Index
+from sqlalchemy import Enum as SQLAlchemyEnum, Index, String
 
 from sqlalchemy import UUID, DateTime, ForeignKey, func
 from application.templates.model import Template
@@ -33,13 +33,13 @@ class SourceCodeVersion(BaseRevision):
     description: Mapped[str] = mapped_column(default="")
     variable_configs: Mapped[list["SourceConfig"]] = relationship(
         "SourceConfig",
+        back_populates="source_code_version",
         # lazy="joined",
     )
     output_configs: Mapped[list["SourceOutputConfig"]] = relationship(
         "SourceOutputConfig",
         # lazy="joined",
     )
-
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
 
@@ -81,6 +81,7 @@ class SourceConfig(Base):
     source_code_version_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("source_code_versions.id", ondelete="CASCADE")
     )
+    source_code_version: Mapped[SourceCodeVersion] = relationship("SourceCodeVersion", lazy="joined")
 
     index: Mapped[int] = mapped_column()
     required: Mapped[bool] = mapped_column(default=False)
@@ -93,10 +94,6 @@ class SourceConfig(Base):
     description: Mapped[str] = mapped_column()
     type: Mapped[str] = mapped_column()
     options: Mapped[list[str]] = mapped_column(JSON, default=list)
-    reference_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("source_codes_output_configs.id", ondelete="CASCADE"), nullable=True
-    )
-    reference: Mapped["SourceOutputConfig"] = relationship("SourceOutputConfig", lazy="joined")
 
 
 class SourceOutputConfig(Base):
@@ -113,6 +110,30 @@ class SourceOutputConfig(Base):
     index: Mapped[int] = mapped_column()
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column()
+
+
+class SourceConfigTemplateReference(Base):
+    __tablename__: str = "source_config_template_references"
+
+    template_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("templates.id", ondelete="CASCADE"), primary_key=True
+    )
+    reference_template_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("templates.id", ondelete="CASCADE"), primary_key=True
+    )
+    input_config_name: Mapped[str] = mapped_column(String, primary_key=True)
+    output_config_name: Mapped[str] = mapped_column(String, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
+    __table_args__ = (
+        Index(
+            "ix_template_output_config_name",
+            "template_id",
+            "reference_template_id",
+            "input_config_name",
+            unique=True,
+        ),
+    )
 
 
 class SourceCodeVersionDTO(BaseModel):
@@ -164,7 +185,6 @@ class SourceConfigDTO:
     description: str = Field(...)
     type: str = Field(...)
     options: list[str] = Field(default_factory=list)
-    reference_id: list["SourceConfigDTO"] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -177,4 +197,15 @@ class SourceOutputConfigDTO:
     source_code_version_id: uuid.UUID = Field(...)
     name: str = Field(...)
     description: str = Field(...)
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceConfigTemplateReferenceDTO(BaseModel):
+    template_id: uuid.UUID = Field(...)
+    reference_template_id: uuid.UUID = Field(...)
+    input_config_name: str = Field(...)
+    output_config_name: str = Field(...)
+    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
     model_config = ConfigDict(from_attributes=True)

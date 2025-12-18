@@ -17,6 +17,7 @@ from application.resources.schema import (
 )
 from application.source_code_versions.schema import (
     SourceCodeVersionWithConfigs,
+    SourceConfigTemplateReferenceResponse,
 )
 from core.errors import EntityExistsError
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
@@ -104,15 +105,14 @@ def get_resource_variable_schema(
 
     def set_default_from_parent(
         parent_outputs: list[Outputs],
-        output_name: dict[str, str],
+        template_reference: SourceConfigTemplateReferenceResponse,
         schema: list[ResourceVariableSchema],
     ) -> None:
-        parent_output_value = next((output.value for output in parent_outputs if output_name.get(output.name)), None)
+        parent_output_value = next(
+            (output.value for output in parent_outputs if template_reference.output_config_name == output.name), None
+        )
         for variable in schema:
-            if not variable.reference:
-                continue
-
-            if variable.name == output_name.get(variable.reference.name):
+            if variable.name == template_reference.input_config_name:
                 variable.value = parent_output_value
 
     def set_default_from_parent_dependency_config(
@@ -128,8 +128,7 @@ def get_resource_variable_schema(
 
     schema: list[ResourceVariableSchema] = []
 
-    # UUID is referenced output id, dict[str, str] is a mapping of output name to variable name
-    referenced_variables: dict[UUID, dict[str, str]] = {}
+    scv_template_references = resource_scv.template_refs
     for scv in resource_scv.variable_configs:
         rvs = ResourceVariableSchema(
             name=scv.name,
@@ -142,23 +141,25 @@ def get_resource_variable_schema(
             frozen=scv.frozen,
             type=scv.type,
             options=scv.options,
-            reference=scv.reference,
             index=scv.index,
         )
         schema.append(rvs)
-        if not scv.reference:
-            continue
-        referenced_variables[scv.reference.id] = {scv.reference.name: scv.name}
 
     # set default values from referenced parent resources
     for parent in parents:
         if not parent.source_code_version_id:
             continue
         for parent_scv in parent_scvs:
-            if parent.source_code_version_id == parent_scv.id:
-                for output in parent_scv.output_configs:
-                    if output.id in referenced_variables:
-                        set_default_from_parent(parent.outputs, referenced_variables[output.id], schema)
+            if parent_scv.template.id not in [ref.reference_template_id for ref in scv_template_references]:
+                continue
+
+            for output in parent_scv.output_configs:
+                if output.name in [ref.output_config_name for ref in scv_template_references]:
+                    set_default_from_parent(
+                        parent.outputs,
+                        [ref for ref in scv_template_references if ref.output_config_name == output.name][0],
+                        schema,
+                    )
 
     # set default values from parent dependency configs
     for parent in parents:

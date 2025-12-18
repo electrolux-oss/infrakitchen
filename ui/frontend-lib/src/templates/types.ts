@@ -3,7 +3,7 @@ import { UserShort } from "../users";
 export interface TemplateShort {
   id: string;
   name: string;
-  cloud_resource_types: string[];
+  cloud_resource_types?: string[];
   _entity_name: string;
 }
 

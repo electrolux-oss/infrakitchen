@@ -13,7 +13,6 @@ import {
 } from "@mui/material";
 
 import { OverviewCard } from "../../common/components/OverviewCard";
-import { SourceCodeVersionResponse } from "../types";
 
 import { DefaultValueInput } from "./ConfigInputs";
 import { ConfigReferenceInput } from "./ConfigReferenceInput";
@@ -22,10 +21,8 @@ export const SourceConfigForm = (props: {
   control: Control<any>;
   index: number;
   fieldId: string;
-  source_code_version_id: string;
-  source_code_versions: SourceCodeVersionResponse[];
 }) => {
-  const { control, index, source_code_versions } = props;
+  const { control, index } = props;
 
   const formState = useFormState({ control });
   const configsErrors = formState.errors?.configs as any;
@@ -40,10 +37,6 @@ export const SourceConfigForm = (props: {
   const required = useWatch({ control, name: `configs.${index}.required` });
   const restricted = useWatch({ control, name: `configs.${index}.restricted` });
   const sensitive = useWatch({ control, name: `configs.${index}.sensitive` });
-  const configReference = useWatch({
-    control,
-    name: `configs.${index}.reference`,
-  });
 
   const isDirty = formState.dirtyFields?.configs?.[index];
   const hasChanges = Boolean(isDirty);
@@ -292,17 +285,7 @@ export const SourceConfigForm = (props: {
                     />
                   </Box>
                 </Stack>
-                <Controller
-                  name={`configs.${index}.reference_id`}
-                  control={control}
-                  render={({ field }) => (
-                    <ConfigReferenceInput
-                      field={field}
-                      sourceCodeVersions={source_code_versions}
-                      reference={configReference}
-                    />
-                  )}
-                />
+                <ConfigReferenceInput control={control} index={index} />
               </Stack>
             </Box>
           )}
