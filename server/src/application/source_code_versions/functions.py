@@ -1,5 +1,7 @@
 from typing import Any
 
+from application.source_code_versions.schema import SourceOutputConfigResponse, SourceOutputConfigTemplateResponse
+
 
 def verify_config_type(config: dict[str, Any], expected_type: str) -> None:
     """
@@ -21,3 +23,37 @@ def verify_config_type(config: dict[str, Any], expected_type: str) -> None:
             config["default"] = str(config["default"])
         case _:
             pass
+
+
+def filter_template_outputs(outputs: list[SourceOutputConfigResponse]) -> list[SourceOutputConfigTemplateResponse]:
+    """
+    Filter the output configurations to include only one per unique name.
+
+    Args:
+        outputs (list[SourceOutputConfigResponse]): The list of output configurations.
+    Returns:
+        list[SourceOutputConfigTemplateResponse]: The filtered list of template output configurations.
+    """
+    # TODO: Check for missed outputs in the template and mark them as "deleted"
+    template_outputs_dict: dict[str, tuple[SourceOutputConfigTemplateResponse, int]] = {}
+    for output in outputs:
+        if template_outputs_dict.get(output.name) is None:
+            template_output = SourceOutputConfigTemplateResponse(
+                name=output.name,
+                description=output.description,
+                created_at=output.created_at,
+                updated_at=output.updated_at,
+                status="new",
+            )
+            template_outputs_dict[output.name] = (template_output, 0)
+        else:
+            template_outputs_dict[output.name] = (
+                template_outputs_dict[output.name][0],
+                template_outputs_dict[output.name][1] + 1,
+            )
+
+    for output, count in template_outputs_dict.values():
+        if count >= 1:
+            output.status = "active"
+
+    return [t[0] for t in template_outputs_dict.values()]

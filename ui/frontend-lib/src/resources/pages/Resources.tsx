@@ -31,6 +31,7 @@ export const ResourcesPage = () => {
       .getList("templates", {
         pagination: { page: 1, perPage: 1000 },
         fields: ["id", "name"],
+        sort: { field: "name", order: "ASC" },
       })
       .then((response: any) => {
         const templateNames = response.data.map((t: any) => t.name);

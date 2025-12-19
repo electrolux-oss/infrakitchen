@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Self
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from application.templates.schema import TemplateShort
 from application.source_codes.schema import SourceCodeShort
@@ -213,6 +213,7 @@ class SourceCodeVersionShort(BaseModel):
     source_code_version: str | None = Field(default=None, frozen=True)
     source_code_branch: str | None = Field(default=None, frozen=True)
     source_code_folder: str = Field(default="", frozen=True)
+    template: TemplateShort = Field(...)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -259,7 +260,6 @@ class SourceConfigResponse(BaseModel):
     description: str = Field(...)
     type: str = Field(...)
     options: list[str] = Field(default_factory=list)
-    reference: "SourceOutputConfigShort | None" = Field(default=None)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -294,7 +294,6 @@ class SourceConfigUpdate(BaseModel):
     unique: bool = Field(default=False)
     restricted: bool = Field(default=False)
     options: list[str] = Field(default_factory=list)
-    reference_id: uuid.UUID | None = Field(default=None)
 
 
 class SourceConfigUpdateWithId(BaseModel):
@@ -311,7 +310,9 @@ class SourceConfigUpdateWithId(BaseModel):
     unique: bool = Field(default=False)
     restricted: bool = Field(default=False)
     options: list[str] = Field(default_factory=list)
-    reference_id: uuid.UUID | None = Field(default=None)
+    template_id: uuid.UUID = Field(...)
+    reference_template_id: uuid.UUID | None = Field(default=None)
+    output_config_name: str | None = Field(default=None)
 
 
 class SourceOutputConfigResponse(BaseModel):
@@ -324,6 +325,18 @@ class SourceOutputConfigResponse(BaseModel):
     name: str = Field(...)
     description: str = Field(...)
     model_config = ConfigDict(from_attributes=True)
+
+
+class SourceOutputConfigTemplateResponse(BaseModel):
+    name: str = Field(...)
+    description: str = Field(...)
+    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    status: Literal[
+        "active",
+        "deleted",
+        "new",
+    ] = Field(default="active")
 
 
 class SourceOutputConfigShort(BaseModel):
@@ -351,6 +364,31 @@ class SourceOutputConfigCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SourceConfigTemplateReferenceResponse(BaseModel):
+    id: uuid.UUID = Field(...)
+    template_id: uuid.UUID = Field(...)
+    reference_template_id: uuid.UUID = Field(...)
+    input_config_name: str = Field(...)
+    output_config_name: str = Field(...)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SourceConfigTemplateReferenceCreate(BaseModel):
+    template_id: uuid.UUID = Field(...)
+    reference_template_id: uuid.UUID | None = Field(default=None)
+    input_config_name: str = Field(...)
+    output_config_name: str | None = Field(default=None)
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def validate_templates(self) -> Self:
+        if self.template_id == self.reference_template_id:
+            raise ValueError("template_id and reference_template_id cannot be the same")
+        return self
+
+
 class SourceCodeVersionWithConfigs(SourceCodeVersionResponse):
     """
     Model representing a source code version with its configurations.
@@ -358,3 +396,4 @@ class SourceCodeVersionWithConfigs(SourceCodeVersionResponse):
 
     variable_configs: list[SourceConfigResponse] = Field(default_factory=list)
     output_configs: list[SourceOutputConfigResponse] = Field(default_factory=list)
+    template_refs: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)

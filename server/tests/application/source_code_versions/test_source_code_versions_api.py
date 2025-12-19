@@ -7,55 +7,9 @@ from fastapi.testclient import TestClient
 
 from application.source_code_versions.api import router
 from application.source_code_versions.dependencies import get_source_code_version_service
-from application.source_code_versions.schema import SourceCodeVersionResponse, SourceConfigUpdate
+from application.source_code_versions.schema import SourceCodeVersionResponse
 from core.constants.model import ModelActions
-
-
-class MockSourceCodeVersionsService:
-    def __init__(self, return_value=None, items=None, actions=None, total=0):
-        self._return_value = return_value
-        self._items = items or []
-        self._total = total
-        self._actions = actions or []
-
-    async def get_by_id(self, source_code_version_id: str):
-        return self._return_value
-
-    async def get_all(self, *args, **kwargs):
-        return self._items
-
-    async def count(self, filter=None):
-        return self._total
-
-    async def create(self, *args, **kwargs):
-        return self._return_value
-
-    async def update(self, *args, **kwargs):
-        return self._return_value
-
-    async def patch(self, *args, **kwargs):
-        return self._return_value
-
-    async def delete(self, *args, **kwargs):
-        pass
-
-    async def get_actions(self, *args, **kwargs):
-        return self._actions
-
-    async def get_configs_by_scv_id(self, source_code_version_id: str):
-        return self._return_value
-
-    async def get_config_by_id(self, config_id: str):
-        return self._return_value
-
-    async def update_config(self, config_id: str, config: SourceConfigUpdate):
-        return self._return_value
-
-    async def update_configs(self, source_code_version_id: str, configs):
-        return self._return_value
-
-    async def get_output_configs_by_scv_id(self, source_code_version_id: str):
-        return self._return_value
+from tests.fixtures.test_source_code_version_fixtures import MockSourceCodeVersionsService
 
 
 @pytest.fixture(autouse=True)
@@ -391,6 +345,7 @@ class TestUpdateConfigs:
                 "required": True,
                 "default": "updated_value",
                 "frozen": False,
+                "template_id": str(uuid4()),
             }
         ]
 
@@ -420,11 +375,13 @@ class TestUpdateConfigs:
                 "id": str(mocked_source_config_response.id),
                 "required": True,
                 "default": "first_value",
+                "template_id": str(uuid4()),
             },
             {
                 "id": str(second_config.id),
                 "required": False,
                 "default": "second_value",
+                "template_id": str(uuid4()),
             },
         ]
 
@@ -465,6 +422,7 @@ class TestUpdateConfigs:
             {
                 "id": str(uuid4()),
                 "required": True,
+                "template_id": str(uuid4()),
             }
         ]
 
@@ -482,6 +440,7 @@ class TestUpdateConfigs:
             {
                 "id": str(uuid4()),
                 "required": True,
+                "template_id": str(uuid4()),
             }
         ]
 

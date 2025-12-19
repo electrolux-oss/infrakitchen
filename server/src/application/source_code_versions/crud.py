@@ -13,7 +13,7 @@ from core.users.model import User
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
 from core.utils.model_tools import is_valid_uuid
 
-from .model import SourceCodeVersion, SourceConfig, SourceOutputConfig
+from .model import SourceCodeVersion, SourceConfig, SourceConfigTemplateReference, SourceOutputConfig
 
 
 class SourceCodeVersionCRUD:
@@ -104,6 +104,11 @@ class SourceCodeVersionCRUD:
         statement = (
             select(SourceConfig)
             .where(SourceConfig.source_code_version_id == source_code_version_id)
+            .join(SourceCodeVersion, SourceConfig.source_code_version_id == SourceCodeVersion.id)
+            .outerjoin(
+                SourceConfigTemplateReference,
+                SourceCodeVersion.template_id == SourceConfigTemplateReference.template_id,
+            )
             .order_by(SourceConfig.index.asc())
         )
         result = await self.session.execute(statement)
@@ -126,11 +131,52 @@ class SourceCodeVersionCRUD:
         return existing_source_code_config
 
     async def get_output_by_scv_id(self, source_code_version_id: str | UUID) -> list[SourceOutputConfig]:
+        if not is_valid_uuid(source_code_version_id):
+            raise ValueError(f"Invalid UUID: {source_code_version_id}")
         statement = select(SourceOutputConfig).where(
             SourceOutputConfig.source_code_version_id == source_code_version_id
         )
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())
+
+    # Get config references
+    async def get_output_by_template_id(self, template_id: str | UUID) -> list[SourceOutputConfig]:
+        if not is_valid_uuid(template_id):
+            raise ValueError(f"Invalid UUID: {template_id}")
+        statement = (
+            select(SourceOutputConfig)
+            .join(SourceCodeVersion, SourceOutputConfig.source_code_version_id == SourceCodeVersion.id)
+            .where(SourceCodeVersion.template_id == template_id)
+        ).order_by(SourceCodeVersion.created_at.asc())
+        result = await self.session.execute(statement)
+        return list(result.unique().scalars().all())
+
+    async def get_reference_output_configs_by_template_id(
+        self, template_id: str | UUID
+    ) -> list[SourceConfigTemplateReference]:
+        if not is_valid_uuid(template_id):
+            raise ValueError(f"Invalid UUID: {template_id}")
+        statement = select(SourceConfigTemplateReference).where(
+            SourceConfigTemplateReference.template_id == template_id
+        )
+        result = await self.session.execute(statement)
+        return list(result.unique().scalars().all())
+
+    async def create_template_references(self, body: dict[str, Any]) -> SourceConfigTemplateReference:
+        reference = SourceConfigTemplateReference(**body)
+        self.session.add(reference)
+        await self.session.flush()
+        return reference
+
+    async def update_template_references(
+        self, existing_reference: SourceConfigTemplateReference, body: dict[str, Any]
+    ) -> SourceConfigTemplateReference:
+        for key, value in body.items():
+            setattr(existing_reference, key, value)
+        return existing_reference
+
+    async def delete_template_references(self, reference: SourceConfigTemplateReference) -> None:
+        await self.session.delete(reference)
 
     async def create_output_config(self, body: dict[str, Any]) -> SourceOutputConfig:
         db_source_code_output = SourceOutputConfig(**body)
@@ -160,7 +206,11 @@ class SourceCodeVersionCRUD:
             raise ValueError(f"Invalid UUID: {source_code_version_id}")
 
         statement = (
-            select(SourceCodeVersion)
+            select(SourceCodeVersion, SourceConfigTemplateReference)
+            .outerjoin(
+                SourceConfigTemplateReference,
+                SourceConfigTemplateReference.template_id == SourceCodeVersion.template_id,
+            )
             .where(SourceCodeVersion.id == source_code_version_id)
             .options(
                 joinedload(SourceCodeVersion.template),
@@ -170,4 +220,18 @@ class SourceCodeVersionCRUD:
             )
         )
         result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        rows = result.fetchall()
+        if not rows:
+            return None
+
+        scv = rows[0][0]
+        template_references = []
+        for _, reference in rows:
+            # Since the query should only return one SourceCodeVersion,
+            # we only care about collecting the references.
+            if reference is not None:
+                template_references.append(reference)
+
+        # Attach the list to a new attribute on the retrieved ORM object
+        scv.template_refs = template_references
+        return scv

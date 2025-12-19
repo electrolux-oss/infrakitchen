@@ -1,4 +1,6 @@
 from typing import Any
+from uuid import UUID
+from application.source_code_versions.functions import filter_template_outputs
 from application.source_code_versions.service import SourceCodeVersionService
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
@@ -12,9 +14,11 @@ from .schema import (
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
     SourceConfigResponse,
+    SourceConfigTemplateReferenceResponse,
     SourceConfigUpdate,
     SourceConfigUpdateWithId,
     SourceOutputConfigResponse,
+    SourceOutputConfigTemplateResponse,
 )
 from .dependencies import get_source_code_version_service
 
@@ -253,4 +257,32 @@ async def get_outputs(
     service: SourceCodeVersionService = Depends(get_source_code_version_service),
 ) -> list[SourceOutputConfigResponse]:
     outputs = await service.get_output_configs_by_scv_id(source_code_version_id=source_code_version_id)
+    return outputs
+
+
+@router.get(
+    "/source_code_versions/template/{template_id}/outputs",
+    response_model=list[SourceOutputConfigTemplateResponse],
+    response_description="Get output configs for a template",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_outputs_by_template(
+    template_id: UUID,
+    service: SourceCodeVersionService = Depends(get_source_code_version_service),
+) -> list[SourceOutputConfigTemplateResponse]:
+    outputs = await service.get_output_configs_by_template_id(template_id=template_id)
+    return filter_template_outputs(outputs=outputs)
+
+
+@router.get(
+    "/source_code_versions/template/{template_id}/references",
+    response_model=list[SourceConfigTemplateReferenceResponse],
+    response_description="Get reference output configs for a template",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_reference_outputs_by_template(
+    template_id: UUID,
+    service: SourceCodeVersionService = Depends(get_source_code_version_service),
+) -> list[SourceConfigTemplateReferenceResponse]:
+    outputs = await service.get_template_config_references_by_template_id(template_id=template_id)
     return outputs

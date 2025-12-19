@@ -42,30 +42,15 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
 
   const onSubmit = useCallback(
     (data: any) => {
-      let payload: any = {};
-      if (user_id) {
-        payload = {
-          ...data,
-          role: buffer["permissions/roles"]?.find(
-            (role: IkEntity) => role.id === data.role,
-          )?.v1,
-        };
-      } else if (role_name) {
-        payload = {
-          ...data,
-        };
-      } else {
-        notifyError("Either user_id or role_name must be provided.");
+      if (!data["role"] || !data["user_id"]) {
+        notifyError(new Error("Both Role and User must be selected."));
         return;
       }
       ikApi
-        .postRaw(
-          `permissions/role/${payload["role"]}/${payload["user_id"]}`,
-          payload,
-        )
+        .postRaw(`permissions/role/${data["role"]}/${data["user_id"]}`, {})
         .then((response: { id: string }) => {
           if (response.id) {
-            notify(`Role assigned successfully: ${data.role}`, "success");
+            notify(`Role assigned successfully`, "success");
             onClose?.();
 
             return response;
@@ -75,7 +60,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
           notifyError(error);
         });
     },
-    [ikApi, onClose, buffer, role_name, user_id],
+    [ikApi, onClose],
   );
 
   return (

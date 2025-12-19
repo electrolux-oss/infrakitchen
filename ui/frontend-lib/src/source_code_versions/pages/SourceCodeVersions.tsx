@@ -21,11 +21,27 @@ export const SourceCodeVersionsPage = () => {
   const navigate = useNavigate();
 
   const [labels, setLabels] = useState<string[]>([]);
+  const [templates, setTemplates] = useState<string[]>([]);
 
   useEffect(() => {
     ikApi.get("labels/source_code_version").then((response: string[]) => {
       setLabels(response);
     });
+    // Load templates
+    ikApi
+      .getList("templates", {
+        pagination: { page: 1, perPage: 1000 },
+        fields: ["id", "name"],
+        sort: { field: "name", order: "ASC" },
+        filter: { abstract: false },
+      })
+      .then((response: any) => {
+        const templateNames = response.data.map((t: any) => t.name);
+        setTemplates(templateNames);
+      })
+      .catch((_) => {
+        setTemplates([]);
+      });
   }, [ikApi]);
 
   const columns = useMemo(
@@ -80,6 +96,26 @@ export const SourceCodeVersionsPage = () => {
   const filterConfigs: FilterConfig[] = useMemo(
     () => [
       {
+        id: "source_code_folder",
+        type: "search" as const,
+        label: "Folder Name",
+        width: 420,
+      },
+      {
+        id: "source_code_version",
+        type: "search" as const,
+        label: "Tag",
+        width: 420,
+      },
+      {
+        id: "template",
+        type: "autocomplete" as const,
+        label: "Template",
+        options: templates,
+        multiple: true,
+        width: 420,
+      },
+      {
         id: "labels",
         type: "autocomplete" as const,
         label: "Labels",
@@ -88,7 +124,7 @@ export const SourceCodeVersionsPage = () => {
         width: 420,
       },
     ],
-    [labels],
+    [labels, templates],
   );
 
   // Build API filters
@@ -97,6 +133,28 @@ export const SourceCodeVersionsPage = () => {
 
     if (filterValues.labels && filterValues.labels.length > 0) {
       apiFilters["labels__contains_all"] = filterValues.labels;
+    }
+
+    // search by folder name
+    if (
+      filterValues.source_code_folder &&
+      filterValues.source_code_folder.trim().length > 0
+    ) {
+      apiFilters["source_code_folder__like"] = filterValues.source_code_folder;
+    }
+
+    // search by version tag
+    if (
+      filterValues.source_code_version &&
+      filterValues.source_code_version.trim().length > 0
+    ) {
+      apiFilters["source_code_version__like"] =
+        filterValues.source_code_version;
+    }
+
+    // Handle template filter - map template names to template IDs
+    if (filterValues.template && filterValues.template.length > 0) {
+      apiFilters["template__name__in"] = filterValues.template;
     }
 
     return apiFilters;

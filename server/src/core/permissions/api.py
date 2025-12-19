@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
@@ -12,6 +13,7 @@ from core.permissions.schema import (
 from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
+from core.utils.model_tools import is_valid_uuid
 
 from .service import PermissionService
 from .dependencies import get_permission_service
@@ -172,20 +174,37 @@ async def create_role(request: Request, body: RoleCreate, service: PermissionSer
 
 
 @router.post(
-    "/permissions/role/{role_name}/{user_id}",
+    "/permissions/role/{role_id}/{user_id}",
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
 )
 async def assign_user_to_role(
-    request: Request, role_name: str, user_id: str, service: PermissionService = Depends(get_permission_service)
+    request: Request, role_id: UUID | str, user_id: UUID, service: PermissionService = Depends(get_permission_service)
 ):
+    """
+    Assign a user to a role by role ID or role name.
+    """
     requester: UserDTO = request.state.user
 
     if await user_is_super_admin(requester) is False:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    entity = await service.assign_user_to_role(role_name=role_name, user_id=user_id, requester=requester)
+    if is_valid_uuid(role_id) is True:
+        # get role name from role id
+        role = await service.get_by_id(permission_id=role_id)
+        if not role:
+            raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Role not found")
+        if role.ptype != "g":
+            raise HTTPException(status_code=400, detail="Permission is not a role")
+
+        if not role.v1:
+            raise HTTPException(status_code=400, detail="Role name is missing")
+        role_name = role.v1
+    else:
+        role_name = role_id
+
+    entity = await service.assign_user_to_role(role_name=str(role_name), user_id=user_id, requester=requester)
 
     return entity
 

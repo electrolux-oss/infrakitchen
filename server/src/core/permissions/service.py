@@ -46,7 +46,7 @@ class PermissionService:
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.casbin_enforcer: CasbinEnforcer = casbin_enforcer
 
-    async def get_by_id(self, permission_id: str) -> PermissionResponse | None:
+    async def get_by_id(self, permission_id: str | UUID) -> PermissionResponse | None:
         if not is_valid_uuid(permission_id):
             raise ValueError("Invalid UUID format")
 

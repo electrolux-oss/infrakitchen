@@ -13,6 +13,7 @@ export interface SourceCodeVersionShort {
   source_code_version: string;
   source_code_branch: string;
   source_code_folder: string;
+  template: TemplateShort;
   _entity_name: string;
 }
 
@@ -89,7 +90,6 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
-  reference: SourceOutputConfigShort | null;
 }
 
 export interface SourceConfigUpdate extends Record<string, any> {
@@ -99,11 +99,12 @@ export interface SourceConfigUpdate extends Record<string, any> {
   unique: boolean;
   restricted: boolean;
   options: string[];
-  reference_id: string | null;
 }
 
 export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   id: string;
+  template_id: string;
+  reference_template_id: string | null;
 }
 
 export interface SourceOutputConfigResponse extends Record<string, any> {
@@ -112,4 +113,20 @@ export interface SourceOutputConfigResponse extends Record<string, any> {
   name: string;
   description: string;
   source_code_version_id: string;
+}
+
+export interface SourceOutputConfigTemplateResponse {
+  name: string;
+  description: string;
+  created_at: Date;
+  updated_at: Date;
+  status: string;
+}
+
+export interface SourceConfigTemplateReferenceResponse {
+  id: string;
+  template_id: string;
+  reference_template_id: string;
+  input_config_name: string;
+  output_config_name: string;
 }

@@ -1,6 +1,11 @@
-import { useState, useCallback, useEffect, SyntheticEvent } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-import { useForm, useFieldArray } from "react-hook-form";
+import {
+  useForm,
+  useFieldArray,
+  FormProvider,
+  useFormContext,
+} from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
@@ -11,48 +16,24 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ENTITY_STATUS } from "../../utils";
 import { ConfigList } from "../components/ConfigList";
-import { ReferenceSelector } from "../components/ReferenceSelector";
-import { useSourceCodeVersionConfig } from "../hooks/useSourceCodeVersionConfig";
 import {
-  SourceConfigUpdateWithId,
-  SourceCodeVersionResponse,
-  SourceConfigUpdate,
-} from "../types";
+  SourceCodeVersionConfigProvider,
+  useSourceCodeVersionConfigContext,
+} from "../context/SourceCodeVersionConfigContext";
+import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
 
 interface FormValues {
-  configs: Array<
-    SourceConfigUpdate & {
-      id: string;
-      name: string;
-      type: string;
-      description: string;
-    }
-  >;
+  configs: SourceConfigUpdateWithId[];
 }
 
-const SourceCodeVersionConfigContent = (props: {
-  entity: SourceCodeVersionResponse;
-}) => {
-  const { entity } = props;
+const SourceCodeVersionConfigContent = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const {
-    references,
-    selectedReferenceId,
-    sourceConfigs,
-    sourceCodeVersions,
-    handleReferenceChange,
-  } = useSourceCodeVersionConfig({ ikApi, entity });
+  const { sourceConfigs, templateReferences, sourceCodeVersion } =
+    useSourceCodeVersionConfigContext();
 
-  const [hasSelectedReference, setHasSelectedReference] = useState(false);
-
-  const { control, handleSubmit, reset, formState } = useForm<FormValues>({
-    mode: "onChange",
-    defaultValues: {
-      configs: [],
-    },
-  });
+  const { control, handleSubmit, reset } = useFormContext<FormValues>();
 
   const { fields } = useFieldArray({
     control,
@@ -73,27 +54,19 @@ const SourceCodeVersionConfigContent = (props: {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
-        reference_id: config.reference ? config.reference.id : null,
-        reference: config.reference,
+        reference_template_id:
+          templateReferences.find((tr) => tr.input_config_name === config.name)
+            ?.reference_template_id || null,
+        output_config_name:
+          templateReferences.find((tr) => tr.input_config_name === config.name)
+            ?.output_config_name || null,
       }));
       reset({ configs: formattedConfigs });
     }
-  }, [sourceConfigs, reset]);
+  }, [sourceConfigs, templateReferences, reset]);
 
   const handleBack = () =>
-    navigate(`${linkPrefix}source_code_versions/${entity.id}`);
-
-  const handleReferenceChangeEvent = (
-    _event: SyntheticEvent,
-    newValue: SourceCodeVersionResponse | null,
-  ) => {
-    const newReferenceId = newValue ? newValue.id : "";
-    handleReferenceChange(newReferenceId);
-    // Mark that a reference has been selected
-    if (newReferenceId) {
-      setHasSelectedReference(true);
-    }
-  };
+    navigate(`${linkPrefix}source_code_versions/${sourceCodeVersion.id}`);
 
   const onSubmit = useCallback(
     async (data: FormValues) => {
@@ -105,35 +78,32 @@ const SourceCodeVersionConfigContent = (props: {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
-        reference_id: config.reference ? config.reference.id : null,
+        reference_template_id:
+          templateReferences.find((tr) => tr.input_config_name === config.name)
+            ?.reference_template_id || null,
+        output_config_name:
+          templateReferences.find((tr) => tr.input_config_name === config.name)
+            ?.output_config_name || null,
       }));
 
-      // When a reference is selected, we want to save all configs even if not manually changed
-      // Otherwise, only save changed configs
-      let configsToSubmit: typeof data.configs;
+      // Filter only changed configs
+      const configsToSubmit = data.configs.filter((formConfig, index) => {
+        const original = originalConfigs[index];
+        if (!original) return true; // New config from reference
 
-      if (hasSelectedReference && !formState.isDirty) {
-        // Reference selected but no manual changes - submit all configs
-        configsToSubmit = data.configs;
-      } else {
-        // Filter only changed configs
-        configsToSubmit = data.configs.filter((formConfig, index) => {
-          const original = originalConfigs[index];
-          if (!original) return true; // New config from reference
-
-          return (
-            formConfig.required !== original.required ||
-            JSON.stringify(formConfig.default) !==
-              JSON.stringify(original.default) ||
-            formConfig.frozen !== original.frozen ||
-            formConfig.unique !== original.unique ||
-            formConfig.restricted !== original.restricted ||
-            JSON.stringify(formConfig.options) !==
-              JSON.stringify(original.options) ||
-            formConfig.reference_id !== original.reference_id
-          );
-        });
-      }
+        return (
+          formConfig.required !== original.required ||
+          JSON.stringify(formConfig.default) !==
+            JSON.stringify(original.default) ||
+          formConfig.frozen !== original.frozen ||
+          formConfig.unique !== original.unique ||
+          formConfig.restricted !== original.restricted ||
+          JSON.stringify(formConfig.options) !==
+            JSON.stringify(original.options) ||
+          formConfig.reference_template_id !== original.reference_template_id ||
+          formConfig.output_config_name !== original.output_config_name
+        );
+      });
 
       if (configsToSubmit.length === 0) {
         notify("No changes to save", "info");
@@ -150,36 +120,41 @@ const SourceCodeVersionConfigContent = (props: {
             unique: config.unique,
             restricted: config.restricted,
             options: config.options,
-            reference_id: config.reference_id,
+            template_id: sourceCodeVersion.template.id,
+            reference_template_id: config.reference_template_id,
+            output_config_name: config.output_config_name,
           }),
         );
 
         await ikApi.updateRaw(
-          `source_code_versions/${entity.id}/configs`,
+          `source_code_versions/${sourceCodeVersion.id}/configs`,
           changesArray,
         );
 
         notify("Configurations updated successfully", "success");
 
-        navigate(`${linkPrefix}source_code_versions/${entity.id}`);
+        navigate(`${linkPrefix}source_code_versions/${sourceCodeVersion.id}`);
       } catch (error: any) {
         notifyError(error);
       }
     },
     [
-      entity.id,
+      sourceCodeVersion.id,
       ikApi,
       navigate,
       linkPrefix,
       sourceConfigs,
-      hasSelectedReference,
-      formState.isDirty,
+      templateReferences,
+      sourceCodeVersion.template.id,
     ],
   );
 
   return (
     <PageContainer
-      title={entity.identifier || "Manage Source Code Version Configurations"}
+      title={
+        sourceCodeVersion.identifier ||
+        "Manage Source Code Version Configurations"
+      }
       onBack={handleBack}
       backAriaLabel="Back to source code version"
       bottomActions={
@@ -187,13 +162,12 @@ const SourceCodeVersionConfigContent = (props: {
           <Button variant="outlined" color="primary" onClick={handleBack}>
             Cancel
           </Button>
-          {entity.status === ENTITY_STATUS.DONE &&
-            entity.variables.length > 0 && (
+          {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+            sourceCodeVersion.variables.length > 0 && (
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleSubmit(onSubmit)}
-                disabled={!formState.isDirty && !hasSelectedReference}
               >
                 Update
               </Button>
@@ -209,9 +183,9 @@ const SourceCodeVersionConfigContent = (props: {
           width: "100%",
         }}
       >
-        {entity && (
+        {sourceCodeVersion && (
           <>
-            {entity.status !== ENTITY_STATUS.DONE && (
+            {sourceCodeVersion.status !== ENTITY_STATUS.DONE && (
               <Alert
                 severity="warning"
                 sx={{
@@ -226,8 +200,8 @@ const SourceCodeVersionConfigContent = (props: {
                 is in the &quot;done&quot; state.
               </Alert>
             )}
-            {entity.status === ENTITY_STATUS.DONE &&
-              entity.variables.length === 0 && (
+            {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+              sourceCodeVersion.variables.length === 0 && (
                 <Alert
                   severity="info"
                   sx={{
@@ -244,23 +218,9 @@ const SourceCodeVersionConfigContent = (props: {
           </>
         )}
 
-        {entity.status === ENTITY_STATUS.DONE &&
-          entity.variables.length > 0 && (
-            <>
-              <ReferenceSelector
-                references={references.filter((ref) => ref.id !== entity.id)}
-                selectedReferenceId={selectedReferenceId}
-                onReferenceChange={handleReferenceChangeEvent}
-              />
-
-              <ConfigList
-                control={control}
-                fields={fields}
-                entityId={entity.id}
-                sourceCodeVersions={sourceCodeVersions}
-                selectedReferenceId={selectedReferenceId}
-              />
-            </>
+        {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+          sourceCodeVersion.variables.length > 0 && (
+            <ConfigList control={control} fields={fields} />
           )}
       </Box>
     </PageContainer>
@@ -286,6 +246,12 @@ export const SourceCodeVersionConfigPage = () => {
   useEffectOnce(() => {
     getSourceCodeVersion();
   });
+  const methods = useForm<FormValues>({
+    mode: "onChange",
+    defaultValues: {
+      configs: [],
+    },
+  });
 
   return (
     <>
@@ -303,7 +269,16 @@ export const SourceCodeVersionConfigPage = () => {
           {error.message}
         </Alert>
       )}
-      {entity && <SourceCodeVersionConfigContent entity={entity} />}
+      {entity && (
+        <SourceCodeVersionConfigProvider
+          ikApi={ikApi}
+          sourceCodeVersion={entity}
+        >
+          <FormProvider {...methods}>
+            <SourceCodeVersionConfigContent />
+          </FormProvider>
+        </SourceCodeVersionConfigProvider>
+      )}
     </>
   );
 };
