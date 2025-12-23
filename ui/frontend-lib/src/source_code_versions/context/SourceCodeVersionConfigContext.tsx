@@ -20,11 +20,14 @@ import {
 } from "../types";
 
 interface SourceCodeVersionConfigContextType {
+  references: SourceCodeVersionResponse[];
+  selectedReferenceId: string;
   sourceCodeVersion: SourceCodeVersionResponse;
   sourceConfigs: SourceConfigResponse[];
   templates: TemplateShort[];
   templateReferences: SourceConfigTemplateReferenceResponse[];
   refetchConfigs: () => void;
+  handleReferenceChange: (newReferenceId: string) => void;
   isLoading: boolean;
 }
 
@@ -65,6 +68,8 @@ export const SourceCodeVersionConfigProvider = ({
   ikApi,
   sourceCodeVersion,
 }: SourceCodeVersionConfigProviderProps) => {
+  const [references, setReferences] = useState<SourceCodeVersionResponse[]>([]);
+  const [selectedReferenceId, setSelectedReferenceId] = useState<string>("");
   const [templates, setTemplates] = useState<TemplateShort[]>([]);
   const [tree, setTree] = useState<TreeResponse>();
   const [templateReferences, setTemplateReferences] = useState<
@@ -119,14 +124,104 @@ export const SourceCodeVersionConfigProvider = ({
     }
   }, [ikApi, sourceCodeVersion.template.id]);
 
+  const updateConfigsValuesWithReference = useCallback(
+    (
+      existingConfigs: SourceConfigResponse[],
+      referenced_configs: SourceConfigResponse[],
+    ) => {
+      const updatedConfigs: SourceConfigResponse[] = existingConfigs.map(
+        (existingConfig) => {
+          const matchingRefConfig = referenced_configs.find(
+            (c) => c.name === existingConfig.name,
+          );
+
+          if (matchingRefConfig) {
+            return {
+              ...existingConfig,
+              default: matchingRefConfig.default,
+              required: matchingRefConfig.required,
+              frozen: matchingRefConfig.frozen,
+              unique: matchingRefConfig.unique,
+              options: matchingRefConfig.options,
+            };
+          }
+          return existingConfig;
+        },
+      );
+
+      return updatedConfigs;
+    },
+    [],
+  );
+
+  const fetchReferenceSourceConfigs = useCallback(
+    (scv_id: string) => {
+      ikApi
+        .get(`source_code_versions/${scv_id}/configs`)
+        .then((response: SourceConfigResponse[]) => {
+          if (response.length > 0) {
+            setSourceConfigs((currentSourceConfigs) => {
+              return updateConfigsValuesWithReference(
+                currentSourceConfigs,
+                response,
+              );
+            });
+          } else {
+            notify(
+              "No source code configs found for the selected reference",
+              "info",
+            );
+          }
+        })
+        .catch((error: Error) => {
+          notifyError(error);
+        });
+    },
+    [ikApi, updateConfigsValuesWithReference],
+  );
+
+  const fetchReferences = useCallback(() => {
+    ikApi
+      .getList("source_code_versions", {
+        pagination: { page: 1, perPage: 1000 },
+        sort: { field: "source_code_folder", order: "ASC" },
+        filter: { template_id: sourceCodeVersion.template.id },
+        fields: [
+          "id",
+          "identifier",
+          "template",
+          "source_code",
+          "status",
+          "created_at",
+        ],
+      })
+      .then((response: { data: SourceCodeVersionResponse[] }) => {
+        setReferences(
+          response.data.filter((ref) => ref.id !== sourceCodeVersion.id),
+        );
+      })
+      .catch((error: Error) => {
+        notifyError(error);
+      });
+  }, [ikApi, sourceCodeVersion.id, sourceCodeVersion.template.id]);
+
+  useEffect(() => {
+    if (selectedReferenceId) {
+      fetchReferenceSourceConfigs(selectedReferenceId);
+    }
+  }, [selectedReferenceId, fetchReferenceSourceConfigs]);
+
   useEffect(() => {
     if (tree) {
       const flattenedTemplates = flattenTemplates(tree);
+      const uniqueTemplates = Array.from(
+        new Map(flattenedTemplates.map((t) => [t.id, t])).values(),
+      );
+
       setTemplates(
-        flattenedTemplates
-          .sort((a, b) => a.name.localeCompare(b.name))
-          // Exclude the current template to prevent self-reference
-          .filter((t) => t.id !== sourceCodeVersion.template.id),
+        uniqueTemplates
+          .filter((t) => t.id !== sourceCodeVersion.template.id)
+          .sort((a, b) => a.name.localeCompare(b.name)),
       );
     }
   }, [tree, sourceCodeVersion.template.id]);
@@ -136,15 +231,23 @@ export const SourceCodeVersionConfigProvider = ({
       fetchSourceConfigs(),
       fetchParentTemplates(),
       fetchTemplateReferences(),
+      fetchReferences(),
     ]).finally(() => setIsLoading(false));
   });
 
+  const handleReferenceChange = useCallback((newReferenceId: string) => {
+    setSelectedReferenceId(newReferenceId);
+  }, []);
+
   const value: SourceCodeVersionConfigContextType = {
+    references,
+    selectedReferenceId,
     sourceCodeVersion,
     sourceConfigs,
     templates,
     templateReferences,
     refetchConfigs: fetchSourceConfigs,
+    handleReferenceChange,
     isLoading,
   };
 

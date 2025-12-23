@@ -16,6 +16,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ENTITY_STATUS } from "../../utils";
 import { ConfigList } from "../components/ConfigList";
+import { ReferenceSelector } from "../components/ReferenceSelector";
 import {
   SourceCodeVersionConfigProvider,
   useSourceCodeVersionConfigContext,
@@ -30,8 +31,12 @@ const SourceCodeVersionConfigContent = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const { sourceConfigs, templateReferences, sourceCodeVersion } =
-    useSourceCodeVersionConfigContext();
+  const {
+    sourceConfigs,
+    templateReferences,
+    sourceCodeVersion,
+    selectedReferenceId,
+  } = useSourceCodeVersionConfigContext();
 
   const { control, handleSubmit, reset } = useFormContext<FormValues>();
 
@@ -86,24 +91,33 @@ const SourceCodeVersionConfigContent = () => {
             ?.output_config_name || null,
       }));
 
+      // When a reference is selected, we want to save all configs even if not manually changed
+      // Otherwise, only save changed configs
+      let configsToSubmit: typeof data.configs;
       // Filter only changed configs
-      const configsToSubmit = data.configs.filter((formConfig, index) => {
-        const original = originalConfigs[index];
-        if (!original) return true; // New config from reference
+      if (selectedReferenceId) {
+        // Reference selected but no manual changes - submit all configs
+        configsToSubmit = data.configs;
+      } else {
+        configsToSubmit = data.configs.filter((formConfig, index) => {
+          const original = originalConfigs[index];
+          if (!original) return true; // New config from reference
 
-        return (
-          formConfig.required !== original.required ||
-          JSON.stringify(formConfig.default) !==
-            JSON.stringify(original.default) ||
-          formConfig.frozen !== original.frozen ||
-          formConfig.unique !== original.unique ||
-          formConfig.restricted !== original.restricted ||
-          JSON.stringify(formConfig.options) !==
-            JSON.stringify(original.options) ||
-          formConfig.reference_template_id !== original.reference_template_id ||
-          formConfig.output_config_name !== original.output_config_name
-        );
-      });
+          return (
+            formConfig.required !== original.required ||
+            JSON.stringify(formConfig.default) !==
+              JSON.stringify(original.default) ||
+            formConfig.frozen !== original.frozen ||
+            formConfig.unique !== original.unique ||
+            formConfig.restricted !== original.restricted ||
+            JSON.stringify(formConfig.options) !==
+              JSON.stringify(original.options) ||
+            formConfig.reference_template_id !==
+              original.reference_template_id ||
+            formConfig.output_config_name !== original.output_config_name
+          );
+        });
+      }
 
       if (configsToSubmit.length === 0) {
         notify("No changes to save", "info");
@@ -141,6 +155,7 @@ const SourceCodeVersionConfigContent = () => {
     [
       sourceCodeVersion.id,
       ikApi,
+      selectedReferenceId,
       navigate,
       linkPrefix,
       sourceConfigs,
@@ -220,7 +235,10 @@ const SourceCodeVersionConfigContent = () => {
 
         {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
           sourceCodeVersion.variables.length > 0 && (
-            <ConfigList control={control} fields={fields} />
+            <>
+              <ReferenceSelector />
+              <ConfigList control={control} fields={fields} />
+            </>
           )}
       </Box>
     </PageContainer>
