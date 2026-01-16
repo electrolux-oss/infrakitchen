@@ -112,7 +112,7 @@ def get_resource_variable_schema(
             (output.value for output in parent_outputs if template_reference.output_config_name == output.name), None
         )
         for variable in schema:
-            if variable.name == template_reference.input_config_name:
+            if variable.name == template_reference.input_config_name and parent_output_value is not None:
                 variable.value = parent_output_value
 
     def set_default_from_parent_dependency_config(
