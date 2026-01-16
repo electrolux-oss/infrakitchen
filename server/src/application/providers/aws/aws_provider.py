@@ -53,6 +53,7 @@ class AwsAuthentication:
         self.aws_account: str | None = configuration.aws_account
         self.aws_access_key_id: str | None = configuration.aws_access_key_id
         self.aws_secret_access_key: EncryptedSecretStr = configuration.aws_secret_access_key
+        self.aws_session_duration: int = configuration.aws_session_duration or 3600
         self.environment_variables: dict[str, str | Any] = kwargs.get("environment_variables", {})
         if not (self.aws_access_key_id and self.aws_secret_access_key and self.aws_account):
             raise CloudWrongCredentials("Some AWS configs are missed")
@@ -81,6 +82,7 @@ class AwsAuthentication:
                     # pyright: ignore[reportGeneralTypeIssues]
                     RoleArn=f"arn:aws:iam::{self.aws_account}:role/{self.aws_assumed_role_name}",
                     RoleSessionName="InfraKitchenSession",
+                    DurationSeconds=self.aws_session_duration,
                 )
 
                 credentials: dict[str, str] = assumed_role_object["Credentials"]
