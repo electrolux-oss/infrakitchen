@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 
 logging.getLogger("aiormq").setLevel(logging.WARNING)
 logging.getLogger("aio_pika").setLevel(logging.WARNING)
+logging.getLogger("aio_pika.queue").setLevel(logging.ERROR)
 
 
 @asynccontextmanager
