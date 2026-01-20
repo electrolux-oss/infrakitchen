@@ -119,6 +119,26 @@ export const renderFieldsForProvider = (
               />
             )}
           />
+          <Controller
+            name="configuration.aws_session_duration"
+            control={control}
+            defaultValue="3600"
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Session Duration (seconds)"
+                placeholder="3600"
+                type="number"
+                fullWidth
+                margin="normal"
+                error={
+                  !!(errors.configuration as FieldErrors)?.aws_session_duration
+                }
+                helperText="Duration for the assumed role session in seconds"
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
           {isCreateMode && (
             <Controller
               name="create_storage"

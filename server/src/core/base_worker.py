@@ -69,28 +69,26 @@ class BaseMessagesWorker:
         await message.message_original.reject(requeue=False)
 
     async def process_message(self, message: MessageHandler) -> None:
-        assert self.worker.id is not None
-        # self.logger.debug(f"Processing message raw: {message}")
         MessageModel.load_from_bytes(message.raw_body)
-        # self.logger.debug(f"Processing message: {msg}")
-        if self.commit_worker_status:
-            await self.worker_service.change_worker_status(self.worker.id, "free")
 
     async def on_message(self, msg: AbstractIncomingMessage):
-        assert self.worker.id is not None
+        if self.worker.id is None:
+            raise ValueError("Worker ID is not set. Make sure to register the worker before processing messages.")
+
         async with msg.process(ignore_processed=True):
             async with self.lock:
                 if self.commit_worker_status:
                     await self.worker_service.change_worker_status(self.worker.id, "busy")
+                    self.worker.status = "busy"
                 message = MessageHandler(msg)
                 try:
                     await self.process_message(message)
-                    if self.commit_worker_status:
-                        await self.worker_service.change_worker_status(self.worker.id, "free")
                 except Exception as e:
+                    logger.error(f"Task failed: {e}")
+                finally:
                     if self.commit_worker_status:
                         await self.worker_service.change_worker_status(self.worker.id, "free")
-                    logger.error(f"Task failed: {e}")
+                        self.worker.status = "free"
 
     async def start(self, rabbitmq_connection, routing_key="broadcast") -> None:
         self.logger.info(f"Perform {self.name} worker connection")
@@ -98,6 +96,9 @@ class BaseMessagesWorker:
         async with rabbitmq_connection as connection:
             # Creating a channel
             channel: AbstractChannel = await connection.get_channel()
+
+            # Setting prefetch count to 1 to process one message at a time
+            await channel.set_qos(prefetch_count=1)
 
             worker = self
 
