@@ -70,7 +70,11 @@ export default function PageContainer(props: PageContainerProps) {
                   </IconButton>
                 </Tooltip>
               ) : null}
-              {title ? <Typography variant="h1">{title}</Typography> : null}
+              {title ? (
+                <Typography variant="h4" component="h1">
+                  {title}
+                </Typography>
+              ) : null}
             </Box>
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
           </PageContentHeader>
