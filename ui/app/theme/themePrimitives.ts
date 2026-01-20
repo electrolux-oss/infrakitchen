@@ -220,30 +220,31 @@ export const typography = {
   fontFamily:
     '-apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
   h1: {
-    fontSize: defaultTheme.typography.pxToRem(28),
+    fontSize: defaultTheme.typography.pxToRem(36),
     fontWeight: 600,
     lineHeight: 1.2,
   },
   h2: {
-    fontSize: defaultTheme.typography.pxToRem(24),
+    fontSize: defaultTheme.typography.pxToRem(32),
     fontWeight: 600,
     lineHeight: 1.2,
   },
   h3: {
-    fontSize: defaultTheme.typography.pxToRem(22),
+    fontSize: defaultTheme.typography.pxToRem(30),
+    fontWeight: 600,
     lineHeight: 1.2,
   },
   h4: {
-    fontSize: defaultTheme.typography.pxToRem(20),
+    fontSize: defaultTheme.typography.pxToRem(28),
     fontWeight: 600,
     lineHeight: 1.5,
   },
   h5: {
-    fontSize: defaultTheme.typography.pxToRem(18),
+    fontSize: defaultTheme.typography.pxToRem(24),
     fontWeight: 600,
   },
   h6: {
-    fontSize: defaultTheme.typography.pxToRem(16),
+    fontSize: defaultTheme.typography.pxToRem(20),
     fontWeight: 500,
   },
   subtitle1: {

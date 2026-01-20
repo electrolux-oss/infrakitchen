@@ -50,7 +50,9 @@ const ProviderSection = (
         }}
       >
         <Box>
-          <Typography variant="h2">{title}</Typography>
+          <Typography variant="h5" component="h2">
+            {title}
+          </Typography>
           <Typography variant="body1" color="text.secondary">
             {subtitle}
           </Typography>
