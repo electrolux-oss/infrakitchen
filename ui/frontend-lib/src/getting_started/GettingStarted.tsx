@@ -44,7 +44,7 @@ const GettingStartedPage = () => {
 
   return (
     <Box sx={{ p: 6, maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h1" fontWeight={600} color="primary" gutterBottom>
+      <Typography variant="h4" component="h1" color="primary" gutterBottom>
         Welcome to InfraKitchen
       </Typography>
       <Typography variant="body1" color="text.secondary" mb={6}>
@@ -54,7 +54,7 @@ const GettingStartedPage = () => {
 
       <Stack direction="row" alignItems="center" gap={2} mb={3}>
         <Icon icon="emojione:shopping-cart" width="24" height="24" />
-        <Typography variant="h2" color="primary">
+        <Typography variant="h5" component="h2" color="primary">
           Getting Started
         </Typography>
       </Stack>
