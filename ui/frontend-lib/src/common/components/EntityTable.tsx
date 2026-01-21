@@ -13,6 +13,7 @@ import {
   GridSortModel,
   GridPaginationModel,
   GridColDef,
+  GridColumnVisibilityModel,
   useGridApiRef,
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
@@ -26,9 +27,13 @@ export interface ResourceTableProps {
   paginationModel?: GridPaginationModel;
   sortModel?: GridSortModel;
   filterModel?: GridFilterModel;
+  columnVisibilityModel?: GridColumnVisibilityModel;
   handleSortModelChange?: (model: GridSortModel) => void;
   handlePaginationModelChange?: (model: GridPaginationModel) => void;
   setFilterModel?: (model: GridFilterModel) => void;
+  handleColumnVisibilityModelChange?: (
+    model: GridColumnVisibilityModel,
+  ) => void;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -44,9 +49,11 @@ export const EntityTable = ({
   paginationModel,
   sortModel,
   filterModel,
+  columnVisibilityModel,
   handleSortModelChange,
   handlePaginationModelChange,
   setFilterModel,
+  handleColumnVisibilityModelChange,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
   const handleColumnVisibilityClick = () => {
@@ -99,6 +106,8 @@ export const EntityTable = ({
               pageSizeOptions={[10, 25, 50, 100]}
               filterModel={filterModel}
               onFilterModelChange={setFilterModel}
+              columnVisibilityModel={columnVisibilityModel}
+              onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
               sx={{
                 "& .MuiDataGrid-columnHeader": {
                   "& .MuiDataGrid-columnHeaderTitleContainer": {
