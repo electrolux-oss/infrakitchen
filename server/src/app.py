@@ -6,6 +6,7 @@ import time
 import json
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
+from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import JSONResponse
 
@@ -61,7 +62,8 @@ async def lifespan(app: FastAPI):
 
     await init_app()
     await CasbinEnforcer().init_enforcer()
-    yield
+    async with mcp_http_app.router.lifespan_context(mcp_http_app):
+        yield
     await websocket_manager.close_all_connections()
 
 
@@ -72,6 +74,7 @@ app = FastAPI(
 )
 
 setup_service_environment()
+mcp_http_app = setup_mcp_server(app)
 
 
 @app.middleware("http")
