@@ -55,6 +55,7 @@ export const TasksPage = () => {
         field: "entity",
         headerName: "Entity",
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <Link

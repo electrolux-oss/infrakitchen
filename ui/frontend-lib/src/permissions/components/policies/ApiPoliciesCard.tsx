@@ -36,6 +36,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         headerName: "Entity Name",
         flex: 1,
         sortable: false,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           if (!params.row.resource_id) {
             // API type policy

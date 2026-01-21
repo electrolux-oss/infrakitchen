@@ -1,11 +1,21 @@
-import { Box, CardContent, CardHeader, Card } from "@mui/material";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
+import {
+  Box,
+  CardContent,
+  CardHeader,
+  Card,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import {
   DataGrid,
   GridFilterModel,
   GridSortModel,
   GridPaginationModel,
   GridColDef,
+  useGridApiRef,
 } from "@mui/x-data-grid";
+import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
 export interface ResourceTableProps {
   entityName: string;
@@ -21,6 +31,10 @@ export interface ResourceTableProps {
   setFilterModel?: (model: GridFilterModel) => void;
 }
 
+type GridPreferencePanelValue = Parameters<
+  NonNullable<GridApiCommunity["showPreferences"]>
+>[0];
+
 export const EntityTable = ({
   entityName,
   entities,
@@ -34,6 +48,11 @@ export const EntityTable = ({
   handlePaginationModelChange,
   setFilterModel,
 }: ResourceTableProps) => {
+  const apiRef = useGridApiRef();
+  const handleColumnVisibilityClick = () => {
+    apiRef.current?.showPreferences?.("columns" as GridPreferencePanelValue);
+  };
+
   return (
     <Box
       sx={{
@@ -45,10 +64,25 @@ export const EntityTable = ({
         <CardHeader
           title={`${entityName} (${entities.length})`}
           sx={{ pb: 2 }}
+          action={
+            <Tooltip title="Show or hide columns">
+              <span>
+                <IconButton
+                  size="small"
+                  aria-label="Toggle column visibility"
+                  onClick={handleColumnVisibilityClick}
+                  disabled={!apiRef.current}
+                >
+                  <ViewColumnIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          }
         />
         <CardContent>
           <Box sx={{ width: "100%", overflowX: "auto" }}>
             <DataGrid
+              apiRef={apiRef}
               rows={entities}
               rowCount={totalRows}
               paginationMode="server"

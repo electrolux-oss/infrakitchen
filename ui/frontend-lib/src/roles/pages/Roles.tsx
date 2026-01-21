@@ -46,6 +46,7 @@ export const RolesPage = () => {
         headerName: "Role Name",
         sortable: false,
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink

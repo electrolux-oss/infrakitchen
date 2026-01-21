@@ -34,6 +34,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         field: "identifier",
         headerName: "Identifier",
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink

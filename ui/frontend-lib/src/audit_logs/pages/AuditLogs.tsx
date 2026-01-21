@@ -75,6 +75,7 @@ export const AuditLogsPage = () => {
         headerName: "Entity",
         flex: 1,
         sortable: true,
+        hideable: false,
         valueGetter: (value: string) => value,
         renderCell: (params: GridRenderCellParams) => {
           return (

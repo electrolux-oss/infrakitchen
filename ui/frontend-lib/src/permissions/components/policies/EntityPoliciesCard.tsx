@@ -52,6 +52,7 @@ export const EntityPoliciesCard = (props: {
         headerName: "Role/User Name",
         flex: 1,
         sortable: false,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           if (params.row.v0.startsWith("user:")) {
             return (
