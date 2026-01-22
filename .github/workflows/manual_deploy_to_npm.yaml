@@ -1,0 +1,52 @@
+name: Build and Deploy Packages to NPM manually
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish-to-npm:
+    runs-on: ubuntu-latest
+
+    steps:
+      #############################################################################
+      # common steps
+      #############################################################################
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: use node.js 20.x
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: "20.x"
+          registry-url: https://registry.npmjs.org/ # Needed for auth
+
+      - name: Run ESLint
+        run: ./scripts/check_typescript.sh
+
+      #############################################################################
+      # publish a library to npm
+      #############################################################################
+      - name: Setup version based on branch
+        working-directory: ./ui/frontend-lib
+        run: |
+          VERSION=$(npm pkg get version --workspaces=false | tr -d \")
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            npm pkg set version=$VERSION
+          else
+            npm pkg set version=$VERSION-$(date +%F%T | tr -d '\-:')-$(echo ${{ github.sha }} | cut -c 1-7)
+          fi
+
+      #############################################################################
+      # publish a release to npm
+      #############################################################################
+      - name: publish package
+        working-directory: ./ui/frontend-lib
+        run: |
+          yarn install --immutable
+          yarn build
+          yarn config set -H 'npmAuthToken' "${{secrets.NPM_TOKEN}}"
+          yarn npm publish --access public --tolerate-republish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
