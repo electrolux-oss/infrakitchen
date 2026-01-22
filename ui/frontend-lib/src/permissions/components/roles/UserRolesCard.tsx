@@ -33,6 +33,7 @@ export const UserRolesCard = (props: { user_id: string }) => {
         field: "v1",
         headerName: "Role Name",
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink

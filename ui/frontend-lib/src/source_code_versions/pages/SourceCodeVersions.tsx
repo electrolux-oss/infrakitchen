@@ -50,6 +50,7 @@ export const SourceCodeVersionsPage = () => {
         field: "identifier",
         headerName: "Name",
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },

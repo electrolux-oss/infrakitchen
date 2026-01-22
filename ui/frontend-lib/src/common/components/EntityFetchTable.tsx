@@ -6,6 +6,7 @@ import {
   GridFilterModel,
   GridPaginationModel,
   GridSortModel,
+  GridColumnVisibilityModel,
 } from "@mui/x-data-grid";
 import { GridSortItem } from "@mui/x-data-grid/models/gridSortModel";
 
@@ -31,6 +32,7 @@ interface EntityFetchTableProps {
 interface DataGridState {
   sortModel: GridSortModel;
   paginationModel: GridPaginationModel;
+  columnVisibilityModel?: GridColumnVisibilityModel;
 }
 
 function buildDefaultApiFilters(
@@ -112,6 +114,11 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     quickFilterValues: [],
   });
 
+  const [columnVisibilityModel, setColumnVisibilityModel] =
+    useState<GridColumnVisibilityModel>(
+      savedState?.columnVisibilityModel || {},
+    );
+
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
     setSortModel(newSortModel);
@@ -121,6 +128,12 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     newPaginationModel: GridPaginationModel,
   ) => {
     setPaginationModel(newPaginationModel);
+  };
+
+  const handleColumnVisibilityModelChange = (
+    newColumnVisibilityModel: GridColumnVisibilityModel,
+  ) => {
+    setColumnVisibilityModel(newColumnVisibilityModel);
   };
 
   const paginationPage = paginationModel.page;
@@ -194,8 +207,12 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   }, [fetchFilteredData]);
 
   useEffect(() => {
-    setKey(storageKey, { sortModel, paginationModel });
-  }, [sortModel, paginationModel, storageKey, setKey]);
+    setKey(storageKey, {
+      sortModel,
+      paginationModel,
+      columnVisibilityModel,
+    });
+  }, [sortModel, paginationModel, columnVisibilityModel, storageKey, setKey]);
 
   const showFilters = filterConfigs && filterConfigs.length > 0;
 
@@ -217,6 +234,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           handleSortModelChange={handleSortModelChange}
           handlePaginationModelChange={handlePaginationModelChange}
           setFilterModel={setFilterModel}
+          columnVisibilityModel={columnVisibilityModel}
+          handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         />
       </Box>
     </>

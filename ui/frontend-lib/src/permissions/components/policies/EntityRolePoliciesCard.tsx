@@ -36,6 +36,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         headerName: "Resource Name",
         flex: 1,
         sortable: false,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
