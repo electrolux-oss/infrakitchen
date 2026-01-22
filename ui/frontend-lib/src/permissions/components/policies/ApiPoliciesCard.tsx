@@ -126,7 +126,6 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         entityName={`permissions/role/${role}/api/policie`}
         defaultFilter={{ policy_type: "api" }}
         columns={columns}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

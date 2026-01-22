@@ -83,7 +83,6 @@ export const RolesPage = () => {
         title="Roles"
         entityName="permissions/role"
         columns={columns}
-        fields={["id"]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

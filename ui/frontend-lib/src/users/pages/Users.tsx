@@ -50,6 +50,7 @@ export const UsersPage = () => {
         headerName: "Identifier",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "identifier"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -107,14 +108,6 @@ export const UsersPage = () => {
         title="Users"
         entityName="user"
         columns={columns}
-        fields={[
-          "id",
-          "identifier",
-          "display_name",
-          "email",
-          "provider",
-          "created_at",
-        ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

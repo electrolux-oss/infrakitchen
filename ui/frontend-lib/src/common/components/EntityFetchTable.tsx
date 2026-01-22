@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 import { Box } from "@mui/material";
 import {
@@ -34,6 +34,24 @@ interface DataGridState {
   paginationModel: GridPaginationModel;
   columnVisibilityModel?: GridColumnVisibilityModel;
 }
+
+const areColumnVisibilityModelsEqual = (
+  a?: GridColumnVisibilityModel,
+  b?: GridColumnVisibilityModel,
+) => {
+  if (a === b) {
+    return true;
+  }
+
+  const aKeys = Object.keys(a ?? {});
+  const bKeys = Object.keys(b ?? {});
+
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+
+  return aKeys.every((key) => (a ?? {})[key] === (b ?? {})[key]);
+};
 
 function buildDefaultApiFilters(
   filterValues: Record<string, any>,
@@ -72,7 +90,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     title,
     columns,
     entityName,
-    fields = [],
+    fields,
     filterConfigs,
     defaultFilter,
     buildApiFilters,
@@ -118,6 +136,63 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     useState<GridColumnVisibilityModel>(
       savedState?.columnVisibilityModel || {},
     );
+  const initialColumnVisibilityModel = useRef<
+    GridColumnVisibilityModel | undefined
+  >(savedState?.columnVisibilityModel);
+
+  const typedColumns = useMemo(
+    () =>
+      columns as Array<
+        GridColDef<any> & {
+          fetchFields?: string[];
+          hide?: boolean;
+        }
+      >,
+    [columns],
+  );
+
+  const visibleColumnFields = useMemo(() => {
+    const fieldSet = new Set<string>();
+
+    typedColumns.forEach((column) => {
+      const visibilityState = columnVisibilityModel?.[column.field];
+      const defaultVisibility = column.hide !== true;
+      const isVisible =
+        typeof visibilityState === "boolean"
+          ? visibilityState
+          : defaultVisibility;
+
+      if (!isVisible) {
+        return;
+      }
+
+      const dependencies =
+        column.fetchFields && column.fetchFields.length > 0
+          ? column.fetchFields
+          : column.field
+            ? [column.field]
+            : [];
+
+      dependencies.forEach((dependency) => {
+        if (dependency) {
+          fieldSet.add(dependency);
+        }
+      });
+    });
+
+    return Array.from(fieldSet);
+  }, [typedColumns, columnVisibilityModel]);
+
+  const extraFields = useMemo(() => fields ?? [], [fields]);
+
+  const requestedFields = useMemo(() => {
+    const fieldSet = new Set<string>(["id"]);
+
+    visibleColumnFields.forEach((field) => fieldSet.add(field));
+    extraFields.forEach((field) => field && fieldSet.add(field));
+
+    return Array.from(fieldSet);
+  }, [visibleColumnFields, extraFields]);
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
@@ -130,11 +205,16 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     setPaginationModel(newPaginationModel);
   };
 
-  const handleColumnVisibilityModelChange = (
-    newColumnVisibilityModel: GridColumnVisibilityModel,
-  ) => {
-    setColumnVisibilityModel(newColumnVisibilityModel);
-  };
+  const handleColumnVisibilityModelChange = useCallback(
+    (newColumnVisibilityModel: GridColumnVisibilityModel) => {
+      setColumnVisibilityModel((prev) =>
+        areColumnVisibilityModelsEqual(prev, newColumnVisibilityModel)
+          ? prev
+          : newColumnVisibilityModel,
+      );
+    },
+    [],
+  );
 
   const paginationPage = paginationModel.page;
   const paginationPageSize = paginationModel.pageSize;
@@ -179,7 +259,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           filter: apiFilters,
           pagination: { page: page + 1, perPage: pageSize },
           sort: apiSort,
-          fields: fields,
+          fields: requestedFields,
         });
         setData(response.data);
         setTotalRows(response.total ? response.total : 0);
@@ -191,7 +271,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     };
   }, [
     ikApi,
-    fields,
+    requestedFields,
     entityName,
     paginationPage,
     paginationPageSize,
@@ -234,7 +314,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           handleSortModelChange={handleSortModelChange}
           handlePaginationModelChange={handlePaginationModelChange}
           setFilterModel={setFilterModel}
-          columnVisibilityModel={columnVisibilityModel}
+          initialColumnVisibilityModel={initialColumnVisibilityModel.current}
           handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         />
       </Box>

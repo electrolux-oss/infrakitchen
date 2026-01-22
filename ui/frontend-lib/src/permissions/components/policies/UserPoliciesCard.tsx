@@ -37,6 +37,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         flex: 1,
         sortable: false,
         hideable: false,
+        fetchFields: ["resource_name", "resource_id"],
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
@@ -122,7 +123,6 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         entityName={`resources/permissions/user/${user_id}/policie`}
         columns={columns}
         defaultFilter={{ policy_type: "resource" }}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

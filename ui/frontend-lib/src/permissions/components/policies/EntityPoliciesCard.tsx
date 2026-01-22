@@ -161,7 +161,6 @@ export const EntityPoliciesCard = (props: {
         title={`${capitalizeFirstLetter(entity_name)} Policies`}
         entityName={`permissions/${entity_name}/${entity_id}/policie`}
         columns={columns}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

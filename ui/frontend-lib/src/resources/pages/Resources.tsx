@@ -49,6 +49,7 @@ export const ResourcesPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "name"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -57,6 +58,7 @@ export const ResourcesPage = () => {
         field: "template_id",
         headerName: "Template",
         flex: 1,
+        fetchFields: ["template_id", "template"],
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
@@ -67,6 +69,7 @@ export const ResourcesPage = () => {
         field: "source_code_version_id",
         headerName: "Source Code Version",
         flex: 1,
+        fetchFields: ["source_code_version_id", "source_code_version"],
         valueGetter: (value: any, row: any) =>
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
@@ -78,6 +81,7 @@ export const ResourcesPage = () => {
         field: "state",
         headerName: "State",
         flex: 1,
+        fetchFields: ["state", "status"],
         valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip
@@ -172,16 +176,6 @@ export const ResourcesPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "name",
-          "template",
-          "source_code_version",
-          "state",
-          "status",
-          "created_at",
-          "labels",
-        ]}
       />
     </PageContainer>
   );

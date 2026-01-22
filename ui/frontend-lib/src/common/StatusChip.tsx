@@ -32,11 +32,14 @@ const getThemeColor = (theme: any, colorPath: string) => {
 
 const StatusChip = ({ status, state }: StatusChipProps) => {
   const colors = getStateColor(status, state);
-  const stateValue = state ? `${state} [${status}]` : status;
+  const rawValue = state ? `${state} [${status}]` : status;
+  const normalizedValue = rawValue
+    ? rawValue.toString().toLocaleUpperCase()
+    : "";
 
   return (
     <Chip
-      label={<code>{stateValue.toLocaleUpperCase()}</code>}
+      label={<code>{normalizedValue}</code>}
       variant="outlined"
       size="small"
       sx={(theme) => ({

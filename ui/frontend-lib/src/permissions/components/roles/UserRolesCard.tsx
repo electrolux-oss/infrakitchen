@@ -105,7 +105,6 @@ export const UserRolesCard = (props: { user_id: string }) => {
         title="User Roles"
         entityName={`permissions/user/${user_id}/role`}
         columns={columns}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

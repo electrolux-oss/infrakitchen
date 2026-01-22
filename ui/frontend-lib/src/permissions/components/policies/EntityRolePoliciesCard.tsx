@@ -37,6 +37,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         flex: 1,
         sortable: false,
         hideable: false,
+        fetchFields: ["resource_name", "resource_id"],
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
@@ -121,7 +122,6 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         title="Role Policies"
         entityName={`resources/permissions/role/${role}/policie`}
         columns={columns}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

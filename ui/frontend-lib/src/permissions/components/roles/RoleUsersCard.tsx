@@ -35,6 +35,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         headerName: "Identifier",
         flex: 1,
         hideable: false,
+        fetchFields: ["identifier", "user_id"],
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
@@ -115,7 +116,6 @@ export const RoleUsersCard = (props: { role: string }) => {
         title="Role Users"
         entityName={`permissions/role/${role}/user`}
         columns={columns}
-        fields={["id"]}
       />
     </PropertyCollapseCard>
   );

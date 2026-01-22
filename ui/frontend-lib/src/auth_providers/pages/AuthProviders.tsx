@@ -26,6 +26,7 @@ export const AuthProvidersPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "name"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -85,14 +86,6 @@ export const AuthProvidersPage = () => {
         title="Auth Providers"
         entityName="auth_provider"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "description",
-          "auth_provider",
-          "enabled",
-          "created_at",
-        ]}
       />
     </PageContainer>
   );

@@ -53,6 +53,7 @@ export const AuditLogsPage = () => {
         field: "created_at",
         headerName: "Time",
         flex: 1,
+        hideable: false,
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
@@ -74,8 +75,7 @@ export const AuditLogsPage = () => {
         field: "model",
         headerName: "Entity",
         flex: 1,
-        sortable: true,
-        hideable: false,
+        fetchFields: ["model", "entity_id"],
         valueGetter: (value: string) => value,
         renderCell: (params: GridRenderCellParams) => {
           return (
@@ -97,7 +97,6 @@ export const AuditLogsPage = () => {
         title="Audit Log"
         entityName="audit_log"
         columns={columns}
-        fields={["id", "user_id", "action", "model", "entity_id", "created_at"]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

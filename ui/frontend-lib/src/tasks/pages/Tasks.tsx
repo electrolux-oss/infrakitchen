@@ -56,6 +56,7 @@ export const TasksPage = () => {
         headerName: "Entity",
         flex: 1,
         hideable: false,
+        fetchFields: ["entity", "entity_id"],
         renderCell: (params: GridRenderCellParams) => {
           return (
             <Link
@@ -76,6 +77,7 @@ export const TasksPage = () => {
         field: "status",
         headerName: "Status",
         flex: 1,
+        fetchFields: ["status", "state"],
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip status={params.row.status} state={params.row.state} />
         ),
@@ -104,15 +106,6 @@ export const TasksPage = () => {
         title="Tasks"
         entityName="task"
         columns={columns}
-        fields={[
-          "id",
-          "entity",
-          "entity_id",
-          "status",
-          "state",
-          "created_at",
-          "updated_at",
-        ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

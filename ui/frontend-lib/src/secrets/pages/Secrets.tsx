@@ -71,6 +71,7 @@ export const SecretsPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "name"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -94,6 +95,7 @@ export const SecretsPage = () => {
         field: "state",
         headerName: "State",
         flex: 1,
+        fetchFields: ["state", "status"],
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip status={String(params.row.status).toLowerCase()} />
         ),
@@ -131,17 +133,6 @@ export const SecretsPage = () => {
         title="Secrets"
         entityName="secret"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "state",
-          "secret_provider",
-          "secret_type",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

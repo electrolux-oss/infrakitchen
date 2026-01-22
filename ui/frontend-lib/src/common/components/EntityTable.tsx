@@ -27,7 +27,7 @@ export interface ResourceTableProps {
   paginationModel?: GridPaginationModel;
   sortModel?: GridSortModel;
   filterModel?: GridFilterModel;
-  columnVisibilityModel?: GridColumnVisibilityModel;
+  initialColumnVisibilityModel?: GridColumnVisibilityModel;
   handleSortModelChange?: (model: GridSortModel) => void;
   handlePaginationModelChange?: (model: GridPaginationModel) => void;
   setFilterModel?: (model: GridFilterModel) => void;
@@ -49,7 +49,7 @@ export const EntityTable = ({
   paginationModel,
   sortModel,
   filterModel,
-  columnVisibilityModel,
+  initialColumnVisibilityModel,
   handleSortModelChange,
   handlePaginationModelChange,
   setFilterModel,
@@ -106,8 +106,16 @@ export const EntityTable = ({
               pageSizeOptions={[10, 25, 50, 100]}
               filterModel={filterModel}
               onFilterModelChange={setFilterModel}
-              columnVisibilityModel={columnVisibilityModel}
               onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+              initialState={
+                initialColumnVisibilityModel
+                  ? {
+                      columns: {
+                        columnVisibilityModel: initialColumnVisibilityModel,
+                      },
+                    }
+                  : undefined
+              }
               sx={{
                 "& .MuiDataGrid-columnHeader": {
                   "& .MuiDataGrid-columnHeaderTitleContainer": {

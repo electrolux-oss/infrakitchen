@@ -71,6 +71,7 @@ export const WorkspacesPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "name"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -89,6 +90,7 @@ export const WorkspacesPage = () => {
         field: "state",
         headerName: "State",
         flex: 1,
+        fetchFields: ["state", "status"],
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip status={String(params.row.status).toLowerCase()} />
         ),
@@ -135,15 +137,6 @@ export const WorkspacesPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "name",
-          "workspace_provider",
-          "status",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
       />
     </PageContainer>
   );

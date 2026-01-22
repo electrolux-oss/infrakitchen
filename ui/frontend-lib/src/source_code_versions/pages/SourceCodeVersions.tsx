@@ -51,6 +51,7 @@ export const SourceCodeVersionsPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "identifier"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -59,6 +60,7 @@ export const SourceCodeVersionsPage = () => {
         field: "template_id",
         headerName: "Template",
         flex: 1,
+        fetchFields: ["template_id", "template"],
         valueGetter: (value: any) => value?.identifier || value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
@@ -69,6 +71,7 @@ export const SourceCodeVersionsPage = () => {
         field: "source_code_id",
         headerName: "Code Repository",
         flex: 1,
+        fetchFields: ["source_code_id", "source_code"],
         renderCell: (params: GridRenderCellParams) => {
           const sourceCode = params.row.source_code;
           return <GetReferenceUrlValue {...sourceCode} />;
@@ -185,14 +188,6 @@ export const SourceCodeVersionsPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "identifier",
-          "template",
-          "source_code",
-          "status",
-          "created_at",
-        ]}
       />
     </PageContainer>
   );

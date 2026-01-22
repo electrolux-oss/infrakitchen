@@ -71,6 +71,7 @@ export const StoragesPage = () => {
         headerName: "Name",
         flex: 1,
         hideable: false,
+        fetchFields: ["id", "name"],
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
@@ -94,6 +95,7 @@ export const StoragesPage = () => {
         field: "state",
         headerName: "State",
         flex: 1,
+        fetchFields: ["state", "status"],
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip
             status={String(params.row.status).toLowerCase()}
@@ -134,17 +136,6 @@ export const StoragesPage = () => {
         title="Storages"
         entityName="storage"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "state",
-          "storage_provider",
-          "storage_type",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

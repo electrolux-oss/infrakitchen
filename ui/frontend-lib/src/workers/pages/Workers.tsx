@@ -121,15 +121,6 @@ export default function WorkerList() {
         title="Workers"
         entityName="worker"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "host",
-          "created_at",
-          "updated_at",
-          "host_metadata",
-        ]}
       />
     </PageContainer>
   );
