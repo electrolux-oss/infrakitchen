@@ -1,4 +1,4 @@
-import { FC, ReactNode, useCallback } from "react";
+import React, { FC, ReactNode, useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -38,18 +38,29 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const handleClick = useCallback(() => {
-    const basePath = `${linkPrefix}${_entity_name}s`;
-    const fullPath = urlProvider
-      ? `${basePath}/${urlProvider}/${id}`
-      : `${basePath}/${id}`;
-    navigate(fullPath);
-  }, [linkPrefix, _entity_name, urlProvider, id, navigate]);
+  const basePath = `${linkPrefix}${_entity_name}s`;
+  const fullPath = urlProvider
+    ? `${basePath}/${urlProvider}/${id}`
+    : `${basePath}/${id}`;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // Allow default behavior for Cmd/Ctrl+Click (opens in new tab)
+      if (e.metaKey || e.ctrlKey) {
+        return;
+      }
+
+      e.preventDefault();
+      navigate(fullPath);
+    },
+    [navigate, fullPath],
+  );
 
   const displayText = display_name || name || identifier;
 
   return (
     <Link
+      href={fullPath}
       onClick={handleClick}
       style={{ textDecoration: "none", cursor: "pointer" }}
     >
@@ -74,12 +85,24 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const handleClick = useCallback(() => {
-    navigate(`${linkPrefix}${_entity_name}s/${id}`);
-  }, [linkPrefix, _entity_name, id, navigate]);
+  const fullPath = `${linkPrefix}${_entity_name}s/${id}`;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // Allow default behavior for Cmd/Ctrl+Click (opens in new tab)
+      if (e.metaKey || e.ctrlKey) {
+        return;
+      }
+
+      e.preventDefault();
+      navigate(fullPath);
+    },
+    [navigate, fullPath],
+  );
 
   return (
     <Link
+      href={fullPath}
       onClick={handleClick}
       style={{ textDecoration: "none", cursor: "pointer" }}
     >
