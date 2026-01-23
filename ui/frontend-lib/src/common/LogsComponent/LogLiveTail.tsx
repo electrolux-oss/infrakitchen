@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
-import Snackbar from "@mui/material/Snackbar";
 import Typography from "@mui/material/Typography";
 import Ansi from "ansi-to-react";
 
@@ -20,8 +19,12 @@ export const LogLiveTail = () => {
   const { entity } = useEntityProvider();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const [logMessages, setLogMessages] = useState<string[]>([]);
+
+  // Resizing State
+  const [dimensions, setDimensions] = useState({ width: 500, height: 400 });
+  const isResizing = useRef(false);
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
   const pendingMessagesRef = useRef<string[]>([]);
@@ -39,7 +42,6 @@ export const LogLiveTail = () => {
           : combined;
       });
 
-      // Auto-scroll after batch update
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop =
@@ -49,6 +51,34 @@ export const LogLiveTail = () => {
     }
     batchTimerRef.current = null;
   }, []);
+
+  // Resize Logic
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing.current) return;
+    const newWidth = window.innerWidth - e.clientX - 20;
+    const newHeight = window.innerHeight - e.clientY - 20;
+
+    setDimensions({
+      width: Math.max(300, newWidth),
+      height: Math.max(200, newHeight),
+    });
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizing.current = false;
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", stopResizing);
+  }, [handleMouseMove]);
+
+  const startResizing = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      isResizing.current = true;
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", stopResizing);
+    },
+    [handleMouseMove, stopResizing],
+  );
 
   useEffect(() => {
     if (socketManagerRef.current === null) {
@@ -63,10 +93,8 @@ export const LogLiveTail = () => {
     if (socketManagerRef.current) {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
-        setSnackbarOpen(true);
-
+        setIsVisible(true);
         pendingMessagesRef.current.push(data.data);
-
         if (batchTimerRef.current === null) {
           batchTimerRef.current = setTimeout(
             flushPendingMessages,
@@ -89,13 +117,56 @@ export const LogLiveTail = () => {
     };
   }, [flushPendingMessages]);
 
+  if (!isVisible) return null;
+
   return (
-    <Snackbar
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      open={snackbarOpen}
-      onClose={() => setSnackbarOpen(false)}
+    <Box
+      sx={{
+        position: "fixed",
+        bottom: 20,
+        right: 20,
+        width: dimensions.width,
+        height: dimensions.height,
+        zIndex: 1300,
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: 6,
+        borderRadius: 1,
+        bgcolor: "background.paper",
+        overflow: "hidden",
+      }}
     >
-      <Alert severity="info" sx={{ p: 0, minWidth: 400 }}>
+      <Box
+        onMouseDown={startResizing}
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: 15,
+          height: 15,
+          cursor: "nwse-resize",
+          zIndex: 10,
+          "&:hover": { bgcolor: "action.hover" },
+        }}
+      />
+
+      <Alert
+        severity="info"
+        icon={false}
+        sx={{
+          p: 0,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          "& .MuiAlert-message": {
+            p: 0,
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+          },
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -105,6 +176,7 @@ export const LogLiveTail = () => {
             py: 1,
             borderBottom: 1,
             borderColor: "divider",
+            cursor: "default",
           }}
         >
           <Typography variant="body2" fontWeight={600}>
@@ -114,27 +186,26 @@ export const LogLiveTail = () => {
             size="small"
             aria-label="close"
             color="inherit"
-            onClick={() => setSnackbarOpen(false)}
+            onClick={() => setIsVisible(false)}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
+
         <Box
           ref={scrollContainerRef}
-          sx={{ maxHeight: 300, overflow: "auto", whiteSpace: "pre-line" }}
+          sx={{
+            flexGrow: 1,
+            overflow: "auto",
+            bgcolor: "#1e1e1e",
+            color: "#fff",
+          }}
         >
-          <pre
-            style={{
-              margin: 0,
-              maxWidth: 700,
-              overflowY: "hidden",
-              padding: 16,
-            }}
-          >
+          <pre style={{ margin: 0, padding: 16, fontSize: "0.8rem" }}>
             <Ansi>{logMessages.join("\n")}</Ansi>
           </pre>
         </Box>
       </Alert>
-    </Snackbar>
+    </Box>
   );
 };
