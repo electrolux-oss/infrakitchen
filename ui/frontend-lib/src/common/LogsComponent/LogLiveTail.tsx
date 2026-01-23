@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
+import MinimizeIcon from "@mui/icons-material/Minimize";
+import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import Ansi from "ansi-to-react";
 
+import { useLocalStorage } from "../context";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import WebSocketManager from "../WebSocketManager";
@@ -17,10 +20,17 @@ const BATCH_INTERVAL = 100; // milliseconds
 export const LogLiveTail = () => {
   const { ikApi } = useConfig();
   const { entity } = useEntityProvider();
+  const { get, setKey } = useLocalStorage<Record<string, unknown>>();
+  const isMinimizedSaved = get("log_live_tail_minimized") as
+    | { isMinimized: boolean }
+    | undefined;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [isMinimized, setIsMinimized] = useState<boolean>(
+    isMinimizedSaved?.isMinimized ?? false,
+  );
   const [logMessages, setLogMessages] = useState<string[]>([]);
+  const [isReceivingLogs, setIsReceivingLogs] = useState<boolean>(false);
 
   // Resizing State
   const [dimensions, setDimensions] = useState({ width: 500, height: 400 });
@@ -29,6 +39,13 @@ export const LogLiveTail = () => {
   const socketManagerRef = useRef<WebSocketManager | null>(null);
   const pendingMessagesRef = useRef<string[]>([]);
   const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const logActivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setKey("log_live_tail_minimized", { isMinimized });
+  }, [setKey, isMinimized]);
 
   const flushPendingMessages = useCallback(() => {
     if (pendingMessagesRef.current.length > 0) {
@@ -93,8 +110,17 @@ export const LogLiveTail = () => {
     if (socketManagerRef.current) {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
-        setIsVisible(true);
         pendingMessagesRef.current.push(data.data);
+
+        // Show spinner when logs are coming
+        setIsReceivingLogs(true);
+        if (logActivityTimerRef.current) {
+          clearTimeout(logActivityTimerRef.current);
+        }
+        logActivityTimerRef.current = setTimeout(() => {
+          setIsReceivingLogs(false);
+        }, 10000);
+
         if (batchTimerRef.current === null) {
           batchTimerRef.current = setTimeout(
             flushPendingMessages,
@@ -114,10 +140,11 @@ export const LogLiveTail = () => {
         clearTimeout(batchTimerRef.current);
         flushPendingMessages();
       }
+      if (logActivityTimerRef.current) {
+        clearTimeout(logActivityTimerRef.current);
+      }
     };
   }, [flushPendingMessages]);
-
-  if (!isVisible) return null;
 
   return (
     <Box
@@ -125,8 +152,8 @@ export const LogLiveTail = () => {
         position: "fixed",
         bottom: 20,
         right: 20,
-        width: dimensions.width,
-        height: dimensions.height,
+        width: isMinimized ? "auto" : dimensions.width,
+        height: isMinimized ? "auto" : dimensions.height,
         zIndex: 1300,
         display: "flex",
         flexDirection: "column",
@@ -136,19 +163,36 @@ export const LogLiveTail = () => {
         overflow: "hidden",
       }}
     >
-      <Box
-        onMouseDown={startResizing}
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: 15,
-          height: 15,
-          cursor: "nwse-resize",
-          zIndex: 10,
-          "&:hover": { bgcolor: "action.hover" },
-        }}
-      />
+      {!isMinimized && (
+        <Box
+          onMouseDown={startResizing}
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: 20,
+            height: 20,
+            cursor: "nwse-resize",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "flex-start",
+            "&:hover": { bgcolor: "action.hover" },
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 2,
+              left: 2,
+              width: 0,
+              height: 0,
+              borderLeft: "8px solid",
+              borderBottom: "8px solid",
+              borderColor: "text.secondary",
+              opacity: 0.3,
+            },
+          }}
+        />
+      )}
 
       <Alert
         severity="info"
@@ -174,37 +218,74 @@ export const LogLiveTail = () => {
             justifyContent: "space-between",
             px: 2,
             py: 1,
-            borderBottom: 1,
+            borderBottom: isMinimized ? 0 : 1,
             borderColor: "divider",
             cursor: "default",
           }}
         >
-          <Typography variant="body2" fontWeight={600}>
-            Live Log Tail
-          </Typography>
-          <IconButton
-            size="small"
-            aria-label="close"
-            color="inherit"
-            onClick={() => setIsVisible(false)}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              paddingRight: 1,
+            }}
           >
-            <CloseIcon fontSize="small" />
-          </IconButton>
+            <Typography variant="body2" fontWeight={600}>
+              Live Log Tail
+            </Typography>
+            {isReceivingLogs && <CircularProgress size={14} thickness={5} />}
+          </Box>
+          <Box>
+            <IconButton
+              size="small"
+              aria-label={isMinimized ? "maximize" : "minimize"}
+              color="inherit"
+              onClick={() => setIsMinimized(!isMinimized)}
+            >
+              {isMinimized ? (
+                <OpenInFullIcon fontSize="small" />
+              ) : (
+                <MinimizeIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Box>
         </Box>
 
-        <Box
-          ref={scrollContainerRef}
-          sx={{
-            flexGrow: 1,
-            overflow: "auto",
-            bgcolor: "#1e1e1e",
-            color: "#fff",
-          }}
-        >
-          <pre style={{ margin: 0, padding: 16, fontSize: "0.8rem" }}>
-            <Ansi>{logMessages.join("\n")}</Ansi>
-          </pre>
-        </Box>
+        {!isMinimized && (
+          <Box
+            ref={scrollContainerRef}
+            sx={{
+              flexGrow: 1,
+              overflow: "auto",
+              bgcolor: "#1e1e1e",
+              color: "#fff",
+            }}
+          >
+            <pre style={{ margin: 0, padding: 16, fontSize: "0.8rem" }}>
+              <Ansi>{logMessages.join("\n")}</Ansi>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "8px",
+                  height: "1em",
+                  backgroundColor: "#fff",
+                  marginLeft: "2px",
+                  animation: "blink 1s step-end infinite",
+                  verticalAlign: "text-bottom",
+                }}
+              />
+            </pre>
+            <style>
+              {`
+                @keyframes blink {
+                  0%, 50% { opacity: 1; }
+                  51%, 100% { opacity: 0; }
+                }
+              `}
+            </style>
+          </Box>
+        )}
       </Alert>
     </Box>
   );
