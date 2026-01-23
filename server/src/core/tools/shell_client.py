@@ -112,17 +112,25 @@ class ShellScriptClient:
         env_path = os.getenv("PATH", "")
         environment_variables: dict[str, str] = {**{"PATH": env_path}, **self.environment_variables}
 
+        # Track pending save tasks to avoid duplication
+        pending_save_task: asyncio.Task[None] | None = None
+
+        async def trigger_save_if_needed():
+            nonlocal pending_save_task
+            if isinstance(self.logger, EntityLogger):
+                # Only create new save task if one isn't already running
+                if pending_save_task is None or pending_save_task.done():
+                    pending_save_task = asyncio.create_task(self.logger.save_if_more_than(5))
+
         def stdout_callback(line: str):
             captured_stdout_lines.append(line)
             self.logger.info(line)
-            if isinstance(self.logger, EntityLogger):
-                _ = asyncio.create_task(self.logger.save_if_more_than(5))
+            _ = asyncio.create_task(trigger_save_if_needed())
 
         def stderr_callback(line: str):
             # Log as error, and trigger save_if_more_than on the EntityLogger
             self.logger.error(line)
-            if isinstance(self.logger, EntityLogger):
-                _ = asyncio.create_task(self.logger.save_if_more_than(5))
+            _ = asyncio.create_task(trigger_save_if_needed())
 
         _, return_code = await _stream_subprocess(
             cmd=self._command_parts,

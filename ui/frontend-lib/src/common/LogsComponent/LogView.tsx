@@ -7,6 +7,7 @@ import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
 import Ansi from "ansi-to-react";
 
 import { LogEntity } from "../../types";
+import { getTimeOnlyValue } from "../components/CommonField";
 import { useConfig } from "../context/ConfigContext";
 import GradientCircularProgress from "../GradientCircularProgress";
 
@@ -14,24 +15,16 @@ function createLog(log: LogEntity[]) {
   const result: { id: string; data: string }[] = [];
   if (!log || log.length === 0) return result;
 
-  let printedDate = log[0].created_at.toString().split("T")[0];
   for (let i = 0; i < log.length; i++) {
     const l = log[i];
-    const createdAtStr = l.created_at.toString();
-    const createdAtDate = createdAtStr.split("T")[0];
-    const createdAtTime = createdAtStr.split("T")[1].slice(0, -7);
-    if (printedDate !== createdAtDate) {
-      const header = `>>>>>>>>>>>>>>>>>>>>>>>> ${createdAtDate} >>>>>>>>>>>>>>>>>>>>>>>>`;
-      result.push({ id: `${l.id}_div`, data: header });
-      printedDate = createdAtDate;
-    }
+    const createdAtStr = getTimeOnlyValue(l.created_at.toString());
     let logMessage = l.data;
     if (l.level === "warn") {
       logMessage = `\u001b[1m\u001b[36m${logMessage}\u001b[22m\u001b[30m`;
     } else if (l.level === "error") {
       logMessage = `\u001b[1m\u001b[31m${logMessage}\u001b[22m\u001b[30m`;
     }
-    const s = `${createdAtTime} ${logMessage}`;
+    const s = `${createdAtStr}. ${logMessage}`;
     result.push({ id: l.id, data: s });
   }
   return result;

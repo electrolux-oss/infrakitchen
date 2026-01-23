@@ -132,8 +132,9 @@ async def rabbitmq_log_consumer(entity_name: str, entity_id: str, connection_id:
 
             async with queue.iterator(no_ack=True) as q:
                 async for message in q:
-                    msg = message.body.decode()
-                    await entity_queue.put(msg)
+                    msg = json.loads(message.body.decode())
+                    msg.pop("_metadata", None)  # Decrease message size before sending to client
+                    await entity_queue.put(json.dumps(msg))
         finally:
             logger.debug("Closing RabbitMQ logs connection")
             entity_queue = cm.remove_queue(str(entity_id))

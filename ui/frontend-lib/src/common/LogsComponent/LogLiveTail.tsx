@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import Alert from "@mui/material/Alert";
@@ -12,6 +12,9 @@ import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import WebSocketManager from "../WebSocketManager";
 
+const MAX_LOG_MESSAGES = 1000;
+const BATCH_INTERVAL = 100; // milliseconds
+
 export const LogLiveTail = () => {
   const { ikApi } = useConfig();
   const { entity } = useEntityProvider();
@@ -21,6 +24,31 @@ export const LogLiveTail = () => {
   const [logMessages, setLogMessages] = useState<string[]>([]);
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
+  const pendingMessagesRef = useRef<string[]>([]);
+  const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushPendingMessages = useCallback(() => {
+    if (pendingMessagesRef.current.length > 0) {
+      const newMessages = pendingMessagesRef.current;
+      pendingMessagesRef.current = [];
+
+      setLogMessages((prev) => {
+        const combined = [...prev, ...newMessages];
+        return combined.length > MAX_LOG_MESSAGES
+          ? combined.slice(combined.length - MAX_LOG_MESSAGES)
+          : combined;
+      });
+
+      // Auto-scroll after batch update
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop =
+            scrollContainerRef.current.scrollHeight;
+        }
+      });
+    }
+    batchTimerRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (socketManagerRef.current === null) {
@@ -36,7 +64,15 @@ export const LogLiveTail = () => {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
         setSnackbarOpen(true);
-        setLogMessages((prev) => [...prev, data.data]);
+
+        pendingMessagesRef.current.push(data.data);
+
+        if (batchTimerRef.current === null) {
+          batchTimerRef.current = setTimeout(
+            flushPendingMessages,
+            BATCH_INTERVAL,
+          );
+        }
       });
       socketManagerRef.current.startVisibilityTracking();
       socketManagerRef.current.connect();
@@ -46,15 +82,12 @@ export const LogLiveTail = () => {
         socketManagerRef.current.stopVisibilityTracking();
         socketManagerRef.current.disconnect();
       }
+      if (batchTimerRef.current) {
+        clearTimeout(batchTimerRef.current);
+        flushPendingMessages();
+      }
     };
-  }, [setLogMessages, setSnackbarOpen]);
-
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop =
-        scrollContainerRef.current.scrollHeight;
-    }
-  }, [logMessages]);
+  }, [flushPendingMessages]);
 
   return (
     <Snackbar
