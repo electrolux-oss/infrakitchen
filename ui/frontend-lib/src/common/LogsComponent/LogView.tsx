@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useEffectOnce } from "react-use";
@@ -40,6 +40,7 @@ export const LogView = (props: {
   const [logs, setLogs] = useState<LogEntity[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [index, setIndex] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchMoreData = useCallback(() => {
     ikApi
@@ -49,10 +50,10 @@ export const LogView = (props: {
           execution_start: execution_time,
         },
         pagination: { page: index, perPage: 600 },
-        sort: { field: "created_at", order: "ASC" },
+        sort: { field: "created_at", order: "DESC" },
       })
       .then((response) => {
-        setLogs((prevItems) => [...prevItems, ...response.data]);
+        setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
 
         if (response.data.length > 0) {
           setIndex((prevIndex) => prevIndex + 1);
@@ -72,10 +73,15 @@ export const LogView = (props: {
   return (
     <Box
       id="logScrollContainer"
+      ref={scrollContainerRef}
       sx={{
-        maxHeight: 800,
+        height: "calc(100vh - 300px)",
+        minHeight: 400,
+        maxHeight: "80vh",
         overflowY: "auto",
         padding: 1,
+        display: "flex",
+        flexDirection: "column-reverse",
       }}
     >
       {logs.length > 0 ? (
@@ -84,6 +90,7 @@ export const LogView = (props: {
             dataLength={logs.length}
             next={fetchMoreData}
             hasMore={hasMore}
+            inverse={true}
             loader={<GradientCircularProgress />}
             scrollableTarget="logScrollContainer"
           >
