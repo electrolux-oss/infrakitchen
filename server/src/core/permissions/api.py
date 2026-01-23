@@ -151,9 +151,23 @@ async def get_users_by_role(
 async def get_entity_permissions(
     entity_name: str,
     entity_id: str,
+    response: Response,
     service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    policies = await service.get_entity_permissions(entity_name, entity_id)
+    if not is_valid_uuid(entity_id):
+        raise ValueError("Invalid entity ID format")
+
+    _, range_, sort, _ = query_parts
+    total = await service.count(filter={"ptype": "p", "v1": f"{entity_name}:{entity_id}"})
+
+    if total == 0:
+        policies = []
+    else:
+        policies = await service.get_entity_permissions(entity_name, entity_id, range=range_, sort=sort)
+
+    headers = {"Content-Range": f"policies 0-{len(policies)}/{total}"}
+    response.headers.update(headers)
     return policies
 
 
