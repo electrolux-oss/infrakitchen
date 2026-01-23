@@ -1,4 +1,6 @@
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import React, { useState, useEffect } from "react";
+
+import { Autocomplete, Chip, InputAdornment, TextField } from "@mui/material";
 
 import { AutocompleteFilterConfig, SearchFilterConfig } from "./FilterConfig";
 
@@ -22,14 +24,44 @@ export const SearchFilter = ({
   value,
   onChange,
 }: SearchFilterProps) => {
+  const [localValue, setLocalValue] = useState(value || "");
+
+  useEffect(() => {
+    setLocalValue(value || "");
+  }, [value]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      onChange(localValue);
+    }
+  };
+
   return (
     <TextField
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
+      value={localValue}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onKeyDown={handleKeyDown}
       label={config.label}
       placeholder={config.placeholder}
       size="small"
-      slotProps={{ input: { spellCheck: false } }}
+      slotProps={{
+        input: {
+          spellCheck: false,
+          endAdornment: (
+            <InputAdornment
+              position="end"
+              sx={{
+                fontSize: "0.7rem",
+                color: "text.secondary",
+                opacity: 0.7,
+                mr: 0.5,
+              }}
+            >
+              Press ↵
+            </InputAdornment>
+          ),
+        },
+      }}
       sx={{
         width: "100%",
         "& .MuiInputBase-root": {
