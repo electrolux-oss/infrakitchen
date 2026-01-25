@@ -233,8 +233,9 @@ class TestGetEntityPermissions:
 
     def test_get_entity_permissions_success(self, client, override_permission_service, mock_policy_data):
         mock_policy_data["v1"] = f"{self.ENTITY_NAME}:{self.ENTITY_ID}"
+        mock_policy_data["ptype"] = "p"
         mock_policies = [mock_policy_data]
-        service = MockPermissionsService(entity_permissions=mock_policies)
+        service = MockPermissionsService(entity_permissions=mock_policies, policy_count=1)
         override_permission_service(service)
 
         response = client.get(f"/permissions/{self.ENTITY_NAME}/{self.ENTITY_ID}/policies")

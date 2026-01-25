@@ -205,11 +205,11 @@ class PermissionService:
         return actions
 
     # Entity permissions
-    async def get_entity_permissions(self, entity_name: str, entity_id: str) -> list[PermissionResponse]:
+    async def get_entity_permissions(self, entity_name: str, entity_id: str, **kwargs) -> list[PermissionResponse]:
         if not is_valid_uuid(entity_id):
             raise ValueError("Invalid entity ID format")
 
-        policies = await self.crud.get_all(filter={"ptype": "p", "v1": f"{entity_name}:{entity_id}"})
+        policies = await self.crud.get_all(filter={"ptype": "p", "v1": f"{entity_name}:{entity_id}"}, **kwargs)
         return [PermissionResponse.model_validate(policy) for policy in policies]
 
     # Api Policies

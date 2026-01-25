@@ -59,6 +59,8 @@ class MockPermissionsService:
             return self._policy_count
         elif filter.get("ptype") == "g" and filter.get("v0__like", "").startswith("user:%") and filter.get("v1"):
             return self._user_count
+        elif filter.get("ptype") == "p" and filter.get("v1"):
+            return self._policy_count
         return 0
 
     async def get_all(self, filter: dict[str, Any], range: tuple[int, int] | None = None) -> list[PermissionResponse]:
@@ -74,7 +76,7 @@ class MockPermissionsService:
     ) -> list[RoleUsersResponse]:
         return self._users_by_role
 
-    async def get_entity_permissions(self, entity_name: str, entity_id: str) -> list[PermissionResponse]:
+    async def get_entity_permissions(self, entity_name: str, entity_id: str, **kwargs) -> list[PermissionResponse]:
         return self._entity_permissions
 
     async def create_role(self, role_name: str, user_id: str | None, requester: UserDTO) -> dict[str, Any]:
