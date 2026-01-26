@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useEffectOnce } from "react-use";
@@ -7,6 +7,7 @@ import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
 import Ansi from "ansi-to-react";
 
 import { LogEntity } from "../../types";
+import { getTimeOnlyValue } from "../components/CommonField";
 import { useConfig } from "../context/ConfigContext";
 import GradientCircularProgress from "../GradientCircularProgress";
 
@@ -14,24 +15,16 @@ function createLog(log: LogEntity[]) {
   const result: { id: string; data: string }[] = [];
   if (!log || log.length === 0) return result;
 
-  let printedDate = log[0].created_at.toString().split("T")[0];
   for (let i = 0; i < log.length; i++) {
     const l = log[i];
-    const createdAtStr = l.created_at.toString();
-    const createdAtDate = createdAtStr.split("T")[0];
-    const createdAtTime = createdAtStr.split("T")[1].slice(0, -7);
-    if (printedDate !== createdAtDate) {
-      const header = `>>>>>>>>>>>>>>>>>>>>>>>> ${createdAtDate} >>>>>>>>>>>>>>>>>>>>>>>>`;
-      result.push({ id: `${l.id}_div`, data: header });
-      printedDate = createdAtDate;
-    }
+    const createdAtStr = getTimeOnlyValue(l.created_at.toString());
     let logMessage = l.data;
     if (l.level === "warn") {
       logMessage = `\u001b[1m\u001b[36m${logMessage}\u001b[22m\u001b[30m`;
     } else if (l.level === "error") {
       logMessage = `\u001b[1m\u001b[31m${logMessage}\u001b[22m\u001b[30m`;
     }
-    const s = `${createdAtTime} ${logMessage}`;
+    const s = `${createdAtStr}. ${logMessage}`;
     result.push({ id: l.id, data: s });
   }
   return result;
@@ -47,6 +40,7 @@ export const LogView = (props: {
   const [logs, setLogs] = useState<LogEntity[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [index, setIndex] = useState(1);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchMoreData = useCallback(() => {
     ikApi
@@ -56,10 +50,10 @@ export const LogView = (props: {
           execution_start: execution_time,
         },
         pagination: { page: index, perPage: 600 },
-        sort: { field: "created_at", order: "ASC" },
+        sort: { field: "created_at", order: "DESC" },
       })
       .then((response) => {
-        setLogs((prevItems) => [...prevItems, ...response.data]);
+        setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
 
         if (response.data.length > 0) {
           setIndex((prevIndex) => prevIndex + 1);
@@ -79,10 +73,15 @@ export const LogView = (props: {
   return (
     <Box
       id="logScrollContainer"
+      ref={scrollContainerRef}
       sx={{
-        maxHeight: 800,
+        height: "calc(100vh - 300px)",
+        minHeight: 400,
+        maxHeight: "80vh",
         overflowY: "auto",
         padding: 1,
+        display: "flex",
+        flexDirection: "column-reverse",
       }}
     >
       {logs.length > 0 ? (
@@ -91,6 +90,7 @@ export const LogView = (props: {
             dataLength={logs.length}
             next={fetchMoreData}
             hasMore={hasMore}
+            inverse={true}
             loader={<GradientCircularProgress />}
             scrollableTarget="logScrollContainer"
           >

@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import datetime
 import logging
 from typing import Any, Literal, Protocol
@@ -44,6 +45,7 @@ class EntityLogger:
         self.revision_number: int = revision_number
         self.execution_start: int = int(datetime.datetime.now().timestamp())
         self.trace_id: str | None = trace_id
+        self._save_lock = asyncio.Lock()
         # setup ttl for logs to be expired ex. dry run logs
         self.expire_at: datetime.datetime | None = None
         if should_be_expired:
@@ -98,24 +100,26 @@ class EntityLogger:
                 "entity_id": str(self.entity_id),
                 "data": data,
                 "level": level,
-                "revision": self.revision_number,
-                "created_at": datetime.datetime.now(datetime.UTC).isoformat(),
             }
         )
         self.messages.append(message)
 
     async def save_if_more_than(self, count: int):
+        # Return early if already saving to avoid creating unnecessary lock contention
+        if self._save_lock.locked():
+            return
         if len(self.bulk_logs_operations) > count:
             await self.save_log()
 
     async def save_log(self):
-        if self.bulk_logs_operations:
-            async with get_session() as session:
-                session.add_all(self.bulk_logs_operations)
-                self.bulk_logs_operations = []
-                await session.commit()
+        async with self._save_lock:
+            if self.bulk_logs_operations:
+                async with get_session() as session:
+                    session.add_all(self.bulk_logs_operations)
+                    self.bulk_logs_operations = []
+                    await session.commit()
 
-        await self.send_messages()
+            await self.send_messages()
 
     async def send_messages(self):
         for message in self.messages:

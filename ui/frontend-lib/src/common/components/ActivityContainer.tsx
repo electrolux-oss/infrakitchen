@@ -28,7 +28,11 @@ export const ActivityContainer = (props: ActivityPageProps) => {
   const navigate = useNavigate();
 
   const [path, setPath] = useState(
-    location.hash ? location.hash.replace("#", "") : "audit",
+    location.hash
+      ? location.hash.replace("#", "")
+      : tabs.includes("logs")
+        ? "logs"
+        : tabs[0],
   );
 
   const handleChange = (event: SyntheticEvent, newValue: string) => {
@@ -70,16 +74,6 @@ export const ActivityContainer = (props: ActivityPageProps) => {
               ))}
             </Tabs>
           </Box>
-          {tabs.includes("audit") && (
-            <TabPanel
-              value="audit"
-              sx={{ p: 0 }}
-              id="tabpanel-audit"
-              aria-labelledby="tab-audit"
-            >
-              <Audit entityId={entity.id || ""} />
-            </TabPanel>
-          )}
           {tabs.includes("logs") && (
             <TabPanel
               value="logs"
@@ -88,6 +82,16 @@ export const ActivityContainer = (props: ActivityPageProps) => {
               sx={{ p: 0 }}
             >
               <LogList entity_id={entity.id || ""} />
+            </TabPanel>
+          )}
+          {tabs.includes("audit") && (
+            <TabPanel
+              value="audit"
+              sx={{ p: 0 }}
+              id="tabpanel-audit"
+              aria-labelledby="tab-audit"
+            >
+              <Audit entityId={entity.id || ""} />
             </TabPanel>
           )}
           {tabs.includes("revisions") && (

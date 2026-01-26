@@ -164,6 +164,21 @@ export const getDateValue = (date: Date | string) => {
   }
 };
 
+export const getTimeOnlyValue = (date: Date | string) => {
+  try {
+    const dateObj = new Date(date);
+
+    return dateObj.toLocaleString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch (_) {
+    return "Invalid Date";
+  }
+};
+
 export const getLabels = (labels: string[]) => {
   if (!labels || labels.length === 0) {
     return getTextValue("No labels");

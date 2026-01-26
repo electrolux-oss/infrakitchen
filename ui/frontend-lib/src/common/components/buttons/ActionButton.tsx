@@ -33,7 +33,7 @@ export const ActionButton = (props: {
           const entityType =
             (entity._entity_name || "Resource").charAt(0).toUpperCase() +
             (entity._entity_name || "Resource").slice(1);
-          notify(`${entityType} ${action} completed successfully`, "success");
+          notify(`${entityType} ${action} task sent successfully`, "success");
           if (refreshEntity) {
             refreshEntity();
           }

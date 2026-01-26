@@ -90,7 +90,7 @@ class OtfClient:
         If no backend bucket is specified, Terraform is initialized without a backend.
         """
         self.logger.info("Initializing Tofu...")
-        await self._run_command("init -force-copy -upgrade -reconfigure -backend-config=backend.tfvars")
+        await self._run_command("init -force-copy -reconfigure -backend-config=backend.tfvars")
 
     async def apply(self):
         """
