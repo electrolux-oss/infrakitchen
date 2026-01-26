@@ -21,15 +21,19 @@ export const EventContext = createContext<EventContextType | undefined>(
 
 export const EventProvider = ({ children }: { children: ReactNode }) => {
   const [event, setEvent] = useState<any>();
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketUrl } = useConfig();
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
 
   useEffect(() => {
     if (socketManagerRef.current === null) {
-      socketManagerRef.current = new WebSocketManager(ikApi);
+      socketManagerRef.current = new WebSocketManager(
+        ikApi,
+        webSocketUrl,
+        "/events",
+      );
     }
-  }, [ikApi]);
+  }, [ikApi, webSocketUrl]);
 
   useEffect(() => {
     if (socketManagerRef.current) {

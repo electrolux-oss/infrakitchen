@@ -1,6 +1,6 @@
 {
   "name": "@electrolux-oss/infrakitchen",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "build": "tsc --emitDeclarationOnly && NODE_OPTIONS='--max-old-space-size=4096' vite build",
     "prepublishOnly": "yarn build"

@@ -21,7 +21,7 @@ export const NotificationContext = createContext<
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notification, setNotification] = useState<any>();
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketUrl } = useConfig();
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
 
@@ -29,10 +29,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     if (socketManagerRef.current === null) {
       socketManagerRef.current = new WebSocketManager(
         ikApi,
-        "/api/ws/notifications",
+        webSocketUrl,
+        "/notifications",
       );
     }
-  }, [ikApi]);
+  }, [ikApi, webSocketUrl]);
 
   useEffect(() => {
     if (socketManagerRef.current) {

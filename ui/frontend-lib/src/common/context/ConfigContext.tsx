@@ -5,6 +5,7 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 interface ConfigContextType {
   linkPrefix: string;
   ikApi: InfraKitchenApi;
+  webSocketUrl: string;
 }
 
 export const ConfigContext = createContext<ConfigContextType | undefined>(
@@ -15,14 +16,17 @@ export const ConfigProvider = ({
   children,
   initialLinkPrefix = "/",
   initialIkApi,
+  webSocketUrl = "/api/ws",
 }: {
   children: ReactNode;
   initialLinkPrefix?: string;
   initialIkApi: InfraKitchenApi | any;
+  webSocketUrl: string;
 }) => {
   const [config] = useState<ConfigContextType>({
     linkPrefix: initialLinkPrefix,
     ikApi: initialIkApi,
+    webSocketUrl,
   });
 
   return (

@@ -63,13 +63,16 @@ export function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
 
 export const AppWrapper = () => {
   const baseDataProvider = ikDataProvider(`/api`);
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const webSocketUrl = `${protocol}//${window.location.host}${`/api/ws`}`;
+
   const dataProvider = addRefreshAuthToDataProvider(
     baseDataProvider,
     refreshAuth,
   );
   return (
     <LocalStorageProvider>
-      <ConfigProvider initialIkApi={dataProvider}>
+      <ConfigProvider initialIkApi={dataProvider} webSocketUrl={webSocketUrl}>
         <AuthProvider>
           <PermissionProvider>
             <EventProvider>

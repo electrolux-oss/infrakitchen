@@ -18,7 +18,7 @@ const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
 
 export const LogLiveTail = () => {
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketUrl } = useConfig();
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
@@ -101,10 +101,11 @@ export const LogLiveTail = () => {
     if (socketManagerRef.current === null) {
       socketManagerRef.current = new WebSocketManager(
         ikApi,
-        `/api/ws/logs/${entity._entity_name}/${entity.id}`,
+        webSocketUrl,
+        `/logs/${entity._entity_name}/${entity.id}`,
       );
     }
-  }, [ikApi, entity]);
+  }, [ikApi, entity, webSocketUrl]);
 
   useEffect(() => {
     if (socketManagerRef.current) {
