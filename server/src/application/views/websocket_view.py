@@ -3,6 +3,7 @@ import logging
 from uuid import uuid4
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, WebSocketException, status
 from pydantic import BaseModel
+from core.config import InfrakitchenConfig
 from core.event_stream_manager import (
     ConnectionManager,
     rabbitmq_events_consumer,
@@ -67,6 +68,10 @@ async def websocket_notifications_endpoint(websocket: WebSocket):
     3. Reject the connection if authentication fails.
     4. Listen for messages from RabbitMQ and send them to the client.
     """
+    if InfrakitchenConfig().websocket is False:
+        await websocket.close(code=1008)
+        return
+
     websocket_manager = WebSocketConnectionManager()
     connection_id = str(uuid4())
     await websocket_manager.connect(websocket)
@@ -111,6 +116,10 @@ async def websocket_notifications_endpoint(websocket: WebSocket):
 
 @router.websocket("/logs/{entity_name}/{entity_id}")
 async def websocket_logs_endpoint(websocket: WebSocket, entity_id: str, entity_name: str):
+    if InfrakitchenConfig().websocket is False:
+        await websocket.close(code=1008)
+        return
+
     if not entity_id or not entity_name:
         await websocket.close(code=1008)
         return
@@ -157,6 +166,10 @@ async def websocket_logs_endpoint(websocket: WebSocket, entity_id: str, entity_n
 
 @router.websocket("/events")
 async def websocket_events_endpoint(websocket: WebSocket):
+    if InfrakitchenConfig().websocket is False:
+        await websocket.close(code=1008)
+        return
+
     websocket_manager = WebSocketConnectionManager()
     connection_id = str(uuid4())
     await websocket_manager.connect(websocket)

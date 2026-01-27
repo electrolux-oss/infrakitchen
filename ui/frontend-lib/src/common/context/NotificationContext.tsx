@@ -21,21 +21,29 @@ export const NotificationContext = createContext<
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [notification, setNotification] = useState<any>();
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketEnabled, globalConfig } = useConfig();
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
 
   useEffect(() => {
-    if (socketManagerRef.current === null) {
+    if (
+      socketManagerRef.current === null &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
       socketManagerRef.current = new WebSocketManager(
         ikApi,
         "/api/ws/notifications",
       );
     }
-  }, [ikApi]);
+  }, [ikApi, webSocketEnabled, globalConfig]);
 
   useEffect(() => {
-    if (socketManagerRef.current) {
+    if (
+      socketManagerRef.current &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
         setNotification(data);
@@ -49,7 +57,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         socketManagerRef.current.disconnect();
       }
     };
-  }, [setNotification]);
+  }, [setNotification, webSocketEnabled, globalConfig]);
 
   const contextValue: NotificationContextType = {
     notification,

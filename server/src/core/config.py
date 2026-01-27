@@ -50,6 +50,7 @@ class Settings(BaseSettings):
 class InfrakitchenConfig(metaclass=SingletonMeta):
     approval_flow: bool = True
     demo_mode: bool = False
+    websocket: bool = True
 
     def __setattr__(self, name: str, value: Any, /) -> None:
         if not hasattr(self, name):
@@ -61,3 +62,10 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
 
     def __str__(self) -> str:
         return self.__rep__()
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "approval_flow": self.approval_flow,
+            "demo_mode": self.demo_mode,
+            "websocket": self.websocket,
+        }

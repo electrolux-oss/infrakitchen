@@ -18,7 +18,7 @@ const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
 
 export const LogLiveTail = () => {
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketEnabled, globalConfig } = useConfig();
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
@@ -98,16 +98,24 @@ export const LogLiveTail = () => {
   );
 
   useEffect(() => {
-    if (socketManagerRef.current === null) {
+    if (
+      socketManagerRef.current === null &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
       socketManagerRef.current = new WebSocketManager(
         ikApi,
         `/api/ws/logs/${entity._entity_name}/${entity.id}`,
       );
     }
-  }, [ikApi, entity]);
+  }, [ikApi, entity, webSocketEnabled, globalConfig]);
 
   useEffect(() => {
-    if (socketManagerRef.current) {
+    if (
+      socketManagerRef.current &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
         pendingMessagesRef.current.push(data.data);
@@ -144,7 +152,11 @@ export const LogLiveTail = () => {
         clearTimeout(logActivityTimerRef.current);
       }
     };
-  }, [flushPendingMessages]);
+  }, [flushPendingMessages, webSocketEnabled, globalConfig]);
+
+  if (webSocketEnabled === false || !globalConfig?.websocket) {
+    return null;
+  }
 
   return (
     <Box

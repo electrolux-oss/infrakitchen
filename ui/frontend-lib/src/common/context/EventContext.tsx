@@ -21,18 +21,26 @@ export const EventContext = createContext<EventContextType | undefined>(
 
 export const EventProvider = ({ children }: { children: ReactNode }) => {
   const [event, setEvent] = useState<any>();
-  const { ikApi } = useConfig();
+  const { ikApi, webSocketEnabled, globalConfig } = useConfig();
 
   const socketManagerRef = useRef<WebSocketManager | null>(null);
 
   useEffect(() => {
-    if (socketManagerRef.current === null) {
-      socketManagerRef.current = new WebSocketManager(ikApi);
+    if (
+      socketManagerRef.current === null &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
+      socketManagerRef.current = new WebSocketManager(ikApi, "/api/ws/events");
     }
-  }, [ikApi]);
+  }, [ikApi, webSocketEnabled, globalConfig]);
 
   useEffect(() => {
-    if (socketManagerRef.current) {
+    if (
+      socketManagerRef.current &&
+      webSocketEnabled &&
+      globalConfig?.websocket
+    ) {
       socketManagerRef.current.setEventHandler((messageEvent) => {
         const data = JSON.parse(messageEvent.data);
         setEvent(data);
@@ -46,7 +54,7 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
         socketManagerRef.current.disconnect();
       }
     };
-  }, [setEvent]);
+  }, [setEvent, webSocketEnabled, globalConfig]);
 
   const contextValue: EventContextType = {
     event,
