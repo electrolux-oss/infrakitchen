@@ -6,5 +6,9 @@
   {
     "name": "Demo Mode",
     "enabled": false
+  },
+  {
+    "name": "Websocket",
+    "enabled": true
   }
 ]

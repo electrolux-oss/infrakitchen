@@ -4,20 +4,16 @@ export interface WebSocketEventHandler {
 }
 
 class WebSocketManager {
-  private readonly path: string = "/api/ws/events";
   private socket: WebSocket | null = null;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private url: string;
   private eventHandler: WebSocketEventHandler | null = null;
   private readonly ikApi: InfraKitchenApi;
 
-  constructor(ikApi: InfraKitchenApi, path?: string) {
+  constructor(ikApi: InfraKitchenApi, path: string) {
     this.ikApi = ikApi;
-    if (path) {
-      this.path = path;
-    }
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.url = `${protocol}//${window.location.host}${this.path}`;
+    this.url = `${protocol}//${window.location.host}${path}`;
   }
 
   public setEventHandler(handler: WebSocketEventHandler): void {
