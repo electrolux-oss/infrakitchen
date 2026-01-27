@@ -98,6 +98,7 @@ nav:
           - Execution Logs: operations/activity/logs.md
           - Revision History: operations/activity/revisions.md
       # - MCP Server: operations/mcp.md - we do not support it yet
+      - Feature Flags: operations/feature_flags.md
   - Architecture: architecture.md
   - FAQ: faq.md
 
