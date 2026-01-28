@@ -28,6 +28,7 @@ export interface IKDataProvider extends InfraKitchenApi {
   deleteRaw: (path: string, params: { [key: string]: any }) => Promise<any>;
   patchRaw: (path: string, params: { [key: string]: any }) => Promise<any>;
   getList: (entity: string, params: GetListParams) => Promise<any>;
+  restartDeployment: (path: string) => Promise<any>;
   [key: string]: (...args: any[]) => Promise<any>;
 }
 
@@ -274,6 +275,22 @@ export const ikDataProvider = (apiUrl: string): IKDataProvider => {
         throw new Error(`Failed to parse JSON response: ${e}`);
       }
     },
+
+    restartDeployment: async (path: string) => {
+      const url = `${apiUrl}/${path}`;
+      const response = await fetchWithAuth(url.toString(), {
+        method: "PUT"
+      });
+      if (!response.ok) {
+        await parseErrorBody(response);
+      }
+      try {
+        const json = await response.json();
+        return json;
+      } catch (e) {
+        throw new Error(`Failed to parse JSON response: ${e}`);
+      }
+    }
   };
 };
 
