@@ -22,10 +22,11 @@ interface DeploymentsDetailsProps {
   entityId: string;
   namespace: string;
   kubernetesResourceType: string;
+  clusterName: string;
 }
 
 export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
-  const { entityId, namespace, kubernetesResourceType } = props;
+  const { entityId, namespace, kubernetesResourceType, clusterName } = props;
   const { ikApi } = useConfig();
 
   const [deployments, setDeployments] = useState<string[]>([]);
@@ -140,6 +141,7 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
         namespace={namespace}
         kubernetesResourceType={kubernetesResourceType}
         deploymentName={selectedDeployment}
+        clusterName={clusterName}
       />
     </>
   );
