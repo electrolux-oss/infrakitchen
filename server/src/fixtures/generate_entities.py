@@ -2,7 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import datetime
 import random
-from typing import Literal, cast
+from typing import Any, Literal, TypedDict, cast
 
 from lorem import get_sentence, get_word
 from sqlalchemy import select, update
@@ -25,6 +25,8 @@ from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.schema import SourceCodeCreate
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
+from application.validation_rules.model import ValidationRule
+from application.validation_rules.types import ValidationRuleDataType
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.schema import AuthProviderCreate, GuestProviderConfig
 from core.config import setup_service_environment
@@ -63,6 +65,22 @@ from application.storages.schema import AWSStorageConfig, AzureRMStorageConfig
 from application.storages.model import Storage
 
 
+class ValidationRuleUpdates(TypedDict, total=False):
+    regex: str
+    no_whitespace: bool
+    max_length: int
+    min_value: float
+    max_value: float
+    rule_metadata: dict[str, Any]
+
+
+class ValidationRuleSpec(TypedDict):
+    entity_name: str
+    field_path: str
+    data_type: ValidationRuleDataType
+    updates: ValidationRuleUpdates
+
+
 async def send_message(message: MessageModel, confirm: bool = False):
     pass
 
@@ -97,6 +115,32 @@ async def change_state(
 
     await session.execute(statement)
     await session.commit()
+
+
+def generate_resource_name(max_length: int = 256) -> str:
+    candidate = "_".join(get_word(count=3).split())
+    if not candidate:
+        candidate = f"resource_{random.randint(1000, 9999)}"
+    return candidate[:max_length]
+
+
+def apply_validation_rule_updates(instance: ValidationRule, updates: ValidationRuleUpdates) -> None:
+    if "regex" in updates:
+        instance.regex = updates["regex"]
+    if "no_whitespace" in updates:
+        instance.no_whitespace = updates["no_whitespace"]
+    if "max_length" in updates:
+        instance.max_length = updates["max_length"]
+    if "min_value" in updates:
+        instance.min_value = updates["min_value"]
+    if "max_value" in updates:
+        instance.max_value = updates["max_value"]
+
+    metadata_updates = updates.get("rule_metadata")
+    if metadata_updates:
+        existing_metadata = dict(instance.rule_metadata or {})
+        existing_metadata.update(metadata_updates)
+        instance.rule_metadata = existing_metadata
 
 
 async def create_auth_provider(session: AsyncSession, user: UserDTO):
@@ -174,6 +218,44 @@ async def insert_template(session: AsyncSession, user: UserDTO):
             current_template = await template_service.create(template, user)
             await session.commit()
             previous_template = current_template
+
+
+async def insert_validation_rules(session: AsyncSession):
+    rule_specs: list[ValidationRuleSpec] = [
+        {
+            "entity_name": "resource",
+            "field_path": "variables.cluster_name",
+            "data_type": ValidationRuleDataType.STRING,
+            "updates": {
+                "max_length": 128,
+                "rule_metadata": {
+                    "field": "cluster_name",
+                    "max_length": "Cluster name must be 128 characters or fewer.",
+                },
+            },
+        }
+    ]
+
+    for spec in rule_specs:
+        stmt = select(ValidationRule).where(
+            ValidationRule.entity_name == spec["entity_name"],
+            ValidationRule.field_path == spec["field_path"],
+        )
+        result = await session.execute(stmt)
+        instance = result.scalars().first()
+
+        if instance is None:
+            instance = ValidationRule(
+                entity_name=spec["entity_name"],
+                field_path=spec["field_path"],
+                data_type=spec["data_type"],
+            )
+            session.add(instance)
+
+        instance.data_type = spec["data_type"]
+        apply_validation_rule_updates(instance, spec["updates"])
+
+    await session.commit()
 
 
 async def insert_source_code_and_version(session: AsyncSession, user: UserDTO):
@@ -529,7 +611,7 @@ async def insert_resources(session: AsyncSession, env: str, user: UserDTO):
             source_code_version = await source_code_version_service.get_by_id_with_configs(str(scv.id))
             assert source_code_version is not None, "Source code version is none"
 
-            name = get_word(count=3).replace(" ", "_")
+            name = generate_resource_name()
             variables = []
             for v in source_code_version.variable_configs:
                 if v.type == "string":
@@ -674,6 +756,7 @@ async def create_fixtures():
         await create_auth_provider(session, user)
         await insert_template(session, user)
         await session.commit()
+        await insert_validation_rules(session)
         for env in envs:
             await insert_integrations(session, env, user)
             await insert_storages(session, env, user)
