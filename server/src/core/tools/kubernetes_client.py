@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime, UTC
 from kubernetes_asyncio.client import Configuration, CoreV1Api, ApiClient, AppsV1Api
 
 
@@ -82,3 +83,19 @@ class KubernetesClient:
         async with ApiClient(self.configuration) as api:
             v1 = CoreV1Api(api)
             return await v1.delete_namespaced_pod(pod_name, namespace)
+
+    async def restart_namespaced_deployment(self, deployment: str, namespace: str):
+        async with ApiClient(self.configuration) as api:
+            apps_v1 = AppsV1Api(api)
+
+            body = {
+                "spec": {
+                    "template": {
+                        "metadata": {
+                            "annotations": {"kubectl.kubernetes.io/restartedAt": datetime.now(UTC).isoformat()}
+                        }
+                    }
+                }
+            }
+
+            return await apps_v1.patch_namespaced_deployment(name=deployment, namespace=namespace, body=body)
