@@ -170,6 +170,15 @@ export default function DashboardSidebar({
             permissionKey="resource"
           />
 
+          <DashboardSidebarPageItem
+            id="executors"
+            title="Executors"
+            icon={<Icon icon="emojione:package" width="22" height="24" />}
+            href="/executors"
+            selected={!!matchPath("/executors/*", pathname)}
+            permissionKey="executor"
+          />
+
           <DashboardSidebarDividerItem />
           <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>
 

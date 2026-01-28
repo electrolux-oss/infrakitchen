@@ -1,9 +1,10 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.executors.model import Executor
 from application.integrations.model import Integration
 from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
@@ -88,12 +89,19 @@ class SourceCodeCRUD:
         await self.session.delete(source_code)
 
     async def get_dependencies(self, existing_source_code: SourceCode) -> list[Any]:
-        statement = select(
+        scv_statement = select(
             SourceCodeVersion.id.label("id"),
             literal("source_code_version").label("type"),
             SourceCodeVersion.source_code_folder.label("name"),
         ).where(SourceCodeVersion.source_code_id == existing_source_code.id)
-        result = await self.session.execute(statement)
+
+        executor_statement = select(
+            Executor.id.label("id"),
+            literal("executor").label("type"),
+            Executor.name.label("name"),
+        ).where(Executor.source_code_id == existing_source_code.id)
+        combined_statement = union_all(scv_statement, executor_statement)
+        result = await self.session.execute(combined_statement)
         return list(result.fetchall())
 
     async def refresh(self, source_code: SourceCode) -> None:

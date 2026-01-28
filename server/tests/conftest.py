@@ -22,6 +22,13 @@ from .fixtures.test_handlers_fixtures import (
     mock_task_handler,
 )
 from .fixtures.test_entity_tasks_fixtures import mock_task_entity_crud, mock_task_entity_service
+from .fixtures.test_executor_fixtures import (
+    mock_executor_crud,
+    mock_executor_service,
+    executor_response,
+    mocked_executor,
+    many_executor_response,
+)
 from .fixtures.test_integration_fixtures import (
     mock_integration_crud,
     mock_integration_service,
@@ -148,6 +155,11 @@ __all__ = [
     "resource_response",
     "mocked_resource",
     "many_resource_response",
+    "mock_executor_crud",
+    "mock_executor_service",
+    "executor_response",
+    "mocked_executor",
+    "many_executor_response",
     "aws_integration_config",
     "mock_casbin",
     "mock_permission_crud",

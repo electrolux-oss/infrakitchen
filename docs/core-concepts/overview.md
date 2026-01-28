@@ -76,6 +76,45 @@ Module Path: aws-vpc/
 
 ---
 
+## ⚙️ Executor
+
+An **Executor** is a specialized component for running infrastructure modules that perform specific, non-reusable tasks.
+
+### Use Cases
+
+Unlike Templates that define reusable infrastructure patterns, Executors are designed for:
+
+- **One-time operations** - Database migrations, data imports, cleanup tasks
+- **Specialized workflows** - Custom scripts that don't fit the template model
+- **Utility tasks** - Infrastructure operations that aren't meant to be templated
+
+### Executor Properties
+
+```yaml
+ID: exec-xyz789
+Name: database-migration-v2
+Runtime: opentofu
+Command: -var-file=environments/dev/eu-west-1.tfvars
+Source Code: github.com/myorg/utility-scripts
+Version: v2.1.0
+Module Path: migrations/database-v2/
+
+Integrations:
+  - AWS Production Account
+  - Database Credentials
+
+State: provisioned
+Status: done
+```
+
+### Key Differences from Resources
+
+- **Not templated** - Executors run specific modules directly
+- **Task-oriented** - Designed for single-purpose operations
+- **No hierarchy** - Executors don't follow parent-child relationships
+
+---
+
 ## 📦 Resource
 
 A **Resource** is an actual instance of infrastructure, created from a Template and Source Code Version.

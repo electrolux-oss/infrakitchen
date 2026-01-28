@@ -26,13 +26,13 @@ class TestOtfClient(OtfClient):
     async def init(self):
         pass
 
-    async def apply(self):
+    async def apply(self, command_args: str = "-auto-approve=true"):
         pass
 
-    async def destroy(self):
+    async def destroy(self, command_args: str = "-auto-approve=true"):
         pass
 
-    async def dry_run(self, destroy: bool = False):
+    async def dry_run(self, command_args: str = "", destroy: bool = False):
         pass
 
     async def get_output(self) -> dict[str, Any]:

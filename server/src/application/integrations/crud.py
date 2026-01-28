@@ -5,6 +5,7 @@ from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import union_all
 
+from application.executors.model import Executor
 from application.resources.model import Resource
 from application.source_codes.model import SourceCode
 from application.storages.model import Storage
@@ -80,8 +81,13 @@ class IntegrationCRUD:
             Storage.name.label("name"),
             literal("storage").label("type"),
         ).where(Storage.integration_id == existing_integration.id)
+        executor_statement = select(
+            Executor.id.label("id"),
+            Executor.name.label("name"),
+            literal("executor").label("type"),
+        ).where(Executor.integration_ids.any(Integration.id == existing_integration.id))
 
-        combined_statement = union_all(resource_statement, source_code_statement, storage_statement)
+        combined_statement = union_all(resource_statement, source_code_statement, storage_statement, executor_statement)
         result = await self.session.execute(combined_statement)
         return list(result.fetchall())
 

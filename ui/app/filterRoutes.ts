@@ -19,6 +19,7 @@ import {
   roleRoutes,
   permissionRoutes,
   secretRoutes,
+  executorRoutes,
 } from "@electrolux-oss/infrakitchen";
 
 type RouteGroup = {
@@ -48,6 +49,7 @@ const routeGroups: RouteGroup[] = [
   { key: "task", routes: taskRoutes },
   { key: "workspace", routes: workspaceRoutes },
   { key: "worker", routes: workerRoutes },
+  { key: "executor", routes: executorRoutes },
 ];
 
 export const useFilteredProtectedRoutes = (): RouteObject[] => {

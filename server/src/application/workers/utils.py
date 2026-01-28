@@ -2,6 +2,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.executors.crud import ExecutorCRUD
+from application.executors.dependencies import get_executor_service
+from application.executors.task import ExecutorTask
 from application.integrations.dependencies import get_integration_service
 from application.resources.crud import ResourceCRUD
 from application.resources.dependencies import get_resource_service
@@ -178,6 +181,47 @@ async def get_resource_task(
         user=user,
         event_sender=event_sender,
         workspace_event_sender=workspace_event_sender,
+        action=action,
+    )
+
+
+async def get_executor_task(
+    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+) -> ExecutorTask:
+    crud_executor = ExecutorCRUD(session=session)
+    event_sender = EventSender(entity_name="executor")
+    source_code_service = get_source_code_service(session=session)
+
+    executor_instance = await crud_executor.get_by_id(obj_id)
+    if not executor_instance:
+        raise CannotProceed(f"Executor {obj_id} not found")
+
+    task_handler = TaskHandler(
+        TaskEntityCRUD(session=session), entity_name="executor", entity_id=executor_instance.id, user=user
+    )
+    r_logger = EntityLogger(
+        entity_name="executor",
+        entity_id=executor_instance.id,
+        revision_number=int(executor_instance.revision_number),
+        trace_id=trace_id,
+    )
+
+    secret_manager = get_secret_manager(
+        logger=r_logger,
+        integration_service=get_integration_service(session=session),
+    )
+
+    return ExecutorTask(
+        session=session,
+        crud_executor=crud_executor,
+        executor_service=get_executor_service(session=session),
+        executor_instance=executor_instance,
+        source_code_service=source_code_service,
+        task_handler=task_handler,
+        logger=r_logger,
+        secret_manager=secret_manager,
+        user=user,
+        event_sender=event_sender,
         action=action,
     )
 

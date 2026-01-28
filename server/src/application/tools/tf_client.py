@@ -64,7 +64,7 @@ class OtfClient:
             f"Backend config generated. {self.backend_storage_config} File path is {self.workspace_path}/backend.tfvars"
         )
 
-    async def _run_command(self, command_args) -> str:
+    async def _run_command(self, command_args: str | list[str]) -> str:
         """
         Run Terraform command and print realtime output
         """
@@ -92,29 +92,29 @@ class OtfClient:
         self.logger.info("Initializing Tofu...")
         await self._run_command("init -force-copy -reconfigure -backend-config=backend.tfvars")
 
-    async def apply(self):
+    async def apply(self, command_args: str = "-auto-approve=true"):
         """
         Apply Tofu configuration.
         """
         self.logger.info("Applying Tofu...")
-        await self._run_command("apply -auto-approve=true")
+        await self._run_command(f"apply {command_args}")
 
-    async def destroy(self):
+    async def destroy(self, command_args: str = "-auto-approve=true"):
         """
         Destroy Tofu configuration.
         """
         self.logger.info("Destroying Tofu...")
-        await self._run_command("destroy -auto-approve=true")
+        await self._run_command(f"destroy {command_args}")
 
-    async def dry_run(self, destroy: bool = False):
+    async def dry_run(self, command_args: str = "", destroy: bool = False):
         """
         Dry run Tofu configuration.
         """
         if destroy:
             self.logger.info("Planning Tofu destroy...")
-            await self._run_command("plan -destroy")
+            await self._run_command(f"plan -destroy {command_args}")
         else:
-            await self._run_command("plan")
+            await self._run_command(f"plan {command_args}")
 
     async def get_output(self) -> dict[str, Any]:
         """

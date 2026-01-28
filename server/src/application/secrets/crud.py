@@ -1,9 +1,10 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.executors.model import Executor
 from application.integrations.model import Integration
 from application.resources.model import Resource
 from core.users.model import User
@@ -72,7 +73,13 @@ class SecretCRUD:
             Resource.id.label("id"), Resource.name.label("name"), literal("resource").label("type")
         ).where(Resource.secret_ids.any(Secret.id == existing_secret.id))
 
-        result = await self.session.execute(resource_statement)
+        executor_statement = select(
+            Executor.id.label("id"),
+            Executor.name.label("name"),
+            literal("executor").label("type"),
+        ).where(Executor.secret_ids.any(Secret.id == existing_secret.id))
+        combined_statement = union_all(resource_statement, executor_statement)
+        result = await self.session.execute(combined_statement)
         return list(result.fetchall())
 
     async def refresh(self, secret: Secret) -> None:

@@ -93,6 +93,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
   return (
     <FormControl fullWidth margin="normal">
       <Autocomplete
+        readOnly={otherProps.readOnly}
         disabled={otherProps.disabled}
         value={selectedOption}
         options={options}

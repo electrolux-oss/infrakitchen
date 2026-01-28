@@ -6,11 +6,13 @@ from uuid import UUID
 from aio_pika import ExchangeType
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.executors.task import ExecutorTask
 from application.resources.task import ResourceTask
 from application.source_code_versions.task import SourceCodeVersionTask
 from application.source_codes.task import SourceCodeTask
 from application.storages.task import StorageTask
 from application.workers.utils import (
+    get_executor_task,
     get_source_code_task,
     get_source_code_version_task,
     get_storage_task,
@@ -115,7 +117,7 @@ class TaskWorker(BaseMessagesWorker):
 
     async def get_task_controller(
         self, entity_controller: str, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
-    ) -> SourceCodeTask | SourceCodeVersionTask | StorageTask | ResourceTask | WorkspaceTask:
+    ) -> SourceCodeTask | SourceCodeVersionTask | StorageTask | ResourceTask | WorkspaceTask | ExecutorTask:
         match entity_controller:
             case "source_code":
                 return await get_source_code_task(
@@ -135,6 +137,10 @@ class TaskWorker(BaseMessagesWorker):
                 )
             case "workspace":
                 return await get_workspace_task(
+                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                )
+            case "executor":
+                return await get_executor_task(
                     session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
                 )
             case _:
