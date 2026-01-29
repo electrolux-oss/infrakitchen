@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from application.integrations.service import IntegrationService
 from core.audit_logs.handler import AuditLogHandler
@@ -46,7 +47,7 @@ class StorageService:
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
 
-    async def get_by_id(self, storage_id: str) -> StorageResponse | None:
+    async def get_by_id(self, storage_id: str | UUID) -> StorageResponse | None:
         storage = await self.crud.get_by_id(storage_id)
         if storage is None:
             return None

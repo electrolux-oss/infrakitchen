@@ -1,4 +1,5 @@
 DEFAULT_ENTITIES = [
+    "executor",
     "template",
     "resource",
     "resource_temp_state",

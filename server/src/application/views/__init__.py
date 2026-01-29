@@ -34,6 +34,7 @@ from ..source_code_versions import api as source_code_versions_api
 from ..storages import api as storages_api
 from ..secrets import api as secrets_api
 from ..workspaces import api as workspaces_api
+from ..executors import api as executors_api
 from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
 from ..views import config_view as config
@@ -134,6 +135,11 @@ api.include_router(
 api.include_router(
     workspaces_api.router,
     tags=["Core", "Workspaces"],
+)
+
+api.include_router(
+    executors_api.router,
+    tags=["Core", "Executors"],
 )
 
 api.include_router(

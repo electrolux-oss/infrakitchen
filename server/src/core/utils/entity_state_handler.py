@@ -31,7 +31,7 @@ async def approve_entity(entity_instance: BaseEntity, abstract: bool = False):
         raise ValueError(f"Entity cannot be approved, has wrong state {entity_instance.state}")
 
 
-async def destroy_entity(entity_instance: BaseEntity):
+async def destroy_entity(entity_instance: BaseEntity, is_resource: bool = True):
     def can_be_destroyed():
         if entity_instance.state == ModelState.PROVISIONED:
             return True
@@ -44,7 +44,7 @@ async def destroy_entity(entity_instance: BaseEntity):
     if can_be_destroyed() is False:
         raise ValueError(f"Entity cannot be destroyed, has wrong state {entity_instance.state}")
 
-    if InfrakitchenConfig().approval_flow is True:
+    if InfrakitchenConfig().approval_flow is True and is_resource is True:
         entity_instance.status = ModelStatus.APPROVAL_PENDING
     else:
         entity_instance.status = ModelStatus.READY

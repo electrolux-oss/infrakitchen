@@ -21,3 +21,4 @@ export * from "./templates";
 export * from "./resources";
 export * from "./administration";
 export * from "./icons";
+export * from "./executors";

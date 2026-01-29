@@ -57,6 +57,7 @@ nav:
   - Core Concepts:
       - Overview: core-concepts/overview.md
       - Templates: core-concepts/templates/overview.md
+      - Executors: core-concepts/executors/overview.md
       - Resources:
           - Overview: core-concepts/resources/overview.md
           - Workflow: core-concepts/resources/workflow.md

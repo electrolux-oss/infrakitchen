@@ -1,3 +1,4 @@
+from .executors import ExecutorDTO
 from .templates import TemplateDTO
 from .integrations import IntegrationDTO
 from .source_codes import SourceCodeDTO
@@ -17,6 +18,7 @@ from .tools.cloud_api_manager import CloudApiManager
 from .tools.secret_manager import SecretManager
 
 __all__ = [
+    "ExecutorDTO",
     "TemplateDTO",
     "CloudApiManager",
     "SecretManager",
