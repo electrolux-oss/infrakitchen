@@ -88,6 +88,7 @@ export const ResourceStateReviewDialog: React.FC<
   return (
     <CommonDialog
       title={title}
+      maxWidth="xl"
       open={open}
       onClose={onClose}
       content={
