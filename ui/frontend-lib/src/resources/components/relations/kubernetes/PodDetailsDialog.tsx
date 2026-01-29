@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useConfig, CommonDialog } from "../../../../common";
+
 import { PodDetails } from "./PodDetails";
 
 interface PodDetailsDialogProps {
@@ -21,7 +22,7 @@ export const PodDetailsDialog = (props: PodDetailsDialogProps) => {
     namespace,
     kubernetesResourceType,
     deploymentName,
-    clusterName
+    clusterName,
   } = props;
   const { ikApi } = useConfig();
 

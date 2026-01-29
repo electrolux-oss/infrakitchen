@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 
+import { RestartAlt } from "@mui/icons-material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import WarningIcon from "@mui/icons-material/Warning";
 import {
   Button,
   Typography,
@@ -24,10 +26,8 @@ import {
 } from "@mui/material";
 
 import { CommonDialog, useConfig } from "../../../../common";
-import { notify, notifyError } from "../../../../common/hooks/useNotification";
-import { RestartAlt } from "@mui/icons-material";
 import { getDateValue } from "../../../../common/components/CommonField";
-import WarningIcon from "@mui/icons-material/Warning";
+import { notify, notifyError } from "../../../../common/hooks/useNotification";
 
 interface PodDetailsProps {
   loadingPods: boolean;
@@ -343,22 +343,22 @@ const RestartPodsDialog = (props: {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRestart = () => {
-    setIsLoading(true)
+    setIsLoading(true);
     ikApi
       .restartDeployment(
         `provider/kubernetes/${kubernetesResourceType}/${entityId}/namespaces/${namespace}/deployments/${deploymentName}`,
       )
       .then(() => {
         notify("Deployment restarted successfully", "success");
-        setIsLoading(false)
+        setIsLoading(false);
         setOpenRestartConfirmationDialog(false);
       })
       .catch((error) => {
         notifyError(error);
-        setIsLoading(false)
+        setIsLoading(false);
         setOpenRestartConfirmationDialog(false);
       });
-  }
+  };
 
   return (
     <CommonDialog
@@ -374,17 +374,17 @@ const RestartPodsDialog = (props: {
       open={openRestartConfirmationDialog}
       onClose={() => setOpenRestartConfirmationDialog(false)}
       content={
-      <>
-        <Typography>
-          Are you sure you want to restart all pods for the {deploymentName} in
-          the {clusterName} cluster?
-        </Typography>
-        {isLoading && (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-            <CircularProgress />
-          </Box>
-        )}
-      </>
+        <>
+          <Typography>
+            Are you sure you want to restart all pods for the {deploymentName}{" "}
+            in the {clusterName} cluster?
+          </Typography>
+          {isLoading && (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+              <CircularProgress />
+            </Box>
+          )}
+        </>
       }
       actions={
         <Button onClick={handleRestart} variant="contained">

@@ -279,7 +279,7 @@ export const ikDataProvider = (apiUrl: string): IKDataProvider => {
     restartDeployment: async (path: string) => {
       const url = `${apiUrl}/${path}`;
       const response = await fetchWithAuth(url.toString(), {
-        method: "PUT"
+        method: "PUT",
       });
       if (!response.ok) {
         await parseErrorBody(response);
@@ -290,7 +290,7 @@ export const ikDataProvider = (apiUrl: string): IKDataProvider => {
       } catch (e) {
         throw new Error(`Failed to parse JSON response: ${e}`);
       }
-    }
+    },
   };
 };
 
