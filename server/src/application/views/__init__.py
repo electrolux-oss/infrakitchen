@@ -35,6 +35,7 @@ from ..storages import api as storages_api
 from ..secrets import api as secrets_api
 from ..workspaces import api as workspaces_api
 from ..executors import api as executors_api
+from ..validation_rules import api as validation_rules_api
 from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
 from ..views import config_view as config
@@ -115,6 +116,11 @@ api.include_router(
 api.include_router(
     resource_variables.router,
     tags=["Core"],
+)
+
+api.include_router(
+    validation_rules_api.router,
+    tags=["Core", "Validation Rules"],
 )
 
 api.include_router(

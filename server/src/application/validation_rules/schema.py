@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Any
 import uuid
 
@@ -21,7 +20,5 @@ class ValidationRuleBase(BaseModel):
 
 class ValidationRuleResponse(ValidationRuleBase):
     id: uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(from_attributes=True)
