@@ -53,6 +53,7 @@ from .fixtures.test_resource_fixtures import (
     resource_response,
     mocked_resource,
     many_resource_response,
+    mock_validation_rule_service,
 )
 from .fixtures.test_resource_temp_state_fixtures import (
     mocked_resource_temp_state_response,
@@ -160,6 +161,7 @@ __all__ = [
     "executor_response",
     "mocked_executor",
     "many_executor_response",
+    "mock_validation_rule_service",
     "aws_integration_config",
     "mock_casbin",
     "mock_permission_crud",

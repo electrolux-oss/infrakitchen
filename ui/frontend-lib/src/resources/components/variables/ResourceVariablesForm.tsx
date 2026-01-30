@@ -2,20 +2,64 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { TableCell, TableRow, Typography, Chip } from "@mui/material";
 
-import { ResourceVariableSchema } from "../../types";
+import { ResourceVariableSchema, ValidationRule } from "../../types";
+import {
+  createNumberValidator,
+  createStringValidator,
+} from "../../utils/validationRules";
 
 import { ResourceVariableInput } from "./ResourceVariableInput";
+
+const buildVariableValidators = (
+  variable: ResourceVariableSchema,
+  validationRule?: ValidationRule,
+): Record<string, (value: any) => true | string> => {
+  const validators: Record<string, (value: any) => true | string> = {};
+
+  if (variable.required) {
+    validators.required = (value) => {
+      if (value === undefined || value === null) {
+        return "This field is required";
+      }
+      if (typeof value === "string" && value.trim().length === 0) {
+        return "This field is required";
+      }
+      return true;
+    };
+  }
+
+  if (variable.type === "string") {
+    const stringValidator = createStringValidator(validationRule);
+    if (stringValidator) {
+      validators.rule = (value) =>
+        stringValidator(value as string | undefined | null);
+    }
+  } else if (variable.type === "number") {
+    const numberValidator = createNumberValidator(validationRule);
+    if (numberValidator) {
+      validators.rule = (value) =>
+        numberValidator(value as number | string | undefined | null);
+    }
+  }
+
+  return validators;
+};
 
 export const ResourceVariableForm = (props: {
   index: number;
   variable: ResourceVariableSchema;
   edit_mode?: boolean;
+  validationRule?: ValidationRule;
 }) => {
-  const { index, variable, edit_mode = false } = props;
+  const { index, variable, edit_mode = false, validationRule } = props;
   const { control } = useFormContext();
 
   if (variable.restricted) return null;
   if (variable.sensitive) return null;
+
+  const validators = buildVariableValidators(variable, validationRule);
+  const rules =
+    Object.keys(validators).length > 0 ? { validate: validators } : undefined;
 
   return (
     <TableRow>
@@ -50,12 +94,7 @@ export const ResourceVariableForm = (props: {
       </TableCell>
       <TableCell sx={{ width: "300px" }}>
         <Controller
-          rules={{
-            validate: (value) =>
-              variable.required && (value === null || value === undefined)
-                ? "This field is required"
-                : true,
-          }}
+          rules={rules}
           name={`variables.${index}.value`}
           control={control}
           render={({ field, fieldState }) => (
@@ -64,6 +103,7 @@ export const ResourceVariableForm = (props: {
               variable={variable}
               field={field}
               fieldState={fieldState}
+              validationRule={validationRule}
             />
           )}
         />

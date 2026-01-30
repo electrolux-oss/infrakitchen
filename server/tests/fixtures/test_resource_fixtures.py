@@ -8,6 +8,7 @@ from application.resources.crud import ResourceCRUD
 from application.resources.model import Resource, ResourceDTO
 from application.resources.schema import DependencyConfig, DependencyTag, Outputs, ResourceResponse, Variables
 from application.resources.service import ResourceService
+from application.validation_rules.service import ValidationRuleService
 
 
 @pytest.fixture
@@ -31,6 +32,13 @@ def mock_resource_crud():
 
 
 @pytest.fixture
+def mock_validation_rule_service():
+    service = Mock(spec=ValidationRuleService)
+    service.list_rules = AsyncMock(return_value=[])
+    return service
+
+
+@pytest.fixture
 def mock_resource_service(
     mock_template_service,
     mock_resource_crud,
@@ -44,6 +52,7 @@ def mock_resource_service(
     mocked_resource_temp_state_handler,
     mock_log_service,
     mock_task_entity_service,
+    mock_validation_rule_service,
 ):
     return ResourceService(
         crud=mock_resource_crud,
@@ -59,6 +68,7 @@ def mock_resource_service(
         resource_temp_state_handler=mocked_resource_temp_state_handler,
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
+        validation_rule_service=mock_validation_rule_service,
     )
 
 

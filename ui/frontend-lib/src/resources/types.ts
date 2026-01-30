@@ -116,3 +116,18 @@ export interface ResourceTempStateResponse {
   created_at: Date;
   updated_at: Date;
 }
+
+export type ValidationRuleDataType = "string" | "number";
+
+export interface ValidationRule {
+  id: string;
+  entity_name: string;
+  field_path: string;
+  data_type: ValidationRuleDataType;
+  regex?: string | null;
+  no_whitespace: boolean;
+  max_length?: number | null;
+  min_value?: number | null;
+  max_value?: number | null;
+  rule_metadata: Record<string, unknown>;
+}

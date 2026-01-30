@@ -33,6 +33,7 @@ import PageContainer from "../../common/PageContainer";
 import { TemplateResponse } from "../../templates/types";
 import { IkEntity } from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
+import { useValidationRules } from "../hooks/useValidationRules";
 import {
   ResourceCreate,
   ResourceResponse,
@@ -66,6 +67,7 @@ const ResourceCreatePageInner = () => {
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { getRuleForPath } = useValidationRules("resource");
 
   useEffect(() => {
     const template_id = location.state?.template_id as string | undefined;
@@ -613,15 +615,22 @@ const ResourceCreatePageInner = () => {
                 <AccordionDetails>
                   <Table>
                     <TableBody>
-                      {fields.map((field, index) =>
-                        schema && schema[index] ? (
+                      {fields.map((field, index) => {
+                        if (!schema || !schema[index]) {
+                          return null;
+                        }
+
+                        return (
                           <ResourceVariableForm
                             key={field.id}
                             index={index}
                             variable={schema[index]}
+                            validationRule={getRuleForPath(
+                              `variables.${schema[index].name}`,
+                            )}
                           />
-                        ) : null,
-                      )}
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </AccordionDetails>
