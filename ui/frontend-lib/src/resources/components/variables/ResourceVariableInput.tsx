@@ -14,7 +14,8 @@ import {
 } from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
 
-import { ResourceVariableSchema } from "../../types";
+import { ResourceVariableSchema, ValidationRule } from "../../types";
+import { handleTrimOnBlur } from "../../utils/validationRules";
 
 interface JsonEditorProps {
   field: {
@@ -79,8 +80,15 @@ export const ResourceVariableInput = (props: {
   field: any;
   fieldState: any;
   isDisabled?: boolean;
+  validationRule?: ValidationRule;
 }) => {
-  const { variable, field, fieldState, isDisabled = false } = props;
+  const {
+    variable,
+    field,
+    fieldState,
+    isDisabled = false,
+    validationRule,
+  } = props;
 
   switch (variable.type) {
     case "string":
@@ -116,6 +124,10 @@ export const ResourceVariableInput = (props: {
             margin="normal"
             disabled={isDisabled}
             error={!!fieldState.error}
+            helperText={fieldState.error?.message}
+            onBlur={() =>
+              handleTrimOnBlur(field.value, field.onChange, field.onBlur)
+            }
           />
         );
       }
@@ -141,6 +153,17 @@ export const ResourceVariableInput = (props: {
           fullWidth
           margin="normal"
           error={!!fieldState.error}
+          helperText={fieldState.error?.message}
+          inputProps={{
+            min:
+              typeof validationRule?.min_value === "number"
+                ? validationRule.min_value
+                : undefined,
+            max:
+              typeof validationRule?.max_value === "number"
+                ? validationRule.max_value
+                : undefined,
+          }}
         />
       );
 

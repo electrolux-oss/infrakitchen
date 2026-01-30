@@ -32,6 +32,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
+import { useValidationRules } from "../hooks/useValidationRules";
 import {
   ResourceResponse,
   ResourceTempStateResponse,
@@ -145,6 +146,7 @@ export const ResourceEditPageInner = (props: {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const { getRuleForPath } = useValidationRules("resource");
 
   function getSchemaObject(schema: ResourceVariableSchema[]) {
     return schema.reduce((acc: Record<string, any>, variable) => {
@@ -478,18 +480,27 @@ export const ResourceEditPageInner = (props: {
                   <AccordionDetails>
                     <Table>
                       <TableBody>
-                        {fields.map((field, index) =>
-                          schema && schema[index] ? (
+                        {fields.map((field, index) => {
+                          if (!schema || !schema[index]) {
+                            return null;
+                          }
+
+                          const schemaEntry =
+                            getSchemaObject(schema)[field.name] ||
+                            schema[index];
+
+                          return (
                             <ResourceVariableForm
                               key={field.id}
                               index={index}
                               edit_mode={true}
-                              variable={
-                                getSchemaObject(schema)[field.name] || {}
-                              }
+                              variable={schemaEntry}
+                              validationRule={getRuleForPath(
+                                `variables.${schemaEntry.name}`,
+                              )}
                             />
-                          ) : null,
-                        )}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </AccordionDetails>

@@ -224,13 +224,16 @@ async def insert_validation_rules(session: AsyncSession):
     rule_specs: list[ValidationRuleSpec] = [
         {
             "entity_name": "resource",
-            "field_path": "variables.cluster_name",
+            "field_path": "variables.k8s_namespace_cloud_test_var_3",
             "data_type": ValidationRuleDataType.STRING,
             "updates": {
-                "max_length": 128,
+                "max_length": 24,
+                "regex": "^[a-z0-9_]+$",
                 "rule_metadata": {
-                    "field": "cluster_name",
-                    "max_length": "Cluster name must be 128 characters or fewer.",
+                    "field": "k8s_namespace_cloud_test_var_3",
+                    "max_length": "k8s_namespace_cloud_test_var_3 must be 24 characters or fewer.",
+                    "regex": "k8s_namespace_cloud_test_var_3 must only contain lowercase letters, "
+                    + "numbers, and underscores.",
                 },
             },
         }
@@ -615,10 +618,14 @@ async def insert_resources(session: AsyncSession, env: str, user: UserDTO):
             variables = []
             for v in source_code_version.variable_configs:
                 if v.type == "string":
+                    value = f"test_{v.name}"
+                    if v.name.endswith("_test_var_3"):
+                        value = "namespace_value_01"
+
                     variables.append(
                         Variables(
                             name=v.name,
-                            value=f"test_{v.name}",
+                            value=value,
                             type=v.type,
                         )
                     )

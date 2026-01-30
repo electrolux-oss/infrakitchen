@@ -1,4 +1,4 @@
-import { ResourceVariableSchema } from "../resources/types";
+import { ResourceVariableSchema, ValidationRule } from "../resources/types";
 import { GetListParams, GetListResult, IkEntity } from "../types";
 
 /** @public */
@@ -13,6 +13,8 @@ export interface InfraKitchenApi {
     id: string,
     parent_resources?: string[],
   ) => Promise<ResourceVariableSchema[]>;
+
+  getValidationRules: (entity?: string) => Promise<ValidationRule[]>;
 
   getTree: (
     component: string,

@@ -4,6 +4,7 @@ import {
   GetListParams,
   InfraKitchenApi,
   ResourceVariableSchema,
+  ValidationRule,
 } from "@electrolux-oss/infrakitchen";
 import queryString from "query-string";
 
@@ -139,6 +140,12 @@ export const ikDataProvider = (apiUrl: string): IKDataProvider => {
         : "";
       const url = `${apiUrl}/source_code_versions/${id}/variables?parent_resources=${parentResourcesQuery}`;
       return httpClient(url).then(({ json }) => json);
+    },
+
+    getValidationRules: async (entity?: string) => {
+      const query = entity ? `?entity=${encodeURIComponent(entity)}` : "";
+      const url = `${apiUrl}/validation-rules${query}`;
+      return httpClient(url).then(({ json }) => json as ValidationRule[]);
     },
 
     getTree: (
