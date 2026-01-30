@@ -5,6 +5,7 @@ from application.integrations.dependencies import get_integration_service
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
+from application.validation_rules.dependencies import get_validation_rule_service
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.audit_logs.handler import AuditLogHandler
 from core.database import SessionLocal
@@ -48,4 +49,5 @@ def get_resource_service(
         resource_temp_state_handler=resource_temp_state_handler,
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
+        validation_rule_service=get_validation_rule_service(session=session),
     )

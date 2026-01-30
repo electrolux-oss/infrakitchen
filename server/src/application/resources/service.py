@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from collections.abc import Sequence
-from typing import Any, Literal
+from typing import Any, Literal, TypeVar
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
@@ -17,6 +17,8 @@ from application.source_code_versions.service import SourceCodeVersionService
 from application.storages.service import StorageService
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
+from application.validation_rules.functions import apply_validation_rules
+from application.validation_rules.service import ValidationRuleService
 from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.audit_logs.handler import AuditLogHandler
@@ -45,6 +47,7 @@ from core.utils.entity_state_handler import (
 )
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import is_valid_uuid
+from pydantic import BaseModel
 from .crud import ResourceCRUD
 from .schema import (
     ResourceCreate,
@@ -59,6 +62,8 @@ from .schema import (
 )
 
 logger = logging.getLogger(__name__)
+
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 class ResourceService:
@@ -82,6 +87,7 @@ class ResourceService:
         resource_temp_state_handler: ResourceTempStateHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        validation_rule_service: ValidationRuleService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -96,6 +102,20 @@ class ResourceService:
         self.resource_temp_state_handler: ResourceTempStateHandler = resource_temp_state_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.validation_rule_service: ValidationRuleService = validation_rule_service
+
+    async def _apply_input_validation(self, payload: ModelT) -> ModelT:
+        """Sanitize payload fields using validation rules before persistence."""
+        payload_data = payload.model_dump(exclude_unset=True)
+        if not payload_data:
+            return payload
+
+        rules = await self.validation_rule_service.list_rules(entity_name="resource")
+        if not rules:
+            return payload
+
+        apply_validation_rules(payload_data, rules)
+        return payload.__class__.model_validate(payload_data)
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -134,6 +154,8 @@ class ResourceService:
         :param requester: User who creates the resource
         :return: Created resource
         """
+
+        resource = await self._apply_input_validation(resource)
 
         if allowed_parent_states is None:
             allowed_parent_states = [ModelState.PROVISIONED]
@@ -248,6 +270,7 @@ class ResourceService:
         :param requester: User who updates the resource
         :return: Updated resource
         """
+        resource = await self._apply_input_validation(resource)
         existing_resource = await self.crud.get_by_id(resource_id)
 
         if not existing_resource:
