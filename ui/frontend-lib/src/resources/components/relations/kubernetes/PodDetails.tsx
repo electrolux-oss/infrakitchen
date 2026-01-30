@@ -345,8 +345,9 @@ const RestartPodsDialog = (props: {
   const handleRestart = () => {
     setIsLoading(true);
     ikApi
-      .restartDeployment(
+      .updateRaw(
         `provider/kubernetes/${kubernetesResourceType}/${entityId}/namespaces/${namespace}/deployments/${deploymentName}`,
+        {},
       )
       .then(() => {
         notify("Deployment restarted successfully", "success");

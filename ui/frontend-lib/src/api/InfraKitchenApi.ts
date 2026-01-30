@@ -29,6 +29,4 @@ export interface InfraKitchenApi {
   updateRaw: (path: string, params: { [key: string]: any }) => Promise<any>;
 
   get(path: string, params?: Record<string, any>): Promise<any>;
-
-  restartDeployment: (path: string) => Promise<any>;
 }
