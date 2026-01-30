@@ -149,3 +149,22 @@ async def delete_pod(
         return {"message": f"Pod '{pod_name}' in namespace '{namespace}' deleted successfully."}
     except Exception as e:
         raise ValueError(f"Failed to delete pod '{pod_name}' in namespace '{namespace}': {str(e)}") from e
+
+
+@router.put(
+    "/provider/kubernetes/{k8s_service}/{resource_id}/namespaces/{namespace}/deployments/{deployment_name}",
+    response_description="Restart all pods in a deployment",
+    response_model=dict[str, str],
+)
+async def restart_deployment(
+    namespace: str,
+    deployment_name: str,
+    kubernetes_client: KubernetesClient = Depends(get_kubernetes_client),
+):
+    try:
+        await kubernetes_client.restart_namespaced_deployment(namespace=namespace, deployment=deployment_name)
+        return {"message": f"Deployment '{deployment_name}' in namespace '{namespace}' restarted successfully."}
+    except Exception as e:
+        raise ValueError(
+            f"Failed to restart deployment '{deployment_name}' in namespace '{namespace}': {str(e)}"
+        ) from e

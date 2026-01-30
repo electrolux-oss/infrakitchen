@@ -76,6 +76,7 @@ export const KubernetesRelations = (props: { entity: ResourceResponse }) => {
                     entityId={entity.id}
                     namespace={namespace}
                     kubernetesResourceType={kubernetesResourceTypes[0]}
+                    clusterName={entity.name}
                   />
                 </ListItem>
               ))}
