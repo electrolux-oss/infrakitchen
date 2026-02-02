@@ -148,6 +148,7 @@ export const LogList = (props: { entity_id: string }) => {
           execution_time={selectedExecution}
         />
       )}
+      {executionList.length === 0 && <Box>No logs available.</Box>}
     </Box>
   );
 };

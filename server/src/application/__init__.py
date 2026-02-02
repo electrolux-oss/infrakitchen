@@ -16,9 +16,11 @@ from .secrets import SecretDTO
 from .workspaces import WorkspaceDTO
 from .tools.cloud_api_manager import CloudApiManager
 from .tools.secret_manager import SecretManager
+from .batch_operations import BatchOperationDTO
 
 __all__ = [
     "ExecutorDTO",
+    "BatchOperationDTO",
     "TemplateDTO",
     "CloudApiManager",
     "SecretManager",

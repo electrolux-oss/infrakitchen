@@ -7,6 +7,7 @@ import {
   useCallback,
 } from "react";
 
+import { IkEntity } from "../../types";
 import { notifyError } from "../hooks/useNotification";
 
 import { useConfig } from "./ConfigContext";
@@ -19,7 +20,7 @@ interface EntityContextType {
   entity_id: string;
   loading: boolean;
   error?: string | null;
-  refreshEntity?: () => void;
+  refreshEntity?: (entity?: IkEntity) => void;
 }
 
 export const EntityContext = createContext<EntityContextType | undefined>(
@@ -37,7 +38,7 @@ export const EntityProvider = ({
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
-  const [refresh, refreshEntity] = useState<number>(1);
+  const [refresh, refreshNumber] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { ikApi } = useConfig();
@@ -85,6 +86,18 @@ export const EntityProvider = ({
     getEntity();
   }, [ikApi, entity_name, entity_id, refresh, setLoading, setError]);
 
+  const refreshEntity = useCallback(
+    (updatedEntity?: IkEntity) => {
+      if (updatedEntity) {
+        setEntity(updatedEntity);
+        userActionsHandler();
+      } else {
+        refreshNumber((prev) => prev + 1);
+      }
+    },
+    [userActionsHandler],
+  );
+
   const contextValue: EntityContextType = {
     actions,
     entity,
@@ -92,7 +105,7 @@ export const EntityProvider = ({
     entity_id,
     loading,
     error,
-    refreshEntity: () => refreshEntity((prev) => prev + 1),
+    refreshEntity,
   };
   return (
     <EntityContext.Provider value={contextValue}>
