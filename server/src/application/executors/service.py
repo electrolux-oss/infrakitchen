@@ -204,7 +204,9 @@ class ExecutorService:
     async def action_recreate(self, existing_executor: Executor, requester: UserDTO):
         await recreate_entity(existing_executor, is_resource=False)
 
-    async def patch_action(self, executor_id, body: PatchBodyModel, requester: UserDTO) -> ExecutorResponse:
+    async def patch_action(
+        self, executor_id, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
+    ) -> ExecutorResponse:
         """
         Patch an existing executor.
         :param executor_id: ID of the executor to patch
@@ -227,7 +229,7 @@ class ExecutorService:
                     await self.event_sender.send_task(
                         existing_executor.id,
                         requester=requester,
-                        trace_id=self.audit_log_handler.trace_id,
+                        trace_id=trace_id or self.audit_log_handler.trace_id,
                         action=ModelActions.EXECUTE,
                     )
                 else:
@@ -238,7 +240,7 @@ class ExecutorService:
             case ModelActions.EXECUTE:
                 await execute_entity(existing_executor)
                 await self.event_sender.send_task(
-                    pydantic_executor.id, requester=requester, trace_id=self.audit_log_handler.trace_id
+                    pydantic_executor.id, requester=requester, trace_id=trace_id or self.audit_log_handler.trace_id
                 )
             case ModelActions.DRYRUN:
                 if existing_executor.status not in [
@@ -253,7 +255,7 @@ class ExecutorService:
                     existing_executor.id,
                     requester=requester,
                     action=ModelActions.DRYRUN,
-                    trace_id=self.audit_log_handler.trace_id,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_executor, requester)

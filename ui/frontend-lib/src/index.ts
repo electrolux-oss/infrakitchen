@@ -19,6 +19,7 @@ export * from "./getting_started";
 export * from "./integrations";
 export * from "./templates";
 export * from "./resources";
+export * from "./batch_operations";
 export * from "./administration";
 export * from "./icons";
 export * from "./executors";

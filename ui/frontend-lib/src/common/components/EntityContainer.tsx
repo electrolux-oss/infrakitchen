@@ -23,6 +23,12 @@ export const EntityContainer = (props: EntityContainerProps) => {
   const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
 
+  const handleRefresh = () => {
+    if (refreshEntity) {
+      refreshEntity();
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer
@@ -77,7 +83,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
             entity_name={entity._entity_name}
           />
           {actions}
-          <IconButton onClick={refreshEntity} aria-label="refresh">
+          <IconButton onClick={() => handleRefresh()} aria-label="refresh">
             <RefreshIcon />
           </IconButton>
         </>
