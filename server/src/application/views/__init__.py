@@ -39,6 +39,7 @@ from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
 from ..views import config_view as config
 from ..views import user_permission_view as user
+from ..validation_rules import api as validation_rules_api
 
 api = APIRouter(dependencies=[Depends(get_logged_user), Depends(check_api_permission)])
 
@@ -204,6 +205,11 @@ api.include_router(
 
 api.include_router(
     feature_flags_api.router,
+    tags=["Core"],
+)
+
+api.include_router(
+    validation_rules_api.router,
     tags=["Core"],
 )
 
