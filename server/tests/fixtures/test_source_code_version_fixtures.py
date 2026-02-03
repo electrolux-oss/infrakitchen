@@ -20,6 +20,8 @@ from application.source_code_versions.schema import (
 )
 from application.source_code_versions.service import SourceCodeVersionService
 from core.constants import ModelStatus
+from application.validation_rules.crud import ValidationRuleCRUD
+from application.validation_rules.service import ValidationRuleService
 
 
 class MockSourceCodeVersionsService:
@@ -100,6 +102,7 @@ def mock_source_code_version_service(
     mock_source_code_service,
     mock_log_service,
     mock_task_entity_service,
+    mock_validation_rule_service,
 ):
     return SourceCodeVersionService(
         template_service=mock_template_service,
@@ -110,6 +113,32 @@ def mock_source_code_version_service(
         audit_log_handler=mock_audit_log_handler,
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
+        validation_rule_service=mock_validation_rule_service,
+    )
+
+
+@pytest.fixture
+def mock_validation_rule_crud():
+    crud = Mock(spec=ValidationRuleCRUD)
+    crud.get_rule_by_id = AsyncMock()
+    crud.get_rule_by_template_and_name = AsyncMock()
+    crud.get_rules_by_template = AsyncMock()
+    crud.get_rules_by_template_ids = AsyncMock()
+    crud.create_rule = AsyncMock()
+    crud.update_rule = AsyncMock()
+    crud.delete_rule = AsyncMock()
+    crud.get_references_by_template = AsyncMock()
+    crud.get_reference_by_template_and_variable = AsyncMock()
+    crud.create_reference = AsyncMock()
+    crud.delete_reference = AsyncMock()
+    return crud
+
+
+@pytest.fixture
+def mock_validation_rule_service(mock_template_service, mock_validation_rule_crud):
+    return ValidationRuleService(
+        crud=mock_validation_rule_crud,
+        template_service=mock_template_service,
     )
 
 

@@ -11,6 +11,7 @@ from application.source_code_versions.model import (
 )
 from application.source_codes.service import SourceCodeService
 from application.templates.service import TemplateService
+from application.validation_rules.service import ValidationRuleService
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
@@ -24,6 +25,7 @@ from core.utils.event_sender import EventSender
 from core.utils.model_tools import valid_uuid
 from .crud import SourceCodeVersionCRUD
 from .schema import (
+    ConfigValidationModel,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -62,6 +64,7 @@ class SourceCodeVersionService:
         audit_log_handler: AuditLogHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        validation_rule_service: ValidationRuleService,
     ):
         self.crud: SourceCodeVersionCRUD = crud
         self.source_code_service: SourceCodeService = source_code_service
@@ -71,6 +74,7 @@ class SourceCodeVersionService:
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.validation_rule_service: ValidationRuleService = validation_rule_service
 
     async def get_dto_by_id(self, source_code_version_id: str | UUID) -> SourceCodeVersionDTO | None:
         source_code_version = await self.crud.get_by_id(source_code_version_id)
@@ -93,7 +97,9 @@ class SourceCodeVersionService:
         source_code_version = await self.crud.get_by_id_with_configs(source_code_version_id)
         if source_code_version is None:
             return None
-        return SourceCodeVersionWithConfigs.model_validate(source_code_version)
+        response = SourceCodeVersionWithConfigs.model_validate(source_code_version)
+        await self._apply_validation_to_config_responses(response.template.id, response.variable_configs)
+        return response
 
     async def get_all(self, **kwargs) -> list[SourceCodeVersionResponse]:
         source_code_versions = await self.crud.get_all(**kwargs)
@@ -296,8 +302,14 @@ class SourceCodeVersionService:
         :param source_code_version_id: ID of the source code version
         :return: List of SourceConfigResponse
         """
+        source_code_version = await self.crud.get_by_id(source_code_version_id)
+        if not source_code_version:
+            raise EntityNotFound("SourceCodeVersion not found")
+
         configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
-        return [SourceConfigResponse.model_validate(config) for config in configs]
+        responses = [SourceConfigResponse.model_validate(config) for config in configs]
+        await self._apply_validation_to_config_responses(source_code_version.template_id, responses)
+        return responses
 
     async def get_config_by_id(self, config_id: str) -> SourceConfigResponse | None:
         """
@@ -316,11 +328,21 @@ class SourceCodeVersionService:
         :param body: List of SourceConfigCreate to create
         :return: None
         """
+        if not configs:
+            return []
+
+        source_code_version = await self.crud.get_by_id(configs[0].source_code_version_id)
+        if not source_code_version:
+            raise EntityNotFound("SourceCodeVersion not found")
+        template_id = source_code_version.template_id
+
         result: list[SourceConfig] = []
         for c in configs:
             config = await self.crud.create_config(c.model_dump(exclude_unset=True))
             result.append(config)
-        return [SourceConfigResponse.model_validate(config) for config in result]
+        responses = [SourceConfigResponse.model_validate(config) for config in result]
+        await self._apply_validation_to_config_responses(template_id, responses)
+        return responses
 
     async def update_config(self, config_id: str, config: SourceConfigUpdate) -> SourceConfigResponse:
         """
@@ -443,7 +465,8 @@ class SourceCodeVersionService:
 
         if template_references_to_create:
             await self.update_template_references(template_references=template_references_to_create)
-
+        if template_id:
+            await self._apply_validation_to_config_responses(template_id, updated_configs)
         return updated_configs
 
     async def get_output_configs_by_scv_id(self, source_code_version_id: str) -> list[SourceOutputConfigResponse]:
@@ -498,7 +521,12 @@ class SourceCodeVersionService:
         scvs = await self.crud.get_scvs_with_configs_and_outputs(
             [valid_uuid(scv_id) for scv_id in source_code_version_ids]
         )
-        return [SourceCodeVersionWithConfigs.model_validate(scv) for scv in scvs]
+        responses: list[SourceCodeVersionWithConfigs] = []
+        for scv in scvs:
+            response = SourceCodeVersionWithConfigs.model_validate(scv)
+            await self._apply_validation_to_config_responses(response.template.id, response.variable_configs)
+            responses.append(response)
+        return responses
 
     async def get_actions(self, source_code_version_id: str, requester: UserDTO) -> list[str]:
         """
@@ -537,3 +565,23 @@ class SourceCodeVersionService:
             return actions
 
         return actions
+
+    async def _apply_validation_to_config_responses(
+        self, template_id: UUID, configs: list[SourceConfigResponse]
+    ) -> None:
+        if not configs:
+            return
+
+        rules = await self.validation_rule_service.get_effective_rules_for_template(template_id)
+        rule_map = {rule.variable_name: rule for rule in rules}
+
+        for config in configs:
+            rule = rule_map.get(config.name)
+            if not rule:
+                config.validation = None
+                continue
+            config.validation = ConfigValidationModel(
+                min_value=rule.min_value,
+                max_value=rule.max_value,
+                regex=rule.regex_pattern,
+            )

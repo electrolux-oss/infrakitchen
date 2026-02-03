@@ -47,7 +47,8 @@ class ValidationRuleService:
             rule = referenced_rules.get(key)
             if not rule:
                 raise EntityNotFound(
-                    f"Validation rule for variable '{reference.variable_name}' not found in template {reference.reference_template_id}"
+                    f"Validation rule for variable '{reference.variable_name}' "
+                    + f"not found in template {reference.reference_template_id}"
                 )
             responses.append(
                 self._to_response(rule, target_template_id=template_id, inherited_from=reference.reference_template_id)
@@ -119,7 +120,8 @@ class ValidationRuleService:
             )
             if not source_rule:
                 raise EntityNotFound(
-                    f"Validation rule for variable '{reference.variable_name}' not found in template {reference.reference_template_id}"
+                    f"Validation rule for variable '{reference.variable_name}' "
+                    + f"not found in template {reference.reference_template_id}"
                 )
 
             existing = await self.crud.get_reference_by_template_and_variable(
