@@ -6,6 +6,7 @@ import {
 } from "../source_code_versions/types";
 import { StorageShort } from "../storages/types";
 import { TemplateShort } from "../templates/types";
+import { ValidationRule } from "../types";
 import { UserShort } from "../users";
 import { WorkspaceShort } from "../workspaces/types";
 
@@ -94,6 +95,7 @@ export interface ResourceVariableSchema {
   unique: boolean;
   value: any | null;
   index: number;
+  validation: ValidationRule | null;
   reference: SourceOutputConfigShort | null;
 }
 

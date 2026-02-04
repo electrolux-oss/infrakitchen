@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Controller, useFormContext } from "react-hook-form";
 
 import { TableCell, TableRow, Typography, Chip } from "@mui/material";
@@ -5,6 +7,7 @@ import { TableCell, TableRow, Typography, Chip } from "@mui/material";
 import { ResourceVariableSchema } from "../../types";
 
 import { ResourceVariableInput } from "./ResourceVariableInput";
+import { createVariableValidator } from "./validationUtils";
 
 export const ResourceVariableForm = (props: {
   index: number;
@@ -13,6 +16,10 @@ export const ResourceVariableForm = (props: {
 }) => {
   const { index, variable, edit_mode = false } = props;
   const { control } = useFormContext();
+  const validateValue = useMemo(
+    () => createVariableValidator(variable),
+    [variable],
+  );
 
   if (variable.restricted) return null;
   if (variable.sensitive) return null;
@@ -51,10 +58,7 @@ export const ResourceVariableForm = (props: {
       <TableCell sx={{ width: "300px" }}>
         <Controller
           rules={{
-            validate: (value) =>
-              variable.required && (value === null || value === undefined)
-                ? "This field is required"
-                : true,
+            validate: validateValue,
           }}
           name={`variables.${index}.value`}
           control={control}

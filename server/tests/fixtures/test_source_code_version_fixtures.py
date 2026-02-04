@@ -64,7 +64,7 @@ class MockSourceCodeVersionsService:
     async def update_config(self, config_id: str, config: SourceConfigUpdate):
         return self._return_value
 
-    async def update_configs(self, source_code_version_id: str, configs):
+    async def update_configs(self, source_code_version_id: str, configs, requester=None):
         return self._return_value
 
     async def get_output_configs_by_scv_id(self, source_code_version_id: str):

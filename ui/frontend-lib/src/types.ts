@@ -67,3 +67,9 @@ export interface AuditLogEntity extends IkEntity {
   entity_id: string;
   action: string;
 }
+
+export interface ValidationRule {
+  min_value?: string | number | null;
+  max_value?: string | number | null;
+  regex?: string | null;
+}

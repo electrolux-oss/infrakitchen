@@ -3,11 +3,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { json } from "@codemirror/lang-json";
 import { lintGutter } from "@codemirror/lint";
 import {
+  Box,
+  Chip,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   FormLabel,
   MenuItem,
-  Select,
   Switch,
   TextField,
   useColorScheme,
@@ -15,6 +17,8 @@ import {
 import CodeMirror from "@uiw/react-codemirror";
 
 import { ResourceVariableSchema } from "../../types";
+
+import { buildHintLabels } from "./validationUtils";
 
 interface JsonEditorProps {
   field: {
@@ -81,30 +85,50 @@ export const ResourceVariableInput = (props: {
   isDisabled?: boolean;
 }) => {
   const { variable, field, fieldState, isDisabled = false } = props;
+  const hintLabels = buildHintLabels(variable);
 
-  switch (variable.type) {
-    case "string":
-      if (variable.options.length > 0) {
-        return (
-          <Select
-            {...field}
-            value={field.value ?? ""}
-            label="Value"
+  const hintChips =
+    hintLabels.length > 0 ? (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+        {hintLabels.map((label) => (
+          <Chip
+            key={label}
+            size="small"
+            color="info"
             variant="outlined"
-            fullWidth
-            margin="normal"
-            disabled={isDisabled}
-            error={!!fieldState.error}
-            onChange={(e) => field.onChange(e.target.value)}
-          >
-            {variable.options.map((option: string) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        );
-      } else {
+            label={label}
+          />
+        ))}
+      </Box>
+    ) : null;
+  const control = (() => {
+    switch (variable.type) {
+      case "string":
+        if (variable.options.length > 0) {
+          return (
+            <TextField
+              {...field}
+              select
+              required={variable.required}
+              value={field.value ?? ""}
+              label="Value"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              disabled={isDisabled}
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+              onChange={(e) => field.onChange(e.target.value)}
+            >
+              {variable.options.map((option: string) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </TextField>
+          );
+        }
+
         return (
           <TextField
             {...field}
@@ -116,55 +140,65 @@ export const ResourceVariableInput = (props: {
             margin="normal"
             disabled={isDisabled}
             error={!!fieldState.error}
+            helperText={fieldState.error?.message}
           />
         );
-      }
 
-    case "number":
-      return (
-        <TextField
-          {...field}
-          required={variable.required}
-          value={
-            field.value === null || field.value === undefined
-              ? ""
-              : Number(field.value)
-          }
-          label="Value"
-          disabled={isDisabled}
-          onChange={(e) => {
-            const val = e.target.value;
-            field.onChange(val === "" ? undefined : Number(val));
-          }}
-          type="number"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          error={!!fieldState.error}
-        />
-      );
-
-    case "boolean":
-      return (
-        <FormControl
-          fullWidth
-          margin="normal"
-          disabled={isDisabled}
-          error={!!fieldState.error?.message}
-        >
-          <FormControlLabel
-            control={
-              <Switch
-                checked={field.value ?? false}
-                onChange={(e) => field.onChange(e.target.checked)}
-              />
+      case "number":
+        return (
+          <TextField
+            {...field}
+            required={variable.required}
+            value={
+              field.value === null || field.value === undefined
+                ? ""
+                : Number(field.value)
             }
-            label={field.value ? "On" : "Off"}
+            label="Value"
+            disabled={isDisabled}
+            onChange={(e) => {
+              const val = e.target.value;
+              field.onChange(val === "" ? undefined : Number(val));
+            }}
+            type="number"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            error={!!fieldState.error}
+            helperText={fieldState.error?.message}
           />
-        </FormControl>
-      );
+        );
 
-    default:
-      return <JsonEditor field={field} fieldState={fieldState} />;
-  }
+      case "boolean":
+        return (
+          <FormControl
+            fullWidth
+            margin="normal"
+            disabled={isDisabled}
+            error={!!fieldState.error?.message}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={field.value ?? false}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              }
+              label={field.value ? "On" : "Off"}
+            />
+            <FormHelperText>{fieldState.error?.message}</FormHelperText>
+          </FormControl>
+        );
+
+      default:
+        return <JsonEditor field={field} fieldState={fieldState} />;
+    }
+  })();
+
+  return (
+    <>
+      {control}
+      {hintChips}
+    </>
+  );
 };

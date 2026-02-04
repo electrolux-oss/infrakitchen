@@ -143,6 +143,7 @@ export const SourceCodeVersionConfigProvider = ({
               frozen: matchingRefConfig.frozen,
               unique: matchingRefConfig.unique,
               options: matchingRefConfig.options,
+              validation: matchingRefConfig.validation,
             };
           }
           return existingConfig;

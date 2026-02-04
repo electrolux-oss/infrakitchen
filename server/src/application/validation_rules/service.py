@@ -94,6 +94,11 @@ class ValidationRuleService:
         updated = await self.crud.update_rule(existing, data)
         return self._to_response(updated)
 
+    async def delete_rule(self, template_id: UUID, variable_name: str) -> None:
+        existing = await self.crud.get_rule_by_template_and_name(template_id, variable_name)
+        if existing:
+            await self.crud.delete_rule(existing)
+
     async def upsert_references(
         self, references: Sequence[ValidationRuleReferenceCreate]
     ) -> list[ValidationRuleReferenceResponse]:

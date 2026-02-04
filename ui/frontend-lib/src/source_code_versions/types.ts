@@ -1,5 +1,6 @@
 import { SourceCodeShort } from "../source_codes/types";
 import { TemplateShort } from "../templates/types";
+import { ValidationRule } from "../types";
 import { UserShort } from "../users";
 
 export interface RefFolders {
@@ -90,6 +91,7 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
+  validation: ValidationRule | null;
 }
 
 export interface SourceConfigUpdate extends Record<string, any> {
@@ -99,12 +101,14 @@ export interface SourceConfigUpdate extends Record<string, any> {
   unique: boolean;
   restricted: boolean;
   options: string[];
+  validation: ValidationRule | null;
 }
 
 export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   id: string;
   template_id: string;
   reference_template_id: string | null;
+  output_config_name: string | null;
 }
 
 export interface SourceOutputConfigResponse extends Record<string, any> {

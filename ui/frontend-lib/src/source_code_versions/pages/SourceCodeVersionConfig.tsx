@@ -14,6 +14,7 @@ import { Box, Alert, Button } from "@mui/material";
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import type { ValidationRule } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
 import { ConfigList } from "../components/ConfigList";
 import { ReferenceSelector } from "../components/ReferenceSelector";
@@ -26,6 +27,61 @@ import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
 }
+
+const coerceNumeric = (
+  value: string | number | null | undefined,
+): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const numericValue =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+
+  return Number.isNaN(numericValue) ? null : numericValue;
+};
+
+const formatValidationForForm = (
+  validation?: ValidationRule | null,
+): ValidationRule => ({
+  min_value: coerceNumeric(validation?.min_value),
+  max_value: coerceNumeric(validation?.max_value),
+  regex: validation?.regex ?? null,
+});
+
+const normalizeValidationForSubmit = (
+  validation?: ValidationRule | null,
+): ValidationRule | null => {
+  if (!validation) {
+    return null;
+  }
+
+  const normalized: ValidationRule = {
+    min_value: coerceNumeric(validation.min_value),
+    max_value: coerceNumeric(validation.max_value),
+    regex:
+      typeof validation.regex === "string"
+        ? validation.regex.trim() || null
+        : (validation.regex ?? null),
+  };
+
+  if (
+    normalized.min_value === null &&
+    normalized.max_value === null &&
+    normalized.regex === null
+  ) {
+    return null;
+  }
+
+  return normalized;
+};
+
+const isValidationEqual = (
+  a?: ValidationRule | null,
+  b?: ValidationRule | null,
+) =>
+  JSON.stringify(normalizeValidationForSubmit(a)) ===
+  JSON.stringify(normalizeValidationForSubmit(b));
 
 const SourceCodeVersionConfigContent = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -59,6 +115,7 @@ const SourceCodeVersionConfigContent = () => {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
+        validation: formatValidationForForm(config.validation),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -83,6 +140,7 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation: formatValidationForForm(config.validation),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -114,7 +172,8 @@ const SourceCodeVersionConfigContent = () => {
               JSON.stringify(original.options) ||
             formConfig.reference_template_id !==
               original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name
+            formConfig.output_config_name !== original.output_config_name ||
+            !isValidationEqual(formConfig.validation, original.validation)
           );
         });
       }
@@ -137,6 +196,7 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
+            validation: normalizeValidationForSubmit(config.validation),
           }),
         );
 
