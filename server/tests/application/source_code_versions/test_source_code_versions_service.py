@@ -365,7 +365,7 @@ class TestUpdate:
         mocked_source_code.status = ModelStatus.IN_PROGRESS
         mock_source_code_version_crud.get_by_id.return_value = mocked_source_code
 
-        with pytest.raises(ValueError, match=r"Entity has wrong status for updating ModelStatus.IN_PROGRESS"):
+        with pytest.raises(ValueError, match=r"Entity has wrong status for updating in_progress"):
             await mock_source_code_version_service.update(
                 source_code_version_id=mocked_source_code.id,
                 source_code_version=Mock(spec=SourceCodeVersionUpdate),
@@ -534,7 +534,7 @@ class TestDelete:
                 source_code_version_id=mocked_source_code.id, requester=mock_user_dto
             )
 
-        assert str(exc.value) == "Entity has wrong status for deleting ModelStatus.DONE"
+        assert str(exc.value) == "Entity has wrong status for deleting done"
         mock_source_code_version_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_source_code_version_crud.delete.assert_not_awaited()
         mock_log_crud.delete_by_entity_id.assert_not_awaited()
