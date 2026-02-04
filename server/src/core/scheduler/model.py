@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column
-from enum import Enum
+from enum import StrEnum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from sqlalchemy import UUID, func
@@ -9,7 +9,7 @@ from sqlalchemy import UUID, func
 from ..base_models import Base
 
 
-class JobType(str, Enum):
+class JobType(StrEnum):
     SQL = "SQL"
     BASH = "BASH"
 

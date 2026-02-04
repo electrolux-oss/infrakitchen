@@ -448,7 +448,7 @@ class TestDelete:
         with pytest.raises(EntityWrongState) as exc:
             await mock_source_code_service.delete(source_code_id=mocked_source_code.id, requester=mock_user_dto)
 
-        assert str(exc.value) == "Entity has wrong status for deletion ModelStatus.DONE"
+        assert str(exc.value) == "Entity has wrong status for deletion done"
         mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_source_code_crud.delete.assert_not_awaited()
         mock_log_crud.delete_by_entity_id.assert_not_awaited()

@@ -443,7 +443,7 @@ class TestPatch:
         with pytest.raises(EntityWrongState) as exc:
             await mock_storage_service.patch_action(storage_id=STORAGE_ID, body=patch_body, requester=requester)
 
-        assert str(exc.value) == "Storage cannot be destroyed, has wrong state ModelState.PROVISION"
+        assert str(exc.value) == "Storage cannot be destroyed, has wrong state provision"
 
     @pytest.mark.asyncio
     async def test_patch_storage_does_not_exist(self, mock_storage_service, mock_storage_crud):

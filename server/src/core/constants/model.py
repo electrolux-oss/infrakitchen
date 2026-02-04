@@ -1,5 +1,5 @@
 from typing import TypeVar, Any
-from enum import Enum, unique
+from enum import StrEnum, unique
 
 from pydantic import BaseModel, Field
 
@@ -17,7 +17,7 @@ class ConstantModel(BaseModel):
 
 
 @unique
-class ModelActions(str, Enum):
+class ModelActions(StrEnum):
     CREATE = "create"  # create a new resource
     UPDATE = "update"  # update an existing resource
     EDIT = "edit"  # edit an existing resource
@@ -37,7 +37,7 @@ class ModelActions(str, Enum):
 
 
 @unique
-class ModelStatus(str, Enum):
+class ModelStatus(StrEnum):
     QUEUED = "queued"
     IN_PROGRESS = "in_progress"
     DONE = "done"
@@ -52,7 +52,7 @@ class ModelStatus(str, Enum):
 
 
 @unique
-class ModelState(str, Enum):
+class ModelState(StrEnum):
     PROVISION = "provision"
     PROVISIONED = "provisioned"
     DESTROY = "destroy"
