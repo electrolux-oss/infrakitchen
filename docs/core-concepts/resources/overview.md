@@ -160,6 +160,13 @@ variable:
 
 This creates automatic dependency chains and ensures child resources have access to parent outputs.
 
+### Validation Rules & Inheritance
+
+- **Defined on templates:** Each template variable can declare a validation rule (`string` with regex or `number` with min/max). These rules are enforced in both the Source Code Version config UI and the Resource Variables form, ensuring invalid values never leave the browser.
+- **Resource enforcement:** When you create or edit a resource, InfraKitchen evaluates the rule before saving. Numeric variables must respect configured ranges, while strings must match the provided pattern. Violations block the action with contextual messages.
+- **Inherited via references:** If a template variable references another template (through Source Code Version template references), its validation rule is inherited automatically. InfraKitchen creates a validation-rule reference behind the scenes, so child templates stay in sync with their parents without duplicating definitions.
+- **References still validate:** Even when a resource variable pulls its value from a parent resource output, the validation rule still runs after substitution, preventing mismatched data from propagating down the hierarchy.
+
 ---
 
 ## 📤 Resource Outputs
