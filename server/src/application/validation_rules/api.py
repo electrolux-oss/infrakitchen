@@ -7,8 +7,6 @@ from core.users.model import UserDTO
 from .dependencies import get_validation_rule_service
 from .schema import (
     ValidationRuleCreate,
-    ValidationRuleReferenceCreate,
-    ValidationRuleReferenceResponse,
     ValidationRuleResponse,
     ValidationRuleUpdate,
 )
@@ -59,16 +57,3 @@ async def update_validation_rule(
     service: ValidationRuleService = Depends(get_validation_rule_service),
 ) -> ValidationRuleResponse:
     return await service.update_rule(body)
-
-
-@router.post(
-    "/validation_rules/references",
-    response_model=list[ValidationRuleReferenceResponse],
-    response_description="List of upserted validation rule references",
-    status_code=status.HTTP_200_OK,
-)
-async def upsert_validation_rule_references(
-    body: list[ValidationRuleReferenceCreate],
-    service: ValidationRuleService = Depends(get_validation_rule_service),
-) -> list[ValidationRuleReferenceResponse]:
-    return await service.upsert_references(body)

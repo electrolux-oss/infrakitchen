@@ -249,6 +249,8 @@ class ConfigValidationModel(BaseModel):
     min_value: Decimal | None = Field(default=None)
     max_value: Decimal | None = Field(default=None)
     regex: str | None = Field(default=None)
+    max_length: int | None = Field(default=None)
+    description: str | None = Field(default=None)
 
 
 class SourceConfigResponse(BaseModel):
@@ -267,7 +269,7 @@ class SourceConfigResponse(BaseModel):
     description: str = Field(...)
     type: str = Field(...)
     options: list[str] = Field(default_factory=list)
-    validation: ConfigValidationModel | None = Field(default=None)
+    validation: list[ConfigValidationModel] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -321,7 +323,7 @@ class SourceConfigUpdateWithId(BaseModel):
     template_id: uuid.UUID = Field(...)
     reference_template_id: uuid.UUID | None = Field(default=None)
     output_config_name: str | None = Field(default=None)
-    validation: ConfigValidationModel | None = Field(default=None)
+    validation: list[ConfigValidationModel] = Field(default_factory=list)
 
 
 class SourceOutputConfigResponse(BaseModel):

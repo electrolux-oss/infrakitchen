@@ -91,7 +91,7 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
-  validation: ValidationRule | null;
+  validation: ValidationRule[];
 }
 
 export interface SourceConfigUpdate extends Record<string, any> {

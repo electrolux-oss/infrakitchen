@@ -129,14 +129,19 @@ def get_resource_variable_schema(
                 if variable.name == config.name and config.value is not None:
                     variable.value = config.value
 
-    def to_validation_model(config_validation) -> ValidationRuleModel | None:
-        if config_validation is None:
-            return None
-        return ValidationRuleModel(
-            min_value=config_validation.min_value,
-            max_value=config_validation.max_value,
-            regex=config_validation.regex,
-        )
+    def to_validation_models(config_validation) -> list[ValidationRuleModel]:
+        if not config_validation:
+            return []
+        return [
+            ValidationRuleModel(
+                min_value=rule.min_value,
+                max_value=rule.max_value,
+                regex=rule.regex,
+                max_length=rule.max_length,
+                description=rule.description,
+            )
+            for rule in config_validation
+        ]
 
     schema: list[ResourceVariableSchema] = []
 
@@ -154,7 +159,7 @@ def get_resource_variable_schema(
             type=scv.type,
             options=scv.options,
             index=scv.index,
-            validation=to_validation_model(scv.validation),
+            validation=to_validation_models(scv.validation),
         )
         schema.append(rvs)
 
@@ -227,30 +232,36 @@ def _coerce_decimal(value: Any) -> Decimal | None:
     return None
 
 
-def enforce_validation_rule(variable: ResourceVariableSchema, value: Any, value_source: str) -> None:
-    rule = variable.validation
-    if rule is None or value is None:
+def enforce_validation_rules(variable: ResourceVariableSchema, value: Any, value_source: str) -> None:
+    if not variable.validation or value is None:
         return
 
-    if variable.type in NUMERIC_VARIABLE_TYPES:
-        numeric_value = _coerce_decimal(value)
-        if numeric_value is not None:
-            if rule.min_value is not None and numeric_value < rule.min_value:
-                raise ValueError(
-                    f"Variable '{variable.name}' violates validation rule min_value={rule.min_value} for {value_source}. Value: {value}"  # noqa: E501
-                )
-            if rule.max_value is not None and numeric_value > rule.max_value:
-                raise ValueError(
-                    f"Variable '{variable.name}' violates validation rule max_value={rule.max_value} for {value_source}. Value: {value}"  # noqa: E501
-                )
+    for rule in variable.validation:
+        if variable.type in NUMERIC_VARIABLE_TYPES:
+            numeric_value = _coerce_decimal(value)
+            if numeric_value is not None:
+                if rule.min_value is not None and numeric_value < rule.min_value:
+                    raise ValueError(
+                        f"Variable '{variable.name}' violates validation rule min_value={rule.min_value} "
+                        + "for {value_source}. Value: {value}"
+                    )
+                if rule.max_value is not None and numeric_value > rule.max_value:
+                    raise ValueError(
+                        f"Variable '{variable.name}' violates validation rule max_value={rule.max_value} "
+                        + "for {value_source}. Value: {value}"
+                    )
 
-    if variable.type == "string" and rule.regex:
-        if not isinstance(value, str):
-            return
-        if re.fullmatch(rule.regex, value) is None:
-            raise ValueError(
-                f"Variable '{variable.name}' violates validation regex '{rule.regex}' for {value_source}. Value: {value}"  # noqa: E501
-            )
+        if variable.type == "string":
+            if rule.max_length is not None and isinstance(value, str) and len(value) > rule.max_length:
+                raise ValueError(
+                    f"Variable '{variable.name}' violates validation max_length={rule.max_length} "
+                    + "for {value_source}. Value: {value}"
+                )
+            if rule.regex and isinstance(value, str) and re.fullmatch(rule.regex, value) is None:
+                raise ValueError(
+                    f"Variable '{variable.name}' violates validation regex '{rule.regex}' "
+                    + "for {value_source}. Value: {value}"
+                )
 
 
 def check_options_values(variable_from_schema: ResourceVariableSchema, variable: Variables) -> bool:
@@ -300,7 +311,7 @@ async def validate_resource_variables_on_create(
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
-            enforce_validation_rule(variable, variable.value, "inherited default")
+            enforce_validation_rules(variable, variable.value, "inherited default")
             variables.append(
                 Variables(
                     name=variable.name,
@@ -345,7 +356,7 @@ async def validate_resource_variables_on_create(
                 f"Variable '{variable.name}' has an invalid type '{type(resource_variable.value)}'. Expected {variable.type}."  #  noqa: E501
             )
 
-        enforce_validation_rule(variable, resource_variable.value, value_source)
+        enforce_validation_rules(variable, resource_variable.value, value_source)
         variables.append(resource_variable)
 
     resource.variables = variables
@@ -392,7 +403,7 @@ async def update_resource_variables_on_patch(
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
-            enforce_validation_rule(variable, variable.value, "inherited default")
+            enforce_validation_rules(variable, variable.value, "inherited default")
             variables.append(
                 Variables(
                     name=variable.name,
@@ -421,7 +432,7 @@ async def update_resource_variables_on_patch(
                     raise ValueError(
                         f"Variable '{variable.name}' has an invalid value. Resource options could be changed in version config"  # noqa: E501
                     )
-                enforce_validation_rule(variable, resource_variable.value, "existing value")
+                enforce_validation_rules(variable, resource_variable.value, "existing value")
                 variables.append(resource_variable)
                 continue
 
@@ -441,7 +452,7 @@ async def update_resource_variables_on_patch(
         if check_variable_type(variable, patched_variable.value) is False:
             raise ValueError(f"Variable '{variable.name}' has an invalid type. Expected {variable.type}.")
 
-        enforce_validation_rule(variable, patched_variable.value, value_source)
+        enforce_validation_rules(variable, patched_variable.value, value_source)
         variables.append(patched_variable)
 
     patched_resource.variables = variables

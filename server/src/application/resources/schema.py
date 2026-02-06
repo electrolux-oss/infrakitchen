@@ -242,6 +242,8 @@ class ValidationRuleModel(BaseModel):
     min_value: Decimal | None = Field(default=None)
     max_value: Decimal | None = Field(default=None)
     regex: str | None = Field(default=None)
+    max_length: int | None = Field(default=None)
+    description: str | None = Field(default=None)
 
 
 class ResourceVariableSchema(BaseModel):
@@ -260,7 +262,7 @@ class ResourceVariableSchema(BaseModel):
     restricted: bool = Field(default=False)
     value: Any | None = Field(default=None)
     index: int = Field(default=0)
-    validation: ValidationRuleModel | None = Field(default=None)
+    validation: list[ValidationRuleModel] = Field(default_factory=list)
 
 
 class ResourceTreeResponse(BaseModel):

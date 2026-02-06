@@ -36,31 +36,47 @@ const toNumericValue = (value: unknown): number | undefined => {
 
 export const buildHintLabels = (variable: ResourceVariableSchema): string[] => {
   const labels: string[] = [];
-  const validation = variable.validation;
-  if (!validation) {
+  const validationRules = Array.isArray(variable.validation)
+    ? variable.validation
+    : [];
+
+  if (validationRules.length === 0) {
     return labels;
   }
 
-  if (variable.type === "number") {
-    const hasMin =
-      validation.min_value !== null && validation.min_value !== undefined;
-    const hasMax =
-      validation.max_value !== null && validation.max_value !== undefined;
-
-    const minLabel = formatValidationNumber(validation.min_value);
-    const maxLabel = formatValidationNumber(validation.max_value);
-
-    if (hasMin && hasMax) {
-      labels.push(`Allowed: ${minLabel}-${maxLabel}`);
-    } else if (hasMin) {
-      labels.push(`Min: ${minLabel}`);
-    } else if (hasMax) {
-      labels.push(`Max: ${maxLabel}`);
+  const addLabel = (label: string) => {
+    if (!labels.includes(label)) {
+      labels.push(label);
     }
+  };
+
+  if (variable.type === "number") {
+    validationRules.forEach((rule) => {
+      const hasMin = rule.min_value !== null && rule.min_value !== undefined;
+      const hasMax = rule.max_value !== null && rule.max_value !== undefined;
+
+      const minLabel = formatValidationNumber(rule.min_value);
+      const maxLabel = formatValidationNumber(rule.max_value);
+
+      if (hasMin && hasMax) {
+        addLabel(`Allowed: ${minLabel}-${maxLabel}`);
+      } else if (hasMin) {
+        addLabel(`Min: ${minLabel}`);
+      } else if (hasMax) {
+        addLabel(`Max: ${maxLabel}`);
+      }
+    });
   }
 
-  if (variable.type === "string" && validation.regex) {
-    labels.push(`Pattern: ${validation.regex}`);
+  if (variable.type === "string") {
+    validationRules.forEach((rule) => {
+      if (rule.regex) {
+        addLabel(`Pattern: ${rule.regex}`);
+      }
+      if (rule.max_length !== null && rule.max_length !== undefined) {
+        addLabel(`Max length: ${rule.max_length}`);
+      }
+    });
   }
 
   return labels;
@@ -73,8 +89,10 @@ export const createVariableValidator = (variable: ResourceVariableSchema) => {
       return "This field is required";
     }
 
-    const validation = variable.validation;
-    if (!validation || empty) {
+    const validationRules = Array.isArray(variable.validation)
+      ? variable.validation
+      : [];
+    if (validationRules.length === 0 || empty) {
       return true;
     }
 
@@ -84,23 +102,20 @@ export const createVariableValidator = (variable: ResourceVariableSchema) => {
         return "Enter a valid number";
       }
 
-      const min = toNumericValue(validation.min_value);
-      if (min !== undefined && numericValue < min) {
-        return `Value must be ≥ ${formatValidationNumber(validation.min_value)}`;
-      }
+      for (const rule of validationRules) {
+        const min = toNumericValue(rule.min_value);
+        if (min !== undefined && numericValue < min) {
+          return `Value must be ≥ ${formatValidationNumber(rule.min_value)}`;
+        }
 
-      const max = toNumericValue(validation.max_value);
-      if (max !== undefined && numericValue > max) {
-        return `Value must be ≤ ${formatValidationNumber(validation.max_value)}`;
+        const max = toNumericValue(rule.max_value);
+        if (max !== undefined && numericValue > max) {
+          return `Value must be ≤ ${formatValidationNumber(rule.max_value)}`;
+        }
       }
     }
 
     if (variable.type === "string") {
-      const pattern = validation.regex?.trim();
-      if (!pattern) {
-        return true;
-      }
-
       const stringValue =
         typeof value === "string"
           ? value
@@ -111,13 +126,28 @@ export const createVariableValidator = (variable: ResourceVariableSchema) => {
         return true;
       }
 
-      try {
-        const regex = new RegExp(pattern);
-        if (!regex.test(stringValue)) {
-          return `Value must match pattern ${pattern}`;
+      for (const rule of validationRules) {
+        if (
+          rule.max_length !== null &&
+          rule.max_length !== undefined &&
+          stringValue.length > rule.max_length
+        ) {
+          return `Value must be ≤ ${rule.max_length} characters`;
         }
-      } catch {
-        return true;
+
+        const pattern = rule.regex?.trim();
+        if (!pattern) {
+          continue;
+        }
+
+        try {
+          const regex = new RegExp(pattern);
+          if (!regex.test(stringValue)) {
+            return `Value must match pattern ${pattern}`;
+          }
+        } catch {
+          return true;
+        }
       }
     }
 

@@ -95,7 +95,7 @@ export interface ResourceVariableSchema {
   unique: boolean;
   value: any | null;
   index: number;
-  validation: ValidationRule | null;
+  validation: ValidationRule[] | null;
   reference: SourceOutputConfigShort | null;
 }
 

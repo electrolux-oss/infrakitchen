@@ -41,13 +41,32 @@ const coerceNumeric = (
   return Number.isNaN(numericValue) ? null : numericValue;
 };
 
+const coerceInteger = (
+  value: string | number | null | undefined,
+): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const intValue =
+    typeof value === "number" ? value : Number.parseInt(String(value), 10);
+
+  return Number.isNaN(intValue) ? null : intValue;
+};
+
 const formatValidationForForm = (
-  validation?: ValidationRule | null,
-): ValidationRule => ({
-  min_value: coerceNumeric(validation?.min_value),
-  max_value: coerceNumeric(validation?.max_value),
-  regex: validation?.regex ?? null,
-});
+  validation?: ValidationRule[] | null,
+): ValidationRule => {
+  const firstRule = validation && validation.length > 0 ? validation[0] : null;
+
+  return {
+    min_value: coerceNumeric(firstRule?.min_value ?? null),
+    max_value: coerceNumeric(firstRule?.max_value ?? null),
+    regex: firstRule?.regex ?? null,
+    max_length: coerceInteger(firstRule?.max_length ?? null),
+    description: firstRule?.description ?? null,
+  };
+};
 
 const normalizeValidationForSubmit = (
   validation?: ValidationRule | null,
@@ -63,12 +82,19 @@ const normalizeValidationForSubmit = (
       typeof validation.regex === "string"
         ? validation.regex.trim() || null
         : (validation.regex ?? null),
+    max_length: coerceInteger(validation.max_length),
+    description:
+      typeof validation.description === "string"
+        ? validation.description.trim() || null
+        : (validation.description ?? null),
   };
 
   if (
     normalized.min_value === null &&
     normalized.max_value === null &&
-    normalized.regex === null
+    normalized.regex === null &&
+    normalized.max_length === null &&
+    !normalized.description
   ) {
     return null;
   }
@@ -184,20 +210,33 @@ const SourceCodeVersionConfigContent = () => {
       }
 
       try {
-        const changesArray: SourceConfigUpdateWithId[] = configsToSubmit.map(
-          (config) => ({
-            id: config.id,
-            required: config.required,
-            default: config.default,
-            frozen: config.frozen,
-            unique: config.unique,
-            restricted: config.restricted,
-            options: config.options,
-            template_id: sourceCodeVersion.template.id,
-            reference_template_id: config.reference_template_id,
-            output_config_name: config.output_config_name,
-            validation: normalizeValidationForSubmit(config.validation),
-          }),
+        type SourceConfigUpdatePayload = Omit<
+          SourceConfigUpdateWithId,
+          "validation"
+        > & {
+          validation: ValidationRule[];
+        };
+
+        const changesArray: SourceConfigUpdatePayload[] = configsToSubmit.map(
+          (config) => {
+            const normalizedRule = normalizeValidationForSubmit(
+              config.validation,
+            );
+
+            return {
+              id: config.id,
+              required: config.required,
+              default: config.default,
+              frozen: config.frozen,
+              unique: config.unique,
+              restricted: config.restricted,
+              options: config.options,
+              template_id: sourceCodeVersion.template.id,
+              reference_template_id: config.reference_template_id,
+              output_config_name: config.output_config_name,
+              validation: normalizedRule ? [normalizedRule] : [],
+            };
+          },
         );
 
         await ikApi.updateRaw(

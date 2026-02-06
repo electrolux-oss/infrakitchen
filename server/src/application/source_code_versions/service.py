@@ -15,8 +15,7 @@ from application.validation_rules.service import ValidationRuleService
 from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import (
     ValidationRuleCreate,
-    ValidationRuleReferenceCreate,
-    ValidationRuleUpdate,
+    ValidationRuleResponse,
 )
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
@@ -446,8 +445,7 @@ class SourceCodeVersionService:
         existing_configs_dict = {config.id: config for config in existing_configs}
         updated_configs: list[SourceConfigResponse] = []
         template_references_to_create: list[SourceConfigTemplateReferenceCreate] = []
-        validation_rule_references: list[ValidationRuleReferenceCreate] = []
-        validation_payloads: list[tuple[str, str, ConfigValidationModel | None]] = []
+        validation_payloads: list[tuple[str, str, list[ConfigValidationModel]]] = []
         template_id = None
         template = await self.template_service.get_by_id(configs[0].template_id)
         if not template:
@@ -472,7 +470,13 @@ class SourceCodeVersionService:
 
             # Handle template references
             pydantic_config = SourceConfigResponse.model_validate(existing_configs_dict[config.id])
-            validation_payloads.append((pydantic_config.name, pydantic_config.type, config.validation))
+            validation_payloads.append(
+                (
+                    pydantic_config.name,
+                    pydantic_config.type,
+                    list(config.validation or []),
+                )
+            )
             template_reference = SourceConfigTemplateReferenceCreate(
                 template_id=template_id,
                 reference_template_id=config.reference_template_id,
@@ -480,28 +484,12 @@ class SourceCodeVersionService:
                 output_config_name=config.output_config_name,
             )
             template_references_to_create.append(template_reference)
-            validation_rule_references.append(
-                ValidationRuleReferenceCreate(
-                    template_id=template_id,
-                    variable_name=pydantic_config.name,
-                    reference_template_id=config.reference_template_id,
-                )
-            )
         try:
             if template_references_to_create:
                 await self.update_template_references(template_references=template_references_to_create)
         except EntityNotFound as error:
             logger.warning(
                 "Skipping source config template reference sync for template %s: %s",
-                template_id,
-                error,
-            )
-        try:
-            if validation_rule_references:
-                await self.validation_rule_service.upsert_references(validation_rule_references)
-        except EntityNotFound as error:
-            logger.warning(
-                "Skipping validation rule reference sync for template %s: %s",
                 template_id,
                 error,
             )
@@ -620,31 +608,41 @@ class SourceCodeVersionService:
             return
 
         rules = await self.validation_rule_service.get_effective_rules_for_template(template_id)
-        rule_map = {rule.variable_name: rule for rule in rules}
+        rule_map: dict[str, list[ValidationRuleResponse]] = {}
+        for rule in rules:
+            rule_map.setdefault(rule.variable_name, []).append(rule)
 
         for config in configs:
-            rule = rule_map.get(config.name)
-            if not rule:
-                config.validation = None
+            rule_list = rule_map.get(config.name, [])
+            if not rule_list:
+                config.validation = []
                 continue
-            config.validation = ConfigValidationModel(
-                min_value=rule.min_value,
-                max_value=rule.max_value,
-                regex=rule.regex_pattern,
-            )
+
+            config.validation = [
+                ConfigValidationModel(
+                    min_value=rule.min_value,
+                    max_value=rule.max_value,
+                    regex=rule.regex_pattern,
+                    max_length=rule.max_length,
+                    description=rule.description,
+                )
+                for rule in rule_list
+            ]
 
     async def _sync_validation_rules_for_configs(
         self,
         template_id: UUID,
-        config_validations: list[tuple[str, str, ConfigValidationModel | None]],
+        config_validations: list[tuple[str, str, list[ConfigValidationModel]]],
         requester: UserDTO,
     ) -> None:
         """Create, update, or delete validation rules so they mirror the provided config payloads."""
         if not config_validations:
             return
 
-        for variable_name, variable_type, validation in config_validations:
-            if self._is_validation_payload_empty(validation):
+        for variable_name, variable_type, validations in config_validations:
+            valid_rules = [rule for rule in validations if not self._is_validation_payload_empty(rule)]
+
+            if not valid_rules:
                 await self.validation_rule_service.delete_rule(template_id, variable_name)
                 continue
 
@@ -654,11 +652,16 @@ class SourceCodeVersionService:
                     f"Validation rules are not supported for config '{variable_name}' of type '{variable_type}'"
                 )
 
-            payload = self._build_validation_payload(template_id, variable_name, target_type, validation)
-            try:
-                await self.validation_rule_service.update_rule(ValidationRuleUpdate(**payload))
-            except EntityNotFound:
-                await self.validation_rule_service.create_rule(ValidationRuleCreate(**payload), requester)
+            payloads = [
+                self._build_validation_payload(template_id, variable_name, target_type, rule) for rule in valid_rules
+            ]
+
+            await self.validation_rule_service.replace_rules_for_variable(
+                template_id=template_id,
+                variable_name=variable_name,
+                rules=[ValidationRuleCreate(**payload) for payload in payloads],
+                requester=requester,
+            )
 
     def _resolve_validation_target_type(self, variable_type: str) -> ValidationRuleTargetType | None:
         """Map a config's variable type to the corresponding validation rule target type."""
@@ -674,25 +677,30 @@ class SourceCodeVersionService:
         if validation is None:
             return True
         regex = (validation.regex or "").strip()
-        return validation.min_value is None and validation.max_value is None and not regex
+        return (
+            validation.min_value is None
+            and validation.max_value is None
+            and not regex
+            and validation.max_length is None
+        )
 
     def _build_validation_payload(
         self,
         template_id: UUID,
         variable_name: str,
         target_type: ValidationRuleTargetType,
-        validation: ConfigValidationModel | None,
+        validation: ConfigValidationModel,
     ) -> dict[str, Any]:
         """Normalize validation input into the schema expected by the validation rule service."""
-        if validation is None:
-            raise ValueError("Validation payload cannot be empty when building a rule")
         payload: dict[str, Any] = {
             "template_id": template_id,
             "variable_name": variable_name,
             "target_type": target_type,
+            "description": validation.description,
             "min_value": None,
             "max_value": None,
             "regex_pattern": None,
+            "max_length": None,
         }
 
         if target_type == ValidationRuleTargetType.STRING:
@@ -700,6 +708,7 @@ class SourceCodeVersionService:
             if not regex_pattern:
                 raise ValueError(f"Regex pattern is required for string validation rule '{variable_name}'")
             payload["regex_pattern"] = regex_pattern
+            payload["max_length"] = validation.max_length
             return payload
 
         # numeric rules

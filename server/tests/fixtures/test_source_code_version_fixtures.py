@@ -123,7 +123,6 @@ def mock_validation_rule_crud():
     crud.get_rule_by_id = AsyncMock()
     crud.get_rule_by_template_and_name = AsyncMock()
     crud.get_rules_by_template = AsyncMock()
-    crud.get_rules_by_template_ids = AsyncMock()
     crud.create_rule = AsyncMock()
     crud.update_rule = AsyncMock()
     crud.delete_rule = AsyncMock()

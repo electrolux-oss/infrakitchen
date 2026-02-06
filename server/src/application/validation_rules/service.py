@@ -1,18 +1,15 @@
 import re
-from collections.abc import Sequence
 from collections.abc import Iterable
 from uuid import UUID
 
 from application.templates.service import TemplateService
-from core.errors import EntityExistsError, EntityNotFound
+from core.errors import EntityNotFound
 from core.users.model import UserDTO
 
 from .crud import ValidationRuleCRUD
-from .model import ValidationRule, ValidationRuleTargetType, ValidationRuleTemplateReference
+from .model import ValidationRule, ValidationRuleTargetType
 from .schema import (
     ValidationRuleCreate,
-    ValidationRuleReferenceCreate,
-    ValidationRuleReferenceResponse,
     ValidationRuleResponse,
     ValidationRuleUpdate,
 )
@@ -24,121 +21,95 @@ class ValidationRuleService:
         self.template_service = template_service
 
     async def get_effective_rules_for_template(self, template_id: UUID) -> list[ValidationRuleResponse]:
-        template = await self.template_service.get_by_id(template_id)
-        if not template:
-            raise EntityNotFound("Template not found")
+        await self._ensure_template_exists(template_id)
 
-        direct_rules = await self.crud.get_rules_by_template(template_id)
         references = await self.crud.get_references_by_template(template_id)
-
         responses = [
-            self._to_response(rule, target_template_id=template_id, inherited_from=None) for rule in direct_rules
-        ]
-        if not references:
-            return sorted(responses, key=lambda rule: rule.variable_name)
-
-        referenced_rules = await self._load_referenced_rules(references)
-        direct_variables = {rule.variable_name for rule in direct_rules}
-
-        for reference in references:
-            if reference.variable_name in direct_variables:
-                continue
-            key = (reference.reference_template_id, reference.variable_name)
-            rule = referenced_rules.get(key)
-            if not rule:
-                raise EntityNotFound(
-                    f"Validation rule for variable '{reference.variable_name}' "
-                    + f"not found in template {reference.reference_template_id}"
-                )
-            responses.append(
-                self._to_response(rule, target_template_id=template_id, inherited_from=reference.reference_template_id)
+            self._to_response(
+                reference.validation_rule,
+                template_id=reference.template_id,
+                variable_name=reference.variable_name,
             )
-
-        return sorted(responses, key=lambda rule: rule.variable_name)
+            for reference in references
+        ]
+        return sorted(responses, key=lambda rule: (rule.variable_name, rule.created_at))
 
     async def create_rule(self, rule: ValidationRuleCreate, requester: UserDTO) -> ValidationRuleResponse:
         await self._ensure_template_exists(rule.template_id)
         self._validate_rule_payload(rule)
 
-        existing = await self.crud.get_rule_by_template_and_name(rule.template_id, rule.variable_name)
-        if existing:
-            raise EntityExistsError("Validation rule already exists for this variable")
-
-        data = rule.model_dump(exclude_unset=True)
+        data = rule.model_dump(exclude_unset=True, exclude={"template_id", "variable_name"})
         data["created_by"] = requester.id
         created = await self.crud.create_rule(data)
-        return self._to_response(created)
+        await self.crud.create_reference(
+            {
+                "template_id": rule.template_id,
+                "variable_name": rule.variable_name,
+                "validation_rule_id": created.id,
+                "created_by": requester.id,
+            }
+        )
+        return self._to_response(created, template_id=rule.template_id, variable_name=rule.variable_name)
 
     async def update_rule(self, rule: ValidationRuleUpdate) -> ValidationRuleResponse:
         await self._ensure_template_exists(rule.template_id)
         self._validate_rule_payload(rule)
 
-        existing = None
-        if rule.id:
-            existing = await self.crud.get_rule_by_id(rule.id)
-        if existing is None:
-            existing = await self.crud.get_rule_by_template_and_name(rule.template_id, rule.variable_name)
+        if not rule.id:
+            raise ValueError("Rule ID is required for updates")
 
-        if not existing:
+        existing = await self.crud.get_rule_by_id(rule.id)
+        if existing is None:
             raise EntityNotFound("Validation rule not found")
 
-        if existing.template_id != rule.template_id:
-            raise ValueError("template_id cannot be changed for an existing validation rule")
+        rules = await self.crud.get_rules_by_template_and_variable(rule.template_id, rule.variable_name)
+        if not any(matching_rule.id == rule.id for matching_rule in rules):
+            raise EntityNotFound("Validation rule reference not found for provided template and variable")
 
-        if existing.variable_name != rule.variable_name:
-            conflict = await self.crud.get_rule_by_template_and_name(rule.template_id, rule.variable_name)
-            if conflict and conflict.id != existing.id:
-                raise EntityExistsError("Validation rule already exists for this variable")
-
-        data = rule.model_dump(exclude_unset=True, exclude={"id"})
+        data = rule.model_dump(exclude_unset=True, exclude={"id", "template_id", "variable_name"})
         updated = await self.crud.update_rule(existing, data)
-        return self._to_response(updated)
+        return self._to_response(updated, template_id=rule.template_id, variable_name=rule.variable_name)
 
-    async def delete_rule(self, template_id: UUID, variable_name: str) -> None:
-        existing = await self.crud.get_rule_by_template_and_name(template_id, variable_name)
-        if existing:
-            await self.crud.delete_rule(existing)
+    async def delete_rule(self, template_id: UUID, variable_name: str, rule_id: UUID | None = None) -> None:
+        references = await self.crud.get_references_by_template_and_variable(template_id, variable_name)
+        if rule_id is not None:
+            references = [reference for reference in references if reference.validation_rule_id == rule_id]
 
-    async def upsert_references(
-        self, references: Sequence[ValidationRuleReferenceCreate]
-    ) -> list[ValidationRuleReferenceResponse]:
-        if not references:
-            return []
-
-        # validate templates in batch
-        templates_to_check = {ref.template_id for ref in references}
-        templates_to_check.update({ref.reference_template_id for ref in references if ref.reference_template_id})
-        await self._ensure_templates_exist(templates_to_check)
-
-        responses: list[ValidationRuleReferenceResponse] = []
         for reference in references:
-            if reference.reference_template_id is None:
-                existing = await self.crud.get_reference_by_template_and_variable(
-                    reference.template_id, reference.variable_name
-                )
-                if existing:
-                    await self.crud.delete_reference(existing)
-                continue
+            await self.crud.delete_reference(reference)
+            await self.crud.delete_rule(reference.validation_rule)
 
-            source_rule = await self.crud.get_rule_by_template_and_name(
-                reference.reference_template_id, reference.variable_name
-            )
-            if not source_rule:
-                raise EntityNotFound(
-                    f"Validation rule for variable '{reference.variable_name}' "
-                    + f"not found in template {reference.reference_template_id}"
-                )
+    async def replace_rules_for_variable(
+        self,
+        template_id: UUID,
+        variable_name: str,
+        rules: Iterable[ValidationRuleCreate],
+        requester: UserDTO,
+    ) -> list[ValidationRuleResponse]:
+        await self._ensure_template_exists(template_id)
+        responses: list[ValidationRuleResponse] = []
 
-            existing = await self.crud.get_reference_by_template_and_variable(
-                reference.template_id, reference.variable_name
+        existing = await self.crud.get_references_by_template_and_variable(template_id, variable_name)
+        for reference in existing:
+            await self.crud.delete_reference(reference)
+            await self.crud.delete_rule(reference.validation_rule)
+
+        for rule in rules:
+            if rule.template_id != template_id or rule.variable_name != variable_name:
+                raise ValueError("Rule payload must match target template and variable")
+            self._validate_rule_payload(rule)
+            data = rule.model_dump(exclude_unset=True, exclude={"template_id", "variable_name"})
+            data["created_by"] = requester.id
+            created = await self.crud.create_rule(data)
+            await self.crud.create_reference(
+                {
+                    "template_id": template_id,
+                    "variable_name": variable_name,
+                    "validation_rule_id": created.id,
+                    "created_by": requester.id,
+                }
             )
-            data = reference.model_dump(exclude_unset=True)
-            if existing:
-                updated = await self.crud.update_reference(existing, data)
-                responses.append(ValidationRuleReferenceResponse.model_validate(updated))
-            else:
-                created = await self.crud.create_reference(data)
-                responses.append(ValidationRuleReferenceResponse.model_validate(created))
+            responses.append(self._to_response(created, template_id=template_id, variable_name=variable_name))
 
         return responses
 
@@ -179,28 +150,17 @@ class ValidationRuleService:
     def _to_response(
         self,
         rule: ValidationRule,
-        target_template_id: UUID | None = None,
-        inherited_from: UUID | None = None,
+        template_id: UUID,
+        variable_name: str,
     ) -> ValidationRuleResponse:
-        template_id = target_template_id or rule.template_id
         return ValidationRuleResponse(
             id=rule.id,
             template_id=template_id,
-            variable_name=rule.variable_name,
+            variable_name=variable_name,
             target_type=rule.target_type,
             min_value=rule.min_value,
             max_value=rule.max_value,
             regex_pattern=rule.regex_pattern,
-            inherited_from_template_id=inherited_from,
             created_at=rule.created_at,
             updated_at=rule.updated_at,
         )
-
-    async def _load_referenced_rules(
-        self, references: Sequence[ValidationRuleTemplateReference]
-    ) -> dict[tuple[UUID, str], ValidationRule]:
-        template_ids = {reference.reference_template_id for reference in references}
-        if not template_ids:
-            return {}
-        rules = await self.crud.get_rules_by_template_ids(template_ids)
-        return {(rule.template_id, rule.variable_name): rule for rule in rules}

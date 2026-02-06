@@ -35,6 +35,7 @@ def mock_template_service(
     mock_event_sender,
     mock_audit_log_handler,
     mocked_user,
+    mocked_template,
 ):
     template_instance = Template(
         id=uuid4(),
@@ -53,7 +54,9 @@ def mock_template_service(
         labels=["test_label"],
         description="A test template",
     )
+    template_instance.id = mocked_template.id
     mock_template_crud.get_by_id.return_value = template_instance
+    mock_template_crud.get_all.return_value = [template_instance]
     return TemplateService(
         crud=mock_template_crud,
         revision_handler=mock_revision_handler,
