@@ -9,7 +9,7 @@ router = APIRouter()
 @router.get(
     "/constants",
     response_model=dict[str, list[ConstantModel]],
-    response_description="Get all logs",
+    response_description="Get all constants",
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
 )

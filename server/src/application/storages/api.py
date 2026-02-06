@@ -7,6 +7,8 @@ from fastapi import status as http_status
 
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
+from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.registry import mcp_group
 from .schema import StorageCreate, StorageResponse, StorageUpdate
 from .dependencies import get_storage_service
 
@@ -19,6 +21,7 @@ router = APIRouter()
     response_description="Get one storage by id",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(get_one_group, "storages", param_renames={"id": "storage_id"})
 async def get_by_id(storage_id: str, service: StorageService = Depends(get_storage_service)):
     entity = await service.get_by_id(storage_id=storage_id)
     if not entity:
@@ -32,6 +35,7 @@ async def get_by_id(storage_id: str, service: StorageService = Depends(get_stora
     response_description="Get all storages",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(list_entities_group, "storages")
 async def get_all(
     response: Response,
     service: StorageService = Depends(get_storage_service),

@@ -4,8 +4,9 @@ import os
 import sys
 import time
 import json
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 from fastapi.exceptions import RequestValidationError
+from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import JSONResponse
 
@@ -20,7 +21,7 @@ from core.event_stream_manager import start_rabbitmq_consumer
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 
-from core.config import setup_service_environment
+from core.config import InfrakitchenConfig, setup_service_environment
 from core.utils.websocket_manager import WebSocketConnectionManager
 from application.views import main_router
 from core.casbin.enforcer import CasbinEnforcer
@@ -55,13 +56,21 @@ logging.getLogger("aio_pika.queue").setLevel(logging.ERROR)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    mcp_context = nullcontext()
+    if InfrakitchenConfig().mcp_enabled:
+        mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
+        mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
+
     websocket_manager = WebSocketConnectionManager()
     loop = asyncio.get_running_loop()
     loop.create_task(start_rabbitmq_consumer())
 
     await init_app()
     await CasbinEnforcer().init_enforcer()
-    yield
+
+    async with mcp_context:
+        yield
+
     await websocket_manager.close_all_connections()
 
 

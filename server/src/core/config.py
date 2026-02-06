@@ -51,21 +51,30 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     approval_flow: bool = True
     demo_mode: bool = False
     websocket: bool = True
+    mcp_enabled: bool = False
 
     def __setattr__(self, name: str, value: Any, /) -> None:
         if not hasattr(self, name):
             raise AttributeError(f"Cannot add new attribute '{name}' to Configuration")
         super().__setattr__(name, value)
 
-    def __rep__(self) -> str:
-        return f"InfrakitchenConfig(approval_flow={self.approval_flow}, demo_mode={self.demo_mode})"
+    def __repr__(self) -> str:
+        return (
+            f"InfrakitchenConfig("
+            f"  approval_flow={self.approval_flow}, "
+            f"  demo_mode={self.demo_mode}, "
+            f"  websocket={self.websocket}, "
+            f"  mcp_enabled={self.mcp_enabled}, "
+            ")"
+        )
 
     def __str__(self) -> str:
-        return self.__rep__()
+        return self.__repr__()
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "approval_flow": self.approval_flow,
             "demo_mode": self.demo_mode,
             "websocket": self.websocket,
+            "mcp_enabled": self.mcp_enabled,
         }

@@ -14,6 +14,8 @@ from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from core.utils.model_tools import is_valid_uuid
+from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.registry import mcp_group
 
 from .service import PermissionService
 from .dependencies import get_permission_service
@@ -27,6 +29,7 @@ router = APIRouter()
     response_description="Get all roles",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(list_entities_group, "roles")
 async def get_all_roles(
     response: Response,
     service: PermissionService = Depends(get_permission_service),
@@ -52,6 +55,7 @@ async def get_all_roles(
     response_description="Get one role by id",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(get_one_group, "roles", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: PermissionService = Depends(get_permission_service)):
     entity = await service.get_by_id(permission_id=entity_id)
 

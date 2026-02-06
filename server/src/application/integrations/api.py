@@ -7,6 +7,8 @@ from core.constants.model import ModelActions
 from core.users.functions import user_has_access_to_api
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
+from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.registry import mcp_group
 from .dependencies import get_integration_service
 from .schema import (
     IntegrationCreate,
@@ -25,6 +27,7 @@ router = APIRouter()
     response_description="Get one integration by id",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(get_one_group, "integrations", param_renames={"id": "integration_id"})
 async def get_by_id(integration_id: str, service: IntegrationService = Depends(get_integration_service)):
     entity = await service.get_by_id(integration_id=integration_id)
     if not entity:
@@ -38,6 +41,7 @@ async def get_by_id(integration_id: str, service: IntegrationService = Depends(g
     response_description="Get all integrations",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(list_entities_group, "integrations")
 async def get_all(
     response: Response,
     service: IntegrationService = Depends(get_integration_service),
