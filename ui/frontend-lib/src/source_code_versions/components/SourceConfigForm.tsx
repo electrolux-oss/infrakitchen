@@ -1,5 +1,6 @@
 import { Controller, Control, useWatch, useFormState } from "react-hook-form";
 
+import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import {
   TextField,
   Autocomplete,
@@ -37,6 +38,23 @@ export const SourceConfigForm = (props: {
   const required = useWatch({ control, name: `configs.${index}.required` });
   const restricted = useWatch({ control, name: `configs.${index}.restricted` });
   const sensitive = useWatch({ control, name: `configs.${index}.sensitive` });
+  const minValidationValue = useWatch({
+    control,
+    name: `configs.${index}.validation.min_value`,
+  });
+  const maxValidationValue = useWatch({
+    control,
+    name: `configs.${index}.validation.max_value`,
+  });
+
+  const parseNumericInput = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+    const numericValue =
+      typeof value === "number" ? value : Number.parseFloat(String(value));
+    return Number.isNaN(numericValue) ? null : numericValue;
+  };
 
   const isDirty = formState.dirtyFields?.configs?.[index];
   const hasChanges = Boolean(isDirty);
@@ -116,7 +134,7 @@ export const SourceConfigForm = (props: {
           )}
           {!sensitive && (
             <Box sx={{ flexGrow: 1, p: 2 }}>
-              <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
+              <Stack direction="column" spacing={1} sx={{ mb: 2 }}>
                 {configType !== "boolean" && (
                   <Box>
                     <Controller
@@ -193,6 +211,160 @@ export const SourceConfigForm = (props: {
                   </Box>
                 )}
               </Stack>
+
+              {configType === "number" && (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={{ xs: 1, md: 2 }}
+                  sx={{ mb: 2 }}
+                >
+                  <Controller
+                    name={`configs.${index}.validation.min_value`}
+                    control={control}
+                    rules={{
+                      validate: (value) => {
+                        if (value === null || value === undefined) {
+                          return true;
+                        }
+                        const numericValue = parseNumericInput(value);
+                        if (numericValue === null) {
+                          return "Enter a valid number";
+                        }
+                        const normalizedMax =
+                          parseNumericInput(maxValidationValue);
+                        if (
+                          normalizedMax !== null &&
+                          numericValue > normalizedMax
+                        ) {
+                          return "Minimum cannot exceed maximum";
+                        }
+                        return true;
+                      },
+                    }}
+                    render={({ field, fieldState: { error } }) => (
+                      <TextField
+                        {...field}
+                        type="number"
+                        value={
+                          field.value === null || field.value === undefined
+                            ? ""
+                            : field.value
+                        }
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          field.onChange(
+                            value === "" ? null : Number.parseFloat(value),
+                          );
+                        }}
+                        label="Min value"
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        error={!!error}
+                        helperText={error?.message}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={`configs.${index}.validation.max_value`}
+                    control={control}
+                    rules={{
+                      validate: (value) => {
+                        if (value === null || value === undefined) {
+                          return true;
+                        }
+                        const numericValue = parseNumericInput(value);
+                        if (numericValue === null) {
+                          return "Enter a valid number";
+                        }
+                        const normalizedMin =
+                          parseNumericInput(minValidationValue);
+                        if (
+                          normalizedMin !== null &&
+                          numericValue < normalizedMin
+                        ) {
+                          return "Maximum cannot be less than minimum";
+                        }
+                        return true;
+                      },
+                    }}
+                    render={({ field, fieldState: { error } }) => (
+                      <TextField
+                        {...field}
+                        type="number"
+                        value={
+                          field.value === null || field.value === undefined
+                            ? ""
+                            : field.value
+                        }
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          field.onChange(
+                            value === "" ? null : Number.parseFloat(value),
+                          );
+                        }}
+                        label="Max value"
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        error={!!error}
+                        helperText={error?.message}
+                      />
+                    )}
+                  />
+                </Stack>
+              )}
+
+              {configType === "string" && (
+                <Box sx={{ mt: 1, mb: 1 }}>
+                  <Controller
+                    name={`configs.${index}.validation.regex`}
+                    control={control}
+                    rules={{
+                      validate: (value) => {
+                        if (!value) {
+                          return true;
+                        }
+                        try {
+                          RegExp(value);
+                          return true;
+                        } catch (_error) {
+                          return "Enter a valid regular expression";
+                        }
+                      },
+                    }}
+                    render={({ field, fieldState: { error } }) => (
+                      <TextField
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={(event) => {
+                          const { value } = event.target;
+                          field.onChange(value === "" ? null : value);
+                        }}
+                        label={
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            Regex pattern
+                            <Tooltip title="Use JavaScript regex syntax without surrounding slashes. Leave empty to accept any string.">
+                              <InfoOutlined fontSize="small" color="action" />
+                            </Tooltip>
+                          </Box>
+                        }
+                        variant="outlined"
+                        fullWidth
+                        margin="normal"
+                        error={!!error}
+                        helperText={error?.message}
+                      />
+                    )}
+                  />
+                </Box>
+              )}
 
               {configType === "boolean" && (
                 <Box sx={{ mb: 2, mt: -5 }}>

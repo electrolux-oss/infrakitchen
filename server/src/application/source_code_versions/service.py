@@ -11,6 +11,12 @@ from application.source_code_versions.model import (
 )
 from application.source_codes.service import SourceCodeService
 from application.templates.service import TemplateService
+from application.validation_rules.service import ValidationRuleService
+from application.validation_rules.model import ValidationRuleTargetType
+from application.validation_rules.schema import (
+    ValidationRuleCreate,
+    ValidationRuleResponse,
+)
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
@@ -24,6 +30,7 @@ from core.utils.event_sender import EventSender
 from core.utils.model_tools import valid_uuid
 from .crud import SourceCodeVersionCRUD
 from .schema import (
+    ConfigValidationModel,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -44,6 +51,9 @@ from core.constants import ModelStatus
 
 logger = logging.getLogger(__name__)
 
+STRING_VALIDATION_TYPES = {"string"}
+NUMERIC_VALIDATION_TYPES = {"number", "float", "integer"}
+
 
 class SourceCodeVersionService:
     """
@@ -62,6 +72,7 @@ class SourceCodeVersionService:
         audit_log_handler: AuditLogHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        validation_rule_service: ValidationRuleService,
     ):
         self.crud: SourceCodeVersionCRUD = crud
         self.source_code_service: SourceCodeService = source_code_service
@@ -71,6 +82,7 @@ class SourceCodeVersionService:
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.validation_rule_service: ValidationRuleService = validation_rule_service
 
     async def get_dto_by_id(self, source_code_version_id: str | UUID) -> SourceCodeVersionDTO | None:
         source_code_version = await self.crud.get_by_id(source_code_version_id)
@@ -93,7 +105,9 @@ class SourceCodeVersionService:
         source_code_version = await self.crud.get_by_id_with_configs(source_code_version_id)
         if source_code_version is None:
             return None
-        return SourceCodeVersionWithConfigs.model_validate(source_code_version)
+        response = SourceCodeVersionWithConfigs.model_validate(source_code_version)
+        await self._apply_validation_to_config_responses(response.template.id, response.variable_configs)
+        return response
 
     async def get_all(self, **kwargs) -> list[SourceCodeVersionResponse]:
         source_code_versions = await self.crud.get_all(**kwargs)
@@ -296,8 +310,14 @@ class SourceCodeVersionService:
         :param source_code_version_id: ID of the source code version
         :return: List of SourceConfigResponse
         """
+        source_code_version = await self.crud.get_by_id(source_code_version_id)
+        if not source_code_version:
+            raise EntityNotFound("SourceCodeVersion not found")
+
         configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
-        return [SourceConfigResponse.model_validate(config) for config in configs]
+        responses = [SourceConfigResponse.model_validate(config) for config in configs]
+        await self._apply_validation_to_config_responses(source_code_version.template_id, responses)
+        return responses
 
     async def get_config_by_id(self, config_id: str) -> SourceConfigResponse | None:
         """
@@ -316,11 +336,21 @@ class SourceCodeVersionService:
         :param body: List of SourceConfigCreate to create
         :return: None
         """
+        if not configs:
+            return []
+
+        source_code_version = await self.crud.get_by_id(configs[0].source_code_version_id)
+        if not source_code_version:
+            raise EntityNotFound("SourceCodeVersion not found")
+        template_id = source_code_version.template_id
+
         result: list[SourceConfig] = []
         for c in configs:
             config = await self.crud.create_config(c.model_dump(exclude_unset=True))
             result.append(config)
-        return [SourceConfigResponse.model_validate(config) for config in result]
+        responses = [SourceConfigResponse.model_validate(config) for config in result]
+        await self._apply_validation_to_config_responses(template_id, responses)
+        return responses
 
     async def update_config(self, config_id: str, config: SourceConfigUpdate) -> SourceConfigResponse:
         """
@@ -397,7 +427,10 @@ class SourceCodeVersionService:
                 await self.crud.create_template_references(tr.model_dump(exclude_unset=True))
 
     async def update_configs(
-        self, source_code_version_id: str, configs: list[SourceConfigUpdateWithId]
+        self,
+        source_code_version_id: str,
+        configs: list[SourceConfigUpdateWithId],
+        requester: UserDTO,
     ) -> list[SourceConfigResponse]:
         """
         Update existing source code version configs.
@@ -405,10 +438,14 @@ class SourceCodeVersionService:
         :param configs: List of SourceConfigUpdate to update
         :return: List of updated source code version configs
         """
+        if not configs:
+            return []
+
         existing_configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
         existing_configs_dict = {config.id: config for config in existing_configs}
         updated_configs: list[SourceConfigResponse] = []
         template_references_to_create: list[SourceConfigTemplateReferenceCreate] = []
+        validation_payloads: list[tuple[str, str, list[ConfigValidationModel]]] = []
         template_id = None
         template = await self.template_service.get_by_id(configs[0].template_id)
         if not template:
@@ -433,6 +470,13 @@ class SourceCodeVersionService:
 
             # Handle template references
             pydantic_config = SourceConfigResponse.model_validate(existing_configs_dict[config.id])
+            validation_payloads.append(
+                (
+                    pydantic_config.name,
+                    pydantic_config.type,
+                    list(config.validation or []),
+                )
+            )
             template_reference = SourceConfigTemplateReferenceCreate(
                 template_id=template_id,
                 reference_template_id=config.reference_template_id,
@@ -440,10 +484,23 @@ class SourceCodeVersionService:
                 output_config_name=config.output_config_name,
             )
             template_references_to_create.append(template_reference)
+        try:
+            if template_references_to_create:
+                await self.update_template_references(template_references=template_references_to_create)
+        except EntityNotFound as error:
+            logger.warning(
+                "Skipping source config template reference sync for template %s: %s",
+                template_id,
+                error,
+            )
 
-        if template_references_to_create:
-            await self.update_template_references(template_references=template_references_to_create)
-
+        if template_id:
+            await self._sync_validation_rules_for_configs(
+                template_id=template_id,
+                config_validations=validation_payloads,
+                requester=requester,
+            )
+            await self._apply_validation_to_config_responses(template_id, updated_configs)
         return updated_configs
 
     async def get_output_configs_by_scv_id(self, source_code_version_id: str) -> list[SourceOutputConfigResponse]:
@@ -498,7 +555,12 @@ class SourceCodeVersionService:
         scvs = await self.crud.get_scvs_with_configs_and_outputs(
             [valid_uuid(scv_id) for scv_id in source_code_version_ids]
         )
-        return [SourceCodeVersionWithConfigs.model_validate(scv) for scv in scvs]
+        responses: list[SourceCodeVersionWithConfigs] = []
+        for scv in scvs:
+            response = SourceCodeVersionWithConfigs.model_validate(scv)
+            await self._apply_validation_to_config_responses(response.template.id, response.variable_configs)
+            responses.append(response)
+        return responses
 
     async def get_actions(self, source_code_version_id: str, requester: UserDTO) -> list[str]:
         """
@@ -537,3 +599,121 @@ class SourceCodeVersionService:
             return actions
 
         return actions
+
+    async def _apply_validation_to_config_responses(
+        self, template_id: UUID, configs: list[SourceConfigResponse]
+    ) -> None:
+        """Enrich config responses with effective validation rules resolved for a template."""
+        if not configs:
+            return
+
+        rules = await self.validation_rule_service.get_effective_rules_for_template(template_id)
+        rule_map: dict[str, list[ValidationRuleResponse]] = {}
+        for rule in rules:
+            rule_map.setdefault(rule.variable_name, []).append(rule)
+
+        for config in configs:
+            rule_list = rule_map.get(config.name, [])
+            if not rule_list:
+                config.validation = []
+                continue
+
+            config.validation = [
+                ConfigValidationModel(
+                    min_value=rule.min_value,
+                    max_value=rule.max_value,
+                    regex=rule.regex_pattern,
+                    max_length=rule.max_length,
+                    description=rule.description,
+                )
+                for rule in rule_list
+            ]
+
+    async def _sync_validation_rules_for_configs(
+        self,
+        template_id: UUID,
+        config_validations: list[tuple[str, str, list[ConfigValidationModel]]],
+        requester: UserDTO,
+    ) -> None:
+        """Create, update, or delete validation rules so they mirror the provided config payloads."""
+        if not config_validations:
+            return
+
+        for variable_name, variable_type, validations in config_validations:
+            valid_rules = [rule for rule in validations if not self._is_validation_payload_empty(rule)]
+
+            if not valid_rules:
+                await self.validation_rule_service.delete_rule(template_id, variable_name)
+                continue
+
+            target_type = self._resolve_validation_target_type(variable_type)
+            if target_type is None:
+                raise ValueError(
+                    f"Validation rules are not supported for config '{variable_name}' of type '{variable_type}'"
+                )
+
+            payloads = [
+                self._build_validation_payload(template_id, variable_name, target_type, rule) for rule in valid_rules
+            ]
+
+            await self.validation_rule_service.replace_rules_for_variable(
+                template_id=template_id,
+                variable_name=variable_name,
+                rules=[ValidationRuleCreate(**payload) for payload in payloads],
+                requester=requester,
+            )
+
+    def _resolve_validation_target_type(self, variable_type: str) -> ValidationRuleTargetType | None:
+        """Map a config's variable type to the corresponding validation rule target type."""
+        if variable_type in NUMERIC_VALIDATION_TYPES:
+            return ValidationRuleTargetType.NUMBER
+        if variable_type in STRING_VALIDATION_TYPES:
+            return ValidationRuleTargetType.STRING
+        return None
+
+    @staticmethod
+    def _is_validation_payload_empty(validation: ConfigValidationModel | None) -> bool:
+        """Determine whether a validation payload lacks any actionable constraints."""
+        if validation is None:
+            return True
+        regex = (validation.regex or "").strip()
+        return (
+            validation.min_value is None
+            and validation.max_value is None
+            and not regex
+            and validation.max_length is None
+        )
+
+    def _build_validation_payload(
+        self,
+        template_id: UUID,
+        variable_name: str,
+        target_type: ValidationRuleTargetType,
+        validation: ConfigValidationModel,
+    ) -> dict[str, Any]:
+        """Normalize validation input into the schema expected by the validation rule service."""
+        payload: dict[str, Any] = {
+            "template_id": template_id,
+            "variable_name": variable_name,
+            "target_type": target_type,
+            "description": validation.description,
+            "min_value": None,
+            "max_value": None,
+            "regex_pattern": None,
+            "max_length": None,
+        }
+
+        if target_type == ValidationRuleTargetType.STRING:
+            regex_pattern = (validation.regex or "").strip()
+            if not regex_pattern:
+                raise ValueError(f"Regex pattern is required for string validation rule '{variable_name}'")
+            payload["regex_pattern"] = regex_pattern
+            payload["max_length"] = validation.max_length
+            return payload
+
+        # numeric rules
+        payload["min_value"] = validation.min_value
+        payload["max_value"] = validation.max_value
+        if payload["min_value"] is None and payload["max_value"] is None:
+            raise ValueError(f"Numeric validation rule '{variable_name}' requires min_value or max_value")
+        return payload

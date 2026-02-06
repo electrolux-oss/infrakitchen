@@ -9,6 +9,7 @@ import {
   MenuItem,
   FormHelperText,
   Button,
+  Box,
 } from "@mui/material";
 
 import { GradientCircularProgress, useConfig } from "../../common";
@@ -150,13 +151,15 @@ export const ConfigReferenceInput = ({
           )}
         />
       )}
-      <Button
-        variant="outlined"
-        onClick={handleDeleteTemplateSelection}
-        sx={{ mt: 2 }}
-      >
-        Clear
-      </Button>
+      <Box>
+        <Button
+          variant="outlined"
+          onClick={handleDeleteTemplateSelection}
+          sx={{ mt: 0.7 }}
+        >
+          Clear
+        </Button>
+      </Box>
     </>
   );
 };

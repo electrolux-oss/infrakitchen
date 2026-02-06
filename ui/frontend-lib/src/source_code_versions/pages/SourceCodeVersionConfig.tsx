@@ -14,6 +14,7 @@ import { Box, Alert, Button } from "@mui/material";
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import type { ValidationRule } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
 import { ConfigList } from "../components/ConfigList";
 import { ReferenceSelector } from "../components/ReferenceSelector";
@@ -26,6 +27,87 @@ import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
 }
+
+const coerceNumeric = (
+  value: string | number | null | undefined,
+): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const numericValue =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+
+  return Number.isNaN(numericValue) ? null : numericValue;
+};
+
+const coerceInteger = (
+  value: string | number | null | undefined,
+): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const intValue =
+    typeof value === "number" ? value : Number.parseInt(String(value), 10);
+
+  return Number.isNaN(intValue) ? null : intValue;
+};
+
+const formatValidationForForm = (
+  validation?: ValidationRule[] | null,
+): ValidationRule => {
+  const firstRule = validation && validation.length > 0 ? validation[0] : null;
+
+  return {
+    min_value: coerceNumeric(firstRule?.min_value ?? null),
+    max_value: coerceNumeric(firstRule?.max_value ?? null),
+    regex: firstRule?.regex ?? null,
+    max_length: coerceInteger(firstRule?.max_length ?? null),
+    description: firstRule?.description ?? null,
+  };
+};
+
+const normalizeValidationForSubmit = (
+  validation?: ValidationRule | null,
+): ValidationRule | null => {
+  if (!validation) {
+    return null;
+  }
+
+  const normalized: ValidationRule = {
+    min_value: coerceNumeric(validation.min_value),
+    max_value: coerceNumeric(validation.max_value),
+    regex:
+      typeof validation.regex === "string"
+        ? validation.regex.trim() || null
+        : (validation.regex ?? null),
+    max_length: coerceInteger(validation.max_length),
+    description:
+      typeof validation.description === "string"
+        ? validation.description.trim() || null
+        : (validation.description ?? null),
+  };
+
+  if (
+    normalized.min_value === null &&
+    normalized.max_value === null &&
+    normalized.regex === null &&
+    normalized.max_length === null &&
+    !normalized.description
+  ) {
+    return null;
+  }
+
+  return normalized;
+};
+
+const isValidationEqual = (
+  a?: ValidationRule | null,
+  b?: ValidationRule | null,
+) =>
+  JSON.stringify(normalizeValidationForSubmit(a)) ===
+  JSON.stringify(normalizeValidationForSubmit(b));
 
 const SourceCodeVersionConfigContent = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -59,6 +141,7 @@ const SourceCodeVersionConfigContent = () => {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
+        validation: formatValidationForForm(config.validation),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -83,6 +166,7 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation: formatValidationForForm(config.validation),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -114,7 +198,8 @@ const SourceCodeVersionConfigContent = () => {
               JSON.stringify(original.options) ||
             formConfig.reference_template_id !==
               original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name
+            formConfig.output_config_name !== original.output_config_name ||
+            !isValidationEqual(formConfig.validation, original.validation)
           );
         });
       }
@@ -125,19 +210,33 @@ const SourceCodeVersionConfigContent = () => {
       }
 
       try {
-        const changesArray: SourceConfigUpdateWithId[] = configsToSubmit.map(
-          (config) => ({
-            id: config.id,
-            required: config.required,
-            default: config.default,
-            frozen: config.frozen,
-            unique: config.unique,
-            restricted: config.restricted,
-            options: config.options,
-            template_id: sourceCodeVersion.template.id,
-            reference_template_id: config.reference_template_id,
-            output_config_name: config.output_config_name,
-          }),
+        type SourceConfigUpdatePayload = Omit<
+          SourceConfigUpdateWithId,
+          "validation"
+        > & {
+          validation: ValidationRule[];
+        };
+
+        const changesArray: SourceConfigUpdatePayload[] = configsToSubmit.map(
+          (config) => {
+            const normalizedRule = normalizeValidationForSubmit(
+              config.validation,
+            );
+
+            return {
+              id: config.id,
+              required: config.required,
+              default: config.default,
+              frozen: config.frozen,
+              unique: config.unique,
+              restricted: config.restricted,
+              options: config.options,
+              template_id: sourceCodeVersion.template.id,
+              reference_template_id: config.reference_template_id,
+              output_config_name: config.output_config_name,
+              validation: normalizedRule ? [normalizedRule] : [],
+            };
+          },
         );
 
         await ikApi.updateRaw(

@@ -1,5 +1,7 @@
 from collections.abc import Sequence
+from decimal import Decimal, InvalidOperation
 import logging
+import re
 from typing import Any, cast
 from uuid import UUID
 
@@ -11,6 +13,7 @@ from application.resources.schema import (
     ResourceCreate,
     ResourceResponse,
     ResourceVariableSchema,
+    ValidationRuleModel,
     ResourceWithConfigs,
     ResourcePatch,
     Variables,
@@ -126,6 +129,20 @@ def get_resource_variable_schema(
                 if variable.name == config.name and config.value is not None:
                     variable.value = config.value
 
+    def to_validation_models(config_validation) -> list[ValidationRuleModel]:
+        if not config_validation:
+            return []
+        return [
+            ValidationRuleModel(
+                min_value=rule.min_value,
+                max_value=rule.max_value,
+                regex=rule.regex,
+                max_length=rule.max_length,
+                description=rule.description,
+            )
+            for rule in config_validation
+        ]
+
     schema: list[ResourceVariableSchema] = []
 
     scv_template_references = resource_scv.template_refs
@@ -142,6 +159,7 @@ def get_resource_variable_schema(
             type=scv.type,
             options=scv.options,
             index=scv.index,
+            validation=to_validation_models(scv.validation),
         )
         schema.append(rvs)
 
@@ -183,6 +201,9 @@ def check_required_variables(variable_from_schema: ResourceVariableSchema, value
         raise ValueError(f"Variable '{variable_from_schema.name}' is required but provided an empty array.")
 
 
+NUMERIC_VARIABLE_TYPES = {"number", "float", "integer"}
+
+
 def check_variable_type(variable: ResourceVariableSchema, value: Any) -> bool:
     if variable.type == "string":
         return isinstance(value, str)
@@ -198,6 +219,49 @@ def check_variable_type(variable: ResourceVariableSchema, value: Any) -> bool:
         return isinstance(value, dict)
     # TODO: Add more types as needed
     return True
+
+
+def _coerce_decimal(value: Any) -> Decimal | None:
+    if isinstance(value, Decimal):
+        return value
+    if isinstance(value, (int, float)):
+        try:
+            return Decimal(str(value))
+        except (InvalidOperation, ValueError):
+            return None
+    return None
+
+
+def enforce_validation_rules(variable: ResourceVariableSchema, value: Any, value_source: str) -> None:
+    if not variable.validation or value is None:
+        return
+
+    for rule in variable.validation:
+        if variable.type in NUMERIC_VARIABLE_TYPES:
+            numeric_value = _coerce_decimal(value)
+            if numeric_value is not None:
+                if rule.min_value is not None and numeric_value < rule.min_value:
+                    raise ValueError(
+                        f"Variable '{variable.name}' violates validation rule min_value={rule.min_value} "
+                        + "for {value_source}. Value: {value}"
+                    )
+                if rule.max_value is not None and numeric_value > rule.max_value:
+                    raise ValueError(
+                        f"Variable '{variable.name}' violates validation rule max_value={rule.max_value} "
+                        + "for {value_source}. Value: {value}"
+                    )
+
+        if variable.type == "string":
+            if rule.max_length is not None and isinstance(value, str) and len(value) > rule.max_length:
+                raise ValueError(
+                    f"Variable '{variable.name}' violates validation max_length={rule.max_length} "
+                    + "for {value_source}. Value: {value}"
+                )
+            if rule.regex and isinstance(value, str) and re.fullmatch(rule.regex, value) is None:
+                raise ValueError(
+                    f"Variable '{variable.name}' violates validation regex '{rule.regex}' "
+                    + "for {value_source}. Value: {value}"
+                )
 
 
 def check_options_values(variable_from_schema: ResourceVariableSchema, variable: Variables) -> bool:
@@ -243,9 +307,11 @@ async def validate_resource_variables_on_create(
             continue
 
         resource_variable = resource_variables_dict.get(variable.name)
+        value_source = "provided value"
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
+            enforce_validation_rules(variable, variable.value, "inherited default")
             variables.append(
                 Variables(
                     name=variable.name,
@@ -270,6 +336,7 @@ async def validate_resource_variables_on_create(
             # set default value for non-required variables
             if resource_variable.value is None and variable.value is not None:
                 resource_variable.value = variable.value
+                value_source = "inherited default"
 
         if check_options_values(variable, resource_variable) is False:
             raise ValueError(
@@ -289,6 +356,7 @@ async def validate_resource_variables_on_create(
                 f"Variable '{variable.name}' has an invalid type '{type(resource_variable.value)}'. Expected {variable.type}."  #  noqa: E501
             )
 
+        enforce_validation_rules(variable, resource_variable.value, value_source)
         variables.append(resource_variable)
 
     resource.variables = variables
@@ -324,6 +392,7 @@ async def update_resource_variables_on_patch(
 
         patched_variable = patched_variables_dict.get(variable.name)
         resource_variable = resource_variables_dict.get(variable.name)
+        value_source = "provided value"
 
         if patched_variable is None:
             raise ValueError(f"Variable '{variable.name}' is missing in the patched resource.")
@@ -334,6 +403,7 @@ async def update_resource_variables_on_patch(
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
+            enforce_validation_rules(variable, variable.value, "inherited default")
             variables.append(
                 Variables(
                     name=variable.name,
@@ -362,6 +432,7 @@ async def update_resource_variables_on_patch(
                     raise ValueError(
                         f"Variable '{variable.name}' has an invalid value. Resource options could be changed in version config"  # noqa: E501
                     )
+                enforce_validation_rules(variable, resource_variable.value, "existing value")
                 variables.append(resource_variable)
                 continue
 
@@ -374,9 +445,14 @@ async def update_resource_variables_on_patch(
                 f"Variable '{variable.name}' has an invalid value. Expected one of {variable.options}, got {patched_variable.value}."  # noqa: E501
             )
 
+        if patched_variable.value is None and variable.value is not None:
+            patched_variable.value = variable.value
+            value_source = "inherited default"
+
         if check_variable_type(variable, patched_variable.value) is False:
             raise ValueError(f"Variable '{variable.name}' has an invalid type. Expected {variable.type}.")
 
+        enforce_validation_rules(variable, patched_variable.value, value_source)
         variables.append(patched_variable)
 
     patched_resource.variables = variables

@@ -39,6 +39,7 @@ class TestCreateConfig:
         mock_source_code_version_service,
         mock_source_code_version_crud,
         mocked_source_config,
+        source_code_version,
     ):
         config1 = mocked_source_config
         config1.id = uuid4()
@@ -48,6 +49,7 @@ class TestCreateConfig:
         configs = [config1, config2]
         configs_to_create = [SourceConfigCreate.model_validate(config) for config in configs]
         mock_source_code_version_crud.create_config.side_effect = [config1, config2]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
         result = await mock_source_code_version_service.create_configs(configs=configs_to_create)
         assert len(result) == 2
         assert all(isinstance(r, SourceConfigResponse) for r in result)

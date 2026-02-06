@@ -243,7 +243,11 @@ async def update_configs(
     ):
         raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
 
-    return await service.update_configs(source_code_version_id=source_code_version_id, configs=body)
+    return await service.update_configs(
+        source_code_version_id=source_code_version_id,
+        configs=body,
+        requester=requester,
+    )
 
 
 @router.get(

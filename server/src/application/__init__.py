@@ -16,6 +16,7 @@ from .secrets import SecretDTO
 from .workspaces import WorkspaceDTO
 from .tools.cloud_api_manager import CloudApiManager
 from .tools.secret_manager import SecretManager
+from .validation_rules import ValidationRuleDTO, ValidationRuleTemplateReferenceDTO
 
 __all__ = [
     "ExecutorDTO",
@@ -38,4 +39,6 @@ __all__ = [
     "VariableReferenceModel",
     "Variables",
     "WorkspaceDTO",
+    "ValidationRuleDTO",
+    "ValidationRuleTemplateReferenceDTO",
 ]

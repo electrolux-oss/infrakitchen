@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Literal, TypeVar
 import uuid
 
@@ -237,6 +238,14 @@ class ResourceWithConfigs(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ValidationRuleModel(BaseModel):
+    min_value: Decimal | None = Field(default=None)
+    max_value: Decimal | None = Field(default=None)
+    regex: str | None = Field(default=None)
+    max_length: int | None = Field(default=None)
+    description: str | None = Field(default=None)
+
+
 class ResourceVariableSchema(BaseModel):
     """
     Used for getting resource with configs to setup new children resources
@@ -253,6 +262,7 @@ class ResourceVariableSchema(BaseModel):
     restricted: bool = Field(default=False)
     value: Any | None = Field(default=None)
     index: int = Field(default=0)
+    validation: list[ValidationRuleModel] = Field(default_factory=list)
 
 
 class ResourceTreeResponse(BaseModel):

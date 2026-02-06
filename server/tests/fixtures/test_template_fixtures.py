@@ -8,6 +8,7 @@ from application.templates.crud import TemplateCRUD
 from application.templates.model import Template, TemplateDTO
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
+from core.constants.model import ModelStatus
 
 TEMPLATE_ID = "abc123"
 
@@ -33,7 +34,29 @@ def mock_template_service(
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
+    mocked_user,
+    mocked_template,
 ):
+    template_instance = Template(
+        id=uuid4(),
+        name="Test Template",
+        template="template1",
+        status=ModelStatus.ENABLED,
+        creator=mocked_user,
+        created_by=mocked_user.id,
+        revision_number=1,
+        parents=[],
+        children=[],
+        abstract=False,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+        cloud_resource_types=[],
+        labels=["test_label"],
+        description="A test template",
+    )
+    template_instance.id = mocked_template.id
+    mock_template_crud.get_by_id.return_value = template_instance
+    mock_template_crud.get_all.return_value = [template_instance]
     return TemplateService(
         crud=mock_template_crud,
         revision_handler=mock_revision_handler,
@@ -53,6 +76,7 @@ def mocked_template(mocked_user):
         id=uuid4(),
         name="Test Template",
         template="template1",
+        status=None,
         creator=mocked_user,
         created_by=mocked_user.id,
         revision_number=1,
