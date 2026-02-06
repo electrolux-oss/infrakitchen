@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi import status as http_status
+from infrakitchen_mcp.dispatch_framework import list_entities_group
+from infrakitchen_mcp.registry import mcp_group
 from .service import LabelsService
 from .dependencies import get_labels_service
 from ..utils.entities import get_all_entities
@@ -13,6 +15,7 @@ router = APIRouter()
     response_description="Get all unique labels",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(list_entities_group, "labels")
 async def get_all_labels(
     service: LabelsService = Depends(get_labels_service),
 ):

@@ -13,7 +13,7 @@ router = APIRouter()
 @router.get(
     "/revisions/{entity_id}",
     response_model=list[RevisionShort],
-    response_description="Get revisions for a revision",
+    response_description="Get revisions for an entity",
     status_code=http_status.HTTP_200_OK,
 )
 async def get_all_entity_revisions(

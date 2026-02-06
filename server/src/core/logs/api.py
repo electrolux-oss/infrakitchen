@@ -4,6 +4,8 @@ from fastapi import status as http_status
 from core.logs.schema import LogResponse
 from core.logs.service import LogService
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
+from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.registry import mcp_group
 from .dependencies import get_log_service
 
 router = APIRouter()
@@ -15,6 +17,7 @@ router = APIRouter()
     response_description="Get one log by id",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(get_one_group, "logs", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: LogService = Depends(get_log_service)):
     entity = await service.get_by_id(entity_id=entity_id)
     if entity is None:
@@ -31,6 +34,7 @@ async def get_by_id(entity_id: str, service: LogService = Depends(get_log_servic
     response_description="Get all logs",
     status_code=http_status.HTTP_200_OK,
 )
+@mcp_group(list_entities_group, "logs")
 async def get_all(
     response: Response,
     service: LogService = Depends(get_log_service),
