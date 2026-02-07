@@ -28,6 +28,7 @@ from ..views import kubernetes_view as kubernetes
 from ..templates import api as templates_api
 from ..resources import api as resources_api
 from ..resource_temp_state import api as resource_temp_state_api
+from ..batch_operations import api as batch_operations_api
 from ..source_codes import api as source_codes_api
 from ..integrations import api as integrations_api
 from ..source_code_versions import api as source_code_versions_api
@@ -95,6 +96,11 @@ api.include_router(
 api.include_router(
     resources_api.router,
     tags=["Core"],
+)
+
+api.include_router(
+    batch_operations_api.router,
+    tags=["Core", "Batch Operations"],
 )
 
 api.include_router(

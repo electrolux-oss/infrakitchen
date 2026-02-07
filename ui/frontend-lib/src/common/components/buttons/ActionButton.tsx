@@ -1,5 +1,6 @@
 import { Button } from "@mui/material";
 
+import { IkEntity } from "../../../types";
 import { useConfig, useEntityProvider } from "../../context";
 import { notify, notifyError } from "../../hooks/useNotification";
 
@@ -29,13 +30,13 @@ export const ActionButton = (props: {
         .patchRaw(`${entity._entity_name}s/${entity.id}/actions`, {
           action: action,
         })
-        .then(() => {
+        .then((response: IkEntity) => {
           const entityType =
-            (entity._entity_name || "Resource").charAt(0).toUpperCase() +
-            (entity._entity_name || "Resource").slice(1);
+            (response._entity_name || "Resource").charAt(0).toUpperCase() +
+            (response._entity_name || "Resource").slice(1);
           notify(`${entityType} ${action} task sent successfully`, "success");
           if (refreshEntity) {
-            refreshEntity();
+            refreshEntity(response);
           }
         })
         .catch((error) => {

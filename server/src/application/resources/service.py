@@ -457,7 +457,9 @@ class ResourceService:
                 existing_resource.id, requester=requester, action=ModelActions.RECREATE
             )
 
-    async def patch_action(self, resource_id, body: PatchBodyModel, requester: UserDTO) -> ResourceResponse:
+    async def patch_action(
+        self, resource_id, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
+    ) -> ResourceResponse:
         """
         Patch an existing resource.
         :param resource_id: ID of the resource to patch
@@ -483,7 +485,7 @@ class ResourceService:
                     await self.event_sender.send_task(
                         existing_resource.id,
                         requester=requester,
-                        trace_id=self.audit_log_handler.trace_id,
+                        trace_id=trace_id or self.audit_log_handler.trace_id,
                         action=ModelActions.EXECUTE,
                     )
                 else:
@@ -498,7 +500,7 @@ class ResourceService:
             case ModelActions.EXECUTE:
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
-                    pydantic_resource.id, requester=requester, trace_id=self.audit_log_handler.trace_id
+                    pydantic_resource.id, requester=requester, trace_id=trace_id or self.audit_log_handler.trace_id
                 )
             case ModelActions.DRYRUN:
                 if existing_resource.status not in [
@@ -514,7 +516,7 @@ class ResourceService:
                     existing_resource.id,
                     requester=requester,
                     action=ModelActions.DRYRUN,
-                    trace_id=self.audit_log_handler.trace_id,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
                 )
             case ModelActions.DRYRUN_WITH_TEMP_STATE:
                 resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(
@@ -537,7 +539,7 @@ class ResourceService:
                     existing_resource.id,
                     requester=requester,
                     action=ModelActions.DRYRUN_WITH_TEMP_STATE,
-                    trace_id=self.audit_log_handler.trace_id,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)

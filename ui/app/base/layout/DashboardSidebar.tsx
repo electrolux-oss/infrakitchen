@@ -169,7 +169,6 @@ export default function DashboardSidebar({
             selected={!!matchPath("/resources/*", pathname)}
             permissionKey="resource"
           />
-
           <DashboardSidebarPageItem
             id="executors"
             title="Executors"
