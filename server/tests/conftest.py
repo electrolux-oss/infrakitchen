@@ -96,6 +96,13 @@ from .fixtures.test_task_worker_fixutres import (
     mock_task_controller,
     mock_task_controller_factory,
 )
+from .fixtures.test_batch_operation_fixtures import (
+    mock_batch_operation_crud,
+    mock_batch_operation_service,
+    batch_operation_response,
+    batch_operation_response_with_errors,
+    mocked_batch_operation,
+)
 from .fixtures.test_user_fixtures import (
     mock_user_crud,
     mock_user_service,
@@ -194,4 +201,9 @@ __all__ = [
     "mock_task_controller",
     "mock_task_controller_factory",
     "mock_stream_subprocess",
+    "mock_batch_operation_crud",
+    "mock_batch_operation_service",
+    "batch_operation_response",
+    "batch_operation_response_with_errors",
+    "mocked_batch_operation",
 ]

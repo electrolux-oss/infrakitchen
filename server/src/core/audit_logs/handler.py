@@ -18,5 +18,6 @@ class AuditLogHandler:
             entity_id=entity_id,
         )
         self.session.add(audit_log)
+        await self.session.flush()
         # Store audit log ID as trace_id for using in other operations
         self.trace_id = str(audit_log.id)
