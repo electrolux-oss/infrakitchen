@@ -85,7 +85,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const [data, setData] = useState<IkEntity[]>([]);
   const [totalRows, setTotalRows] = useState(0);
 
-  const filterStorageKey = `filter_${entityName}s`;
+  const filterStorageKey = `filter_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const hasFilters = Boolean(filterConfigs && filterConfigs.length > 0);
 
   const multiFilterState = useMultiFilterState({
@@ -98,7 +98,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     [hasFilters, multiFilterState.filterValues],
   );
 
-  const storageKey = `entityTable_${entityName}`;
+  const storageKey = `entityTable_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const savedState = get(storageKey) as DataGridState | undefined;
 
   const [sortModel, setSortModel] = useState<GridSortModel>(

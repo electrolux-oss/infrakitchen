@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -16,17 +16,27 @@ interface TemplateResourcesProps {
 export const TemplateResources = (props: TemplateResourcesProps) => {
   const { template_id } = props;
   const { ikApi } = useConfig();
+
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["template-resources"];
+
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchRelatedData = useCallback(async () => {
     if (!template_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "updated_at", order: "DESC" },
         filter: { template_id: template_id },
+        fields: ["id", "name", "status", "state"],
       })
       .then((response) => {
         setResources(response.data || []);
@@ -37,7 +47,7 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, template_id]);
+  }, [ikApi, template_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

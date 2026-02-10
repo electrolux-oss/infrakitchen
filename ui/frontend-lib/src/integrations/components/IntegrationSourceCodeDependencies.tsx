@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -21,14 +21,22 @@ export const IntegrationSourceCodeDependencies = (
   const [sourceCodes, setSourceCodes] = useState<SourceCodeResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["integration-sc-dependencies"];
   const fetchRelatedData = useCallback(async () => {
     if (!integration_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("source_codes", {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "updated_at", order: "DESC" },
         filter: { integration_id: integration_id },
+        fields: ["id", "name", "description", "status", "labels", "identifier"],
       })
       .then((response) => {
         setSourceCodes(response.data || []);
@@ -39,7 +47,7 @@ export const IntegrationSourceCodeDependencies = (
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, integration_id]);
+  }, [ikApi, integration_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -18,14 +18,30 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["integration-resources"];
   const fetchRelatedData = useCallback(async () => {
     if (!integration_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "updated_at", order: "DESC" },
         filter: { integration_ids__any: [integration_id] },
+        fields: [
+          "id",
+          "name",
+          "description",
+          "state",
+          "status",
+          "labels",
+          "template_id",
+        ],
       })
       .then((response) => {
         setResources(response.data || []);
@@ -36,7 +52,7 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, integration_id]);
+  }, [ikApi, integration_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

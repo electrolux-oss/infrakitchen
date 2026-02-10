@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useConfig } from "../../context";
+import { useConfig, useLocalStorage } from "../../context";
 import { PropertyCollapseCard } from "../PropertyCollapseCard";
 
 import { EntityTreeViewItems } from "./TreeViewItems";
@@ -18,12 +18,20 @@ export const EntityTreeView = ({ entity_id, entity_name }: TreeViewProps) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [tree, setTree] = useState<TreeResponse>();
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap[`${entity_name}-tree-view`];
+
   useEffect(() => {
+    if (!isExpanded) return;
     ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
       setTree(tree);
       setSelected([tree.node_id]);
     });
-  }, [entity_id, entity_name, ikApi]);
+  }, [entity_id, entity_name, ikApi, isExpanded]);
 
   return (
     <PropertyCollapseCard

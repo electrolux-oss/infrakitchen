@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -18,7 +18,15 @@ export const StorageResources = (props: StorageResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["storage-resources"];
+
   const fetchRelatedData = useCallback(async () => {
+    if (!isExpanded) return;
     if (!storage_id) return;
     setLoading(true);
     ikApi
@@ -26,6 +34,15 @@ export const StorageResources = (props: StorageResourcesProps) => {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "updated_at", order: "DESC" },
         filter: { storage_id: storage_id },
+        fields: [
+          "id",
+          "name",
+          "description",
+          "state",
+          "status",
+          "labels",
+          "template_id",
+        ],
       })
       .then((response) => {
         setResources(response.data || []);
@@ -36,7 +53,7 @@ export const StorageResources = (props: StorageResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, storage_id]);
+  }, [ikApi, storage_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

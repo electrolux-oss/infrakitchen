@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -19,9 +19,16 @@ export const SourceCodeVersionResources = (
   const { ikApi } = useConfig();
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["source_code_version-resources"];
 
   const fetchRelatedData = useCallback(async () => {
     if (!source_code_version_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -38,7 +45,7 @@ export const SourceCodeVersionResources = (
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, source_code_version_id]);
+  }, [ikApi, source_code_version_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

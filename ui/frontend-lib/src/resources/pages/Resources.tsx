@@ -93,6 +93,13 @@ export const ResourcesPage = () => {
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
+      {
+        field: "updated_at",
+        headerName: "Updated At",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) =>
+          getDateValue(params.value),
+      },
     ],
     [],
   );
@@ -180,6 +187,7 @@ export const ResourcesPage = () => {
           "state",
           "status",
           "created_at",
+          "updated_at",
           "labels",
         ]}
       />
