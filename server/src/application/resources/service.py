@@ -17,6 +17,7 @@ from application.source_code_versions.service import SourceCodeVersionService
 from application.storages.service import StorageService
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
+from application.validation_rules.service import ValidationRuleService
 from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.audit_logs.handler import AuditLogHandler
@@ -82,6 +83,7 @@ class ResourceService:
         resource_temp_state_handler: ResourceTempStateHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        validation_rule_service: ValidationRuleService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -96,6 +98,7 @@ class ResourceService:
         self.resource_temp_state_handler: ResourceTempStateHandler = resource_temp_state_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.validation_rule_service: ValidationRuleService = validation_rule_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -658,8 +661,12 @@ class ResourceService:
         if not resource_scv:
             raise EntityNotFound("Source code version not found")
 
+        validation_rules_map = await self.validation_rule_service.get_rules_map_for_template(
+            template_id=resource_scv.template.id
+        )
+
         if len(resource_ids) == 0:
-            schema = get_resource_variable_schema(resource_scv, [], [])
+            schema = get_resource_variable_schema(resource_scv, [], [], validation_rules_map)
             return schema
 
         parents: list[ResourceWithConfigs] = []
@@ -684,7 +691,7 @@ class ResourceService:
         parent_scvs = await self.service_source_code_version.get_scvs_with_configs_and_outputs(
             source_code_version_ids=parent_source_code_version_ids
         )
-        schema = get_resource_variable_schema(resource_scv, parents, parent_scvs)
+        schema = get_resource_variable_schema(resource_scv, parents, parent_scvs, validation_rules_map)
         return sorted(schema, key=lambda item: item.index)
 
     async def get_actions(self, resource_id: str, requester: UserDTO) -> list[str]:

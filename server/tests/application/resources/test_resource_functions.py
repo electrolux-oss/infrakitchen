@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 from uuid import uuid4
 import pytest
@@ -15,6 +16,8 @@ from application.resources.schema import (
     ResourceVariableSchema,
     Variables,
 )
+from application.validation_rules.model import ValidationRuleTargetType
+from application.validation_rules.schema import ValidationRuleResponse
 
 
 @pytest.mark.parametrize(
@@ -227,6 +230,78 @@ async def test_validate_resource_variables_options_provided():
         await validate_resource_variables_on_create(schema, resource, [])
 
 
+@pytest.mark.asyncio
+async def test_validate_resource_variables_regex_rule_violation():
+    schema = [
+        ResourceVariableSchema(
+            name="env",
+            type="string",
+            validation_rules=[
+                ValidationRuleResponse(
+                    id=uuid4(),
+                    target_type=ValidationRuleTargetType.STRING,
+                    regex_pattern=r"^prod$",
+                )
+            ],
+        )
+    ]
+    resource = ResourceCreate(name="test", template_id=uuid4(), variables=[Variables(name="env", value="dev")])
+
+    with pytest.raises(ValueError, match=r"does not match required pattern"):
+        await validate_resource_variables_on_create(schema, resource, [])
+
+
+@pytest.mark.asyncio
+async def test_validate_resource_variables_max_length_violation():
+    schema = [
+        ResourceVariableSchema(
+            name="token",
+            type="string",
+            validation_rules=[
+                ValidationRuleResponse(
+                    id=uuid4(),
+                    target_type=ValidationRuleTargetType.STRING,
+                    max_length=5,
+                )
+            ],
+        )
+    ]
+    resource = ResourceCreate(
+        name="test",
+        template_id=uuid4(),
+        variables=[Variables(name="token", value="toolong")],
+    )
+
+    with pytest.raises(ValueError, match=r"exceeds maximum length"):
+        await validate_resource_variables_on_create(schema, resource, [])
+
+
+@pytest.mark.asyncio
+async def test_validate_resource_variables_numeric_rule_violation():
+    schema = [
+        ResourceVariableSchema(
+            name="replicas",
+            type="number",
+            validation_rules=[
+                ValidationRuleResponse(
+                    id=uuid4(),
+                    target_type=ValidationRuleTargetType.NUMBER,
+                    min_value=Decimal("3"),
+                    max_value=Decimal("10"),
+                )
+            ],
+        )
+    ]
+    resource = ResourceCreate(
+        name="test",
+        template_id=uuid4(),
+        variables=[Variables(name="replicas", value=2)],
+    )
+
+    with pytest.raises(ValueError, match=r"below the minimum value"):
+        await validate_resource_variables_on_create(schema, resource, [])
+
+
 # -------------------------------
 # Tests for validate_resource_variables_on_update
 # -------------------------------
@@ -289,4 +364,27 @@ async def test_validate_resource_variables_patch_invalid_option(resource_respons
     update = ResourcePatch(variables=[Variables(name="color", value="yellow")])
 
     with pytest.raises(ValueError, match=r"Variable 'color' has an invalid value. Expected one of"):
+        await update_resource_variables_on_patch(schema, old, update)
+
+
+@pytest.mark.asyncio
+async def test_validate_resource_variables_patch_enforces_rules(resource_response):
+    schema = [
+        ResourceVariableSchema(
+            name="env",
+            type="string",
+            validation_rules=[
+                ValidationRuleResponse(
+                    id=uuid4(),
+                    target_type=ValidationRuleTargetType.STRING,
+                    regex_pattern=r"^prod$",
+                )
+            ],
+        )
+    ]
+    old = resource_response
+    old.variables = [Variables(name="env", value="staging")]
+    update = ResourcePatch(variables=[Variables(name="env", value="staging")])
+
+    with pytest.raises(ValueError, match=r"does not match required pattern"):
         await update_resource_variables_on_patch(schema, old, update)
