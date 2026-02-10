@@ -13,6 +13,7 @@ from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
 from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
+from application.validation_rules.dependencies import get_validation_rule_service
 
 from .crud import ResourceCRUD
 from .service import ResourceService
@@ -48,4 +49,5 @@ def get_resource_service(
         resource_temp_state_handler=resource_temp_state_handler,
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
+        validation_rule_service=get_validation_rule_service(session=session),
     )
