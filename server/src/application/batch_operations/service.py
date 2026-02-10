@@ -5,9 +5,8 @@ from uuid import UUID
 from application.executors.service import ExecutorService
 from application.resources.service import ResourceService
 from core.audit_logs.handler import AuditLogHandler
-from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
-from core.errors import EntityNotFound, EntityWrongState
+from core.errors import EntityNotFound
 from core.tasks.service import TaskEntityService
 from core.users.functions import user_api_permission
 from core.users.model import UserDTO
@@ -17,7 +16,7 @@ from .crud import BatchOperationCRUD
 from .schema import (
     BatchOperationCreate,
     BatchOperationResponse,
-    BatchOperationResponseWithErrors,
+    BatchOperationEntityIdsPatch,
 )
 
 logger = logging.getLogger(__name__)
@@ -74,55 +73,34 @@ class BatchOperationService:
         entity = await self.crud.create(body=body)
         return BatchOperationResponse.model_validate(entity)
 
-    async def patch_action(
+    async def patch_entity_ids(
         self,
         batch_operation_id: str | UUID,
-        body: PatchBodyModel,
+        body: BatchOperationEntityIdsPatch,
         requester: UserDTO,
-    ) -> BatchOperationResponseWithErrors:
-        """Patch actions on a batch operation"""
+    ) -> BatchOperationResponse:
+        """Patch entity_ids list on a batch operation"""
         entity = await self.crud.get_by_id(batch_operation_id=batch_operation_id)
         if not entity:
             raise EntityNotFound(f"Batch operation {batch_operation_id} not found")
 
-        if body.action not in [ModelActions.DRYRUN, ModelActions.EXECUTE]:
-            raise ValueError(f"Unsupported action {body.action} for batch operation")
+        await self.audit_log_handler.create_log(entity.id, requester.id, ModelActions.EDIT)
 
-        pydantic_batch_operation = BatchOperationResponseWithErrors.model_validate(entity)
-        await self.audit_log_handler.create_log(pydantic_batch_operation.id, requester.id, body.action)
-        entities_with_errors: dict[UUID, str] = {}
-        if pydantic_batch_operation.entity_type == "resource":
-            for resource_id in pydantic_batch_operation.entity_ids:
-                try:
-                    await self.resource_service.patch_action(
-                        resource_id=resource_id,
-                        body=PatchBodyModel(action=body.action),
-                        requester=requester,
-                        trace_id=self.audit_log_handler.trace_id,
-                    )
-                except EntityWrongState as e:
-                    entities_with_errors.update({resource_id: str(e)})
-                    logger.warning(f"Resource {resource_id} skipped in batch operation {batch_operation_id}: {e}")
+        existing_ids = list(entity.entity_ids or [])
+        existing_ids_set = {str(value) for value in existing_ids}
+        patch_ids_set = {str(value) for value in body.entity_ids}
 
-            pydantic_batch_operation.error_entity_ids = entities_with_errors
-        elif pydantic_batch_operation.entity_type == "executor":
-            for executor_id in pydantic_batch_operation.entity_ids:
-                try:
-                    await self.executor_service.patch_action(
-                        executor_id=executor_id,
-                        body=PatchBodyModel(action=body.action),
-                        requester=requester,
-                        trace_id=self.audit_log_handler.trace_id,
-                    )
-                except EntityWrongState as e:
-                    entities_with_errors.update({executor_id: str(e)})
-                    logger.warning(f"Executor {executor_id} skipped in batch operation {batch_operation_id}: {e}")
+        if body.action == "add":
+            for entity_id in body.entity_ids:
+                if str(entity_id) not in existing_ids_set:
+                    existing_ids.append(entity_id)
+                    existing_ids_set.add(str(entity_id))
+        elif body.action == "remove":
+            existing_ids = [value for value in existing_ids if str(value) not in patch_ids_set]
 
-            pydantic_batch_operation.error_entity_ids = entities_with_errors
-        else:
-            raise ValueError(f"Unsupported entity type {pydantic_batch_operation.entity_type} for batch operation")
-
-        return pydantic_batch_operation
+        entity.entity_ids = existing_ids
+        updated_entity = await self.crud.update(entity)
+        return BatchOperationResponse.model_validate(updated_entity)
 
     async def delete(
         self,
@@ -159,7 +137,9 @@ class BatchOperationService:
             return []
 
         actions.append(ModelActions.DELETE)
-        actions.append(ModelActions.DRYRUN)
-        actions.append(ModelActions.EXECUTE)
+        # For simplicity, we allow both "add" and "remove" actions for entity_ids patching
+        # if the user has admin permissions.
+        actions.append("remove")
+        actions.append("add")
 
         return actions

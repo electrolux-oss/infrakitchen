@@ -2,14 +2,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
     BatchOperationCreate,
+    BatchOperationEntityIdsPatch,
     BatchOperationResponse,
-    BatchOperationResponseWithErrors,
 )
 from .dependencies import get_batch_operation_service
 from .service import BatchOperationService
@@ -82,27 +80,24 @@ async def post(
 
 
 @router.patch(
-    "/batch_operations/{batch_operation_id}/actions",
-    response_model=BatchOperationResponseWithErrors,
+    "/batch_operations/{batch_operation_id}/entity_ids",
+    response_model=BatchOperationResponse,
     status_code=http_status.HTTP_200_OK,
 )
-async def patch_actions(
+async def patch_entity_ids(
     request: Request,
     batch_operation_id: str,
-    body: PatchBodyModel,
+    body: BatchOperationEntityIdsPatch,
     service: BatchOperationService = Depends(get_batch_operation_service),
 ):
-    requester: UserDTO = request.state.user
-    actions_list = list(map(lambda x: x.value, ModelActions))
-    if body.action not in actions_list:
-        raise HTTPException(status_code=400, detail="Invalid action")
+    requester: UserDTO | None = request.state.user
+    if not requester:
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if body.action not in await service.get_actions(batch_operation_id=batch_operation_id, requester=requester):
         raise HTTPException(status_code=403, detail=f"Access denied for action {body.action}")
 
-    entity = await service.patch_action(batch_operation_id=batch_operation_id, body=body, requester=requester)
-    if not entity:
-        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Batch operation not found")
+    entity = await service.patch_entity_ids(batch_operation_id=batch_operation_id, body=body, requester=requester)
     return entity
 
 

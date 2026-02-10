@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from application.batch_operations.api import router
 from application.batch_operations.dependencies import get_batch_operation_service
-from core.constants.model import ModelActions
 
 BATCH_OPERATION_ID = "batch123"
 
@@ -20,6 +19,7 @@ class MockBatchOperationService:
         items=None,
         created=None,
         patched=None,
+        entity_ids_patched=None,
         actions=None,
     ):
         self._return_value = return_value
@@ -27,6 +27,7 @@ class MockBatchOperationService:
         self._items = items or []
         self._created = created
         self._patched = patched
+        self._entity_ids_patched = entity_ids_patched
         self._actions = actions
 
     async def get_by_id(self, batch_operation_id: str):
@@ -43,6 +44,9 @@ class MockBatchOperationService:
 
     async def patch_action(self, batch_operation_id, body, requester):
         return self._patched
+
+    async def patch_entity_ids(self, batch_operation_id, body, requester):
+        return self._entity_ids_patched
 
     async def delete(self, batch_operation_id, requester):
         return None
@@ -160,56 +164,6 @@ class TestCreate:
         assert response.json()["name"] == created.name
 
 
-class TestBatchOperationActionsPatch:
-    def test_patch_forbidden(self, client_with_user, override_service):
-        patch_body = {
-            "action": "dryrun",
-        }
-        override_service(MockBatchOperationService(actions=[]))
-
-        response = client_with_user.patch(
-            f"/batch_operations/{BATCH_OPERATION_ID}/actions",
-            json=patch_body,
-        )
-
-        assert response.status_code == HTTPStatus.FORBIDDEN
-        assert response.json() == {"detail": "Access denied for action dryrun"}
-
-    def test_patch_value_error(self, client_with_user):
-        patch_body = {
-            "action": "unknown",
-        }
-
-        response = client_with_user.patch(
-            f"/batch_operations/{BATCH_OPERATION_ID}/actions",
-            json=patch_body,
-        )
-
-        assert response.status_code == HTTPStatus.BAD_REQUEST
-        assert response.json() == {"detail": "Invalid action"}
-
-    def test_patch_success(self, client_with_user, override_service, batch_operation_response_with_errors):
-        patch_body = {
-            "action": "dryrun",
-        }
-
-        service = MockBatchOperationService(
-            patched=batch_operation_response_with_errors,
-            actions=[ModelActions.DRYRUN],
-        )
-        override_service(service)
-
-        response = client_with_user.patch(
-            f"/batch_operations/{BATCH_OPERATION_ID}/actions",
-            json=patch_body,
-        )
-        json_response = response.json()
-
-        assert response.status_code == HTTPStatus.OK
-        assert json_response["name"] == batch_operation_response_with_errors.name
-        assert json_response["id"] == str(batch_operation_response_with_errors.id)
-
-
 class TestBatchOperationDelete:
     def test_delete_success(self, client_with_user, override_service):
         service = MockBatchOperationService()
@@ -241,3 +195,53 @@ class TestBatchOperationGetPermissions:
 
         assert response.status_code == HTTPStatus.OK
         assert json_response == []
+
+
+class TestBatchOperationEntityIdsPatch:
+    def test_patch_entity_ids_forbidden_without_user(self, client_without_user):
+        patch_body = {
+            "action": "remove",
+            "entity_ids": [str(uuid4())],
+        }
+
+        response = client_without_user.patch(
+            f"/batch_operations/{BATCH_OPERATION_ID}/entity_ids",
+            json=patch_body,
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+    def test_patch_entity_ids_forbidden(self, client_with_user, override_service):
+        patch_body = {
+            "action": "remove",
+            "entity_ids": [str(uuid4())],
+        }
+        override_service(MockBatchOperationService(actions=[]))
+
+        response = client_with_user.patch(
+            f"/batch_operations/{BATCH_OPERATION_ID}/entity_ids",
+            json=patch_body,
+        )
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert response.json() == {"detail": "Access denied for action remove"}
+
+    def test_patch_entity_ids_success(self, client_with_user, override_service, batch_operation_response):
+        patch_body = {
+            "action": "remove",
+            "entity_ids": [str(uuid4())],
+        }
+        service = MockBatchOperationService(
+            entity_ids_patched=batch_operation_response,
+            actions=["remove"],
+        )
+        override_service(service)
+
+        response = client_with_user.patch(
+            f"/batch_operations/{BATCH_OPERATION_ID}/entity_ids",
+            json=patch_body,
+        )
+        json_response = response.json()
+
+        assert response.status_code == HTTPStatus.OK
+        assert json_response["id"] == str(batch_operation_response.id)

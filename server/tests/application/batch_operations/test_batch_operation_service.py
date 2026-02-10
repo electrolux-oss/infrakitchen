@@ -1,12 +1,10 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
 
-from application.batch_operations.schema import BatchOperationCreate
-from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions
-from core.errors import EntityNotFound, EntityWrongState
+from application.batch_operations.schema import BatchOperationCreate, BatchOperationEntityIdsPatch
+from core.errors import EntityNotFound
 from core.users.model import UserDTO
 
 BATCH_OPERATION_ID = uuid4()
@@ -119,102 +117,58 @@ class TestCreate:
         assert result.entity_ids == mocked_batch_operation.entity_ids
 
 
-class TestPatchAction:
+class TestPatchEntityIds:
     @pytest.mark.asyncio
-    async def test_patch_action_not_found(self, mock_batch_operation_service, mock_batch_operation_crud):
-        patch_body = PatchBodyModel(action=ModelActions.DRYRUN)
+    async def test_patch_entity_ids_not_found(self, mock_batch_operation_service, mock_batch_operation_crud):
+        patch_body = BatchOperationEntityIdsPatch(action="remove", entity_ids=[uuid4()])
         requester = Mock(spec=UserDTO)
 
         mock_batch_operation_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Batch operation"):
-            await mock_batch_operation_service.patch_action(BATCH_OPERATION_ID, patch_body, requester)
+            await mock_batch_operation_service.patch_entity_ids(BATCH_OPERATION_ID, patch_body, requester)
 
     @pytest.mark.asyncio
-    async def test_patch_action_invalid_action(self, mock_batch_operation_service, mocked_user_response):
-        patch_body = PatchBodyModel(action=ModelActions.DELETE)
-
-        with pytest.raises(ValueError, match="Unsupported action"):
-            await mock_batch_operation_service.patch_action(BATCH_OPERATION_ID, patch_body, mocked_user_response)
-
-    @pytest.mark.asyncio
-    async def test_patch_action_resource_success(
+    async def test_patch_entity_ids_add(
         self,
         mock_batch_operation_service,
         mock_batch_operation_crud,
         mocked_batch_operation,
-        mock_resource_service,
-        mock_audit_log_handler,
-        mocked_user_response,
+        mocked_user,
     ):
-        patch_body = PatchBodyModel(action=ModelActions.DRYRUN)
-        mocked_batch_operation.entity_type = "resource"
-        mocked_batch_operation.entity_ids = [uuid4(), uuid4()]
+        existing_id = uuid4()
+        new_id = uuid4()
+        mocked_batch_operation.entity_ids = [existing_id]
 
+        patch_body = BatchOperationEntityIdsPatch(action="add", entity_ids=[new_id])
         mock_batch_operation_crud.get_by_id.return_value = mocked_batch_operation
+        mock_batch_operation_crud.update.return_value = mocked_batch_operation
 
-        mock_resource_service.patch_action = AsyncMock()
+        result = await mock_batch_operation_service.patch_entity_ids(BATCH_OPERATION_ID, patch_body, mocked_user)
 
-        result = await mock_batch_operation_service.patch_action(
-            batch_operation_id=mocked_batch_operation.id,
-            body=patch_body,
-            requester=mocked_user_response,
-        )
-
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_batch_operation.id, mocked_user_response.id, ModelActions.DRYRUN
-        )
-        assert result.error_entity_ids == {}
-        assert mock_resource_service.patch_action.await_count == 2
+        assert str(new_id) in [str(value) for value in mocked_batch_operation.entity_ids]
+        assert result.id == mocked_batch_operation.id
+        mock_batch_operation_crud.update.assert_awaited_once_with(mocked_batch_operation)
 
     @pytest.mark.asyncio
-    async def test_patch_action_resource_with_errors(
+    async def test_patch_entity_ids_remove(
         self,
         mock_batch_operation_service,
         mock_batch_operation_crud,
         mocked_batch_operation,
-        mock_resource_service,
-        mocked_user_response,
+        mocked_user,
     ):
-        patch_body = PatchBodyModel(action=ModelActions.DRYRUN)
-        mocked_batch_operation.entity_type = "resource"
-        resource_id = uuid4()
-        mocked_batch_operation.entity_ids = [resource_id]
+        remove_id = uuid4()
+        keep_id = uuid4()
+        mocked_batch_operation.entity_ids = [remove_id, keep_id]
 
+        patch_body = BatchOperationEntityIdsPatch(action="remove", entity_ids=[remove_id])
         mock_batch_operation_crud.get_by_id.return_value = mocked_batch_operation
+        mock_batch_operation_crud.update.return_value = mocked_batch_operation
 
-        mock_resource_service.patch_action = AsyncMock(side_effect=EntityWrongState("Dry run not allowed"))
+        result = await mock_batch_operation_service.patch_entity_ids(BATCH_OPERATION_ID, patch_body, mocked_user)
 
-        result = await mock_batch_operation_service.patch_action(
-            batch_operation_id=mocked_batch_operation.id,
-            body=patch_body,
-            requester=mocked_user_response,
-        )
-
-        assert result.error_entity_ids == {resource_id: "Dry run not allowed"}
-
-    @pytest.mark.asyncio
-    async def test_patch_action_executor_success(
-        self,
-        mock_batch_operation_service,
-        mock_batch_operation_crud,
-        mocked_batch_operation,
-        mock_executor_service,
-        mocked_user_response,
-    ):
-        patch_body = PatchBodyModel(action=ModelActions.EXECUTE)
-        mocked_batch_operation.entity_type = "executor"
-        mocked_batch_operation.entity_ids = [uuid4(), uuid4()]
-
-        mock_batch_operation_crud.get_by_id.return_value = mocked_batch_operation
-
-        mock_executor_service.patch_action = AsyncMock()
-
-        result = await mock_batch_operation_service.patch_action(
-            batch_operation_id=mocked_batch_operation.id,
-            body=patch_body,
-            requester=mocked_user_response,
-        )
-
-        assert result.error_entity_ids == {}
-        assert mock_executor_service.patch_action.await_count == 2
+        assert str(remove_id) not in [str(value) for value in mocked_batch_operation.entity_ids]
+        assert str(keep_id) in [str(value) for value in mocked_batch_operation.entity_ids]
+        assert result.id == mocked_batch_operation.id
+        mock_batch_operation_crud.update.assert_awaited_once_with(mocked_batch_operation)

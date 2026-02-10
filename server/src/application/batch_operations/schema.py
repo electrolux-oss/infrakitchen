@@ -35,6 +35,8 @@ class BatchOperationResponse(BaseModel):
         return "batch_operation"
 
 
-class BatchOperationResponseWithErrors(BatchOperationResponse):
-    error_entity_ids: dict[uuid.UUID, str] = Field(default_factory=dict)
+class BatchOperationEntityIdsPatch(BaseModel):
+    action: Literal["add", "remove"] = Field(...)
+    entity_ids: list[uuid.UUID] = Field(..., min_length=1)
+
     model_config = ConfigDict(from_attributes=True)
