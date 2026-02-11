@@ -64,6 +64,9 @@ const ResourceCreatePageInner = () => {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const [parentSelections, setParentSelections] = useState<
+    Record<string, string[]>
+  >({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -120,13 +123,6 @@ const ResourceCreatePageInner = () => {
     [watchedIntegrationIds],
   );
 
-  const filter_parents = useMemo(
-    () => ({
-      template_id: watchedTemplate ? watchedTemplate.parents : [],
-    }),
-    [watchedTemplate],
-  );
-
   const filter_template = useMemo(
     () => ({
       template_id: watchedTemplateId,
@@ -141,11 +137,9 @@ const ResourceCreatePageInner = () => {
   }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
-    if (watchedTemplate) {
-      setValue("storage_id", watchedTemplate.storage_id);
-      setValue("workspace_id", watchedTemplate.workspace_id);
-    }
-  }, [watchedTemplate, setValue]);
+    setParentSelections({});
+    setValue("parents", [], { shouldValidate: true });
+  }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
     if (watchedTemplate) {
@@ -161,7 +155,14 @@ const ResourceCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedParentIds.length > 0) {
-      const parentObjects = buffer["resources"]?.find((e: ResourceResponse) =>
+      const parentCandidates = watchedTemplate?.parents
+        ? watchedTemplate.parents.flatMap(
+            (parent: IkEntity) =>
+              (buffer[String(parent.id)] as IkEntity[]) || [],
+          )
+        : [];
+
+      const parentObjects = parentCandidates.find((e: ResourceResponse) =>
         watchedParentIds.includes(e.id),
       );
 
@@ -187,7 +188,7 @@ const ResourceCreatePageInner = () => {
       setValue("storage_id", parentStorage);
       setValue("workspace_id", parentWorkspace);
     }
-  }, [watchedParentIds, setValue, getValues, buffer]);
+  }, [watchedParentIds, setValue, getValues, buffer, watchedTemplate]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
@@ -346,24 +347,49 @@ const ResourceCreatePageInner = () => {
                     control={control}
                     rules={{ required: "*Required" }}
                     render={({ field }) => (
-                      <ArrayReferenceInput
-                        ikApi={ikApi}
-                        buffer={buffer}
-                        setBuffer={setBuffer}
-                        showFields={["template.name", "name"]}
-                        {...field}
-                        entity_name="resources"
-                        error={!!errors.parents}
-                        helpertext={
-                          errors.parents
-                            ? errors.parents.message
-                            : "Select Parents for Resource"
-                        }
-                        value={field.value}
-                        filter={filter_parents}
-                        label="Select Parents"
-                        multiple
-                      />
+                      <>
+                        {watchedTemplate.parents.map((parent: IkEntity) => (
+                          <ArrayReferenceInput
+                            key={parent.id}
+                            ikApi={ikApi}
+                            buffer={buffer}
+                            fields={[
+                              "name",
+                              "template",
+                              "integration_ids",
+                              "storage",
+                              "workspace",
+                              "secret_ids",
+                              "id",
+                            ]}
+                            setBuffer={setBuffer}
+                            showFields={["template.name", "name"]}
+                            entity_name="resources"
+                            bufferKey={String(parent.id)}
+                            error={!!errors.parents}
+                            helpertext={
+                              errors.parents
+                                ? errors.parents.message
+                                : `Select Parent for Resource ${watchedTemplate.name} (only resources based on ${parent.name} templates will be shown)`
+                            }
+                            value={parentSelections[String(parent.id)] || []}
+                            filter={{ template_id: [parent.id] }}
+                            label={`Select Parent (${parent.name})`}
+                            multiple
+                            onChange={(selectedIds: string[]) => {
+                              setParentSelections((prev) => {
+                                const next = {
+                                  ...prev,
+                                  [String(parent.id)]: selectedIds,
+                                };
+                                const merged = Object.values(next).flat();
+                                field.onChange(merged);
+                                return next;
+                              });
+                            }}
+                          />
+                        ))}
+                      </>
                     )}
                   />
 
@@ -390,24 +416,49 @@ const ResourceCreatePageInner = () => {
                   control={control}
                   rules={{ required: "*Required" }}
                   render={({ field }) => (
-                    <ArrayReferenceInput
-                      ikApi={ikApi}
-                      buffer={buffer}
-                      setBuffer={setBuffer}
-                      showFields={["template.name", "name"]}
-                      {...field}
-                      entity_name="resources"
-                      error={!!errors.parents}
-                      helpertext={
-                        errors.parents
-                          ? errors.parents.message
-                          : "Select Parents for Resource"
-                      }
-                      value={field.value}
-                      filter={filter_parents}
-                      label="Select Parents"
-                      multiple
-                    />
+                    <>
+                      {watchedTemplate.parents.map((parent: IkEntity) => (
+                        <ArrayReferenceInput
+                          key={parent.id}
+                          ikApi={ikApi}
+                          buffer={buffer}
+                          fields={[
+                            "name",
+                            "template",
+                            "integration_ids",
+                            "storage",
+                            "workspace",
+                            "secret_ids",
+                            "id",
+                          ]}
+                          setBuffer={setBuffer}
+                          showFields={["template.name", "name"]}
+                          entity_name="resources"
+                          bufferKey={String(parent.id)}
+                          error={!!errors.parents}
+                          helpertext={
+                            errors.parents
+                              ? errors.parents.message
+                              : `Select Parent for Resource "${watchedTemplate.name}" (only resources based on ${parent.name} templates will be shown)`
+                          }
+                          value={parentSelections[String(parent.id)] || []}
+                          filter={{ template_id: [parent.id] }}
+                          label={`Select Parent (${parent.name})`}
+                          multiple
+                          onChange={(selectedIds: string[]) => {
+                            setParentSelections((prev) => {
+                              const next = {
+                                ...prev,
+                                [String(parent.id)]: selectedIds,
+                              };
+                              const merged = Object.values(next).flat();
+                              field.onChange(merged);
+                              return next;
+                            });
+                          }}
+                        />
+                      ))}
+                    </>
                   )}
                 />
               )}

@@ -19,9 +19,11 @@ interface ArrayReferenceInputProps {
   entity_name: string;
   onChange: (selectedEntity: any[]) => void;
   filter?: object;
+  fields?: Array<string>;
   multiple?: boolean;
   helpertext?: string;
   buffer: Record<string, IkEntity[]>;
+  bufferKey?: string;
   showFields?: Array<string>;
   label: string;
   value: any;
@@ -39,6 +41,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       buffer,
       showFields = ["name"],
       entity_name,
+      bufferKey,
+      fields,
       filter = {},
       label,
       value,
@@ -62,17 +66,20 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
 
     const isOptionDisabled = (option: IkEntity) => option.status === "disabled";
 
+    const resolvedBufferKey = bufferKey || entity_name;
+
     useEffect(() => {
       ikApi
         .getList(entity_name, {
-          pagination: { page: 1, perPage: 100 },
+          pagination: { page: 1, perPage: 1000 },
           sort: { field: "name", order: "ASC" },
           filter: filter,
+          fields: fields,
         })
         .then((response: { data: IkEntity[] }) => {
           setBuffer((prev: Record<string, IkEntity[]>) => ({
             ...prev,
-            [entity_name]: response.data,
+            [resolvedBufferKey]: response.data,
           }));
         })
         .catch((error: { message: string }) => {
@@ -111,17 +118,17 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
           defaultValue={otherProps.defaultValue || undefined}
           disabled={otherProps.disabled || false}
           getOptionDisabled={isOptionDisabled}
-          options={buffer[entity_name] || []}
+          options={buffer[resolvedBufferKey] || []}
           getOptionLabel={(option) => getOptionLabel(option, showFields)}
           isOptionEqualToValue={(option, value) =>
             option.id === (value?.id || value)
           }
           value={
             otherProps.multiple
-              ? buffer[entity_name]?.filter((e: IkEntity) =>
+              ? buffer[resolvedBufferKey]?.filter((e: IkEntity) =>
                   value?.includes(e.id.toString()),
                 ) || [] // Ensure array for multiple
-              : buffer[entity_name]?.find(
+              : buffer[resolvedBufferKey]?.find(
                   (e: IkEntity) => e.id.toString() === value,
                 ) || null // Ensure null for single select
           }
