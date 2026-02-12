@@ -1,5 +1,8 @@
+import { useState } from "react";
+
 import { Controller, Control, useWatch, useFormState } from "react-hook-form";
 
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   TextField,
   Autocomplete,
@@ -10,12 +13,17 @@ import {
   Box,
   Stack,
   Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 
 import { OverviewCard } from "../../common/components/OverviewCard";
 
 import { DefaultValueInput } from "./ConfigInputs";
 import { ConfigReferenceInput } from "./ConfigReferenceInput";
+import { ValidationNumberControls } from "./ValidationNumberControls";
+import { ValidationRegexControls } from "./ValidationRegexControls";
 
 export const SourceConfigForm = (props: {
   control: Control<any>;
@@ -23,6 +31,8 @@ export const SourceConfigForm = (props: {
   fieldId: string;
 }) => {
   const { control, index } = props;
+  const [isStringValidationOpen, setIsStringValidationOpen] = useState(false);
+  const [isNumberValidationOpen, setIsNumberValidationOpen] = useState(false);
 
   const formState = useFormState({ control });
   const configsErrors = formState.errors?.configs as any;
@@ -287,6 +297,61 @@ export const SourceConfigForm = (props: {
                 </Stack>
                 <ConfigReferenceInput control={control} index={index} />
               </Stack>
+
+              {configType === "string" && (
+                <Accordion
+                  expanded={isStringValidationOpen}
+                  onChange={(_, expanded) =>
+                    setIsStringValidationOpen(expanded)
+                  }
+                  disableGutters
+                  elevation={0}
+                  square
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    mt: 1,
+                    "&:before": { display: "none" },
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      String Validation
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <ValidationRegexControls control={control} index={index} />
+                  </AccordionDetails>
+                </Accordion>
+              )}
+              {configType === "number" && (
+                <Accordion
+                  expanded={isNumberValidationOpen}
+                  onChange={(_, expanded) =>
+                    setIsNumberValidationOpen(expanded)
+                  }
+                  disableGutters
+                  elevation={0}
+                  square
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    mt: 1,
+                    "&:before": { display: "none" },
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      Number Validation
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <ValidationNumberControls control={control} index={index} />
+                  </AccordionDetails>
+                </Accordion>
+              )}
             </Box>
           )}
         </OverviewCard>

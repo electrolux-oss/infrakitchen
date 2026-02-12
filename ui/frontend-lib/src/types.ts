@@ -67,3 +67,25 @@ export interface AuditLogEntity extends IkEntity {
   entity_id: string;
   action: string;
 }
+
+export type ValidationRuleTargetType = "string" | "number";
+
+export interface ValidationRule {
+  id?: string;
+  target_type: ValidationRuleTargetType;
+  min_value?: string | number | null;
+  max_value?: string | number | null;
+  regex?: string | null;
+  max_length?: number | null;
+  description?: string | null;
+}
+
+export interface ValidationRuleTemplateReference {
+  id: string;
+  template_id: string;
+  variable_name: string;
+  validation_rule_id: string;
+  created_at: Date;
+  updated_at: Date;
+  created_by: string | null;
+}

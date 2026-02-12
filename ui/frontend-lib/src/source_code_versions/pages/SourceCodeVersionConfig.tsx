@@ -22,6 +22,7 @@ import {
   useSourceCodeVersionConfigContext,
 } from "../context/SourceCodeVersionConfigContext";
 import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
+import { normalizeNumericField, parseNumericField } from "../utils/numeric";
 
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
@@ -59,6 +60,13 @@ const SourceCodeVersionConfigContent = () => {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
+        validation_regex: config.validation_regex || "",
+        validation_min_value: normalizeNumericField(
+          config.validation_min_value,
+        ),
+        validation_max_value: normalizeNumericField(
+          config.validation_max_value,
+        ),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -83,6 +91,13 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation_regex: config.validation_regex || "",
+        validation_min_value: normalizeNumericField(
+          config.validation_min_value,
+        ),
+        validation_max_value: normalizeNumericField(
+          config.validation_max_value,
+        ),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -114,7 +129,13 @@ const SourceCodeVersionConfigContent = () => {
               JSON.stringify(original.options) ||
             formConfig.reference_template_id !==
               original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name
+            formConfig.output_config_name !== original.output_config_name ||
+            (formConfig.validation_regex || "") !==
+              (original.validation_regex || "") ||
+            normalizeNumericField(formConfig.validation_min_value) !==
+              normalizeNumericField(original.validation_min_value) ||
+            normalizeNumericField(formConfig.validation_max_value) !==
+              normalizeNumericField(original.validation_max_value)
           );
         });
       }
@@ -137,6 +158,13 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
+            validation_regex: config.validation_regex,
+            validation_min_value: parseNumericField(
+              config.validation_min_value,
+            ),
+            validation_max_value: parseNumericField(
+              config.validation_max_value,
+            ),
           }),
         );
 
