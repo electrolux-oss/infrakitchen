@@ -105,6 +105,7 @@ export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   id: string;
   template_id: string;
   reference_template_id: string | null;
+  output_config_name?: string | null;
 }
 
 export interface SourceOutputConfigResponse extends Record<string, any> {

@@ -46,16 +46,18 @@ const parseErrorBody = async (response: Response): Promise<void> => {
       errorBody.error_code,
       errorBody.metadata,
     );
-  } else if (errorBody && errorBody.message) {
+  }
+
+  if (errorBody && errorBody.message) {
     throw new ApiClientError(
       response.status,
       errorBody.message,
       "unknown_error",
       errorBody.metadata || {},
     );
-  } else {
-    throw new Error(`${response.status} ${response.statusText}.`);
   }
+
+  throw new Error(`${response.status} ${response.statusText}.`);
 };
 
 export const ikDataProvider = (apiUrl: string): IKDataProvider => {
