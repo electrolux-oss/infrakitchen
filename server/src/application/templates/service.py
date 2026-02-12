@@ -135,6 +135,7 @@ class TemplateService:
         if not existing_template:
             raise EntityNotFound("Template not found")
 
+        await self.audit_log_handler.create_log(existing_template.id, requester.id, body.action)
         match body.action:
             case ModelActions.DISABLE:
                 existing_template.status = ModelStatus.DISABLED
@@ -146,7 +147,6 @@ class TemplateService:
             case _:
                 raise ValueError("Invalid action")
 
-        await self.audit_log_handler.create_log(existing_template.id, requester.id, body.action)
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, body.action)
         return response
