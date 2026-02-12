@@ -377,6 +377,7 @@ class ResourceService:
             )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
+            await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 
@@ -747,6 +748,9 @@ class ResourceService:
             if resource.status == ModelStatus.READY:
                 actions.append(ModelActions.DRYRUN)
                 actions.append(ModelActions.DELETE)
+            elif resource.status == ModelStatus.ERROR:
+                actions.append(ModelActions.DESTROY)
+                actions.append(ModelActions.DRYRUN)
             if resource_temp_state is not None and user_is_admin:
                 actions.append(ModelActions.APPROVE)
                 actions.append(ModelActions.REJECT)

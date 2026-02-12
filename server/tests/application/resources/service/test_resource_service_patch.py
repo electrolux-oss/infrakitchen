@@ -244,7 +244,7 @@ class TestPatchAction:
             (ModelState.PROVISIONED, ModelStatus.DONE, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
-            (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.ERROR),
+            (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.READY),
         ],
     )
     async def test_patch_approve_when_provisioned_resource_edited(

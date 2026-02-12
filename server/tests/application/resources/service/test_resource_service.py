@@ -652,6 +652,18 @@ class TestGetResourceActions:
                 ],
             ),
             (
+                ModelStatus.ERROR,
+                ModelState.PROVISION,
+                ["read", "write"],
+                [
+                    ModelActions.DESTROY,
+                    ModelActions.DOWNLOAD,
+                    ModelActions.EXECUTE,
+                    ModelActions.DRYRUN,
+                    ModelActions.EDIT,
+                ],
+            ),
+            (
                 ModelStatus.APPROVAL_PENDING,
                 ModelState.PROVISION,
                 ["read", "write"],
@@ -695,6 +707,18 @@ class TestGetResourceActions:
                     ModelActions.APPROVE,
                     ModelActions.REJECT,
                     ModelActions.DELETE,
+                ],
+            ),
+            (
+                ModelStatus.ERROR,
+                ModelState.PROVISION,
+                ["read", "write", "admin"],
+                [
+                    ModelActions.DESTROY,
+                    ModelActions.DOWNLOAD,
+                    ModelActions.EXECUTE,
+                    ModelActions.DRYRUN,
+                    ModelActions.EDIT,
                 ],
             ),
             (
