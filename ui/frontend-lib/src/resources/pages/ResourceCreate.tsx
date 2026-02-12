@@ -20,6 +20,7 @@ import {
   Table,
   TableBody,
   Button,
+  Alert,
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
@@ -155,6 +156,7 @@ const ResourceCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedParentIds.length > 0) {
+      // override integration_ids, storage_id and workspace_id based on the last parent selection
       const parentCandidates = watchedTemplate?.parents
         ? watchedTemplate.parents.flatMap(
             (parent: IkEntity) =>
@@ -162,8 +164,9 @@ const ResourceCreatePageInner = () => {
           )
         : [];
 
-      const parentObjects = parentCandidates.find((e: ResourceResponse) =>
-        watchedParentIds.includes(e.id),
+      const primaryParentId = watchedParentIds.at(-1);
+      const parentObjects = parentCandidates.find(
+        (e: ResourceResponse) => String(e.id) === String(primaryParentId),
       );
 
       if (!parentObjects) {
@@ -178,10 +181,7 @@ const ResourceCreatePageInner = () => {
       const parentStorage = parentObjects?.storage?.id || null;
       const parentWorkspace = parentObjects?.workspace?.id || null;
 
-      if (
-        parentIntegrations.length > 0 &&
-        getValues("integration_ids").length === 0
-      ) {
+      if (parentIntegrations.length > 0) {
         setValue("integration_ids", parentIntegrations);
       }
 
@@ -392,7 +392,6 @@ const ResourceCreatePageInner = () => {
                       </>
                     )}
                   />
-
                   <Controller
                     name="labels"
                     control={control}
@@ -458,6 +457,16 @@ const ResourceCreatePageInner = () => {
                           }}
                         />
                       ))}
+                      {watchedParentIds.length > 1 && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                          Multiple parents selected. Integration, storage, and
+                          workspace will be taken from the last selected parent.
+                          Please make sure this is the intended configuration,
+                          as it may cause issues with Terraform state management
+                          if different parents have different integrations or
+                          storages.
+                        </Alert>
+                      )}
                     </>
                   )}
                 />
