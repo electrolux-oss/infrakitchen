@@ -33,6 +33,13 @@ class ValidationRuleResponse(ValidationRuleBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ValidationRulesByVariableResponse(BaseModel):
+    """Validation rules grouped by variable name."""
+
+    variable_name: str = Field(...)
+    rules: list[ValidationRuleResponse] = Field(default_factory=list)
+
+
 class ValidationRuleTemplateReferenceCreate(BaseModel):
     """
     Request model for creating a new validation rule template reference.

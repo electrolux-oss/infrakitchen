@@ -8,6 +8,7 @@ from .schema import (
     ValidationRuleBase,
     ValidationRuleResponse,
     ValidationRuleTemplateReference,
+    ValidationRulesByVariableResponse,
 )
 from core.errors import EntityNotFound
 from core.users.model import UserDTO
@@ -31,17 +32,23 @@ class ValidationRuleService:
         rules = await self.crud.get_all_rules()
         return [ValidationRuleResponse.model_validate(rule) for rule in rules]
 
-    async def get_rules_for_template(self, template_id: str | UUID) -> list[ValidationRuleResponse]:
-        """
-        Retrieve all validation rules associated with a given template ID.
-        """
-        rules = await self.crud.get_rules_by_template(template_id=template_id)
-        return [ValidationRuleResponse.model_validate(rule) for rule in rules]
+    async def get_rules_for_template(self, template_id: str | UUID) -> list[ValidationRulesByVariableResponse]:
+        """Retrieve validation rules grouped by variable for a template."""
+        rules_map = await self.get_rules_map_for_template(template_id)
+        grouped_rules: list[ValidationRulesByVariableResponse] = []
+
+        for variable_name in sorted(rules_map.keys()):
+            grouped_rules.append(
+                ValidationRulesByVariableResponse(
+                    variable_name=variable_name,
+                    rules=rules_map[variable_name],
+                )
+            )
+
+        return grouped_rules
 
     async def get_rules_for_variable(self, template_id: str | UUID, variable_name: str) -> list[ValidationRuleResponse]:
-        """
-        Retrieve all validation rules associated with a specific variable in a template.
-        """
+        """Retrieve all validation rules associated with a specific variable in a template."""
         rules = await self.crud.get_rules_by_template_and_variable(template_id=template_id, variable_name=variable_name)
         return [ValidationRuleResponse.model_validate(rule) for rule in rules]
 

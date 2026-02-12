@@ -75,9 +75,24 @@ export interface ValidationRule {
   target_type: ValidationRuleTargetType;
   min_value?: string | number | null;
   max_value?: string | number | null;
-  regex?: string | null;
+  regex_pattern?: string | null;
   max_length?: number | null;
   description?: string | null;
+}
+
+export interface ValidationRulesByVariable {
+  variable_name: string;
+  rules: ValidationRule[];
+}
+
+export interface ValidationRuleTemplateReferenceCreate {
+  template_id: string;
+  variable_name: string;
+  rule: ValidationRule;
+}
+
+export interface ValidationRuleTemplateReferenceReplace {
+  rules: ValidationRule[];
 }
 
 export interface ValidationRuleTemplateReference {
