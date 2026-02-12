@@ -44,6 +44,18 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.create_index(
+        "ix_validation_rules_signature",
+        "validation_rules",
+        [
+            "target_type",
+            "description",
+            "min_value",
+            "max_value",
+            "regex_pattern",
+            "max_length",
+        ],
+    )
 
     op.create_table(
         "validation_rule_template_references",
@@ -69,6 +81,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_index("ix_validation_rules_signature", table_name="validation_rules")
     op.drop_index(
         "ix_validation_rule_template_reference_var",
         table_name="validation_rule_template_references",

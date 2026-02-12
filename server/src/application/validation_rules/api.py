@@ -56,7 +56,7 @@ async def create_template_rule(
     reference = await service.add_rule_for_template(
         template_id=template_id,
         variable_name=body.variable_name,
-        rule_id=str(body.validation_rule_id),
+        rule=body.rule,
         requester=requester,
     )
     return reference
@@ -81,11 +81,10 @@ async def replace_template_rules(
     if requester is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
-    rule_ids = [str(rule_id) for rule_id in body.rule_ids]
     references = await service.replace_rules_for_variable(
         template_id=template_id,
         variable_name=variable_name,
-        rule_ids=rule_ids,
+        rules=body.rules,
         requester=requester,
     )
     return references

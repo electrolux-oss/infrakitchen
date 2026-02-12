@@ -54,6 +54,15 @@ class ValidationRule(Base):
             "(min_value IS NULL) OR (max_value IS NULL) OR (min_value <= max_value)",
             name="ck_validation_rules_min_le_max",
         ),
+        Index(
+            "ix_validation_rules_signature",
+            "target_type",
+            "description",
+            "min_value",
+            "max_value",
+            "regex_pattern",
+            "max_length",
+        ),
     )
 
 

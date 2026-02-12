@@ -33,12 +33,14 @@ class MockValidationRuleService:
         self.calls.append(("variable", template_id, variable_name))
         return self.variable_rules
 
-    async def add_rule_for_template(self, template_id: str, variable_name: str, rule_id: str, requester):
-        self.calls.append(("add", template_id, variable_name, rule_id, requester))
+    async def add_rule_for_template(self, template_id: str, variable_name: str, rule: dict[str, Any], requester):
+        self.calls.append(("add", template_id, variable_name, rule, requester))
         return self.reference
 
-    async def replace_rules_for_variable(self, template_id: str, variable_name: str, rule_ids: list[str], requester):
-        self.calls.append(("replace", template_id, variable_name, tuple(rule_ids), requester))
+    async def replace_rules_for_variable(
+        self, template_id: str, variable_name: str, rules: list[dict[str, Any]], requester
+    ):
+        self.calls.append(("replace", template_id, variable_name, tuple(rules), requester))
         return self.replaced
 
     async def delete_rule_reference(self, template_id: str, variable_name: str, reference_id: str):
@@ -137,7 +139,7 @@ class TestCreateTemplateRule:
         body = {
             "template_id": template_id,
             "variable_name": "cpu",
-            "validation_rule_id": str(uuid4()),
+            "rule": {"target_type": "string", "regex_pattern": "^foo$"},
         }
 
         response = client_without_user.post(f"/validation_rules/template/{template_id}", json=body)
@@ -153,7 +155,7 @@ class TestCreateTemplateRule:
         body = {
             "template_id": str(uuid4()),
             "variable_name": "cpu",
-            "validation_rule_id": str(uuid4()),
+            "rule": {"target_type": "string", "regex_pattern": "^foo$"},
         }
 
         response = client_with_user.post(f"/validation_rules/template/{path_template_id}", json=body)
@@ -169,7 +171,7 @@ class TestCreateTemplateRule:
         body = {
             "template_id": template_id,
             "variable_name": validation_rule_reference.variable_name,
-            "validation_rule_id": str(validation_rule_reference.validation_rule_id),
+            "rule": {"target_type": "string", "regex_pattern": "^foo$"},
         }
 
         response = client_with_user.post(f"/validation_rules/template/{template_id}", json=body)
@@ -183,7 +185,7 @@ class TestReplaceTemplateRules:
         template_id = str(uuid4())
         response = client_without_user.put(
             f"/validation_rules/template/{template_id}/cpu",
-            json={"rule_ids": [str(uuid4())]},
+            json={"rules": [{"target_type": "string", "regex_pattern": "^foo$"}]},
         )
         assert response.status_code == HTTPStatus.FORBIDDEN
 
@@ -191,7 +193,7 @@ class TestReplaceTemplateRules:
         service = MockValidationRuleService(replaced=[validation_rule_reference])
         override_service(service)
         template_id = str(validation_rule_reference.template_id)
-        body = {"rule_ids": [str(validation_rule_reference.validation_rule_id)]}
+        body = {"rules": [{"target_type": "string", "regex_pattern": "^foo$"}]}
 
         response = client_with_user.put(
             f"/validation_rules/template/{template_id}/{validation_rule_reference.variable_name}",

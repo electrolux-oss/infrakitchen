@@ -27,6 +27,7 @@ def mock_validation_rule_crud():
     crud.get_rules_by_template_and_variable = AsyncMock()
     crud.get_references_by_template = AsyncMock()
     crud.create_rule = AsyncMock()
+    crud.get_rule_by_attributes = AsyncMock()
     crud.get_rule_by_id = AsyncMock()
     crud.update_rule = AsyncMock()
     crud.delete_rule = AsyncMock()
@@ -185,7 +186,10 @@ class TestReplaceRulesForVariable:
     async def test_replaces_rules(self, validation_rule_service, mock_validation_rule_crud, mock_user_dto, monkeypatch):
         existing_refs = [Mock(), Mock()]
         mock_validation_rule_crud.get_references_by_template_and_variable.return_value = existing_refs
-        mock_validation_rule_crud.get_rule_by_id.side_effect = [object(), object()]
+        persisted_rules = [Mock(), Mock()]
+        persisted_rules[0].id = "rule-1"
+        persisted_rules[1].id = "rule-2"
+        mock_validation_rule_crud.get_rule_by_attributes.side_effect = persisted_rules
         created_refs = [Mock(), Mock()]
         mock_validation_rule_crud.create_reference.side_effect = created_refs
         parsed_refs = [Mock(), Mock()]
@@ -195,7 +199,10 @@ class TestReplaceRulesForVariable:
         result = await validation_rule_service.replace_rules_for_variable(
             template_id=TEMPLATE_ID,
             variable_name=VARIABLE_NAME,
-            rule_ids=["rule-1", "rule-2"],
+            rules=[
+                ValidationRuleBase(target_type=ValidationRuleTargetType.STRING, regex_pattern="^foo$"),
+                ValidationRuleBase(target_type=ValidationRuleTargetType.STRING, regex_pattern="^bar$"),
+            ],
             requester=mock_user_dto,
         )
 
@@ -221,6 +228,29 @@ class TestReplaceRulesForVariable:
             ]
         )
         assert result == parsed_refs
+        mock_validation_rule_crud.create_rule.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_creates_missing_rules(
+        self, validation_rule_service, mock_validation_rule_crud, mock_user_dto, monkeypatch
+    ):
+        mock_validation_rule_crud.get_references_by_template_and_variable.return_value = []
+        mock_validation_rule_crud.get_rule_by_attributes.return_value = None
+        new_db_rule = Mock()
+        new_db_rule.id = "new-rule"
+        mock_validation_rule_crud.create_rule.return_value = new_db_rule
+        created_reference = Mock()
+        mock_validation_rule_crud.create_reference.return_value = created_reference
+        monkeypatch.setattr(ValidationRuleTemplateReference, "model_validate", Mock(return_value=Mock()))
+
+        await validation_rule_service.replace_rules_for_variable(
+            template_id=TEMPLATE_ID,
+            variable_name=VARIABLE_NAME,
+            rules=[ValidationRuleBase(target_type=ValidationRuleTargetType.STRING, regex_pattern="^foo$")],
+            requester=mock_user_dto,
+        )
+
+        mock_validation_rule_crud.create_rule.assert_awaited_once()
 
 
 class TestAddRuleForTemplate:
@@ -228,7 +258,9 @@ class TestAddRuleForTemplate:
     async def test_creates_reference(
         self, validation_rule_service, mock_validation_rule_crud, mock_user_dto, monkeypatch
     ):
-        mock_validation_rule_crud.get_rule_by_id.return_value = object()
+        persisted_rule = Mock()
+        persisted_rule.id = RULE_ID
+        mock_validation_rule_crud.get_rule_by_attributes.return_value = persisted_rule
         created_reference = Mock()
         mock_validation_rule_crud.create_reference.return_value = created_reference
         parsed_reference = Mock()
@@ -238,7 +270,7 @@ class TestAddRuleForTemplate:
         result = await validation_rule_service.add_rule_for_template(
             template_id=TEMPLATE_ID,
             variable_name=VARIABLE_NAME,
-            rule_id=RULE_ID,
+            rule=ValidationRuleBase(target_type=ValidationRuleTargetType.STRING, regex_pattern="^foo$"),
             requester=mock_user_dto,
         )
 
@@ -253,16 +285,27 @@ class TestAddRuleForTemplate:
         assert result is parsed_reference
 
     @pytest.mark.asyncio
-    async def test_raises_when_rule_missing(self, validation_rule_service, mock_validation_rule_crud, mock_user_dto):
-        mock_validation_rule_crud.get_rule_by_id.return_value = None
+    async def test_creates_rule_when_missing(
+        self, validation_rule_service, mock_validation_rule_crud, mock_user_dto, monkeypatch
+    ):
+        mock_validation_rule_crud.get_rule_by_attributes.return_value = None
+        new_rule = Mock()
+        new_rule.id = RULE_ID
+        mock_validation_rule_crud.create_rule.return_value = new_rule
+        created_reference = Mock()
+        mock_validation_rule_crud.create_reference.return_value = created_reference
+        parsed_reference = Mock()
+        monkeypatch.setattr(ValidationRuleTemplateReference, "model_validate", Mock(return_value=parsed_reference))
 
-        with pytest.raises(EntityNotFound):
-            await validation_rule_service.add_rule_for_template(
-                template_id=TEMPLATE_ID,
-                variable_name=VARIABLE_NAME,
-                rule_id=RULE_ID,
-                requester=mock_user_dto,
-            )
+        result = await validation_rule_service.add_rule_for_template(
+            template_id=TEMPLATE_ID,
+            variable_name=VARIABLE_NAME,
+            rule=ValidationRuleBase(target_type=ValidationRuleTargetType.STRING, regex_pattern="^foo$"),
+            requester=mock_user_dto,
+        )
+
+        mock_validation_rule_crud.create_rule.assert_awaited_once()
+        assert result is parsed_reference
 
 
 class TestDeleteRuleReference:
