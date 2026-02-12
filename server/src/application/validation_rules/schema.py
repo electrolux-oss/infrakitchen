@@ -12,6 +12,7 @@ class ValidationRuleBase(BaseModel):
     Base model for validation rules, containing common fields for both creation and response models.
     """
 
+    id: uuid.UUID | None = Field(default=None)
     target_type: ValidationRuleTargetType = Field(...)
     description: str | None = Field(default=None)
     min_value: Decimal | None = Field(default=None)
@@ -25,7 +26,6 @@ class ValidationRuleResponse(ValidationRuleBase):
     Response model for validation rules, including fields that are returned when fetching validation rules.
     """
 
-    id: uuid.UUID = Field(...)
     created_at: datetime = Field(default_factory=datetime.now, frozen=True)
     updated_at: datetime = Field(default_factory=datetime.now)
     created_by: uuid.UUID | None = Field(default=None)
@@ -40,7 +40,7 @@ class ValidationRuleTemplateReferenceCreate(BaseModel):
 
     template_id: uuid.UUID = Field(...)
     variable_name: str = Field(...)
-    validation_rule_id: uuid.UUID = Field(...)
+    rule: ValidationRuleBase = Field(...)
 
 
 class ValidationRuleTemplateReference(BaseModel):
@@ -64,4 +64,4 @@ class ValidationRuleTemplateReference(BaseModel):
 class ValidationRuleTemplateReferenceReplace(BaseModel):
     """Request payload for replacing validation rules assigned to a variable."""
 
-    rule_ids: list[uuid.UUID] = Field(default_factory=list)
+    rules: list[ValidationRuleBase] = Field(default_factory=list)

@@ -1,9 +1,9 @@
 import logging
 from collections import defaultdict
-from collections.abc import Sequence
 from uuid import UUID
 
 from .crud import ValidationRuleCRUD
+from .model import ValidationRule
 from .schema import (
     ValidationRuleBase,
     ValidationRuleResponse,
@@ -91,7 +91,7 @@ class ValidationRuleService:
         await self.crud.delete_rule(existing_rule)
 
     async def replace_rules_for_variable(
-        self, template_id: str | UUID, variable_name: str, rule_ids: Sequence[str | UUID], requester: UserDTO
+        self, template_id: str | UUID, variable_name: str, rules: list[ValidationRuleBase], requester: UserDTO
     ) -> list[ValidationRuleTemplateReference]:
         """
         Replace all validation rules for a specific variable in a template with a new set of rules.
@@ -105,14 +105,12 @@ class ValidationRuleService:
 
         # Create new rule references
         created_references = []
-        for rule_id in rule_ids:
-            rule = await self.crud.get_rule_by_id(rule_id=rule_id)
-            if not rule:
-                raise EntityNotFound(f"Validation rule with ID {rule_id} not found.")
+        for rule_definition in rules:
+            persisted_rule = await self._get_or_create_rule(rule=rule_definition, requester=requester)
             body = {
                 "template_id": template_id,
                 "variable_name": variable_name,
-                "validation_rule_id": rule_id,
+                "validation_rule_id": persisted_rule.id,
                 "created_by": requester.id,
             }
             new_reference = await self.crud.create_reference(data=body)
@@ -121,19 +119,17 @@ class ValidationRuleService:
         return [ValidationRuleTemplateReference.model_validate(reference) for reference in created_references]
 
     async def add_rule_for_template(
-        self, template_id: str | UUID, variable_name: str, rule_id: str | UUID, requester: UserDTO
+        self, template_id: str | UUID, variable_name: str, rule: ValidationRuleBase, requester: UserDTO
     ) -> ValidationRuleTemplateReference:
         """
         Add a new validation rule to a specific template.
         """
-        rule = await self.crud.get_rule_by_id(rule_id=rule_id)
-        if not rule:
-            raise EntityNotFound(f"Validation rule with ID {rule_id} not found.")
+        persisted_rule = await self._get_or_create_rule(rule=rule, requester=requester)
 
         body = {
             "template_id": template_id,
             "variable_name": variable_name,
-            "validation_rule_id": rule_id,
+            "validation_rule_id": persisted_rule.id,
             "created_by": requester.id,
         }
         reference = await self.crud.create_reference(data=body)
@@ -151,3 +147,24 @@ class ValidationRuleService:
             raise EntityNotFound("Validation rule reference not found for the provided template or variable.")
 
         await self.crud.delete_reference(reference)
+
+    async def _get_or_create_rule(self, rule: ValidationRuleBase, requester: UserDTO) -> ValidationRule:
+        if rule.id is not None:
+            existing_rule = await self.crud.get_rule_by_id(rule_id=rule.id)
+            if existing_rule:
+                return existing_rule
+
+        existing_rule = await self.crud.get_rule_by_attributes(
+            target_type=rule.target_type,
+            description=rule.description,
+            min_value=rule.min_value,
+            max_value=rule.max_value,
+            regex_pattern=rule.regex_pattern,
+            max_length=rule.max_length,
+        )
+        if existing_rule:
+            return existing_rule
+
+        body = rule.model_dump(exclude_unset=True)
+        body["created_by"] = requester.id
+        return await self.crud.create_rule(data=body)

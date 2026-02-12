@@ -29,6 +29,34 @@ class ValidationRuleCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
+    async def get_rule_by_attributes(
+        self,
+        *,
+        target_type,
+        description,
+        min_value,
+        max_value,
+        regex_pattern,
+        max_length,
+    ) -> ValidationRule | None:
+        statement = select(ValidationRule).where(ValidationRule.target_type == target_type)
+
+        def _match(field, value):
+            nonlocal statement
+            if value is None:
+                statement = statement.where(field.is_(None))
+            else:
+                statement = statement.where(field == value)
+
+        _match(ValidationRule.description, description)
+        _match(ValidationRule.min_value, min_value)
+        _match(ValidationRule.max_value, max_value)
+        _match(ValidationRule.regex_pattern, regex_pattern)
+        _match(ValidationRule.max_length, max_length)
+
+        result = await self.session.execute(statement.limit(1))
+        return result.scalar_one_or_none()
+
     async def get_rules_by_template(self, template_id: str | UUID) -> list[ValidationRule]:
         if not is_valid_uuid(template_id):
             raise ValueError(f"Invalid UUID: {template_id}")
