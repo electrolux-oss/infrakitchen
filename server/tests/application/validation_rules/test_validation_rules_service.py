@@ -63,16 +63,26 @@ class TestGetRulesForTemplate:
     @pytest.mark.asyncio
     async def test_returns_template_rules(self, validation_rule_service, mock_validation_rule_crud, monkeypatch):
         db_rule = object()
-        mock_validation_rule_crud.get_rules_by_template.return_value = [db_rule]
+        db_reference = Mock()
+        db_reference.variable_name = "env"
+        db_reference.validation_rule = db_rule
+        mock_validation_rule_crud.get_references_by_template.return_value = [db_reference]
         parsed_rule = Mock()
         mock_validate = Mock(return_value=parsed_rule)
         monkeypatch.setattr(ValidationRuleResponse, "model_validate", mock_validate)
+        grouped_response = Mock()
+        mocked_group_constructor = Mock(return_value=grouped_response)
+        monkeypatch.setattr(
+            "application.validation_rules.service.ValidationRulesByVariableResponse",
+            mocked_group_constructor,
+        )
 
         result = await validation_rule_service.get_rules_for_template(TEMPLATE_ID)
 
-        assert result == [parsed_rule]
-        mock_validation_rule_crud.get_rules_by_template.assert_awaited_once_with(template_id=TEMPLATE_ID)
+        assert result == [grouped_response]
+        mock_validation_rule_crud.get_references_by_template.assert_awaited_once_with(TEMPLATE_ID)
         mock_validate.assert_called_once_with(db_rule)
+        mocked_group_constructor.assert_called_once_with(variable_name=db_reference.variable_name, rules=[parsed_rule])
 
 
 class TestGetRulesForVariable:

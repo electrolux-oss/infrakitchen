@@ -5,10 +5,10 @@ from core.users.model import UserDTO
 from .dependencies import get_validation_rule_service
 from .service import ValidationRuleService
 from .schema import (
-    ValidationRuleResponse,
     ValidationRuleTemplateReference,
     ValidationRuleTemplateReferenceCreate,
     ValidationRuleTemplateReferenceReplace,
+    ValidationRulesByVariableResponse,
 )
 
 router = APIRouter()
@@ -16,19 +16,26 @@ router = APIRouter()
 
 @router.get(
     "/validation_rules/template/{template_id}",
-    response_model=list[ValidationRuleResponse],
-    response_description="List of effective validation rules for the specified template",
+    response_model=list[ValidationRulesByVariableResponse],
+    response_description="Validation rules grouped by variable for the specified template",
     status_code=status.HTTP_200_OK,
 )
 async def get_template_rules(
     template_id: str,
     variable_name: str | None = None,
     service: ValidationRuleService = Depends(get_validation_rule_service),
-) -> list[ValidationRuleResponse]:
+) -> list[ValidationRulesByVariableResponse]:
     """Retrieve validation rules for a template, optionally filtered by variable name."""
 
     if variable_name:
-        return await service.get_rules_for_variable(template_id=template_id, variable_name=variable_name)
+        rules = await service.get_rules_for_variable(template_id=template_id, variable_name=variable_name)
+        return [
+            ValidationRulesByVariableResponse(
+                variable_name=variable_name,
+                rules=rules,
+            )
+        ]
+
     return await service.get_rules_for_template(template_id=template_id)
 
 

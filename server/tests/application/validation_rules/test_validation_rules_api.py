@@ -12,6 +12,7 @@ from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import (
     ValidationRuleResponse,
     ValidationRuleTemplateReference,
+    ValidationRulesByVariableResponse,
 )
 
 TEMPLATE_ID = "template-id"
@@ -116,13 +117,16 @@ def validation_rule_reference():
 
 class TestGetTemplateRules:
     def test_returns_rules(self, client, override_service, validation_rule_response):
-        service = MockValidationRuleService(template_rules=[validation_rule_response])
+        grouped = ValidationRulesByVariableResponse(variable_name="cpu", rules=[validation_rule_response])
+        service = MockValidationRuleService(template_rules=[grouped])
         override_service(service)
 
         response = client.get(f"/validation_rules/template/{TEMPLATE_ID}")
 
         assert response.status_code == HTTPStatus.OK
-        assert response.json()[0]["id"] == str(validation_rule_response.id)
+        payload = response.json()[0]
+        assert payload["variable_name"] == "cpu"
+        assert payload["rules"][0]["id"] == str(validation_rule_response.id)
 
     def test_filters_by_variable(self, client, override_service, validation_rule_response):
         service = MockValidationRuleService(variable_rules=[validation_rule_response])
@@ -131,6 +135,9 @@ class TestGetTemplateRules:
         response = client.get(f"/validation_rules/template/{TEMPLATE_ID}?variable_name=cpu")
 
         assert response.status_code == HTTPStatus.OK
+        payload = response.json()[0]
+        assert payload["variable_name"] == "cpu"
+        assert payload["rules"][0]["id"] == str(validation_rule_response.id)
 
 
 class TestCreateTemplateRule:
