@@ -142,6 +142,7 @@ class TestPatch:
         mock_revision_handler,
     ):
         resource_patch = ResourcePatch(
+            name="name",
             description="desc",
             source_code_version_id=uuid4(),
             integration_ids=[uuid4()],

@@ -98,6 +98,7 @@ export interface ResourceVariableSchema {
 }
 
 export interface ResourceUpdate {
+  name: string;
   description: string;
   source_code_version_id: string | null;
   integration_ids: string[];

@@ -52,6 +52,7 @@ export const ResourceEditPageInner = (props: {
   const getEntityDefaultValues = useCallback(
     (entity: ResourceResponse): ResourceUpdate => {
       return {
+        name: entity.name,
         description: entity.description,
         integration_ids: entity.integration_ids.map((i) => i.id),
         secret_ids: entity.secret_ids.map((s) => s.id),
@@ -288,6 +289,28 @@ export const ResourceEditPageInner = (props: {
           }}
         >
           <PropertyCard title="Resource Definition">
+            <Controller
+              name="name"
+              control={control}
+              rules={{ required: "Name is required" }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Name"
+                  required
+                  placeholder="Enter resource name. It should be unique within the selected template."
+                  helperText={
+                    errors.name
+                      ? errors.name.message
+                      : "It should be unique within the selected template."
+                  }
+                  variant="outlined"
+                  error={!!errors.name}
+                  fullWidth
+                  margin="normal"
+                />
+              )}
+            />
             <Controller
               name="description"
               control={control}
