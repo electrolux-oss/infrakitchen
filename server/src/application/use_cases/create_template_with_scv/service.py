@@ -71,12 +71,10 @@ class TemplateWithSCVService:
         #    raise ValueError(f"Provider {repository!r} is not supported")
 
         sc = SourceCodeCreate.model_validate(body)
-        new_sc = None
-        existant_sc = await self.source_code_service.get_one(filter={"source_code_url": sc.source_code_url})
-        if not existant_sc:
-            new_sc = await self.source_code_service.create(sc, requester=requester)
+        if existing_sc := await self.source_code_service.get_one(filter={"source_code_url": sc.source_code_url}):
+            new_sc = existing_sc
         else:
-            new_sc = existant_sc
+            new_sc = await self.source_code_service.create(sc, requester=requester)
 
         # Create SourceCodeVersion
         body["template_id"] = new_template.id
