@@ -22,6 +22,7 @@ import {
   useSourceCodeVersionConfigContext,
 } from "../context/SourceCodeVersionConfigContext";
 import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
+import { normalizeNumericField, parseNumericField } from "../utils/numeric";
 
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
@@ -59,6 +60,14 @@ const SourceCodeVersionConfigContent = () => {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
+        validation_rule_id: config.validation_rule_id ?? null,
+        validation_regex: config.validation_regex || "",
+        validation_min_value: normalizeNumericField(
+          config.validation_min_value,
+        ),
+        validation_max_value: normalizeNumericField(
+          config.validation_max_value,
+        ),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -83,6 +92,14 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation_rule_id: config.validation_rule_id ?? null,
+        validation_regex: config.validation_regex || "",
+        validation_min_value: normalizeNumericField(
+          config.validation_min_value,
+        ),
+        validation_max_value: normalizeNumericField(
+          config.validation_max_value,
+        ),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -114,7 +131,14 @@ const SourceCodeVersionConfigContent = () => {
               JSON.stringify(original.options) ||
             formConfig.reference_template_id !==
               original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name
+            formConfig.output_config_name !== original.output_config_name ||
+            formConfig.validation_rule_id !== original.validation_rule_id ||
+            (formConfig.validation_regex || "") !==
+              (original.validation_regex || "") ||
+            normalizeNumericField(formConfig.validation_min_value) !==
+              normalizeNumericField(original.validation_min_value) ||
+            normalizeNumericField(formConfig.validation_max_value) !==
+              normalizeNumericField(original.validation_max_value)
           );
         });
       }
@@ -125,8 +149,21 @@ const SourceCodeVersionConfigContent = () => {
       }
 
       try {
-        const changesArray: SourceConfigUpdateWithId[] = configsToSubmit.map(
-          (config) => ({
+        const configUpdates: SourceConfigUpdateWithId[] = [];
+        const validationRuleUpdates: Map<
+          string,
+          {
+            rule_id?: string | null;
+            variable_name: string;
+            regex_pattern?: string | null;
+            min_value?: string | number | null;
+            max_value?: string | number | null;
+            target_type: "string" | "number";
+          }
+        > = new Map();
+
+        configsToSubmit.forEach((config) => {
+          configUpdates.push({
             id: config.id,
             required: config.required,
             default: config.default,
@@ -137,13 +174,76 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
-          }),
-        );
+            validation_rule_id: config.validation_rule_id ?? null,
+          });
 
-        await ikApi.updateRaw(
-          `source_code_versions/${sourceCodeVersion.id}/configs`,
-          changesArray,
-        );
+          const hasValidationRules =
+            (config.validation_regex && config.validation_regex.trim()) ||
+            config.validation_min_value !== null ||
+            config.validation_max_value !== null;
+
+          if (hasValidationRules) {
+            const sourceConfig = sourceConfigs.find((c) => c.id === config.id);
+            if (sourceConfig) {
+              const targetType =
+                sourceConfig.type === "number" ? "number" : "string";
+
+              validationRuleUpdates.set(sourceConfig.name, {
+                rule_id: config.validation_rule_id ?? null,
+                variable_name: sourceConfig.name,
+                regex_pattern:
+                  config.validation_regex && config.validation_regex.trim()
+                    ? config.validation_regex
+                    : null,
+                min_value: parseNumericField(config.validation_min_value),
+                max_value: parseNumericField(config.validation_max_value),
+                target_type: targetType,
+              });
+            }
+          }
+        });
+
+        if (configUpdates.length > 0) {
+          await ikApi.updateRaw(
+            `source_code_versions/${sourceCodeVersion.id}/configs`,
+            configUpdates,
+          );
+        }
+
+        for (const [variableName, validationData] of validationRuleUpdates) {
+          const rules = [];
+
+          const rule: any = {
+            target_type: validationData.target_type,
+          };
+
+          if (validationData.regex_pattern) {
+            rule.regex_pattern = validationData.regex_pattern;
+          }
+          if (validationData.min_value !== null) {
+            rule.min_value = validationData.min_value;
+          }
+          if (validationData.max_value !== null) {
+            rule.max_value = validationData.max_value;
+          }
+
+          if (validationData.rule_id) {
+            rule.id = validationData.rule_id;
+          }
+          if (
+            rule.id ||
+            rule.regex_pattern ||
+            rule.min_value !== undefined ||
+            rule.max_value !== undefined
+          ) {
+            rules.push(rule);
+          }
+
+          await ikApi.updateRaw(
+            `validation_rules/template/${sourceCodeVersion.template.id}/${variableName}`,
+            { rules },
+          );
+        }
 
         notify("Configurations updated successfully", "success");
 

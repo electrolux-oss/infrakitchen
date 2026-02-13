@@ -13,6 +13,7 @@ import { InfraKitchenApi } from "../../api";
 import { TreeResponse } from "../../common/components/tree/types";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { TemplateShort } from "../../templates/types";
+import { ValidationRule, ValidationRulesByVariable } from "../../types";
 import {
   SourceConfigResponse,
   SourceCodeVersionResponse,
@@ -26,6 +27,7 @@ interface SourceCodeVersionConfigContextType {
   sourceConfigs: SourceConfigResponse[];
   templates: TemplateShort[];
   templateReferences: SourceConfigTemplateReferenceResponse[];
+  validationRulesCatalog: ValidationRule[];
   refetchConfigs: () => void;
   handleReferenceChange: (newReferenceId: string) => void;
   isLoading: boolean;
@@ -79,22 +81,82 @@ export const SourceCodeVersionConfigProvider = ({
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [validationRulesCatalog, setValidationRulesCatalog] = useState<
+    ValidationRule[]
+  >([]);
 
-  const fetchSourceConfigs = useCallback(() => {
+  const fetchSourceConfigs = useCallback(async () => {
     setIsLoading(true);
-    ikApi
-      .get(`source_code_versions/${sourceCodeVersion.id}/configs`)
-      .then((response: SourceConfigResponse[]) => {
-        if (response.length > 0) {
-          setSourceConfigs(response);
-        } else {
-          notify("No source code configs found", "info");
-        }
-      })
-      .catch((error: Error) => {
-        notifyError(error);
-      });
-  }, [ikApi, sourceCodeVersion.id]);
+    try {
+      const configsResponse: SourceConfigResponse[] = await ikApi.get(
+        `source_code_versions/${sourceCodeVersion.id}/configs`,
+      );
+
+      if (configsResponse.length > 0) {
+        const validationRulesResponse: ValidationRulesByVariable[] =
+          await ikApi.get(
+            `validation_rules/template/${sourceCodeVersion.template.id}`,
+          );
+
+        const validationRulesMap = new Map<
+          string,
+          {
+            id?: string;
+            regex_pattern?: string | null;
+            min_value?: string | number | null;
+            max_value?: string | number | null;
+          }
+        >();
+
+        validationRulesResponse.forEach(({ variable_name, rules }) => {
+          if (!rules || rules.length === 0) {
+            return;
+          }
+
+          const preferredRule =
+            rules.find((rule) => {
+              const hasRegex = Boolean(rule.regex_pattern?.trim().length);
+              const hasMin =
+                rule.min_value !== undefined && rule.min_value !== null;
+              const hasMax =
+                rule.max_value !== undefined && rule.max_value !== null;
+              return hasRegex || hasMin || hasMax;
+            }) || rules[0];
+
+          const hasMin =
+            preferredRule.min_value !== undefined &&
+            preferredRule.min_value !== null;
+          const hasMax =
+            preferredRule.max_value !== undefined &&
+            preferredRule.max_value !== null;
+
+          validationRulesMap.set(variable_name, {
+            id: preferredRule.id,
+            regex_pattern: preferredRule.regex_pattern,
+            min_value: hasMin ? preferredRule.min_value : null,
+            max_value: hasMax ? preferredRule.max_value : null,
+          });
+        });
+
+        const configsWithValidation = configsResponse.map((config) => {
+          const validationRule = validationRulesMap.get(config.name);
+          return {
+            ...config,
+            validation_rule_id: validationRule?.id ?? null,
+            validation_regex: validationRule?.regex_pattern || "",
+            validation_min_value: validationRule?.min_value ?? null,
+            validation_max_value: validationRule?.max_value ?? null,
+          };
+        });
+
+        setSourceConfigs(configsWithValidation);
+      } else {
+        notify("No source code configs found", "info");
+      }
+    } catch (error: any) {
+      notifyError(error);
+    }
+  }, [ikApi, sourceCodeVersion.id, sourceCodeVersion.template.id]);
 
   const fetchParentTemplates = useCallback(async () => {
     try {
@@ -123,6 +185,17 @@ export const SourceCodeVersionConfigProvider = ({
       notifyError(e);
     }
   }, [ikApi, sourceCodeVersion.template.id]);
+
+  const fetchValidationRulesCatalog = useCallback(async () => {
+    try {
+      const rules: ValidationRule[] = await ikApi.get(
+        `validation_rules/predefined`,
+      );
+      setValidationRulesCatalog(rules);
+    } catch (e) {
+      notifyError(e);
+    }
+  }, [ikApi]);
 
   const updateConfigsValuesWithReference = useCallback(
     (
@@ -232,6 +305,7 @@ export const SourceCodeVersionConfigProvider = ({
       fetchParentTemplates(),
       fetchTemplateReferences(),
       fetchReferences(),
+      fetchValidationRulesCatalog(),
     ]).finally(() => setIsLoading(false));
   });
 
@@ -246,6 +320,7 @@ export const SourceCodeVersionConfigProvider = ({
     sourceConfigs,
     templates,
     templateReferences,
+    validationRulesCatalog,
     refetchConfigs: fetchSourceConfigs,
     handleReferenceChange,
     isLoading,

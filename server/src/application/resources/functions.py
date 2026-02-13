@@ -1,5 +1,5 @@
-from collections.abc import Sequence
 import logging
+from collections.abc import Sequence
 from typing import Any, cast
 from uuid import UUID
 
@@ -23,6 +23,9 @@ from core.errors import EntityExistsError
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.users.model import UserDTO
+from application.validation_rules.model import ValidationRuleTargetType
+from application.validation_rules.schema import ValidationRuleResponse
+from application.validation_rules.validators import validate_number_rule, validate_string_rule
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +95,7 @@ def get_resource_variable_schema(
     resource_scv: SourceCodeVersionWithConfigs,
     parents: list[ResourceWithConfigs],
     parent_scvs: list[SourceCodeVersionWithConfigs],
+    validation_rules_map: dict[str, list[ValidationRuleResponse]] | None = None,
 ) -> list[ResourceVariableSchema]:
     """
     Retrieves the schema for the resource variables.
@@ -99,9 +103,12 @@ def get_resource_variable_schema(
         resource_scv (SourceCodeVersionWithConfigs): The source code version of the resource.
         parents (list[ResourceWithConfigs]): A list of parent resources with their configurations.
         scv_with_configs (list[SourceCodeVersionWithConfigs]): A list of source code versions with their configurations.
+        validation_rules_map (dict[str, list[ValidationRuleResponse]] | None):
+            Optional map of validation rules keyed by variable name.
     Returns:
         dict[str, Any]: A dictionary containing the schema for the resource variables.
     """
+    validation_rules_map = validation_rules_map or {}
 
     def set_default_from_parent(
         parent_outputs: list[Outputs],
@@ -130,6 +137,7 @@ def get_resource_variable_schema(
 
     scv_template_references = resource_scv.template_refs
     for scv in resource_scv.variable_configs:
+        rules = [rule.model_copy(deep=True) for rule in validation_rules_map.get(scv.name, [])]
         rvs = ResourceVariableSchema(
             name=scv.name,
             description=scv.description,
@@ -142,6 +150,7 @@ def get_resource_variable_schema(
             type=scv.type,
             options=scv.options,
             index=scv.index,
+            validation_rules=rules,
         )
         schema.append(rvs)
 
@@ -169,6 +178,23 @@ def get_resource_variable_schema(
         set_default_from_parent_dependency_config(parent.dependency_config, schema)
 
     return schema
+
+
+def validate_variable_against_rules(variable_from_schema: ResourceVariableSchema, value: Any) -> None:
+    if value is None or not variable_from_schema.validation_rules:
+        return
+
+    for rule in variable_from_schema.validation_rules:
+        if rule.target_type == ValidationRuleTargetType.STRING:
+            validate_string_rule(variable_from_schema, rule, value)
+        elif rule.target_type == ValidationRuleTargetType.NUMBER:
+            validate_number_rule(variable_from_schema, rule, value)
+        else:
+            logger.warning(
+                "Unknown validation rule target type '%s' for variable '%s'",
+                rule.target_type,
+                variable_from_schema.name,
+            )
 
 
 # check_required_variables and check_variable_type functions are used to validate the resource variables
@@ -246,6 +272,7 @@ async def validate_resource_variables_on_create(
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
+            validate_variable_against_rules(variable, variable.value)
             variables.append(
                 Variables(
                     name=variable.name,
@@ -289,6 +316,7 @@ async def validate_resource_variables_on_create(
                 f"Variable '{variable.name}' has an invalid type '{type(resource_variable.value)}'. Expected {variable.type}."  #  noqa: E501
             )
 
+        validate_variable_against_rules(variable, resource_variable.value)
         variables.append(resource_variable)
 
     resource.variables = variables
@@ -334,6 +362,7 @@ async def update_resource_variables_on_patch(
 
         if variable.restricted:
             # If the variable is restricted, we do not allow changes and keep the original value
+            validate_variable_against_rules(variable, variable.value)
             variables.append(
                 Variables(
                     name=variable.name,
@@ -357,11 +386,12 @@ async def update_resource_variables_on_patch(
             resource_variable.sensitive = variable.sensitive
 
             if resource_variable.value == patched_variable.value:
-                # If the variable value hasn't changed, skip validation
+                # If the variable value hasn't changed, ensure it still satisfies constraints
                 if check_options_values(variable, patched_variable) is False:
                     raise ValueError(
                         f"Variable '{variable.name}' has an invalid value. Resource options could be changed in version config"  # noqa: E501
                     )
+                validate_variable_against_rules(variable, resource_variable.value)
                 variables.append(resource_variable)
                 continue
 
@@ -377,6 +407,7 @@ async def update_resource_variables_on_patch(
         if check_variable_type(variable, patched_variable.value) is False:
             raise ValueError(f"Variable '{variable.name}' has an invalid type. Expected {variable.type}.")
 
+        validate_variable_against_rules(variable, patched_variable.value)
         variables.append(patched_variable)
 
     patched_resource.variables = variables

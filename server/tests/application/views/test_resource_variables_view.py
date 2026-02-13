@@ -52,6 +52,7 @@ mocked_variables_schema = [
         "type": "array[string]",
         "unique": False,
         "value": ["test"],
+        "validation_rules": [],
     }
 ]
 
