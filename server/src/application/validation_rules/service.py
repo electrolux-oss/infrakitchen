@@ -32,6 +32,13 @@ class ValidationRuleService:
         rules = await self.crud.get_all_rules()
         return [ValidationRuleResponse.model_validate(rule) for rule in rules]
 
+    async def get_predefined_rules(self) -> list[ValidationRuleResponse]:
+        """
+        Retrieve predefined validation rules with descriptions.
+        """
+        rules = await self.crud.get_predefined_rules()
+        return [ValidationRuleResponse.model_validate(rule) for rule in rules]
+
     async def get_rules_for_template(self, template_id: str | UUID) -> list[ValidationRulesByVariableResponse]:
         """Retrieve validation rules grouped by variable for a template."""
         rules_map = await self.get_rules_map_for_template(template_id)
@@ -163,7 +170,6 @@ class ValidationRuleService:
 
         existing_rule = await self.crud.get_rule_by_attributes(
             target_type=rule.target_type,
-            description=rule.description,
             min_value=rule.min_value,
             max_value=rule.max_value,
             regex_pattern=rule.regex_pattern,

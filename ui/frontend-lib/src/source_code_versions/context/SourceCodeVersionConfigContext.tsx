@@ -13,7 +13,7 @@ import { InfraKitchenApi } from "../../api";
 import { TreeResponse } from "../../common/components/tree/types";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { TemplateShort } from "../../templates/types";
-import { ValidationRulesByVariable } from "../../types";
+import { ValidationRule, ValidationRulesByVariable } from "../../types";
 import {
   SourceConfigResponse,
   SourceCodeVersionResponse,
@@ -27,6 +27,7 @@ interface SourceCodeVersionConfigContextType {
   sourceConfigs: SourceConfigResponse[];
   templates: TemplateShort[];
   templateReferences: SourceConfigTemplateReferenceResponse[];
+  validationRulesCatalog: ValidationRule[];
   refetchConfigs: () => void;
   handleReferenceChange: (newReferenceId: string) => void;
   isLoading: boolean;
@@ -80,6 +81,9 @@ export const SourceCodeVersionConfigProvider = ({
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [validationRulesCatalog, setValidationRulesCatalog] = useState<
+    ValidationRule[]
+  >([]);
 
   const fetchSourceConfigs = useCallback(async () => {
     setIsLoading(true);
@@ -178,6 +182,17 @@ export const SourceCodeVersionConfigProvider = ({
       notifyError(e);
     }
   }, [ikApi, sourceCodeVersion.template.id]);
+
+  const fetchValidationRulesCatalog = useCallback(async () => {
+    try {
+      const rules: ValidationRule[] = await ikApi.get(
+        `validation_rules/predefined`,
+      );
+      setValidationRulesCatalog(rules);
+    } catch (e) {
+      notifyError(e);
+    }
+  }, [ikApi]);
 
   const updateConfigsValuesWithReference = useCallback(
     (
@@ -287,6 +302,7 @@ export const SourceCodeVersionConfigProvider = ({
       fetchParentTemplates(),
       fetchTemplateReferences(),
       fetchReferences(),
+      fetchValidationRulesCatalog(),
     ]).finally(() => setIsLoading(false));
   });
 
@@ -301,6 +317,7 @@ export const SourceCodeVersionConfigProvider = ({
     sourceConfigs,
     templates,
     templateReferences,
+    validationRulesCatalog,
     refetchConfigs: fetchSourceConfigs,
     handleReferenceChange,
     isLoading,
