@@ -8,6 +8,7 @@ import {
   LocalStorageProvider,
   RouterSnackbarWrapper,
   PermissionProvider,
+  useFilteredProtectedRoutes,
 } from "@electrolux-oss/infrakitchen";
 import CssBaseline from "@mui/material/CssBaseline";
 
@@ -18,7 +19,6 @@ import {
   ikDataProvider,
 } from "./base/data/DataProvider";
 import DashboardLayout from "./base/layout/DashboardLayout";
-import { useFilteredProtectedRoutes } from "./filterRoutes";
 import ProtectedRoute from "./routes";
 import SignInSide from "./sign-in-side/SignInSide";
 import AppTheme from "./theme/AppTheme";

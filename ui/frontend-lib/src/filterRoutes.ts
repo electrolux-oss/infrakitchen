@@ -1,27 +1,25 @@
 import { RouteObject } from "react-router";
 
-import {
-  usePermissionProvider,
-  GettingStartedPage,
-  administrationRoutes,
-  auditLogsRoutes,
-  authProviderRoutes,
-  templateRoutes,
-  integrationRoutes,
-  resourceRoutes,
-  batchOperationRoutes,
-  storageRoutes,
-  sourceCodeRoutes,
-  sourceCodeVersionRoutes,
-  taskRoutes,
-  workspaceRoutes,
-  workerRoutes,
-  usersRoutes,
-  roleRoutes,
-  permissionRoutes,
-  secretRoutes,
-  executorRoutes,
-} from "@electrolux-oss/infrakitchen";
+import { administrationRoutes } from "./administration";
+import { auditLogsRoutes } from "./audit_logs";
+import { authProviderRoutes } from "./auth_providers";
+import { batchOperationRoutes } from "./batch_operations";
+import { usePermissionProvider } from "./common";
+import { executorRoutes } from "./executors";
+import { GettingStartedPage, NotFoundPage } from "./getting_started";
+import { integrationRoutes } from "./integrations";
+import { permissionRoutes } from "./permissions";
+import { resourceRoutes } from "./resources";
+import { roleRoutes } from "./roles";
+import { secretRoutes } from "./secrets";
+import { sourceCodeVersionRoutes } from "./source_code_versions";
+import { sourceCodeRoutes } from "./source_codes";
+import { storageRoutes } from "./storages";
+import { taskRoutes } from "./tasks";
+import { templateRoutes } from "./templates";
+import { usersRoutes } from "./users";
+import { workerRoutes } from "./workers";
+import { workspaceRoutes } from "./workspaces";
 
 type RouteGroup = {
   key: string;
@@ -103,8 +101,9 @@ export const useFilteredProtectedRoutes = (): RouteObject[] => {
   });
 
   accessibleRoutes.push(
+    { path: "/", Component: GettingStartedPage },
     { path: GettingStartedPage.path, Component: GettingStartedPage },
-    { path: "*", Component: GettingStartedPage },
+    { path: "*", Component: NotFoundPage },
   );
 
   return accessibleRoutes;
