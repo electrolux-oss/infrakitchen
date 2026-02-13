@@ -23,6 +23,10 @@ export const GithubIcon: React.FC<IconProps> = (props) => (
   <Icon icon="octicon:mark-github-24" {...props} />
 );
 
+export const GitLabIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="logos:gitlab-icon" {...props} />
+);
+
 export const BitbucketIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-bitbucketpipeline" {...props} />
 );
@@ -48,6 +52,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["microsoft", AzureLogoIcon],
   ["github", GithubIcon],
   ["github_ssh", GithubIcon],
+  ["gitlab", GitLabIcon],
   ["bitbucket", BitbucketIcon],
   ["bitbucket_ssh", BitbucketIcon],
   ["gcp", GoogleCloudIcon],

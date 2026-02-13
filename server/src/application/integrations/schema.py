@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
@@ -17,6 +17,7 @@ integration_provider_type = Literal[
     "azure_devops_ssh",
     "github",
     "github_ssh",
+    "gitlab",
     "bitbucket",
     "bitbucket_ssh",
     "mongodb_atlas",
@@ -118,6 +119,15 @@ class GithubSshIntegrationConfig(BaseModel):
         return [("github_ssh_private_key", self.github_ssh_private_key)] if self.github_ssh_private_key else []
 
 
+class GitLabIntegrationConfig(BaseModel):
+    gitlab_server_url: str = Field(default="https://gitlab.com")
+    gitlab_token: EncryptedSecretStr = Field(...)
+    integration_provider: Literal["gitlab"] = Field(default="gitlab", frozen=True)
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("gitlab_token", self.gitlab_token)] if self.gitlab_token else []
+
+
 class BitbucketIntegrationConfig(BaseModel):
     bitbucket_user: EmailStr = Field(...)
     bitbucket_key: EncryptedSecretStr = Field(...)
@@ -133,6 +143,23 @@ class BitbucketSshIntegrationConfig(BaseModel):
 
     def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
         return [("bitbucket_ssh_private_key", self.bitbucket_ssh_private_key)] if self.bitbucket_ssh_private_key else []
+
+
+IntegrationConfigType: TypeAlias = Annotated[
+    AWSIntegrationConfig
+    | GCPIntegrationConfig
+    | AzureRMIntegrationConfig
+    | AzureReposIntegrationConfig
+    | AzureReposSshIntegrationConfig
+    | MongoDBAtlasIntegrationConfig
+    | GithubIntegrationConfig
+    | GithubSshIntegrationConfig
+    | GitLabIntegrationConfig
+    | BitbucketIntegrationConfig
+    | BitbucketSshIntegrationConfig
+    | DatadogIntegrationConfig,
+    Field(discriminator="integration_provider"),
+]
 
 
 class IntegrationResponse(BaseModel):
@@ -153,20 +180,7 @@ class IntegrationResponse(BaseModel):
     integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
-    configuration: Annotated[
-        AWSIntegrationConfig
-        | GCPIntegrationConfig
-        | AzureRMIntegrationConfig
-        | AzureReposIntegrationConfig
-        | AzureReposSshIntegrationConfig
-        | MongoDBAtlasIntegrationConfig
-        | GithubIntegrationConfig
-        | GithubSshIntegrationConfig
-        | BitbucketIntegrationConfig
-        | BitbucketSshIntegrationConfig
-        | DatadogIntegrationConfig,
-        Field(discriminator="integration_provider"),
-    ] = Field(...)
+    configuration: IntegrationConfigType = Field(...)
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -183,20 +197,7 @@ class IntegrationCreate(BaseModel):
     integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
-    configuration: Annotated[
-        AWSIntegrationConfig
-        | GCPIntegrationConfig
-        | AzureRMIntegrationConfig
-        | AzureReposIntegrationConfig
-        | AzureReposSshIntegrationConfig
-        | MongoDBAtlasIntegrationConfig
-        | GithubIntegrationConfig
-        | GithubSshIntegrationConfig
-        | BitbucketIntegrationConfig
-        | BitbucketSshIntegrationConfig
-        | DatadogIntegrationConfig,
-        Field(discriminator="integration_provider"),
-    ] = Field(...)
+    configuration: IntegrationConfigType = Field(...)
 
     @field_validator("integration_provider")
     @classmethod
@@ -227,23 +228,7 @@ class IntegrationUpdate(BaseModel):
     name: str | None = Field(default=None)
     description: str | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
-    configuration: (
-        Annotated[
-            AWSIntegrationConfig
-            | GCPIntegrationConfig
-            | AzureRMIntegrationConfig
-            | AzureReposIntegrationConfig
-            | AzureReposSshIntegrationConfig
-            | MongoDBAtlasIntegrationConfig
-            | GithubIntegrationConfig
-            | GithubSshIntegrationConfig
-            | BitbucketIntegrationConfig
-            | BitbucketSshIntegrationConfig
-            | DatadogIntegrationConfig,
-            Field(discriminator="integration_provider"),
-        ]
-        | None
-    ) = Field(default=None)
+    configuration: IntegrationConfigType | None = Field(default=None)
 
 
 class IntegrationShort(BaseModel):
@@ -261,21 +246,7 @@ class IntegrationShort(BaseModel):
 class IntegrationValidationRequest(BaseModel):
     integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
     integration_provider: integration_provider_type = Field(..., frozen=True)
-
-    configuration: Annotated[
-        AWSIntegrationConfig
-        | GCPIntegrationConfig
-        | AzureRMIntegrationConfig
-        | AzureReposIntegrationConfig
-        | AzureReposSshIntegrationConfig
-        | MongoDBAtlasIntegrationConfig
-        | GithubIntegrationConfig
-        | GithubSshIntegrationConfig
-        | BitbucketIntegrationConfig
-        | BitbucketSshIntegrationConfig
-        | DatadogIntegrationConfig,
-        Field(discriminator="integration_provider"),
-    ] = Field(...)
+    configuration: IntegrationConfigType = Field(...)
 
     @computed_field
     def _entity_name(self) -> str:

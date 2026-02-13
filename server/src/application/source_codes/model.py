@@ -67,7 +67,7 @@ class SourceCodeDTO(BaseModel):
         ...,
         frozen=True,
     )
-    source_code_provider: Literal["github", "bitbucket", "azure_devops"] = Field(..., frozen=True)
+    source_code_provider: Literal["github", "gitlab", "bitbucket", "azure_devops"] = Field(..., frozen=True)
     source_code_language: Literal["opentofu"] = Field(..., frozen=True)
     integration_id: uuid.UUID | str | None = Field(default=None, frozen=True)
     integration: IntegrationDTO | None = Field(default=None)
