@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  HTMLAttributes,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
 import {
   Alert,
+  Autocomplete,
   Box,
   FormControlLabel,
   Stack,
@@ -12,6 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import {
   buildRegexFromState,
   DEFAULT_TOGGLE_STATE,
@@ -67,16 +75,51 @@ interface ValidationRegexControlsProps {
   index: number;
 }
 
+interface RegexOption {
+  id: string;
+  label: string;
+  regex: string;
+}
+
 export const ValidationRegexControls = ({
   control,
   index,
 }: ValidationRegexControlsProps) => {
   const { setValue } = useFormContext();
+  const { validationRulesCatalog } = useSourceCodeVersionConfigContext();
   const fieldName = useMemo(() => `configs.${index}.validation_regex`, [index]);
   const regexValue = useWatch({
     control,
     name: fieldName,
   }) as string | undefined;
+  const regexOptions = useMemo<RegexOption[]>(() => {
+    if (!validationRulesCatalog || validationRulesCatalog.length === 0) {
+      return [];
+    }
+
+    const seen = new Map<string, RegexOption>();
+
+    validationRulesCatalog.forEach((rule) => {
+      if (!rule.description || !rule.regex_pattern) {
+        return;
+      }
+
+      const key = rule.id ? String(rule.id) : rule.regex_pattern;
+      if (seen.has(key)) {
+        return;
+      }
+
+      seen.set(key, {
+        id: key,
+        label: rule.description,
+        regex: rule.regex_pattern,
+      });
+    });
+
+    return Array.from(seen.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [validationRulesCatalog]);
 
   const [toggleState, setToggleState] =
     useState<Record<ToggleKey, boolean>>(DEFAULT_TOGGLE_STATE);
@@ -215,29 +258,82 @@ export const ValidationRegexControls = ({
             return true;
           },
         }}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            value={field.value || ""}
-            label="Validation Regex"
-            placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            InputProps={{
-              sx: {
-                fontFamily:
-                  '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
-              },
-            }}
-            error={Boolean(fieldState.error)}
-            helperText={
-              fieldState.error?.message ||
-              "This value is saved as-is. Leave it blank to disable validation."
-            }
-          />
-        )}
+        render={({ field, fieldState }) => {
+          const selectedOption =
+            regexOptions.find((option) => option.regex === field.value) ?? null;
+
+          return (
+            <Autocomplete<RegexOption, false, false, true>
+              freeSolo
+              options={regexOptions}
+              value={selectedOption}
+              inputValue={field.value || ""}
+              onInputChange={(_, newInputValue, reason) => {
+                if (reason === "input" || reason === "clear") {
+                  field.onChange(newInputValue);
+                }
+              }}
+              onChange={(_, newValue) => {
+                if (typeof newValue === "string") {
+                  field.onChange(newValue);
+                } else if (newValue) {
+                  field.onChange(newValue.regex);
+                } else {
+                  field.onChange("");
+                }
+              }}
+              isOptionEqualToValue={(option, value) =>
+                typeof value === "string"
+                  ? option.regex === value
+                  : option.regex === value.regex
+              }
+              getOptionLabel={(option) =>
+                typeof option === "string" ? option : option.label
+              }
+              renderOption={(props, option) => {
+                const optionProps = {
+                  ...(props as HTMLAttributes<HTMLLIElement>),
+                };
+                delete (optionProps as Record<string, unknown>).key;
+
+                return (
+                  <li key={option.id} {...optionProps}>
+                    <Box sx={{ display: "flex", flexDirection: "column" }}>
+                      <Typography variant="body2">{option.label}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.regex}
+                      </Typography>
+                    </Box>
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Validation Regex"
+                  placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
+                  fullWidth
+                  margin="normal"
+                  onBlur={field.onBlur}
+                  InputProps={{
+                    ...params.InputProps,
+                    sx: {
+                      fontFamily:
+                        '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                    },
+                  }}
+                  error={Boolean(fieldState.error)}
+                  helperText={
+                    fieldState.error?.message ||
+                    (selectedOption
+                      ? `Selected rule: ${selectedOption.label}`
+                      : "Select a predefined rule or enter a custom regex. Leave blank to disable validation.")
+                  }
+                />
+              )}
+            />
+          );
+        }}
       />
 
       {isComplexRegex && (

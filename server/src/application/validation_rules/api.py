@@ -5,6 +5,7 @@ from core.users.model import UserDTO
 from .dependencies import get_validation_rule_service
 from .service import ValidationRuleService
 from .schema import (
+    ValidationRuleResponse,
     ValidationRuleTemplateReference,
     ValidationRuleTemplateReferenceCreate,
     ValidationRuleTemplateReferenceReplace,
@@ -12,6 +13,19 @@ from .schema import (
 )
 
 router = APIRouter()
+
+
+@router.get(
+    "/validation_rules/predefined",
+    response_model=list[ValidationRuleResponse],
+    response_description="List of validation rules with descriptions",
+    status_code=status.HTTP_200_OK,
+)
+async def get_predefined_rules(
+    service: ValidationRuleService = Depends(get_validation_rule_service),
+) -> list[ValidationRuleResponse]:
+    """Retrieve predefined validation rules with descriptions."""
+    return await service.get_predefined_rules()
 
 
 @router.get(

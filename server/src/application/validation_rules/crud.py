@@ -29,11 +29,19 @@ class ValidationRuleCRUD:
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 
+    async def get_predefined_rules(self) -> list[ValidationRule]:
+        statement = (
+            select(ValidationRule)
+            .where(ValidationRule.description.isnot(None))
+            .join(User, ValidationRule.created_by == User.id)
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
     async def get_rule_by_attributes(
         self,
         *,
         target_type,
-        description,
         min_value,
         max_value,
         regex_pattern,
@@ -48,7 +56,6 @@ class ValidationRuleCRUD:
             else:
                 statement = statement.where(field == value)
 
-        _match(ValidationRule.description, description)
         _match(ValidationRule.min_value, min_value)
         _match(ValidationRule.max_value, max_value)
         _match(ValidationRule.regex_pattern, regex_pattern)
