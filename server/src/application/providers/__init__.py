@@ -7,6 +7,7 @@ from .azurerm.azurerm_provider import AzurermProvider
 from .gcp.gcp_provider import GcpProvider
 from .bitbucket.bitbucket_provider import BitbucketProvider, BitbucketSshProvider
 from .github.github_provider import GithubProvider, GithubSshProvider
+from .gitlab.gitlab_provider import GitLabProvider
 from .azurerm.azure_devops_repo_provider import AzureRepoSourceCode
 from .datadog.datadog_provider import DatadogProvider
 from .mongo_atlas import MongodbAtlasProvider
@@ -24,6 +25,7 @@ __all__ = [
     "BitbucketSshProvider",
     "GithubProvider",
     "GithubSshProvider",
+    "GitLabProvider",
     "AzureRepoSourceCode",
     "AzurermTfStorage",
     "AwsTfStorage",

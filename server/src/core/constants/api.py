@@ -23,6 +23,7 @@ async def get_constants_api() -> dict[str, list[ConstantModel]]:
 
     source_code_provider = [
         ConstantModel(name="github", description="GitHub"),
+        ConstantModel(name="gitlab", description="GitLab"),
         ConstantModel(name="bitbucket", description="Bitbucket"),
     ]
 

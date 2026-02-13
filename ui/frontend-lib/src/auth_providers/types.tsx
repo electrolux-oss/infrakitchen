@@ -15,6 +15,7 @@ export interface AuthProviderResponse extends AuthProviderShort {
     | "microsoft"
     | "guest"
     | "github"
+    | "gitlab"
     | "backstage"
     | "ik_service_account";
   configuration: object;
@@ -29,6 +30,7 @@ export interface AuthProviderCreate {
     | "microsoft"
     | "guest"
     | "github"
+    | "gitlab"
     | "backstage"
     | "ik_service_account"
     | "";

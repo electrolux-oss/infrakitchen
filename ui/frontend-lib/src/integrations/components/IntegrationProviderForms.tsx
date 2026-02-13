@@ -647,6 +647,7 @@ export const renderFieldsForProvider = (
           />
         </>
       );
+
     case "github_ssh":
       return (
         <>
@@ -671,6 +672,61 @@ export const renderFieldsForProvider = (
                 helperText={
                   (errors.configuration as any)?.github_ssh_private_key
                     ?.message || "SSH private key for GitHub repository access"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+        </>
+      );
+
+    case "gitlab":
+      return (
+        <>
+          <Controller
+            name="configuration.gitlab_server_url"
+            control={control}
+            defaultValue="https://gitlab.com"
+            rules={{ required: "GitLab Server URL is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="GitLab Server URL"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.gitlab_server_url}
+                helperText={
+                  !!(errors.configuration as FieldErrors)?.gitlab_server_url
+                    ?.message
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+
+          <Controller
+            name="configuration.gitlab_token"
+            control={control}
+            defaultValue=""
+            rules={{
+              required: "GitLab Token is required",
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="GitLab Token"
+                fullWidth
+                margin="normal"
+                type="password"
+                error={
+                  !!(errors.configuration as FieldErrors)?.gitlab_token
+                }
+                helperText={
+                  (errors.configuration as any)?.gitlab_token
+                    ?.message ||
+                  "The token will be securely stored and encrypted"
                 }
                 required
                 slotProps={{ input: { readOnly: readonly } }}
