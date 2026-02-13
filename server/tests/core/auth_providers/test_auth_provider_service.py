@@ -310,26 +310,31 @@ class TestUpdate:
 
     @pytest.mark.asyncio
     async def test_update_disable_single_auth_provider(
-        self, mock_auth_provider_service, mock_auth_provider_crud, auth_provider
+        self, mock_auth_provider_service, mock_auth_provider_crud, auth_provider, mocked_user_response
     ):
         auth_provider_update = AuthProviderUpdate(enabled=False)
-        requester = Mock(spec=UserDTO)
 
         mock_auth_provider_crud.get_by_id.return_value = auth_provider
         mock_auth_provider_crud.count.return_value = 1
 
         with pytest.raises(ValueError) as exc:
             await mock_auth_provider_service.update(
-                auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=requester
+                auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=mocked_user_response
             )
 
         assert exc.value.args[0] == "Cannot disable single provider"
         mock_auth_provider_crud.update.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_update_error(self, mock_auth_provider_service, mock_auth_provider_crud, auth_provider, monkeypatch):
+    async def test_update_error(
+        self,
+        mock_auth_provider_service,
+        mock_auth_provider_crud,
+        auth_provider,
+        monkeypatch,
+        mocked_user_response,
+    ):
         auth_provider_update = AuthProviderUpdate(enabled=True)
-        requester = Mock(spec=UserDTO)
         existing_auth_provider = auth_provider
         mock_auth_provider_crud.get_by_id.return_value = existing_auth_provider
 
@@ -343,7 +348,7 @@ class TestUpdate:
 
         with pytest.raises(RuntimeError) as exc:
             await mock_auth_provider_service.update(
-                auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=requester
+                auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=mocked_user_response
             )
 
         assert exc.value is error

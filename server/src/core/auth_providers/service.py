@@ -96,6 +96,7 @@ class AuthProviderService:
         if not auth_provider_from_db:
             raise EntityNotFound("AuthProvider not found")
 
+        await self.audit_log_handler.create_log(auth_provider_from_db.id, requester.id, ModelActions.UPDATE)
         if auth_provider.enabled is False:
             dependencies = await self.crud.count(filter={"enabled": True})
             if dependencies <= 1:
@@ -107,7 +108,6 @@ class AuthProviderService:
 
         updated_auth_provider = await self.crud.update(auth_provider_from_db, body)
 
-        await self.audit_log_handler.create_log(updated_auth_provider.id, requester.id, ModelActions.UPDATE)
         response = AuthProviderResponse.model_validate(updated_auth_provider)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return response
