@@ -48,7 +48,12 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             <Box
               gap={1}
               maxHeight={150}
-              sx={{ overflowY: "auto", p: 1, border: "1px solid #eee" }}
+              sx={(theme) => ({
+                overflowY: "auto",
+                p: 1,
+                border: `1px solid ${theme.palette.divider}`,
+                marginTop: 1,
+              })}
             >
               {resource.parents.map((parent) => {
                 const display_name = `${parent.template.name} (${parent.name})`;
@@ -73,7 +78,12 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             <Box
               gap={1}
               maxHeight={150}
-              sx={{ overflowY: "auto", p: 1, border: "1px solid #eee" }}
+              sx={(theme) => ({
+                overflowY: "auto",
+                p: 1,
+                border: `1px solid ${theme.palette.divider}`,
+                marginTop: 1,
+              })}
             >
               {resource.children.map((child) => {
                 const display_name = `${child.template.name} (${child.name})`;

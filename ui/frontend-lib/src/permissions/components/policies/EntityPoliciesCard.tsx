@@ -134,6 +134,7 @@ export const EntityPoliciesCard = (props: {
           variant="outlined"
           onClick={() => handleOpenDialog()}
           startIcon={<Icon icon="icon-park-outline:add" />}
+          sx={{ mr: 1 }}
         >
           Add Role
         </Button>

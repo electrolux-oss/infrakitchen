@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
-import MinimizeIcon from "@mui/icons-material/Minimize";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
+import { CloseFullscreen, OpenInFull } from "@mui/icons-material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -199,7 +198,7 @@ export const LogLiveTail = () => {
               height: 0,
               borderLeft: "8px solid",
               borderBottom: "8px solid",
-              borderColor: "text.secondary",
+              borderColor: "transparent",
               opacity: 0.3,
             },
           }}
@@ -256,9 +255,9 @@ export const LogLiveTail = () => {
               onClick={() => setIsMinimized(!isMinimized)}
             >
               {isMinimized ? (
-                <OpenInFullIcon fontSize="small" />
+                <OpenInFull fontSize="small" />
               ) : (
-                <MinimizeIcon fontSize="small" />
+                <CloseFullscreen fontSize="small" />
               )}
             </IconButton>
           </Box>

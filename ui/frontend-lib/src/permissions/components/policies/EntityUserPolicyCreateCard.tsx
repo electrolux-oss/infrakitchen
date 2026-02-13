@@ -1,10 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
 import {
   Box,
-  Button,
   FormControl,
   InputLabel,
   MenuItem,
@@ -23,6 +22,7 @@ interface EntityUserPolicyCreateCardProps {
   entity_name?: string;
   entity_id?: string;
   onClose?: () => void;
+  formId?: string;
 }
 
 const actions = [
@@ -34,7 +34,13 @@ const actions = [
 export const EntityUserPolicyCreateCard = (
   props: EntityUserPolicyCreateCardProps,
 ) => {
-  const { user_id, entity_name = "resource", entity_id, onClose } = props;
+  const {
+    user_id,
+    entity_name = "resource",
+    entity_id,
+    onClose,
+    formId,
+  } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -53,6 +59,8 @@ export const EntityUserPolicyCreateCard = (
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
+  const generatedFormId = useId();
+  const resolvedFormId = formId ?? generatedFormId;
 
   const onSubmit = useCallback(
     async (data: EntityPolicyCreate) => {
@@ -82,90 +90,79 @@ export const EntityUserPolicyCreateCard = (
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <>
-          {!entity_id && (
-            <Controller
-              name="entity_id"
-              control={control}
-              rules={{ required: "Resource is required" }}
-              render={({ field }) => (
-                <ReferenceSearchInput
-                  {...field}
-                  ikApi={ikApi}
-                  entity_name={`${entity_name}s`}
-                  searchField="name"
-                  showFields={["template.name", "name"]}
-                  buffer={buffer}
-                  setBuffer={setBuffer}
-                  error={!!errors.entity_id}
-                  helpertext={errors.entity_id ? errors.entity_id.message : ""}
-                  value={field.value}
-                  label="Select Resource"
-                  sx={{ mb: 3 }}
-                />
-              )}
-            />
-          )}
-          {!user_id && (
-            <Controller
-              name="user_id"
-              control={control}
-              render={({ field }) => (
-                <ReferenceSearchInput
-                  {...field}
-                  ikApi={ikApi}
-                  entity_name="users"
-                  showFields={["identifier", "provider"]}
-                  searchField="identifier"
-                  error={!!errors.user_id}
-                  helpertext={errors.user_id ? errors.user_id.message : ""}
-                  buffer={buffer}
-                  setBuffer={setBuffer}
-                  value={field.value}
-                  label="Select User"
-                  sx={{ mb: 3 }}
-                />
-              )}
-            />
-          )}
+      <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
+        {!entity_id && (
           <Controller
-            name="action"
+            name="entity_id"
             control={control}
-            rules={{ required: "Action is required" }}
-            render={({ field, fieldState }) => (
-              <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel id="action-label">Action name</InputLabel>
-                <Select
-                  error={!!fieldState.error}
-                  labelId="action-label"
-                  label="Action name"
-                  {...field}
-                >
-                  {actions.map((e) => (
-                    <MenuItem key={e.id} value={e.id}>
-                      {e.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {fieldState.error && (
-                  <Typography color="error" variant="caption">
-                    {fieldState.error.message}
-                  </Typography>
-                )}
-              </FormControl>
+            rules={{ required: "Resource is required" }}
+            render={({ field }) => (
+              <ReferenceSearchInput
+                {...field}
+                ikApi={ikApi}
+                entity_name={`${entity_name}s`}
+                searchField="name"
+                showFields={["template.name", "name"]}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                error={!!errors.entity_id}
+                helpertext={errors.entity_id ? errors.entity_id.message : ""}
+                value={field.value}
+                label="Select Resource"
+                sx={{ mb: 3 }}
+              />
             )}
           />
-        </>
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2, py: 1.5, px: 4, borderRadius: "8px" }}
-        >
-          Submit
-        </Button>
+        )}
+        {!user_id && (
+          <Controller
+            name="user_id"
+            control={control}
+            render={({ field }) => (
+              <ReferenceSearchInput
+                {...field}
+                ikApi={ikApi}
+                entity_name="users"
+                showFields={["identifier", "provider"]}
+                searchField="identifier"
+                error={!!errors.user_id}
+                helpertext={errors.user_id ? errors.user_id.message : ""}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                value={field.value}
+                label="Select User"
+                sx={{ mb: 3 }}
+              />
+            )}
+          />
+        )}
+        <Controller
+          name="action"
+          control={control}
+          rules={{ required: "Action is required" }}
+          render={({ field, fieldState }) => (
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel id="action-label">Action name</InputLabel>
+              <Select
+                error={!!fieldState.error}
+                labelId="action-label"
+                label="Action name"
+                {...field}
+              >
+                {actions.map((e) => (
+                  <MenuItem key={e.id} value={e.id}>
+                    {e.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {fieldState.error && (
+                <Typography color="error" variant="caption">
+                  {fieldState.error.message}
+                </Typography>
+              )}
+            </FormControl>
+          )}
+        />
       </form>
     </Box>
   );

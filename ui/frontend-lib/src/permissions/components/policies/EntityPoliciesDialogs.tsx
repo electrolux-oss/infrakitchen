@@ -1,3 +1,7 @@
+import { useId } from "react";
+
+import { Button } from "@mui/material";
+
 import { CommonDialog } from "../../../common";
 
 import { EntityRolePolicyCreateCard } from "./EntityRolePoliciesCreateCard";
@@ -58,14 +62,24 @@ export const EntityPolicyUserCreateDialog = (
   props: EntityPolicyUserCreateDialogProps,
 ) => {
   const { user_id, onClose, open } = props;
+  const formId = useId();
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
       title="Create User Policy"
+      actions={
+        <Button type="submit" form={formId} variant="contained" color="primary">
+          Submit
+        </Button>
+      }
       content={
-        <EntityUserPolicyCreateCard user_id={user_id} onClose={onClose} />
+        <EntityUserPolicyCreateCard
+          user_id={user_id}
+          onClose={onClose}
+          formId={formId}
+        />
       }
     />
   );
@@ -82,17 +96,24 @@ export const UserPolicyEntityCreateDialog = (
   props: UserPolicyEntityCreateDialogProps,
 ) => {
   const { entity_name, entity_id, onClose, open } = props;
+  const formId = useId();
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
       title="Create User Policy"
+      actions={
+        <Button type="submit" form={formId} variant="contained" color="primary">
+          Submit
+        </Button>
+      }
       content={
         <EntityUserPolicyCreateCard
           entity_id={entity_id}
           entity_name={entity_name}
           onClose={onClose}
+          formId={formId}
         />
       }
     />
