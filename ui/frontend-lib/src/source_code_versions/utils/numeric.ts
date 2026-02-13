@@ -19,3 +19,22 @@ export const parseNumericField = (value: unknown): number | null => {
 
   return parsed;
 };
+
+export const formatNumericDisplayValue = (
+  value: string | number | null | undefined,
+): string => {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  const asString = String(value);
+  if (!asString.includes(".")) {
+    return asString;
+  }
+
+  const trimmed = asString
+    .replace(/(\.\d*?[1-9])0+$/, "$1")
+    .replace(/\.0+$/, "");
+
+  return trimmed;
+};
