@@ -24,7 +24,7 @@ import { DeleteButton } from "./buttons/DeleteEntityButton";
 import { CommonDialog } from "./CommonDialog";
 
 export const DangerZoneCard = () => {
-  const { ikApi } = useConfig();
+  const { ikApi, linkPrefix } = useConfig();
   const { actions, entity } = useEntityProvider();
   const [entityName, setDestroyEntityName] = useState<string>("");
   const [dialogValues, setDialogValues] = useState<{
@@ -193,7 +193,7 @@ export const DangerZoneCard = () => {
         actions={
           <DeleteButton
             onClose={() => changeDialog("delete")}
-            onDelete={() => navigate(`/${entity._entity_name}s`)}
+            onDelete={() => navigate(`${linkPrefix}/${entity._entity_name}s`)}
             ikApi={ikApi}
             entity_name={entity._entity_name}
             entity_id={entity.id}
