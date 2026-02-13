@@ -69,7 +69,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ikApi
       .getList(entity_name, {
         pagination: { page: 1, perPage: 100 },
-        sort: { field: "identifier", order: "ASC" },
+        sort: { field: "name", order: "ASC" },
         filter: filter,
       })
       .then((response: { data: IkEntity[] }) => {

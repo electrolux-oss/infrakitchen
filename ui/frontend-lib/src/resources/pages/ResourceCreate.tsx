@@ -20,6 +20,7 @@ import {
   Table,
   TableBody,
   Button,
+  Alert,
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
@@ -64,6 +65,9 @@ const ResourceCreatePageInner = () => {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const [parentSelections, setParentSelections] = useState<
+    Record<string, string[]>
+  >({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -120,13 +124,6 @@ const ResourceCreatePageInner = () => {
     [watchedIntegrationIds],
   );
 
-  const filter_parents = useMemo(
-    () => ({
-      template_id: watchedTemplate ? watchedTemplate.parents : [],
-    }),
-    [watchedTemplate],
-  );
-
   const filter_template = useMemo(
     () => ({
       template_id: watchedTemplateId,
@@ -141,11 +138,9 @@ const ResourceCreatePageInner = () => {
   }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
-    if (watchedTemplate) {
-      setValue("storage_id", watchedTemplate.storage_id);
-      setValue("workspace_id", watchedTemplate.workspace_id);
-    }
-  }, [watchedTemplate, setValue]);
+    setParentSelections({});
+    setValue("parents", [], { shouldValidate: true });
+  }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
     if (watchedTemplate) {
@@ -161,8 +156,17 @@ const ResourceCreatePageInner = () => {
 
   useEffect(() => {
     if (watchedParentIds.length > 0) {
-      const parentObjects = buffer["resources"]?.find((e: ResourceResponse) =>
-        watchedParentIds.includes(e.id),
+      // override integration_ids, storage_id and workspace_id based on the last parent selection
+      const parentCandidates = watchedTemplate?.parents
+        ? watchedTemplate.parents.flatMap(
+            (parent: IkEntity) =>
+              (buffer[String(parent.id)] as IkEntity[]) || [],
+          )
+        : [];
+
+      const primaryParentId = watchedParentIds.at(-1);
+      const parentObjects = parentCandidates.find(
+        (e: ResourceResponse) => String(e.id) === String(primaryParentId),
       );
 
       if (!parentObjects) {
@@ -177,17 +181,14 @@ const ResourceCreatePageInner = () => {
       const parentStorage = parentObjects?.storage?.id || null;
       const parentWorkspace = parentObjects?.workspace?.id || null;
 
-      if (
-        parentIntegrations.length > 0 &&
-        getValues("integration_ids").length === 0
-      ) {
+      if (parentIntegrations.length > 0) {
         setValue("integration_ids", parentIntegrations);
       }
 
       setValue("storage_id", parentStorage);
       setValue("workspace_id", parentWorkspace);
     }
-  }, [watchedParentIds, setValue, getValues, buffer]);
+  }, [watchedParentIds, setValue, getValues, buffer, watchedTemplate]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
@@ -346,27 +347,51 @@ const ResourceCreatePageInner = () => {
                     control={control}
                     rules={{ required: "*Required" }}
                     render={({ field }) => (
-                      <ArrayReferenceInput
-                        ikApi={ikApi}
-                        buffer={buffer}
-                        setBuffer={setBuffer}
-                        showFields={["template.name", "name"]}
-                        {...field}
-                        entity_name="resources"
-                        error={!!errors.parents}
-                        helpertext={
-                          errors.parents
-                            ? errors.parents.message
-                            : "Select Parents for Resource"
-                        }
-                        value={field.value}
-                        filter={filter_parents}
-                        label="Select Parents"
-                        multiple
-                      />
+                      <>
+                        {watchedTemplate.parents.map((parent: IkEntity) => (
+                          <ArrayReferenceInput
+                            key={parent.id}
+                            ikApi={ikApi}
+                            buffer={buffer}
+                            fields={[
+                              "name",
+                              "template",
+                              "integration_ids",
+                              "storage",
+                              "workspace",
+                              "secret_ids",
+                              "id",
+                            ]}
+                            setBuffer={setBuffer}
+                            showFields={["template.name", "name"]}
+                            entity_name="resources"
+                            bufferKey={String(parent.id)}
+                            error={!!errors.parents}
+                            helpertext={
+                              errors.parents
+                                ? errors.parents.message
+                                : `Select Parent for Resource ${watchedTemplate.name} (only resources based on ${parent.name} templates will be shown)`
+                            }
+                            value={parentSelections[String(parent.id)] || []}
+                            filter={{ template_id: [parent.id] }}
+                            label={`Select Parent (${parent.name})`}
+                            multiple
+                            onChange={(selectedIds: string[]) => {
+                              setParentSelections((prev) => {
+                                const next = {
+                                  ...prev,
+                                  [String(parent.id)]: selectedIds,
+                                };
+                                const merged = Object.values(next).flat();
+                                field.onChange(merged);
+                                return next;
+                              });
+                            }}
+                          />
+                        ))}
+                      </>
                     )}
                   />
-
                   <Controller
                     name="labels"
                     control={control}
@@ -390,24 +415,59 @@ const ResourceCreatePageInner = () => {
                   control={control}
                   rules={{ required: "*Required" }}
                   render={({ field }) => (
-                    <ArrayReferenceInput
-                      ikApi={ikApi}
-                      buffer={buffer}
-                      setBuffer={setBuffer}
-                      showFields={["template.name", "name"]}
-                      {...field}
-                      entity_name="resources"
-                      error={!!errors.parents}
-                      helpertext={
-                        errors.parents
-                          ? errors.parents.message
-                          : "Select Parents for Resource"
-                      }
-                      value={field.value}
-                      filter={filter_parents}
-                      label="Select Parents"
-                      multiple
-                    />
+                    <>
+                      {watchedTemplate.parents.map((parent: IkEntity) => (
+                        <ArrayReferenceInput
+                          key={parent.id}
+                          ikApi={ikApi}
+                          buffer={buffer}
+                          fields={[
+                            "name",
+                            "template",
+                            "integration_ids",
+                            "storage",
+                            "workspace",
+                            "secret_ids",
+                            "id",
+                          ]}
+                          setBuffer={setBuffer}
+                          showFields={["template.name", "name"]}
+                          entity_name="resources"
+                          bufferKey={String(parent.id)}
+                          error={!!errors.parents}
+                          helpertext={
+                            errors.parents
+                              ? errors.parents.message
+                              : `Select Parent for Resource "${watchedTemplate.name}" (only resources based on ${parent.name} templates will be shown)`
+                          }
+                          value={parentSelections[String(parent.id)] || []}
+                          filter={{ template_id: [parent.id] }}
+                          label={`Select Parent (${parent.name})`}
+                          multiple
+                          onChange={(selectedIds: string[]) => {
+                            setParentSelections((prev) => {
+                              const next = {
+                                ...prev,
+                                [String(parent.id)]: selectedIds,
+                              };
+                              const merged = Object.values(next).flat();
+                              field.onChange(merged);
+                              return next;
+                            });
+                          }}
+                        />
+                      ))}
+                      {watchedParentIds.length > 1 && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                          Multiple parents selected. Integration, storage, and
+                          workspace will be taken from the last selected parent.
+                          Please make sure this is the intended configuration,
+                          as it may cause issues with Terraform state management
+                          if different parents have different integrations or
+                          storages.
+                        </Alert>
+                      )}
+                    </>
                   )}
                 />
               )}

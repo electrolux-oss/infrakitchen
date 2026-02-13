@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -21,14 +21,31 @@ export const TemplateSourceCodeVersions = (
   const [scv, setScv] = useState<SourceCodeVersionResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["template-versions"];
+
   const fetchRelatedData = useCallback(async () => {
     if (!template_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("source_code_versions", {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "updated_at", order: "DESC" },
         filter: { template_id: template_id },
+        fields: [
+          "id",
+          "source_code_version",
+          "source_code_branch",
+          "source_code_folder",
+          "description",
+          "status",
+          "labels",
+        ],
       })
       .then((response) => {
         setScv(response.data || []);
@@ -39,7 +56,7 @@ export const TemplateSourceCodeVersions = (
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, template_id]);
+  }, [ikApi, template_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

@@ -8,7 +8,6 @@ from application.batch_operations.crud import BatchOperationCRUD
 from application.batch_operations.model import BatchOperation
 from application.batch_operations.schema import (
     BatchOperationResponse,
-    BatchOperationResponseWithErrors,
 )
 from application.batch_operations.service import BatchOperationService
 
@@ -47,17 +46,6 @@ def mock_batch_operation_service(
 @pytest.fixture
 def batch_operation_response(mocked_batch_operation):
     return BatchOperationResponse.model_validate(mocked_batch_operation)
-
-
-@pytest.fixture
-def batch_operation_response_with_errors(mocked_batch_operation):
-    errored_id = uuid4()
-    batch_operation_response_with_errors = BatchOperationResponseWithErrors.model_validate(mocked_batch_operation)
-    batch_operation_response_with_errors.entity_ids.append(errored_id)
-    batch_operation_response_with_errors.error_entity_ids = {
-        errored_id: "Dry run is only allowed for resources in READY, ERROR, APPROVAL_PENDING, or DONE",
-    }
-    return batch_operation_response_with_errors
 
 
 @pytest.fixture

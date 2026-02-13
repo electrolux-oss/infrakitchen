@@ -85,10 +85,7 @@ async def run_server_and_worker():
 
     uvicorn_log_config = get_uvicorn_log_config()
     server_config = uvicorn.Config(
-        app=app,
-        host="0.0.0.0",
-        port=8000,
-        log_config=uvicorn_log_config,
+        app=app, host="0.0.0.0", port=8000, log_config=uvicorn_log_config, ws="websockets-sansio"
     )
     server = uvicorn.Server(config=server_config)
 

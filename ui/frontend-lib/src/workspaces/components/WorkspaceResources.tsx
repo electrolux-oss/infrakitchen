@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -18,8 +18,15 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["workspace-resources"];
   const fetchRelatedData = useCallback(async () => {
     if (!workspace_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -36,7 +43,7 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, workspace_id]);
+  }, [ikApi, workspace_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

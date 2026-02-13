@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress } from "../../common";
+import { GradientCircularProgress, useLocalStorage } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -17,9 +17,16 @@ export const SecretResources = (props: SecretResourcesProps) => {
   const { ikApi } = useConfig();
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const { value } = useLocalStorage<{
+    expanded?: Record<string, boolean>;
+  }>();
+
+  const expandedMap = value.expanded ?? {};
+  const isExpanded = expandedMap["secret-resources"];
 
   const fetchRelatedData = useCallback(async () => {
     if (!secret_id) return;
+    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -36,7 +43,7 @@ export const SecretResources = (props: SecretResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, secret_id]);
+  }, [ikApi, secret_id, isExpanded]);
 
   useEffect(() => {
     fetchRelatedData();

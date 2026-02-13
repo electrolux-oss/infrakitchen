@@ -15,13 +15,19 @@ export const RelationsComponent = () => {
   const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
 
+  const handleRefresh = () => {
+    if (refreshEntity) {
+      refreshEntity();
+    }
+  };
+
   return (
     <PageContainer
       title={`Resource Metadata for ${entity?.name || entity?.identifier}`}
       onBack={() => navigate(`${linkPrefix}resources/${entity?.id}`)}
       actions={
         <>
-          <IconButton onClick={refreshEntity} aria-label="refresh">
+          <IconButton onClick={() => handleRefresh()} aria-label="refresh">
             <RefreshIcon />
           </IconButton>
         </>

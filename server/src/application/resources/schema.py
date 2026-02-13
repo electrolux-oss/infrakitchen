@@ -184,6 +184,7 @@ class ResourceCreate(BaseModel):
 
 
 class ResourcePatch(BaseModel):
+    name: str | None = Field(default=None)
     description: str | None = Field(default="")
     source_code_version_id: uuid.UUID | None = Field(
         default=None,
@@ -205,6 +206,7 @@ class ResourcePatch(BaseModel):
     @model_validator(mode="before")
     def at_least_one_field_present(cls, values):
         fields = [
+            "name",
             "description",
             "source_code_version_id",
             "integration_ids",

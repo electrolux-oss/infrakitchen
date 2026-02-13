@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Button } from "@mui/material";
 
 import { IkEntity } from "../../../types";
@@ -23,9 +25,11 @@ export const ActionButton = (props: {
 
   const { ikApi } = useConfig();
   const { entity, refreshEntity } = useEntityProvider();
+  const [loading, setLoading] = useState(false);
 
   const handleClick = () => {
     if (entity.id || entity._entity_name) {
+      setLoading(true);
       ikApi
         .patchRaw(`${entity._entity_name}s/${entity.id}/actions`, {
           action: action,
@@ -38,12 +42,13 @@ export const ActionButton = (props: {
           if (refreshEntity) {
             refreshEntity(response);
           }
+          onClose();
         })
         .catch((error) => {
           notifyError(error);
         })
         .finally(() => {
-          onClose();
+          setLoading(false);
         });
     } else {
       const entityType =
@@ -58,10 +63,11 @@ export const ActionButton = (props: {
       color={color || "success"}
       onClick={() => handleClick()}
       variant={variant || "outlined"}
-      disabled={disabled}
+      disabled={disabled || loading}
       aria-label="Action Button"
     >
       {children}
+      {loading && " ..."}
     </Button>
   );
 };

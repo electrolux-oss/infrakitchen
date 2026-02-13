@@ -2,7 +2,11 @@ import * as React from "react";
 
 import { Outlet } from "react-router";
 
-import { InfrakitchenLogo } from "@electrolux-oss/infrakitchen";
+import {
+  GradientCircularProgress,
+  InfrakitchenLogo,
+  usePermissionProvider,
+} from "@electrolux-oss/infrakitchen";
 import Box from "@mui/material/Box";
 import { useTheme } from "@mui/material/styles";
 import Toolbar from "@mui/material/Toolbar";
@@ -13,6 +17,7 @@ import DashboardSidebar from "./DashboardSidebar";
 
 export default function DashboardLayout() {
   const theme = useTheme();
+  const loading = usePermissionProvider().loading;
 
   const [isDesktopNavigationExpanded, setIsDesktopNavigationExpanded] =
     React.useState(true);
@@ -48,6 +53,21 @@ export default function DashboardLayout() {
   );
 
   const layoutRef = React.useRef<HTMLDivElement>(null);
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <GradientCircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box
