@@ -114,7 +114,8 @@ dependencies = [
   "google-cloud-storage>=3.3.0",
   "google-cloud-resource-manager>=1.14.2",
   "google-cloud-secret-manager>=2.25.0",
-  "fastmcp>=3.0.0b1"
+  "fastmcp>=3.0.0b1",
+  "python-gitlab>=8.0.0"
 ]
 requires-python = "==3.14.*"
 readme = "README.md"
