@@ -60,6 +60,7 @@ const SourceCodeVersionConfigContent = () => {
         restricted: config.restricted,
         sensitive: config.sensitive,
         options: config.options,
+        validation_rule_id: config.validation_rule_id ?? null,
         validation_regex: config.validation_regex || "",
         validation_min_value: normalizeNumericField(
           config.validation_min_value,
@@ -91,6 +92,7 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation_rule_id: config.validation_rule_id ?? null,
         validation_regex: config.validation_regex || "",
         validation_min_value: normalizeNumericField(
           config.validation_min_value,
@@ -130,6 +132,7 @@ const SourceCodeVersionConfigContent = () => {
             formConfig.reference_template_id !==
               original.reference_template_id ||
             formConfig.output_config_name !== original.output_config_name ||
+            formConfig.validation_rule_id !== original.validation_rule_id ||
             (formConfig.validation_regex || "") !==
               (original.validation_regex || "") ||
             normalizeNumericField(formConfig.validation_min_value) !==
@@ -150,6 +153,7 @@ const SourceCodeVersionConfigContent = () => {
         const validationRuleUpdates: Map<
           string,
           {
+            rule_id?: string | null;
             variable_name: string;
             regex_pattern?: string | null;
             min_value?: string | number | null;
@@ -170,6 +174,7 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
+            validation_rule_id: config.validation_rule_id ?? null,
           });
 
           const hasValidationRules =
@@ -184,6 +189,7 @@ const SourceCodeVersionConfigContent = () => {
                 sourceConfig.type === "number" ? "number" : "string";
 
               validationRuleUpdates.set(sourceConfig.name, {
+                rule_id: config.validation_rule_id ?? null,
                 variable_name: sourceConfig.name,
                 regex_pattern:
                   config.validation_regex && config.validation_regex.trim()
@@ -221,7 +227,11 @@ const SourceCodeVersionConfigContent = () => {
             rule.max_value = validationData.max_value;
           }
 
+          if (validationData.rule_id) {
+            rule.id = validationData.rule_id;
+          }
           if (
+            rule.id ||
             rule.regex_pattern ||
             rule.min_value !== undefined ||
             rule.max_value !== undefined

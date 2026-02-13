@@ -4,7 +4,7 @@ import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { Box, Button, Stack, TextField, Typography } from "@mui/material";
 
-import { parseNumericField } from "../utils/numeric";
+import { formatNumericDisplayValue, parseNumericField } from "../utils/numeric";
 
 interface ValidationNumberControlsProps {
   control: Control<any>;
@@ -69,7 +69,7 @@ export const ValidationNumberControls = ({
           render={({ field, fieldState }) => (
             <TextField
               {...field}
-              value={field.value ?? ""}
+              value={formatNumericDisplayValue(field.value)}
               label="Min value"
               type="number"
               inputProps={{ step: "any" }}
@@ -108,7 +108,7 @@ export const ValidationNumberControls = ({
           render={({ field, fieldState }) => (
             <TextField
               {...field}
-              value={field.value ?? ""}
+              value={formatNumericDisplayValue(field.value)}
               label="Max value"
               type="number"
               inputProps={{ step: "any" }}

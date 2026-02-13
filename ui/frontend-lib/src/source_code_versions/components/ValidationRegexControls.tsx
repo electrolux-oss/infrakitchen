@@ -88,6 +88,10 @@ export const ValidationRegexControls = ({
   const { setValue } = useFormContext();
   const { validationRulesCatalog } = useSourceCodeVersionConfigContext();
   const fieldName = useMemo(() => `configs.${index}.validation_regex`, [index]);
+  const ruleIdFieldName = useMemo(
+    () => `configs.${index}.validation_rule_id`,
+    [index],
+  );
   const regexValue = useWatch({
     control,
     name: fieldName,
@@ -193,8 +197,9 @@ export const ValidationRegexControls = ({
       }
 
       setValue(fieldName, nextRegex, { shouldDirty: true, shouldTouch: true });
+      setValue(ruleIdFieldName, null, { shouldDirty: true, shouldTouch: true });
     },
-    [fieldName, regexValue, setValue],
+    [fieldName, regexValue, ruleIdFieldName, setValue],
   );
 
   const handleToggleChange = useCallback(
@@ -271,15 +276,31 @@ export const ValidationRegexControls = ({
               onInputChange={(_, newInputValue, reason) => {
                 if (reason === "input" || reason === "clear") {
                   field.onChange(newInputValue);
+                  setValue(ruleIdFieldName, null, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
                 }
               }}
               onChange={(_, newValue) => {
                 if (typeof newValue === "string") {
                   field.onChange(newValue);
+                  setValue(ruleIdFieldName, null, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
                 } else if (newValue) {
                   field.onChange(newValue.regex);
+                  setValue(ruleIdFieldName, newValue.id, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
                 } else {
                   field.onChange("");
+                  setValue(ruleIdFieldName, null, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
                 }
               }}
               isOptionEqualToValue={(option, value) =>

@@ -101,6 +101,7 @@ export const SourceCodeVersionConfigProvider = ({
         const validationRulesMap = new Map<
           string,
           {
+            id?: string;
             regex_pattern?: string | null;
             min_value?: string | number | null;
             max_value?: string | number | null;
@@ -130,6 +131,7 @@ export const SourceCodeVersionConfigProvider = ({
             preferredRule.max_value !== null;
 
           validationRulesMap.set(variable_name, {
+            id: preferredRule.id,
             regex_pattern: preferredRule.regex_pattern,
             min_value: hasMin ? preferredRule.min_value : null,
             max_value: hasMax ? preferredRule.max_value : null,
@@ -140,6 +142,7 @@ export const SourceCodeVersionConfigProvider = ({
           const validationRule = validationRulesMap.get(config.name);
           return {
             ...config,
+            validation_rule_id: validationRule?.id ?? null,
             validation_regex: validationRule?.regex_pattern || "",
             validation_min_value: validationRule?.min_value ?? null,
             validation_max_value: validationRule?.max_value ?? null,

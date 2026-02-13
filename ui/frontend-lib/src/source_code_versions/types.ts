@@ -90,6 +90,7 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
+  validation_rule_id?: string | null;
   validation_regex?: string;
   validation_min_value?: string | number | null;
   validation_max_value?: string | number | null;
@@ -109,6 +110,7 @@ export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   template_id: string;
   reference_template_id: string | null;
   output_config_name?: string | null;
+  validation_rule_id?: string | null;
   validation_regex?: string;
   validation_min_value?: string | number | null;
   validation_max_value?: string | number | null;
