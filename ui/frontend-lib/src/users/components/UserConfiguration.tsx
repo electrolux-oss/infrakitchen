@@ -62,6 +62,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                   variant="outlined"
                   onClick={() => handleOpenSecondaryAccountsDialog()}
                   startIcon={<Icon icon="carbon:link" />}
+                  sx={{ mt: 2 }}
                 >
                   Link Secondary Account
                 </Button>

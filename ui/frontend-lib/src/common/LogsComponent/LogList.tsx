@@ -94,9 +94,7 @@ export const LogList = (props: { entity_id: string }) => {
   return (
     <Box>
       {executionList.length > 0 && (
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, mt: 2 }}
-        >
+        <Box sx={{ display: "flex", alignItems: "end", gap: 2, mb: 2, mt: 2 }}>
           <FormControl fullWidth sx={{ maxWidth: "600px" }}>
             <InputLabel id="execution-select-label">Execution</InputLabel>
             <Select
