@@ -139,6 +139,27 @@ export const renderFieldsForProvider = (
               />
             )}
           />
+          <Controller
+            name="configuration.aws_default_region"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="AWS Default Region"
+                fullWidth
+                margin="normal"
+                error={
+                  !!(errors.configuration as FieldErrors)?.aws_default_region
+                }
+                helperText={
+                  (errors.configuration as any)?.aws_default_region?.message ||
+                  "Default AWS region for resource management (default to us-east-1 if not specified)"
+                }
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
           {isCreateMode && (
             <Controller
               name="create_storage"
