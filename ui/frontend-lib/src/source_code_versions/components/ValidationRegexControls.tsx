@@ -135,9 +135,9 @@ export const ValidationRegexControls = ({
   const [lengthError, setLengthError] = useState<string | null>(null);
   const [isComplexRegex, setIsComplexRegex] = useState(false);
   const [testValue, setTestValue] = useState("");
-  const [testResult, setTestResult] = useState<"match" | "no-match" | null>(
-    null,
-  );
+  const [testResult, setTestResult] = useState<
+    "match" | "no-match" | "no-length-match" | null
+  >(null);
   const hasInfiniteMax = lengths.max.trim().toLowerCase() === "infinity";
 
   useEffect(() => {
@@ -170,7 +170,26 @@ export const ValidationRegexControls = ({
 
     try {
       const regex = new RegExp(regexValue);
-      setTestResult(regex.test(testValue) ? "match" : "no-match");
+      if (regex.test(testValue)) {
+        setTestResult("match");
+        return;
+      }
+
+      const parsed = parseSimpleRegex(regexValue);
+      if (!parsed) {
+        setTestResult("no-match");
+        return;
+      }
+
+      const charsetRegex = new RegExp(
+        buildRegexFromState(parsed.toggles, 0, Number.POSITIVE_INFINITY),
+      );
+      if (charsetRegex.test(testValue)) {
+        setTestResult("no-length-match");
+        return;
+      }
+
+      setTestResult("no-match");
     } catch {
       setTestResult(null);
     }
@@ -489,14 +508,22 @@ export const ValidationRegexControls = ({
         onChange={(event) => setTestValue(event.target.value)}
         sx={{ mt: 2 }}
         fullWidth
-        error={testResult === "no-match"}
-        color={testResult === "match" ? "success" : undefined}
+        error={testResult === "no-match" || testResult === "no-length-match"}
+        color={
+          testResult === "match"
+            ? "success"
+            : testResult === "no-length-match"
+              ? "warning"
+              : undefined
+        }
         helperText={
           testResult === "match"
             ? "Value matches the current regex."
-            : testResult === "no-match"
-              ? "Value does not match the current regex."
-              : "Enter a sample value to test against this regex."
+            : testResult === "no-length-match"
+              ? "Value matches allowed characters, but its length is outside the configured range."
+              : testResult === "no-match"
+                ? "Value does not match the current regex."
+                : "Enter a sample value to test against this regex."
         }
       />
     </Box>
