@@ -138,6 +138,7 @@ export const ValidationRegexControls = ({
   const [testResult, setTestResult] = useState<"match" | "no-match" | null>(
     null,
   );
+  const hasInfiniteMax = lengths.max.trim().toLowerCase() === "infinity";
 
   useEffect(() => {
     if (!regexValue) {
@@ -222,6 +223,10 @@ export const ValidationRegexControls = ({
 
   const handleLengthChange = useCallback(
     (key: keyof LengthState, value: string) => {
+      if (key === "max" && hasInfiniteMax) {
+        return;
+      }
+
       const numericOnly = value.replace(/[^0-9]/g, "");
       const nextLengths = { ...lengths, [key]: numericOnly };
       setLengths(nextLengths);
@@ -232,7 +237,30 @@ export const ValidationRegexControls = ({
 
       applyGeneratedRegex(toggleState, nextLengths);
     },
-    [applyGeneratedRegex, isComplexRegex, lengths, toggleState],
+    [applyGeneratedRegex, hasInfiniteMax, isComplexRegex, lengths, toggleState],
+  );
+
+  const handleInfiniteMaxToggle = useCallback(
+    (checked: boolean) => {
+      const normalizedMin = Number(lengths.min || "0");
+      const nextMin =
+        checked && Number.isFinite(normalizedMin) && normalizedMin > 1
+          ? "1"
+          : lengths.min;
+      const nextLengths = {
+        min: nextMin,
+        max: checked ? "Infinity" : "64",
+      };
+
+      setLengths(nextLengths);
+
+      if (isComplexRegex) {
+        return;
+      }
+
+      applyGeneratedRegex(toggleState, nextLengths);
+    },
+    [applyGeneratedRegex, isComplexRegex, lengths.min, toggleState],
   );
 
   return (
@@ -402,7 +430,11 @@ export const ValidationRegexControls = ({
         </Typography>
       )}
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 4 }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ mt: 4, alignItems: "baseline" }}
+      >
         <TextField
           label="Min length"
           type="text"
@@ -411,6 +443,7 @@ export const ValidationRegexControls = ({
           onChange={(event) => handleLengthChange("min", event.target.value)}
           disabled={isComplexRegex}
           fullWidth
+          helperText="Set a minimum length for the input."
         />
         <TextField
           label="Max length"
@@ -418,8 +451,25 @@ export const ValidationRegexControls = ({
           inputMode="numeric"
           value={lengths.max}
           onChange={(event) => handleLengthChange("max", event.target.value)}
-          disabled={isComplexRegex}
+          disabled={isComplexRegex || hasInfiniteMax}
           fullWidth
+          helperText={
+            hasInfiniteMax
+              ? "Infinite max is enabled."
+              : "Set an upper bound or enable infinite length."
+          }
+        />
+        <FormControlLabel
+          sx={{ mt: 1, minWidth: 200 }}
+          control={
+            <Switch
+              size="small"
+              checked={hasInfiniteMax}
+              onChange={(_, checked) => handleInfiniteMaxToggle(checked)}
+              disabled={isComplexRegex}
+            />
+          }
+          label="Infinite max length"
         />
       </Stack>
 

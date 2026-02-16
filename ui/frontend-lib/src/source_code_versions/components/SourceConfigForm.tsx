@@ -304,7 +304,7 @@ export const SourceConfigForm = (props: {
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={1}
-                sx={{ mb: 2 }}
+                sx={{ alignItems: "baseline", mb: 2, mt: 2 }}
               >
                 <Stack
                   direction={{ xs: "column", md: "row" }}
