@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { getValidationSummary } from "../utils/validationSummary";
 
 import { DefaultValueInput } from "./ConfigInputs";
 import { ConfigReferenceInput } from "./ConfigReferenceInput";
@@ -109,6 +110,21 @@ export const SourceConfigForm = (props: {
     }
   };
 
+  const validationSummary = getValidationSummary({
+    validation_regex: useWatch({
+      control,
+      name: `configs.${index}.validation_regex`,
+    }),
+    validation_min_value: useWatch({
+      control,
+      name: `configs.${index}.validation_min_value`,
+    }),
+    validation_max_value: useWatch({
+      control,
+      name: `configs.${index}.validation_max_value`,
+    }),
+  });
+
   return (
     <Box sx={{ width: "100%", mb: 2 }}>
       <Box
@@ -150,6 +166,14 @@ export const SourceConfigForm = (props: {
                     label="optional"
                     size="small"
                     color="info"
+                    variant="outlined"
+                  />
+                )}
+                {validationSummary && (
+                  <Chip
+                    label={validationSummary}
+                    size="small"
+                    color="success"
                     variant="outlined"
                   />
                 )}
