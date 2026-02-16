@@ -67,7 +67,7 @@ class TemplateWithSCVService:
             body["source_code_provider"] = "bitbucket"
         else:
             body["source_code_provider"] = "gitlab"
-        #else:
+        # else:
         #    raise ValueError(f"Provider {repository!r} is not supported")
 
         sc = SourceCodeCreate.model_validate(body)

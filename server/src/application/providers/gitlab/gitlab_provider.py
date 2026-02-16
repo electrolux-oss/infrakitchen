@@ -13,6 +13,7 @@ log = logging.getLogger("gitlab_integration")  # TODO use __name__ instead
 
 class GitLabProvider(IntegrationProvider):
     """Implement the GitLab provider."""
+
     __integration_provider_name__: str = "gitlab"
     logger: logging.Logger | EntityLogger = log
 
@@ -39,11 +40,8 @@ class GitLabProvider(IntegrationProvider):
     async def authenticate(self, **kwargs) -> None:
         self.environment_variables["GITLAB_SERVER_URL"] = self.gitlab_server_url
         if self.gitlab_token:
-            self.logger.info(
-                f"Authenticating with {self.gitlab_server_url} using private or personal token..."
-            )
-            self.environment_variables["GITLAB_TOKEN"] = \
-                self.gitlab_token.get_decrypted_value().strip()
+            self.logger.info(f"Authenticating with {self.gitlab_server_url} using private or personal token...")
+            self.environment_variables["GITLAB_TOKEN"] = self.gitlab_token.get_decrypted_value().strip()
             self.logger.info("GITLAB_TOKEN environment variable set")
         else:
             self.logger.error("No valid authentication method provided for GitLab.")
@@ -80,7 +78,7 @@ class GitLabProvider(IntegrationProvider):
 
     def _get_git_url(self, git_url: str) -> str:
         """Get the git URL for the GitLab integration."""
-        if git_url.startswith('https://'):
+        if git_url.startswith("https://"):
             if token := self.gitlab_token:
                 return git_url.replace("https://", f"https://{token.get_decrypted_value()}@")
         return git_url
