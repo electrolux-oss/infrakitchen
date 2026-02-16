@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from typing import Annotated, Literal, TypeAlias
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
@@ -146,7 +146,7 @@ class BitbucketSshIntegrationConfig(BaseModel):
         return [("bitbucket_ssh_private_key", self.bitbucket_ssh_private_key)] if self.bitbucket_ssh_private_key else []
 
 
-IntegrationConfigType: TypeAlias = Annotated[
+type IntegrationConfigType = Annotated[
     AWSIntegrationConfig
     | GCPIntegrationConfig
     | AzureRMIntegrationConfig
