@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { parseNumericField } from "../utils/numeric";
 import { getValidationSummary } from "../utils/validationSummary";
 
 import { DefaultValueInput } from "./ConfigInputs";
@@ -65,6 +66,14 @@ export const SourceConfigForm = (props: {
   const validationEnabled = Boolean(
     useWatch({ control, name: validationEnabledField, defaultValue: false }),
   );
+  const validationMinValue = useWatch({
+    control,
+    name: validationMinValueField,
+  });
+  const validationMaxValue = useWatch({
+    control,
+    name: validationMaxValueField,
+  });
 
   const isDirty = formState.dirtyFields?.configs?.[index];
   const hasChanges = Boolean(isDirty);
@@ -225,6 +234,37 @@ export const SourceConfigForm = (props: {
                           ) {
                             return "Default value is required when the field is marked as Restricted.";
                           }
+
+                          if (configType !== "number") {
+                            return true;
+                          }
+
+                          if (
+                            value === "" ||
+                            value === null ||
+                            value === undefined
+                          ) {
+                            return true;
+                          }
+
+                          const parsedDefault = parseNumericField(value);
+                          if (parsedDefault === null) {
+                            return "Default value must be a valid number.";
+                          }
+
+                          const parsedMin =
+                            parseNumericField(validationMinValue);
+                          const parsedMax =
+                            parseNumericField(validationMaxValue);
+
+                          if (parsedMin !== null && parsedDefault < parsedMin) {
+                            return `Default value must be greater than or equal to min value (${parsedMin}).`;
+                          }
+
+                          if (parsedMax !== null && parsedDefault > parsedMax) {
+                            return `Default value must be less than or equal to max value (${parsedMax}).`;
+                          }
+
                           return true;
                         },
                       }}
