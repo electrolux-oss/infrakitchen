@@ -1,8 +1,13 @@
 import { useState } from "react";
 
-import { Controller, Control, useWatch, useFormState } from "react-hook-form";
+import {
+  Controller,
+  Control,
+  useWatch,
+  useFormState,
+  useFormContext,
+} from "react-hook-form";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   TextField,
   Autocomplete,
@@ -16,6 +21,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Switch,
 } from "@mui/material";
 
 import { OverviewCard } from "../../common/components/OverviewCard";
@@ -34,6 +40,7 @@ export const SourceConfigForm = (props: {
   const [isStringValidationOpen, setIsStringValidationOpen] = useState(false);
   const [isNumberValidationOpen, setIsNumberValidationOpen] = useState(false);
 
+  const { setValue } = useFormContext();
   const formState = useFormState({ control });
   const configsErrors = formState.errors?.configs as any;
   const errors = configsErrors?.[index];
@@ -47,9 +54,60 @@ export const SourceConfigForm = (props: {
   const required = useWatch({ control, name: `configs.${index}.required` });
   const restricted = useWatch({ control, name: `configs.${index}.restricted` });
   const sensitive = useWatch({ control, name: `configs.${index}.sensitive` });
+  const validationEnabledField = `configs.${index}.validation_enabled` as const;
+  const validationRuleIdField = `configs.${index}.validation_rule_id` as const;
+  const validationRegexField = `configs.${index}.validation_regex` as const;
+  const validationMinValueField =
+    `configs.${index}.validation_min_value` as const;
+  const validationMaxValueField =
+    `configs.${index}.validation_max_value` as const;
+  const validationEnabled = Boolean(
+    useWatch({ control, name: validationEnabledField, defaultValue: false }),
+  );
 
   const isDirty = formState.dirtyFields?.configs?.[index];
   const hasChanges = Boolean(isDirty);
+
+  const handleValidationToggle = (
+    enabled: boolean,
+    onFieldChange: (value: boolean) => void,
+    type: "string" | "number",
+  ) => {
+    onFieldChange(enabled);
+
+    if (!enabled) {
+      setValue(validationRuleIdField, null, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+
+      if (type === "string") {
+        setValue(validationRegexField, "", {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        setIsStringValidationOpen(false);
+      } else {
+        setValue(validationMinValueField, "", {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        setValue(validationMaxValueField, "", {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        setIsNumberValidationOpen(false);
+      }
+
+      return;
+    }
+
+    if (type === "string") {
+      setIsStringValidationOpen(true);
+    } else {
+      setIsNumberValidationOpen(true);
+    }
+  };
 
   return (
     <Box sx={{ width: "100%", mb: 2 }}>
@@ -315,13 +373,73 @@ export const SourceConfigForm = (props: {
                     "&:before": { display: "none" },
                   }}
                 >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      String Validation
-                    </Typography>
+                  <AccordionSummary>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        gap: 2,
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        String Validation
+                      </Typography>
+                      <Controller
+                        name={validationEnabledField}
+                        control={control}
+                        defaultValue={false}
+                        render={({ field }) => (
+                          <FormControlLabel
+                            sx={{ m: 0 }}
+                            labelPlacement="start"
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                            label={
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {field.value ? "Enabled" : "Disabled"}
+                              </Typography>
+                            }
+                            control={
+                              <Switch
+                                name={field.name}
+                                inputRef={field.ref}
+                                checked={Boolean(field.value)}
+                                onClick={(event) => event.stopPropagation()}
+                                onFocus={(event) => event.stopPropagation()}
+                                onChange={(_, checked) =>
+                                  handleValidationToggle(
+                                    checked,
+                                    field.onChange,
+                                    "string",
+                                  )
+                                }
+                                inputProps={{
+                                  "aria-label": "Toggle string validation",
+                                }}
+                              />
+                            }
+                          />
+                        )}
+                      />
+                    </Box>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <ValidationRegexControls control={control} index={index} />
+                    {validationEnabled ? (
+                      <ValidationRegexControls
+                        control={control}
+                        index={index}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Validation is disabled for this variable. Toggle the
+                        switch to enable it.
+                      </Typography>
+                    )}
                   </AccordionDetails>
                 </Accordion>
               )}
@@ -342,13 +460,73 @@ export const SourceConfigForm = (props: {
                     "&:before": { display: "none" },
                   }}
                 >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      Number Validation
-                    </Typography>
+                  <AccordionSummary>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        gap: 2,
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        Number Validation
+                      </Typography>
+                      <Controller
+                        name={validationEnabledField}
+                        control={control}
+                        defaultValue={false}
+                        render={({ field }) => (
+                          <FormControlLabel
+                            sx={{ m: 0 }}
+                            labelPlacement="start"
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                            label={
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {field.value ? "Enabled" : "Disabled"}
+                              </Typography>
+                            }
+                            control={
+                              <Switch
+                                name={field.name}
+                                inputRef={field.ref}
+                                checked={Boolean(field.value)}
+                                onClick={(event) => event.stopPropagation()}
+                                onFocus={(event) => event.stopPropagation()}
+                                onChange={(_, checked) =>
+                                  handleValidationToggle(
+                                    checked,
+                                    field.onChange,
+                                    "number",
+                                  )
+                                }
+                                inputProps={{
+                                  "aria-label": "Toggle number validation",
+                                }}
+                              />
+                            }
+                          />
+                        )}
+                      />
+                    </Box>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <ValidationNumberControls control={control} index={index} />
+                    {validationEnabled ? (
+                      <ValidationNumberControls
+                        control={control}
+                        index={index}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Validation is disabled for this variable. Toggle the
+                        switch to enable numeric boundaries.
+                      </Typography>
+                    )}
                   </AccordionDetails>
                 </Accordion>
               )}

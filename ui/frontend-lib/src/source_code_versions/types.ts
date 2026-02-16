@@ -114,6 +114,7 @@ export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   validation_regex?: string;
   validation_min_value?: string | number | null;
   validation_max_value?: string | number | null;
+  validation_enabled: boolean;
 }
 
 export interface SourceOutputConfigResponse extends Record<string, any> {

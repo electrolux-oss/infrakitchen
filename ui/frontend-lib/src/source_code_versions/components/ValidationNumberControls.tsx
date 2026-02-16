@@ -76,10 +76,7 @@ export const ValidationNumberControls = ({
               onChange={(event) => field.onChange(event.target.value)}
               fullWidth
               error={Boolean(fieldState.error)}
-              helperText={
-                fieldState.error?.message ||
-                "Optional lower bound. Leave blank to skip."
-              }
+              helperText={fieldState.error?.message || "Optional lower bound."}
             />
           )}
         />
@@ -115,10 +112,7 @@ export const ValidationNumberControls = ({
               onChange={(event) => field.onChange(event.target.value)}
               fullWidth
               error={Boolean(fieldState.error)}
-              helperText={
-                fieldState.error?.message ||
-                "Optional upper bound. Leave blank to skip."
-              }
+              helperText={fieldState.error?.message || "Optional upper bound."}
             />
           )}
         />

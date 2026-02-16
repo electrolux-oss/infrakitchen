@@ -239,7 +239,7 @@ export const ValidationRegexControls = ({
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2" color="text.secondary">
         Provide a regular expression for this variable or use the toggles to
-        generate one automatically. Leave the field blank to skip validation.
+        generate one automatically.
       </Typography>
       <Controller
         name={fieldName}
@@ -348,7 +348,7 @@ export const ValidationRegexControls = ({
                     fieldState.error?.message ||
                     (selectedOption
                       ? `Selected rule: ${selectedOption.label}`
-                      : "Select a predefined rule or enter a custom regex. Leave blank to disable validation.")
+                      : "Select a predefined rule or enter a custom regex.")
                   }
                 />
               )}
