@@ -436,6 +436,11 @@ export const BatchOperationEntities = ({
         <DialogContent>
           {logsEntityId && <LogList entity_id={logsEntityId} />}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseLogs} color="primary" variant="outlined">
+            Cancel
+          </Button>
+        </DialogActions>
       </Dialog>
       <Dialog
         open={addDialogOpen}

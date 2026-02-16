@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
@@ -14,6 +14,7 @@ interface RoleCreateProps {
   user_id?: string;
   role_name?: string;
   onClose?: () => void;
+  formId?: string;
 }
 
 interface FormValues {
@@ -22,7 +23,7 @@ interface FormValues {
 }
 
 export const AssignUserToRole = (props: RoleCreateProps) => {
-  const { user_id, role_name, onClose } = props;
+  const { user_id, role_name, onClose, formId } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -63,9 +64,12 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
     [ikApi, onClose],
   );
 
+  const generatedFormId = useId();
+  const resolvedFormId = formId ?? generatedFormId;
+
   return (
     <Box sx={{ width: "50%", mt: 4 }}>
-      <form>
+      <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {user_id && (
           <Controller
             name="role"
@@ -110,13 +114,6 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
             )}
           />
         )}
-        <Button
-          type="submit"
-          variant="contained"
-          onClick={handleSubmit(onSubmit)}
-        >
-          Submit
-        </Button>
       </form>
     </Box>
   );
@@ -131,17 +128,24 @@ interface UserRoleCreateProps {
 
 export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
   const { user_id, role_name, onClose, open } = props;
+  const formId = useId();
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
       title="Assign User Role"
+      actions={
+        <Button type="submit" form={formId} variant="contained">
+          Submit
+        </Button>
+      }
       content={
         <AssignUserToRole
           user_id={user_id}
           role_name={role_name}
           onClose={onClose}
+          formId={formId}
         />
       }
     />

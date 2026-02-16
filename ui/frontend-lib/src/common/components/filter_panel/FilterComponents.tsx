@@ -51,10 +51,9 @@ export const SearchFilter = ({
             <InputAdornment
               position="end"
               sx={{
-                fontSize: "0.7rem",
                 color: "text.secondary",
-                opacity: 0.7,
-                mr: 0.5,
+                opacity: 0.5,
+                mr: 2,
               }}
             >
               Press ↵
