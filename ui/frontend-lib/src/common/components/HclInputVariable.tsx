@@ -2,24 +2,65 @@ import React from "react";
 
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
 
+import { SourceConfigResponse } from "../../source_code_versions/types";
+import { formatNumericDisplayValue } from "../../source_code_versions/utils/numeric";
+
+type HclInputVariableData = SourceConfigResponse & {
+  source?: string;
+};
+
 interface HclInputVariableProps {
-  variable: {
-    name: string;
-    type: string;
-    original_type?: string;
-    description?: string;
-    required?: boolean;
-    restricted?: boolean;
-    sensitive?: boolean;
-    default?: any;
-    source?: string;
-  };
+  variable: HclInputVariableData;
 }
 
 export const HclInputVariable: React.FC<HclInputVariableProps> = ({
   variable,
 }) => {
   const theme = useTheme();
+
+  const getValidationSummary = () => {
+    const regex =
+      typeof variable.validation_regex === "string"
+        ? variable.validation_regex.trim()
+        : "";
+    if (regex) {
+      const truncatedRegex =
+        regex.length > 40 ? `${regex.slice(0, 37)}...` : regex;
+      return `regex ${truncatedRegex}`;
+    }
+
+    const hasMin =
+      variable.validation_min_value !== null &&
+      variable.validation_min_value !== undefined &&
+      variable.validation_min_value !== "";
+    const hasMax =
+      variable.validation_max_value !== null &&
+      variable.validation_max_value !== undefined &&
+      variable.validation_max_value !== "";
+
+    if (!hasMin && !hasMax) {
+      return null;
+    }
+
+    const formattedMin = hasMin
+      ? formatNumericDisplayValue(variable.validation_min_value)
+      : "";
+    const formattedMax = hasMax
+      ? formatNumericDisplayValue(variable.validation_max_value)
+      : "";
+
+    if (hasMin && hasMax) {
+      return `range ${formattedMin} - ${formattedMax}`;
+    }
+
+    if (hasMin) {
+      return `min ≥ ${formattedMin}`;
+    }
+
+    return `max ≤ ${formattedMax}`;
+  };
+
+  const validationSummary = getValidationSummary();
 
   const formatTypeDisplay = (type: string) => {
     // If it's a simple type, display inline
@@ -142,6 +183,16 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               size="small"
               color="info"
               variant="outlined"
+            />
+          )}
+
+          {validationSummary && (
+            <Chip
+              label={validationSummary}
+              size="small"
+              color="success"
+              variant="outlined"
+              sx={{ ml: 1 }}
             />
           )}
 
