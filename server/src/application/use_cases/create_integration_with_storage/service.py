@@ -59,7 +59,7 @@ class IntegrationWithStorageService:
             if isinstance(integration.configuration, AWSIntegrationConfig):
                 configuration = {
                     "aws_bucket_name": f"infrakitchen-{integration.configuration.aws_account}-bucket",
-                    "aws_region": "us-east-1",
+                    "aws_region": integration.configuration.aws_default_region or "us-east-1",
                     "storage_provider": "aws",
                 }
             elif isinstance(integration.configuration, GCPIntegrationConfig):

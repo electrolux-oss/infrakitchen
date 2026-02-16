@@ -140,6 +140,7 @@ class IntegrationService:
         if not existing_integration:
             raise EntityNotFound("Integration not found")
 
+        await self.audit_log_handler.create_log(existing_integration.id, requester.id, body.action)
         match body.action:
             case ModelActions.DISABLE:
                 existing_integration.status = ModelStatus.DISABLED
@@ -151,7 +152,6 @@ class IntegrationService:
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
-        await self.audit_log_handler.create_log(existing_integration.id, requester.id, body.action)
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, body.action)
         return response

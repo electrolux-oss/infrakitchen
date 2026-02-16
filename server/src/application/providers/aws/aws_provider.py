@@ -54,11 +54,12 @@ class AwsAuthentication:
         self.aws_access_key_id: str | None = configuration.aws_access_key_id
         self.aws_secret_access_key: EncryptedSecretStr = configuration.aws_secret_access_key
         self.aws_session_duration: int = configuration.aws_session_duration or 3600
+        self.aws_default_region: str = configuration.aws_default_region or "us-east-1"
         self.environment_variables: dict[str, str | Any] = kwargs.get("environment_variables", {})
         if not (self.aws_access_key_id and self.aws_secret_access_key and self.aws_account):
             raise CloudWrongCredentials("Some AWS configs are missed")
 
-    async def get_account_session(self, region_name: str = "us-east-1"):
+    async def get_account_session(self):
         if self.aws_assumed_role_name is None or self.aws_assumed_role_name.strip() == "":
             self.logger.info("No role to assume, using provided AWS credentials directly.")
             self.environment_variables.update(
@@ -66,6 +67,7 @@ class AwsAuthentication:
                     "AWS_ACCESS_KEY_ID": self.aws_access_key_id,
                     "AWS_SECRET_ACCESS_KEY": self.aws_secret_access_key.get_decrypted_value(),
                     "AWS_ACCOUNT": self.aws_account,
+                    "AWS_REGION": self.aws_default_region,
                 }
             )
             return
@@ -92,6 +94,7 @@ class AwsAuthentication:
                         "AWS_SECRET_ACCESS_KEY": credentials["SecretAccessKey"],
                         "AWS_SESSION_TOKEN": credentials["SessionToken"],
                         "AWS_ACCOUNT": self.aws_account,
+                        "AWS_REGION": self.aws_default_region,
                     }
                 )
                 self.logger.info(
@@ -143,7 +146,7 @@ class AwsProvider(IntegrationProvider, AwsAuthentication):
         if not self.environment_variables.get("AWS_ACCESS_KEY_ID") or not self.environment_variables.get(
             "AWS_SECRET_ACCESS_KEY"
         ):
-            await self.get_account_session(region_name=region)
+            await self.get_account_session()
 
         assumed_role_session = get_session()
         assumed_role_session.set_credentials(

@@ -8,13 +8,14 @@ from application.providers.aws.aws_provider import AwsAuthentication
 from core.errors import CloudWrongCredentials
 
 
-async def get_account_session(self, region_name: str = "us-east-1"):
+async def get_account_session(self):
     self.environment_variables.update(
         {
             "AWS_ACCESS_KEY_ID": self.aws_access_key_id,
             "AWS_SECRET_ACCESS_KEY": self.aws_secret_access_key.get_decrypted_value(),
             "AWS_SESSION_TOKEN": "session",
             "AWS_ACCOUNT": self.aws_account,
+            "AWS_REGION": self.aws_default_region,
         }
     )
 
@@ -43,6 +44,11 @@ class TestIsValid:
         provider = AwsProvider(configuration=configuration)
         await provider.authenticate()
         assert await provider.is_valid() is True
+        assert provider.environment_variables["AWS_ACCESS_KEY_ID"] == "test_key"
+        assert provider.environment_variables["AWS_SECRET_ACCESS_KEY"] == "test_secret"
+        assert provider.environment_variables["AWS_SESSION_TOKEN"] == "session"
+        assert provider.environment_variables["AWS_ACCOUNT"] == "0123456789012"
+        assert provider.environment_variables["AWS_REGION"] == "us-east-1"
 
     @pytest.mark.asyncio
     async def test_is_valid_failure(self, monkeypatch):

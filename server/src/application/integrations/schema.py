@@ -30,6 +30,7 @@ class AWSIntegrationConfig(BaseModel):
     aws_account: str = Field(..., frozen=True)
     aws_assumed_role_name: str | None = Field(default=None)
     aws_session_duration: int | None = Field(default=3600)
+    aws_default_region: str | None = Field(default="us-east-1")
     integration_provider: Literal["aws"] = Field(default="aws", frozen=True)
 
     def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
