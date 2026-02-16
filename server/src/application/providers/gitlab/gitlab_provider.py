@@ -80,5 +80,5 @@ class GitLabProvider(IntegrationProvider):
         """Get the git URL for the GitLab integration."""
         if git_url.startswith("https://"):
             if token := self.gitlab_token:
-                return git_url.replace("https://", f"https://{token.get_decrypted_value()}@")
+                return git_url.replace("https://", f"https://oauth2:{token.get_decrypted_value()}@")
         return git_url
