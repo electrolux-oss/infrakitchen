@@ -2,24 +2,23 @@ import React from "react";
 
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
 
+import { SourceConfigResponse } from "../../source_code_versions/types";
+import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
+
+type HclInputVariableData = SourceConfigResponse & {
+  source?: string;
+};
+
 interface HclInputVariableProps {
-  variable: {
-    name: string;
-    type: string;
-    original_type?: string;
-    description?: string;
-    required?: boolean;
-    restricted?: boolean;
-    sensitive?: boolean;
-    default?: any;
-    source?: string;
-  };
+  variable: HclInputVariableData;
 }
 
 export const HclInputVariable: React.FC<HclInputVariableProps> = ({
   variable,
 }) => {
   const theme = useTheme();
+
+  const validationSummary = getValidationSummary(variable);
 
   const formatTypeDisplay = (type: string) => {
     // If it's a simple type, display inline
@@ -142,6 +141,16 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               size="small"
               color="info"
               variant="outlined"
+            />
+          )}
+
+          {validationSummary && (
+            <Chip
+              label={validationSummary}
+              size="small"
+              color="success"
+              variant="outlined"
+              sx={{ ml: 1 }}
             />
           )}
 

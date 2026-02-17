@@ -22,10 +22,37 @@ import {
   useSourceCodeVersionConfigContext,
 } from "../context/SourceCodeVersionConfigContext";
 import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
+import { normalizeNumericField, parseNumericField } from "../utils/numeric";
 
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
 }
+
+const hasValidationData = (config: {
+  validation_regex?: string | null;
+  validation_min_value?: string | number | null;
+  validation_max_value?: string | number | null;
+  validation_rule_id?: string | null;
+}): boolean => {
+  const regexValue =
+    typeof config.validation_regex === "string"
+      ? config.validation_regex
+      : config.validation_regex
+        ? String(config.validation_regex)
+        : "";
+  const hasRegex = regexValue.trim().length > 0;
+  const hasMin =
+    config.validation_min_value !== null &&
+    config.validation_min_value !== undefined &&
+    config.validation_min_value !== "";
+  const hasMax =
+    config.validation_max_value !== null &&
+    config.validation_max_value !== undefined &&
+    config.validation_max_value !== "";
+  const hasReference = Boolean(config.validation_rule_id);
+
+  return hasRegex || hasMin || hasMax || hasReference;
+};
 
 const SourceCodeVersionConfigContent = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -47,25 +74,41 @@ const SourceCodeVersionConfigContent = () => {
 
   useEffect(() => {
     if (sourceConfigs.length > 0) {
-      const formattedConfigs = sourceConfigs.map((config) => ({
-        id: config.id,
-        name: config.name,
-        type: config.type,
-        description: config.description,
-        required: config.required,
-        default: config.default,
-        frozen: config.frozen,
-        unique: config.unique,
-        restricted: config.restricted,
-        sensitive: config.sensitive,
-        options: config.options,
-        reference_template_id:
-          templateReferences.find((tr) => tr.input_config_name === config.name)
-            ?.reference_template_id || null,
-        output_config_name:
-          templateReferences.find((tr) => tr.input_config_name === config.name)
-            ?.output_config_name || null,
-      }));
+      const formattedConfigs = sourceConfigs.map((config) => {
+        const normalizedMin = normalizeNumericField(
+          config.validation_min_value,
+        );
+        const normalizedMax = normalizeNumericField(
+          config.validation_max_value,
+        );
+
+        return {
+          id: config.id,
+          name: config.name,
+          type: config.type,
+          description: config.description,
+          required: config.required,
+          default: config.default,
+          frozen: config.frozen,
+          unique: config.unique,
+          restricted: config.restricted,
+          sensitive: config.sensitive,
+          options: config.options,
+          validation_rule_id: config.validation_rule_id ?? null,
+          validation_regex: config.validation_regex || "",
+          validation_min_value: normalizedMin,
+          validation_max_value: normalizedMax,
+          validation_enabled: hasValidationData(config),
+          reference_template_id:
+            templateReferences.find(
+              (tr) => tr.input_config_name === config.name,
+            )?.reference_template_id || null,
+          output_config_name:
+            templateReferences.find(
+              (tr) => tr.input_config_name === config.name,
+            )?.output_config_name || null,
+        };
+      });
       reset({ configs: formattedConfigs });
     }
   }, [sourceConfigs, templateReferences, reset]);
@@ -83,6 +126,15 @@ const SourceCodeVersionConfigContent = () => {
         unique: config.unique,
         restricted: config.restricted,
         options: config.options,
+        validation_rule_id: config.validation_rule_id ?? null,
+        validation_regex: config.validation_regex || "",
+        validation_min_value: normalizeNumericField(
+          config.validation_min_value,
+        ),
+        validation_max_value: normalizeNumericField(
+          config.validation_max_value,
+        ),
+        validation_enabled: hasValidationData(config),
         reference_template_id:
           templateReferences.find((tr) => tr.input_config_name === config.name)
             ?.reference_template_id || null,
@@ -114,7 +166,16 @@ const SourceCodeVersionConfigContent = () => {
               JSON.stringify(original.options) ||
             formConfig.reference_template_id !==
               original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name
+            formConfig.output_config_name !== original.output_config_name ||
+            formConfig.validation_rule_id !== original.validation_rule_id ||
+            (formConfig.validation_regex || "") !==
+              (original.validation_regex || "") ||
+            normalizeNumericField(formConfig.validation_min_value) !==
+              normalizeNumericField(original.validation_min_value) ||
+            normalizeNumericField(formConfig.validation_max_value) !==
+              normalizeNumericField(original.validation_max_value) ||
+            Boolean(formConfig.validation_enabled) !==
+              Boolean(original.validation_enabled)
           );
         });
       }
@@ -125,8 +186,28 @@ const SourceCodeVersionConfigContent = () => {
       }
 
       try {
-        const changesArray: SourceConfigUpdateWithId[] = configsToSubmit.map(
-          (config) => ({
+        const configUpdates: SourceConfigUpdateWithId[] = [];
+        type ValidationRuleUpdate =
+          | {
+              action: "upsert";
+              target_type: "string" | "number";
+              rule_id?: string | null;
+              regex_pattern?: string | null;
+              min_value?: number | null;
+              max_value?: number | null;
+            }
+          | {
+              action: "clear";
+              target_type: "string" | "number";
+            };
+
+        const validationRuleUpdates = new Map<string, ValidationRuleUpdate>();
+        const originalConfigMap = new Map(
+          originalConfigs.map((config) => [config.id, config]),
+        );
+
+        configsToSubmit.forEach((config) => {
+          configUpdates.push({
             id: config.id,
             required: config.required,
             default: config.default,
@@ -137,13 +218,112 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
-          }),
-        );
+            validation_rule_id: config.validation_rule_id ?? null,
+            validation_enabled: config.validation_enabled,
+          });
 
-        await ikApi.updateRaw(
-          `source_code_versions/${sourceCodeVersion.id}/configs`,
-          changesArray,
-        );
+          const sourceConfig = sourceConfigs.find((c) => c.id === config.id);
+          if (!sourceConfig) {
+            return;
+          }
+
+          const targetType =
+            sourceConfig.type === "number" ? "number" : "string";
+          const trimmedRegex = (config.validation_regex || "").trim();
+          const normalizedMin = parseNumericField(config.validation_min_value);
+          const normalizedMax = parseNumericField(config.validation_max_value);
+          const wantsValidation = Boolean(config.validation_enabled);
+          const hasConstraints =
+            wantsValidation &&
+            (Boolean(trimmedRegex) ||
+              normalizedMin !== null ||
+              normalizedMax !== null);
+
+          const original = originalConfigMap.get(config.id);
+          const originalTrimmedRegex = (
+            original?.validation_regex || ""
+          ).trim();
+          const originalMin = parseNumericField(original?.validation_min_value);
+          const originalMax = parseNumericField(original?.validation_max_value);
+          const originalWantsValidation = Boolean(original?.validation_enabled);
+          const originalHasConstraints =
+            originalWantsValidation &&
+            (Boolean(originalTrimmedRegex) ||
+              originalMin !== null ||
+              originalMax !== null);
+
+          if (hasConstraints) {
+            validationRuleUpdates.set(sourceConfig.name, {
+              action: "upsert",
+              target_type: targetType,
+              rule_id: config.validation_rule_id ?? null,
+              regex_pattern:
+                targetType === "string" && trimmedRegex ? trimmedRegex : null,
+              min_value:
+                targetType === "number" && normalizedMin !== null
+                  ? normalizedMin
+                  : null,
+              max_value:
+                targetType === "number" && normalizedMax !== null
+                  ? normalizedMax
+                  : null,
+            });
+          } else if (originalHasConstraints) {
+            validationRuleUpdates.set(sourceConfig.name, {
+              action: "clear",
+              target_type: targetType,
+            });
+          }
+        });
+
+        if (configUpdates.length > 0) {
+          await ikApi.updateRaw(
+            `source_code_versions/${sourceCodeVersion.id}/configs`,
+            configUpdates,
+          );
+        }
+
+        for (const [variableName, validationData] of validationRuleUpdates) {
+          if (validationData.action === "clear") {
+            await ikApi.updateRaw(
+              `validation_rules/template/${sourceCodeVersion.template.id}/${variableName}`,
+              { rules: [] },
+            );
+            continue;
+          }
+
+          const rules = [];
+          const rule: any = {
+            target_type: validationData.target_type,
+          };
+
+          if (validationData.regex_pattern) {
+            rule.regex_pattern = validationData.regex_pattern;
+          }
+          if (
+            validationData.min_value !== null &&
+            validationData.min_value !== undefined
+          ) {
+            rule.min_value = validationData.min_value;
+          }
+          if (
+            validationData.max_value !== null &&
+            validationData.max_value !== undefined
+          ) {
+            rule.max_value = validationData.max_value;
+          }
+
+          if (validationData.rule_id) {
+            rule.id = validationData.rule_id;
+          }
+
+          rules.push(rule);
+
+          await ikApi.updateRaw(
+            `validation_rules/template/${sourceCodeVersion.template.id}/${variableName}`,
+            { rules },
+          );
+        }
 
         notify("Configurations updated successfully", "success");
 

@@ -53,6 +53,7 @@ from .fixtures.test_resource_fixtures import (
     resource_response,
     mocked_resource,
     many_resource_response,
+    mock_validation_rule_service,
 )
 from .fixtures.test_resource_temp_state_fixtures import (
     mocked_resource_temp_state_response,
@@ -161,6 +162,7 @@ __all__ = [
     "resource_response",
     "mocked_resource",
     "many_resource_response",
+    "mock_validation_rule_service",
     "mock_executor_crud",
     "mock_executor_service",
     "executor_response",

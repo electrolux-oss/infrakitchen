@@ -11,6 +11,13 @@ from application.resources.service import ResourceService
 
 
 @pytest.fixture
+def mock_validation_rule_service():
+    service = Mock()
+    service.get_rules_map_for_template = AsyncMock(return_value={})
+    return service
+
+
+@pytest.fixture
 def mock_resource_crud():
     crud = Mock(spec=ResourceCRUD)
     crud.get_by_id = AsyncMock()
@@ -44,6 +51,7 @@ def mock_resource_service(
     mocked_resource_temp_state_handler,
     mock_log_service,
     mock_task_entity_service,
+    mock_validation_rule_service,
 ):
     return ResourceService(
         crud=mock_resource_crud,
@@ -59,6 +67,7 @@ def mock_resource_service(
         resource_temp_state_handler=mocked_resource_temp_state_handler,
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
+        validation_rule_service=mock_validation_rule_service,
     )
 
 
