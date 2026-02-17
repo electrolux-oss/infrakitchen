@@ -23,3 +23,4 @@ export * from "./batch_operations";
 export * from "./administration";
 export * from "./icons";
 export * from "./executors";
+export * from "./filterRoutes";

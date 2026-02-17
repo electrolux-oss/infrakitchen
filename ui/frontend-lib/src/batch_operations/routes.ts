@@ -1,5 +1,3 @@
-import React from "react";
-
 import { BatchOperationPage } from "./pages/BatchOperation";
 import { BatchOperationActivityPage } from "./pages/BatchOperationActivity";
 import { BatchOperationCreatePage } from "./pages/BatchOperationCreate";
@@ -8,25 +6,25 @@ import { BatchOperationsPage } from "./pages/BatchOperations";
 export const batchOperationRoutes = [
   {
     path: BatchOperationsPage.path,
-    element: React.createElement(BatchOperationsPage),
+    Component: BatchOperationsPage,
     requiredPermission: "api:batch_operation",
     permissionAction: "read",
   },
   {
     path: BatchOperationCreatePage.path,
-    element: React.createElement(BatchOperationCreatePage),
+    Component: BatchOperationCreatePage,
     requiredPermission: "api:batch_operation",
     permissionAction: "write",
   },
   {
     path: BatchOperationPage.path,
-    element: React.createElement(BatchOperationPage),
+    Component: BatchOperationPage,
     requiredPermission: "api:batch_operation",
     permissionAction: "read",
   },
   {
     path: BatchOperationActivityPage.path,
-    element: React.createElement(BatchOperationActivityPage),
+    Component: BatchOperationActivityPage,
     requiredPermission: "api:batch_operation",
     permissionAction: "read",
   },

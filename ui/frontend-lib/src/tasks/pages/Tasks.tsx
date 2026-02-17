@@ -18,8 +18,8 @@ export const TasksPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    ikApi.getList("entities", {}).then((response) => {
-      setEntities(response.data);
+    ikApi.get("entities", {}).then((response) => {
+      setEntities(response);
     });
   }, [ikApi]);
 
