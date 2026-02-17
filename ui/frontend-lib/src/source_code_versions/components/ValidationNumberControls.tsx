@@ -24,6 +24,10 @@ export const ValidationNumberControls = ({
     () => `configs.${index}.validation_max_value`,
     [index],
   );
+  const ruleIdFieldName = useMemo(
+    () => `configs.${index}.validation_rule_id`,
+    [index],
+  );
 
   const minValue = useWatch({ control, name: minFieldName });
   const maxValue = useWatch({ control, name: maxFieldName });
@@ -35,6 +39,7 @@ export const ValidationNumberControls = ({
   const clearValues = () => {
     setValue(minFieldName, "", { shouldDirty: true, shouldTouch: true });
     setValue(maxFieldName, "", { shouldDirty: true, shouldTouch: true });
+    setValue(ruleIdFieldName, null, { shouldDirty: true, shouldTouch: true });
   };
 
   return (
@@ -73,7 +78,13 @@ export const ValidationNumberControls = ({
               label="Min value"
               type="number"
               inputProps={{ step: "any" }}
-              onChange={(event) => field.onChange(event.target.value)}
+              onChange={(event) => {
+                field.onChange(event.target.value);
+                setValue(ruleIdFieldName, null, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+              }}
               fullWidth
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message || "Optional lower bound."}
@@ -109,7 +120,13 @@ export const ValidationNumberControls = ({
               label="Max value"
               type="number"
               inputProps={{ step: "any" }}
-              onChange={(event) => field.onChange(event.target.value)}
+              onChange={(event) => {
+                field.onChange(event.target.value);
+                setValue(ruleIdFieldName, null, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+              }}
               fullWidth
               error={Boolean(fieldState.error)}
               helperText={fieldState.error?.message || "Optional upper bound."}
