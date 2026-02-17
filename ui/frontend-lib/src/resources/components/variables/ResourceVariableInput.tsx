@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { json } from "@codemirror/lang-json";
 import { lintGutter } from "@codemirror/lint";
 import {
+  FormHelperText,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -86,23 +87,27 @@ export const ResourceVariableInput = (props: {
     case "string":
       if (variable.options.length > 0) {
         return (
-          <Select
-            {...field}
-            value={field.value ?? ""}
-            label="Value"
-            variant="outlined"
+          <FormControl
             fullWidth
             margin="normal"
-            disabled={isDisabled}
             error={!!fieldState.error}
-            onChange={(e) => field.onChange(e.target.value)}
+            disabled={isDisabled}
           >
-            {variable.options.map((option: string) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
+            <Select
+              {...field}
+              value={field.value ?? ""}
+              label="Value"
+              variant="outlined"
+              onChange={(e) => field.onChange(e.target.value)}
+            >
+              {variable.options.map((option: string) => (
+                <MenuItem key={option} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{fieldState.error?.message}</FormHelperText>
+          </FormControl>
         );
       } else {
         return (
@@ -116,6 +121,7 @@ export const ResourceVariableInput = (props: {
             margin="normal"
             disabled={isDisabled}
             error={!!fieldState.error}
+            helperText={fieldState.error?.message}
           />
         );
       }
@@ -141,6 +147,7 @@ export const ResourceVariableInput = (props: {
           fullWidth
           margin="normal"
           error={!!fieldState.error}
+          helperText={fieldState.error?.message}
         />
       );
 

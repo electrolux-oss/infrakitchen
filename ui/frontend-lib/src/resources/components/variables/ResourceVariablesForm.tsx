@@ -2,7 +2,9 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { TableCell, TableRow, Typography, Chip } from "@mui/material";
 
+import { ValidationRule } from "../../../types";
 import { ResourceVariableSchema } from "../../types";
+import { validateResourceVariableValue } from "../../utils/validationRules";
 
 import { ResourceVariableInput } from "./ResourceVariableInput";
 
@@ -11,8 +13,15 @@ export const ResourceVariableForm = (props: {
   variable: ResourceVariableSchema;
   edit_mode?: boolean;
   validationSummary?: string | null;
+  validationRule?: ValidationRule | null;
 }) => {
-  const { index, variable, edit_mode = false, validationSummary } = props;
+  const {
+    index,
+    variable,
+    edit_mode = false,
+    validationSummary,
+    validationRule,
+  } = props;
   const { control } = useFormContext();
 
   if (variable.restricted) return null;
@@ -61,9 +70,7 @@ export const ResourceVariableForm = (props: {
         <Controller
           rules={{
             validate: (value) =>
-              variable.required && (value === null || value === undefined)
-                ? "This field is required"
-                : true,
+              validateResourceVariableValue(value, variable, validationRule),
           }}
           name={`variables.${index}.value`}
           control={control}

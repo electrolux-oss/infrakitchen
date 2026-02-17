@@ -31,16 +31,16 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
 import { TemplateResponse } from "../../templates/types";
 import { IkEntity } from "../../types";
-import { ValidationRulesByVariable } from "../../types";
+import { ValidationRule, ValidationRulesByVariable } from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import {
   ResourceCreate,
   ResourceResponse,
   ResourceVariableSchema,
 } from "../types";
+import { buildValidationRuleMaps } from "../utils/validationRules";
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -69,6 +69,9 @@ const ResourceCreatePageInner = () => {
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
   const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
     useState<Record<string, string>>({});
+  const [validationRuleByVariable, setValidationRuleByVariable] = useState<
+    Record<string, ValidationRule | null>
+  >({});
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
   >({});
@@ -237,31 +240,18 @@ const ResourceCreatePageInner = () => {
   useEffect(() => {
     if (!watchedTemplateId) {
       setValidationRuleSummaryByVariable({});
+      setValidationRuleByVariable({});
       return;
     }
 
     ikApi
       .get(`validation_rules/template/${watchedTemplateId}`)
       .then((response: ValidationRulesByVariable[]) => {
-        const summaryMap: Record<string, string> = {};
+        const { summaryByVariable, ruleByVariable } =
+          buildValidationRuleMaps(response);
 
-        response.forEach(({ variable_name, rules }) => {
-          if (!rules || rules.length === 0) {
-            return;
-          }
-
-          const summary = getValidationSummary({
-            validation_regex: rules[0].regex_pattern ?? "",
-            validation_min_value: rules[0].min_value ?? null,
-            validation_max_value: rules[0].max_value ?? null,
-          });
-
-          if (summary) {
-            summaryMap[variable_name] = summary;
-          }
-        });
-
-        setValidationRuleSummaryByVariable(summaryMap);
+        setValidationRuleSummaryByVariable(summaryByVariable);
+        setValidationRuleByVariable(ruleByVariable);
       })
       .catch((error: any) => {
         notifyError(error);
@@ -721,6 +711,10 @@ const ResourceCreatePageInner = () => {
                               validationRuleSummaryByVariable[
                                 schema[index].name
                               ] || null
+                            }
+                            validationRule={
+                              validationRuleByVariable[schema[index].name] ||
+                              null
                             }
                           />
                         ) : null,
