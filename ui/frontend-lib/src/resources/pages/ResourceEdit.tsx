@@ -30,7 +30,8 @@ import TagInput from "../../common/components/inputs/TagInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { IkEntity } from "../../types";
+import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
+import { IkEntity, ValidationRulesByVariable } from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import {
   ResourceResponse,
@@ -146,6 +147,8 @@ export const ResourceEditPageInner = (props: {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
+    useState<Record<string, string>>({});
 
   function getSchemaObject(schema: ResourceVariableSchema[]) {
     return schema.reduce((acc: Record<string, any>, variable) => {
@@ -256,6 +259,40 @@ export const ResourceEditPageInner = (props: {
     fields,
     remove,
   ]);
+
+  useEffect(() => {
+    if (!entity.template.id) {
+      setValidationRuleSummaryByVariable({});
+      return;
+    }
+
+    ikApi
+      .get(`validation_rules/template/${entity.template.id}`)
+      .then((response: ValidationRulesByVariable[]) => {
+        const summaryMap: Record<string, string> = {};
+
+        response.forEach(({ variable_name, rules }) => {
+          if (!rules || rules.length === 0) {
+            return;
+          }
+
+          const summary = getValidationSummary({
+            validation_regex: rules[0].regex_pattern ?? "",
+            validation_min_value: rules[0].min_value ?? null,
+            validation_max_value: rules[0].max_value ?? null,
+          });
+
+          if (summary) {
+            summaryMap[variable_name] = summary;
+          }
+        });
+
+        setValidationRuleSummaryByVariable(summaryMap);
+      })
+      .catch((error: any) => {
+        notifyError(error);
+      });
+  }, [ikApi, entity.template.id]);
 
   return (
     <FormProvider {...methods}>
@@ -509,6 +546,11 @@ export const ResourceEditPageInner = (props: {
                               edit_mode={true}
                               variable={
                                 getSchemaObject(schema)[field.name] || {}
+                              }
+                              validationSummary={
+                                validationRuleSummaryByVariable[
+                                  schema[index].name
+                                ] || null
                               }
                             />
                           ) : null,
