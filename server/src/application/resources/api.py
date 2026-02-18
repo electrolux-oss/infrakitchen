@@ -168,6 +168,21 @@ async def get_metadata(
     return metadata
 
 
+@router.patch(
+    "/resources/{resource_id}/sync",
+    response_model=ResourceResponse,
+    status_code=http_status.HTTP_200_OK,
+)
+async def patch(
+        request: Request,
+        resource_id: str,
+        service: ResourceService = Depends(get_resource_service),
+):
+    requester: UserDTO = request.state.user
+    entity = await service.sync_workspace(resource_id=resource_id, requester=requester)
+    return entity
+
+
 # Permissions
 @router.get(
     "/resources/permissions/user/{user_id}/policies",

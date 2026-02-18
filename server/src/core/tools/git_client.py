@@ -111,22 +111,36 @@ class GitClient:
         self.logger.info("Adding changes to staging area")
         _ = await self._run_git_command("add -A", self.destination_dir)
 
+    async def has_changes(self) -> bool:
+        """
+        Check if there are any changes in the repository to commit.
+        :return: True if there are changes, False otherwise.
+        """
+        status_output = await self._run_git_command(["status", "--porcelain"], self.destination_dir)
+        return bool(status_output.strip())
+
     async def commit_changes(
         self, commit_message: str, user_email: str | None = None, user_name: str | None = None
-    ) -> None:
+    ) -> bool:
         """
         Commit changes in the repository with the specified commit message.
         :param commit_message: The commit message to use for the commit.
+        :return: True if changes were committed, False if there was nothing to commit.
         """
         if user_email is None:
             user_email = "ik@infrakitchen.io"
         if user_name is None:
             user_name = "ik"
 
+        if not await self.has_changes():
+            self.logger.info("No changes to commit - working tree is clean")
+            return False
+
         self.logger.info(f"Committing changes with message: {commit_message}")
         _ = await self._run_git_command(["config", "user.email", user_email], self.destination_dir)
         _ = await self._run_git_command(["config", "user.name", user_name], self.destination_dir)
         _ = await self._run_git_command(["commit", "-am", commit_message], self.destination_dir)
+        return True
 
     async def push(self, branch: str = "main", force: bool = False) -> None:
         """
