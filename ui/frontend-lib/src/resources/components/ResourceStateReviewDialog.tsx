@@ -114,7 +114,20 @@ export const ResourceStateReviewDialog: React.FC<
                           if (
                             Object.prototype.hasOwnProperty.call(entity, key)
                           ) {
-                            filteredEntity[key] = (entity as any)[key];
+                            if (
+                              key.endsWith("_ids") &&
+                              Array.isArray((entity as any)[key])
+                            ) {
+                              // For fields that are arrays of IDs, we want to compare the IDs directly rather than the full objects
+                              filteredEntity[key] = (entity as any)[key].map(
+                                (item: any) =>
+                                  item && typeof item === "object"
+                                    ? item.id
+                                    : item,
+                              );
+                            } else {
+                              filteredEntity[key] = (entity as any)[key];
+                            }
                           }
                         },
                       );

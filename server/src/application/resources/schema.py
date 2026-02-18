@@ -112,6 +112,9 @@ class ResourceResponse(BaseModel):
     template: TemplateShort = Field(...)
 
     source_code_version: SourceCodeVersionShort | None = Field(...)
+    source_code_version_id: uuid.UUID | None = Field(
+        default=None,
+    )
     integration_ids: list[IntegrationShort] = Field(
         default=[],
     )
@@ -136,6 +139,9 @@ class ResourceResponse(BaseModel):
     )
     labels: list[str] = Field(default_factory=list)
     workspace: WorkspaceShort | None = Field(default=None)
+    workspace_id: uuid.UUID | None = Field(
+        default=None,
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
