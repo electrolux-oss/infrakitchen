@@ -24,7 +24,7 @@ class TemplateCreateWithSCV(BaseModel):
     @field_validator("source_code_url")
     @classmethod
     def validate_repository(cls, value: str) -> str:
-        pattern = r"^(https:\/\/|git@)([\w\.@]+)(\/|:)([\w,\-,_,\/]+)(\.git)?$"
+        pattern = r"^(https:\/\/|git@)([\w\.-]+)(\/|:)([\w\-\/]+)(\.git)?$"
         if not re.fullmatch(pattern, value):
             raise ValueError(f"field has to match pattern {pattern}")
         return value

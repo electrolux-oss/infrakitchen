@@ -24,6 +24,7 @@ from .schema import (
     MongoDBAtlasIntegrationConfig,
     GithubIntegrationConfig,
     GithubSshIntegrationConfig,
+    GitLabIntegrationConfig,
     BitbucketIntegrationConfig,
     BitbucketSshIntegrationConfig,
     DatadogIntegrationConfig,
@@ -92,6 +93,7 @@ class IntegrationDTO(BaseModel):
         | MongoDBAtlasIntegrationConfig
         | GithubIntegrationConfig
         | GithubSshIntegrationConfig
+        | GitLabIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
         | DatadogIntegrationConfig,

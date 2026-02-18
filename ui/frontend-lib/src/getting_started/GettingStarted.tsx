@@ -9,7 +9,7 @@ const steps = [
   {
     title: "Integrate Git Provider(s)",
     description:
-      "Connect your git providers (GitHub, Bitbucket, Azure Repos) to access infrastructure templates",
+      "Connect your git providers (GitHub, GitLab, Bitbucket, Azure Repos) to access infrastructure templates",
     button: "Integrate Git",
     navigateTo: "integrations#git",
     icon: <Icon icon="noto:fork-and-knife" width="24" height="24" />,

@@ -108,9 +108,7 @@ class ShellScriptClient:
         )
 
         captured_stdout_lines: list[str] = []
-        # Ensure PATH with binaries is included in the environment variables
-        env_path = os.getenv("PATH", "")
-        environment_variables: dict[str, str] = {**{"PATH": env_path}, **self.environment_variables}
+        environment_variables: dict[str, str] = {**self._default_env(), **self.environment_variables}
 
         # Track pending save tasks to avoid duplication
         pending_save_task: asyncio.Task[None] | None = None
@@ -149,3 +147,7 @@ class ShellScriptClient:
             raise ShellExecutionError(f"Command '{self.command}' failed with exit code {return_code}.")
 
         return "\n".join(captured_stdout_lines).strip()
+
+    def _default_env(self) -> dict[str, str]:
+        """Return forced environment variables such as PATH & proxy variables."""
+        return {key: os.getenv(key, "") for key in {"PATH", "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY"}}

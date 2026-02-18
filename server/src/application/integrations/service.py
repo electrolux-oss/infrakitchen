@@ -74,6 +74,7 @@ class IntegrationService:
         cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog"]
         source_code_providers = [
             "github",
+            "gitlab",
             "bitbucket",
             "azure_devops",
             "azure_devops_ssh",
