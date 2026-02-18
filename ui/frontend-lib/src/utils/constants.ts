@@ -35,6 +35,7 @@ export enum ENTITY_ACTION {
   DISABLE = "disable",
   ENABLE = "enable",
   HAS_TEMPORARY_STATE = "has_temporary_state",
+  RESET = "reset",
 }
 
 export enum INTEGRATION_STATUS {

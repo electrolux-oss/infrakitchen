@@ -115,6 +115,15 @@ export const DangerZoneCard = () => {
             Disable
           </Button>
         )}
+        {actions.includes("reset") && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => changeDialog("reset")}
+          >
+            Reset to Previous State
+          </Button>
+        )}
       </CardActions>
       <CommonDialog
         maxWidth="xs"
@@ -231,6 +240,39 @@ export const DangerZoneCard = () => {
             onSubmit={() => changeDialog("disable")}
           >
             Disable
+          </ActionButton>
+        }
+      />
+      <CommonDialog
+        maxWidth="xs"
+        title={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <WarningIcon color="error" />
+            <Typography variant="h6" component="span">
+              Confirmation
+            </Typography>
+          </Box>
+        }
+        open={dialogValues.reset}
+        onClose={() => changeDialog("reset")}
+        content={
+          <>
+            Are you sure you want to reset{" "}
+            <mark>
+              <code>{entity.name || entity.identifier}</code>
+            </mark>{" "}
+            to its previous state? It can cause unexpected consequences. Please
+            make sure you understand the implications before proceeding.
+          </>
+        }
+        actions={
+          <ActionButton
+            action={ENTITY_ACTION.RESET}
+            variant="contained"
+            color="error"
+            onSubmit={() => changeDialog("reset")}
+          >
+            Reset
           </ActionButton>
         }
       />
