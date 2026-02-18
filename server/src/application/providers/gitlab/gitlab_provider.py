@@ -58,7 +58,9 @@ class GitLabProvider(IntegrationProvider):
         Verify credentials by calling the /user endpoint.
         Raises GitLab Python SDK any auth failure.
         """
-        await self.get_api_client()
+        client = await self.get_api_client()
+        # Check the token, see https://python-gitlab.readthedocs.io/en/stable/api-usage.html
+        client.client.auth()
 
     @override
     async def get_api_client(self) -> GitLabApi:
