@@ -57,6 +57,7 @@ class GcpAuthentication:
 
 class GcpProvider(IntegrationProvider, GcpAuthentication):
     __integration_provider_name__: str = "gcp"
+    __integration_provider_type__: str = "cloud"
     logger: logging.Logger | EntityLogger = log
 
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:

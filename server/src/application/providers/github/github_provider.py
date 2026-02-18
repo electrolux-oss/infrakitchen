@@ -135,6 +135,7 @@ class GithubAuthentication:
 
 class GithubProvider(IntegrationProvider, GithubAuthentication):
     __integration_provider_name__: str = "github"
+    __integration_provider_type__: str = "git"
     logger: logging.Logger | EntityLogger = log
 
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:

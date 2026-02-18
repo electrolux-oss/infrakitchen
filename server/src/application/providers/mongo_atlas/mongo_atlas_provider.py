@@ -44,6 +44,7 @@ class MongodbAtlasAuthentication:
 
 class MongodbAtlasProvider(IntegrationProvider, MongodbAtlasAuthentication):
     __integration_provider_name__: str = "mongodb_atlas"
+    __integration_provider_type__: str = "cloud"
     logger: logging.Logger | EntityLogger = log
 
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:

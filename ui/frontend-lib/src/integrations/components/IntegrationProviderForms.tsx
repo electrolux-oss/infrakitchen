@@ -695,7 +695,9 @@ export const renderFieldsForProvider = (
                 label="GitLab Server URL"
                 fullWidth
                 margin="normal"
-                error={!!(errors.configuration as FieldErrors)?.gitlab_server_url}
+                error={
+                  !!(errors.configuration as FieldErrors)?.gitlab_server_url
+                }
                 helperText={
                   !!(errors.configuration as FieldErrors)?.gitlab_server_url
                     ?.message
@@ -720,12 +722,9 @@ export const renderFieldsForProvider = (
                 fullWidth
                 margin="normal"
                 type="password"
-                error={
-                  !!(errors.configuration as FieldErrors)?.gitlab_token
-                }
+                error={!!(errors.configuration as FieldErrors)?.gitlab_token}
                 helperText={
-                  (errors.configuration as any)?.gitlab_token
-                    ?.message ||
+                  (errors.configuration as any)?.gitlab_token?.message ||
                   "The token will be securely stored and encrypted"
                 }
                 required

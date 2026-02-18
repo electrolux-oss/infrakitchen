@@ -78,6 +78,7 @@ class AzureRepoAuthentication:
 
 class AzureRepoSourceCode(IntegrationProvider, AzureRepoAuthentication):
     __integration_provider_name__: str = "azure_devops"
+    __integration_provider_type__: str = "git"
     logger: logging.Logger | EntityLogger = log
 
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:
