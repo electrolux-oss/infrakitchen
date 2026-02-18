@@ -78,6 +78,7 @@ class BitbucketAuthentication:
 
 class BitbucketProvider(IntegrationProvider, BitbucketAuthentication):
     __integration_provider_name__: str = "bitbucket"
+    __integration_provider_type__: str = "git"
     logger: logging.Logger | EntityLogger = log
 
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:

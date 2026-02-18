@@ -81,6 +81,7 @@ class IntegrationProvider:
     """
 
     __integration_provider_name__: str = ""
+    __integration_provider_type__: str = ""
 
     adapters: dict[str, Any] = {}
     environment_variables: dict[str, str] = {}

@@ -20,8 +20,6 @@ import { IkEntity } from "../../types";
 import { renderFieldsForProvider } from "../components/SecretProviderForms";
 import { SecretCreate, SecretResponse, SecretValidateResponse } from "../types";
 
-const secret_providers = ["custom", "aws", "gcp"];
-
 const secret_provider_mapping: Record<string, string> = {
   custom: "IK Custom Secret",
   aws: "AWS Secret Manager",
@@ -31,7 +29,7 @@ const secret_provider_mapping: Record<string, string> = {
 const secret_types = ["tofu"];
 
 const SecretCreatePageInner = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { ikApi, linkPrefix, globalConfig } = useConfig();
   const {
     control,
     formState: { errors },
@@ -216,11 +214,13 @@ const SecretCreatePageInner = () => {
                   fullWidth
                   margin="normal"
                 >
-                  {secret_providers.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {secret_provider_mapping[option]}
-                    </MenuItem>
-                  ))}
+                  {globalConfig?.secret_provider_registry?.map(
+                    (option: string) => (
+                      <MenuItem key={option} value={option}>
+                        {secret_provider_mapping[option] || option}
+                      </MenuItem>
+                    ),
+                  )}
                 </TextField>
               )}
             />

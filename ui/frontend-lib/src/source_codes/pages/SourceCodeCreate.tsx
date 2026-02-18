@@ -19,11 +19,10 @@ import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { SourceCodeCreate, SourceCodeResponse } from "../types";
 
-const SOURCE_CODE_PROVIDERS = ["github", "bitbucket", "azure_devops"];
 const SOURCE_CODE_LANGUAGES = ["opentofu"];
 
 const SourceCodeCreatePageInner = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { ikApi, linkPrefix, globalConfig } = useConfig();
   const {
     control,
     formState: { errors },
@@ -183,7 +182,7 @@ const SourceCodeCreatePageInner = () => {
                     },
                   }}
                 >
-                  {SOURCE_CODE_PROVIDERS.map((type) => (
+                  {globalConfig?.git_provider_registry?.map((type: string) => (
                     <MenuItem key={type} value={type}>
                       {type}
                     </MenuItem>

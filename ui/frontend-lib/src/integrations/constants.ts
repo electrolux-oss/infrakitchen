@@ -80,7 +80,7 @@ export const providers: Provider[] = [
     slug: "gitlab",
     instructions: [
       'Go to <a href="https://gitlab.com/-/user_settings/personal_access_tokens" target="_blank"><strong>GitLab</strong></a> or your own instance URL and either',
-      'create a <strong>personal access token</strong>, a <strong>group access token</strong> or a <strong>project access token</strong>',
+      "create a <strong>personal access token</strong>, a <strong>group access token</strong> or a <strong>project access token</strong>",
       "Give your token a descriptive name (e.g., 'InfraKitchen Integration')",
       "Set an appropriate expiration date",
       "Under <strong>Select a role</strong>, select the access level based on your needs",

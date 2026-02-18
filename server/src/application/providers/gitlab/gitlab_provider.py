@@ -15,6 +15,7 @@ class GitLabProvider(IntegrationProvider):
     """Implement the GitLab provider."""
 
     __integration_provider_name__: str = "gitlab"
+    __integration_provider_type__: str = "git"
     logger: logging.Logger | EntityLogger = log
 
     # TODO make a relevant __init__ in parent class to reduce boilerplate

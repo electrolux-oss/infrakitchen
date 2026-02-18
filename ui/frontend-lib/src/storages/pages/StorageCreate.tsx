@@ -20,11 +20,10 @@ import { IkEntity } from "../../types";
 import { renderFieldsForProvider } from "../components/StorageProviderForms";
 import { StorageCreate, StorageResponse } from "../types";
 
-const storage_providers = ["aws", "azurerm", "gcp"];
 const storage_types = ["tofu"];
 
 const StorageCreatePageInner = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { ikApi, linkPrefix, globalConfig } = useConfig();
   const {
     control,
     formState: { errors },
@@ -171,11 +170,13 @@ const StorageCreatePageInner = () => {
                   fullWidth
                   margin="normal"
                 >
-                  {storage_providers.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
+                  {globalConfig?.storage_provider_registry?.map(
+                    (option: string) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ),
+                  )}
                 </TextField>
               )}
             />
