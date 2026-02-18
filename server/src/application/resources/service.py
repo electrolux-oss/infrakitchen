@@ -356,6 +356,20 @@ class ResourceService:
             )
 
     async def action_approve(self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO):
+        def resource_variables_differ() -> bool:
+            # compare variables in temp state and existing resource, if they differ, we need to change resource status
+            if resource_temp_state is None:
+                return False
+
+            input_variables = resource_temp_state.value.get("variables", [])
+            existing_variables = pydantic_resource.variables or []
+            if len(input_variables) != len(existing_variables):
+                return True
+            input_map = {v["name"]: v for v in input_variables}
+            existing_map = {v.name: v.model_dump() for v in existing_variables}
+
+            return input_map != existing_map
+
         resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(
             resource_id=pydantic_resource.id
         )
@@ -380,12 +394,14 @@ class ResourceService:
             )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
-            await approve_entity(existing_resource, abstract=existing_resource.abstract)
+            if resource_variables_differ():
+                await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 
         elif resource_temp_state is not None and pydantic_resource.state == ModelState.PROVISIONED:
-            await approve_entity(existing_resource, abstract=existing_resource.abstract)
+            if resource_variables_differ():
+                await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.audit_log_handler.create_log(
                 pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
             )
@@ -405,9 +421,10 @@ class ResourceService:
             )
 
         if pydantic_resource.workspace_id is not None:
-            await self.workspace_event_sender.send_task(
-                pydantic_resource.id, requester=requester, action=ModelActions.APPROVE
-            )
+            if resource_variables_differ():
+                await self.workspace_event_sender.send_task(
+                    pydantic_resource.id, requester=requester, action=ModelActions.APPROVE
+                )
 
     async def action_destroy(self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO):
         if pydantic_resource.state in [ModelState.DESTROY, ModelState.DESTROYED]:
