@@ -1,4 +1,5 @@
-import { Box, Grid, Tooltip, Typography } from "@mui/material";
+import { Box, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import SyncIcon from "@mui/icons-material/Sync";
 
 import {
   getTextValue,
@@ -7,6 +8,8 @@ import {
 } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useConfig } from "../../common";
 
 export interface TemplateConfigurationProps {
   resource: ResourceResponse;
@@ -60,6 +63,20 @@ const getSourceCodeVariables = (
 export const TemplateConfiguration = ({
   resource,
 }: TemplateConfigurationProps) => {
+
+  const { ikApi } = useConfig();
+
+  const handleSync = () => {
+    ikApi
+      .patchRaw(`resources/${resource.id}/sync`, {})
+      .then(() => {
+        notify("Sent sync workspace request", "success");
+      })
+      .catch((error) => {
+        notifyError(error);
+      });
+  };
+
   return (
     <PropertyCollapseCard
       title={"Template Configuration"}
@@ -117,7 +134,17 @@ export const TemplateConfiguration = ({
         {resource.workspace && (
           <CommonField
             name={"Workspace"}
-            value={<GetReferenceUrlValue {...resource.workspace} />}
+            value={
+              <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+                <GetReferenceUrlValue {...resource.workspace} />
+                <IconButton
+                  size="small"
+                  onClick={handleSync}
+                  sx={{ '& .MuiSvgIcon-root': { fontSize: '1.2rem' } }}>
+                  <SyncIcon />
+                </IconButton>
+              </Box>
+            }
           />
         )}
         <CommonField
