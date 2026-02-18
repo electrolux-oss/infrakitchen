@@ -1,6 +1,6 @@
 # Git Providers
 
-InfraKitchen integrates seamlessly with your existing Git workflows, supporting providers such as GitHub, Bitbucket, and Azure DevOps.
+InfraKitchen integrates seamlessly with your existing Git workflows, supporting providers such as GitHub, GitLab, Bitbucket, and Azure DevOps.
 
 InfraKitchen enables two powerful workflows for infrastructure management:
 
