@@ -242,10 +242,10 @@ class TestPatchAction:
     @pytest.mark.parametrize(
         "state, status, expected_state, expected_status",
         [
-            (ModelState.PROVISIONED, ModelStatus.DONE, ModelState.PROVISIONED, ModelStatus.READY),
+            (ModelState.PROVISIONED, ModelStatus.DONE, ModelState.PROVISIONED, ModelStatus.DONE),
             (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
             (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
-            (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.READY),
+            (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.ERROR),
         ],
     )
     async def test_patch_approve_when_provisioned_resource_edited(
@@ -275,6 +275,77 @@ class TestPatchAction:
         mock_resource_crud.get_by_id.return_value = existing_resource
         for key, value in mocked_resource_temp_state.value.items():
             setattr(existing_resource, key, value)
+
+        mock_resource_crud.update.return_value = existing_resource
+        mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
+
+        result = await mock_resource_service.patch_action(
+            resource_id=resource_id, body=patch_body, requester=mocked_user
+        )
+
+        mocked_resource_temp_state_handler.get_by_resource_id.assert_awaited_once_with(resource_id=resource_id)
+        mock_resource_crud.update.assert_awaited_once_with(existing_resource, mocked_resource_temp_state.value)
+
+        mock_audit_log_handler.create_log.assert_has_calls(
+            [
+                call(existing_resource.id, mocked_user.id, ModelActions.APPROVE),
+                call(existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE),
+            ]
+        )
+        mock_revision_handler.handle_revision.assert_awaited_once_with(existing_resource)
+        mocked_resource_temp_state_handler.delete_by_resource_id.assert_awaited_once_with(
+            resource_id=existing_resource.id
+        )
+
+        mock_resource_crud.refresh.assert_has_calls([call(existing_resource)])
+
+        response = ResourceResponse.model_validate(existing_resource)
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.APPROVE)
+
+        assert result.status == expected_status
+        assert result.state == expected_state
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "state, status, expected_state, expected_status",
+        [
+            (ModelState.PROVISIONED, ModelStatus.DONE, ModelState.PROVISIONED, ModelStatus.READY),
+            (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
+            (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
+            (ModelState.PROVISION, ModelStatus.ERROR, ModelState.PROVISION, ModelStatus.READY),
+        ],
+    )
+    async def test_patch_approve_when_provisioned_resource_edited_include_variables(
+        self,
+        state,
+        status,
+        expected_state,
+        expected_status,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_resource_temp_state_handler,
+        mocked_resource_temp_state,
+        mock_revision_handler,
+        mocked_user,
+        mocked_resource,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.APPROVE)
+
+        resource_id = uuid4()
+        existing_resource = mocked_resource
+        existing_resource.id = resource_id
+        existing_resource.status = status
+        existing_resource.state = state
+
+        mock_resource_crud.get_by_id.return_value = existing_resource
+        for key, value in mocked_resource_temp_state.value.items():
+            setattr(existing_resource, key, value)
+
+        # set variables to test the variables are updated after approval
+        mocked_resource_temp_state.value["variables"] = [{"name": "var1", "value": "value1"}]
+        existing_resource.variables = [{"name": "var1", "value": "old_value"}]
 
         mock_resource_crud.update.return_value = existing_resource
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
