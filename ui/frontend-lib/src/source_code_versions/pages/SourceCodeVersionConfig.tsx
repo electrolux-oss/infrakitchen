@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 import {
   useForm,
@@ -27,6 +27,119 @@ import { normalizeNumericField, parseNumericField } from "../utils/numeric";
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
 }
+
+interface ConfigSnapshot {
+  id: string;
+  required: boolean;
+  default: unknown;
+  frozen: boolean;
+  unique: boolean;
+  restricted: boolean;
+  options: unknown;
+  validation_rule_id: string | null;
+  validation_regex: string;
+  validation_min_value: string;
+  validation_max_value: string;
+  validation_enabled: boolean;
+  reference_template_id: string | null;
+  output_config_name: string | null;
+}
+
+type ValidationRuleUpdate =
+  | {
+      action: "upsert";
+      target_type: "string" | "number";
+      rule_id?: string | null;
+      regex_pattern?: string | null;
+      min_value?: number | null;
+      max_value?: number | null;
+    }
+  | {
+      action: "clear";
+      target_type: "string" | "number";
+    };
+
+const hasConfigChanged = (
+  formConfig: SourceConfigUpdateWithId,
+  original?: ConfigSnapshot,
+): boolean => {
+  if (!original) {
+    return true;
+  }
+
+  return (
+    formConfig.required !== original.required ||
+    JSON.stringify(formConfig.default) !== JSON.stringify(original.default) ||
+    formConfig.frozen !== original.frozen ||
+    formConfig.unique !== original.unique ||
+    formConfig.restricted !== original.restricted ||
+    JSON.stringify(formConfig.options) !== JSON.stringify(original.options) ||
+    formConfig.reference_template_id !== original.reference_template_id ||
+    formConfig.output_config_name !== original.output_config_name ||
+    formConfig.validation_rule_id !== original.validation_rule_id ||
+    (formConfig.validation_regex || "") !== (original.validation_regex || "") ||
+    normalizeNumericField(formConfig.validation_min_value) !==
+      normalizeNumericField(original.validation_min_value) ||
+    normalizeNumericField(formConfig.validation_max_value) !==
+      normalizeNumericField(original.validation_max_value) ||
+    Boolean(formConfig.validation_enabled) !==
+      Boolean(original.validation_enabled)
+  );
+};
+
+const buildValidationRuleUpdate = (
+  config: SourceConfigUpdateWithId,
+  sourceConfig: { type: string },
+  ruleIdForSubmission: string | null,
+  original?: ConfigSnapshot,
+): ValidationRuleUpdate | null => {
+  const targetType = sourceConfig.type === "number" ? "number" : "string";
+  const trimmedRegex = (config.validation_regex || "").trim();
+  const normalizedMin = parseNumericField(config.validation_min_value);
+  const normalizedMax = parseNumericField(config.validation_max_value);
+  const wantsValidation = Boolean(config.validation_enabled);
+
+  const hasConstraints =
+    wantsValidation &&
+    (Boolean(trimmedRegex) || normalizedMin !== null || normalizedMax !== null);
+
+  const originalTrimmedRegex = (original?.validation_regex || "").trim();
+  const originalMin = parseNumericField(original?.validation_min_value);
+  const originalMax = parseNumericField(original?.validation_max_value);
+  const originalWantsValidation = Boolean(original?.validation_enabled);
+  const originalHasConstraints =
+    originalWantsValidation &&
+    (Boolean(originalTrimmedRegex) ||
+      originalMin !== null ||
+      originalMax !== null);
+
+  if (hasConstraints) {
+    return {
+      action: "upsert",
+      target_type: targetType,
+      rule_id: ruleIdForSubmission,
+      regex_pattern:
+        targetType === "string" && trimmedRegex ? trimmedRegex : null,
+      min_value:
+        targetType === "number" && normalizedMin !== null
+          ? normalizedMin
+          : null,
+      max_value:
+        targetType === "number" && normalizedMax !== null
+          ? normalizedMax
+          : null,
+    };
+  }
+
+  if (originalHasConstraints) {
+    return {
+      action: "clear",
+      target_type: targetType,
+    };
+  }
+
+  return null;
+};
 
 const hasValidationData = (config: {
   validation_regex?: string | null;
@@ -72,9 +185,64 @@ const SourceCodeVersionConfigContent = () => {
     name: "configs",
   });
 
+  const templateReferenceMap = useMemo(
+    () =>
+      new Map(
+        templateReferences.map((reference) => [
+          reference.input_config_name,
+          {
+            reference_template_id: reference.reference_template_id || null,
+            output_config_name: reference.output_config_name || null,
+          },
+        ]),
+      ),
+    [templateReferences],
+  );
+
+  const originalConfigs = useMemo<ConfigSnapshot[]>(
+    () =>
+      sourceConfigs.map((config) => {
+        const templateReference = templateReferenceMap.get(config.name);
+
+        return {
+          id: config.id,
+          required: config.required,
+          default: config.default,
+          frozen: config.frozen,
+          unique: config.unique,
+          restricted: config.restricted,
+          options: config.options,
+          validation_rule_id: config.validation_rule_id ?? null,
+          validation_regex: config.validation_regex || "",
+          validation_min_value: normalizeNumericField(
+            config.validation_min_value,
+          ),
+          validation_max_value: normalizeNumericField(
+            config.validation_max_value,
+          ),
+          validation_enabled: hasValidationData(config),
+          reference_template_id:
+            templateReference?.reference_template_id || null,
+          output_config_name: templateReference?.output_config_name || null,
+        };
+      }),
+    [sourceConfigs, templateReferenceMap],
+  );
+
+  const originalConfigMap = useMemo(
+    () => new Map(originalConfigs.map((config) => [config.id, config])),
+    [originalConfigs],
+  );
+
+  const sourceConfigMap = useMemo(
+    () => new Map(sourceConfigs.map((config) => [config.id, config])),
+    [sourceConfigs],
+  );
+
   useEffect(() => {
     if (sourceConfigs.length > 0) {
       const formattedConfigs = sourceConfigs.map((config) => {
+        const templateReference = templateReferenceMap.get(config.name);
         const normalizedMin = normalizeNumericField(
           config.validation_min_value,
         );
@@ -100,84 +268,28 @@ const SourceCodeVersionConfigContent = () => {
           validation_max_value: normalizedMax,
           validation_enabled: hasValidationData(config),
           reference_template_id:
-            templateReferences.find(
-              (tr) => tr.input_config_name === config.name,
-            )?.reference_template_id || null,
-          output_config_name:
-            templateReferences.find(
-              (tr) => tr.input_config_name === config.name,
-            )?.output_config_name || null,
+            templateReference?.reference_template_id || null,
+          output_config_name: templateReference?.output_config_name || null,
         };
       });
       reset({ configs: formattedConfigs });
     }
-  }, [sourceConfigs, templateReferences, reset]);
+  }, [sourceConfigs, templateReferenceMap, reset]);
 
   const handleBack = () =>
     navigate(`${linkPrefix}source_code_versions/${sourceCodeVersion.id}`);
 
   const onSubmit = useCallback(
     async (data: FormValues) => {
-      const originalConfigs = sourceConfigs.map((config) => ({
-        id: config.id,
-        required: config.required,
-        default: config.default,
-        frozen: config.frozen,
-        unique: config.unique,
-        restricted: config.restricted,
-        options: config.options,
-        validation_rule_id: config.validation_rule_id ?? null,
-        validation_regex: config.validation_regex || "",
-        validation_min_value: normalizeNumericField(
-          config.validation_min_value,
-        ),
-        validation_max_value: normalizeNumericField(
-          config.validation_max_value,
-        ),
-        validation_enabled: hasValidationData(config),
-        reference_template_id:
-          templateReferences.find((tr) => tr.input_config_name === config.name)
-            ?.reference_template_id || null,
-        output_config_name:
-          templateReferences.find((tr) => tr.input_config_name === config.name)
-            ?.output_config_name || null,
-      }));
-
       // When a reference is selected, we want to save all configs even if not manually changed
       // Otherwise, only save changed configs
       let configsToSubmit: typeof data.configs;
-      // Filter only changed configs
       if (selectedReferenceId) {
-        // Reference selected but no manual changes - submit all configs
         configsToSubmit = data.configs;
       } else {
-        configsToSubmit = data.configs.filter((formConfig, index) => {
-          const original = originalConfigs[index];
-          if (!original) return true; // New config from reference
-
-          return (
-            formConfig.required !== original.required ||
-            JSON.stringify(formConfig.default) !==
-              JSON.stringify(original.default) ||
-            formConfig.frozen !== original.frozen ||
-            formConfig.unique !== original.unique ||
-            formConfig.restricted !== original.restricted ||
-            JSON.stringify(formConfig.options) !==
-              JSON.stringify(original.options) ||
-            formConfig.reference_template_id !==
-              original.reference_template_id ||
-            formConfig.output_config_name !== original.output_config_name ||
-            formConfig.validation_rule_id !== original.validation_rule_id ||
-            (formConfig.validation_regex || "") !==
-              (original.validation_regex || "") ||
-            normalizeNumericField(formConfig.validation_min_value) !==
-              normalizeNumericField(original.validation_min_value) ||
-            normalizeNumericField(formConfig.validation_max_value) !==
-              normalizeNumericField(original.validation_max_value) ||
-            Boolean(formConfig.validation_enabled) !==
-              Boolean(original.validation_enabled)
-          );
-        });
+        configsToSubmit = data.configs.filter((formConfig) =>
+          hasConfigChanged(formConfig, originalConfigMap.get(formConfig.id)),
+        );
       }
 
       if (configsToSubmit.length === 0) {
@@ -187,26 +299,15 @@ const SourceCodeVersionConfigContent = () => {
 
       try {
         const configUpdates: SourceConfigUpdateWithId[] = [];
-        type ValidationRuleUpdate =
-          | {
-              action: "upsert";
-              target_type: "string" | "number";
-              rule_id?: string | null;
-              regex_pattern?: string | null;
-              min_value?: number | null;
-              max_value?: number | null;
-            }
-          | {
-              action: "clear";
-              target_type: "string" | "number";
-            };
-
         const validationRuleUpdates = new Map<string, ValidationRuleUpdate>();
-        const originalConfigMap = new Map(
-          originalConfigs.map((config) => [config.id, config]),
-        );
 
         configsToSubmit.forEach((config) => {
+          const sourceConfig = sourceConfigMap.get(config.id);
+          const ruleIdForSubmission =
+            sourceConfig?.type === "string"
+              ? (config.validation_rule_id ?? null)
+              : null;
+
           configUpdates.push({
             id: config.id,
             required: config.required,
@@ -218,61 +319,31 @@ const SourceCodeVersionConfigContent = () => {
             template_id: sourceCodeVersion.template.id,
             reference_template_id: config.reference_template_id,
             output_config_name: config.output_config_name,
-            validation_rule_id: config.validation_rule_id ?? null,
+            validation_rule_id: ruleIdForSubmission,
             validation_enabled: config.validation_enabled,
+            validation_regex: config.validation_regex || "",
+            validation_min_value: normalizeNumericField(
+              config.validation_min_value,
+            ),
+            validation_max_value: normalizeNumericField(
+              config.validation_max_value,
+            ),
           });
 
-          const sourceConfig = sourceConfigs.find((c) => c.id === config.id);
           if (!sourceConfig) {
             return;
           }
 
-          const targetType =
-            sourceConfig.type === "number" ? "number" : "string";
-          const trimmedRegex = (config.validation_regex || "").trim();
-          const normalizedMin = parseNumericField(config.validation_min_value);
-          const normalizedMax = parseNumericField(config.validation_max_value);
-          const wantsValidation = Boolean(config.validation_enabled);
-          const hasConstraints =
-            wantsValidation &&
-            (Boolean(trimmedRegex) ||
-              normalizedMin !== null ||
-              normalizedMax !== null);
-
           const original = originalConfigMap.get(config.id);
-          const originalTrimmedRegex = (
-            original?.validation_regex || ""
-          ).trim();
-          const originalMin = parseNumericField(original?.validation_min_value);
-          const originalMax = parseNumericField(original?.validation_max_value);
-          const originalWantsValidation = Boolean(original?.validation_enabled);
-          const originalHasConstraints =
-            originalWantsValidation &&
-            (Boolean(originalTrimmedRegex) ||
-              originalMin !== null ||
-              originalMax !== null);
+          const validationRuleUpdate = buildValidationRuleUpdate(
+            config,
+            sourceConfig,
+            ruleIdForSubmission,
+            original,
+          );
 
-          if (hasConstraints) {
-            validationRuleUpdates.set(sourceConfig.name, {
-              action: "upsert",
-              target_type: targetType,
-              rule_id: config.validation_rule_id ?? null,
-              regex_pattern:
-                targetType === "string" && trimmedRegex ? trimmedRegex : null,
-              min_value:
-                targetType === "number" && normalizedMin !== null
-                  ? normalizedMin
-                  : null,
-              max_value:
-                targetType === "number" && normalizedMax !== null
-                  ? normalizedMax
-                  : null,
-            });
-          } else if (originalHasConstraints) {
-            validationRuleUpdates.set(sourceConfig.name, {
-              action: "clear",
-              target_type: targetType,
-            });
+          if (validationRuleUpdate) {
+            validationRuleUpdates.set(sourceConfig.name, validationRuleUpdate);
           }
         });
 
@@ -338,8 +409,8 @@ const SourceCodeVersionConfigContent = () => {
       selectedReferenceId,
       navigate,
       linkPrefix,
-      sourceConfigs,
-      templateReferences,
+      originalConfigMap,
+      sourceConfigMap,
       sourceCodeVersion.template.id,
     ],
   );

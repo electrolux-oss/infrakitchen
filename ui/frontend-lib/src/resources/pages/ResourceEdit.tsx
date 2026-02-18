@@ -30,7 +30,11 @@ import TagInput from "../../common/components/inputs/TagInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { IkEntity } from "../../types";
+import {
+  IkEntity,
+  ValidationRule,
+  ValidationRulesByVariable,
+} from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import {
   ResourceResponse,
@@ -38,6 +42,7 @@ import {
   ResourceUpdate,
   ResourceVariableSchema,
 } from "../types";
+import { buildValidationRuleMaps } from "../utils/validationRules";
 
 export const ResourceEditPageInner = (props: {
   entity: ResourceResponse;
@@ -146,6 +151,11 @@ export const ResourceEditPageInner = (props: {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
+    useState<Record<string, string>>({});
+  const [validationRuleByVariable, setValidationRuleByVariable] = useState<
+    Record<string, ValidationRule | null>
+  >({});
 
   function getSchemaObject(schema: ResourceVariableSchema[]) {
     return schema.reduce((acc: Record<string, any>, variable) => {
@@ -256,6 +266,27 @@ export const ResourceEditPageInner = (props: {
     fields,
     remove,
   ]);
+
+  useEffect(() => {
+    if (!entity.template.id) {
+      setValidationRuleSummaryByVariable({});
+      setValidationRuleByVariable({});
+      return;
+    }
+
+    ikApi
+      .get(`validation_rules/template/${entity.template.id}`)
+      .then((response: ValidationRulesByVariable[]) => {
+        const { summaryByVariable, ruleByVariable } =
+          buildValidationRuleMaps(response);
+
+        setValidationRuleSummaryByVariable(summaryByVariable);
+        setValidationRuleByVariable(ruleByVariable);
+      })
+      .catch((error: any) => {
+        notifyError(error);
+      });
+  }, [ikApi, entity.template.id]);
 
   return (
     <FormProvider {...methods}>
@@ -509,6 +540,13 @@ export const ResourceEditPageInner = (props: {
                               edit_mode={true}
                               variable={
                                 getSchemaObject(schema)[field.name] || {}
+                              }
+                              validationSummary={
+                                validationRuleSummaryByVariable[field.name] ||
+                                null
+                              }
+                              validationRule={
+                                validationRuleByVariable[field.name] || null
                               }
                             />
                           ) : null,

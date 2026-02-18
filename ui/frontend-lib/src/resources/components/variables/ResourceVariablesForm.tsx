@@ -2,7 +2,9 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { TableCell, TableRow, Typography, Chip } from "@mui/material";
 
+import { ValidationRule } from "../../../types";
 import { ResourceVariableSchema } from "../../types";
+import { validateResourceVariableValue } from "../../utils/validationRules";
 
 import { ResourceVariableInput } from "./ResourceVariableInput";
 
@@ -10,8 +12,16 @@ export const ResourceVariableForm = (props: {
   index: number;
   variable: ResourceVariableSchema;
   edit_mode?: boolean;
+  validationSummary?: string | null;
+  validationRule?: ValidationRule | null;
 }) => {
-  const { index, variable, edit_mode = false } = props;
+  const {
+    index,
+    variable,
+    edit_mode = false,
+    validationSummary,
+    validationRule,
+  } = props;
   const { control } = useFormContext();
 
   if (variable.restricted) return null;
@@ -29,17 +39,6 @@ export const ResourceVariableForm = (props: {
           {variable.name}
           {variable.required && <span style={{ color: "#d32f2f" }}> *</span>}
         </Typography>
-        <Chip
-          label={variable.type}
-          size="small"
-          color="default"
-          sx={{
-            ml: 1,
-            fontWeight: "bold",
-            letterSpacing: 0.5,
-            verticalAlign: "middle",
-          }}
-        />
         <Typography
           variant="body2"
           color="text.secondary"
@@ -47,14 +46,31 @@ export const ResourceVariableForm = (props: {
         >
           {variable.description}
         </Typography>
+
+        <Chip
+          label={variable.type}
+          size="small"
+          color="default"
+          sx={{
+            fontWeight: "bold",
+            letterSpacing: 0.5,
+          }}
+        />
+        {validationSummary && (
+          <Chip
+            label={validationSummary}
+            size="small"
+            color="success"
+            variant="outlined"
+            sx={{ ml: 1 }}
+          />
+        )}
       </TableCell>
       <TableCell sx={{ width: "300px" }}>
         <Controller
           rules={{
             validate: (value) =>
-              variable.required && (value === null || value === undefined)
-                ? "This field is required"
-                : true,
+              validateResourceVariableValue(value, variable, validationRule),
           }}
           name={`variables.${index}.value`}
           control={control}

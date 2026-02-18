@@ -33,12 +33,14 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { TemplateResponse } from "../../templates/types";
 import { IkEntity } from "../../types";
+import { ValidationRule, ValidationRulesByVariable } from "../../types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import {
   ResourceCreate,
   ResourceResponse,
   ResourceVariableSchema,
 } from "../types";
+import { buildValidationRuleMaps } from "../utils/validationRules";
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -65,6 +67,11 @@ const ResourceCreatePageInner = () => {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
+  const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
+    useState<Record<string, string>>({});
+  const [validationRuleByVariable, setValidationRuleByVariable] = useState<
+    Record<string, ValidationRule | null>
+  >({});
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
   >({});
@@ -229,6 +236,27 @@ const ResourceCreatePageInner = () => {
     setSchema,
     setValue,
   ]);
+
+  useEffect(() => {
+    if (!watchedTemplateId) {
+      setValidationRuleSummaryByVariable({});
+      setValidationRuleByVariable({});
+      return;
+    }
+
+    ikApi
+      .get(`validation_rules/template/${watchedTemplateId}`)
+      .then((response: ValidationRulesByVariable[]) => {
+        const { summaryByVariable, ruleByVariable } =
+          buildValidationRuleMaps(response);
+
+        setValidationRuleSummaryByVariable(summaryByVariable);
+        setValidationRuleByVariable(ruleByVariable);
+      })
+      .catch((error: any) => {
+        notifyError(error);
+      });
+  }, [ikApi, watchedTemplateId]);
 
   return (
     <PageContainer
@@ -679,6 +707,15 @@ const ResourceCreatePageInner = () => {
                             key={field.id}
                             index={index}
                             variable={schema[index]}
+                            validationSummary={
+                              validationRuleSummaryByVariable[
+                                schema[index].name
+                              ] || null
+                            }
+                            validationRule={
+                              validationRuleByVariable[schema[index].name] ||
+                              null
+                            }
                           />
                         ) : null,
                       )}
