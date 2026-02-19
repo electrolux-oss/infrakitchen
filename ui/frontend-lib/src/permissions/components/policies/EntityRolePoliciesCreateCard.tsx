@@ -1,10 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 
 import { Controller, useForm } from "react-hook-form";
 
 import {
   Box,
-  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -25,6 +24,7 @@ interface EntityRolePolicyCreateProps {
   entity_name?: string;
   role_name?: string;
   onClose?: () => void;
+  formId?: string;
 }
 
 const actions = [
@@ -36,7 +36,13 @@ const actions = [
 export const EntityRolePolicyCreateCard = (
   props: EntityRolePolicyCreateProps,
 ) => {
-  const { role_name, entity_id, entity_name = "resource", onClose } = props;
+  const {
+    role_name,
+    entity_id,
+    entity_name = "resource",
+    onClose,
+    formId,
+  } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -56,6 +62,8 @@ export const EntityRolePolicyCreateCard = (
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
+  const generatedFormId = useId();
+  const resolvedFormId = formId ?? generatedFormId;
 
   const onSubmit = useCallback(
     async (data: EntityPolicyCreate) => {
@@ -108,7 +116,7 @@ export const EntityRolePolicyCreateCard = (
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {!role_name && (
           <Controller
             name="role"
@@ -195,15 +203,6 @@ export const EntityRolePolicyCreateCard = (
             )}
           />
         )}
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2, py: 1.5, px: 4, borderRadius: "8px" }}
-        >
-          Submit
-        </Button>
       </form>
     </Box>
   );
