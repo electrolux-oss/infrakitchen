@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Any, Literal, TypeVar
+from typing import Annotated, Any, Literal, TypeVar
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
 
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
@@ -13,6 +13,8 @@ from application.workspaces.schema import WorkspaceShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
+
+OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 
 class DependencyTag(BaseModel):
@@ -185,7 +187,7 @@ class ResourceCreate(BaseModel):
         default_factory=list,
     )
     labels: list[str] = Field(default_factory=list)
-    workspace_id: uuid.UUID | None = Field(
+    workspace_id: OptionalUUID = Field(
         default=None,
     )
 
@@ -206,7 +208,7 @@ class ResourcePatch(BaseModel):
     dependency_tags: list[DependencyTag] | None = Field(default_factory=list)
     dependency_config: list[DependencyConfig] | None = Field(default_factory=list)
     labels: list[str] | None = Field(default_factory=list)
-    workspace_id: uuid.UUID | None = Field(
+    workspace_id: OptionalUUID = Field(
         default=None,
     )
 
