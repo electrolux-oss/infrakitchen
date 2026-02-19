@@ -32,6 +32,7 @@ from core.logs.service import LogService
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from application.resource_temp_state.handler import ResourceTempStateHandler
+from application.favorites.service import FavoriteService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.users.functions import user_entity_permissions
@@ -582,6 +583,9 @@ class ResourceService:
         )
         if resource_temp_state is not None:
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=existing_resource.id)
+
+        favorite_service = FavoriteService(session=self.crud.session)
+        await favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
 
         await delete_entity(existing_resource)
         await self.audit_log_handler.create_log(resource_id, requester.id, ModelActions.DELETE)

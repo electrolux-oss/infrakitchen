@@ -13,6 +13,8 @@ from application.executors.service import ExecutorService
 @pytest.fixture
 def mock_executor_crud():
     crud = Mock(spec=ExecutorCRUD)
+    crud.session = Mock()
+    crud.session.execute = AsyncMock()
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()

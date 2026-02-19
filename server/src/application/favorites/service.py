@@ -1,11 +1,12 @@
 from uuid import UUID
 
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select
 
 from core.errors import EntityNotFound
 
-from .model import Favorite, FavoriteCreate, FavoriteDTO
+from .model import Favorite, FavoriteComponentType, FavoriteCreate, FavoriteDTO
 
 
 class FavoriteService:
@@ -38,7 +39,9 @@ class FavoriteService:
         await self.session.flush()
         return FavoriteDTO.model_validate(db_favorite)
 
-    async def delete(self, user_id: UUID | str, component_type: str, component_id: UUID | str) -> None:
+    async def delete(
+        self, user_id: UUID | str, component_type: FavoriteComponentType, component_id: UUID | str
+    ) -> None:
         favorite = await self.get_by_composite_keys(
             user_id=user_id,
             component_type=component_type,
@@ -53,7 +56,7 @@ class FavoriteService:
     async def get_by_composite_keys(
         self,
         user_id: UUID | str,
-        component_type: str,
+        component_type: FavoriteComponentType,
         component_id: UUID | str,
     ) -> Favorite | None:
         statement = select(Favorite).where(
@@ -64,3 +67,10 @@ class FavoriteService:
 
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
+
+    async def delete_all_by_component(self, component_type: FavoriteComponentType, component_id: UUID | str) -> None:
+        statement = delete(Favorite).where(
+            Favorite.component_type == component_type,
+            Favorite.component_id == component_id,
+        )
+        await self.session.execute(statement)

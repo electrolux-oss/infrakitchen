@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import SessionLocal
 from core.users.model import UserDTO
 
-from .model import FavoriteCreate, FavoriteDTO
+from .model import FavoriteComponentType, FavoriteCreate, FavoriteDTO
 from .service import FavoriteService
 
 router = APIRouter()
@@ -63,7 +63,7 @@ async def post(
 )
 async def delete(
     request: Request,
-    component_type: str,
+    component_type: FavoriteComponentType,
     component_id: UUID,
     service: FavoriteService = Depends(get_favorite_service),
 ):

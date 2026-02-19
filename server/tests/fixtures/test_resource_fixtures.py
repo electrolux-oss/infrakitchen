@@ -20,6 +20,8 @@ def mock_validation_rule_service():
 @pytest.fixture
 def mock_resource_crud():
     crud = Mock(spec=ResourceCRUD)
+    crud.session = Mock()
+    crud.session.execute = AsyncMock()
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()

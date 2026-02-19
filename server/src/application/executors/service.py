@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from application.executors.functions import delete_executor_policies
+from application.favorites.service import FavoriteService
 from application.integrations.service import IntegrationService
 from application.executors.model import Executor, ExecutorDTO
 from application.source_code_versions.service import SourceCodeService
@@ -271,6 +272,9 @@ class ExecutorService:
         existing_executor = await self.crud.get_by_id(executor_id)
         if not existing_executor:
             raise EntityNotFound("Executor not found")
+
+        favorite_service = FavoriteService(session=self.crud.session)
+        await favorite_service.delete_all_by_component(component_type="executor", component_id=executor_id)
 
         await delete_entity(existing_executor)
         await self.audit_log_handler.create_log(executor_id, requester.id, ModelActions.DELETE)
