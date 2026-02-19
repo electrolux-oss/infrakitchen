@@ -62,6 +62,7 @@ const ResourceCreatePageInner = () => {
   const [variablesOpen, setVariablesOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [parentsSelected, setParentsSelected] = useState(false);
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
@@ -188,14 +189,26 @@ const ResourceCreatePageInner = () => {
       const parentStorage = parentObjects?.storage?.id || null;
       const parentWorkspace = parentObjects?.workspace?.id || null;
 
-      if (parentIntegrations.length > 0) {
+      if (
+        parentIntegrations.length > 0 &&
+        watchedTemplate.parents.length === watchedParentIds.length &&
+        !parentsSelected
+      ) {
+        setParentsSelected(true);
         setValue("integration_ids", parentIntegrations);
       }
 
       setValue("storage_id", parentStorage);
       setValue("workspace_id", parentWorkspace);
     }
-  }, [watchedParentIds, setValue, getValues, buffer, watchedTemplate]);
+  }, [
+    watchedParentIds,
+    setValue,
+    getValues,
+    buffer,
+    watchedTemplate,
+    parentsSelected,
+  ]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
