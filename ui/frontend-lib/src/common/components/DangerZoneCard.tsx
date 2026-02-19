@@ -121,7 +121,7 @@ export const DangerZoneCard = () => {
             color="error"
             onClick={() => changeDialog("reset")}
           >
-            Reset to Previous State
+            Reset to error state
           </Button>
         )}
       </CardActions>
@@ -261,8 +261,14 @@ export const DangerZoneCard = () => {
             <mark>
               <code>{entity.name || entity.identifier}</code>
             </mark>{" "}
-            to its previous state? It can cause unexpected consequences. Please
-            make sure you understand the implications before proceeding.
+            to <b>error</b> state? It allows you to unlock the resource for
+            further actions.
+            <br />
+            <br />
+            <span style={{ color: "red" }}>
+              It can cause unexpected consequences. Please make sure you
+              understand the implications before proceeding.
+            </span>
           </>
         }
         actions={

@@ -43,7 +43,12 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       />
       <CommonField
         name={"Status"}
-        value={<StatusChip status={sourceCode.status} />}
+        value={
+          <StatusChip
+            status={sourceCode.status}
+            updatedAt={sourceCode.updated_at}
+          />
+        }
       />
       <CommonField
         name={"Integration"}
