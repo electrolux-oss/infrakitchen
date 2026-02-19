@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 from uuid import UUID
@@ -155,6 +156,14 @@ class SourceCodeService:
                     trace_id=self.audit_log_handler.trace_id,
                     action=ModelActions.SYNC,
                 )
+            case ModelActions.RESET:
+                if existing_source_code.status != ModelStatus.IN_PROGRESS:
+                    raise ValueError("Only source codes in IN_PROGRESS status can be reset")
+                if datetime.now(UTC) - existing_source_code.updated_at < timedelta(minutes=10):
+                    raise EntityWrongState(
+                        "Source code is in progress. Please wait or reset after 10 minutes from last update."
+                    )
+                existing_source_code.status = ModelStatus.ERROR
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
@@ -214,6 +223,8 @@ class SourceCodeService:
             return []
 
         if source_code.status == ModelStatus.IN_PROGRESS:
+            if datetime.now(UTC) - source_code.updated_at > timedelta(minutes=10):
+                return [ModelActions.RESET]
             return []
 
         if source_code.status in [ModelStatus.READY, ModelStatus.ERROR, ModelStatus.DONE]:

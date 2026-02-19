@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 from uuid import UUID
@@ -260,6 +261,15 @@ class ExecutorService:
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_executor, requester)
 
+            case ModelActions.RESET:
+                if existing_executor.status != ModelStatus.IN_PROGRESS:
+                    raise ValueError("Only executors in IN_PROGRESS status can be reset")
+                if datetime.now(UTC) - existing_executor.updated_at < timedelta(minutes=10):
+                    raise EntityWrongState(
+                        "Executor is in progress. Please wait or reset after 10 minutes from last update."
+                    )
+                existing_executor.status = ModelStatus.ERROR
+
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
@@ -296,6 +306,8 @@ class ExecutorService:
             raise EntityNotFound("Executor not found")
 
         if executor.status in [ModelStatus.IN_PROGRESS]:
+            if datetime.now(UTC) - executor.updated_at > timedelta(minutes=10):
+                return [ModelActions.RESET]
             return []
 
         user_is_admin = "admin" in requester_permissions

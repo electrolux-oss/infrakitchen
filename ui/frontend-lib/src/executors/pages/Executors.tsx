@@ -57,6 +57,7 @@ export const ExecutorsPage = () => {
           <StatusChip
             status={String(params.row.status).toLowerCase()}
             state={String(params.row.state).toLowerCase()}
+            updatedAt={params.row.updated_at}
           />
         ),
       },
@@ -140,6 +141,7 @@ export const ExecutorsPage = () => {
           "state",
           "status",
           "created_at",
+          "updated_at",
           "labels",
         ]}
       />

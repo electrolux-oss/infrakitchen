@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -461,6 +462,85 @@ class TestPatch:
         mock_source_code_version_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_source_code_version_crud.refresh.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_awaited_once()
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_success(
+        self,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_source_code_version_service,
+        mock_user_dto,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        source_code_version.status = ModelStatus.IN_PROGRESS
+        source_code_version.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        result = await mock_source_code_version_service.patch(
+            source_code_version_id=source_code_version.id, body=patch_body, requester=mock_user_dto
+        )
+
+        assert result.status == ModelStatus.ERROR
+        mock_source_code_version_crud.get_by_id.assert_awaited_once_with(source_code_version.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            source_code_version.id, mock_user_dto.id, ModelActions.RESET
+        )
+        response = SourceCodeVersionResponse.model_validate(source_code_version)
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RESET)
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_invalid_status(
+        self,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_source_code_version_service,
+        mock_user_dto,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        source_code_version.status = ModelStatus.READY
+        source_code_version.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        with pytest.raises(ValueError, match="Only source code versions in IN_PROGRESS status can be reset"):
+            await mock_source_code_version_service.patch(
+                source_code_version_id=source_code_version.id, body=patch_body, requester=mock_user_dto
+            )
+
+        mock_source_code_version_crud.get_by_id.assert_awaited_once_with(source_code_version.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            source_code_version.id, mock_user_dto.id, ModelActions.RESET
+        )
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_too_recent_updated_at(
+        self,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_source_code_version_service,
+        mock_user_dto,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        source_code_version.status = ModelStatus.IN_PROGRESS
+        source_code_version.updated_at = datetime.now(UTC) - timedelta(minutes=5)
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        with pytest.raises(EntityWrongState, match="Source code version is in progress"):
+            await mock_source_code_version_service.patch(
+                source_code_version_id=source_code_version.id, body=patch_body, requester=mock_user_dto
+            )
+
+        mock_source_code_version_crud.get_by_id.assert_awaited_once_with(source_code_version.id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            source_code_version.id, mock_user_dto.id, ModelActions.RESET
+        )
         mock_event_sender.send_event.assert_not_awaited()
 
 

@@ -159,7 +159,10 @@ export const SourceCodesPage = () => {
           <Typography variant="caption" sx={{ display: "block" }}>
             Status
           </Typography>
-          <StatusChip status={sourceCode.status} />
+          <StatusChip
+            status={sourceCode.status}
+            updatedAt={sourceCode.updated_at}
+          />
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Typography variant="caption" sx={{ display: "block" }}>

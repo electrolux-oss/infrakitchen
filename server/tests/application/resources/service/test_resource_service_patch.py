@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, call
 from uuid import uuid4
 
@@ -854,3 +855,93 @@ class TestPatchAction:
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RETRY)
         assert result.status == ModelStatus.QUEUED
         assert result.state == ModelState.PROVISIONED
+
+    @pytest.mark.asyncio
+    async def test_reset_action_success(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+
+        resource_id = uuid4()
+        existing_resource = mocked_resource
+        existing_resource.id = resource_id
+        existing_resource.status = ModelStatus.IN_PROGRESS
+        existing_resource.state = ModelState.PROVISION
+        existing_resource.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_resource_crud.get_by_id.return_value = existing_resource
+
+        result = await mock_resource_service.patch_action(
+            resource_id=resource_id, body=patch_body, requester=mocked_user
+        )
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(resource_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(resource_id, mocked_user.id, ModelActions.RESET)
+
+        response = ResourceResponse.model_validate(existing_resource)
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RESET)
+
+        assert result.status == ModelStatus.ERROR
+        assert result.state == ModelState.PROVISION
+
+    @pytest.mark.asyncio
+    async def test_reset_action_invalid_status(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+
+        resource_id = uuid4()
+        existing_resource = mocked_resource
+        existing_resource.id = resource_id
+        existing_resource.status = ModelStatus.READY
+        existing_resource.state = ModelState.PROVISION
+        existing_resource.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_resource_crud.get_by_id.return_value = existing_resource
+
+        with pytest.raises(ValueError, match="Only resources in IN_PROGRESS status can be reset"):
+            await mock_resource_service.patch_action(resource_id=resource_id, body=patch_body, requester=mocked_user)
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(resource_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(resource_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_reset_action_too_recent_updated_at(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+
+        resource_id = uuid4()
+        existing_resource = mocked_resource
+        existing_resource.id = resource_id
+        existing_resource.status = ModelStatus.IN_PROGRESS
+        existing_resource.state = ModelState.PROVISION
+        existing_resource.updated_at = datetime.now(UTC) - timedelta(minutes=5)
+
+        mock_resource_crud.get_by_id.return_value = existing_resource
+
+        with pytest.raises(EntityWrongState, match="Resource is in progress"):
+            await mock_resource_service.patch_action(resource_id=resource_id, body=patch_body, requester=mocked_user)
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(resource_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(resource_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()

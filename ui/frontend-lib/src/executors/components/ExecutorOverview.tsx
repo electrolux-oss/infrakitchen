@@ -18,7 +18,13 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
     <OverviewCard name={executor.name} description={executor.description}>
       <CommonField
         name={"State"}
-        value={<StatusChip status={executor.status} state={executor.state} />}
+        value={
+          <StatusChip
+            status={executor.status}
+            state={executor.state}
+            updatedAt={executor.updated_at}
+          />
+        }
       />
       {executor.source_code && (
         <CommonField

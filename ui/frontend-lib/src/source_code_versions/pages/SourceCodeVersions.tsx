@@ -79,7 +79,10 @@ export const SourceCodeVersionsPage = () => {
         headerName: "Status",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <StatusChip status={params.row.status} />
+          <StatusChip
+            status={params.row.status}
+            updatedAt={params.row.updated_at}
+          />
         ),
       },
       {
@@ -192,6 +195,7 @@ export const SourceCodeVersionsPage = () => {
           "source_code",
           "status",
           "created_at",
+          "updated_at",
         ]}
       />
     </PageContainer>

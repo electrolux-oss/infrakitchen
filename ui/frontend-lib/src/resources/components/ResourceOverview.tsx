@@ -24,7 +24,13 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       />
       <CommonField
         name={"State"}
-        value={<StatusChip status={resource.status} state={resource.state} />}
+        value={
+          <StatusChip
+            status={resource.status}
+            state={resource.state}
+            updatedAt={resource.updated_at}
+          />
+        }
       />
       <CommonField
         name={"Created"}

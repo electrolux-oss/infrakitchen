@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import pytest
 from unittest.mock import AsyncMock, Mock
 
@@ -68,8 +68,8 @@ def mocked_source_code(mocked_user):
         description="test_source_code",
         source_code_url="source_code_url",
         status=ModelStatus.READY,
-        created_at=datetime.now(),
-        updated_at=datetime.now(),
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
         revision_number=1,
         creator=mocked_user,
         created_by=mocked_user.id,
