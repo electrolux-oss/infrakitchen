@@ -34,6 +34,7 @@ from ..integrations import api as integrations_api
 from ..source_code_versions import api as source_code_versions_api
 from ..storages import api as storages_api
 from ..secrets import api as secrets_api
+from ..favorites import api as favorites_api
 from ..workspaces import api as workspaces_api
 from ..executors import api as executors_api
 from ..validation_rules import api as validation_rules_api
@@ -142,6 +143,11 @@ api.include_router(
 api.include_router(
     secrets_api.router,
     tags=["Core"],
+)
+
+api.include_router(
+    favorites_api.router,
+    tags=["Core", "Favorites"],
 )
 
 api.include_router(

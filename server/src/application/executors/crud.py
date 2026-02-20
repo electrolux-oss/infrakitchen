@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, func, select, cast
+from sqlalchemy import String, and_, case, func, select, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from application.integrations.model import Integration
+from application.favorites.model import Favorite
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
 from application.storages.model import Storage
@@ -45,6 +46,7 @@ class ExecutorCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        requester_id: str | UUID | None = None,
     ) -> list[Executor]:
         statement = (
             select(Executor)
@@ -52,7 +54,22 @@ class ExecutorCRUD:
             .outerjoin(Storage, Executor.storage_id == Storage.id)
             .outerjoin(SourceCode, Executor.source_code_id == SourceCode.id)
         )
-        statement = evaluate_sqlalchemy_sorting(Executor, statement, sort)
+
+        if sort and sort[0].lower() == "favorite" and requester_id:
+            favorite_join_condition = and_(
+                Favorite.user_id == requester_id,
+                Favorite.component_type == "executor",
+                Favorite.component_id == Executor.id,
+            )
+            statement = statement.outerjoin(Favorite, favorite_join_condition)
+            favorite_sort_value = case((Favorite.component_id.is_not(None), 1), else_=0)
+            if sort[1].lower() == "asc":
+                statement = statement.order_by(favorite_sort_value.asc())
+            else:
+                statement = statement.order_by(favorite_sort_value.desc())
+        else:
+            statement = evaluate_sqlalchemy_sorting(Executor, statement, sort)
+
         statement = evaluate_sqlalchemy_filters(Executor, statement, filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 

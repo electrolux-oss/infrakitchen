@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import {
   ConfigProvider,
   EventProvider,
+  FavoritesProvider,
   NotificationProvider,
   GlobalNotificationPopup,
   LocalStorageProvider,
@@ -72,11 +73,13 @@ export const AppWrapper = () => {
       <ConfigProvider initialIkApi={dataProvider}>
         <AuthProvider>
           <PermissionProvider>
-            <EventProvider>
-              <NotificationProvider>
-                <InfrakitchenApp />
-              </NotificationProvider>
-            </EventProvider>
+            <FavoritesProvider>
+              <EventProvider>
+                <NotificationProvider>
+                  <InfrakitchenApp />
+                </NotificationProvider>
+              </EventProvider>
+            </FavoritesProvider>
           </PermissionProvider>
         </AuthProvider>
       </ConfigProvider>

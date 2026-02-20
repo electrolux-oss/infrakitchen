@@ -4,6 +4,7 @@ import {
   GetReferenceUrlValue,
   getTextValue,
 } from "../../common/components/CommonField";
+import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -15,7 +16,17 @@ export interface ExecutorAboutProps {
 
 export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
   return (
-    <OverviewCard name={executor.name} description={executor.description}>
+    <OverviewCard
+      name={executor.name}
+      description={executor.description}
+      actions={
+        <FavoriteButton
+          componentId={String(executor.id)}
+          componentType="executor"
+          ariaLabel="Add executor to favorites"
+        />
+      }
+    >
       <CommonField
         name={"State"}
         value={<StatusChip status={executor.status} state={executor.state} />}

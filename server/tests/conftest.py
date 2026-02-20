@@ -103,6 +103,12 @@ from .fixtures.test_batch_operation_fixtures import (
     batch_operation_response,
     mocked_batch_operation,
 )
+from .fixtures.test_favorites_fixtures import (
+    mock_favorite_crud,
+    mock_favorite_service,
+    favorite_dto,
+    mocked_favorite,
+)
 from .fixtures.test_user_fixtures import (
     mock_user_crud,
     mock_user_service,
@@ -206,4 +212,8 @@ __all__ = [
     "mock_batch_operation_service",
     "batch_operation_response",
     "mocked_batch_operation",
+    "mock_favorite_crud",
+    "mock_favorite_service",
+    "favorite_dto",
+    "mocked_favorite",
 ]

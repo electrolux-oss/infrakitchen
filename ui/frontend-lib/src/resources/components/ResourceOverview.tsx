@@ -6,6 +6,7 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
+import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -17,7 +18,17 @@ export interface ResourceAboutProps {
 
 export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   return (
-    <OverviewCard name={resource.name} description={resource.description}>
+    <OverviewCard
+      name={resource.name}
+      description={resource.description}
+      actions={
+        <FavoriteButton
+          componentId={String(resource.id)}
+          componentType="resource"
+          ariaLabel="Add resource to favorites"
+        />
+      }
+    >
       <CommonField
         name={"Template"}
         value={getTextValue(resource.template.name)}

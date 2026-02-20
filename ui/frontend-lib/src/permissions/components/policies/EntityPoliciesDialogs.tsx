@@ -18,13 +18,19 @@ export const EntityPolicyRoleCreateDialog = (
   props: EntityPolicyRoleCreateDialogProps,
 ) => {
   const { onClose, open } = props;
+  const formId = useId();
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
+      actions={
+        <Button type="submit" form={formId} variant="contained" color="primary">
+          Submit
+        </Button>
+      }
       title="Create Role Policy"
-      content={<EntityRolePolicyCreateCard {...props} />}
+      content={<EntityRolePolicyCreateCard {...props} formId={formId} />}
     />
   );
 };
@@ -39,14 +45,24 @@ export const RolePolicyEntityCreateDialog = (
   props: RolePolicyEntityCreateDialogProps,
 ) => {
   const { role_name, onClose, open } = props;
+  const formId = useId();
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
       title="Create Resource Policy"
+      actions={
+        <Button type="submit" form={formId} variant="contained" color="primary">
+          Submit
+        </Button>
+      }
       content={
-        <EntityRolePolicyCreateCard role_name={role_name} onClose={onClose} />
+        <EntityRolePolicyCreateCard
+          role_name={role_name}
+          onClose={onClose}
+          formId={formId}
+        />
       }
     />
   );

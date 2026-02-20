@@ -13,6 +13,8 @@ from application.executors.service import ExecutorService
 @pytest.fixture
 def mock_executor_crud():
     crud = Mock(spec=ExecutorCRUD)
+    crud.session = Mock()
+    crud.session.execute = AsyncMock()
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()
@@ -36,6 +38,7 @@ def mock_executor_service(
     mock_permission_service,
     mock_log_service,
     mock_task_entity_service,
+    mock_favorite_service,
 ):
     return ExecutorService(
         crud=mock_executor_crud,
@@ -48,6 +51,7 @@ def mock_executor_service(
         permission_service=mock_permission_service,
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
+        favorite_service=mock_favorite_service,
     )
 
 

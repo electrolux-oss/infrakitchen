@@ -11,6 +11,7 @@ import {
   GetEntityLink,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { FavoriteButton } from "../../common/components/FavoriteButton";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 
@@ -52,6 +53,23 @@ export const ResourcesPage = () => {
         renderCell: (params: GridRenderCellParams) => {
           return <GetEntityLink {...params.row} />;
         },
+      },
+      {
+        field: "Favorite",
+        headerName: "",
+        width: 60,
+        sortable: true,
+        filterable: false,
+        align: "center" as const,
+        headerAlign: "center" as const,
+        renderCell: (params: GridRenderCellParams) => (
+          <FavoriteButton
+            componentId={String(params.row.id)}
+            componentType="resource"
+            ariaLabel="Toggle resource favorite"
+            format="table"
+          />
+        ),
       },
       {
         field: "template_id",
