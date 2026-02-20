@@ -37,6 +37,7 @@ class FavoriteService:
 
         self.session.add(db_favorite)
         await self.session.flush()
+        await self.session.refresh(db_favorite)
         return FavoriteDTO.model_validate(db_favorite)
 
     async def delete(
