@@ -1,82 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
-
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { IconButton } from "@mui/material";
 
-import { useConfig } from "../context/ConfigContext";
+import {
+  FavoriteComponentType,
+  useFavorites,
+} from "../context/FavoritesContext";
 import { notifyError } from "../hooks/useNotification";
-
-type FavoriteComponentType = "resource" | "executor";
-
-interface FavoriteResponse {
-  component_type: string;
-  component_id: string;
-}
 
 interface FavoriteButtonProps {
   componentId: string;
   componentType: FavoriteComponentType;
   ariaLabel: string;
-  successMessage: string;
+  format?: "overview" | "table";
 }
 
 export const FavoriteButton = ({
   componentId,
   componentType,
   ariaLabel,
+  format = "overview",
 }: FavoriteButtonProps) => {
-  const { ikApi } = useConfig();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { isFavorite, toggleFavorite, isSubmitting } = useFavorites();
 
-  const fetchFavoriteStatus = useCallback(async () => {
-    try {
-      const favorites = await ikApi.get("favorites");
-      const hasFavorite = (favorites as FavoriteResponse[]).some(
-        (favorite) =>
-          favorite.component_type === componentType &&
-          String(favorite.component_id) === String(componentId),
-      );
-      setIsFavorite(hasFavorite);
-    } catch {
-      setIsFavorite(false);
-    }
-  }, [componentId, componentType, ikApi]);
-
-  useEffect(() => {
-    fetchFavoriteStatus();
-  }, [fetchFavoriteStatus]);
+  const favoriteState = isFavorite(componentType, componentId);
+  const submittingState = isSubmitting(componentType, componentId);
 
   const handleAddFavorite = async () => {
-    if (isSubmitting) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    if (isFavorite) {
-      try {
-        await ikApi.deleteRaw(`favorites/${componentType}/${componentId}`, {});
-        setIsFavorite(false);
-      } catch (error: any) {
-        notifyError(error);
-      } finally {
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
     try {
-      await ikApi.postRaw("favorites", {
-        component_type: componentType,
-        component_id: componentId,
-      });
-      setIsFavorite(true);
+      await toggleFavorite(componentType, componentId);
     } catch (error: any) {
       notifyError(error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -84,9 +38,34 @@ export const FavoriteButton = ({
     <IconButton
       aria-label={ariaLabel}
       onClick={handleAddFavorite}
-      disabled={isSubmitting}
+      disabled={submittingState}
+      disableRipple={format === "table"}
+      sx={
+        format === "table"
+          ? {
+              p: 0,
+              minWidth: 0,
+              width: 20,
+              height: 20,
+              border: "none",
+              outline: "none",
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
+            }
+          : undefined
+      }
     >
-      {isFavorite ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+      {favoriteState ? (
+        <FavoriteIcon
+          color="error"
+          fontSize={format === "table" ? "small" : "medium"}
+        />
+      ) : (
+        <FavoriteBorderIcon
+          fontSize={format === "table" ? "small" : "medium"}
+        />
+      )}
     </IconButton>
   );
 };
