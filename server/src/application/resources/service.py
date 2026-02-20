@@ -85,6 +85,7 @@ class ResourceService:
         log_service: LogService,
         task_service: TaskEntityService,
         validation_rule_service: ValidationRuleService,
+        favorite_service: FavoriteService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -100,6 +101,7 @@ class ResourceService:
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
         self.validation_rule_service: ValidationRuleService = validation_rule_service
+        self.favorite_service: FavoriteService = favorite_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -584,8 +586,7 @@ class ResourceService:
         if resource_temp_state is not None:
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=existing_resource.id)
 
-        favorite_service = FavoriteService(session=self.crud.session)
-        await favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
+        await self.favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
 
         await delete_entity(existing_resource)
         await self.audit_log_handler.create_log(resource_id, requester.id, ModelActions.DELETE)

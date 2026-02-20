@@ -1,160 +1,256 @@
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
 
-from application.favorites.model import Favorite, FavoriteComponentType, FavoriteCreate, FavoriteDTO
-from application.favorites.service import FavoriteService
+from application.favorites.model import FavoriteDTO
+from application.favorites.schema import FavoriteCreate
 from core.errors import EntityNotFound
 
 
-class FakeScalarResult:
-    def __init__(self, scalars=None, scalar_one_or_none=None):
-        self._scalars = scalars or []
-        self._scalar_one_or_none = scalar_one_or_none
+class TestGetById:
+    @pytest.mark.asyncio
+    async def test_get_by_id_not_found(self, mock_favorite_service):
+        user_id = uuid4()
+        component_id = uuid4()
+        mock_favorite_service.crud.get_by_id.return_value = None
 
-    def scalars(self):
-        return self
+        result = await mock_favorite_service.get_by_id(user_id, "executor", component_id)
 
-    def all(self):
-        return self._scalars
+        assert result is None
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(user_id, "executor", component_id)
 
-    def scalar_one_or_none(self):
-        return self._scalar_one_or_none
+    @pytest.mark.asyncio
+    async def test_get_by_id_success(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
+        mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
+        mocked_validate = Mock(return_value=favorite_dto)
+        monkeypatch.setattr(FavoriteDTO, "model_validate", mocked_validate)
 
+        result = await mock_favorite_service.get_by_id(favorite_dto.user_id, "executor", favorite_dto.component_id)
 
-@pytest.fixture
-def mock_session():
-    session = AsyncMock()
-    session.execute = AsyncMock()
-    session.add = Mock()
-    session.flush = AsyncMock()
-    session.refresh = AsyncMock()
-    session.delete = AsyncMock()
-    return session
+        assert result.user_id == favorite_dto.user_id
+        assert result.component_type == favorite_dto.component_type
+        assert result.component_id == favorite_dto.component_id
 
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
+            favorite_dto.user_id, "executor", favorite_dto.component_id
+        )
+        mocked_validate.assert_called_once_with(mocked_favorite)
 
-@pytest.fixture
-def favorite_service(mock_session):
-    return FavoriteService(session=mock_session)
+    @pytest.mark.asyncio
+    async def test_get_by_id_error(self, monkeypatch, mock_favorite_service, mocked_favorite):
+        mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
 
+        error = ValueError("Validation error")
+        monkeypatch.setattr(FavoriteDTO, "model_validate", Mock(side_effect=error))
 
-def _favorite(
-    user_id=None,
-    component_type: FavoriteComponentType = "resource",
-    component_id=None,
-):
-    return Favorite(
-        user_id=user_id or uuid4(),
-        component_type=component_type,
-        component_id=component_id or uuid4(),
-        created_at=datetime.now(),
-    )
+        with pytest.raises(ValueError) as exc:
+            await mock_favorite_service.get_by_id(
+                mocked_favorite.user_id, mocked_favorite.component_type, mocked_favorite.component_id
+            )
+
+        assert exc.value is error
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
+            mocked_favorite.user_id, mocked_favorite.component_type, mocked_favorite.component_id
+        )
 
 
 class TestGetAllByUserId:
     @pytest.mark.asyncio
-    async def test_empty(self, favorite_service, mock_session):
-        mock_session.execute.return_value = FakeScalarResult(scalars=[])
+    async def test_get_all_by_user_id_empty(self, mock_favorite_service):
+        user_id = uuid4()
+        mock_favorite_service.crud.get_all_by_user_id.return_value = []
 
-        result = await favorite_service.get_all_by_user_id(user_id=uuid4())
+        result = await mock_favorite_service.get_all_by_user_id(user_id)
 
         assert result == []
-        mock_session.execute.assert_awaited_once()
+        mock_favorite_service.crud.get_all_by_user_id.assert_awaited_once_with(user_id)
 
     @pytest.mark.asyncio
-    async def test_with_items(self, favorite_service, mock_session):
-        favorites = [_favorite(), _favorite(component_type="executor")]
-        mock_session.execute.return_value = FakeScalarResult(scalars=favorites)
+    async def test_get_all_by_user_id_success(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
+        user_id = uuid4()
+        favorites = [mocked_favorite]
+        mock_favorite_service.crud.get_all_by_user_id.return_value = favorites
 
-        result = await favorite_service.get_all_by_user_id(user_id=uuid4())
+        def mock_model_validate(arg):
+            return favorite_dto
 
-        assert len(result) == 2
-        assert isinstance(result[0], FavoriteDTO)
-        assert result[0].component_type == favorites[0].component_type
-        mock_session.execute.assert_awaited_once()
+        monkeypatch.setattr(FavoriteDTO, "model_validate", mock_model_validate)
+
+        result = await mock_favorite_service.get_all_by_user_id(user_id)
+
+        assert len(result) == 1
+        assert result[0].user_id == favorite_dto.user_id
+        mock_favorite_service.crud.get_all_by_user_id.assert_awaited_once_with(user_id)
+
+    @pytest.mark.asyncio
+    async def test_get_all_by_user_id_error(self, monkeypatch, mock_favorite_service, mocked_favorite):
+        user_id = uuid4()
+        favorites = [mocked_favorite]
+        mock_favorite_service.crud.get_all_by_user_id.return_value = favorites
+
+        error = ValueError("Validation error")
+        monkeypatch.setattr(FavoriteDTO, "model_validate", Mock(side_effect=error))
+
+        with pytest.raises(ValueError) as exc:
+            await mock_favorite_service.get_all_by_user_id(user_id)
+
+        assert exc.value is error
+        mock_favorite_service.crud.get_all_by_user_id.assert_awaited_once_with(user_id)
+
+
+class TestCount:
+    @pytest.mark.asyncio
+    async def test_count_success(self, mock_favorite_service):
+        mock_favorite_service.crud.count.return_value = 5
+
+        result = await mock_favorite_service.count()
+
+        assert result == 5
+        mock_favorite_service.crud.count.assert_awaited_once_with(filter=None)
+
+    @pytest.mark.asyncio
+    async def test_count_with_filter(self, mock_favorite_service):
+        mock_favorite_service.crud.count.return_value = 2
+        filter_dict = {"component_type": "executor"}
+
+        result = await mock_favorite_service.count(filter=filter_dict)
+
+        assert result == 2
+        mock_favorite_service.crud.count.assert_awaited_once_with(filter=filter_dict)
 
 
 class TestCreate:
     @pytest.mark.asyncio
-    async def test_existing_returns_existing(self, favorite_service, monkeypatch, mock_session):
-        existing = _favorite()
-        monkeypatch.setattr(favorite_service, "get_by_composite_keys", AsyncMock(return_value=existing))
-
-        favorite_create = FavoriteCreate(component_type="resource", component_id=existing.component_id)
-        result = await favorite_service.create(favorite=favorite_create, user_id=existing.user_id)
-
-        assert result.user_id == existing.user_id
-        assert result.component_id == existing.component_id
-        mock_session.add.assert_not_called()
-        mock_session.flush.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_create_new(self, favorite_service, monkeypatch, mock_session):
-        monkeypatch.setattr(favorite_service, "get_by_composite_keys", AsyncMock(return_value=None))
+    async def test_create_success(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
         user_id = uuid4()
         component_id = uuid4()
-        favorite_create = FavoriteCreate(component_type="resource", component_id=component_id)
+        favorite_create = FavoriteCreate(component_type="executor", component_id=component_id)
 
-        async def refresh_side_effect(obj):
-            if obj.created_at is None:
-                obj.created_at = datetime.now()
+        mock_favorite_service.crud.get_by_id.return_value = None
+        mock_favorite_service.crud.create.return_value = mocked_favorite
+        mocked_validate = Mock(return_value=favorite_dto)
+        monkeypatch.setattr(FavoriteDTO, "model_validate", mocked_validate)
 
-        mock_session.refresh.side_effect = refresh_side_effect
+        result = await mock_favorite_service.create(favorite_create, user_id)
 
-        result = await favorite_service.create(favorite=favorite_create, user_id=user_id)
+        assert result.user_id == favorite_dto.user_id
+        assert result.component_type == favorite_dto.component_type
+        assert result.component_id == favorite_dto.component_id
 
-        assert result.user_id == user_id
-        assert result.component_id == component_id
-        mock_session.add.assert_called_once()
-        mock_session.flush.assert_awaited_once()
-        mock_session.refresh.assert_awaited_once()
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
+            user_id=user_id, component_type="executor", component_id=component_id
+        )
+        mock_favorite_service.crud.create.assert_awaited_once()
+        mock_favorite_service.crud.refresh.assert_awaited_once_with(mocked_favorite)
+        mocked_validate.assert_called_once_with(mocked_favorite)
+
+    @pytest.mark.asyncio
+    async def test_create_already_exists(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
+        user_id = uuid4()
+        component_id = uuid4()
+        favorite_create = FavoriteCreate(component_type="executor", component_id=component_id)
+
+        mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
+        mocked_validate = Mock(return_value=favorite_dto)
+        monkeypatch.setattr(FavoriteDTO, "model_validate", mocked_validate)
+
+        result = await mock_favorite_service.create(favorite_create, user_id)
+
+        assert result.user_id == favorite_dto.user_id
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
+            user_id=user_id, component_type="executor", component_id=component_id
+        )
+        mock_favorite_service.crud.create.assert_not_awaited()
+        mock_favorite_service.crud.refresh.assert_not_awaited()
+        mocked_validate.assert_called_once_with(mocked_favorite)
+
+    @pytest.mark.asyncio
+    async def test_create_error(self, mock_favorite_service):
+        user_id = uuid4()
+        component_id = uuid4()
+        favorite_create = FavoriteCreate(component_type="executor", component_id=component_id)
+
+        mock_favorite_service.crud.get_by_id.return_value = None
+        error = RuntimeError("create fail")
+        mock_favorite_service.crud.create.side_effect = error
+
+        with pytest.raises(RuntimeError) as exc:
+            await mock_favorite_service.create(favorite_create, user_id)
+
+        assert exc.value is error
+        mock_favorite_service.crud.create.assert_awaited_once()
 
 
 class TestDelete:
     @pytest.mark.asyncio
-    async def test_not_found(self, favorite_service, monkeypatch, mock_session):
-        monkeypatch.setattr(favorite_service, "get_by_composite_keys", AsyncMock(return_value=None))
+    async def test_delete_success(self, mock_favorite_service, mocked_favorite):
+        user_id = mocked_favorite.user_id
+        component_type = mocked_favorite.component_type
+        component_id = mocked_favorite.component_id
 
-        with pytest.raises(EntityNotFound):
-            await favorite_service.delete(user_id=uuid4(), component_type="resource", component_id=uuid4())
+        mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
 
-        mock_session.delete.assert_not_called()
+        await mock_favorite_service.delete(user_id, component_type, component_id)
+
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(user_id, component_type, component_id)
+        mock_favorite_service.crud.delete.assert_awaited_once_with(mocked_favorite)
 
     @pytest.mark.asyncio
-    async def test_success(self, favorite_service, monkeypatch, mock_session):
-        existing = _favorite()
-        monkeypatch.setattr(favorite_service, "get_by_composite_keys", AsyncMock(return_value=existing))
+    async def test_delete_not_found(self, mock_favorite_service):
+        user_id = uuid4()
+        component_id = uuid4()
 
-        await favorite_service.delete(
-            user_id=existing.user_id,
-            component_type=existing.component_type,
-            component_id=existing.component_id,
-        )
+        mock_favorite_service.crud.get_by_id.return_value = None
 
-        mock_session.delete.assert_awaited_once_with(existing)
+        with pytest.raises(EntityNotFound, match="Favorite not found"):
+            await mock_favorite_service.delete(user_id, "executor", component_id)
 
+        mock_favorite_service.crud.get_by_id.assert_awaited_once_with(user_id, "executor", component_id)
+        mock_favorite_service.crud.delete.assert_not_awaited()
 
-class TestGetByCompositeKeys:
     @pytest.mark.asyncio
-    async def test_success(self, favorite_service, mock_session):
-        favorite = _favorite()
-        mock_session.execute.return_value = FakeScalarResult(scalar_one_or_none=favorite)
+    async def test_delete_error(self, mock_favorite_service, mocked_favorite):
+        user_id = mocked_favorite.user_id
+        component_type = mocked_favorite.component_type
+        component_id = mocked_favorite.component_id
 
-        result = await favorite_service.get_by_composite_keys(
-            user_id=favorite.user_id,
-            component_type=favorite.component_type,
-            component_id=favorite.component_id,
-        )
+        mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
+        error = RuntimeError("delete fail")
+        mock_favorite_service.crud.delete.side_effect = error
 
-        assert result is favorite
-        mock_session.execute.assert_awaited_once()
+        with pytest.raises(RuntimeError) as exc:
+            await mock_favorite_service.delete(user_id, component_type, component_id)
+
+        assert exc.value is error
+        mock_favorite_service.crud.delete.assert_awaited_once_with(mocked_favorite)
 
 
 class TestDeleteAllByComponent:
     @pytest.mark.asyncio
-    async def test_executes_delete(self, favorite_service, mock_session):
-        await favorite_service.delete_all_by_component(component_type="resource", component_id=uuid4())
+    async def test_delete_all_by_component_success(self, mock_favorite_service):
+        component_id = uuid4()
 
-        mock_session.execute.assert_awaited_once()
+        await mock_favorite_service.delete_all_by_component("executor", component_id)
+
+        mock_favorite_service.crud.delete_all_by_component.assert_awaited_once_with("executor", component_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_all_by_component_resource(self, mock_favorite_service):
+        component_id = uuid4()
+
+        await mock_favorite_service.delete_all_by_component("resource", component_id)
+
+        mock_favorite_service.crud.delete_all_by_component.assert_awaited_once_with("resource", component_id)
+
+    @pytest.mark.asyncio
+    async def test_delete_all_by_component_error(self, mock_favorite_service):
+        component_id = uuid4()
+        error = RuntimeError("delete fail")
+        mock_favorite_service.crud.delete_all_by_component.side_effect = error
+
+        with pytest.raises(RuntimeError) as exc:
+            await mock_favorite_service.delete_all_by_component("executor", component_id)
+
+        assert exc.value is error
+        mock_favorite_service.crud.delete_all_by_component.assert_awaited_once_with("executor", component_id)

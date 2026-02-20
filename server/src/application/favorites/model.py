@@ -27,11 +27,6 @@ class Favorite(FavoriteBase):
     __table_args__ = (Index("ix_favorites_user_id", "user_id"),)
 
 
-class FavoriteCreate(BaseModel):
-    component_type: FavoriteComponentType = Field(...)
-    component_id: uuid.UUID = Field(...)
-
-
 class FavoriteDTO(BaseModel):
     user_id: uuid.UUID = Field(...)
     component_type: FavoriteComponentType = Field(...)

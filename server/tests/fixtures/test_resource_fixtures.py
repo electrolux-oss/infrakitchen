@@ -54,6 +54,7 @@ def mock_resource_service(
     mock_log_service,
     mock_task_entity_service,
     mock_validation_rule_service,
+    mock_favorite_service,
 ):
     return ResourceService(
         crud=mock_resource_crud,
@@ -70,6 +71,7 @@ def mock_resource_service(
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
         validation_rule_service=mock_validation_rule_service,
+        favorite_service=mock_favorite_service,
     )
 
 

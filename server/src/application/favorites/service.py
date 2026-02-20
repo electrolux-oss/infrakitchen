@@ -1,26 +1,43 @@
+from typing import Any
 from uuid import UUID
-
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.expression import select
 
 from core.errors import EntityNotFound
 
-from .model import Favorite, FavoriteComponentType, FavoriteCreate, FavoriteDTO
+from .crud import FavoriteCRUD
+from .model import FavoriteComponentType, FavoriteDTO
+from .schema import FavoriteCreate
 
 
 class FavoriteService:
-    def __init__(self, session: AsyncSession):
-        self.session: AsyncSession = session
+    """
+    FavoriteService implements all business-logic for favorites.
+    It uses FavoriteCRUD for database operations.
+    """
+
+    def __init__(self, crud: FavoriteCRUD):
+        self.crud: FavoriteCRUD = crud
+
+    async def get_by_id(
+        self, user_id: UUID | str, component_type: FavoriteComponentType, component_id: UUID | str
+    ) -> FavoriteDTO | None:
+        """Get a favorite by composite key."""
+        favorite = await self.crud.get_by_id(user_id, component_type, component_id)
+        if favorite is None:
+            return None
+        return FavoriteDTO.model_validate(favorite)
 
     async def get_all_by_user_id(self, user_id: UUID | str) -> list[FavoriteDTO]:
-        statement = select(Favorite).where(Favorite.user_id == user_id)
-        result = await self.session.execute(statement)
-        favorites = result.scalars().all()
+        """Get all favorites for a user."""
+        favorites = await self.crud.get_all_by_user_id(user_id)
         return [FavoriteDTO.model_validate(favorite) for favorite in favorites]
 
+    async def count(self, filter: dict[str, Any] | None = None) -> int:
+        """Count favorites with optional filter."""
+        return await self.crud.count(filter=filter)
+
     async def create(self, favorite: FavoriteCreate, user_id: UUID | str) -> FavoriteDTO:
-        existing = await self.get_by_composite_keys(
+        """Create a new favorite (or return existing if already favorited)."""
+        existing = await self.crud.get_by_id(
             user_id=user_id,
             component_type=favorite.component_type,
             component_id=favorite.component_id,
@@ -29,49 +46,23 @@ class FavoriteService:
         if existing:
             return FavoriteDTO.model_validate(existing)
 
-        db_favorite = Favorite(
-            user_id=user_id,
-            component_type=favorite.component_type,
-            component_id=favorite.component_id,
-        )
-
-        self.session.add(db_favorite)
-        await self.session.flush()
-        await self.session.refresh(db_favorite)
+        body = favorite.model_dump()
+        body["user_id"] = user_id
+        db_favorite = await self.crud.create(body)
+        await self.crud.refresh(db_favorite)
         return FavoriteDTO.model_validate(db_favorite)
 
     async def delete(
         self, user_id: UUID | str, component_type: FavoriteComponentType, component_id: UUID | str
     ) -> None:
-        favorite = await self.get_by_composite_keys(
-            user_id=user_id,
-            component_type=component_type,
-            component_id=component_id,
-        )
+        """Delete a favorite by composite key."""
+        favorite = await self.crud.get_by_id(user_id, component_type, component_id)
 
         if not favorite:
             raise EntityNotFound("Favorite not found")
 
-        await self.session.delete(favorite)
-
-    async def get_by_composite_keys(
-        self,
-        user_id: UUID | str,
-        component_type: FavoriteComponentType,
-        component_id: UUID | str,
-    ) -> Favorite | None:
-        statement = select(Favorite).where(
-            Favorite.user_id == user_id,
-            Favorite.component_type == component_type,
-            Favorite.component_id == component_id,
-        )
-
-        result = await self.session.execute(statement)
-        return result.scalar_one_or_none()
+        await self.crud.delete(favorite)
 
     async def delete_all_by_component(self, component_type: FavoriteComponentType, component_id: UUID | str) -> None:
-        statement = delete(Favorite).where(
-            Favorite.component_type == component_type,
-            Favorite.component_id == component_id,
-        )
-        await self.session.execute(statement)
+        """Delete all favorites for a specific component (used on component deletion)."""
+        await self.crud.delete_all_by_component(component_type, component_id)

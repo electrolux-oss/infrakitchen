@@ -31,9 +31,16 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("user_id", "component_type", "component_id"),
     )
     op.create_index(op.f("ix_favorites_user_id"), "favorites", ["user_id"], unique=False)
+    op.create_index(
+        op.f("ix_favorites_user_component"),
+        "favorites",
+        ["user_id", "component_type", "component_id"],
+        unique=False,
+    )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_index(op.f("ix_favorites_user_component"), table_name="favorites")
     op.drop_index(op.f("ix_favorites_user_id"), table_name="favorites")
     op.drop_table("favorites")

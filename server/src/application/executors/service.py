@@ -59,6 +59,7 @@ class ExecutorService:
         audit_log_handler: AuditLogHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        favorite_service: FavoriteService,
     ):
         self.crud: ExecutorCRUD = crud
         self.integration_service: IntegrationService = integration_service
@@ -70,6 +71,7 @@ class ExecutorService:
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.favorite_service: FavoriteService = favorite_service
 
     async def get_dto_by_id(self, executor_id: str | UUID) -> ExecutorDTO | None:
         if not is_valid_uuid(executor_id):
@@ -273,8 +275,7 @@ class ExecutorService:
         if not existing_executor:
             raise EntityNotFound("Executor not found")
 
-        favorite_service = FavoriteService(session=self.crud.session)
-        await favorite_service.delete_all_by_component(component_type="executor", component_id=executor_id)
+        await self.favorite_service.delete_all_by_component(component_type="executor", component_id=executor_id)
 
         await delete_entity(existing_executor)
         await self.audit_log_handler.create_log(executor_id, requester.id, ModelActions.DELETE)

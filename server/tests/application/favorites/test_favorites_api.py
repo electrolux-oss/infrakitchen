@@ -6,7 +6,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from application.favorites.api import get_favorite_service, router
+from application.favorites.api import router
+from application.favorites.dependencies import get_favorite_service
 from application.favorites.model import FavoriteComponentType, FavoriteDTO
 
 
