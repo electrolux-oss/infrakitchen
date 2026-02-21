@@ -135,6 +135,7 @@ class SecretService:
         if not existing_secret:
             raise EntityNotFound("Secret not found")
 
+        await self.audit_log_handler.create_log(existing_secret.id, requester.id, body.action)
         match body.action:
             case ModelActions.DISABLE:
                 existing_secret.status = ModelStatus.DISABLED
@@ -146,7 +147,6 @@ class SecretService:
             case _:
                 raise ValueError("Invalid action")
 
-        await self.audit_log_handler.create_log(existing_secret.id, requester.id, body.action)
         response = SecretResponse.model_validate(existing_secret)
         await self.event_sender.send_event(response, body.action)
         return response
