@@ -2,8 +2,8 @@ import React from "react";
 
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
 
-import { SourceConfigResponse } from "../../source_code_versions/types";
-import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
+import { SourceConfigResponse } from "../../source_codes/types";
+import { getValidationSummary } from "../../source_codes/utils/validationSummary";
 
 type HclInputVariableData = SourceConfigResponse & {
   source?: string;

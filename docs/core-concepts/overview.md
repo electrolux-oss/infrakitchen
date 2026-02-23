@@ -61,21 +61,6 @@ Repository: github.com/myorg/terraform-modules
 
 ---
 
-## 🏷️ Source Code Version
-
-A **Source Code Version** links a specific Template to a specific version of IaC code in a repository.
-
-### Components
-
-```yaml
-Template: Production VPC
-Source Code: github.com/myorg/terraform-modules
-Tag/Branch: v1.2.0
-Module Path: aws-vpc/
-```
-
----
-
 ## ⚙️ Executor
 
 An **Executor** is a specialized component for running infrastructure modules that perform specific, non-reusable tasks.

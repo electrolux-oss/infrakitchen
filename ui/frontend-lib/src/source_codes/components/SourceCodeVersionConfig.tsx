@@ -1,13 +1,6 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
-import {
-  useForm,
-  useFieldArray,
-  FormProvider,
-  useFormContext,
-} from "react-hook-form";
-import { useNavigate, useParams } from "react-router";
-import { useEffectOnce } from "react-use";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { Box, Alert, Button } from "@mui/material";
 
@@ -15,14 +8,12 @@ import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ENTITY_STATUS } from "../../utils";
-import { ConfigList } from "../components/ConfigList";
-import { ReferenceSelector } from "../components/ReferenceSelector";
-import {
-  SourceCodeVersionConfigProvider,
-  useSourceCodeVersionConfigContext,
-} from "../context/SourceCodeVersionConfigContext";
-import { SourceConfigUpdateWithId, SourceCodeVersionResponse } from "../types";
+import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
+import { SourceConfigUpdateWithId } from "../types";
 import { normalizeNumericField, parseNumericField } from "../utils/numeric";
+
+import { ConfigList } from "./ConfigList";
+import { ReferenceSelector } from "./ReferenceSelector";
 
 interface FormValues {
   configs: SourceConfigUpdateWithId[];
@@ -167,9 +158,8 @@ const hasValidationData = (config: {
   return hasRegex || hasMin || hasMax || hasReference;
 };
 
-const SourceCodeVersionConfigContent = () => {
-  const { ikApi, linkPrefix } = useConfig();
-  const navigate = useNavigate();
+export const SourceCodeVersionConfig = () => {
+  const { ikApi } = useConfig();
 
   const {
     sourceConfigs,
@@ -275,9 +265,6 @@ const SourceCodeVersionConfigContent = () => {
       reset({ configs: formattedConfigs });
     }
   }, [sourceConfigs, templateReferenceMap, reset]);
-
-  const handleBack = () =>
-    navigate(`${linkPrefix}source_code_versions/${sourceCodeVersion.id}`);
 
   const onSubmit = useCallback(
     async (data: FormValues) => {
@@ -397,8 +384,6 @@ const SourceCodeVersionConfigContent = () => {
         }
 
         notify("Configurations updated successfully", "success");
-
-        navigate(`${linkPrefix}source_code_versions/${sourceCodeVersion.id}`);
       } catch (error: any) {
         notifyError(error);
       }
@@ -407,8 +392,6 @@ const SourceCodeVersionConfigContent = () => {
       sourceCodeVersion.id,
       ikApi,
       selectedReferenceId,
-      navigate,
-      linkPrefix,
       originalConfigMap,
       sourceConfigMap,
       sourceCodeVersion.template.id,
@@ -417,17 +400,8 @@ const SourceCodeVersionConfigContent = () => {
 
   return (
     <PageContainer
-      title={
-        sourceCodeVersion.identifier ||
-        "Manage Source Code Version Configurations"
-      }
-      onBack={handleBack}
-      backAriaLabel="Back to source code version"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
           {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
             sourceCodeVersion.variables.length > 0 && (
               <Button
@@ -495,62 +469,3 @@ const SourceCodeVersionConfigContent = () => {
     </PageContainer>
   );
 };
-
-export const SourceCodeVersionConfigPage = () => {
-  const { source_code_version_id } = useParams();
-  const [entity, setEntity] = useState<SourceCodeVersionResponse>();
-  const [error, setError] = useState<Error>();
-  const { ikApi } = useConfig();
-
-  const getSourceCodeVersion = useCallback(async (): Promise<any> => {
-    await ikApi
-      .get(`source_code_versions/${source_code_version_id}`)
-      .then((response: SourceCodeVersionResponse) => {
-        setEntity(response);
-        setError(undefined);
-      })
-      .catch((e: any) => setError(e));
-  }, [ikApi, source_code_version_id]);
-
-  useEffectOnce(() => {
-    getSourceCodeVersion();
-  });
-  const methods = useForm<FormValues>({
-    mode: "onChange",
-    defaultValues: {
-      configs: [],
-    },
-  });
-
-  return (
-    <>
-      {error && (
-        <Alert
-          severity="error"
-          sx={{
-            mt: 2,
-            width: "75%",
-            minWidth: 320,
-            maxWidth: 1000,
-            alignSelf: "center",
-          }}
-        >
-          {error.message}
-        </Alert>
-      )}
-      {entity && (
-        <SourceCodeVersionConfigProvider
-          ikApi={ikApi}
-          sourceCodeVersion={entity}
-        >
-          <FormProvider {...methods}>
-            <SourceCodeVersionConfigContent />
-          </FormProvider>
-        </SourceCodeVersionConfigProvider>
-      )}
-    </>
-  );
-};
-
-SourceCodeVersionConfigPage.path =
-  "/source_code_versions/:source_code_version_id/configs";

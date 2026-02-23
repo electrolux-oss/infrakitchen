@@ -8,7 +8,7 @@ import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCa
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { SourceCodeVersionResponse } from "../../source_code_versions/types";
+import { SourceCodeVersionResponse } from "../../source_codes/types";
 
 interface TemplateSourceCodeVersionsProps {
   template_id: string;
@@ -39,6 +39,7 @@ export const TemplateSourceCodeVersions = (
         filter: { template_id: template_id },
         fields: [
           "id",
+          "source_code",
           "source_code_version",
           "source_code_branch",
           "source_code_folder",
@@ -103,8 +104,8 @@ export const TemplateSourceCodeVersions = (
               >
                 <GetEntityLink
                   {...{
-                    id: version.id,
-                    _entity_name: version._entity_name,
+                    id: version.source_code.id,
+                    _entity_name: version.source_code._entity_name,
                     name: version.source_code_version
                       ? `Tag: ${version.source_code_version}, Path: ${version.source_code_folder}`
                       : `Branch: ${version.source_code_branch}, Path: ${version.source_code_folder}`,

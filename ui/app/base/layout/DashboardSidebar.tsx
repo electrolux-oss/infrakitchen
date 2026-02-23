@@ -5,7 +5,6 @@ import { matchPath, useLocation } from "react-router";
 import { Icon } from "@iconify/react";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CodeIcon from "@mui/icons-material/Code";
-import HistoryIcon from "@mui/icons-material/History";
 import HubIcon from "@mui/icons-material/Hub";
 import KeyIcon from "@mui/icons-material/Key";
 import ListAltIcon from "@mui/icons-material/ListAlt";
@@ -188,14 +187,6 @@ export default function DashboardSidebar({
             href="/source_codes"
             selected={!!matchPath("/source_codes/*", pathname)}
             permissionKey="source_code"
-          />
-          <DashboardSidebarPageItem
-            id="source_code_versions"
-            title="Code Versions"
-            icon={<HistoryIcon />}
-            href="/source_code_versions"
-            selected={!!matchPath("/source_code_versions/*", pathname)}
-            permissionKey="source_code_version"
           />
           <DashboardSidebarPageItem
             id="workspaces"

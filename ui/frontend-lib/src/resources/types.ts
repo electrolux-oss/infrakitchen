@@ -3,7 +3,7 @@ import { SecretShort } from "../secrets/types";
 import {
   SourceCodeVersionShort,
   SourceOutputConfigShort,
-} from "../source_code_versions/types";
+} from "../source_codes/types";
 import { StorageShort } from "../storages/types";
 import { TemplateShort } from "../templates/types";
 import { UserShort } from "../users";
