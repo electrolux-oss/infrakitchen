@@ -405,15 +405,12 @@ class ResourceTask:
             match self.resource_instance.state:
                 case ModelState.PROVISION:
                     await self.parent_resource_is_ready()
-                    await self.init_workspace()
                     await self.create_state()
                 case ModelState.PROVISIONED:
                     await self.parent_resource_is_ready()
-                    await self.init_workspace()
                     await self.update_state()
                 case ModelState.DESTROY:
                     await self.children_resource_is_destroyed()
-                    await self.init_workspace()
                     await self.destroy_state()
                 case _:
                     raise ExitWithoutSave(f"Entity cannot be executed, has wrong state {self.resource_instance.state}")
@@ -423,6 +420,7 @@ class ResourceTask:
     async def create_state(self):
         make_in_progress(self.resource_instance)
         await self.change_entity_status(event_type=ModelActions.CREATE)
+        await self.init_workspace()
         await self.init_provision_tool()
         await self.create()
         make_done(self.resource_instance)
@@ -433,6 +431,7 @@ class ResourceTask:
     async def update_state(self):
         make_in_progress(self.resource_instance)
         await self.change_entity_status(event_type=ModelActions.UPDATE)
+        await self.init_workspace()
         await self.init_provision_tool()
         await self.update()
 
@@ -444,6 +443,7 @@ class ResourceTask:
     async def destroy_state(self):
         make_in_progress(self.resource_instance)
         await self.change_entity_status(event_type=ModelActions.DESTROY)
+        await self.init_workspace()
         await self.init_provision_tool()
         await self.destroy()
         make_done(self.resource_instance)

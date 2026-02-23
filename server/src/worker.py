@@ -4,6 +4,8 @@ import logging
 import os
 import sys
 
+from prometheus_async.aio import web
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
@@ -35,6 +37,8 @@ async def run_task_worker(rabbitmq):
 
 
 async def main():
+    # prometheus
+    await web.start_http_server(port=8001)
     rabbitmq = RabbitMQConnection()
     await run_task_worker(rabbitmq)
 

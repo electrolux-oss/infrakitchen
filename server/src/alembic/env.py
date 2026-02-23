@@ -35,7 +35,7 @@ target_metadata = MetaData()
 
 for base in [Base]:
     for table in base.metadata.tables.values():
-        table.tometadata(target_metadata)
+        table.to_metadata(target_metadata)
 
 
 def run_migrations_offline() -> None:
