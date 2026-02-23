@@ -173,12 +173,16 @@ async def get_metadata(
     response_model=ResourceResponse,
     status_code=http_status.HTTP_200_OK,
 )
-async def patch(
-        request: Request,
-        resource_id: str,
-        service: ResourceService = Depends(get_resource_service),
+async def sync_workspace(
+    request: Request,
+    resource_id: str,
+    service: ResourceService = Depends(get_resource_service),
 ):
     requester: UserDTO = request.state.user
+
+    if ModelActions.EDIT not in await service.get_actions(resource_id=resource_id, requester=requester):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.EDIT.value}")
+
     entity = await service.sync_workspace(resource_id=resource_id, requester=requester)
     return entity
 

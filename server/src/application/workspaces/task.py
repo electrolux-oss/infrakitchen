@@ -73,7 +73,7 @@ class WorkspaceTask:
             case ModelActions.APPROVE:
                 await self.approve_state()
             case ModelActions.SYNC:
-                await self.sync_source_code()
+                await self.sync_workspace()
             case ModelActions.REJECT:
                 await self.reject_state()
             case ModelActions.DESTROY:
@@ -182,6 +182,16 @@ class WorkspaceTask:
         await self.sync_source_code()
         self.logger.info("Sync task is done")
         await self.change_state(ModelStatus.DONE)
+
+    async def sync_workspace(self):
+        if self.resource_task_controller.resource_instance.state == ModelState.PROVISIONED:
+            await self.sync_source_code()
+            await self.approve()
+            self.logger.info("Sync workspace task is done")
+        elif self.resource_task_controller.resource_instance.state == ModelState.DESTROYED:
+            await self.delete_source_code()
+            await self.approve()
+            self.logger.info("Sync workspace task (Delete source code) is done")
 
     async def destroy_state(self):
         await self.change_state(ModelStatus.IN_PROGRESS)

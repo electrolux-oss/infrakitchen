@@ -940,17 +940,12 @@ class ResourceService:
         if not existing_resource:
             raise EntityNotFound("Resource not found")
 
-        if existing_resource.status in [ModelStatus.DISABLED, ModelStatus.QUEUED, ModelStatus.IN_PROGRESS]:
-            raise ValueError(f"Resource cannot be synced because of the wrong status {existing_resource.status}")
-
-        if existing_resource.state in [ModelState.DESTROY, ModelState.DESTROYED]:
+        if existing_resource.state not in [ModelState.PROVISIONED, ModelState.DESTROYED]:
             raise ValueError(f"Resource cannot be synced because of the wrong state {existing_resource.state}")
 
         if existing_resource.workspace_id is None:
             raise EntityNotFound("Resource doesn't have assigned workspace")
 
-        await self.workspace_event_sender.send_task(
-            existing_resource.id, requester=requester, action=ModelActions.SYNC
-        )
+        await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
 
         return ResourceResponse.model_validate(existing_resource)

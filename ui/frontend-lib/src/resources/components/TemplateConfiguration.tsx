@@ -1,15 +1,17 @@
-import { Box, Grid, IconButton, Tooltip, Typography } from "@mui/material";
-import SyncIcon from "@mui/icons-material/Sync";
+import { useState } from "react";
 
+import SyncIcon from "@mui/icons-material/Sync";
+import { Box, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+
+import { PermissionWrapper, useConfig } from "../../common";
 import {
   getTextValue,
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
-import { ResourceResponse, VariableInput, VariableOutput } from "../types";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { useConfig } from "../../common";
+import { ResourceResponse, VariableInput, VariableOutput } from "../types";
 
 export interface TemplateConfigurationProps {
   resource: ResourceResponse;
@@ -63,10 +65,11 @@ const getSourceCodeVariables = (
 export const TemplateConfiguration = ({
   resource,
 }: TemplateConfigurationProps) => {
-
   const { ikApi } = useConfig();
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleSync = () => {
+    setIsSyncing(true);
     ikApi
       .patchRaw(`resources/${resource.id}/sync`, {})
       .then(() => {
@@ -74,6 +77,7 @@ export const TemplateConfiguration = ({
       })
       .catch((error) => {
         notifyError(error);
+        setIsSyncing(false);
       });
   };
 
@@ -135,14 +139,28 @@ export const TemplateConfiguration = ({
           <CommonField
             name={"Workspace"}
             value={
-              <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
                 <GetReferenceUrlValue {...resource.workspace} />
-                <IconButton
-                  size="small"
-                  onClick={handleSync}
-                  sx={{ '& .MuiSvgIcon-root': { fontSize: '1.2rem' } }}>
-                  <SyncIcon />
-                </IconButton>
+                <PermissionWrapper
+                  requiredPermission="api:resource"
+                  permissionAction="admin"
+                >
+                  <IconButton
+                    size="small"
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                    sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
+                  >
+                    <SyncIcon />
+                  </IconButton>
+                </PermissionWrapper>
               </Box>
             }
           />
