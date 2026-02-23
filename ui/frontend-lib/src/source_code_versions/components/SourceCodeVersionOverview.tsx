@@ -31,6 +31,7 @@ export const SourceCodeVersionOverview = ({
           <StatusChip
             status={source_code_version.status}
             state={source_code_version.state}
+            updatedAt={source_code_version.updated_at}
           />
         }
       />

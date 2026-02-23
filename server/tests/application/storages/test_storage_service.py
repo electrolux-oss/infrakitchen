@@ -1,4 +1,5 @@
 import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock
 
 from pydantic import PydanticUserError
@@ -408,6 +409,89 @@ class TestPatch:
         assert result.state == expected_state
 
     @pytest.mark.asyncio
+    async def test_patch_reset_success(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_storage,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        storage_id = uuid4()
+        existing_storage = mocked_storage
+        existing_storage.id = storage_id
+        existing_storage.status = ModelStatus.IN_PROGRESS
+        existing_storage.state = ModelState.PROVISION
+        existing_storage.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_storage_crud.get_by_id.return_value = existing_storage
+
+        result = await mock_storage_service.patch_action(storage_id=storage_id, body=patch_body, requester=mocked_user)
+
+        mock_storage_crud.get_by_id.assert_awaited_once_with(storage_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(storage_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_awaited_once_with(result, ModelActions.RESET)
+
+        assert result.status == ModelStatus.ERROR
+        assert result.state == ModelState.PROVISION
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_invalid_status(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_storage,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        storage_id = uuid4()
+        existing_storage = mocked_storage
+        existing_storage.id = storage_id
+        existing_storage.status = ModelStatus.READY
+        existing_storage.state = ModelState.PROVISION
+        existing_storage.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_storage_crud.get_by_id.return_value = existing_storage
+
+        with pytest.raises(ValueError, match="Only storages in IN_PROGRESS status can be reset"):
+            await mock_storage_service.patch_action(storage_id=storage_id, body=patch_body, requester=mocked_user)
+
+        mock_storage_crud.get_by_id.assert_awaited_once_with(storage_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(storage_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_too_recent_updated_at(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_storage,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        storage_id = uuid4()
+        existing_storage = mocked_storage
+        existing_storage.id = storage_id
+        existing_storage.status = ModelStatus.IN_PROGRESS
+        existing_storage.state = ModelState.PROVISION
+        existing_storage.updated_at = datetime.now(UTC) - timedelta(minutes=5)
+
+        mock_storage_crud.get_by_id.return_value = existing_storage
+
+        with pytest.raises(EntityWrongState, match="Storage is in progress"):
+            await mock_storage_service.patch_action(storage_id=storage_id, body=patch_body, requester=mocked_user)
+
+        mock_storage_crud.get_by_id.assert_awaited_once_with(storage_id)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(storage_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_patch_error_with_dependencies(self, mock_storage_service, mock_storage_crud, storage_response):
         patch_body = PatchBodyModel(action=ModelActions.DESTROY)
         requester = Mock(spec=UserDTO)
@@ -613,3 +697,25 @@ class TestGetStorageActions:
         result = await mock_storage_service.get_actions(storage_id=mocked_storage.id, requester=mock_user_dto)
 
         assert sorted(result) == sorted(expected_actions)
+
+    @pytest.mark.asyncio
+    async def test_get_storage_user_actions_reset(
+        self, mock_storage_service, mock_storage_crud, mocked_storage, monkeypatch, mock_user_dto, mock_user_permissions
+    ):
+        storage_id = uuid4()
+        existing_storage = mocked_storage
+        existing_storage.id = storage_id
+        existing_storage.status = ModelStatus.IN_PROGRESS
+        existing_storage.state = ModelState.PROVISION
+        existing_storage.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_user_permissions(
+            {"api:storage": "admin"},
+            monkeypatch,
+            "application.storages.service.user_api_permission",
+        )
+        mock_storage_crud.get_by_id.return_value = existing_storage
+
+        result = await mock_storage_service.get_actions(storage_id=existing_storage.id, requester=mock_user_dto)
+
+        assert result == [ModelActions.RESET]

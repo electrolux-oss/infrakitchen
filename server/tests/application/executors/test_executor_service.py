@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, Mock
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -739,6 +740,99 @@ class TestPatchAction:
 
         assert result.status == expected_status
         assert result.state == expected_state
+
+    @pytest.mark.asyncio
+    async def test_reset_action_success(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mocked_executor,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_revision_handler,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        executor_id = uuid4()
+        existing_executor = mocked_executor
+        existing_executor.id = executor_id
+        existing_executor.status = ModelStatus.IN_PROGRESS
+        existing_executor.state = ModelState.PROVISION
+        existing_executor.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_executor_crud.get_by_id.return_value = existing_executor
+
+        result = await mock_executor_service.patch_action(
+            executor_id=executor_id, body=patch_body, requester=mocked_user
+        )
+
+        mock_executor_crud.get_by_id.assert_awaited_once_with(executor_id)
+        mock_revision_handler.handle_revision.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_awaited_once_with(executor_id, mocked_user.id, ModelActions.RESET)
+
+        response = ExecutorResponse.model_validate(existing_executor)
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RESET)
+
+        assert result.status == ModelStatus.ERROR
+        assert result.state == ModelState.PROVISION
+
+    @pytest.mark.asyncio
+    async def test_reset_action_invalid_status(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mocked_executor,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_revision_handler,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        executor_id = uuid4()
+        existing_executor = mocked_executor
+        existing_executor.id = executor_id
+        existing_executor.status = ModelStatus.READY
+        existing_executor.state = ModelState.PROVISION
+        existing_executor.updated_at = datetime.now(UTC) - timedelta(minutes=11)
+
+        mock_executor_crud.get_by_id.return_value = existing_executor
+
+        with pytest.raises(ValueError, match="Only executors in IN_PROGRESS status can be reset"):
+            await mock_executor_service.patch_action(executor_id=executor_id, body=patch_body, requester=mocked_user)
+
+        mock_executor_crud.get_by_id.assert_awaited_once_with(executor_id)
+        mock_revision_handler.handle_revision.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_awaited_once_with(executor_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_reset_action_too_recent_updated_at(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mocked_executor,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mock_revision_handler,
+        mocked_user,
+    ):
+        patch_body = PatchBodyModel(action=ModelActions.RESET)
+        executor_id = uuid4()
+        existing_executor = mocked_executor
+        existing_executor.id = executor_id
+        existing_executor.status = ModelStatus.IN_PROGRESS
+        existing_executor.state = ModelState.PROVISION
+        existing_executor.updated_at = datetime.now(UTC) - timedelta(minutes=5)
+
+        mock_executor_crud.get_by_id.return_value = existing_executor
+
+        with pytest.raises(EntityWrongState, match="Executor is in progress"):
+            await mock_executor_service.patch_action(executor_id=executor_id, body=patch_body, requester=mocked_user)
+
+        mock_executor_crud.get_by_id.assert_awaited_once_with(executor_id)
+        mock_revision_handler.handle_revision.assert_not_awaited()
+        mock_audit_log_handler.create_log.assert_awaited_once_with(executor_id, mocked_user.id, ModelActions.RESET)
+        mock_event_sender.send_event.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_patch_executor_does_not_exist(self, mock_executor_service, mock_executor_crud):

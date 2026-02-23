@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import logging
 from collections import defaultdict
 from collections.abc import Sequence
@@ -565,6 +566,15 @@ class ResourceService:
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)
 
+            case ModelActions.RESET:
+                if existing_resource.status != ModelStatus.IN_PROGRESS:
+                    raise ValueError("Only resources in IN_PROGRESS status can be reset")
+                if datetime.now(UTC) - existing_resource.updated_at < timedelta(minutes=10):
+                    raise EntityWrongState(
+                        "Resource is in progress. Please wait or reset after 10 minutes from last update."
+                    )
+                existing_resource.status = ModelStatus.ERROR
+
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
@@ -727,7 +737,10 @@ class ResourceService:
             raise EntityNotFound("Resource not found")
 
         if resource.status in [ModelStatus.IN_PROGRESS]:
-            return []
+            if datetime.now(UTC) - resource.updated_at > timedelta(minutes=10):
+                return [ModelActions.RESET]
+            else:
+                return []
 
         user_is_admin = "admin" in requester_permissions
 

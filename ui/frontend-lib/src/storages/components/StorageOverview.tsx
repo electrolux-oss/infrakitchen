@@ -13,7 +13,13 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
     <OverviewCard name={storage.name} description={storage.description}>
       <CommonField
         name={"State"}
-        value={<StatusChip status={storage.status} state={storage.state} />}
+        value={
+          <StatusChip
+            status={storage.status}
+            state={storage.state}
+            updatedAt={storage.updated_at}
+          />
+        }
       />
       <CommonField
         name={"Created"}

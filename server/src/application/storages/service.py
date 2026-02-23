@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 from uuid import UUID
@@ -144,7 +145,7 @@ class StorageService:
         if not existing_storage:
             raise EntityNotFound("Storage not found")
 
-        if existing_storage.status in [ModelStatus.IN_PROGRESS]:
+        if existing_storage.status in [ModelStatus.IN_PROGRESS] and body.action != ModelActions.RESET:
             logger.error(f"Entity has wrong status for patching {existing_storage.status}")
             raise EntityWrongState(f"Entity has wrong status for patching {existing_storage.status}")
 
@@ -195,6 +196,15 @@ class StorageService:
             case ModelActions.RECREATE:
                 await recreate_entity(existing_storage, is_resource=False)
 
+            case ModelActions.RESET:
+                if existing_storage.status != ModelStatus.IN_PROGRESS:
+                    raise ValueError("Only storages in IN_PROGRESS status can be reset")
+                if datetime.now(UTC) - existing_storage.updated_at < timedelta(minutes=10):
+                    raise EntityWrongState(
+                        "Storage is in progress. Please wait or reset after 10 minutes from last update."
+                    )
+                existing_storage.status = ModelStatus.ERROR
+
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
@@ -234,6 +244,8 @@ class StorageService:
             raise EntityNotFound("Storage not found")
 
         if storage.status in [ModelStatus.IN_PROGRESS]:
+            if datetime.now(UTC) - storage.updated_at > timedelta(minutes=10):
+                return [ModelActions.RESET]
             return []
 
         user_is_admin = "admin" in requester_permissions

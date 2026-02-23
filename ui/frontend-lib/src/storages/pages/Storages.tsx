@@ -98,6 +98,7 @@ export const StoragesPage = () => {
           <StatusChip
             status={String(params.row.status).toLowerCase()}
             state={String(params.row.state).toLowerCase()}
+            updatedAt={params.row.updated_at}
           />
         ),
       },
