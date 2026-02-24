@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 
 import {
   Controller,
@@ -10,12 +10,16 @@ import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Button,
   Box,
   TextField,
   Alert,
   Typography,
+  IconButton,
+  Tooltip,
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -23,7 +27,7 @@ import {
   TableBody,
 } from "@mui/material";
 
-import { LabelInput, useConfig } from "../../common";
+import { LabelInput, PermissionWrapper, useConfig } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import TagInput from "../../common/components/inputs/TagInput";
@@ -67,6 +71,8 @@ export const ResourceEditPageInner = (props: {
         variables: entity.variables as unknown as ResourceVariableSchema[],
         workspace_id: entity.workspace?.id || null,
         labels: entity.labels,
+        storage_id: entity.storage?.id || null,
+        storage_path: entity.storage_path,
       };
     },
     [],
@@ -136,6 +142,18 @@ export const ResourceEditPageInner = (props: {
     reset,
   } = methods;
 
+  const watchedSourceCodeVersionId = watch("source_code_version_id");
+
+  const watchedIntegrationIds = watch("integration_ids");
+  const watchedStorage = watch("storage_id");
+  const [isStorageEditable, setIsStorageEditable] = useState(false);
+  const filter_storage = useMemo(
+    () => ({
+      integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
+    }),
+    [watchedIntegrationIds],
+  );
+
   useEffect(() => {
     const mergedValues = getMergedDefaultValues();
     reset(mergedValues);
@@ -204,8 +222,6 @@ export const ResourceEditPageInner = (props: {
     },
     [entity, trigger, isDirty, ikApi, linkPrefix, dirtyFields, navigate],
   );
-
-  const watchedSourceCodeVersionId = watch("source_code_version_id");
 
   useEffect(() => {
     if (watchedSourceCodeVersionId && entity.parents) {
@@ -467,6 +483,106 @@ export const ResourceEditPageInner = (props: {
                       />
                     )}
                   />
+                  <PermissionWrapper
+                    requiredPermission="storage"
+                    permissionAction="admin"
+                  >
+                    {watchedIntegrationIds.length > 0 && (
+                      <>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            mt: 1,
+                          }}
+                        >
+                          <Tooltip
+                            title={
+                              isStorageEditable
+                                ? "Lock storage field"
+                                : "Unlock storage field"
+                            }
+                          >
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() =>
+                                setIsStorageEditable((editable) => !editable)
+                              }
+                            >
+                              {isStorageEditable ? (
+                                <LockOpenOutlinedIcon fontSize="small" />
+                              ) : (
+                                <LockOutlinedIcon fontSize="small" />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          <Typography variant="body2" color="warning.main">
+                            {isStorageEditable
+                              ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
+                              : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
+                          </Typography>
+                        </Box>
+                        <Controller
+                          name="storage_id"
+                          control={control}
+                          rules={{ required: "*Required" }}
+                          render={({ field }) => (
+                            <ReferenceInput
+                              {...field}
+                              ikApi={ikApi}
+                              entity_name="storages"
+                              buffer={buffer}
+                              showFields={["name", "storage_provider"]}
+                              setBuffer={setBuffer}
+                              error={!!errors.storage_id}
+                              helpertext={
+                                errors.storage_id
+                                  ? errors.storage_id.message
+                                  : "Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                              }
+                              filter={filter_storage}
+                              value={field.value}
+                              label="Select Storage for storing TF state"
+                              required
+                              readOnly={!isStorageEditable}
+                            />
+                          )}
+                        />
+                      </>
+                    )}
+
+                    {watchedStorage && (
+                      <Controller
+                        name="storage_path"
+                        control={control}
+                        rules={{
+                          validate: {
+                            required: (value) => {
+                              if (!value) return "*Required";
+                            },
+                          },
+                        }}
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            error={!!errors.storage_path}
+                            fullWidth
+                            margin="normal"
+                            label="Storage Path"
+                            disabled={!isStorageEditable}
+                            helperText={
+                              errors.storage_path
+                                ? errors.storage_path.message
+                                : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
+                            }
+                          />
+                        )}
+                      />
+                    )}
+                  </PermissionWrapper>
+
                   <Controller
                     name="workspace_id"
                     control={control}

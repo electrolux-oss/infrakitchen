@@ -108,6 +108,8 @@ export interface ResourceUpdate {
   dependency_config: object[];
   labels: string[];
   workspace_id: string | null;
+  storage_path: string | null;
+  storage_id: string | null;
 }
 
 export interface ResourceTempStateResponse {

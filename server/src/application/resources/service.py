@@ -254,6 +254,14 @@ class ResourceService:
         :param requester: User who updates the resource
         :return: Updated resource
         """
+
+        def check_critical_fields_changed(existing: Resource, patched: ResourcePatch) -> bool:
+            critical_fields = ["storage_id", "storage_path"]
+            for field in critical_fields:
+                if getattr(patched, field) is not None and getattr(patched, field) != getattr(existing, field):
+                    return True
+            return False
+
         existing_resource = await self.crud.get_by_id(resource_id)
 
         if not existing_resource:
@@ -270,6 +278,11 @@ class ResourceService:
         existing_resource_pydantic = ResourceResponse.model_validate(existing_resource)
 
         if existing_resource_pydantic.abstract is False:
+            if check_critical_fields_changed(existing_resource, resource):
+                requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+                if "admin" not in requester_permissions:
+                    raise ValueError("Only admin can change storage or storage path of the resource")
+
             # validate configuration variables
             if resource.source_code_version_id:
                 source_code_version_id = resource.source_code_version_id
