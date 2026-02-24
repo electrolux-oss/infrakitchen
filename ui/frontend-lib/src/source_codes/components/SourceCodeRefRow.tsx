@@ -487,6 +487,7 @@ export const SourceCodeRefRow = ({
           <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
             {entry}
           </Typography>
+          {/* TO DO
           {(!hasVersion || isRecentlyCreated) && (
             <Chip
               label="New"
@@ -498,7 +499,7 @@ export const SourceCodeRefRow = ({
                 "& .MuiChip-label": { px: 0.75 },
               }}
             />
-          )}
+          )} */}
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
