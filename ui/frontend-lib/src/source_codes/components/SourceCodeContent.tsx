@@ -3,9 +3,8 @@ import { Box } from "@mui/material";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
 
-import { SourceCodeDependencies } from "./SourceCodeDependencies";
-import { SourceCodeGitOverview } from "./SourceCodeGitOverview";
 import { SourceCodeOverview } from "./SourceCodeOverview";
+import { SourceCodeRefOverview } from "./SourceCodeRefOverview";
 
 export const SourceCodeContent = () => {
   const { entity } = useEntityProvider();
@@ -19,8 +18,7 @@ export const SourceCodeContent = () => {
       }}
     >
       <SourceCodeOverview sourceCode={entity} />
-      <SourceCodeGitOverview sourceCode={entity} />
-      <SourceCodeDependencies source_code_id={entity.id} />
+      <SourceCodeRefOverview sourceCode={entity} />
       <DangerZoneCard />
     </Box>
   );

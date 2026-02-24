@@ -12,7 +12,6 @@ import { permissionRoutes } from "./permissions";
 import { resourceRoutes } from "./resources";
 import { roleRoutes } from "./roles";
 import { secretRoutes } from "./secrets";
-import { sourceCodeVersionRoutes } from "./source_code_versions";
 import { sourceCodeRoutes } from "./source_codes";
 import { storageRoutes } from "./storages";
 import { taskRoutes } from "./tasks";
@@ -45,7 +44,6 @@ const routeGroups: RouteGroup[] = [
   { key: "storage", routes: storageRoutes },
   { key: "secret", routes: secretRoutes },
   { key: "sourceCode", routes: sourceCodeRoutes },
-  { key: "sourceCodeVersion", routes: sourceCodeVersionRoutes },
   { key: "task", routes: taskRoutes },
   { key: "workspace", routes: workspaceRoutes },
   { key: "worker", routes: workerRoutes },

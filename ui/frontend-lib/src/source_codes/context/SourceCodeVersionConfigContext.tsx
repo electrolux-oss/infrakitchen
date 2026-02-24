@@ -266,6 +266,8 @@ export const SourceCodeVersionConfigProvider = ({
           "source_code",
           "status",
           "created_at",
+          "source_code_version",
+          "source_code_branch",
         ],
       })
       .then((response: { data: SourceCodeVersionResponse[] }) => {

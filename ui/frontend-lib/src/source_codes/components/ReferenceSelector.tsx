@@ -44,13 +44,17 @@ export const ReferenceSelector = () => {
           value={selectedObject}
           onChange={handleAutocompleteChange}
           isOptionEqualToValue={(option, val) => option.id === val.id}
-          getOptionLabel={(option) => option.identifier || ""}
+          getOptionLabel={(option) =>
+            option.source_code_version || option.source_code_branch || ""
+          }
           renderInput={(params) => <TextField {...params} margin="normal" />}
           renderOption={(props, option) => {
             return (
               <li {...props}>
                 <Box>
-                  <Typography variant="body1">{option.identifier}</Typography>
+                  <Typography variant="body1">
+                    {option.source_code_version || option.source_code_branch}
+                  </Typography>
                   {option.description && (
                     <Typography variant="body2" color="text.secondary">
                       {option.description}

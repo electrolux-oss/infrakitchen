@@ -6,7 +6,6 @@ export * from "./roles";
 export * from "./utils";
 export * from "./common";
 export * from "./source_codes";
-export * from "./source_code_versions";
 export * from "./storages";
 export * from "./secrets";
 export * from "./users";
