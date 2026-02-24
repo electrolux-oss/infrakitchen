@@ -447,10 +447,11 @@ export const SourceCodeRefRow = ({
     setActiveTab(newValue);
   };
 
-  const isRecentlyCreated =
-    hasVersion &&
-    entity?.created_at &&
-    isAfter(new Date(entity.created_at), subDays(new Date(), 3));
+  // TODO
+  // const isRecentlyCreated =
+  //   hasVersion &&
+  //   entity?.created_at &&
+  //   isAfter(new Date(entity.created_at), subDays(new Date(), 3));
 
   return (
     <Paper
@@ -487,6 +488,7 @@ export const SourceCodeRefRow = ({
           <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
             {entry}
           </Typography>
+          {/* TO DO
           {(!hasVersion || isRecentlyCreated) && (
             <Chip
               label="New"
@@ -498,7 +500,7 @@ export const SourceCodeRefRow = ({
                 "& .MuiChip-label": { px: 0.75 },
               }}
             />
-          )}
+          )} */}
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
