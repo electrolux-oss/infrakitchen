@@ -447,10 +447,11 @@ export const SourceCodeRefRow = ({
     setActiveTab(newValue);
   };
 
-  const isRecentlyCreated =
-    hasVersion &&
-    entity?.created_at &&
-    isAfter(new Date(entity.created_at), subDays(new Date(), 3));
+  // TODO
+  // const isRecentlyCreated =
+  //   hasVersion &&
+  //   entity?.created_at &&
+  //   isAfter(new Date(entity.created_at), subDays(new Date(), 3));
 
   return (
     <Paper
