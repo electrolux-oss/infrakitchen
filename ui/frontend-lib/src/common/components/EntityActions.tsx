@@ -101,11 +101,11 @@ export function EntityActions(props: EntityActionsProps) {
         )}
       {actions.includes("execute") && (
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={() => changeDialog("execute")}
           disabled={isLoading}
         >
-          Execute
+          Apply
         </Button>
       )}
       {actions.includes("retry") && (
@@ -169,8 +169,8 @@ export function EntityActions(props: EntityActionsProps) {
       )}
 
       <CommonDialog
-        title="Request Execution"
-        content="Do you want to execute it?"
+        title="Confirmation"
+        content="This will apply the changes. Do you want to continue?"
         maxWidth="xs"
         actions={
           <ActionButton
@@ -179,7 +179,7 @@ export function EntityActions(props: EntityActionsProps) {
             color="error"
             variant="contained"
           >
-            Execute
+            Apply
           </ActionButton>
         }
         open={dialogValues.execute}
@@ -223,8 +223,8 @@ export function EntityActions(props: EntityActionsProps) {
       />
 
       <CommonDialog
-        title="Request Dry-run"
-        content="Dry-run will not change entities, it only provides the logs"
+        title="Confirmation"
+        content="This will create an execution plan to preview the changes. Do you want to continue?"
         maxWidth="xs"
         actions={
           <ActionButton
@@ -233,15 +233,15 @@ export function EntityActions(props: EntityActionsProps) {
             color="success"
             variant="contained"
           >
-            Run
+            Plan
           </ActionButton>
         }
         open={dialogValues.dryrun}
         onClose={() => changeDialog("dryrun")}
       />
       <CommonDialog
-        title="Request Dry-run with Temp State"
-        content="Dry-run will not change entities, it only provides the logs"
+        title="Confirmation"
+        content="This will create an execution plan to preview the changes with temporary state. Do you want to continue?"
         maxWidth="xs"
         actions={
           <ActionButton
@@ -250,7 +250,7 @@ export function EntityActions(props: EntityActionsProps) {
             color="success"
             variant="contained"
           >
-            Run with Temp State
+            Plan
           </ActionButton>
         }
         open={dialogValues.dryrun_with_temp_state}
