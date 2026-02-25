@@ -29,11 +29,6 @@ export const EntityPolicyRoleCreateDialog = (
       }
       open={open}
       onClose={onClose}
-      actions={
-        <Button type="submit" form={formId} variant="contained" color="primary">
-          Submit
-        </Button>
-      }
       title="Create Role Policy"
       content={<EntityRolePolicyCreateCard {...props} formId={formId} />}
     />
