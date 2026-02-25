@@ -1,6 +1,7 @@
 from collections.abc import AsyncGenerator
 from fastapi import Depends
 
+from application.favorites.dependencies import get_favorite_service
 from application.integrations.dependencies import get_integration_service
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
@@ -29,6 +30,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession]:
 
 def get_resource_service(
     session: AsyncSession = Depends(get_db_session),
+    favorite_service=Depends(get_favorite_service),
 ) -> ResourceService:
     revision_handler = RevisionHandler(session=session, entity_name="resource")
     event_sender = EventSender(entity_name="resource")
@@ -50,4 +52,5 @@ def get_resource_service(
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
         validation_rule_service=get_validation_rule_service(session=session),
+        favorite_service=favorite_service,
     )
