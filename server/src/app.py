@@ -20,7 +20,7 @@ from core.event_stream_manager import start_rabbitmq_consumer
 
 from application.init_app import init_app
 from fastapi import FastAPI, Request
-
+from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import InfrakitchenConfig, setup_service_environment
 from core.utils.websocket_manager import WebSocketConnectionManager
 from application.views import main_router
@@ -81,6 +81,8 @@ app = FastAPI(
 )
 
 setup_service_environment()
+
+Instrumentator().instrument(app).expose(app)
 
 
 @app.middleware("http")

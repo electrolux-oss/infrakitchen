@@ -1,5 +1,6 @@
 import asyncio
 import os
+from prometheus_async.aio import web
 import uvicorn
 import base64
 from alembic.command import upgrade
@@ -55,6 +56,7 @@ def run_sql_migrations():
 
 async def start_task_worker():
     """Initializes and runs the TaskWorker indefinitely."""
+    await web.start_http_server(port=8001)
     rabbitmq = RabbitMQConnection()
     await run_task_worker(rabbitmq)
 
