@@ -62,6 +62,10 @@ export const EntityRolePolicyCreateCard = (
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
+
+  // Store the selected role entity to access v1 field reliably
+  const [selectedRole, setSelectedRole] = useState<IkEntity | null>(null);
+
   const generatedFormId = useId();
   const resolvedFormId = formId ?? generatedFormId;
 
@@ -77,25 +81,18 @@ export const EntityRolePolicyCreateCard = (
           return;
         }
 
-        let payload: EntityPolicyCreate;
-
-        if (!role_name) {
-          payload = {
-            ...data,
-            role: buffer["permissions/roles"]?.find(
-              (role: IkEntity) => role.id === data.role,
-            )?.v1,
-          };
-        } else if (!entity_id) {
-          payload = {
-            ...data,
-          };
-        } else {
+        if (!role_name && !entity_id) {
           notifyError(
             new Error("Either role_name or entity_id must be undefined."),
           );
           return;
         }
+
+        // Build payload, using selectedRole.v1 if role was selected from dropdown
+        const payload: EntityPolicyCreate = {
+          ...data,
+          role: role_name || selectedRole?.v1 || data.role,
+        };
 
         const response = await ikApi.postRaw(
           `${entity_name}s/permissions`,
@@ -111,7 +108,7 @@ export const EntityRolePolicyCreateCard = (
         notifyError(error);
       }
     },
-    [ikApi, onClose, buffer, role_name, entity_id, entity_name],
+    [ikApi, onClose, role_name, entity_id, entity_name, selectedRole],
   );
 
   return (
@@ -125,6 +122,18 @@ export const EntityRolePolicyCreateCard = (
             render={({ field }) => (
               <ReferenceSearchInput
                 {...field}
+                onChange={(value: any) => {
+                  field.onChange(value);
+                  // Store the full selected entity to access v1 reliably
+                  if (value && buffer["permissions/roles"]) {
+                    const selected = (
+                      buffer["permissions/roles"] as IkEntity[]
+                    ).find((r) => r.id === value);
+                    setSelectedRole(selected || null);
+                  } else {
+                    setSelectedRole(null);
+                  }
+                }}
                 ikApi={ikApi}
                 entity_name="permissions/roles"
                 showFields={["v1"]}

@@ -22,6 +22,11 @@ export const EntityPolicyRoleCreateDialog = (
 
   return (
     <CommonDialog
+      actions={
+        <Button type="submit" form={formId} variant="contained" color="primary">
+          Submit
+        </Button>
+      }
       open={open}
       onClose={onClose}
       actions={
