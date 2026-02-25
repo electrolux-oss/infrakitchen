@@ -22,13 +22,13 @@ export const EntityPolicyRoleCreateDialog = (
 
   return (
     <CommonDialog
-      open={open}
-      onClose={onClose}
       actions={
         <Button type="submit" form={formId} variant="contained" color="primary">
           Submit
         </Button>
       }
+      open={open}
+      onClose={onClose}
       title="Create Role Policy"
       content={<EntityRolePolicyCreateCard {...props} formId={formId} />}
     />
