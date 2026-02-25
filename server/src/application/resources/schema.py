@@ -212,6 +212,14 @@ class ResourcePatch(BaseModel):
         default=None,
     )
 
+    # critical change, as changing storage may cause issues with existing resources
+    storage_id: uuid.UUID | StorageShort | None = Field(
+        default=None,
+    )
+    storage_path: str | None = Field(
+        default=None,
+    )
+
     @model_validator(mode="before")
     def at_least_one_field_present(cls, values):
         fields = [
@@ -225,6 +233,8 @@ class ResourcePatch(BaseModel):
             "dependency_config",
             "labels",
             "workspace_id",
+            "storage_id",
+            "storage_path",
         ]
         if not any(values.get(field) not in (None, [], "") for field in fields):
             raise ValueError("At least one field must be provided in ResourcePatch.")

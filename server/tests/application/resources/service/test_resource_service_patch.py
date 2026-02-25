@@ -154,6 +154,8 @@ class TestPatch:
             dependency_config=[],
         )
         resource_patch.source_code_version_id = None
+        resource_patch.storage_id = None
+        resource_patch.storage_path = None
 
         resource_id = uuid4()
         existing_resource = mocked_resource

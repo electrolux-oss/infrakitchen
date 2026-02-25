@@ -19,6 +19,7 @@ DEFAULT_ENTITIES = [
     "user",
     "permission",
     "variable",
+    "validation_rule",
     "label",
     "tree",
     "schema",

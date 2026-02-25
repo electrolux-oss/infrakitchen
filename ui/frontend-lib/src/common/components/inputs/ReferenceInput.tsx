@@ -94,7 +94,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     <FormControl fullWidth margin="normal">
       <Autocomplete
         readOnly={otherProps.readOnly}
-        disabled={otherProps.disabled}
+        disabled={otherProps.disabled || otherProps.readOnly}
         value={selectedOption}
         options={options}
         getOptionLabel={(option) => getOptionLabel(option, showFields)}
