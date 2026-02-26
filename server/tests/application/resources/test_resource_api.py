@@ -70,6 +70,9 @@ class MockResourceService:
     async def get_user_resource_policies(self, user_id: str):
         return self._policies
 
+    async def sync_workspace(self, resource_id, requester):
+        return self._return_value
+
 
 @pytest.fixture(autouse=True)
 def app():
@@ -455,3 +458,24 @@ class TestGetUserResourcesPolicies:
 
         assert response.status_code == HTTPStatus.OK
         assert len(json_response) == 0
+
+
+class TestSyncWorkspace:
+    def test_sync_forbidden(self, client_with_user, override_service):
+        override_service(MockResourceService(actions=[]))
+
+        response = client_with_user.patch(f"/resources/{RESOURCE_ID}/sync")
+
+        assert response.status_code == HTTPStatus.FORBIDDEN
+        assert response.json() == {"detail": "Access denied for action edit"}
+
+    def test_sync_success(self, client_with_user, override_service, resource_response):
+        service = MockResourceService(return_value=resource_response, actions=[ModelActions.EDIT])
+        override_service(service)
+
+        response = client_with_user.patch(f"/resources/{RESOURCE_ID}/sync")
+        json_response = response.json()
+
+        assert response.status_code == HTTPStatus.OK
+        assert json_response["name"] == resource_response.name
+        assert json_response["id"] == str(resource_response.id)

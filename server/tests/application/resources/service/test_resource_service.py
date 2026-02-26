@@ -866,3 +866,96 @@ class TestGetResourceActions:
         result = await mock_resource_service.get_actions(resource_id=mocked_resource.id, requester=mock_user_dto)
 
         assert sorted(result) == sorted(expected_actions)
+
+
+class TestSyncWorkspace:
+    @pytest.mark.asyncio
+    async def test_sync_workspace_resource_not_found(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+    ):
+        mock_resource_crud.get_by_id.return_value = None
+        requester = Mock(spec=UserDTO)
+
+        with pytest.raises(EntityNotFound, match="Resource not found"):
+            await mock_resource_service.sync_workspace(resource_id=RESOURCE_ID, requester=requester)
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(RESOURCE_ID)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "state",
+        [
+            ModelState.PROVISION,
+            ModelState.DESTROY,
+        ],
+    )
+    async def test_sync_workspace_wrong_state(
+        self,
+        state,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+    ):
+        mocked_resource.state = state
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        requester = Mock(spec=UserDTO)
+
+        with pytest.raises(ValueError, match="Resource cannot be synced because of the wrong state"):
+            await mock_resource_service.sync_workspace(resource_id=str(mocked_resource.id), requester=requester)
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(str(mocked_resource.id))
+
+    @pytest.mark.asyncio
+    async def test_sync_workspace_no_workspace_id(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+    ):
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.workspace_id = None
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        requester = Mock(spec=UserDTO)
+
+        with pytest.raises(EntityNotFound, match="Resource doesn't have assigned workspace"):
+            await mock_resource_service.sync_workspace(resource_id=str(mocked_resource.id), requester=requester)
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(str(mocked_resource.id))
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "state",
+        [
+            ModelState.PROVISIONED,
+            ModelState.DESTROYED,
+        ],
+    )
+    async def test_sync_workspace_success(
+        self,
+        state,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_event_sender,
+        mocked_resource,
+        resource_response,
+        monkeypatch,
+        mock_user_dto,
+    ):
+        mocked_resource.state = state
+        mocked_resource.workspace_id = uuid4()
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mocked_validate = Mock(return_value=resource_response)
+        monkeypatch.setattr(ResourceResponse, "model_validate", mocked_validate)
+
+        result = await mock_resource_service.sync_workspace(
+            resource_id=str(mocked_resource.id), requester=mock_user_dto
+        )
+
+        mock_resource_crud.get_by_id.assert_awaited_once_with(str(mocked_resource.id))
+        mock_event_sender.send_task.assert_awaited_once_with(
+            mocked_resource.id, requester=mock_user_dto, action=ModelActions.SYNC
+        )
+        mocked_validate.assert_called_once_with(mocked_resource)
+        assert result == resource_response

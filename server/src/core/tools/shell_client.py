@@ -108,6 +108,7 @@ class ShellScriptClient:
         )
 
         captured_stdout_lines: list[str] = []
+        captured_stderr_lines: list[str] = []
         environment_variables: dict[str, str] = {**self._default_env(), **self.environment_variables}
 
         # Track pending save tasks to avoid duplication
@@ -126,8 +127,9 @@ class ShellScriptClient:
             _ = asyncio.create_task(trigger_save_if_needed())
 
         def stderr_callback(line: str):
-            # Log as error, and trigger save_if_more_than on the EntityLogger
-            self.logger.error(line)
+            # Capture stderr lines, but defer logging until we know the exit code
+            # Many tools (like git) write informational messages to stderr even on success
+            captured_stderr_lines.append(line)
             _ = asyncio.create_task(trigger_save_if_needed())
 
         _, return_code = await _stream_subprocess(
@@ -137,6 +139,15 @@ class ShellScriptClient:
             cwd=self.workspace_path,
             env=environment_variables,
         )
+
+        # Log stderr lines with appropriate level based on exit code
+        # If command succeeded (return_code == 0), log as INFO since many tools use stderr for status messages
+        # If command failed, log as ERROR since these are actual error messages
+        for line in captured_stderr_lines:
+            if return_code != 0:
+                self.logger.error(line)
+            else:
+                self.logger.info(line)
 
         # After the subprocess finishes, ensure all logs are saved
         if isinstance(self.logger, EntityLogger):

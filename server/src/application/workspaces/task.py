@@ -72,6 +72,8 @@ class WorkspaceTask:
                 await self.recreate_state()
             case ModelActions.APPROVE:
                 await self.approve_state()
+            case ModelActions.SYNC:
+                await self.sync_workspace()
             case ModelActions.REJECT:
                 await self.reject_state()
             case ModelActions.DESTROY:
@@ -181,6 +183,16 @@ class WorkspaceTask:
         self.logger.info("Sync task is done")
         await self.change_state(ModelStatus.DONE)
 
+    async def sync_workspace(self):
+        if self.resource_task_controller.resource_instance.state == ModelState.PROVISIONED:
+            await self.sync_source_code()
+            await self.approve()
+            self.logger.info("Sync workspace task is done")
+        elif self.resource_task_controller.resource_instance.state == ModelState.DESTROYED:
+            await self.delete_source_code()
+            await self.approve()
+            self.logger.info("Sync workspace task (Delete source code) is done")
+
     async def destroy_state(self):
         await self.change_state(ModelStatus.IN_PROGRESS)
         await self.delete_source_code()
@@ -215,9 +227,14 @@ class WorkspaceTask:
         commit_message = f"Delete resource {resource_instance.name}. Initiated by {self.user.identifier}"
 
         await self.git_client.add_changes()
-        await self.git_client.commit_changes(
+        changes_committed = await self.git_client.commit_changes(
             commit_message, user_email=self.user.email, user_name=self.user.display_name or self.user.identifier
         )
+
+        if not changes_committed:
+            self.logger.info("No changes detected, skipping push and pull request creation")
+            return
+
         await self.git_client.push(new_branch, force=True)
         if self.git_api:
             self.logger.info("Creating pull request for the synced changes")
@@ -282,9 +299,14 @@ class WorkspaceTask:
         commit_message = f"Sync resource {resource_instance.name}. Created by {self.user.identifier}"
 
         await self.git_client.add_changes()
-        await self.git_client.commit_changes(
+        changes_committed = await self.git_client.commit_changes(
             commit_message, user_email=self.user.email, user_name=self.user.display_name or self.user.identifier
         )
+
+        if not changes_committed:
+            self.logger.info("No changes detected, skipping push and pull request creation")
+            return
+
         await self.git_client.push(new_branch, force=True)
         if self.git_api:
             self.logger.info("Creating pull request for the synced changes")
