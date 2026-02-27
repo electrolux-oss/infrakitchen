@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  type RefObject,
+} from "react";
 
 import {
   useForm,
@@ -40,6 +47,10 @@ import {
   ResourceResponse,
   ResourceVariableSchema,
 } from "../types";
+import {
+  getFirstErrorFieldPath,
+  validateTagEntries,
+} from "../utils/formValidation";
 import { buildValidationRuleMaps } from "../utils/validationRules";
 
 const ResourceCreatePageInner = () => {
@@ -48,7 +59,6 @@ const ResourceCreatePageInner = () => {
     control,
     formState: { errors },
     watch,
-    trigger,
     setValue,
     getValues,
     handleSubmit,
@@ -76,8 +86,52 @@ const ResourceCreatePageInner = () => {
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
   >({});
+  const resourceDefinitionSectionRef = useRef<HTMLDivElement>(null);
+  const dependencyTagsSectionRef = useRef<HTMLDivElement>(null);
+  const dependencyConfigSectionRef = useRef<HTMLDivElement>(null);
+  const templateConfigSectionRef = useRef<HTMLDivElement>(null);
+  const inputVariablesSectionRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const scrollToErrorSection = useCallback(
+    (submitErrors: Record<string, any>) => {
+      const firstErrorPath = getFirstErrorFieldPath(submitErrors);
+      if (!firstErrorPath) {
+        return;
+      }
+
+      const rootField = firstErrorPath.split(".")[0];
+      const scrollTo = (ref: RefObject<HTMLDivElement | null>) => {
+        ref.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      };
+      const sectionByField: Record<string, RefObject<HTMLDivElement | null>> = {
+        template_id: resourceDefinitionSectionRef,
+        name: resourceDefinitionSectionRef,
+        description: resourceDefinitionSectionRef,
+        dependency_tags: dependencyTagsSectionRef,
+        dependency_config: dependencyConfigSectionRef,
+      };
+
+      if (rootField === "variables") {
+        setVariablesOpen(true);
+        scrollTo(inputVariablesSectionRef);
+        return;
+      }
+
+      const targetSectionRef = sectionByField[rootField];
+      if (targetSectionRef) {
+        scrollTo(targetSectionRef);
+        return;
+      }
+
+      scrollTo(templateConfigSectionRef);
+    },
+    [setVariablesOpen],
+  );
 
   useEffect(() => {
     const template_id = location.state?.template_id as string | undefined;
@@ -91,12 +145,6 @@ const ResourceCreatePageInner = () => {
   const handleSave = useCallback(
     async (data: ResourceCreate) => {
       setSaving(true);
-      const isValid = await trigger();
-      if (!isValid) {
-        setSaving(false);
-        notifyError(new Error("Please fix the errors in the form"));
-        return;
-      }
       ikApi
         .postRaw("resources", data)
         .then((response: ResourceResponse) => {
@@ -112,7 +160,15 @@ const ResourceCreatePageInner = () => {
           setSaving(false);
         });
     },
-    [ikApi, navigate, trigger, setSaving, linkPrefix],
+    [ikApi, navigate, setSaving, linkPrefix],
+  );
+
+  const handleInvalidSave = useCallback(
+    (submitErrors: Record<string, any>) => {
+      scrollToErrorSection(submitErrors);
+      notifyError(new Error("Please fix the errors in the form"));
+    },
+    [scrollToErrorSection],
   );
 
   const watchedIntegrationIds = watch("integration_ids");
@@ -284,7 +340,7 @@ const ResourceCreatePageInner = () => {
           <Button
             variant="contained"
             color="primary"
-            onClick={handleSubmit(handleSave)}
+            onClick={handleSubmit(handleSave, handleInvalidSave)}
           >
             {saving ? "Saving..." : "Save"}
           </Button>
@@ -300,89 +356,184 @@ const ResourceCreatePageInner = () => {
           minWidth: 320,
         }}
       >
-        <PropertyCard title="Resource Definition">
-          <Box>
-            <Controller
-              name="template_id"
-              control={control}
-              rules={{ required: "*Required" }}
-              render={({ field }) => (
-                <ReferenceInput
-                  {...field}
-                  ikApi={ikApi}
-                  entity_name="templates"
-                  buffer={buffer}
-                  setBuffer={setBuffer}
-                  error={!!errors.template_id}
-                  value={field.value}
-                  label="Template"
-                  required
-                  fullWidth
-                />
-              )}
-            />
-            <Controller
-              name="name"
-              control={control}
-              rules={{ required: "Name is required" }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Name"
-                  required
-                  placeholder="Enter resource name. It should be unique within the selected template."
-                  variant="outlined"
-                  error={!!errors.name}
-                  fullWidth
-                  margin="normal"
-                />
-              )}
-            />
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Description"
-                  placeholder="Enter resource description (optional)"
-                  variant="outlined"
-                  error={!!errors.description}
-                  fullWidth
-                  margin="normal"
-                />
-              )}
-            />
-          </Box>
-        </PropertyCard>
-
-        <PropertyCard title="Dependency Configuration">
-          <Box>
-            <Controller
-              name="dependency_tags"
-              control={control}
-              render={({ field }) => (
-                <TagInput {...field} label="Dependency Tags" errors={errors} />
-              )}
-            />
-            <Controller
-              name="dependency_config"
-              control={control}
-              render={({ field }) => (
-                <TagInput
-                  {...field}
-                  label="Dependency Configs"
-                  errors={errors}
-                />
-              )}
-            />
-          </Box>
-        </PropertyCard>
-        {watchedTemplate?.abstract === true && (
-          <PropertyCard title="Template Configuration">
+        <Box ref={resourceDefinitionSectionRef} sx={{ width: "100%" }}>
+          <PropertyCard title="Resource Definition">
             <Box>
-              {watchedTemplate && watchedTemplate.parents?.length > 0 && (
-                <>
+              <Controller
+                name="template_id"
+                control={control}
+                rules={{ required: "*Required" }}
+                render={({ field }) => (
+                  <ReferenceInput
+                    {...field}
+                    ikApi={ikApi}
+                    entity_name="templates"
+                    buffer={buffer}
+                    setBuffer={setBuffer}
+                    error={!!errors.template_id}
+                    value={field.value}
+                    label="Template"
+                    required
+                    fullWidth
+                  />
+                )}
+              />
+              <Controller
+                name="name"
+                control={control}
+                rules={{ required: "Name is required" }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Name"
+                    required
+                    placeholder="Enter resource name. It should be unique within the selected template."
+                    variant="outlined"
+                    error={!!errors.name}
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
+              />
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Description"
+                    placeholder="Enter resource description (optional)"
+                    variant="outlined"
+                    error={!!errors.description}
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
+              />
+            </Box>
+          </PropertyCard>
+        </Box>
+
+        <Box sx={{ width: "100%" }}>
+          <PropertyCard title="Dependency Configuration">
+            <Box>
+              <Box ref={dependencyTagsSectionRef}>
+                <Controller
+                  name="dependency_tags"
+                  control={control}
+                  rules={{
+                    validate: {
+                      requiredFields: (value) => validateTagEntries(value),
+                    },
+                  }}
+                  render={({ field, formState }) => (
+                    <TagInput
+                      {...field}
+                      label="Dependency Tags"
+                      errors={errors}
+                      showErrors={formState.isSubmitted}
+                    />
+                  )}
+                />
+              </Box>
+              <Box ref={dependencyConfigSectionRef}>
+                <Controller
+                  name="dependency_config"
+                  control={control}
+                  rules={{
+                    validate: {
+                      requiredFields: (value) => validateTagEntries(value),
+                    },
+                  }}
+                  render={({ field, formState }) => (
+                    <TagInput
+                      {...field}
+                      label="Dependency Configs"
+                      errors={errors}
+                      showErrors={formState.isSubmitted}
+                    />
+                  )}
+                />
+              </Box>
+            </Box>
+          </PropertyCard>
+        </Box>
+        {watchedTemplate?.abstract === true && (
+          <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
+            <PropertyCard title="Template Configuration">
+              <Box>
+                {watchedTemplate && watchedTemplate.parents?.length > 0 && (
+                  <>
+                    <Controller
+                      name="parents"
+                      control={control}
+                      rules={{ required: "*Required" }}
+                      render={({ field }) => (
+                        <>
+                          {watchedTemplate.parents.map((parent: IkEntity) => (
+                            <ArrayReferenceInput
+                              key={parent.id}
+                              ikApi={ikApi}
+                              buffer={buffer}
+                              fields={[
+                                "name",
+                                "template",
+                                "integration_ids",
+                                "storage",
+                                "workspace",
+                                "secret_ids",
+                                "id",
+                              ]}
+                              setBuffer={setBuffer}
+                              showFields={["template.name", "name"]}
+                              entity_name="resources"
+                              bufferKey={String(parent.id)}
+                              error={!!errors.parents}
+                              helpertext={
+                                errors.parents
+                                  ? errors.parents.message
+                                  : `Select Parent for Resource ${watchedTemplate.name} (only resources based on ${parent.name} templates will be shown)`
+                              }
+                              value={parentSelections[String(parent.id)] || []}
+                              filter={{ template_id: [parent.id] }}
+                              label={`Select Parent (${parent.name})`}
+                              multiple
+                              onChange={(selectedIds: string[]) => {
+                                setParentSelections((prev) => {
+                                  const next = {
+                                    ...prev,
+                                    [String(parent.id)]: selectedIds,
+                                  };
+                                  const merged = Object.values(next).flat();
+                                  field.onChange(merged);
+                                  return next;
+                                });
+                              }}
+                            />
+                          ))}
+                        </>
+                      )}
+                    />
+                    <Controller
+                      name="labels"
+                      control={control}
+                      defaultValue={[]}
+                      render={({ field }) => (
+                        <LabelInput errors={errors} {...field} />
+                      )}
+                    />
+                  </>
+                )}
+              </Box>
+            </PropertyCard>
+          </Box>
+        )}
+
+        {watchedTemplate?.abstract === false && (
+          <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
+            <PropertyCard title="Template Configuration">
+              <Box>
+                {watchedTemplate && watchedTemplate.parents?.length > 0 && (
                   <Controller
                     name="parents"
                     control={control}
@@ -411,7 +562,7 @@ const ResourceCreatePageInner = () => {
                             helpertext={
                               errors.parents
                                 ? errors.parents.message
-                                : `Select Parent for Resource ${watchedTemplate.name} (only resources based on ${parent.name} templates will be shown)`
+                                : `Select Parent for Resource "${watchedTemplate.name}" (only resources based on ${parent.name} templates will be shown)`
                             }
                             value={parentSelections[String(parent.id)] || []}
                             filter={{ template_id: [parent.id] }}
@@ -430,186 +581,170 @@ const ResourceCreatePageInner = () => {
                             }}
                           />
                         ))}
+                        {watchedParentIds.length > 1 && (
+                          <Alert severity="warning" sx={{ mt: 1 }}>
+                            Multiple parents selected. Integration, storage, and
+                            workspace will be taken from the last selected
+                            parent. Please make sure this is the intended
+                            configuration, as it may cause issues with Terraform
+                            state management if different parents have different
+                            integrations or storages.
+                          </Alert>
+                        )}
                       </>
                     )}
                   />
-                  <Controller
-                    name="labels"
-                    control={control}
-                    defaultValue={[]}
-                    render={({ field }) => (
-                      <LabelInput errors={errors} {...field} />
-                    )}
-                  />
-                </>
-              )}
-            </Box>
-          </PropertyCard>
-        )}
+                )}
 
-        {watchedTemplate?.abstract === false && (
-          <PropertyCard title="Template Configuration">
-            <Box>
-              {watchedTemplate && watchedTemplate.parents?.length > 0 && (
                 <Controller
-                  name="parents"
+                  name="labels"
                   control={control}
-                  rules={{ required: "*Required" }}
+                  defaultValue={[]}
                   render={({ field }) => (
-                    <>
-                      {watchedTemplate.parents.map((parent: IkEntity) => (
-                        <ArrayReferenceInput
-                          key={parent.id}
-                          ikApi={ikApi}
-                          buffer={buffer}
-                          fields={[
-                            "name",
-                            "template",
-                            "integration_ids",
-                            "storage",
-                            "workspace",
-                            "secret_ids",
-                            "id",
-                          ]}
-                          setBuffer={setBuffer}
-                          showFields={["template.name", "name"]}
-                          entity_name="resources"
-                          bufferKey={String(parent.id)}
-                          error={!!errors.parents}
-                          helpertext={
-                            errors.parents
-                              ? errors.parents.message
-                              : `Select Parent for Resource "${watchedTemplate.name}" (only resources based on ${parent.name} templates will be shown)`
-                          }
-                          value={parentSelections[String(parent.id)] || []}
-                          filter={{ template_id: [parent.id] }}
-                          label={`Select Parent (${parent.name})`}
-                          multiple
-                          onChange={(selectedIds: string[]) => {
-                            setParentSelections((prev) => {
-                              const next = {
-                                ...prev,
-                                [String(parent.id)]: selectedIds,
-                              };
-                              const merged = Object.values(next).flat();
-                              field.onChange(merged);
-                              return next;
-                            });
-                          }}
-                        />
-                      ))}
-                      {watchedParentIds.length > 1 && (
-                        <Alert severity="warning" sx={{ mt: 1 }}>
-                          Multiple parents selected. Integration, storage, and
-                          workspace will be taken from the last selected parent.
-                          Please make sure this is the intended configuration,
-                          as it may cause issues with Terraform state management
-                          if different parents have different integrations or
-                          storages.
-                        </Alert>
-                      )}
-                    </>
+                    <LabelInput errors={errors} {...field} />
                   )}
                 />
-              )}
 
-              <Controller
-                name="labels"
-                control={control}
-                defaultValue={[]}
-                render={({ field }) => (
-                  <LabelInput errors={errors} {...field} />
-                )}
-              />
-
-              <Controller
-                name="integration_ids"
-                control={control}
-                rules={{
-                  validate: {
-                    required: (value: string[]) => {
-                      if (value.length === 0) return "*Required";
-                    },
-                  },
-                }}
-                render={({ field }) => (
-                  <ArrayReferenceInput
-                    {...field}
-                    ikApi={ikApi}
-                    entity_name="integrations"
-                    filter={{ integration_type: "cloud" }}
-                    showFields={["integration_provider", "name"]}
-                    buffer={buffer}
-                    setBuffer={setBuffer}
-                    error={!!errors.integration_ids}
-                    helpertext={
-                      errors.integration_ids
-                        ? (errors.integration_ids as any).message
-                        : ""
-                    }
-                    value={field.value}
-                    label="Cloud Integration"
-                    required
-                    multiple
-                    fullWidth
-                  />
-                )}
-              />
-
-              <Controller
-                name="secret_ids"
-                control={control}
-                render={({ field }) => (
-                  <ArrayReferenceInput
-                    {...field}
-                    ikApi={ikApi}
-                    entity_name="secrets"
-                    showFields={["name", "secret_provider"]}
-                    buffer={buffer}
-                    setBuffer={setBuffer}
-                    error={!!errors.secret_ids}
-                    helpertext={
-                      errors.secret_ids
-                        ? (errors.secret_ids as any).message
-                        : "Select Secrets"
-                    }
-                    value={field.value}
-                    label="Select Secrets"
-                    multiple
-                    fullWidth
-                  />
-                )}
-              />
-
-              {watchedIntegrationIds.length > 0 && (
                 <Controller
-                  name="storage_id"
+                  name="integration_ids"
                   control={control}
-                  rules={{ required: "*Required" }}
+                  rules={{
+                    validate: {
+                      required: (value: string[]) => {
+                        if (value.length === 0) return "*Required";
+                      },
+                    },
+                  }}
+                  render={({ field }) => (
+                    <ArrayReferenceInput
+                      {...field}
+                      ikApi={ikApi}
+                      entity_name="integrations"
+                      filter={{ integration_type: "cloud" }}
+                      showFields={["integration_provider", "name"]}
+                      buffer={buffer}
+                      setBuffer={setBuffer}
+                      error={!!errors.integration_ids}
+                      helpertext={
+                        errors.integration_ids
+                          ? (errors.integration_ids as any).message
+                          : ""
+                      }
+                      value={field.value}
+                      label="Cloud Integration"
+                      required
+                      multiple
+                      fullWidth
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="secret_ids"
+                  control={control}
+                  render={({ field }) => (
+                    <ArrayReferenceInput
+                      {...field}
+                      ikApi={ikApi}
+                      entity_name="secrets"
+                      showFields={["name", "secret_provider"]}
+                      buffer={buffer}
+                      setBuffer={setBuffer}
+                      error={!!errors.secret_ids}
+                      helpertext={
+                        errors.secret_ids
+                          ? (errors.secret_ids as any).message
+                          : "Select Secrets"
+                      }
+                      value={field.value}
+                      label="Select Secrets"
+                      multiple
+                      fullWidth
+                    />
+                  )}
+                />
+
+                {watchedIntegrationIds.length > 0 && (
+                  <Controller
+                    name="storage_id"
+                    control={control}
+                    rules={{ required: "*Required" }}
+                    render={({ field }) => (
+                      <ReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="storages"
+                        buffer={buffer}
+                        showFields={["name", "storage_provider"]}
+                        setBuffer={setBuffer}
+                        error={!!errors.storage_id}
+                        helpertext={
+                          errors.storage_id ? errors.storage_id.message : ""
+                        }
+                        filter={filter_storage}
+                        value={field.value}
+                        label="Select Storage for storing TF state"
+                        required
+                      />
+                    )}
+                  />
+                )}
+
+                {watchedStorage && (
+                  <Controller
+                    name="storage_path"
+                    control={control}
+                    rules={{
+                      validate: {
+                        required: (value) => {
+                          if (!value) return "*Required";
+                        },
+                      },
+                    }}
+                    render={({ field }) => (
+                      <TextField
+                        {...field}
+                        error={!!errors.storage_path}
+                        fullWidth
+                        margin="normal"
+                        label="Storage Path"
+                        helperText={
+                          errors.storage_path
+                            ? errors.storage_path.message
+                            : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
+                        }
+                      />
+                    )}
+                  />
+                )}
+
+                <Controller
+                  name="workspace_id"
+                  control={control}
                   render={({ field }) => (
                     <ReferenceInput
                       {...field}
                       ikApi={ikApi}
-                      entity_name="storages"
+                      entity_name="workspaces"
                       buffer={buffer}
-                      showFields={["name", "storage_provider"]}
+                      showFields={["name", "workspace_provider"]}
                       setBuffer={setBuffer}
-                      error={!!errors.storage_id}
+                      error={!!errors.workspace_id}
                       helpertext={
-                        errors.storage_id ? errors.storage_id.message : ""
+                        errors.workspace_id
+                          ? errors.workspace_id.message
+                          : "Select Workspace"
                       }
-                      filter={filter_storage}
                       value={field.value}
-                      label="Select Storage for storing TF state"
-                      required
+                      label="Select Workspace"
                     />
                   )}
                 />
-              )}
+              </Box>
 
-              {watchedStorage && (
+              <Box>
                 <Controller
-                  name="storage_path"
+                  name="source_code_version_id"
                   control={control}
                   rules={{
                     validate: {
@@ -619,126 +754,76 @@ const ResourceCreatePageInner = () => {
                     },
                   }}
                   render={({ field }) => (
-                    <TextField
+                    <ReferenceInput
                       {...field}
-                      error={!!errors.storage_path}
-                      fullWidth
-                      margin="normal"
-                      label="Storage Path"
-                      helperText={
-                        errors.storage_path
-                          ? errors.storage_path.message
-                          : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
+                      ikApi={ikApi}
+                      entity_name="source_code_versions"
+                      buffer={buffer}
+                      setBuffer={setBuffer}
+                      error={!!errors.source_code_version_id}
+                      helpertext={
+                        errors.source_code_version_id
+                          ? errors.source_code_version_id.message
+                          : ""
                       }
+                      filter={filter_template}
+                      value={field.value}
+                      label="Template Version"
+                      required
+                      disabled={!watchedTemplateId}
                     />
                   )}
                 />
-              )}
+              </Box>
 
-              <Controller
-                name="workspace_id"
-                control={control}
-                render={({ field }) => (
-                  <ReferenceInput
-                    {...field}
-                    ikApi={ikApi}
-                    entity_name="workspaces"
-                    buffer={buffer}
-                    showFields={["name", "workspace_provider"]}
-                    setBuffer={setBuffer}
-                    error={!!errors.workspace_id}
-                    helpertext={
-                      errors.workspace_id
-                        ? errors.workspace_id.message
-                        : "Select Workspace"
-                    }
-                    value={field.value}
-                    label="Select Workspace"
-                  />
-                )}
-              />
-            </Box>
-
-            <Box>
-              <Controller
-                name="source_code_version_id"
-                control={control}
-                rules={{
-                  validate: {
-                    required: (value) => {
-                      if (!value) return "*Required";
+              {Array.isArray(schema) && schema.length > 0 && (
+                <Accordion
+                  ref={inputVariablesSectionRef}
+                  expanded={variablesOpen}
+                  onChange={() => setVariablesOpen(!variablesOpen)}
+                  elevation={0}
+                  sx={{
+                    borderRadius: 1,
+                    mt: 2,
+                    "&:before": {
+                      display: "none",
                     },
-                  },
-                }}
-                render={({ field }) => (
-                  <ReferenceInput
-                    {...field}
-                    ikApi={ikApi}
-                    entity_name="source_code_versions"
-                    buffer={buffer}
-                    setBuffer={setBuffer}
-                    error={!!errors.source_code_version_id}
-                    helpertext={
-                      errors.source_code_version_id
-                        ? errors.source_code_version_id.message
-                        : ""
-                    }
-                    filter={filter_template}
-                    value={field.value}
-                    label="Template Version"
-                    required
-                    disabled={!watchedTemplateId}
-                  />
-                )}
-              />
-            </Box>
-
-            {Array.isArray(schema) && schema.length > 0 && (
-              <Accordion
-                expanded={variablesOpen}
-                onChange={() => setVariablesOpen(!variablesOpen)}
-                elevation={0}
-                sx={{
-                  borderRadius: 1,
-                  mt: 2,
-                  "&:before": {
-                    display: "none",
-                  },
-                }}
-              >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h5" component="h4">
-                    Input Variables ({schema?.length || 0})
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Table>
-                    <TableBody>
-                      {fields.map((field, index) =>
-                        schema && schema[index] ? (
-                          <ResourceVariableForm
-                            key={field.id}
-                            index={index}
-                            variable={schema[index]}
-                            validationSummary={
-                              validationRuleSummaryByVariable[
-                                schema[index].name
-                              ] || null
-                            }
-                            validationRule={
-                              validationRuleByVariable[schema[index].name] ||
-                              null
-                            }
-                          />
-                        ) : null,
-                      )}
-                    </TableBody>
-                  </Table>
-                </AccordionDetails>
-              </Accordion>
-            )}
-            {isLoading && <GradientCircularProgress />}
-          </PropertyCard>
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography variant="h5" component="h4">
+                      Input Variables ({schema?.length || 0})
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Table>
+                      <TableBody>
+                        {fields.map((field, index) =>
+                          schema && schema[index] ? (
+                            <ResourceVariableForm
+                              key={field.id}
+                              index={index}
+                              variable={schema[index]}
+                              validationSummary={
+                                validationRuleSummaryByVariable[
+                                  schema[index].name
+                                ] || null
+                              }
+                              validationRule={
+                                validationRuleByVariable[schema[index].name] ||
+                                null
+                              }
+                            />
+                          ) : null,
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionDetails>
+                </Accordion>
+              )}
+              {isLoading && <GradientCircularProgress />}
+            </PropertyCard>
+          </Box>
         )}
       </Box>
     </PageContainer>
