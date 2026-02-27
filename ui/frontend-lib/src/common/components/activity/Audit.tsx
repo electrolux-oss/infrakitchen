@@ -1,20 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 
 import ArticleIcon from "@mui/icons-material/Article";
-import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
   Button,
   Card,
   CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import {
   DataGrid,
@@ -25,7 +18,7 @@ import {
   GridColDef,
 } from "@mui/x-data-grid";
 
-import { useConfig } from "../../../common";
+import { CommonDialog, useConfig } from "../../../common";
 import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
 import { getDateValue, GetReferenceUrlValue } from "../CommonField";
@@ -45,49 +38,6 @@ interface DataGridState {
   sortModel: GridSortModel;
   paginationModel: GridPaginationModel;
 }
-
-interface LogsModalProps {
-  open: boolean;
-  onClose: () => void;
-  entityId: string;
-  traceId: string;
-}
-
-export const LogsModal = ({
-  open,
-  onClose,
-  entityId,
-  traceId,
-}: LogsModalProps) => {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ArticleIcon fontSize="small" />
-          <Typography variant="h6" component="span">
-            Logs
-          </Typography>
-          <IconButton
-            onClick={onClose}
-            sx={{ ml: "auto" }}
-            size="small"
-            aria-label="close"
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent dividers>
-        <Logs entityId={entityId} traceId={traceId} />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
 
 export const AuditFilterPanel = ({
   search,
@@ -288,12 +238,17 @@ export const Audit = ({ entityId }: AuditProps) => {
                   },
                 }}
               />
-              <LogsModal
-                open={logsOpen}
-                onClose={() => setLogsOpen(false)}
-                entityId={entityId}
-                traceId={selectedTraceId ?? ""}
-              />
+              {selectedTraceId && (
+                <CommonDialog
+                  title="Logs"
+                  maxWidth="md"
+                  open={logsOpen}
+                  onClose={() => setLogsOpen(false)}
+                  content={
+                    <Logs entityId={entityId} traceId={selectedTraceId} />
+                  }
+                />
+              )}
             </Box>
           </CardContent>
         </Card>
