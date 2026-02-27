@@ -8,7 +8,7 @@ export const WorkspaceActivityPage = () => {
 
   return (
     <EntityProvider entity_name="workspace" entity_id={workspace_id || ""}>
-      <ActivityContainer tabs={["audit", "logs"]} />
+      <ActivityContainer tabs={["audit"]} />
     </EntityProvider>
   );
 };

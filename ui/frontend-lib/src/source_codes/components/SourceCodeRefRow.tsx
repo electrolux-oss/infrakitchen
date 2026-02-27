@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import React from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
@@ -6,6 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
+import { TabContext, TabPanel } from "@mui/lab";
 import {
   Typography,
   Box,
@@ -22,7 +23,9 @@ import {
   Tab,
 } from "@mui/material";
 
-import { useConfig, useEntityListProvider } from "../../common";
+import { StyledTab, useConfig, useEntityListProvider } from "../../common";
+import { Audit } from "../../common/components/activity/Audit";
+import { Revision } from "../../common/components/activity/Revision";
 import { HclItemList } from "../../common/components/HclItemList";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -38,7 +41,12 @@ import {
 
 import { SourceCodeVersionConfig } from "./SourceCodeVersionConfig";
 
-type TabValue = "metadata" | "inputs" | "outputs" | "configuration";
+type TabValue =
+  | "metadata"
+  | "inputs"
+  | "outputs"
+  | "configuration"
+  | "activity";
 
 type GitRefRow = {
   entry: string;
@@ -397,6 +405,75 @@ const ConfigurationTabContent = ({ entity }: ConfigurationTabContentProps) => {
   );
 };
 
+interface ActivityTabProps {
+  tabs: string[];
+  entity: any | undefined;
+}
+
+const ActivityTab = ({ tabs, entity }: ActivityTabProps) => {
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  const handleChange = (_: SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
+
+  if (!entity) {
+    return null;
+  }
+
+  return (
+    <Box sx={{ width: "100%", maxWidth: 1400 }}>
+      <TabContext value={activeTab}>
+        <Box sx={{ py: 1.5 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleChange}
+            variant="fullWidth"
+            sx={{
+              "& .MuiTabs-indicator": {
+                display: "none",
+              },
+            }}
+          >
+            {tabs.map((tab) => (
+              <StyledTab
+                disableRipple
+                value={tab}
+                label={tab.charAt(0).toUpperCase() + tab.slice(1)}
+                key={tab}
+                id={`tab-${tab}`}
+                aria-controls={`tabpanel-${tab}`}
+              />
+            ))}
+          </Tabs>
+        </Box>
+
+        {tabs.includes("audit") && (
+          <TabPanel
+            value="audit"
+            sx={{ p: 0 }}
+            id="tabpanel-audit"
+            aria-labelledby="tab-audit"
+          >
+            <Audit entityId={entity.id || ""} />
+          </TabPanel>
+        )}
+
+        {tabs.includes("revisions") && (
+          <TabPanel
+            value="revisions"
+            sx={{ p: 0 }}
+            id="tabpanel-revisions"
+            aria-labelledby="tab-revisions"
+          >
+            <Revision resourceId={entity.id || ""} resourceRevision={0} />
+          </TabPanel>
+        )}
+      </TabContext>
+    </Box>
+  );
+};
+
 export const SourceCodeRefRow = ({
   entry,
   type,
@@ -549,6 +626,7 @@ export const SourceCodeRefRow = ({
               disabled={!hasVersion}
             />
             <Tab label="Configure" value="configuration" disabled={!isDone} />
+            <Tab label="Activity" value="activity" />
           </Tabs>
 
           {activeTab === "metadata" && (
@@ -575,6 +653,10 @@ export const SourceCodeRefRow = ({
 
           {activeTab === "configuration" && (
             <ConfigurationTabContent entity={entity} />
+          )}
+
+          {activeTab === "activity" && (
+            <ActivityTab tabs={["audit", "revision"]} entity={entity} />
           )}
         </Box>
       </Collapse>

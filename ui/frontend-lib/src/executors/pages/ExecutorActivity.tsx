@@ -8,7 +8,7 @@ export const ExecutorActivityPage = () => {
 
   return (
     <EntityProvider entity_name="executor" entity_id={executor_id || ""}>
-      <ActivityContainer tabs={["audit", "logs", "revisions"]} />
+      <ActivityContainer tabs={["audit", "revisions"]} />
     </EntityProvider>
   );
 };

@@ -8,7 +8,7 @@ import Ansi from "ansi-to-react";
 
 import { LogEntity } from "../../types";
 import { getTimeOnlyValue } from "../components/CommonField";
-import { useConfig } from "../context/ConfigContext";
+import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
 
 function createLog(log: LogEntity[]) {
@@ -39,32 +39,34 @@ export const LogView = (props: {
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [index, setIndex] = useState(1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isFetching = useRef(false);
+  const indexRef = useRef(1);
 
   const fetchMoreData = useCallback(() => {
+    if (isFetching.current) return; // prevent concurrent fetches
+    isFetching.current = true;
+
     ikApi
       .getList("logs", {
-        filter: {
-          entity_id: entity_id,
-          execution_start: execution_time,
-        },
-        pagination: { page: index, perPage: 600 },
+        filter: { entity_id, execution_start: execution_time },
+        pagination: { page: indexRef.current, perPage: 600 },
         sort: { field: "created_at", order: "DESC" },
       })
       .then((response) => {
         setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
 
         if (response.data.length > 0) {
-          setIndex((prevIndex) => prevIndex + 1);
+          indexRef.current += 1;
         } else {
           setHasMore(false);
         }
       })
-      .catch((_) => {
-        setHasMore(false);
+      .catch(() => setHasMore(false))
+      .finally(() => {
+        isFetching.current = false;
       });
-  }, [ikApi, entity_id, setLogs, setHasMore, setIndex, execution_time, index]);
+  }, [ikApi, entity_id, execution_time]);
 
   useEffectOnce(() => {
     fetchMoreData();

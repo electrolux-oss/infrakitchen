@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Box, Card, CardContent, Stack, TextField } from "@mui/material";
+import ArticleIcon from "@mui/icons-material/Article";
+import CloseIcon from "@mui/icons-material/Close";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import {
   DataGrid,
   GridFilterModel,
@@ -15,6 +30,8 @@ import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
 import { getDateValue, GetReferenceUrlValue } from "../CommonField";
 
+import { Logs } from "./Logs";
+
 export interface AuditProps {
   entityId: string;
 }
@@ -28,6 +45,49 @@ interface DataGridState {
   sortModel: GridSortModel;
   paginationModel: GridPaginationModel;
 }
+
+interface LogsModalProps {
+  open: boolean;
+  onClose: () => void;
+  entityId: string;
+  traceId: string;
+}
+
+export const LogsModal = ({
+  open,
+  onClose,
+  entityId,
+  traceId,
+}: LogsModalProps) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <ArticleIcon fontSize="small" />
+          <Typography variant="h6" component="span">
+            Logs
+          </Typography>
+          <IconButton
+            onClick={onClose}
+            sx={{ ml: "auto" }}
+            size="small"
+            aria-label="close"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Logs entityId={entityId} traceId={traceId} />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} variant="outlined">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export const AuditFilterPanel = ({
   search,
@@ -62,10 +122,18 @@ export const Audit = ({ entityId }: AuditProps) => {
   const { ikApi } = useConfig();
   const { get, setKey } = useLocalStorage<Record<string, DataGridState>>();
   const storageKey = "auditTable";
+  const actionsWithLogs = useMemo<string[]>(
+    () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
+    [],
+  );
+
   const savedState = get(storageKey);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
+
+  const [logsOpen, setLogsOpen] = useState<boolean>(false);
+  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -143,8 +211,38 @@ export const Audit = ({ entityId }: AuditProps) => {
         headerName: "Event",
         flex: 1,
       },
+      {
+        field: "userActions",
+        headerName: "Actions",
+        flex: 1,
+        renderCell: (params) => (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            {actionsWithLogs.includes(params.row.action) && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ArticleIcon />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedTraceId(params.row.id);
+                  setLogsOpen(true);
+                }}
+              >
+                Logs
+              </Button>
+            )}
+          </Box>
+        ),
+      },
     ],
-    [],
+    [actionsWithLogs],
   );
 
   return (
@@ -189,6 +287,12 @@ export const Audit = ({ entityId }: AuditProps) => {
                     labelId: "audit-pagination-label",
                   },
                 }}
+              />
+              <LogsModal
+                open={logsOpen}
+                onClose={() => setLogsOpen(false)}
+                entityId={entityId}
+                traceId={selectedTraceId ?? ""}
               />
             </Box>
           </CardContent>
