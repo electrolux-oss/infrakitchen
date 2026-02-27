@@ -8,7 +8,7 @@ export const StorageActivityPage = () => {
 
   return (
     <EntityProvider entity_name="storage" entity_id={storage_id || ""}>
-      <ActivityContainer tabs={["audit", "logs", "revisions"]} />
+      <ActivityContainer tabs={["audit", "revisions"]} />
     </EntityProvider>
   );
 };
