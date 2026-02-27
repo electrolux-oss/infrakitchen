@@ -28,6 +28,7 @@ class SchedulerJobCreate(BaseModel):
     cron: str = Field(..., description="Cron‐style schedule (e.g. '0 0 * * *')")
 
     @field_validator("cron")
+    @classmethod
     def validate_crone(cls, expression: str) -> str:
         try:
             CronTrigger.from_crontab(expression)
@@ -36,6 +37,7 @@ class SchedulerJobCreate(BaseModel):
         return expression
 
     @field_validator("script")
+    @classmethod
     def validate_script(cls, script: str, info: ValidationInfo) -> str:
         job_type = info.data.get("type")
         stripped = script.lstrip()
@@ -44,6 +46,41 @@ class SchedulerJobCreate(BaseModel):
             if not SQL_START.match(stripped):
                 raise ValueError(f"Invalid SQL: must start with one of {VALID_STATEMENTS}")
         else:
+            if not BASH_START.match(stripped):
+                raise ValueError("Invalid Bash: must start with shebang (#!…) or a command name")
+        return script
+
+
+class SchedulerJobUpdate(BaseModel):
+    type: Literal[JobType.SQL, JobType.BASH] | None = None
+    script: str | None = Field(default=None, description="SQL or Shell script to run")
+    cron: str | None = Field(default=None, description="Cron‐style schedule (e.g. '0 0 * * *')")
+
+    @field_validator("cron")
+    @classmethod
+    def validate_crone(cls, expression: str | None) -> str | None:
+        if expression is None:
+            return None
+
+        try:
+            CronTrigger.from_crontab(expression)
+        except ValueError as e:
+            raise ValueError(f"Invalid cron expression: {expression!r}") from e
+        return expression
+
+    @field_validator("script")
+    @classmethod
+    def validate_script(cls, script: str | None, info: ValidationInfo) -> str | None:
+        if script is None:
+            return None
+
+        job_type = info.data.get("type")
+        stripped = script.lstrip()
+
+        if job_type == JobType.SQL:
+            if not SQL_START.match(stripped):
+                raise ValueError(f"Invalid SQL: must start with one of {VALID_STATEMENTS}")
+        elif job_type == JobType.BASH:
             if not BASH_START.match(stripped):
                 raise ValueError("Invalid Bash: must start with shebang (#!…) or a command name")
         return script

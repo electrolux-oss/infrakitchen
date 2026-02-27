@@ -78,7 +78,7 @@ class TestGetAll:
         service = MockSchedulerJobService(all_jobs=[])
         override_service(service)
 
-        response = client.get("/scheduler/jobs")
+        response = client.get("/schedulers")
 
         assert response.status_code == HTTPStatus.OK
         assert response.json() == []
@@ -91,7 +91,7 @@ class TestGetAll:
         service = MockSchedulerJobService(all_jobs=jobs)
         override_service(service)
 
-        response = client.get("/scheduler/jobs")
+        response = client.get("/schedulers")
         json_response = response.json()
 
         assert response.status_code == HTTPStatus.OK
@@ -102,7 +102,7 @@ class TestCreate:
     def test_create_forbidden_when_no_requester(self, client_without_user):
         scheduler_job_create = {"type": "SQL", "script": SQL_SCRIPT, "cron": CRON}
 
-        response = client_without_user.post("/scheduler/jobs", json=scheduler_job_create)
+        response = client_without_user.post("/schedulers", json=scheduler_job_create)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {"detail": "Access denied"}
@@ -115,7 +115,7 @@ class TestCreate:
 
         monkeypatch.setattr("core.scheduler.api.user_is_super_admin", mock_user_is_super_admin)
 
-        response = client_without_user.post("/scheduler/jobs", json=scheduler_job_create)
+        response = client_without_user.post("/schedulers", json=scheduler_job_create)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {"detail": "Access denied"}
@@ -132,7 +132,7 @@ class TestCreate:
 
         monkeypatch.setattr("core.scheduler.api.user_is_super_admin", mock_user_is_super_admin)
 
-        response = client_with_user.post("/scheduler/jobs", json=scheduler_job_create)
+        response = client_with_user.post("/schedulers", json=scheduler_job_create)
         json_response = response.json()
 
         assert response.status_code == HTTPStatus.CREATED
