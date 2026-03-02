@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Box, Card, CardContent, Stack, TextField } from "@mui/material";
+import ArticleIcon from "@mui/icons-material/Article";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  TextField,
+} from "@mui/material";
 import {
   DataGrid,
   GridFilterModel,
@@ -10,10 +18,12 @@ import {
   GridColDef,
 } from "@mui/x-data-grid";
 
-import { useConfig } from "../../../common";
+import { CommonDialog, useConfig } from "../../../common";
 import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
 import { getDateValue, GetReferenceUrlValue } from "../CommonField";
+
+import { Logs } from "./Logs";
 
 export interface AuditProps {
   entityId: string;
@@ -62,10 +72,18 @@ export const Audit = ({ entityId }: AuditProps) => {
   const { ikApi } = useConfig();
   const { get, setKey } = useLocalStorage<Record<string, DataGridState>>();
   const storageKey = "auditTable";
+  const actionsWithLogs = useMemo<string[]>(
+    () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
+    [],
+  );
+
   const savedState = get(storageKey);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
+
+  const [logsOpen, setLogsOpen] = useState<boolean>(false);
+  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -143,8 +161,38 @@ export const Audit = ({ entityId }: AuditProps) => {
         headerName: "Event",
         flex: 1,
       },
+      {
+        field: "userActions",
+        headerName: "Actions",
+        flex: 1,
+        renderCell: (params) => (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            {actionsWithLogs.includes(params.row.action) && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ArticleIcon />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedTraceId(params.row.id);
+                  setLogsOpen(true);
+                }}
+              >
+                Logs
+              </Button>
+            )}
+          </Box>
+        ),
+      },
     ],
-    [],
+    [actionsWithLogs],
   );
 
   return (
@@ -190,6 +238,17 @@ export const Audit = ({ entityId }: AuditProps) => {
                   },
                 }}
               />
+              {selectedTraceId && (
+                <CommonDialog
+                  title="Logs"
+                  maxWidth="md"
+                  open={logsOpen}
+                  onClose={() => setLogsOpen(false)}
+                  content={
+                    <Logs entityId={entityId} traceId={selectedTraceId} />
+                  }
+                />
+              )}
             </Box>
           </CardContent>
         </Card>

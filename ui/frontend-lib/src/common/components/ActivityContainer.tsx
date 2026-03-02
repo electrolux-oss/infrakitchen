@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router";
 import { TabContext, TabPanel } from "@mui/lab";
 import { Box, Tabs } from "@mui/material";
 
-import { LogList, StyledTab } from "..";
+import { StyledTab } from "..";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import PageContainer from "../PageContainer";
@@ -21,10 +21,9 @@ export const ActivityContainer = (props: ActivityPageProps) => {
   const { tabs } = props;
 
   const { entity, entity_name } = useEntityProvider();
+
   const { linkPrefix } = useConfig();
-
   const location = useLocation();
-
   const navigate = useNavigate();
 
   const [path, setPath] = useState(
@@ -74,16 +73,7 @@ export const ActivityContainer = (props: ActivityPageProps) => {
               ))}
             </Tabs>
           </Box>
-          {tabs.includes("logs") && (
-            <TabPanel
-              value="logs"
-              id="tabpanel-logs"
-              aria-labelledby="tab-logs"
-              sx={{ p: 0 }}
-            >
-              <LogList entity_id={entity.id || ""} />
-            </TabPanel>
-          )}
+
           {tabs.includes("audit") && (
             <TabPanel
               value="audit"
@@ -94,6 +84,7 @@ export const ActivityContainer = (props: ActivityPageProps) => {
               <Audit entityId={entity.id || ""} />
             </TabPanel>
           )}
+
           {tabs.includes("revisions") && (
             <TabPanel
               value="revisions"

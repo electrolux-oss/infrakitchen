@@ -8,7 +8,7 @@ export const ResourceActivityPage = () => {
 
   return (
     <EntityProvider entity_name="resource" entity_id={resource_id || ""}>
-      <ActivityContainer tabs={["audit", "logs", "revisions"]} />
+      <ActivityContainer tabs={["audit", "revisions"]} />
     </EntityProvider>
   );
 };

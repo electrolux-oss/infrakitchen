@@ -8,7 +8,7 @@ export const SourceCodeActivityPage = () => {
 
   return (
     <EntityProvider entity_name="source_code" entity_id={source_code_id || ""}>
-      <ActivityContainer tabs={["audit", "logs", "revisions"]} />
+      <ActivityContainer tabs={["audit", "revisions"]} />
     </EntityProvider>
   );
 };
