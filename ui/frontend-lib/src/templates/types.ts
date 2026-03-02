@@ -1,5 +1,17 @@
 import { UserShort } from "../users";
 
+export type IntegrationProviderType =
+  | "aws"
+  | "azurerm"
+  | "gcp"
+  | "mongodb_atlas"
+  | "datadog";
+
+export interface TemplateConfig {
+  one_resource_per_integration: boolean;
+  allowed_provider_integration_types: IntegrationProviderType[];
+}
+
 export interface TemplateShort {
   id: string;
   name: string;
@@ -21,6 +33,7 @@ export interface TemplateResponse {
   parents: TemplateShort[];
   children: TemplateShort[];
   cloud_resource_types: string[];
+  configuration: TemplateConfig;
   labels: string[];
   _entity_name: string;
 }
@@ -45,6 +58,7 @@ export interface TemplateCreateRequest {
   children: string[];
   labels: string[];
   cloud_resource_types: string[];
+  configuration: TemplateConfig;
   abstract: boolean;
 }
 
@@ -54,5 +68,6 @@ export interface TemplateUpdate extends TemplateShort {
   children: string[];
   labels: string[];
   cloud_resource_types: string[];
+  configuration: TemplateConfig;
   abstract: boolean;
 }

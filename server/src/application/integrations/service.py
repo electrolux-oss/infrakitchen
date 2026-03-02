@@ -61,6 +61,10 @@ class IntegrationService:
         integrations = await self.crud.get_all(**kwargs)
         return [IntegrationResponse.model_validate(integration) for integration in integrations]
 
+    async def get_all_dto(self, **kwargs) -> list[IntegrationDTO]:
+        integrations = await self.crud.get_all(**kwargs)
+        return [IntegrationDTO.model_validate(integration) for integration in integrations]
+
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 

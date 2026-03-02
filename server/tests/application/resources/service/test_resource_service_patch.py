@@ -135,6 +135,8 @@ class TestPatch:
         expected_state,
         expected_status,
         mock_resource_service,
+        mock_template_crud,
+        mocked_template,
         mock_resource_crud,
         mocked_user_response,
         mocked_resource,
@@ -145,7 +147,7 @@ class TestPatch:
             name="name",
             description="desc",
             source_code_version_id=uuid4(),
-            integration_ids=[uuid4()],
+            integration_ids=[],
             secret_ids=[],
             labels=["label1"],
             workspace_id=uuid4(),
@@ -166,6 +168,7 @@ class TestPatch:
         mock_resource_crud.get_by_id.return_value = existing_resource
         mock_resource_service.resource_temp_state_handler = mocked_resource_temp_state_handler
         mock_resource_service.revision_handler = mock_revision_handler
+        mock_template_crud.get_by_id.return_value = mocked_template
 
         result = await mock_resource_service.patch(
             resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
@@ -193,6 +196,81 @@ class TestPatch:
             )
 
         assert exc.value is error
+
+    @pytest.mark.asyncio
+    async def test_patch_resource_with_allowed_provider_integration_types_success(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mock_resource_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
+        mocked_template.abstract = False
+        mocked_integration.integration_provider = "aws"
+        resource_patch = ResourcePatch(
+            integration_ids=[mocked_integration.id],
+        )
+
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_resource_crud.patch.return_value = mocked_resource
+
+        await mock_resource_service.patch(
+            resource_id=mocked_resource.id, resource=resource_patch, requester=mocked_user
+        )
+        mock_integration_crud.get_all.assert_awaited_once()
+        mock_resource_crud.get_by_id.assert_awaited_once_with(mocked_resource.id)
+        mock_template_crud.get_by_id.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_patch_resource_with_disallowed_provider_integration_types_failure(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mock_resource_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
+        mocked_template.abstract = False
+        mocked_integration.integration_provider = "gcp"
+        resource_patch = ResourcePatch(
+            integration_ids=[mocked_integration.id],
+        )
+
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        with pytest.raises(
+            ValueError,
+            match=f"Integration {mocked_integration.id} has provider {mocked_integration.integration_provider} "
+            "which is not allowed for the template",
+        ):
+            await mock_resource_service.patch(
+                resource_id=mocked_resource.id, resource=resource_patch, requester=mocked_user
+            )
 
 
 class TestPatchAction:

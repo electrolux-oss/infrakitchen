@@ -458,6 +458,8 @@ export const ResourceEditPageInner = (props: {
                         {...field}
                         ikApi={ikApi}
                         entity_name="integrations"
+                        filter={{ integration_type: "cloud" }}
+                        showFields={["integration_provider", "name"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.integration_ids}
@@ -467,7 +469,7 @@ export const ResourceEditPageInner = (props: {
                             : "Select Credentials for the resource"
                         }
                         value={field.value}
-                        label="Credentials"
+                        label="Cloud Integrations"
                         multiple
                       />
                     )}

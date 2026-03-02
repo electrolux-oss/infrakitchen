@@ -9,6 +9,9 @@ import {
   Checkbox,
   Box,
   Button,
+  Autocomplete,
+  Chip,
+  Typography,
 } from "@mui/material";
 
 import { LabelInput } from "../../common";
@@ -17,8 +20,14 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { getProviderDisplayName } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { TemplateCreateRequest, TemplateResponse } from "../types";
+import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
+import {
+  TemplateCreateRequest,
+  TemplateResponse,
+  IntegrationProviderType,
+} from "../types";
 
 export const TemplateCreatePage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -36,6 +45,10 @@ export const TemplateCreatePage = () => {
       children: [],
       labels: [],
       cloud_resource_types: [],
+      configuration: {
+        one_resource_per_integration: false,
+        allowed_provider_integration_types: [],
+      },
       abstract: false,
     },
     mode: "onChange",
@@ -86,7 +99,7 @@ export const TemplateCreatePage = () => {
         </>
       }
     >
-      <PropertyCard title="Template Configuration">
+      <PropertyCard title="Template Definition">
         <Box>
           <Controller
             name="name"
@@ -206,6 +219,31 @@ export const TemplateCreatePage = () => {
             defaultValue={[]}
             render={({ field }) => <LabelInput errors={errors} {...field} />}
           />
+        </Box>
+      </PropertyCard>
+
+      <PropertyCard title="Template Configuration">
+        <Box>
+          <Controller
+            name="abstract"
+            control={control}
+            render={({ field }) => (
+              <Box>
+                <FormControlLabel
+                  control={<Checkbox {...field} checked={field.value} />}
+                  label="Abstract (if true, won't be instantiated)"
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: -1, mb: 1 }}
+                >
+                  Abstract templates are used as reusable building blocks and
+                  cannot be instantiated directly.
+                </Typography>
+              </Box>
+            )}
+          />
           <Controller
             name="cloud_resource_types"
             control={control}
@@ -229,12 +267,75 @@ export const TemplateCreatePage = () => {
             )}
           />
           <Controller
-            name="abstract"
+            name="configuration.one_resource_per_integration"
             control={control}
             render={({ field }) => (
-              <FormControlLabel
-                control={<Checkbox {...field} checked={field.value} />}
-                label="Abstract (if true, won't be instantiated)"
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={!!field.value}
+                      onChange={(event) => field.onChange(event.target.checked)}
+                    />
+                  }
+                  label="Allow only one resource per integration"
+                />
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: -1, mb: 1 }}
+                >
+                  Enforces a single resource per integration when this template
+                  is used.
+                </Typography>
+              </Box>
+            )}
+          />
+          <Controller
+            name="configuration.allowed_provider_integration_types"
+            control={control}
+            render={({ field }) => (
+              <Autocomplete
+                multiple
+                options={INTEGRATION_PROVIDER_OPTIONS}
+                value={field.value || []}
+                onChange={(_event, newValue) => field.onChange(newValue)}
+                getOptionLabel={(option) => getProviderDisplayName(option)}
+                renderValue={(
+                  value: readonly IntegrationProviderType[],
+                  getTagProps,
+                ) =>
+                  value.map(
+                    (option: IntegrationProviderType, index: number) => {
+                      const { key, ...rest } = getTagProps({ index });
+                      return (
+                        <Chip
+                          key={key}
+                          {...rest}
+                          variant="outlined"
+                          label={getProviderDisplayName(option)}
+                        />
+                      );
+                    },
+                  )
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Allowed Integration Providers"
+                    error={
+                      !!errors.configuration?.allowed_provider_integration_types
+                    }
+                    helperText={
+                      errors.configuration?.allowed_provider_integration_types
+                        ? errors.configuration
+                            .allowed_provider_integration_types.message
+                        : "Restrict template usage to selected providers (empty means all providers)"
+                    }
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
               />
             )}
           />

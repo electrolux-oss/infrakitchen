@@ -155,17 +155,50 @@ class ResourceService:
         if len(template.parents) != len(parent_resources):
             raise ValueError("Invalid parent templates")
 
-        parent_integrations = [parent.integration_ids for parent in parent_resources if parent.integration_ids]
-
-        if parent_integrations and not resource.integration_ids:
-            raise ValueError("Parent has defined integration. Integration ID is required")
-
         # TODO: Check if parent template is required
         for parent in parent_resources:
             if parent.state not in allowed_parent_states:
                 raise EntityWrongState(f"Parent resource {parent.template} ID: {parent.id} has {parent.state} state.")
 
         if template.abstract is False:
+            # validate that integrations are allowed for the template and are enabled.
+            # If parent has integration, child resource should have it too
+            parent_integrations = [parent.integration_ids for parent in parent_resources if parent.integration_ids]
+
+            if parent_integrations and not resource.integration_ids:
+                raise ValueError("Parent has defined integration. Integration ID is required")
+
+            if resource.integration_ids:
+                # if template allows only specific integration types,
+                # check that number of integrations is equal to number of allowed types.
+                if template.configuration.allowed_provider_integration_types:
+                    if len(resource.integration_ids) != len(template.configuration.allowed_provider_integration_types):
+                        raise ValueError(
+                            f"Number of integrations must be equal to number of allowed integration "
+                            "types for the template "
+                            f"Expected {len(template.configuration.allowed_provider_integration_types)}, "
+                            f"got {len(resource.integration_ids)}"
+                        )
+
+                integrations = await self.integration_service.get_all_dto(
+                    filter={"id": [i for i in resource.integration_ids]}
+                )
+                for integration in integrations:
+                    if integration.status != ModelStatus.ENABLED:
+                        raise EntityWrongState(
+                            f"Integration {integration.id} is not enabled and cannot be assigned to resource"
+                        )
+
+                    if (
+                        template.configuration.allowed_provider_integration_types
+                        and integration.integration_provider
+                        not in template.configuration.allowed_provider_integration_types
+                    ):
+                        raise ValueError(
+                            f"Integration {integration.id} has provider {integration.integration_provider} "
+                            "which is not allowed for the template"
+                        )
+
             # validate configuration variables
             if resource.source_code_version_id:
                 source_code_version_id = resource.source_code_version_id
@@ -276,7 +309,6 @@ class ResourceService:
             raise ValueError(f"Entity cannot be updated, has wrong state {existing_resource.state}")
 
         existing_resource_pydantic = ResourceResponse.model_validate(existing_resource)
-
         if existing_resource_pydantic.abstract is False:
             if check_critical_fields_changed(existing_resource, resource):
                 requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
@@ -306,6 +338,42 @@ class ResourceService:
                     resource=existing_resource_pydantic,
                     patched_resource=resource,
                 )
+
+            # validate that integrations are allowed for the template and are enabled
+            if resource.integration_ids is not None:
+                if template := await self.template_service.get_by_id(existing_resource_pydantic.template.id):
+                    if template.configuration.allowed_provider_integration_types:
+                        if len(resource.integration_ids) != len(
+                            template.configuration.allowed_provider_integration_types
+                        ):
+                            raise ValueError(
+                                f"Number of integrations must be equal to number of allowed integration "
+                                "types for the template "
+                                f"Expected {len(template.configuration.allowed_provider_integration_types)}, "
+                                f"got {len(resource.integration_ids)}"
+                            )
+
+                    integrations = await self.integration_service.get_all_dto(
+                        filter={"id": [i for i in resource.integration_ids]}
+                    )
+                    for integration in integrations:
+                        if integration.status != ModelStatus.ENABLED:
+                            raise EntityWrongState(
+                                f"Integration {integration.id} is not enabled and cannot be assigned to resource"
+                            )
+
+                        if (
+                            template.configuration.allowed_provider_integration_types
+                            and integration.integration_provider
+                            not in template.configuration.allowed_provider_integration_types
+                        ):
+                            raise ValueError(
+                                f"Integration {integration.id} has provider {integration.integration_provider} "
+                                "which is not allowed for the template"
+                            )
+
+                else:
+                    raise EntityNotFound("Template not found")
 
         body = resource.model_dump(exclude_unset=True)
 

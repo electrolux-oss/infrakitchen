@@ -356,6 +356,38 @@ class TestCreate:
             await mock_resource_service.create(resource_create, requester)
 
     @pytest.mark.asyncio
+    async def test_create_invalid_integration_state(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version_response,
+        mock_source_code_version_crud,
+    ):
+        mocked_integration.status = ModelStatus.DISABLED
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version_response.id,
+            integration_ids=[mocked_integration.id],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+
+        with pytest.raises(
+            EntityWrongState,
+            match=f"Integration {str(mocked_integration.id)} is not enabled and cannot be assigned to resource",
+        ):
+            await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
     async def test_create_scv_wrong_state(
         self,
         mock_resource_service,
@@ -382,6 +414,82 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
 
         with pytest.raises(EntityWrongState, match="Source code version is disabled"):
+            await mock_resource_service.create(resource_create, requester)
+
+    # Test template configuration
+    @pytest.mark.asyncio
+    async def test_create_resource_with_allowed_provider_integration_types_success(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mock_resource_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
+        mocked_template.abstract = False
+        mocked_integration.integration_provider = "aws"
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            integration_ids=[mocked_integration.id],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_resource_service.get_variable_schema = AsyncMock(return_value=[])
+
+        await mock_resource_service.create(resource_create, requester)
+        mock_integration_crud.get_all.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_create_resource_with_not_allowed_provider_integration_types_failure(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mock_resource_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["allowed_provider_integration_types"] = ["gcp"]
+        mocked_template.abstract = False
+        mocked_integration.integration_provider = "aws"
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            integration_ids=[mocked_integration.id],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+
+        with pytest.raises(
+            ValueError,
+            match=f"Integration {mocked_integration.id} has provider {mocked_integration.integration_provider} "
+            "which is not allowed for the template",
+        ):
             await mock_resource_service.create(resource_create, requester)
 
 

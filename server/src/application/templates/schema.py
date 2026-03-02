@@ -3,8 +3,18 @@ import re
 from typing import Literal
 import uuid
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from application.types import IntegrationProviderType
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
+
+
+class TemplateConfig(BaseModel):
+    # Allow only one resource per integration, which is required for some templates to work properly.
+    # If false, multiple resources can be used in the same integration
+    one_resource_per_integration: bool = Field(default=False)
+
+    # Allowed integration types for this template. If empty, all integration types are allowed.
+    allowed_provider_integration_types: list[IntegrationProviderType] = Field(default_factory=list)
 
 
 class TemplateShort(BaseModel):
@@ -39,6 +49,7 @@ class TemplateCreate(BaseModel):
         default_factory=list,
     )
     cloud_resource_types: list[str] = Field(default_factory=list)
+    configuration: TemplateConfig = Field(default_factory=TemplateConfig)
     labels: list[str] = Field(default_factory=list)
     abstract: bool = Field(default=False)
 
@@ -69,6 +80,7 @@ class TemplateUpdate(BaseModel):
         default_factory=list,
     )
     cloud_resource_types: list[str] = Field(default_factory=list)
+    configuration: TemplateConfig = Field(default_factory=TemplateConfig)
     labels: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(
@@ -110,6 +122,7 @@ class TemplateResponse(BaseModel):
         default_factory=list,
     )
     cloud_resource_types: list[str] = Field(default_factory=list)
+    configuration: TemplateConfig = Field(default_factory=TemplateConfig)
     labels: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)

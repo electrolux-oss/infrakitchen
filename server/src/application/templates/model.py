@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from application.templates.schema import TemplateConfig
 from core.base_models import Base, BaseRevision
 from sqlalchemy import UUID, Column, DateTime, ForeignKey, JSON, Table, func
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -46,6 +47,7 @@ class Template(BaseRevision):
     )
     cloud_resource_types: Mapped[list[str]] = mapped_column(JSON, default=list)
     abstract: Mapped[bool] = mapped_column(default=False)
+    configuration: Mapped[dict[str, Any]] = mapped_column(JSON)
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
@@ -90,6 +92,7 @@ class TemplateDTO(BaseModel):
     children: list[uuid.UUID] = Field(
         default_factory=list,
     )
+    configuration: TemplateConfig = Field(default_factory=TemplateConfig)
     cloud_resource_types: list[str] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)

@@ -6,8 +6,9 @@ from uuid import uuid4
 
 from application.templates.crud import TemplateCRUD
 from application.templates.model import Template, TemplateDTO
-from application.templates.schema import TemplateResponse
+from application.templates.schema import TemplateConfig, TemplateResponse
 from application.templates.service import TemplateService
+from core.constants.model import ModelStatus
 
 TEMPLATE_ID = "abc123"
 
@@ -43,8 +44,16 @@ def mock_template_service(
 
 
 @pytest.fixture
-def template_response():
-    return TemplateResponse(id=uuid4(), name="Test Template", template="template1")
+def template_response(mocked_user_response):
+    return TemplateResponse(
+        id=uuid4(),
+        name="Test Template",
+        template="template1",
+        configuration=TemplateConfig(),
+        creator=mocked_user_response,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
 
 
 @pytest.fixture
@@ -53,6 +62,7 @@ def mocked_template(mocked_user):
         id=uuid4(),
         name="Test Template",
         template="template1",
+        status=ModelStatus.ENABLED,
         creator=mocked_user,
         created_by=mocked_user.id,
         revision_number=1,
@@ -62,6 +72,7 @@ def mocked_template(mocked_user):
         created_at=datetime.now(),
         updated_at=datetime.now(),
         cloud_resource_types=[],
+        configuration={},
         labels=["test_label"],
         description="A test template",
     )
