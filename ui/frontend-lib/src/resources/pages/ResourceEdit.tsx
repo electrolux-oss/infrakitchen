@@ -1,4 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  type RefObject,
+} from "react";
 
 import {
   Controller,
@@ -46,6 +53,10 @@ import {
   ResourceUpdate,
   ResourceVariableSchema,
 } from "../types";
+import {
+  getFirstErrorFieldPath,
+  validateTagEntries,
+} from "../utils/formValidation";
 import { buildValidationRuleMaps } from "../utils/validationRules";
 
 export const ResourceEditPageInner = (props: {
@@ -136,11 +147,53 @@ export const ResourceEditPageInner = (props: {
   const {
     control,
     handleSubmit,
-    trigger,
     formState: { errors, dirtyFields, isDirty },
     watch,
     reset,
   } = methods;
+  const resourceDefinitionSectionRef = useRef<HTMLDivElement>(null);
+  const templateConfigSectionRef = useRef<HTMLDivElement>(null);
+  const dependencyTagsSectionRef = useRef<HTMLDivElement>(null);
+  const dependencyConfigSectionRef = useRef<HTMLDivElement>(null);
+  const inputVariablesSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToErrorSection = useCallback(
+    (submitErrors: Record<string, any>) => {
+      const firstErrorPath = getFirstErrorFieldPath(submitErrors);
+      if (!firstErrorPath) {
+        return;
+      }
+
+      const rootField = firstErrorPath.split(".")[0];
+      const scrollTo = (ref: RefObject<HTMLDivElement | null>) => {
+        ref.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      };
+      const sectionByField: Record<string, RefObject<HTMLDivElement | null>> = {
+        name: resourceDefinitionSectionRef,
+        description: resourceDefinitionSectionRef,
+        dependency_tags: dependencyTagsSectionRef,
+        dependency_config: dependencyConfigSectionRef,
+      };
+
+      if (rootField === "variables") {
+        setVariablesOpen(true);
+        scrollTo(inputVariablesSectionRef);
+        return;
+      }
+
+      const targetSectionRef = sectionByField[rootField];
+      if (targetSectionRef) {
+        scrollTo(targetSectionRef);
+        return;
+      }
+
+      scrollTo(templateConfigSectionRef);
+    },
+    [setVariablesOpen],
+  );
 
   const watchedSourceCodeVersionId = watch("source_code_version_id");
 
@@ -186,12 +239,6 @@ export const ResourceEditPageInner = (props: {
     async (data: ResourceUpdate) => {
       if (!entity) return;
 
-      const isValid = await trigger();
-      if (!isValid) {
-        notifyError(new Error("Please fill in all required fields"));
-        return;
-      }
-
       if (!isDirty) {
         notify("No changes detected", "info");
         return;
@@ -220,7 +267,15 @@ export const ResourceEditPageInner = (props: {
         notifyError(error);
       }
     },
-    [entity, trigger, isDirty, ikApi, linkPrefix, dirtyFields, navigate],
+    [entity, isDirty, ikApi, linkPrefix, dirtyFields, navigate],
+  );
+
+  const handleInvalidSubmit = useCallback(
+    (submitErrors: Record<string, any>) => {
+      scrollToErrorSection(submitErrors);
+      notifyError(new Error("Please fill in all required fields"));
+    },
+    [scrollToErrorSection],
   );
 
   useEffect(() => {
@@ -318,7 +373,7 @@ export const ResourceEditPageInner = (props: {
             <Button
               variant="contained"
               color="primary"
-              onClick={handleSubmit(onSubmit)}
+              onClick={handleSubmit(onSubmit, handleInvalidSubmit)}
             >
               Update
             </Button>
@@ -335,108 +390,54 @@ export const ResourceEditPageInner = (props: {
             maxWidth: 1000,
           }}
         >
-          <PropertyCard title="Resource Definition">
-            <Controller
-              name="name"
-              control={control}
-              rules={{ required: "Name is required" }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Name"
-                  required
-                  placeholder="Enter resource name. It should be unique within the selected template."
-                  helperText={
-                    errors.name
-                      ? errors.name.message
-                      : "It should be unique within the selected template."
-                  }
-                  variant="outlined"
-                  error={!!errors.name}
-                  fullWidth
-                  margin="normal"
-                />
-              )}
-            />
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Description"
-                  variant="outlined"
-                  error={!!errors.description}
-                  helperText={
-                    errors.description
-                      ? errors.description.message
-                      : "Description of the resource"
-                  }
-                  fullWidth
-                  margin="normal"
-                />
-              )}
-            />
-          </PropertyCard>
-          <PropertyCard title="Template Configuration">
-            {entity.abstract === true && (
+          <Box ref={resourceDefinitionSectionRef} sx={{ width: "100%" }}>
+            <PropertyCard title="Resource Definition">
               <Controller
-                name="labels"
+                name="name"
                 control={control}
-                defaultValue={[]}
+                rules={{ required: "Name is required" }}
                 render={({ field }) => (
-                  <LabelInput errors={errors} {...field} />
+                  <TextField
+                    {...field}
+                    label="Name"
+                    required
+                    placeholder="Enter resource name. It should be unique within the selected template."
+                    helperText={
+                      errors.name
+                        ? errors.name.message
+                        : "It should be unique within the selected template."
+                    }
+                    variant="outlined"
+                    error={!!errors.name}
+                    fullWidth
+                    margin="normal"
+                  />
                 )}
               />
-            )}
-
-            {entity?.abstract === false && (
-              <>
-                <Controller
-                  name="integration_ids"
-                  control={control}
-                  render={({ field }) => (
-                    <ArrayReferenceInput
-                      {...field}
-                      ikApi={ikApi}
-                      entity_name="integrations"
-                      buffer={buffer}
-                      setBuffer={setBuffer}
-                      error={!!errors.integration_ids}
-                      helpertext={
-                        errors.integration_ids
-                          ? errors.integration_ids.message
-                          : "Select Credentials for the resource"
-                      }
-                      value={field.value}
-                      label="Credentials"
-                      multiple
-                    />
-                  )}
-                />
-                <Controller
-                  name="secret_ids"
-                  control={control}
-                  render={({ field }) => (
-                    <ArrayReferenceInput
-                      {...field}
-                      ikApi={ikApi}
-                      entity_name="secrets"
-                      buffer={buffer}
-                      setBuffer={setBuffer}
-                      error={!!errors.secret_ids}
-                      helpertext={
-                        errors.secret_ids
-                          ? errors.secret_ids.message
-                          : "Select Secret for the resource"
-                      }
-                      value={field.value}
-                      label="Secrets"
-                      multiple
-                    />
-                  )}
-                />
-
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Description"
+                    variant="outlined"
+                    error={!!errors.description}
+                    helperText={
+                      errors.description
+                        ? errors.description.message
+                        : "Description of the resource"
+                    }
+                    fullWidth
+                    margin="normal"
+                  />
+                )}
+              />
+            </PropertyCard>
+          </Box>
+          <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
+            <PropertyCard title="Template Configuration">
+              {entity.abstract === true && (
                 <Controller
                   name="labels"
                   control={control}
@@ -445,234 +446,314 @@ export const ResourceEditPageInner = (props: {
                     <LabelInput errors={errors} {...field} />
                   )}
                 />
-              </>
-            )}
+              )}
 
-            {entity?.abstract === false && (
-              <>
-                <Typography variant="h5" component="h3">
-                  Template version
-                </Typography>
-                <Box>
+              {entity?.abstract === false && (
+                <>
                   <Controller
-                    name="source_code_version_id"
+                    name="integration_ids"
                     control={control}
-                    rules={{
-                      validate: {
-                        required: (value) => {
-                          if (!value) return "*Required";
-                        },
-                      },
-                    }}
                     render={({ field }) => (
-                      <ReferenceInput
+                      <ArrayReferenceInput
                         {...field}
                         ikApi={ikApi}
-                        entity_name="source_code_versions"
+                        entity_name="integrations"
                         buffer={buffer}
                         setBuffer={setBuffer}
-                        error={!!errors.source_code_version_id}
+                        error={!!errors.integration_ids}
                         helpertext={
-                          errors.source_code_version_id
-                            ? errors.source_code_version_id.message
-                            : "Select Source Code Version"
+                          errors.integration_ids
+                            ? errors.integration_ids.message
+                            : "Select Credentials for the resource"
                         }
-                        filter={{ template_id: entity.template.id }}
                         value={field.value}
-                        label="Source Code Version"
+                        label="Credentials"
+                        multiple
                       />
                     )}
                   />
-                  <PermissionWrapper
-                    requiredPermission="storage"
-                    permissionAction="admin"
-                  >
-                    {watchedIntegrationIds.length > 0 && (
-                      <>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mt: 1,
-                          }}
-                        >
-                          <Tooltip
-                            title={
-                              isStorageEditable
-                                ? "Lock storage field"
-                                : "Unlock storage field"
-                            }
+                  <Controller
+                    name="secret_ids"
+                    control={control}
+                    render={({ field }) => (
+                      <ArrayReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="secrets"
+                        buffer={buffer}
+                        setBuffer={setBuffer}
+                        error={!!errors.secret_ids}
+                        helpertext={
+                          errors.secret_ids
+                            ? errors.secret_ids.message
+                            : "Select Secret for the resource"
+                        }
+                        value={field.value}
+                        label="Secrets"
+                        multiple
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="labels"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field }) => (
+                      <LabelInput errors={errors} {...field} />
+                    )}
+                  />
+                </>
+              )}
+
+              {entity?.abstract === false && (
+                <>
+                  <Typography variant="h5" component="h3">
+                    Template version
+                  </Typography>
+                  <Box>
+                    <Controller
+                      name="source_code_version_id"
+                      control={control}
+                      rules={{
+                        validate: {
+                          required: (value) => {
+                            if (!value) return "*Required";
+                          },
+                        },
+                      }}
+                      render={({ field }) => (
+                        <ReferenceInput
+                          {...field}
+                          ikApi={ikApi}
+                          entity_name="source_code_versions"
+                          buffer={buffer}
+                          setBuffer={setBuffer}
+                          error={!!errors.source_code_version_id}
+                          helpertext={
+                            errors.source_code_version_id
+                              ? errors.source_code_version_id.message
+                              : "Select Source Code Version"
+                          }
+                          filter={{ template_id: entity.template.id }}
+                          value={field.value}
+                          label="Source Code Version"
+                        />
+                      )}
+                    />
+                    <PermissionWrapper
+                      requiredPermission="storage"
+                      permissionAction="admin"
+                    >
+                      {watchedIntegrationIds.length > 0 && (
+                        <>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mt: 1,
+                            }}
                           >
-                            <IconButton
-                              size="small"
-                              color="warning"
-                              onClick={() =>
-                                setIsStorageEditable((editable) => !editable)
+                            <Tooltip
+                              title={
+                                isStorageEditable
+                                  ? "Lock storage field"
+                                  : "Unlock storage field"
                               }
                             >
-                              {isStorageEditable ? (
-                                <LockOpenOutlinedIcon fontSize="small" />
-                              ) : (
-                                <LockOutlinedIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Tooltip>
-                          <Typography variant="body2" color="warning.main">
-                            {isStorageEditable
-                              ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
-                              : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
-                          </Typography>
-                        </Box>
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                onClick={() =>
+                                  setIsStorageEditable((editable) => !editable)
+                                }
+                              >
+                                {isStorageEditable ? (
+                                  <LockOpenOutlinedIcon fontSize="small" />
+                                ) : (
+                                  <LockOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                            <Typography variant="body2" color="warning.main">
+                              {isStorageEditable
+                                ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
+                                : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
+                            </Typography>
+                          </Box>
+                          <Controller
+                            name="storage_id"
+                            control={control}
+                            rules={{ required: "*Required" }}
+                            render={({ field }) => (
+                              <ReferenceInput
+                                {...field}
+                                ikApi={ikApi}
+                                entity_name="storages"
+                                buffer={buffer}
+                                showFields={["name", "storage_provider"]}
+                                setBuffer={setBuffer}
+                                error={!!errors.storage_id}
+                                helpertext={
+                                  errors.storage_id
+                                    ? errors.storage_id.message
+                                    : "Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                                }
+                                filter={filter_storage}
+                                value={field.value}
+                                label="Select Storage for storing TF state"
+                                required
+                                readOnly={!isStorageEditable}
+                              />
+                            )}
+                          />
+                        </>
+                      )}
+
+                      {watchedStorage && (
                         <Controller
-                          name="storage_id"
+                          name="storage_path"
                           control={control}
-                          rules={{ required: "*Required" }}
+                          rules={{
+                            validate: {
+                              required: (value) => {
+                                if (!value) return "*Required";
+                              },
+                            },
+                          }}
                           render={({ field }) => (
-                            <ReferenceInput
+                            <TextField
                               {...field}
-                              ikApi={ikApi}
-                              entity_name="storages"
-                              buffer={buffer}
-                              showFields={["name", "storage_provider"]}
-                              setBuffer={setBuffer}
-                              error={!!errors.storage_id}
-                              helpertext={
-                                errors.storage_id
-                                  ? errors.storage_id.message
-                                  : "Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                              error={!!errors.storage_path}
+                              fullWidth
+                              margin="normal"
+                              label="Storage Path"
+                              disabled={!isStorageEditable}
+                              helperText={
+                                errors.storage_path
+                                  ? errors.storage_path.message
+                                  : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
                               }
-                              filter={filter_storage}
-                              value={field.value}
-                              label="Select Storage for storing TF state"
-                              required
-                              readOnly={!isStorageEditable}
                             />
                           )}
                         />
-                      </>
-                    )}
+                      )}
+                    </PermissionWrapper>
 
-                    {watchedStorage && (
-                      <Controller
-                        name="storage_path"
-                        control={control}
-                        rules={{
-                          validate: {
-                            required: (value) => {
-                              if (!value) return "*Required";
-                            },
-                          },
-                        }}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            error={!!errors.storage_path}
-                            fullWidth
-                            margin="normal"
-                            label="Storage Path"
-                            disabled={!isStorageEditable}
-                            helperText={
-                              errors.storage_path
-                                ? errors.storage_path.message
-                                : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
-                            }
-                          />
-                        )}
-                      />
-                    )}
-                  </PermissionWrapper>
-
-                  <Controller
-                    name="workspace_id"
-                    control={control}
-                    render={({ field }) => (
-                      <ReferenceInput
-                        {...field}
-                        ikApi={ikApi}
-                        showFields={["name", "workspace_provider"]}
-                        entity_name="workspaces"
-                        buffer={buffer}
-                        setBuffer={setBuffer}
-                        error={!!errors.workspace_id}
-                        helpertext={
-                          errors.workspace_id
-                            ? errors.workspace_id.message
-                            : "Select Workspace"
-                        }
-                        value={field.value}
-                        label="Workspace"
-                      />
-                    )}
-                  />
-                </Box>
-              </>
-            )}
-            <Controller
-              name="dependency_tags"
-              control={control}
-              render={({ field }) => (
-                <TagInput {...field} label="Dependency Tags" errors={errors} />
+                    <Controller
+                      name="workspace_id"
+                      control={control}
+                      render={({ field }) => (
+                        <ReferenceInput
+                          {...field}
+                          ikApi={ikApi}
+                          showFields={["name", "workspace_provider"]}
+                          entity_name="workspaces"
+                          buffer={buffer}
+                          setBuffer={setBuffer}
+                          error={!!errors.workspace_id}
+                          helpertext={
+                            errors.workspace_id
+                              ? errors.workspace_id.message
+                              : "Select Workspace"
+                          }
+                          value={field.value}
+                          label="Workspace"
+                        />
+                      )}
+                    />
+                  </Box>
+                </>
               )}
-            />
-            <Controller
-              name="dependency_config"
-              control={control}
-              render={({ field }) => (
-                <TagInput
-                  {...field}
-                  label="Dependency Configs"
-                  errors={errors}
-                />
-              )}
-            />
-          </PropertyCard>
-          {entity.abstract === false && (
-            <PropertyCard title="Input Variables">
-              {Array.isArray(schema) && schema.length > 0 && (
-                <Accordion
-                  expanded={variablesOpen}
-                  onChange={() => setVariablesOpen(!variablesOpen)}
-                  elevation={0}
-                  sx={{
-                    "&:before": {
-                      display: "none",
+              <Box ref={dependencyTagsSectionRef}>
+                <Controller
+                  name="dependency_tags"
+                  control={control}
+                  rules={{
+                    validate: {
+                      requiredFields: (value) => validateTagEntries(value),
                     },
                   }}
-                >
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography variant="h5" component="h4">
-                      Input variables
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Table>
-                      <TableBody>
-                        {fields.map((field, index) =>
-                          schema && schema[index] ? (
-                            <ResourceVariableForm
-                              key={field.id}
-                              index={index}
-                              edit_mode={true}
-                              variable={
-                                getSchemaObject(schema)[field.name] || {}
-                              }
-                              validationSummary={
-                                validationRuleSummaryByVariable[field.name] ||
-                                null
-                              }
-                              validationRule={
-                                validationRuleByVariable[field.name] || null
-                              }
-                            />
-                          ) : null,
-                        )}
-                      </TableBody>
-                    </Table>
-                  </AccordionDetails>
-                </Accordion>
-              )}
+                  render={({ field, formState }) => (
+                    <TagInput
+                      {...field}
+                      label="Dependency Tags"
+                      errors={errors}
+                      showErrors={formState.isSubmitted}
+                    />
+                  )}
+                />
+              </Box>
+              <Box ref={dependencyConfigSectionRef}>
+                <Controller
+                  name="dependency_config"
+                  control={control}
+                  rules={{
+                    validate: {
+                      requiredFields: (value) => validateTagEntries(value),
+                    },
+                  }}
+                  render={({ field, formState }) => (
+                    <TagInput
+                      {...field}
+                      label="Dependency Configs"
+                      errors={errors}
+                      showErrors={formState.isSubmitted}
+                    />
+                  )}
+                />
+              </Box>
             </PropertyCard>
+          </Box>
+          {entity.abstract === false && (
+            <Box ref={inputVariablesSectionRef} sx={{ width: "100%" }}>
+              <PropertyCard title="Input Variables">
+                {Array.isArray(schema) && schema.length > 0 && (
+                  <Accordion
+                    expanded={variablesOpen}
+                    onChange={() => setVariablesOpen(!variablesOpen)}
+                    elevation={0}
+                    sx={{
+                      "&:before": {
+                        display: "none",
+                      },
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="h5" component="h4">
+                        Input variables
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Table>
+                        <TableBody>
+                          {fields.map((field, index) =>
+                            schema && schema[index] ? (
+                              <ResourceVariableForm
+                                key={field.id}
+                                index={index}
+                                edit_mode={true}
+                                variable={
+                                  getSchemaObject(schema)[field.name] || {}
+                                }
+                                validationSummary={
+                                  validationRuleSummaryByVariable[field.name] ||
+                                  null
+                                }
+                                validationRule={
+                                  validationRuleByVariable[field.name] || null
+                                }
+                              />
+                            ) : null,
+                          )}
+                        </TableBody>
+                      </Table>
+                    </AccordionDetails>
+                  </Accordion>
+                )}
+              </PropertyCard>
+            </Box>
           )}
         </Box>
       </PageContainer>
