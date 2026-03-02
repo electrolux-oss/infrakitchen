@@ -17,6 +17,7 @@ export const SourceCodeVersionLink = ({
   name = undefined,
 }: SourceCodeVersionLinkProps) => {
   const navigate = useNavigate();
+  const targetUrl = `/source_codes/${source_code_version.source_code.id}`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -26,18 +27,19 @@ export const SourceCodeVersionLink = ({
       }
 
       e.preventDefault();
-      navigate(`/source_codes/${source_code_version.source_code.id}`, {
+      navigate(targetUrl, {
         state: source_code_version.source_code_version
           ? { refTagSearch: source_code_version.source_code_version }
           : { refBranchSearch: source_code_version.source_code_branch },
       });
     },
-    [navigate, source_code_version],
+    [navigate, source_code_version, targetUrl],
   );
 
   return (
     <Box>
       <Link
+        href={targetUrl}
         onClick={handleClick}
         style={{ textDecoration: "none", cursor: "pointer" }}
       >
