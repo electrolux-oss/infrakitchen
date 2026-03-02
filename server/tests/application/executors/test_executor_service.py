@@ -84,14 +84,14 @@ class TestGetAll:
                 id=uuid4(),
                 name="Test Executor1",
                 source_code={"id": uuid4(), "name": "source1"},
-                runtime="opentofu",
+                runtime="tofu",
                 command_args="-var-file=environments/dev/eu-west-1.tfvars",
             ),
             Executor(
                 id=uuid4(),
                 name="Test Executor2",
                 source_code={"id": uuid4(), "name": "source2"},
-                runtime="opentofu",
+                runtime="tofu",
                 command_args="-var-file=environments/dev/eu-west-1.tfvars",
             ),
         ]
@@ -103,7 +103,7 @@ class TestGetAll:
             source_code=mocked_source_code_response,
             creator=mocked_user_response,
             storage=storage_response,
-            runtime="opentofu",
+            runtime="tofu",
             command_args="-apply",
         )
         executor_response_2 = ExecutorResponse(
@@ -112,7 +112,7 @@ class TestGetAll:
             source_code=mocked_source_code_response,
             creator=mocked_user_response,
             storage=storage_response,
-            runtime="opentofu",
+            runtime="tofu",
             command_args="-plan",
         )
 
@@ -187,7 +187,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="-apply",
         )
 
@@ -199,7 +199,7 @@ class TestCreate:
             "source_code_folder": "executors/",
             "storage_id": storage_response.id,
             "storage_path": "path/to/storage",
-            "runtime": "opentofu",
+            "runtime": "tofu",
             "command_args": "-apply",
         }
         requester = mocked_user_response
@@ -251,7 +251,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="-apply",
         )
 
@@ -286,7 +286,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="-apply",
         )
 
@@ -311,7 +311,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -335,7 +335,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -362,7 +362,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -385,7 +385,7 @@ class TestCreate:
             source_code_id=mocked_source_code.id,
             source_code_version="v1.0.0",
             source_code_folder="executors/",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -411,7 +411,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=uuid4(),
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -439,7 +439,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=mocked_storage.id,
             storage_path="",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 
@@ -469,7 +469,7 @@ class TestCreate:
             source_code_folder="executors/",
             storage_id=storage_response.id,
             storage_path="path/to/storage",
-            runtime="opentofu",
+            runtime="tofu",
             command_args="apply",
         )
 

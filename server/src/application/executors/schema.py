@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from application.secrets.schema import SecretShort
 from application.source_codes.schema import SourceCodeShort
 from application.integrations.schema import IntegrationShort
+from application.types import IacToolType
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
@@ -58,7 +59,7 @@ class ExecutorResponse(BaseModel):
     )
     description: str = Field(default="")
 
-    runtime: Literal["opentofu"] = Field(default="opentofu")
+    runtime: IacToolType = Field(default="tofu")
     command_args: str = Field(default="")
 
     source_code: SourceCodeShort | None = Field(...)
@@ -95,7 +96,7 @@ class ExecutorCreate(BaseModel):
     )
     description: str = Field(default="")
 
-    runtime: Literal["opentofu"] = Field(default="opentofu")
+    runtime: IacToolType = Field(default="tofu")
     command_args: str = Field(default="")
 
     source_code_id: uuid.UUID = Field(..., frozen=True)

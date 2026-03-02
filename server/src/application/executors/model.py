@@ -9,6 +9,7 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 from application.secrets.model import Secret, SecretDTO
 from application.source_codes.model import SourceCode, SourceCodeDTO
 from application.integrations.model import Integration, IntegrationDTO
+from application.types import IacToolType
 from core.base_models import Base, BaseEntity
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import User, UserDTO
@@ -40,7 +41,7 @@ class Executor(BaseEntity):
     name: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
     description: Mapped[str] = mapped_column(default="")
 
-    runtime: Mapped[Literal["opentofu"]] = mapped_column(default="opentofu")
+    runtime: Mapped[str] = mapped_column(default="tofu")
     command_args: Mapped[str] = mapped_column(default="")
 
     source_code_id: Mapped[uuid.UUID] = mapped_column(
@@ -96,7 +97,7 @@ class ExecutorDTO(BaseModel):
         ModelStatus.READY,
     ] = Field(default=ModelStatus.QUEUED)
 
-    runtime: Literal["opentofu"] = Field(default="opentofu")
+    runtime: IacToolType = Field(default="tofu")
     command_args: str = Field(default="")
     source_code_id: uuid.UUID | SourceCodeDTO | None = Field(...)
     source_code_version: str | None = Field(default=None)

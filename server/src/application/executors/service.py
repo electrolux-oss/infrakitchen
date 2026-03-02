@@ -123,10 +123,10 @@ class ExecutorService:
         if source_code.status == ModelStatus.DISABLED:
             raise EntityWrongState("SourceCode is not enabled")
 
-        if executor.runtime in ["opentofu"] and not executor.storage_id:
+        if executor.runtime in ["tofu"] and not executor.storage_id:
             raise ValueError("Storage is required for opentofu executors")
 
-        if executor.storage_id and executor.runtime in ["opentofu"]:
+        if executor.storage_id and executor.runtime in ["tofu"]:
             storage = await self.storage_service.get_by_id(executor.storage_id)
             if not storage:
                 raise EntityNotFound("Storage not found")

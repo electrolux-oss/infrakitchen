@@ -524,7 +524,7 @@ const ExecutorCreatePage = () => {
   const methods = useForm<ExecutorCreate>({
     defaultValues: {
       name: "",
-      runtime: "opentofu",
+      runtime: "tofu",
       command_args: "",
       labels: [],
       description: "",

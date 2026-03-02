@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from application.integrations.schema import IntegrationShort
 
+from application.types import StorageProviderType, IacToolType
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 
@@ -15,8 +16,6 @@ gcp_storage_regions = Literal[
     "EU",
     "ASIA",
 ]
-
-storage_providers = Literal["aws", "azurerm", "gcp"]
 
 
 class AWSStorageConfig(BaseModel):
@@ -64,8 +63,8 @@ class StorageResponse(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    storage_type: Literal["tofu"] = Field(..., frozen=True)
-    storage_provider: storage_providers = Field(..., frozen=True)
+    storage_type: IacToolType = Field(..., frozen=True)
+    storage_provider: StorageProviderType = Field(..., frozen=True)
     integration: IntegrationShort = Field(...)
 
     configuration: Annotated[
@@ -83,8 +82,8 @@ class StorageResponse(BaseModel):
 class StorageCreate(BaseModel):
     name: str = Field(...)
     description: str = Field(default="")
-    storage_type: Literal["tofu"] = Field(..., frozen=True)
-    storage_provider: storage_providers = Field(..., frozen=True)
+    storage_type: IacToolType = Field(..., frozen=True)
+    storage_provider: StorageProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID = Field(..., frozen=True)
     configuration: Annotated[
         AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig, Field(discriminator="storage_provider")
@@ -100,8 +99,8 @@ class StorageUpdate(BaseModel):
 class StorageShort(BaseModel):
     id: uuid.UUID = Field(...)
     name: str = Field(...)
-    storage_type: Literal["tofu"] = Field(..., frozen=True)
-    storage_provider: storage_providers = Field(..., frozen=True)
+    storage_type: IacToolType = Field(..., frozen=True)
+    storage_provider: StorageProviderType = Field(..., frozen=True)
 
     model_config = ConfigDict(from_attributes=True)
 

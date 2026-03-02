@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from application.integrations.schema import IntegrationShort
 
 
+from application.types import CodeLanguageType, GitProviderType
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
 
@@ -38,8 +39,8 @@ class SourceCodeResponse(BaseModel):
         ...,
         frozen=True,
     )
-    source_code_provider: Literal["github", "gitlab", "bitbucket", "azure_devops"] = Field(..., frozen=True)
-    source_code_language: Literal["opentofu"] = Field(..., frozen=True)
+    source_code_provider: GitProviderType = Field(..., frozen=True)
+    source_code_language: CodeLanguageType = Field(..., frozen=True)
     integration: IntegrationShort | None = Field(default=None)
     git_tags: list[str] = Field(default_factory=list)
     git_tag_messages: dict[str, str] | None = Field(default_factory=dict)
@@ -64,8 +65,8 @@ class SourceCodeCreate(BaseModel):
         ...,
         frozen=True,
     )
-    source_code_provider: Literal["github", "gitlab", "bitbucket", "azure_devops"] = Field(..., frozen=True)
-    source_code_language: Literal["opentofu"] = Field(..., frozen=True)
+    source_code_provider: GitProviderType = Field(..., frozen=True)
+    source_code_language: CodeLanguageType = Field(..., frozen=True)
     integration_id: str | uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
@@ -83,8 +84,8 @@ class SourceCodeShort(BaseModel):
 
     id: uuid.UUID
     source_code_url: str
-    source_code_provider: Literal["github", "gitlab", "bitbucket", "azure_devops"]
-    source_code_language: Literal["opentofu"]
+    source_code_provider: GitProviderType
+    source_code_language: CodeLanguageType
 
     model_config = ConfigDict(from_attributes=True)
 

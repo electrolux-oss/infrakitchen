@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from application.integrations.model import Integration, IntegrationDTO
+from application.types import CodeLanguageType, GitProviderType
 from core.base_models import BaseRevision
 from sqlalchemy import UUID, DateTime, ForeignKey, JSON, func
 from core.constants.model import ModelStatus
@@ -67,8 +68,8 @@ class SourceCodeDTO(BaseModel):
         ...,
         frozen=True,
     )
-    source_code_provider: Literal["github", "gitlab", "bitbucket", "azure_devops"] = Field(..., frozen=True)
-    source_code_language: Literal["opentofu"] = Field(..., frozen=True)
+    source_code_provider: GitProviderType = Field(..., frozen=True)
+    source_code_language: CodeLanguageType = Field(..., frozen=True)
     integration_id: uuid.UUID | str | None = Field(default=None, frozen=True)
     integration: IntegrationDTO | None = Field(default=None)
     git_tags: list[str] = Field(default_factory=list)
