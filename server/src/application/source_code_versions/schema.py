@@ -214,6 +214,7 @@ class SourceCodeVersionShort(BaseModel):
     source_code_branch: str | None = Field(default=None, frozen=True)
     source_code_folder: str = Field(default="", frozen=True)
     template: TemplateShort = Field(...)
+    source_code: SourceCodeShort = Field(...)
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -3,11 +3,11 @@ import { useState, useCallback, useEffect } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 
 import { GradientCircularProgress, useLocalStorage } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { SourceCodeVersionResponse } from "../../source_codes/types";
 
 interface TemplateSourceCodeVersionsProps {
@@ -102,14 +102,13 @@ export const TemplateSourceCodeVersions = (
                   whiteSpace: "nowrap",
                 }}
               >
-                <GetEntityLink
-                  {...{
-                    id: version.source_code.id,
-                    _entity_name: version.source_code._entity_name,
-                    name: version.source_code_version
+                <SourceCodeVersionLink
+                  source_code_version={version}
+                  name={
+                    version.source_code_version
                       ? `Tag: ${version.source_code_version}, Path: ${version.source_code_folder}`
-                      : `Branch: ${version.source_code_branch}, Path: ${version.source_code_folder}`,
-                  }}
+                      : `Branch: ${version.source_code_branch}, Path: ${version.source_code_folder}`
+                  }
                 />
               </Typography>
               <Typography variant="body2" color="text.secondary">

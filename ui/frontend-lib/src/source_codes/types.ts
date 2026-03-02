@@ -60,6 +60,7 @@ export interface SourceCodeVersionShort {
   source_code_branch: string;
   source_code_folder: string;
   template: TemplateShort;
+  source_code: SourceCodeShort;
   _entity_name: string;
 }
 
