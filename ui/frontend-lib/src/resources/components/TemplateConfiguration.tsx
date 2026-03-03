@@ -11,6 +11,7 @@ import {
 } from "../../common/components/CommonField";
 import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
 
 export interface TemplateConfigurationProps {
@@ -168,8 +169,10 @@ export const TemplateConfiguration = ({
         <CommonField
           name={"Template Version"}
           value={
-            resource.source_code_version ? (
-              <GetReferenceUrlValue {...resource.source_code_version} />
+            resource.source_code_version?.source_code ? (
+              <SourceCodeVersionLink
+                source_code_version={resource.source_code_version}
+              />
             ) : (
               "N/A"
             )

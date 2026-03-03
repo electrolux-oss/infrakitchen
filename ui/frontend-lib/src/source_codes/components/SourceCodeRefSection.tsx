@@ -1,5 +1,7 @@
 import { useState, ElementType, useMemo } from "react";
 
+import { useLocation } from "react-router";
+
 import {
   CircularProgress,
   Box,
@@ -8,23 +10,18 @@ import {
   Chip,
   Divider,
 } from "@mui/material";
+import { GridPaginationModel } from "@mui/x-data-grid";
 
-import { useEntityListProvider, EntityListProvider } from "../../common";
-import { RefType, SourceCodeVersionResponse } from "../types";
+import {
+  useEntityListProvider,
+  EntityListProvider,
+  FilterState,
+  FilterRenderer,
+  useLocalStorage,
+} from "../../common";
+import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
-
-function buildVersionedByRef(
-  entities: SourceCodeVersionResponse[],
-  type: RefType,
-): Map<string, SourceCodeVersionResponse> {
-  return new Map(
-    entities.map((v) => [
-      type === RefType.BRANCH ? v.source_code_branch : v.source_code_version,
-      v,
-    ]),
-  );
-}
 
 type SourceCodeRefSectionProps = {
   title: string;
@@ -37,6 +34,7 @@ type SourceCodeRefSectionProps = {
 
 const SourceCodeGitRefRows = ({
   refs,
+  pagedRefs,
   type,
   sourceCodeId,
   getFolders,
@@ -44,48 +42,56 @@ const SourceCodeGitRefRows = ({
   perPage,
   onPageChange,
   onRowsPerPageChange,
+  defaultOpenRef,
 }: Omit<SourceCodeRefSectionProps, "title" | "icon"> & {
+  pagedRefs: string[];
   page: number;
   perPage: number;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (perPage: number) => void;
+  defaultOpenRef?: string;
 }) => {
   const { entities, loading, refreshList } = useEntityListProvider();
 
-  if (loading) {
-    return (
-      <CircularProgress
-        size={24}
-        sx={{ my: 1, mx: "auto", display: "block" }}
-      />
+  const versionMap = useMemo(() => {
+    return new Map(
+      entities.map((v) => [
+        type === RefType.BRANCH ? v.source_code_branch : v.source_code_version,
+        v,
+      ]),
     );
-  }
-
-  const versionedByRef = buildVersionedByRef(entities, type);
-  const pagedRefs = refs.slice((page - 1) * perPage, page * perPage);
+  }, [entities, type]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-      {pagedRefs.map((ref) => (
-        <SourceCodeRefRow
-          key={ref}
-          entry={ref}
-          type={type}
-          sourceCodeId={sourceCodeId}
-          gitFolders={getFolders(ref)}
-          entity={versionedByRef.get(ref)}
-          onVersionCreate={refreshList}
-        />
-      ))}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          <CircularProgress size={32} />
+        </Box>
+      ) : (
+        pagedRefs.map((ref: string) => (
+          <SourceCodeRefRow
+            key={ref}
+            entry={ref}
+            type={type}
+            sourceCodeId={sourceCodeId}
+            gitFolders={getFolders(ref)}
+            entity={versionMap.get(ref)}
+            onVersionCreate={refreshList}
+            defaultOpen={ref === defaultOpenRef}
+          />
+        ))
+      )}
+
       <TablePagination
         component="div"
         count={refs.length}
         page={page - 1}
         onPageChange={(_, newPage) => onPageChange(newPage + 1)}
         rowsPerPage={perPage}
-        onRowsPerPageChange={(e) => {
-          onRowsPerPageChange(parseInt(e.target.value, 10));
-        }}
+        onRowsPerPageChange={(e) =>
+          onRowsPerPageChange(parseInt(e.target.value, 10))
+        }
         rowsPerPageOptions={[5, 10, 25]}
         sx={{ borderTop: 1, borderColor: "divider", mt: 1 }}
       />
@@ -101,21 +107,68 @@ export const SourceCodeRefSection = ({
   sourceCodeId,
   getFolders,
 }: SourceCodeRefSectionProps) => {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const { get, setKey } =
+    useLocalStorage<Record<string, GridPaginationModel>>();
+  const storageKey = `sourceCodeVersion_entities_${title.toLowerCase().replace(/\s+/g, "_")}`;
+
+  const savedState = get(storageKey);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
+    savedState || { page: 0, pageSize: 10 },
+  );
+
+  const location = useLocation();
+  const initialSearch =
+    type === RefType.BRANCH
+      ? (location.state?.refBranchSearch ?? "")
+      : (location.state?.refTagSearch ?? "");
+
+  const [filterValues, setFilterValues] = useState<FilterState>({
+    ref_search: initialSearch,
+  });
+
+  const filteredRefs = useMemo(() => {
+    const search = filterValues["ref_search"]?.toLowerCase();
+    if (!search) return refs;
+    return refs.filter((ref) => ref.toLowerCase().includes(search));
+  }, [refs, filterValues]);
+
+  const pagedRefs = useMemo(() => {
+    const start = paginationModel.page * paginationModel.pageSize;
+    return filteredRefs.slice(start, start + paginationModel.pageSize);
+  }, [filteredRefs, paginationModel]);
 
   const params = useMemo(
     () => ({
       sort: { field: "created_at", order: "DESC" as const },
       filter: {
         source_code_id: sourceCodeId,
-        ...(type === RefType.TAG
-          ? { source_code_branch: null }
-          : { source_code_version: null }),
+        [type === RefType.BRANCH
+          ? "source_code_branch"
+          : "source_code_version"]: pagedRefs,
       },
+      pagination: { page: 1, perPage: paginationModel.pageSize },
     }),
-    [sourceCodeId, type],
+    [sourceCodeId, type, pagedRefs, paginationModel.pageSize],
   );
+
+  const handlePageChange = (newPage: number) => {
+    const updatedModel = { ...paginationModel, page: newPage - 1 };
+    setPaginationModel(updatedModel);
+    setKey(storageKey, updatedModel);
+  };
+
+  const handleRowsPerPageChange = (newSize: number) => {
+    const updatedModel = { page: 0, pageSize: newSize };
+    setPaginationModel(updatedModel);
+    setKey(storageKey, updatedModel);
+  };
+
+  const handleFilterChange = (id: string, val: any) => {
+    setFilterValues({ [id]: val });
+    const updatedModel = { ...paginationModel, page: 0 };
+    setPaginationModel(updatedModel);
+    setKey(storageKey, updatedModel);
+  };
 
   if (refs.length === 0) return null;
 
@@ -125,40 +178,43 @@ export const SourceCodeRefSection = ({
         <Icon sx={{ fontSize: "0.95rem", color: "text.disabled" }} />
         <Typography
           variant="overline"
-          sx={{
-            color: "text.secondary",
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-            fontSize: "0.7rem",
-          }}
+          sx={{ color: "text.secondary", fontSize: "0.7rem" }}
         >
           {title}
         </Typography>
         <Chip
-          label={refs.length}
+          label={filteredRefs.length}
           size="small"
           variant="outlined"
-          sx={{
-            height: 16,
-            fontSize: "0.65rem",
-            "& .MuiChip-label": { px: 0.75 },
-          }}
+          sx={{ height: 16, fontSize: "0.65rem" }}
         />
         <Divider sx={{ flex: 1 }} />
+        <Box sx={{ width: "15rem", px: "1rem" }}>
+          <FilterRenderer
+            config={{
+              id: "ref_search",
+              type: "search",
+              label:
+                type === RefType.BRANCH ? "Filter branches…" : "Filter tags…",
+            }}
+            filterValues={filterValues}
+            onChange={handleFilterChange}
+          />
+        </Box>
       </Box>
+
       <EntityListProvider entity_name="source_code_version" params={params}>
         <SourceCodeGitRefRows
-          refs={refs}
+          refs={filteredRefs}
+          pagedRefs={pagedRefs}
           type={type}
           sourceCodeId={sourceCodeId}
           getFolders={getFolders}
-          page={page}
-          perPage={perPage}
-          onPageChange={setPage}
-          onRowsPerPageChange={(newPerPage) => {
-            setPerPage(newPerPage);
-            setPage(1);
-          }}
+          page={paginationModel.page + 1}
+          perPage={paginationModel.pageSize}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+          defaultOpenRef={initialSearch || undefined}
         />
       </EntityListProvider>
     </Box>

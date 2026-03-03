@@ -14,6 +14,7 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 
 export const ExecutorsPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -63,7 +64,9 @@ export const ExecutorsPage = () => {
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return (
+            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
+          );
         },
       },
       {

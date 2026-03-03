@@ -27,6 +27,7 @@ import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { IkEntity } from "../../types";
 import { BatchOperationCreate } from "../types";
 
@@ -123,7 +124,9 @@ export const BatchOperationEntitySelector = (
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code_version;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return (
+            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
+          );
         },
       },
       {
@@ -168,7 +171,9 @@ export const BatchOperationEntitySelector = (
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return (
+            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
+          );
         },
       },
       {

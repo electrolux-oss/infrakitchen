@@ -54,6 +54,7 @@ type GitRefRow = {
   gitFolders: string[];
   sourceCodeId: string;
   entity?: SourceCodeVersionResponse;
+  defaultOpen?: boolean;
   onVersionCreate: () => void;
 };
 
@@ -223,7 +224,7 @@ const MetadataTab = ({
         )}
 
         <Box />
-        <FieldLabel>Folder Path</FieldLabel>
+        <FieldLabel>Path</FieldLabel>
 
         {hasVersion ? (
           <Typography variant="body2">
@@ -239,7 +240,7 @@ const MetadataTab = ({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  placeholder="Select or enter folder path"
+                  placeholder="Select or enter path"
                   sx={{
                     "& .MuiInputBase-input": {
                       fontSize: "0.875rem",
@@ -480,11 +481,12 @@ export const SourceCodeRefRow = ({
   gitFolders,
   sourceCodeId,
   entity,
+  defaultOpen = false,
   onVersionCreate,
 }: GitRefRow) => {
   const { loading } = useEntityListProvider();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<TabValue>("metadata");
 
   const { localInProgress, toggleEnabled, triggerSync } = useVersionActions(
