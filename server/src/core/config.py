@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     CACHE_DISABLED: str = "false"
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
+    MCP_ENABLED: bool = False
 
     class ConfigDict:
         env_file = ".env"
@@ -51,7 +52,6 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     approval_flow: bool = True
     demo_mode: bool = False
     websocket: bool = True
-    mcp_enabled: bool = False
 
     def __setattr__(self, name: str, value: Any, /) -> None:
         if not hasattr(self, name):
@@ -64,7 +64,6 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             f"  approval_flow={self.approval_flow}, "
             f"  demo_mode={self.demo_mode}, "
             f"  websocket={self.websocket}, "
-            f"  mcp_enabled={self.mcp_enabled}, "
             ")"
         )
 
@@ -76,5 +75,4 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             "approval_flow": self.approval_flow,
             "demo_mode": self.demo_mode,
             "websocket": self.websocket,
-            "mcp_enabled": self.mcp_enabled,
         }
