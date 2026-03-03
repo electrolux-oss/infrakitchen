@@ -204,19 +204,21 @@ class ResourceService:
 
                 # Validate template one_resource_per_integration configuration.
                 if template.configuration.one_resource_per_integration and resource.integration_ids:
-                    if integration_ids_to_check := [
-                        integration.id
+                    if integrations_to_check := [
+                        integration
                         for integration in integrations
                         if integration.integration_provider in template.configuration.one_resource_per_integration
                     ]:
                         resources_with_integration = await self.crud.get_resource_by_template_and_integrations(
-                            template_id=resource.template_id, integration_ids=integration_ids_to_check
+                            template_id=resource.template_id,
+                            integration_ids=[integration.id for integration in integrations_to_check],
                         )
 
                         if resources_with_integration:
                             raise DependencyError(
-                                message="Cannot create resource with the same integration as another resource "
-                                "for this template",
+                                message="Cannot create resource because integration(s) "
+                                f"'{','.join([integration.name for integration in integrations_to_check])}' "
+                                "are already used by other resource(s) for the same template.",
                                 metadata=[
                                     ResourceShort.model_validate(res).model_dump() for res in resources_with_integration
                                 ],

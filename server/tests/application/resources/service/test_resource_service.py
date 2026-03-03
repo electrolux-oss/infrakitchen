@@ -525,7 +525,7 @@ class TestCreate:
 
         with pytest.raises(
             DependencyError,
-            match="Cannot create resource with the same integration as another resource for this template",
+            match=r"Cannot create resource because integration\(s\)",
         ) as exc:
             await mock_resource_service.create(resource_create, requester)
 
