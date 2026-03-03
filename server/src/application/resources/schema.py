@@ -163,7 +163,7 @@ class ResourceCreate(BaseModel):
     source_code_version_id: uuid.UUID | None = Field(
         default=None,
     )
-    integration_ids: list[uuid.UUID | IntegrationShort] = Field(
+    integration_ids: list[uuid.UUID] = Field(
         default=[],
     )
 

@@ -9,8 +9,6 @@ import {
   Box,
   TextField,
   Alert,
-  FormControlLabel,
-  Checkbox,
   Autocomplete,
   Chip,
   Typography,
@@ -251,42 +249,54 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                   />
                 )}
               />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: -1, mb: 1 }}
-              >
-                Defines which cloud resource types this template can be used
-                with.
-              </Typography>
               <Controller
                 name="configuration.one_resource_per_integration"
                 control={control}
                 render={({ field }) => (
-                  <Box>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={!!field.value}
-                          onChange={(event) =>
-                            field.onChange(event.target.checked)
-                          }
-                        />
-                      }
-                      label="Allow only one resource per integration"
-                    />
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: "block", mt: -1, mb: 1 }}
-                    >
-                      Enforces a single resource per integration when this
-                      template is used.
-                    </Typography>
-                  </Box>
+                  <Autocomplete
+                    multiple
+                    options={INTEGRATION_PROVIDER_OPTIONS}
+                    value={field.value || []}
+                    onChange={(_event, newValue) => field.onChange(newValue)}
+                    getOptionLabel={(option) => getProviderDisplayName(option)}
+                    renderValue={(
+                      value: readonly IntegrationProviderType[],
+                      getTagProps,
+                    ) =>
+                      value.map(
+                        (option: IntegrationProviderType, index: number) => {
+                          const { key, ...rest } = getTagProps({ index });
+                          return (
+                            <Chip
+                              key={key}
+                              {...rest}
+                              variant="outlined"
+                              label={getProviderDisplayName(option)}
+                            />
+                          );
+                        },
+                      )
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Integration Providers to filter on"
+                        error={
+                          !!errors.configuration?.one_resource_per_integration
+                        }
+                        helperText={
+                          errors.configuration?.one_resource_per_integration
+                            ? errors.configuration.one_resource_per_integration
+                                .message
+                            : "Enforce one resource per integration for selected providers (empty means all providers)"
+                        }
+                        fullWidth
+                        margin="normal"
+                      />
+                    )}
+                  />
                 )}
               />
-
               <Controller
                 name="configuration.allowed_provider_integration_types"
                 control={control}

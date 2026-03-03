@@ -314,6 +314,21 @@ class ResourceCRUD:
         rows = result.mappings().all()
         return [row["id"] for row in reversed(rows)]
 
+    async def get_resource_by_template_and_integrations(
+        self,
+        template_id: UUID,
+        integration_ids: list[UUID],
+    ) -> list[Resource]:
+        """Get a resource by template id and integration ids."""
+        statement = (
+            select(Resource)
+            .where(Resource.template_id == template_id)
+            .join(Resource.integration_ids)
+            .where(Integration.id.in_(integration_ids))
+        )
+        result = await self.session.execute(statement)
+        return list(result.unique().scalars().all())
+
     async def get_parents_with_configs(self, resource_ids: list[UUID]) -> list[Resource]:
         """Get all parent resources with configs by resource ids. Direction is from child to parent (leaf)."""
         statement = (

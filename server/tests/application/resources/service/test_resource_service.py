@@ -13,7 +13,7 @@ from application.resources.schema import (
 from application.resources.service import ResourceService
 from core.config import InfrakitchenConfig
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.errors import EntityNotFound, EntityWrongState
+from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.users.model import UserDTO
 
 RESOURCE_ID = "abc123"
@@ -454,7 +454,7 @@ class TestCreate:
         mock_integration_crud.get_all.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_create_resource_with_not_allowed_provider_integration_types_failure(
+    async def test_create_resource_with_allowed_provider_integration_types_failure(
         self,
         mock_resource_service,
         mocked_user,
@@ -491,6 +491,45 @@ class TestCreate:
             "which is not allowed for the template",
         ):
             await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
+    async def test_create_resource_with_one_resource_per_integration_failure(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mock_resource_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["one_resource_per_integration"] = ["aws"]
+        mocked_template.abstract = False
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            integration_ids=[mocked_integration.id],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_resource_by_template_and_integrations.return_value = [mocked_resource]
+
+        with pytest.raises(
+            DependencyError,
+            match="Cannot create resource with the same integration as another resource for this template",
+        ) as exc:
+            await mock_resource_service.create(resource_create, requester)
+
+        assert len(exc.value.metadata) == 1
 
 
 class TestDelete:

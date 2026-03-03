@@ -11,7 +11,7 @@ from core.users.schema import UserShort
 class TemplateConfig(BaseModel):
     # Allow only one resource per integration, which is required for some templates to work properly.
     # If false, multiple resources can be used in the same integration
-    one_resource_per_integration: bool = Field(default=False)
+    one_resource_per_integration: list[IntegrationProviderType] = Field(default_factory=list)
 
     # Allowed integration types for this template. If empty, all integration types are allowed.
     allowed_provider_integration_types: list[IntegrationProviderType] = Field(default_factory=list)

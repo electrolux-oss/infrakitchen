@@ -8,7 +8,7 @@ export type IntegrationProviderType =
   | "datadog";
 
 export interface TemplateConfig {
-  one_resource_per_integration: boolean;
+  one_resource_per_integration: IntegrationProviderType[];
   allowed_provider_integration_types: IntegrationProviderType[];
 }
 

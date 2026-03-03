@@ -168,6 +168,9 @@ class ResourceService:
             if parent_integrations and not resource.integration_ids:
                 raise ValueError("Parent has defined integration. Integration ID is required")
 
+            if template.configuration.allowed_provider_integration_types and not resource.integration_ids:
+                raise ValueError("Template requires integration. Integration ID is required")
+
             if resource.integration_ids:
                 # if template allows only specific integration types,
                 # check that number of integrations is equal to number of allowed types.
@@ -198,6 +201,26 @@ class ResourceService:
                             f"Integration {integration.id} has provider {integration.integration_provider} "
                             "which is not allowed for the template"
                         )
+
+                # Validate template one_resource_per_integration configuration.
+                if template.configuration.one_resource_per_integration and resource.integration_ids:
+                    if integration_ids_to_check := [
+                        integration.id
+                        for integration in integrations
+                        if integration.integration_provider in template.configuration.one_resource_per_integration
+                    ]:
+                        resources_with_integration = await self.crud.get_resource_by_template_and_integrations(
+                            template_id=resource.template_id, integration_ids=integration_ids_to_check
+                        )
+
+                        if resources_with_integration:
+                            raise DependencyError(
+                                message="Cannot create resource with the same integration as another resource "
+                                "for this template",
+                                metadata=[
+                                    ResourceShort.model_validate(res).model_dump() for res in resources_with_integration
+                                ],
+                            )
 
             # validate configuration variables
             if resource.source_code_version_id:

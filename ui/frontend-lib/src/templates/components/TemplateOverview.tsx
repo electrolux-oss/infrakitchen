@@ -112,14 +112,37 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           size={6}
         />
       )}
-
-      <CommonField
-        name={"One Resource Per Integration"}
-        value={getTextValue(
-          template.configuration?.one_resource_per_integration || false,
-        )}
-        size={6}
-      />
+      {template.configuration?.one_resource_per_integration?.length > 0 && (
+        <CommonField
+          name={"Integration Providers for One Resource Per Integration"}
+          value={
+            <Box>
+              {template.configuration.one_resource_per_integration.map(
+                (provider) => (
+                  <Box
+                    key={provider}
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      backgroundColor: "primary.dark",
+                      color: "primary.contrastText",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      mr: 0.5,
+                      mb: 0.5,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {getProviderDisplayName(provider)}
+                  </Box>
+                ),
+              )}
+            </Box>
+          }
+          size={6}
+        />
+      )}
 
       {template.configuration?.allowed_provider_integration_types?.length >
         0 && (
