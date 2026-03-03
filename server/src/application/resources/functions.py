@@ -326,6 +326,7 @@ async def update_resource_variables_on_patch(
     schema: list[ResourceVariableSchema],
     resource: ResourceResponse,
     patched_resource: ResourcePatch,
+    allow_frozen_variable_changes: bool = False,
 ) -> None:
     """
     Validates the resource variables against the schema for updates.
@@ -334,6 +335,7 @@ async def update_resource_variables_on_patch(
         schema (list[ResourceVariableSchema]): The schema for the resource variables.
         resource (ResourceResponse): The resource being updated.
         patched_resource (ResourcePatch): The updated resource data.
+        allow_frozen_variable_changes (bool): Whether frozen variables can be changed.
 
     Raises:
         ValueError: If a required variable is missing or if a unique variable already exists.
@@ -396,7 +398,11 @@ async def update_resource_variables_on_patch(
                 continue
 
             # If the variable exists in the original resource, we need to check if it's frozen
-            if variable.frozen and resource_variable.value != patched_variable.value:
+            if (
+                variable.frozen
+                and not allow_frozen_variable_changes
+                and resource_variable.value != patched_variable.value
+            ):
                 raise ValueError(f"Variable '{variable.name}' is frozen and cannot be changed.")
 
         if check_options_values(variable, patched_variable) is False:

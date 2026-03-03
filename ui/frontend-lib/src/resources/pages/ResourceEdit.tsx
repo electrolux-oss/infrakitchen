@@ -46,6 +46,7 @@ import {
   ValidationRule,
   ValidationRulesByVariable,
 } from "../../types";
+import { ENTITY_STATE } from "../../utils/constants";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
 import {
   ResourceResponse,
@@ -199,6 +200,7 @@ export const ResourceEditPageInner = (props: {
 
   const watchedIntegrationIds = watch("integration_ids");
   const watchedStorage = watch("storage_id");
+  const allowFrozenVariableChanges = entity.state === ENTITY_STATE.PROVISION;
   const [isStorageEditable, setIsStorageEditable] = useState(false);
   const filter_storage = useMemo(
     () => ({
@@ -735,7 +737,7 @@ export const ResourceEditPageInner = (props: {
                               <ResourceVariableForm
                                 key={field.id}
                                 index={index}
-                                edit_mode={true}
+                                edit_mode={!allowFrozenVariableChanges}
                                 variable={
                                   getSchemaObject(schema)[field.name] || {}
                                 }

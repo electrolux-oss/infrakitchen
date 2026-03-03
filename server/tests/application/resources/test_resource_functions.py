@@ -342,7 +342,22 @@ async def test_validate_resource_variables_patch_frozen_change(resource_response
     update = ResourcePatch(variables=[Variables(name="env", value="staging")])
 
     with pytest.raises(ValueError, match=r"Variable 'env' is frozen and cannot be changed"):
-        await update_resource_variables_on_patch(schema, old, update)
+        await update_resource_variables_on_patch(schema, old, update, allow_frozen_variable_changes=False)
+
+
+@pytest.mark.asyncio
+async def test_validate_resource_variables_patch_frozen_change_allowed(resource_response):
+    schema = [ResourceVariableSchema(name="env", type="string", frozen=True)]
+    old = resource_response
+    old.variables = [Variables(name="env", value="prod")]
+    update = ResourcePatch(variables=[Variables(name="env", value="staging")])
+
+    await update_resource_variables_on_patch(
+        schema,
+        old,
+        update,
+        allow_frozen_variable_changes=True,
+    )
 
 
 @pytest.mark.asyncio

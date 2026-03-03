@@ -362,6 +362,7 @@ class ResourceService:
                     schema=resource_variables_schema,
                     resource=existing_resource_pydantic,
                     patched_resource=resource,
+                    allow_frozen_variable_changes=existing_resource.state == ModelState.PROVISION,
                 )
 
             # validate that integrations are allowed for the template and are enabled
