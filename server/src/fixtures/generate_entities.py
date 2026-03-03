@@ -286,7 +286,7 @@ async def insert_source_code_and_version(session: AsyncSession, user: UserDTO):
         version = SourceCodeVersionCreate(
             template_id=template.id,
             source_code_id=random.choice(source_code_list).id,
-            source_code_version="1.0.0",
+            source_code_version="v1.0.0",
             source_code_folder=f"test/{template.template}",
             description=get_sentence(),
         )
