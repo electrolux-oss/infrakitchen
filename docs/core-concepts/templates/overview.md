@@ -20,8 +20,40 @@ Each template in InfraKitchen contains the following core properties:
 | **Parents**              | Templates this template depends on      | Hierarchical relationships                |
 | **Children**             | Templates that depend on this template  | Hierarchical relationships                |
 | **Cloud Resource Types** | Types of cloud resources managed        | E.g., `aws_vpc`, `azurerm_resource_group` |
+| **Configuration**        | Runtime constraints for resource creation | Provider restrictions and integration limits |
 | **Labels**               | Tags for organizing and filtering       | E.g., `aws`, `networking`, `production`   |
 | **Revision Number**      | Version tracking for template changes   | Auto-incremented on updates               |
+
+---
+
+## ⚙️ Template Configuration
+
+Templates support a `configuration` object that controls how resources can be created from that template.
+
+| Option                                   | Description                                                                 | Notes                                                                                         |
+| :--------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **Allowed Integration Providers**        | Restricts which integration providers can be attached to template resources | Empty list means all providers are allowed                                                    |
+| **One Resource Per Integration**         | Enforces uniqueness of resource+integration for selected providers          | Applies only to providers listed in this option; other providers can still be reused          |
+
+### Allowed Integration Providers
+
+Use this option when a template should only work with specific providers.
+
+- If configured, resource creation/update requires integrations that match the allowed providers
+- Resource integration count must match the number of configured allowed providers
+- If no providers are configured, InfraKitchen does not apply provider-type restrictions
+
+### One Resource Per Integration
+
+Use this option when the same integration must not be reused across multiple resources of the same template.
+
+- Configure a list of providers where uniqueness must be enforced
+- During resource creation, InfraKitchen checks existing resources for the same template
+- If a matching integration is already used, resource creation is rejected with a dependency error
+
+!!! info "How These Options Work Together"
+  You can use both options at the same time. In this case, provider allow-list validation is applied first,
+  then per-provider uniqueness is enforced for providers listed in **One Resource Per Integration**.
 
 ---
 
@@ -81,7 +113,7 @@ Create a template from scratch by defining all properties manually. This is usef
 1. Navigate to **Templates** in the sidebar
 2. Click **Create**
 3. Fill in required fields (name, template key, description)
-4. Configure optional properties (parents, children, labels, cloud resource types)
+4. Configure optional properties (parents, children, labels, cloud resource types, template configuration)
 5. Check **Abstract** if the template should not be instantiated directly
 6. Click **Save**
 
