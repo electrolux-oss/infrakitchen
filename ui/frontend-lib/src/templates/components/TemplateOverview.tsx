@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Divider } from "@mui/material";
 
 import {
   getTextValue,
@@ -9,6 +9,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { getProviderDisplayName } from "../../common/utils";
 import { TemplateResponse } from "../types";
 
 export interface TemplateAboutProps {
@@ -25,7 +26,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         name={"Status"}
         value={<StatusChip status={template.status} />}
       />
-      <CommonField name={"Abstract"} value={getTextValue(template.abstract)} />
       <CommonField
         name={"Created"}
         value={
@@ -72,6 +72,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           size={6}
         />
       )}
+
+      <Box sx={{ width: "100%", my: 1 }}>
+        <Divider />
+      </Box>
+
+      <CommonField
+        name={"Abstract"}
+        value={getTextValue(template.abstract)}
+        size={6}
+      />
+
       {template.cloud_resource_types.length > 0 && (
         <CommonField
           name={"Cloud Resource Types"}
@@ -98,7 +109,71 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
               ))}
             </Box>
           }
-          size={12}
+          size={6}
+        />
+      )}
+      {template.configuration?.one_resource_per_integration?.length > 0 && (
+        <CommonField
+          name={"Integration Providers for One Resource Per Integration"}
+          value={
+            <Box>
+              {template.configuration.one_resource_per_integration.map(
+                (provider) => (
+                  <Box
+                    key={provider}
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      backgroundColor: "primary.dark",
+                      color: "primary.contrastText",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      mr: 0.5,
+                      mb: 0.5,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {getProviderDisplayName(provider)}
+                  </Box>
+                ),
+              )}
+            </Box>
+          }
+          size={6}
+        />
+      )}
+
+      {template.configuration?.allowed_provider_integration_types?.length >
+        0 && (
+        <CommonField
+          name={"Allowed Integration Providers"}
+          value={
+            <Box>
+              {template.configuration.allowed_provider_integration_types.map(
+                (provider) => (
+                  <Box
+                    key={provider}
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      backgroundColor: "primary.dark",
+                      color: "primary.contrastText",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      mr: 0.5,
+                      mb: 0.5,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {getProviderDisplayName(provider)}
+                  </Box>
+                ),
+              )}
+            </Box>
+          }
+          size={6}
         />
       )}
     </OverviewCard>

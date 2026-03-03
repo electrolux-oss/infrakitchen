@@ -631,7 +631,12 @@ const ResourceCreatePageInner = () => {
                           : ""
                       }
                       value={field.value}
-                      label="Cloud Integration"
+                      label={`Cloud Integrations. ${
+                        watchedTemplate?.configuration
+                          .allowed_provider_integration_types
+                          ? `Only ${watchedTemplate.configuration.allowed_provider_integration_types.join(", ")} integrations are allowed for this template.`
+                          : ""
+                      }`}
                       required
                       multiple
                       fullWidth

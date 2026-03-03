@@ -8,7 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from application.integrations.model import Integration, IntegrationDTO
-from application.storages.schema import AWSStorageConfig, GCPStorageConfig, AzureRMStorageConfig, storage_providers
+from application.storages.schema import AWSStorageConfig, GCPStorageConfig, AzureRMStorageConfig
+from application.types import StorageProviderType, IacToolType
 from core.base_models import BaseEntity
 
 from core.constants.model import ModelState, ModelStatus
@@ -67,8 +68,8 @@ class StorageDTO(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    storage_type: Literal["tofu"] = Field(..., frozen=True)
-    storage_provider: storage_providers = Field(..., frozen=True)
+    storage_type: IacToolType = Field(..., frozen=True)
+    storage_provider: StorageProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID | str = Field(..., frozen=True)
     integration: IntegrationDTO = Field(frozen=True)
     configuration: Annotated[

@@ -337,6 +337,7 @@ class TestUpdate:
         }
         template_update.model_dump = Mock(return_value=template_update_body)
         existing_template = mocked_template
+        existing_template.status = "invalid_status"
 
         mock_template_crud.get_by_id.return_value = existing_template
 

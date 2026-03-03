@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, DateTime, Enum as SQLAlchemyEnum, ForeignKey, func
 
 
+from application.types import IntegrationType, IntegrationProviderType
 from core.base_models import BaseRevision
 
 from sqlalchemy import Index, JSON
@@ -16,7 +17,6 @@ from core.users.model import User, UserDTO
 from core.constants.model import ModelStatus
 from .schema import (
     AzureReposSshIntegrationConfig,
-    integration_provider_type,
     AWSIntegrationConfig,
     GCPIntegrationConfig,
     AzureRMIntegrationConfig,
@@ -81,8 +81,8 @@ class IntegrationDTO(BaseModel):
         ...,
     )
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
-    integration_provider: integration_provider_type = Field(..., frozen=True)
+    integration_type: IntegrationType = Field(..., frozen=True)
+    integration_provider: IntegrationProviderType = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: Annotated[
         AWSIntegrationConfig

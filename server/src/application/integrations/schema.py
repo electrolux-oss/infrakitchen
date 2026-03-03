@@ -5,24 +5,10 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
+from application.types import IntegrationProviderType, IntegrationType
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
-
-integration_provider_type = Literal[
-    "aws",
-    "azurerm",
-    "gcp",
-    "azure_devops",
-    "azure_devops_ssh",
-    "github",
-    "github_ssh",
-    "gitlab",
-    "bitbucket",
-    "bitbucket_ssh",
-    "mongodb_atlas",
-    "datadog",
-]
 
 
 class AWSIntegrationConfig(BaseModel):
@@ -178,8 +164,8 @@ class IntegrationResponse(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
-    integration_provider: integration_provider_type = Field(..., frozen=True)
+    integration_type: IntegrationType = Field(..., frozen=True)
+    integration_provider: IntegrationProviderType = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: IntegrationConfigType = Field(...)
 
@@ -195,8 +181,8 @@ class IntegrationResponse(BaseModel):
 class IntegrationCreate(BaseModel):
     name: str = Field(...)
     description: str = Field(default="")
-    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
-    integration_provider: integration_provider_type = Field(..., frozen=True)
+    integration_type: IntegrationType = Field(..., frozen=True)
+    integration_provider: IntegrationProviderType = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
     configuration: IntegrationConfigType = Field(...)
 
@@ -235,7 +221,7 @@ class IntegrationUpdate(BaseModel):
 class IntegrationShort(BaseModel):
     id: uuid.UUID
     name: str
-    integration_provider: integration_provider_type = Field(..., frozen=True)
+    integration_provider: IntegrationProviderType = Field(..., frozen=True)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -245,8 +231,8 @@ class IntegrationShort(BaseModel):
 
 
 class IntegrationValidationRequest(BaseModel):
-    integration_type: Literal["cloud", "git"] = Field(..., frozen=True)
-    integration_provider: integration_provider_type = Field(..., frozen=True)
+    integration_type: IntegrationType = Field(..., frozen=True)
+    integration_provider: IntegrationProviderType = Field(..., frozen=True)
     configuration: IntegrationConfigType = Field(...)
 
     @computed_field

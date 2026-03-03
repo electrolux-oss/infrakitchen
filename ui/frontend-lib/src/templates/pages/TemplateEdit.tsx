@@ -4,15 +4,30 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
-import { Button, Box, TextField, Alert } from "@mui/material";
+import {
+  Button,
+  Box,
+  TextField,
+  Alert,
+  Autocomplete,
+  Chip,
+  Typography,
+} from "@mui/material";
 
 import { LabelInput, useConfig } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { getProviderDisplayName } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { TemplateResponse, TemplateShort, TemplateUpdate } from "../types";
+import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
+import {
+  TemplateResponse,
+  TemplateShort,
+  TemplateUpdate,
+  IntegrationProviderType,
+} from "../types";
 
 export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
   const { linkPrefix, ikApi } = useConfig();
@@ -33,6 +48,12 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
       children: entity.children.map((child: TemplateShort) => child.id),
       labels: entity.labels,
       cloud_resource_types: entity.cloud_resource_types,
+      configuration: {
+        one_resource_per_integration:
+          entity.configuration?.one_resource_per_integration || false,
+        allowed_provider_integration_types:
+          entity.configuration?.allowed_provider_integration_types || [],
+      },
     },
   });
 
@@ -201,7 +222,11 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                   <LabelInput errors={errors} {...field} />
                 )}
               />
+            </Box>
+          </PropertyCard>
 
+          <PropertyCard title="Template Configuration">
+            <Box>
               <Controller
                 name="cloud_resource_types"
                 control={control}
@@ -224,6 +249,112 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                   />
                 )}
               />
+              <Controller
+                name="configuration.one_resource_per_integration"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    multiple
+                    options={INTEGRATION_PROVIDER_OPTIONS}
+                    value={field.value || []}
+                    onChange={(_event, newValue) => field.onChange(newValue)}
+                    getOptionLabel={(option) => getProviderDisplayName(option)}
+                    renderValue={(
+                      value: readonly IntegrationProviderType[],
+                      getTagProps,
+                    ) =>
+                      value.map(
+                        (option: IntegrationProviderType, index: number) => {
+                          const { key, ...rest } = getTagProps({ index });
+                          return (
+                            <Chip
+                              key={key}
+                              {...rest}
+                              variant="outlined"
+                              label={getProviderDisplayName(option)}
+                            />
+                          );
+                        },
+                      )
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Integration Providers to filter on"
+                        error={
+                          !!errors.configuration?.one_resource_per_integration
+                        }
+                        helperText={
+                          errors.configuration?.one_resource_per_integration
+                            ? errors.configuration.one_resource_per_integration
+                                .message
+                            : "Enforce one resource per integration for selected providers (empty means all providers)"
+                        }
+                        fullWidth
+                        margin="normal"
+                      />
+                    )}
+                  />
+                )}
+              />
+              <Controller
+                name="configuration.allowed_provider_integration_types"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    multiple
+                    options={INTEGRATION_PROVIDER_OPTIONS}
+                    value={field.value || []}
+                    onChange={(_event, newValue) => field.onChange(newValue)}
+                    getOptionLabel={(option) => getProviderDisplayName(option)}
+                    renderValue={(
+                      value: readonly IntegrationProviderType[],
+                      getTagProps,
+                    ) =>
+                      value.map(
+                        (option: IntegrationProviderType, index: number) => {
+                          const { key, ...rest } = getTagProps({ index });
+                          return (
+                            <Chip
+                              key={key}
+                              {...rest}
+                              variant="outlined"
+                              label={getProviderDisplayName(option)}
+                            />
+                          );
+                        },
+                      )
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Allowed Integration Providers"
+                        error={
+                          !!errors.configuration
+                            ?.allowed_provider_integration_types
+                        }
+                        helperText={
+                          errors.configuration
+                            ?.allowed_provider_integration_types
+                            ? errors.configuration
+                                .allowed_provider_integration_types.message
+                            : "Restrict template usage to selected providers (empty means all providers)"
+                        }
+                        fullWidth
+                        margin="normal"
+                      />
+                    )}
+                  />
+                )}
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: -1 }}
+              >
+                Restricts template usage to selected integration providers.
+                Leave empty to allow all providers.
+              </Typography>
             </Box>
           </PropertyCard>
         </Box>

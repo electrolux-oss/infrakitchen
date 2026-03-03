@@ -6,11 +6,10 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from application.integrations.schema import IntegrationShort
 
+from application.types import IacToolType, SecretProviderType
 from core.constants.model import ModelStatus
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.users.schema import UserShort
-
-secret_providers = Literal["aws", "gcp", "custom"]
 
 
 class AWSSecretConfig(BaseModel):
@@ -60,8 +59,8 @@ class SecretResponse(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    secret_type: Literal["tofu"] = Field(..., frozen=True)
-    secret_provider: secret_providers = Field(..., frozen=True)
+    secret_type: IacToolType = Field(..., frozen=True)
+    secret_provider: SecretProviderType = Field(..., frozen=True)
     integration: IntegrationShort | None = Field(default=None)
 
     configuration: Annotated[
@@ -80,8 +79,8 @@ class SecretResponse(BaseModel):
 class SecretCreate(BaseModel):
     name: str = Field(...)
     description: str = Field(default="")
-    secret_type: Literal["tofu"] = Field(..., frozen=True)
-    secret_provider: secret_providers = Field(..., frozen=True)
+    secret_type: IacToolType = Field(..., frozen=True)
+    secret_provider: SecretProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID | str | None = Field(default=None, frozen=True)
     configuration: Annotated[
         AWSSecretConfig | GCPSecretConfig | CustomSecretConfig,
@@ -93,7 +92,7 @@ class SecretCreate(BaseModel):
 class SecretUpdate(BaseModel):
     description: str | None = Field(default="")
     labels: list[str] = Field(default_factory=list)
-    secret_provider: secret_providers | None = Field(default=None, frozen=True)
+    secret_provider: SecretProviderType | None = Field(default=None, frozen=True)
     configuration: (
         Annotated[
             AWSSecretConfig | GCPSecretConfig | CustomSecretConfig,
@@ -106,8 +105,8 @@ class SecretUpdate(BaseModel):
 class SecretShort(BaseModel):
     id: uuid.UUID = Field(...)
     name: str = Field(...)
-    secret_type: Literal["tofu"] = Field(..., frozen=True)
-    secret_provider: secret_providers = Field(..., frozen=True)
+    secret_type: IacToolType = Field(..., frozen=True)
+    secret_provider: SecretProviderType = Field(..., frozen=True)
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -25,6 +25,7 @@ from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.schema import SourceCodeCreate
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
+from application.types import IntegrationType
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.schema import AuthProviderCreate, GuestProviderConfig
 from core.config import setup_service_environment
@@ -455,7 +456,7 @@ async def insert_integrations(session: AsyncSession, env: str, user: UserDTO):
         ),
     }
 
-    integration_types: dict[str, Literal["cloud", "git"]] = {
+    integration_types: dict[str, IntegrationType] = {
         "aws": "cloud",
         "azurerm": "cloud",
         "github": "git",

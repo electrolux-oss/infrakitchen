@@ -12,8 +12,8 @@ from application.secrets.schema import (
     AWSSecretConfig,
     CustomSecretConfig,
     GCPSecretConfig,
-    secret_providers,
 )
+from application.types import IacToolType, SecretProviderType
 from core.base_models import BaseEntity
 
 from core.constants.model import ModelStatus
@@ -60,8 +60,8 @@ class SecretDTO(BaseModel):
 
     name: str = Field(...)
     description: str = Field(default="")
-    secret_type: Literal["tofu"] = Field(..., frozen=True)
-    secret_provider: secret_providers = Field(..., frozen=True)
+    secret_type: IacToolType = Field(..., frozen=True)
+    secret_provider: SecretProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID | str | None = Field(default=None, frozen=True)
     integration: IntegrationDTO | None = Field(default=None, frozen=True)
     configuration: Annotated[
