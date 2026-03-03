@@ -5,10 +5,11 @@ import { useNavigate } from "react-router";
 
 import { Box, Link } from "@mui/material";
 
+import { useConfig } from "../../common";
 import { SourceCodeVersionShort } from "../types";
 
 interface SourceCodeVersionLinkProps {
-  source_code_version: SourceCodeVersionShort;
+  source_code_version: SourceCodeVersionShort | null;
   name?: string | undefined;
 }
 
@@ -17,10 +18,15 @@ export const SourceCodeVersionLink = ({
   name = undefined,
 }: SourceCodeVersionLinkProps) => {
   const navigate = useNavigate();
-  const targetUrl = `/source_codes/${source_code_version.source_code.id}`;
+  const { linkPrefix } = useConfig();
+
+  const targetUrl = `${linkPrefix}source_codes/${source_code_version?.source_code.id}`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!source_code_version) {
+        return;
+      }
       // Allow default behavior for Cmd/Ctrl+Click (opens in new tab)
       if (e.metaKey || e.ctrlKey) {
         return;
@@ -35,6 +41,10 @@ export const SourceCodeVersionLink = ({
     },
     [navigate, source_code_version, targetUrl],
   );
+
+  if (!source_code_version) {
+    return null;
+  }
 
   return (
     <Box>
