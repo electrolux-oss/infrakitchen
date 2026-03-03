@@ -42,12 +42,14 @@ const SourceCodeGitRefRows = ({
   perPage,
   onPageChange,
   onRowsPerPageChange,
+  defaultOpenRef,
 }: Omit<SourceCodeRefSectionProps, "title" | "icon"> & {
   pagedRefs: string[];
   page: number;
   perPage: number;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (perPage: number) => void;
+  defaultOpenRef?: string;
 }) => {
   const { entities, loading, refreshList } = useEntityListProvider();
 
@@ -76,6 +78,7 @@ const SourceCodeGitRefRows = ({
             gitFolders={getFolders(ref)}
             entity={versionMap.get(ref)}
             onVersionCreate={refreshList}
+            defaultOpen={ref === defaultOpenRef}
           />
         ))
       )}
@@ -95,6 +98,7 @@ const SourceCodeGitRefRows = ({
     </Box>
   );
 };
+
 export const SourceCodeRefSection = ({
   title,
   icon: Icon,
@@ -113,11 +117,13 @@ export const SourceCodeRefSection = ({
   );
 
   const location = useLocation();
+  const initialSearch =
+    type === RefType.BRANCH
+      ? (location.state?.refBranchSearch ?? "")
+      : (location.state?.refTagSearch ?? "");
+
   const [filterValues, setFilterValues] = useState<FilterState>({
-    ref_search:
-      type === RefType.BRANCH
-        ? (location.state?.refBranchSearch ?? "")
-        : (location.state?.refTagSearch ?? ""),
+    ref_search: initialSearch,
   });
 
   const filteredRefs = useMemo(() => {
@@ -208,6 +214,7 @@ export const SourceCodeRefSection = ({
           perPage={paginationModel.pageSize}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          defaultOpenRef={initialSearch || undefined}
         />
       </EntityListProvider>
     </Box>
