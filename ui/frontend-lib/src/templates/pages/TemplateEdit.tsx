@@ -11,7 +11,6 @@ import {
   Alert,
   Autocomplete,
   Chip,
-  Typography,
 } from "@mui/material";
 
 import { LabelInput, useConfig } from "../../common";
@@ -347,14 +346,6 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                   />
                 )}
               />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: -1 }}
-              >
-                Restricts template usage to selected integration providers.
-                Leave empty to allow all providers.
-              </Typography>
             </Box>
           </PropertyCard>
         </Box>

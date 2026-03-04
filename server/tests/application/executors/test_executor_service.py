@@ -605,6 +605,17 @@ class TestGetExecutorActions:
                     ModelActions.DELETE,
                 ],
             ),
+            # Write permission - PROVISION state ERROR status
+            (
+                ModelStatus.ERROR,
+                ModelState.PROVISION,
+                ["read", "write"],
+                [
+                    ModelActions.EXECUTE,
+                    ModelActions.DRYRUN,
+                    ModelActions.DESTROY,
+                ],
+            ),
             # Admin permission - PROVISION state READY status
             (
                 ModelStatus.READY,

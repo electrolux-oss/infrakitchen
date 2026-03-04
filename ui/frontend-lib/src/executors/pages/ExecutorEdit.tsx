@@ -11,6 +11,7 @@ import {
   Alert,
   Typography,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 
 import { LabelInput, useConfig } from "../../common";
@@ -350,64 +351,68 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
                   name="source_code_version"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      label="Select Git Tag"
-                      fullWidth
-                      margin="normal"
-                      error={!!errors.source_code_version}
-                      helperText={
-                        errors.source_code_version
-                          ? errors.source_code_version.message
-                          : "Select git tag"
+                    <Autocomplete
+                      options={gitTags}
+                      value={field.value ?? null}
+                      onChange={(_, value) =>
+                        field.onChange(value ?? undefined)
                       }
-                      slotProps={{
-                        select: {
-                          inputProps: {
+                      getOptionLabel={(option) =>
+                        `${option} - ${gitTagMessages[option] || ""}`
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Select Git Tag"
+                          fullWidth
+                          margin="normal"
+                          error={!!errors.source_code_version}
+                          helperText={
+                            errors.source_code_version
+                              ? errors.source_code_version.message
+                              : "Select git tag"
+                          }
+                          inputProps={{
+                            ...params.inputProps,
                             "aria-label": "Source git tag",
-                          },
-                        },
-                      }}
-                    >
-                      {gitTags.map((type) => (
-                        <MenuItem key={type} value={type}>
-                          {`${type} - ${gitTagMessages[type] || ""}`}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                          }}
+                        />
+                      )}
+                    />
                   )}
                 />
                 <Controller
                   name="source_code_branch"
                   control={control}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      select
-                      label="Select Git Branch"
-                      fullWidth
-                      margin="normal"
-                      error={!!errors.source_code_branch}
-                      helperText={
-                        errors.source_code_branch
-                          ? errors.source_code_branch.message
-                          : "Select git branch"
+                    <Autocomplete
+                      options={gitBranches}
+                      value={field.value ?? null}
+                      onChange={(_, value) =>
+                        field.onChange(value ?? undefined)
                       }
-                      slotProps={{
-                        select: {
-                          inputProps: {
+                      getOptionLabel={(option) =>
+                        `${option} - ${gitBranchMessages[option] || ""}`
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Select Git Branch"
+                          fullWidth
+                          margin="normal"
+                          error={!!errors.source_code_branch}
+                          helperText={
+                            errors.source_code_branch
+                              ? errors.source_code_branch.message
+                              : "Select git branch"
+                          }
+                          inputProps={{
+                            ...params.inputProps,
                             "aria-label": "Source git branch",
-                          },
-                        },
-                      }}
-                    >
-                      {gitBranches.map((type) => (
-                        <MenuItem key={type} value={type}>
-                          {`${type} - ${gitBranchMessages[type] || ""}`}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                          }}
+                        />
+                      )}
+                    />
                   )}
                 />
                 <Controller

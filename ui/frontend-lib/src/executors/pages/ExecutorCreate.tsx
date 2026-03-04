@@ -8,7 +8,7 @@ import {
 } from "react-hook-form";
 import { useNavigate } from "react-router";
 
-import { Box, TextField, Button, MenuItem } from "@mui/material";
+import { Box, TextField, Button, MenuItem, Autocomplete } from "@mui/material";
 
 import { LabelInput } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
@@ -48,7 +48,7 @@ const ExecutorCreatePageInner = () => {
 
   const navigate = useNavigate();
 
-  const handleBack = () => navigate(`${linkPrefix}resources`);
+  const handleBack = () => navigate(`${linkPrefix}executors`);
 
   const watchedSourceCode = watch("source_code_id");
   const watchedVersion = watch("source_code_version");
@@ -185,7 +185,7 @@ const ExecutorCreatePageInner = () => {
     <PageContainer
       title="Create Executor"
       onBack={handleBack}
-      backAriaLabel="Back to resources"
+      backAriaLabel="Back to executors list"
       bottomActions={
         <>
           <Button variant="outlined" onClick={handleBack}>
@@ -221,7 +221,7 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   label="Name"
                   required
-                  placeholder="Enter resource name. It should be unique within the selected template."
+                  placeholder="Enter executor name. It should be unique within the selected template."
                   variant="outlined"
                   error={!!errors.name}
                   fullWidth
@@ -236,7 +236,7 @@ const ExecutorCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Description"
-                  placeholder="Enter resource description (optional)"
+                  placeholder="Enter executor description (optional)"
                   variant="outlined"
                   error={!!errors.description}
                   fullWidth
@@ -285,32 +285,32 @@ const ExecutorCreatePageInner = () => {
                 name="source_code_version"
                 control={control}
                 render={({ field }) => (
-                  <TextField
-                    {...field}
-                    select
-                    label="Select Git Tag"
-                    fullWidth
-                    margin="normal"
-                    error={!!errors.source_code_version}
-                    helperText={
-                      errors.source_code_version
-                        ? errors.source_code_version.message
-                        : "Select git tag"
+                  <Autocomplete
+                    options={gitTags}
+                    value={field.value ?? null}
+                    onChange={(_, value) => field.onChange(value ?? undefined)}
+                    getOptionLabel={(option) =>
+                      `${option} - ${gitTagMessages[option] || ""}`
                     }
-                    slotProps={{
-                      select: {
-                        inputProps: {
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Select Git Tag"
+                        fullWidth
+                        margin="normal"
+                        error={!!errors.source_code_version}
+                        helperText={
+                          errors.source_code_version
+                            ? errors.source_code_version.message
+                            : "Select git tag"
+                        }
+                        inputProps={{
+                          ...params.inputProps,
                           "aria-label": "Source git tag",
-                        },
-                      },
-                    }}
-                  >
-                    {gitTags.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {`${type} - ${gitTagMessages[type] || ""}`}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                        }}
+                      />
+                    )}
+                  />
                 )}
               />
             )}
@@ -318,32 +318,32 @@ const ExecutorCreatePageInner = () => {
               name="source_code_branch"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Select Git Branch"
-                  fullWidth
-                  margin="normal"
-                  error={!!errors.source_code_branch}
-                  helperText={
-                    errors.source_code_branch
-                      ? errors.source_code_branch.message
-                      : "Select git branch"
+                <Autocomplete
+                  options={gitBranches}
+                  value={field.value ?? null}
+                  onChange={(_, value) => field.onChange(value ?? undefined)}
+                  getOptionLabel={(option) =>
+                    `${option} - ${gitBranchMessages[option] || ""}`
                   }
-                  slotProps={{
-                    select: {
-                      inputProps: {
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Git Branch"
+                      fullWidth
+                      margin="normal"
+                      error={!!errors.source_code_branch}
+                      helperText={
+                        errors.source_code_branch
+                          ? errors.source_code_branch.message
+                          : "Select git branch"
+                      }
+                      inputProps={{
+                        ...params.inputProps,
                         "aria-label": "Source git branch",
-                      },
-                    },
-                  }}
-                >
-                  {gitBranches.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {`${type} - ${gitBranchMessages[type] || ""}`}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                      }}
+                    />
+                  )}
+                />
               )}
             />
             <Controller
@@ -507,7 +507,7 @@ const ExecutorCreatePageInner = () => {
                     helperText={
                       errors.storage_path
                         ? errors.storage_path.message
-                        : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
+                        : "By default InfraKitchen uses `service-catalog/{template}/{executor_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
                     }
                   />
                 )}

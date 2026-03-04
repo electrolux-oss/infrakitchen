@@ -20,7 +20,7 @@ export const SourceCodeVersionLink = ({
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
 
-  const targetUrl = `${linkPrefix}source_codes/${source_code_version?.source_code.id}`;
+  const targetUrl = `${linkPrefix}source_codes/${source_code_version?.source_code?.id}`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
