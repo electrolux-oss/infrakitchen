@@ -324,6 +324,9 @@ class ExecutorService:
             if executor.status == ModelStatus.READY:
                 actions.append(ModelActions.DRYRUN)
                 actions.append(ModelActions.DELETE)
+            elif executor.status == ModelStatus.ERROR:
+                actions.append(ModelActions.DESTROY)
+                actions.append(ModelActions.DRYRUN)
         elif executor.state == ModelState.DESTROYED:
             if executor.status == ModelStatus.DONE:
                 actions.append(ModelActions.RECREATE)

@@ -14,7 +14,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 
 export const ExecutorsPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -60,13 +59,11 @@ export const ExecutorsPage = () => {
         field: "source_code_id",
         headerName: "Source Code",
         flex: 1,
-        valueGetter: (value: any, row: any) =>
-          row.source_code_version?.identifier || "",
+        valueGetter: (_value: any, row: any) =>
+          row.source_code?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code;
-          return (
-            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
-          );
+          return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
       {
