@@ -33,7 +33,7 @@ from core.users.dependencies import get_user_service
 from core.users.schema import UserCreateWithProvider
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.audit_logs.handler import AuditLogHandler
-from application.templates.schema import TemplateCreate
+from application.templates.schema import TemplateConfig, TemplateCreate
 from core.rabbitmq import RabbitMQConnection
 
 from core.base_models import Base, MessageModel
@@ -162,6 +162,7 @@ async def insert_template(session: AsyncSession, user: UserDTO):
             description=get_sentence(),
             template=f"{template_name}_cloud",
             labels=["template", template_name.lower(), "cloud"],
+            configuration=TemplateConfig(),
         )
 
         existant_template = await template_service.get_all(filter={"name": template_name})
