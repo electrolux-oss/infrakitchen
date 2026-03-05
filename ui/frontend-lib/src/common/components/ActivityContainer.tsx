@@ -15,11 +15,15 @@ import { Revision } from "./activity/Revision";
 
 interface ActivityPageProps {
   tabs: string[];
+  disableTitle?: boolean;
+  disableOnBack?: boolean;
 }
 
-export const ActivityContainer = (props: ActivityPageProps) => {
-  const { tabs } = props;
-
+export const ActivityContainer = ({
+  tabs,
+  disableOnBack = false,
+  disableTitle = false,
+}: ActivityPageProps) => {
   const { entity, entity_name } = useEntityProvider();
 
   const { linkPrefix } = useConfig();
@@ -45,8 +49,16 @@ export const ActivityContainer = (props: ActivityPageProps) => {
 
   return (
     <PageContainer
-      title={entity.name || entity.identifier || entity_name}
-      onBack={() => navigate(`${linkPrefix}${entity_name}s/${entity.id}`)}
+      title={
+        disableTitle
+          ? undefined
+          : (entity.name ?? entity.identifier ?? entity_name)
+      }
+      onBack={
+        disableOnBack
+          ? undefined
+          : () => navigate(`${linkPrefix}${entity_name}s/${entity.id}`)
+      }
     >
       <Box sx={{ width: "100%", maxWidth: 1400 }}>
         <TabContext value={path}>

@@ -1,15 +1,16 @@
 import { Box } from "@mui/material";
 
 import {
-  getTextValue,
   getLabels,
   CommonField,
   GetReferenceUrlValue,
+  GetEntityLink,
 } from "../../common/components/CommonField";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse } from "../types";
 
 export interface ResourceAboutProps {
@@ -30,86 +31,102 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       }
     >
       <CommonField
-        name={"Template"}
-        value={getTextValue(resource.template.name)}
-      />
-      <CommonField
-        name={"State"}
+        name="State"
         value={<StatusChip status={resource.status} state={resource.state} />}
+        size={4}
       />
+
       <CommonField
-        name={"Created"}
+        name="Template Version"
+        value={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <GetEntityLink {...resource.template} />
+            {"/"}
+            <SourceCodeVersionLink
+              source_code_version={resource.source_code_version}
+              name={
+                resource.source_code_version?.source_code_version ||
+                resource.source_code_version?.source_code_branch
+              }
+            />
+          </Box>
+        }
+        size={4}
+      />
+
+      <CommonField name="Revision" value={resource.revision_number} size={4} />
+
+      <CommonField
+        name="Created"
         value={
           <RelativeTime date={resource.created_at} user={resource.creator} />
         }
+        size={6}
       />
       <CommonField
-        name={"Last Updated"}
+        name="Last Updated"
         value={<RelativeTime date={resource.updated_at} />}
+        size={6}
       />
-      <CommonField
-        name={"Labels"}
-        value={getLabels(resource.labels)}
-        size={12}
-      />
+
+      <CommonField name="Labels" value={getLabels(resource.labels)} size={12} />
+
       {resource.parents.length > 0 && (
         <CommonField
           name={`Parents (${resource.parents.length})`}
+          size={6}
           value={
             <Box
-              gap={1}
-              maxHeight={150}
               sx={(theme) => ({
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                maxHeight: 150,
                 overflowY: "auto",
+                mt: 1,
                 p: 1,
                 border: `1px solid ${theme.palette.divider}`,
-                marginTop: 1,
+                borderRadius: 1,
               })}
             >
-              {resource.parents.map((parent) => {
-                const display_name = `${parent.template.name} (${parent.name})`;
-                return (
-                  <Box key={parent.id} sx={{ flexShrink: 0 }}>
-                    <GetReferenceUrlValue
-                      {...parent}
-                      display_name={display_name}
-                    />
-                  </Box>
-                );
-              })}
+              {resource.parents.map((parent) => (
+                <GetReferenceUrlValue
+                  key={parent.id}
+                  {...parent}
+                  display_name={`${parent.template.name} (${parent.name})`}
+                />
+              ))}
             </Box>
           }
-          size={6}
         />
       )}
       {resource.children.length > 0 && (
         <CommonField
           name={`Children (${resource.children.length})`}
+          size={6}
           value={
             <Box
-              gap={1}
-              maxHeight={150}
               sx={(theme) => ({
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                maxHeight: 150,
                 overflowY: "auto",
+                mt: 1,
                 p: 1,
                 border: `1px solid ${theme.palette.divider}`,
-                marginTop: 1,
+                borderRadius: 1,
               })}
             >
-              {resource.children.map((child) => {
-                const display_name = `${child.template.name} (${child.name})`;
-                return (
-                  <Box key={child.id} sx={{ flexShrink: 0 }}>
-                    <GetReferenceUrlValue
-                      {...child}
-                      display_name={display_name}
-                    />
-                  </Box>
-                );
-              })}
+              {resource.children.map((child) => (
+                <GetReferenceUrlValue
+                  key={child.id}
+                  {...child}
+                  display_name={`${child.template.name} (${child.name})`}
+                />
+              ))}
             </Box>
           }
-          size={6}
         />
       )}
     </OverviewCard>

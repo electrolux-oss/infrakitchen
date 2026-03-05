@@ -14,11 +14,12 @@ import EntityActions from "./EntityActions";
 export interface EntityContainerProps {
   children: ReactNode;
   title?: string;
+  showActivity?: boolean;
   actions?: ReactNode;
 }
 
 export const EntityContainer = (props: EntityContainerProps) => {
-  const { children, title, actions } = props;
+  const { children, title, actions, showActivity = true } = props;
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
@@ -81,6 +82,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
           <EntityActions
             entity_id={entity.id}
             entity_name={entity._entity_name}
+            show_activity={showActivity}
           />
           {actions}
           <IconButton onClick={() => handleRefresh()} aria-label="refresh">

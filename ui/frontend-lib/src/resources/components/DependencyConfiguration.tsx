@@ -1,7 +1,7 @@
 import { Box, Checkbox, Typography, FormControlLabel } from "@mui/material";
 
 import { getTextValue } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { DependencyVariable, ResourceResponse } from "../types";
 
 export interface DependencyConfigurationProps {
@@ -73,33 +73,25 @@ export const DependencyConfiguration = ({
   resource,
 }: DependencyConfigurationProps) => {
   return (
-    <PropertyCollapseCard
-      title="Dependency Configuration"
-      subtitle="Configuration inherited from dependencies"
-      id="resource-dependency-config"
-    >
-      <Box sx={{ gap: 2, display: "flex", flexDirection: "column" }}>
-        <PropertyCollapseCard
-          title={
-            <Typography variant="h5" component="h2">
-              Tags
-            </Typography>
-          }
-          id="resource-dependency-tags"
-        >
-          {getDependencyVariables(resource.dependency_tags)}
-        </PropertyCollapseCard>
-        <PropertyCollapseCard
-          title={
-            <Typography variant="h5" component="h2">
-              Configs
-            </Typography>
-          }
-          id="resource-dependency-configs"
-        >
-          {getDependencyVariables(resource.dependency_config)}
-        </PropertyCollapseCard>
-      </Box>
-    </PropertyCollapseCard>
+    <Box sx={{ gap: 2, display: "flex", flexDirection: "column" }}>
+      <OverviewCard
+        name={
+          <Typography variant="h5" component="h2">
+            Tags
+          </Typography>
+        }
+      >
+        {getDependencyVariables(resource.dependency_tags)}
+      </OverviewCard>
+      <OverviewCard
+        name={
+          <Typography variant="h5" component="h2">
+            Configs
+          </Typography>
+        }
+      >
+        {getDependencyVariables(resource.dependency_config)}
+      </OverviewCard>
+    </Box>
   );
 };
