@@ -4,6 +4,7 @@ import { administrationRoutes } from "./administration";
 import { auditLogsRoutes } from "./audit_logs";
 import { authProviderRoutes } from "./auth_providers";
 import { batchOperationRoutes } from "./batch_operations";
+import { blueprintRoutes } from "./blueprints";
 import { usePermissionProvider } from "./common";
 import { executorRoutes } from "./executors";
 import { GettingStartedPage, NotFoundPage } from "./getting_started";
@@ -17,6 +18,7 @@ import { storageRoutes } from "./storages";
 import { taskRoutes } from "./tasks";
 import { templateRoutes } from "./templates";
 import { usersRoutes } from "./users";
+import { workflowRoutes } from "./workflows";
 import { workerRoutes } from "./workers";
 import { workspaceRoutes } from "./workspaces";
 
@@ -47,6 +49,8 @@ const routeGroups: RouteGroup[] = [
   { key: "task", routes: taskRoutes },
   { key: "workspace", routes: workspaceRoutes },
   { key: "worker", routes: workerRoutes },
+  { key: "blueprint", routes: blueprintRoutes },
+  { key: "workflow", routes: workflowRoutes },
   { key: "executor", routes: executorRoutes },
 ];
 

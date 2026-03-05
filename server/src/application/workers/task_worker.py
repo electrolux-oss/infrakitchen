@@ -12,6 +12,7 @@ from application.source_code_versions.task import SourceCodeVersionTask
 from application.source_codes.task import SourceCodeTask
 from application.storages.task import StorageTask
 from application.workers.utils import (
+    get_workflow_task,
     get_executor_task,
     get_source_code_task,
     get_source_code_version_task,
@@ -19,6 +20,7 @@ from application.workers.utils import (
     get_resource_task,
     get_workspace_task,
 )
+from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core import BaseMessagesWorker, MessageHandler, MessageModel
 from core.constants.model import ModelActions
@@ -123,7 +125,15 @@ class TaskWorker(BaseMessagesWorker):
 
     async def get_task_controller(
         self, entity_controller: str, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
-    ) -> SourceCodeTask | SourceCodeVersionTask | StorageTask | ResourceTask | WorkspaceTask | ExecutorTask:
+    ) -> (
+        SourceCodeTask
+        | SourceCodeVersionTask
+        | StorageTask
+        | ResourceTask
+        | WorkspaceTask
+        | ExecutorTask
+        | WorkflowTask
+    ):
         match entity_controller:
             case "source_code":
                 return await get_source_code_task(
@@ -147,6 +157,10 @@ class TaskWorker(BaseMessagesWorker):
                 )
             case "executor":
                 return await get_executor_task(
+                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                )
+            case "workflow":
+                return await get_workflow_task(
                     session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
                 )
             case _:
@@ -201,12 +215,12 @@ class TaskWorker(BaseMessagesWorker):
         raise TaskFailure from e
 
     async def handle_unexpected_exception(self, e, task_controller):
+        logger.error(f"Unhandled exception: {e}", exc_info=True)
         task_controller.logger.error("Unhandled exception occurred")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
 
         error_message = f"UnhandledException: {e}"
-        logger.error(f"Unhandled exception: {e}", exc_info=True)
         await self.send_task_notification(
             task_controller, f"Task failed for {task_controller.logger.entity_id}: {error_message}"
         )

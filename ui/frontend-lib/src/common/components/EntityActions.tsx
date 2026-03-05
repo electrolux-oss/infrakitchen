@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 
 import { Button } from "@mui/material";
 
+import EditIcon from "@mui/icons-material/Edit";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
@@ -163,6 +164,7 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("edit") && (
         <Button
           variant="outlined"
+          startIcon={<EditIcon />}
           onClick={() =>
             navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
           }

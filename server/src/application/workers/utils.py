@@ -17,7 +17,10 @@ from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.task import SourceCodeTask
 from application.storages.crud import StorageCRUD
 from application.storages.task import StorageTask
+from application.templates.dependencies import get_template_service
 from application.tools.secret_manager import get_secret_manager
+from application.workflows.dependencies import get_workflow_service
+from application.workflows.task import WorkflowTask
 from application.workspaces.crud import WorkspaceCRUD
 from application.workspaces.task import WorkspaceTask
 from core.custom_entity_log_controller import EntityLogger
@@ -222,6 +225,32 @@ async def get_executor_task(
         secret_manager=secret_manager,
         user=user,
         event_sender=event_sender,
+        action=action,
+    )
+
+
+async def get_workflow_task(
+    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+) -> WorkflowTask:
+    workflow_service = get_workflow_service(session=session)
+    workflow_instance = await workflow_service.crud.get_by_id(obj_id)
+    if not workflow_instance:
+        raise CannotProceed(f"Workflow {obj_id} not found")
+
+    return WorkflowTask(
+        session=session,
+        workflow_service=workflow_service,
+        workflow_instance=workflow_instance,
+        resource_service=get_resource_service(session=session),
+        template_service=get_template_service(session=session),
+        source_code_version_service=get_source_code_version_service(session=session),
+        logger=EntityLogger(
+            entity_name="workflow",
+            entity_id=str(obj_id),
+            trace_id=trace_id,
+        ),
+        user=user,
+        event_sender=EventSender(entity_name="workflow"),
         action=action,
     )
 

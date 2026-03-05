@@ -25,6 +25,8 @@ from ..views import github_view as github
 from ..views import bitbucket_view as bitbucket
 from ..views import azure_devops_view as azure_devops
 from ..views import kubernetes_view as kubernetes
+from ..blueprints import api as blueprints_api
+from ..workflows import api as workflows_api
 from ..templates import api as templates_api
 from ..resources import api as resources_api
 from ..resource_temp_state import api as resource_temp_state_api
@@ -88,6 +90,16 @@ api.include_router(
 api.include_router(
     kubernetes.router,
     tags=["Core", "Kubernetes"],
+)
+
+api.include_router(
+    blueprints_api.router,
+    tags=["Core", "Blueprints"],
+)
+
+api.include_router(
+    workflows_api.router,
+    tags=["Core", "Workflows"],
 )
 
 api.include_router(
