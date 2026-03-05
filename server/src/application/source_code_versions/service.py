@@ -10,6 +10,7 @@ from application.source_code_versions.model import (
     SourceOutputConfig,
 )
 from application.source_codes.service import SourceCodeService
+from application.templates.schema import TemplateShort
 from application.templates.service import TemplateService
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
@@ -24,6 +25,7 @@ from core.utils.event_sender import EventSender
 from core.utils.model_tools import valid_uuid
 from .crud import SourceCodeVersionCRUD
 from .schema import (
+    BatchTemplatePortsResponse,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -37,6 +39,8 @@ from .schema import (
     SourceConfigUpdateWithId,
     SourceOutputConfigCreate,
     SourceOutputConfigResponse,
+    SourceOutputConfigTemplateResponse,
+    TemplatePortsItem,
 )
 from core.users.model import UserDTO
 
@@ -510,6 +514,73 @@ class SourceCodeVersionService:
         """
         references = await self.crud.get_reference_output_configs_by_template_id(template_id)
         return [SourceConfigTemplateReferenceResponse.model_validate(reference) for reference in references]
+
+    async def get_batch_template_ports(self, template_ids: list[UUID]) -> BatchTemplatePortsResponse:
+        """
+        Get configs, outputs, references, and parents for multiple templates in one call.
+        Replaces N individual calls with 3 batch DB queries + 1 template list query.
+        """
+
+        # 3 batch queries in parallel-ish (all hit the same session, but no fan-out)
+        configs_by_tid = await self.crud.get_configs_by_template_ids(template_ids)
+        outputs_by_tid = await self.crud.get_outputs_by_template_ids(template_ids)
+        refs_by_tid = await self.crud.get_references_by_template_ids(template_ids)
+
+        # Fetch all templates at once to get their parents
+        templates = await self.template_service.get_all(filter={"id": [str(tid) for tid in template_ids]})
+        parents_by_tid: dict[str, list[TemplateShort]] = {}
+        for t in templates:
+            parents_by_tid[str(t.id)] = t.parents
+
+        result: dict[str, TemplatePortsItem] = {}
+        for tid in template_ids:
+            tid_str = str(tid)
+
+            # Deduplicate configs by name (same logic as get_configs_by_template_id)
+            raw_configs = configs_by_tid.get(tid_str, [])
+            seen_names: set[str] = set()
+            unique_configs: list[SourceConfigResponse] = []
+            for config in raw_configs:
+                if config.name not in seen_names:
+                    seen_names.add(config.name)
+                    unique_configs.append(SourceConfigResponse.model_validate(config))
+
+            # Deduplicate outputs by name (same logic as filter_template_outputs)
+            raw_outputs = outputs_by_tid.get(tid_str, [])
+            template_outputs_dict: dict[str, tuple[SourceOutputConfigTemplateResponse, int]] = {}
+            for output in raw_outputs:
+                validated = SourceOutputConfigResponse.model_validate(output)
+                if validated.name not in template_outputs_dict:
+                    template_output = SourceOutputConfigTemplateResponse(
+                        name=validated.name,
+                        description=validated.description,
+                        created_at=validated.created_at,
+                        updated_at=validated.updated_at,
+                        status="new",
+                    )
+                    template_outputs_dict[validated.name] = (template_output, 0)
+                else:
+                    template_outputs_dict[validated.name] = (
+                        template_outputs_dict[validated.name][0],
+                        template_outputs_dict[validated.name][1] + 1,
+                    )
+            for output_item, count in template_outputs_dict.values():
+                if count >= 1:
+                    output_item.status = "active"
+            filtered_outputs = [t[0] for t in template_outputs_dict.values()]
+
+            # References
+            refs = refs_by_tid.get(tid_str, [])
+            validated_refs = [SourceConfigTemplateReferenceResponse.model_validate(r) for r in refs]
+
+            result[tid_str] = TemplatePortsItem(
+                configs=unique_configs,
+                outputs=filtered_outputs,
+                references=validated_refs,
+                parents=parents_by_tid.get(tid_str, []),
+            )
+
+        return BatchTemplatePortsResponse(templates=result)
 
     async def create_output_configs(self, body: list[SourceOutputConfigCreate]) -> list[SourceOutputConfig]:
         """

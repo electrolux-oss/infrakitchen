@@ -384,6 +384,32 @@ class ResourceTask:
         await self.event_sender.send_event(response_model, event_type)
         await self.event_sender.flush()
 
+        # Notify parent workflow when resource reaches a terminal state
+        if self.resource_instance.status in (ModelStatus.DONE, ModelStatus.ERROR):
+            await self._notify_workflow_callback()
+
+    async def _notify_workflow_callback(self) -> None:
+        """If this resource was created by a workflow (trace_id = workflow_id),
+        send a workflow task so the pipeline resumes without polling."""
+        workflow_id = getattr(self.logger, "trace_id", None)
+        if not workflow_id:
+            return
+        try:
+            workflow_sender = EventSender(entity_name="workflow")
+            await workflow_sender.send_task(
+                entity_id=workflow_id,
+                requester=self.user,
+                action=ModelActions.EXECUTE,
+                extra_metadata={"resource_id": str(self.resource_instance.id)},
+            )
+            await self.event_sender.flush()
+        except Exception:
+            # Don't fail the resource task if workflow callback fails
+            logging.getLogger(__name__).warning(
+                f"Failed to send workflow callback for workflow {workflow_id}",
+                exc_info=True,
+            )
+
     async def make_failed(self) -> None:
         if self.resource_instance.state == ModelState.DESTROYED:
             return None

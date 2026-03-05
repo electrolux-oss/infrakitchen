@@ -17,6 +17,8 @@ export * from "./audit_logs";
 export * from "./getting_started";
 export * from "./integrations";
 export * from "./templates";
+export * from "./blueprints";
+export * from "./workflows";
 export * from "./resources";
 export * from "./batch_operations";
 export * from "./administration";

@@ -53,6 +53,7 @@ class EventSender:
         action: str = "execute",
         trace_id: str | None = None,
         audit_log_id: str | UUID | None = None,
+        extra_metadata: dict[str, str] | None = None,
     ):
         logger.debug(f"Sending task for {self.entity_name} {entity_id} with action {action}")
         message = MessageModel()
@@ -62,6 +63,8 @@ class EventSender:
         message.metadata["user"] = requester.id
         message.metadata["trace_id"] = trace_id
         message.metadata["audit_log_id"] = str(audit_log_id) if audit_log_id else None
+        if extra_metadata:
+            message.metadata.update(extra_metadata)
         message.routing_key = "ik_tasks"
         message.exchange_type = ExchangeType.DIRECT
         self._buffer.append(message)

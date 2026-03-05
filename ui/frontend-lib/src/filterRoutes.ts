@@ -79,6 +79,53 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
 
+  // ── Blueprints ───────────────────────────────────────────────────────────────
+  {
+    path: "/blueprints",
+    Component: lz(
+      () => import("./blueprints/pages/Blueprints"),
+      "BlueprintsPage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "read",
+  },
+  {
+    path: "/blueprints/create",
+    Component: lz(
+      () => import("./blueprints/pages/BlueprintCreate"),
+      "BlueprintCreatePage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "write",
+  },
+  {
+    path: "/blueprints/:blueprint_id/edit",
+    Component: lz(
+      () => import("./blueprints/pages/BlueprintEdit"),
+      "BlueprintEditPage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "write",
+  },
+  {
+    path: "/blueprints/:blueprint_id/use",
+    Component: lz(
+      () => import("./blueprints/pages/BlueprintUse"),
+      "BlueprintUsePage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "write",
+  },
+  {
+    path: "/blueprints/:blueprint_id",
+    Component: lz(
+      () => import("./blueprints/pages/Blueprint"),
+      "BlueprintPage",
+    ),
+    requiredPermission: "api:blueprint",
+    permissionAction: "read",
+  },
+
   // ── Batch Operations ─────────────────────────────────────────────────────────
   {
     path: "/batch_operations",
@@ -429,6 +476,20 @@ const allRoutes: LazyRouteDefinition[] = [
     path: "workers",
     Component: lazy(() => import("./workers/pages/Workers")),
     requiredPermission: "api:worker",
+    permissionAction: "read",
+  },
+
+  // ── Workflows ─────────────────────────────────────────────────────────────────
+  {
+    path: "/workflows",
+    Component: lz(() => import("./workflows/pages/Workflows"), "WorkflowsPage"),
+    requiredPermission: "api:workflow",
+    permissionAction: "read",
+  },
+  {
+    path: "/workflows/:workflow_id",
+    Component: lz(() => import("./workflows/pages/Workflow"), "WorkflowPage"),
+    requiredPermission: "api:workflow",
     permissionAction: "read",
   },
 
