@@ -12,6 +12,8 @@ from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
 from infrakitchen_mcp.registry import mcp_group
 from .schema import (
+    BatchTemplatePortsRequest,
+    BatchTemplatePortsResponse,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -303,3 +305,16 @@ async def get_reference_outputs_by_template(
 ) -> list[SourceConfigTemplateReferenceResponse]:
     outputs = await service.get_template_config_references_by_template_id(template_id=template_id)
     return outputs
+
+
+@router.post(
+    "/source_code_versions/templates/ports",
+    response_model=BatchTemplatePortsResponse,
+    response_description="Get configs, outputs, references and parents for multiple templates in one call",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_batch_template_ports(
+    body: BatchTemplatePortsRequest,
+    service: SourceCodeVersionService = Depends(get_source_code_version_service),
+) -> BatchTemplatePortsResponse:
+    return await service.get_batch_template_ports(template_ids=body.template_ids)

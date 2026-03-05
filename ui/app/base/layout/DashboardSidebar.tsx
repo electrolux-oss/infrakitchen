@@ -177,6 +177,14 @@ export default function DashboardSidebar({
             selected={!!matchPath("/executors/*", pathname)}
             permissionKey="executor"
           />
+          <DashboardSidebarPageItem
+            id="blueprints"
+            title="Blueprints"
+            icon={<Icon icon="noto:spiral-notepad" width="20" height="20" />}
+            href="/blueprints"
+            selected={!!matchPath("/blueprints/*", pathname)}
+            permissionKey="blueprint"
+          />
 
           <DashboardSidebarDividerItem />
           <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>
