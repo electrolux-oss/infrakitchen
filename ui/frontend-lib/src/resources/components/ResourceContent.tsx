@@ -52,14 +52,14 @@ export const ResourceContent = () => {
           <Revision resourceId={entity.id} resourceRevision={0} />
         </Box>
       ),
-      requiredPermission: "api:resource",
+      requiredPermission: `resource:${entity.id}`,
       permissionAction: "write",
     },
     {
       label: "Settings",
       content: <DangerZoneCard />,
-      requiredPermission: "api:resource",
-      permissionAction: "admin",
+      requiredPermission: `resource:${entity.id}`,
+      permissionAction: "write",
     },
   ];
 
