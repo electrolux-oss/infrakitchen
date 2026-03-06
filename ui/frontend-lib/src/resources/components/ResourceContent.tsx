@@ -52,6 +52,8 @@ export const ResourceContent = () => {
           <Revision resourceId={entity.id} resourceRevision={0} />
         </Box>
       ),
+      requiredPermission: "api:resource",
+      permissionAction: "write",
     },
     {
       label: "Settings",
