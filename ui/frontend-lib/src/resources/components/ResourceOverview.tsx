@@ -61,12 +61,12 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         value={
           <RelativeTime date={resource.created_at} user={resource.creator} />
         }
-        size={6}
+        size={4}
       />
       <CommonField
         name="Last Updated"
         value={<RelativeTime date={resource.updated_at} />}
-        size={6}
+        size={4}
       />
 
       <CommonField name="Labels" value={getLabels(resource.labels)} size={12} />

@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { ActivityContainer } from "../../common/components/ActivityContainer";
+import { ActivityTab } from "../../common/components/ActivityTab";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
@@ -42,15 +42,7 @@ export const ResourceContent = () => {
     },
     {
       label: "Activity",
-      content: (
-        <Box sx={{ mt: -8 }}>
-          <ActivityContainer
-            tabs={["audit", "revisions"]}
-            disableOnBack={true}
-            disableTitle={true}
-          />
-        </Box>
-      ),
+      content: <ActivityTab tabs={["audit", "revisions"]} />,
     },
     {
       label: "Settings",

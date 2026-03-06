@@ -147,6 +147,13 @@ export const TemplateConfiguration = ({
               value={<GetReferenceUrlValue {...resource.storage} />}
             />
           )}
+          {resource.storage_path && (
+            <CommonField
+              name={"Storage Path"}
+              value={getTextValue(resource.storage_path || "N/A")}
+              size={12}
+            />
+          )}
           {resource.workspace && (
             <CommonField
               name="Workspace"
