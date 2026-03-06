@@ -40,21 +40,20 @@ export const FavoriteButton = ({
       onClick={handleAddFavorite}
       disabled={submittingState}
       disableRipple={format === "table"}
-      sx={
-        format === "table"
-          ? {
-              p: 0,
-              minWidth: 0,
-              width: 20,
-              height: 20,
-              border: "none",
-              outline: "none",
-              "&:hover": {
-                backgroundColor: "transparent",
-              },
-            }
-          : undefined
-      }
+      sx={{
+        border: "none",
+        outline: "none",
+        backgroundColor: "transparent",
+        "&.MuiButtonBase-root": { backgroundColor: "transparent" },
+        "&:hover": { backgroundColor: "transparent" },
+        "&:hover.MuiButtonBase-root": { backgroundColor: "transparent" },
+        ...(format === "table" && {
+          p: 0,
+          minWidth: 0,
+          width: 20,
+          height: 20,
+        }),
+      }}
     >
       {favoriteState ? (
         <FavoriteIcon

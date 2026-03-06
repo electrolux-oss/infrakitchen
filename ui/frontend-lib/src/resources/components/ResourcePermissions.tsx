@@ -1,4 +1,4 @@
-import { EntityPoliciesCard } from "../../permissions/components/policies/EntityPoliciesCard";
+import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
 import { ResourceResponse } from "../types";
 
 export interface AdvancedSettingsProps {
@@ -7,7 +7,7 @@ export interface AdvancedSettingsProps {
 
 export const ResourcePermissions = ({ resource }: AdvancedSettingsProps) => {
   return (
-    <EntityPoliciesCard
+    <EntityPoliciesTab
       entity_id={resource.id}
       entity_name={resource._entity_name}
     />

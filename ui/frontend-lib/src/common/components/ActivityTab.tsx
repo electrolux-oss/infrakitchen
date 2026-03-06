@@ -39,7 +39,7 @@ export const ActivityTab = ({ tabs }: ActivityTabProps) => {
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 1400 }}>
+    <Box sx={{ width: "100%", maxWidth: 1000 }}>
       <TabContext value={path}>
         <Box sx={{ py: 1.5 }}>
           <Tabs
