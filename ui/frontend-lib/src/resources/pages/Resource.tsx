@@ -23,6 +23,7 @@ export const ResourcePage = () => {
     <EntityProvider entity_name="resource" entity_id={resource_id || ""}>
       <EntityContainer
         title={"Resource Overview"}
+        showActivity={false}
         actions={
           <PermissionWrapper
             requiredPermission="api:resource"

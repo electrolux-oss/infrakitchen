@@ -9,7 +9,7 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
@@ -78,127 +78,122 @@ export const TemplateConfiguration = ({
       })
       .catch((error) => {
         notifyError(error);
+      })
+      .finally(() => {
         setIsSyncing(false);
       });
   };
 
   return (
-    <PropertyCollapseCard
-      title={"Template Configuration"}
-      expanded={true}
-      id="resource-template-config"
-    >
-      <Grid container spacing={2}>
-        <CommonField
-          name={"Template"}
-          value={<GetReferenceUrlValue {...resource.template} />}
-        />
-        <CommonField
-          name={"Abstract"}
-          value={getTextValue(resource.abstract)}
-        />
-        {resource.integration_ids.length > 0 && (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <OverviewCard name="Overview">
+        <Grid container spacing={2} sx={{ ml: 3, mt: 2 }}>
           <CommonField
-            name={"Integrations"}
+            name="Template"
+            value={<GetReferenceUrlValue {...resource.template} />}
+          />
+          <CommonField
+            name="Template Version"
             value={
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {resource.integration_ids.map((parent) => (
-                  <span key={parent.id}>
-                    <GetReferenceUrlValue
-                      {...parent}
-                      urlProvider={parent.integration_provider}
-                    />
-                  </span>
-                ))}
-              </Box>
+              resource.source_code_version?.source_code ? (
+                <SourceCodeVersionLink
+                  source_code_version={resource.source_code_version}
+                  name={
+                    resource.source_code_version.source_code_version ||
+                    resource.source_code_version.source_code_branch
+                  }
+                />
+              ) : (
+                "N/A"
+              )
             }
-            size={6}
           />
-        )}
-        {resource.secret_ids.length > 0 && (
-          <CommonField
-            name={"Secrets"}
-            value={
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {resource.secret_ids.map((parent) => (
-                  <span key={parent.id}>
-                    <GetReferenceUrlValue {...parent} />
-                  </span>
-                ))}
-              </Box>
-            }
-            size={6}
-          />
-        )}
-        {resource.storage && (
-          <CommonField
-            name={"Storage"}
-            value={<GetReferenceUrlValue {...resource.storage} />}
-          />
-        )}
-        {resource.workspace && (
-          <CommonField
-            name={"Workspace"}
-            value={
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                <GetReferenceUrlValue {...resource.workspace} />
-                <PermissionWrapper
-                  requiredPermission="api:resource"
-                  permissionAction="admin"
-                >
-                  <IconButton
-                    size="small"
-                    onClick={handleSync}
-                    disabled={isSyncing}
-                    sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
+          {resource.integration_ids.length > 0 && (
+            <CommonField
+              name="Integrations"
+              value={
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {resource.integration_ids.map((parent) => (
+                    <span key={parent.id}>
+                      <GetReferenceUrlValue
+                        {...parent}
+                        urlProvider={parent.integration_provider}
+                      />
+                    </span>
+                  ))}
+                </Box>
+              }
+              size={6}
+            />
+          )}
+          {resource.secret_ids.length > 0 && (
+            <CommonField
+              name="Secrets"
+              value={
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {resource.secret_ids.map((parent) => (
+                    <span key={parent.id}>
+                      <GetReferenceUrlValue {...parent} />
+                    </span>
+                  ))}
+                </Box>
+              }
+              size={6}
+            />
+          )}
+          {resource.storage && (
+            <CommonField
+              name="Storage"
+              value={<GetReferenceUrlValue {...resource.storage} />}
+            />
+          )}
+          {resource.storage_path && (
+            <CommonField
+              name={"Storage Path"}
+              value={getTextValue(resource.storage_path || "N/A")}
+              size={12}
+            />
+          )}
+          {resource.workspace && (
+            <CommonField
+              name="Workspace"
+              value={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <GetReferenceUrlValue {...resource.workspace} />
+                  <PermissionWrapper
+                    requiredPermission="api:resource"
+                    permissionAction="admin"
                   >
-                    <SyncIcon />
-                  </IconButton>
-                </PermissionWrapper>
-              </Box>
-            }
-          />
-        )}
-        <CommonField
-          name={"Template Version"}
-          value={
-            resource.source_code_version?.source_code ? (
-              <SourceCodeVersionLink
-                source_code_version={resource.source_code_version}
-              />
-            ) : (
-              "N/A"
-            )
-          }
-        />
-        {resource.abstract === false && (
-          <>
-            <Grid size={12}>
-              <PropertyCollapseCard
-                title={"Input Variables"}
-                id="resource-template-input-vars"
-              >
-                {getSourceCodeVariables(resource.variables)}
-              </PropertyCollapseCard>
-            </Grid>
-            <Grid size={12}>
-              <PropertyCollapseCard
-                title={"Output Values"}
-                id="resource-template-output-vars"
-              >
-                {getSourceCodeVariables(resource.outputs)}
-              </PropertyCollapseCard>
-            </Grid>
-          </>
-        )}
-      </Grid>
-    </PropertyCollapseCard>
+                    <Tooltip title="Sync workspace">
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={handleSync}
+                          disabled={isSyncing}
+                          sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
+                        >
+                          <SyncIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </PermissionWrapper>
+                </Box>
+              }
+            />
+          )}
+        </Grid>
+      </OverviewCard>
+
+      {resource.abstract === false && (
+        <>
+          <OverviewCard name="Input Variables">
+            {getSourceCodeVariables(resource.variables)}
+          </OverviewCard>
+          <OverviewCard name="Output Values">
+            {getSourceCodeVariables(resource.outputs)}
+          </OverviewCard>
+        </>
+      )}
+    </Box>
   );
 };

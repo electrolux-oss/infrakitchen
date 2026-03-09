@@ -1,10 +1,15 @@
 import { Box } from "@mui/material";
 
+import { Audit } from "../../common/components/activity/Audit";
+import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
-import { EntityTreeView } from "../../common/components/tree/TreeView";
+import {
+  TabbedContent,
+  TabDefinition,
+} from "../../common/components/TabbedContent";
+import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 
-import { AdvancedSettings } from "./AdvancedSettings";
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceOverview } from "./ResourceOverview";
 import { ResourcePermissions } from "./ResourcePermissions";
@@ -14,22 +19,54 @@ export const ResourceContent = () => {
   const { entity } = useEntityProvider();
   if (!entity) return null;
 
+  const tabs: TabDefinition[] = [
+    {
+      label: "Template",
+      content: <TemplateConfiguration resource={entity} />,
+    },
+    {
+      label: "Dependencies",
+      content: <DependencyConfiguration resource={entity} />,
+    },
+    {
+      label: "Tree View",
+      content: (
+        <EntityTreeViewTab
+          entity_id={entity.id}
+          entity_name={entity._entity_name}
+        />
+      ),
+    },
+    {
+      label: "Policies",
+      content: <ResourcePermissions resource={entity} />,
+    },
+    {
+      label: "Audit",
+      content: <Audit entityId={entity.id} />,
+    },
+    {
+      label: "Revisions",
+      content: (
+        <Box sx={{ maxWidth: 1000 }}>
+          <Revision resourceId={entity.id} resourceRevision={0} />
+        </Box>
+      ),
+      requiredPermission: `resource:${entity.id}`,
+      permissionAction: "write",
+    },
+    {
+      label: "Settings",
+      content: <DangerZoneCard />,
+      requiredPermission: `resource:${entity.id}`,
+      permissionAction: "write",
+    },
+  ];
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 2,
-      }}
-    >
+    <Box sx={{ gap: 2, minWidth: 1000 }}>
       <ResourceOverview resource={entity} />
-      <TemplateConfiguration resource={entity} />
-      <DependencyConfiguration resource={entity} />
-      <EntityTreeView entity_id={entity.id} entity_name={entity._entity_name} />
-      <AdvancedSettings resource={entity} />
-      <ResourcePermissions resource={entity} />
-      <DangerZoneCard />
+      <TabbedContent tabs={tabs} />
     </Box>
   );
 };
