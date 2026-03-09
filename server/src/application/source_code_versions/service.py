@@ -299,6 +299,21 @@ class SourceCodeVersionService:
         configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
         return [SourceConfigResponse.model_validate(config) for config in configs]
 
+    async def get_configs_by_template_id(self, template_id: str | UUID) -> list[SourceConfigResponse]:
+        """
+        Get all configs for all source code versions of a template.
+        :param template_id: ID of the template
+        :return: List of SourceConfigResponse (deduplicated by name)
+        """
+        configs = await self.crud.get_configs_by_template_id(template_id)
+        seen_names: set[str] = set()
+        unique_configs: list[SourceConfigResponse] = []
+        for config in configs:
+            if config.name not in seen_names:
+                seen_names.add(config.name)
+                unique_configs.append(SourceConfigResponse.model_validate(config))
+        return unique_configs
+
     async def get_config_by_id(self, config_id: str) -> SourceConfigResponse | None:
         """
         Get a config by its ID.
@@ -488,7 +503,7 @@ class SourceCodeVersionService:
         return result
 
     async def get_scvs_with_configs_and_outputs(
-        self, source_code_version_ids: list[str]
+        self, source_code_version_ids: list[UUID]
     ) -> list[SourceCodeVersionWithConfigs]:
         """
         Get all source code versions with variable configs and output configs.

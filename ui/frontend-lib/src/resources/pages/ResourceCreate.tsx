@@ -17,6 +17,8 @@ import {
 import { useLocation, useNavigate } from "react-router";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Box,
   Typography,
@@ -28,6 +30,8 @@ import {
   TableBody,
   Button,
   Alert,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
@@ -86,6 +90,11 @@ const ResourceCreatePageInner = () => {
   const [parentSelections, setParentSelections] = useState<
     Record<string, string[]>
   >({});
+
+  const [namingConvention, setNamingConvention] = useState(null);
+  const [namingConventionEditable, setNamingConventionEditable] =
+    useState(true);
+
   const resourceDefinitionSectionRef = useRef<HTMLDivElement>(null);
   const dependencyTagsSectionRef = useRef<HTMLDivElement>(null);
   const dependencyConfigSectionRef = useRef<HTMLDivElement>(null);
@@ -196,6 +205,17 @@ const ResourceCreatePageInner = () => {
   );
 
   const watchedName = watch("name");
+
+  useEffect(() => {
+    if (watchedTemplate?.configuration?.naming_convention) {
+      setNamingConvention(watchedTemplate.configuration.naming_convention);
+      setValue("name", watchedTemplate.configuration.naming_convention, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setNamingConventionEditable(false);
+    }
+  }, [watchedTemplate, setValue]);
 
   useEffect(() => {
     setValue("source_code_version_id", null);
@@ -387,11 +407,45 @@ const ResourceCreatePageInner = () => {
                     {...field}
                     label="Name"
                     required
+                    disabled={!namingConventionEditable}
                     placeholder="Enter resource name. It should be unique within the selected template."
                     variant="outlined"
                     error={!!errors.name}
                     fullWidth
                     margin="normal"
+                    helperText={
+                      errors.name
+                        ? errors.name.message
+                        : namingConvention
+                          ? `Naming convention enforced by template: ${namingConvention}. You can unlock the name field to provide a custom name or pattern, but make sure it is unique within the selected template.`
+                          : "Enter resource name. It should be unique within the selected template."
+                    }
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            {namingConvention && (
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                edge="end"
+                                onClick={() =>
+                                  setNamingConventionEditable(
+                                    (editable) => !editable,
+                                  )
+                                }
+                              >
+                                {namingConventionEditable ? (
+                                  <LockOpenOutlinedIcon fontSize="small" />
+                                ) : (
+                                  <LockOutlinedIcon fontSize="small" />
+                                )}
+                              </IconButton>
+                            )}
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
                 )}
               />

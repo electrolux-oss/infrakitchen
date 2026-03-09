@@ -20,6 +20,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { getProviderDisplayName } from "../../common/utils";
 import { IkEntity } from "../../types";
+import { NamingConventionInput } from "../components/NamingConventionInput";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
 import {
   TemplateResponse,
@@ -49,9 +50,10 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
       cloud_resource_types: entity.cloud_resource_types,
       configuration: {
         one_resource_per_integration:
-          entity.configuration?.one_resource_per_integration || false,
+          entity.configuration?.one_resource_per_integration || [],
         allowed_provider_integration_types:
           entity.configuration?.allowed_provider_integration_types || [],
+        naming_convention: entity.configuration?.naming_convention ?? null,
       },
     },
   });
@@ -343,6 +345,25 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                         margin="normal"
                       />
                     )}
+                  />
+                )}
+              />
+              <Controller
+                name="configuration.naming_convention"
+                control={control}
+                render={({ field }) => (
+                  <NamingConventionInput
+                    template_id={entity.id}
+                    parents={entity.parents}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={!!errors.configuration?.naming_convention}
+                    helperText={
+                      errors.configuration?.naming_convention
+                        ? (errors.configuration.naming_convention as any)
+                            .message
+                        : undefined
+                    }
                   />
                 )}
               />
