@@ -146,16 +146,16 @@ def get_resource_variable_schema(
         if not parent.source_code_version_id:
             continue
 
-        parent_outputs_map: dict[str, Any] = {o.name: o.value for o in parent.outputs}
-
         for parent_scv in parent_scvs:
             if parent_scv.template.id not in ref_template_ids:
                 continue
 
+            parent_outputs_map: dict[str, Any] = {f"{o.name}_{parent.template_id}": o.value for o in parent.outputs}
+
             # Only visit output configs whose name has a matching ref.
             for output_config in parent_scv.output_configs:
                 for ref in refs_by_output.get(output_config.name, []):
-                    output_value = parent_outputs_map.get(ref.output_config_name)
+                    output_value = parent_outputs_map.get(f"{ref.output_config_name}_{ref.reference_template_id}")
                     if output_value is not None:
                         variable = schema_by_name.get(ref.input_config_name)
                         if variable is not None:
