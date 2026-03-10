@@ -16,6 +16,12 @@ class TemplateConfig(BaseModel):
     # Allowed integration types for this template. If empty, all integration types are allowed.
     allowed_provider_integration_types: list[IntegrationProviderType] = Field(default_factory=list)
 
+    # Naming convention for resources created from this template. Can include placeholders for template variables
+    # e.g. 'my-resource-{variable}'. If None, no naming convention is enforced.
+    naming_convention: str | None = Field(
+        default=None,
+    )
+
 
 class TemplateShort(BaseModel):
     id: uuid.UUID

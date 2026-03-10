@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from collections import defaultdict
 from collections.abc import Sequence
@@ -7,6 +8,7 @@ from uuid import UUID, uuid4
 from application.integrations.service import IntegrationService
 from application.resources.functions import (
     add_resource_parent_policy,
+    convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
@@ -225,11 +227,11 @@ class ResourceService:
                             )
 
             # validate configuration variables
-            if resource.source_code_version_id:
-                source_code_version_id = resource.source_code_version_id
+            if source_code_version_id := resource.source_code_version_id:
                 source_code_version = await self.service_source_code_version.get_by_id(source_code_version_id)
                 if source_code_version is None:
                     raise EntityNotFound("Source code version not found")
+
                 if source_code_version.template.id != resource.template_id:
                     raise ValueError(
                         "Source code version template ID does not match resource template ID. "
@@ -271,6 +273,16 @@ class ResourceService:
                     raise EntityNotFound("Storage not found")
                 if resource.storage_path is None or resource.storage_path == "":
                     raise ValueError("Storage path is required for non-abstract resources with storage")
+
+            if template.configuration.naming_convention:
+                parents_lists: list[list[ResourceWithConfigs]] = await asyncio.gather(
+                    *[self.get_parents_with_configs(rid) for rid in resource.parents]
+                )
+                parents: list[ResourceWithConfigs] = [p for sublist in parents_lists for p in sublist]
+
+                await convert_field_by_naming_convention_pattern(
+                    resource, fields=["name", "storage_path"], parents=parents
+                )
 
         body = resource.model_dump(exclude_unset=True)
         if template.abstract is True:
@@ -782,10 +794,15 @@ class ResourceService:
     ) -> list[ResourceVariableSchema]:
         """
         Get the variable schema for a resource.
-        :param resource_id: ID of the resource
         :param source_code_version_id: ID of the source code version
+        :param resource_ids: List of resource IDs to get the schema for
         :return: Dictionary representing the variable schema
         """
+
+        invalid_ids = [rid for rid in resource_ids if not is_valid_uuid(rid)]
+        if invalid_ids:
+            raise ValueError(f"Invalid resource ID(s): {', '.join(str(i) for i in invalid_ids)}")
+
         resource_scv = await self.service_source_code_version.get_by_id_with_configs(source_code_version_id)
         if not resource_scv:
             raise EntityNotFound("Source code version not found")
@@ -794,32 +811,27 @@ class ResourceService:
             template_id=resource_scv.template.id
         )
 
-        if len(resource_ids) == 0:
-            schema = get_resource_variable_schema(resource_scv, [], [], validation_rules_map)
-            return schema
+        if not resource_ids:
+            return get_resource_variable_schema(resource_scv, [], [], validation_rules_map)
 
-        parents: list[ResourceWithConfigs] = []
-        for resource_id in resource_ids:
-            if not is_valid_uuid(resource_id):
-                raise ValueError(f"Invalid resource ID: {resource_id}")
-            resource = await self.crud.get_by_id(resource_id)
-            if not resource:
-                raise EntityNotFound(f"Resource {resource_id} not found")
-
-            # Get all parents of parents with assigned variables and outputs
-            parents += await self.get_parents_with_configs(resource_id)
-
-        # Fetch all source code versions with configs and outputs for generating the schema
-        # We do filter out the source code version ID of the current resource, since resource can be abstract
-        # and don't have any configs or outputs
-        parent_source_code_version_ids: list[str] = []
-        for parent in parents:
-            if parent.source_code_version_id:
-                parent_source_code_version_ids.append(str(parent.source_code_version_id))
-
-        parent_scvs = await self.service_source_code_version.get_scvs_with_configs_and_outputs(
-            source_code_version_ids=parent_source_code_version_ids
+        parents_lists: list[list[ResourceWithConfigs]] = await asyncio.gather(
+            *[self.get_parents_with_configs(rid) for rid in resource_ids]
         )
+        parents: list[ResourceWithConfigs] = [p for sublist in parents_lists for p in sublist]
+
+        # Deduplicate SCV IDs before the batch fetch to avoid redundant DB work.
+        parent_source_code_version_ids: list[UUID] = list(
+            {parent.source_code_version_id for parent in parents if parent.source_code_version_id}
+        )
+
+        # Skip the batch call entirely when there are no parent SCVs.
+        if parent_source_code_version_ids:
+            parent_scvs = await self.service_source_code_version.get_scvs_with_configs_and_outputs(
+                source_code_version_ids=parent_source_code_version_ids
+            )
+        else:
+            parent_scvs = []
+
         schema = get_resource_variable_schema(resource_scv, parents, parent_scvs, validation_rules_map)
         return sorted(schema, key=lambda item: item.index)
 

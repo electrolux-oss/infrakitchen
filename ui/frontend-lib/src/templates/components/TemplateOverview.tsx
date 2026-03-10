@@ -176,6 +176,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           size={6}
         />
       )}
+      {template.configuration?.naming_convention && (
+        <CommonField
+          name={"Naming Convention"}
+          value={
+            <Box component="span" sx={{ fontStyle: "italic", mr: 1 }}>
+              {template.configuration.naming_convention}
+            </Box>
+          }
+          size={6}
+        />
+      )}
     </OverviewCard>
   );
 };

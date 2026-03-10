@@ -265,6 +265,19 @@ async def get_outputs(
 
 
 @router.get(
+    "/source_code_versions/template/{template_id}/configs",
+    response_model=list[SourceConfigResponse],
+    response_description="Get unique variable configs for a template across all source code versions",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_configs_by_template(
+    template_id: UUID,
+    service: SourceCodeVersionService = Depends(get_source_code_version_service),
+) -> list[SourceConfigResponse]:
+    return await service.get_configs_by_template_id(template_id=template_id)
+
+
+@router.get(
     "/source_code_versions/template/{template_id}/outputs",
     response_model=list[SourceOutputConfigTemplateResponse],
     response_description="Get output configs for a template",

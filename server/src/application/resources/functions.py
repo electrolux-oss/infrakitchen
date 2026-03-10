@@ -1,13 +1,13 @@
 import logging
+from collections import defaultdict
 from collections.abc import Sequence
+import re
 from typing import Any, cast
 from uuid import UUID
 
 
 from application.resources.schema import (
-    DependencyConfig,
     DependencyType,
-    Outputs,
     ResourceCreate,
     ResourceResponse,
     ResourceVariableSchema,
@@ -110,35 +110,8 @@ def get_resource_variable_schema(
     """
     validation_rules_map = validation_rules_map or {}
 
-    def set_default_from_parent(
-        parent_outputs: list[Outputs],
-        template_reference: SourceConfigTemplateReferenceResponse,
-        schema: list[ResourceVariableSchema],
-    ) -> None:
-        parent_output_value = next(
-            (output.value for output in parent_outputs if template_reference.output_config_name == output.name), None
-        )
-        for variable in schema:
-            if variable.name == template_reference.input_config_name and parent_output_value is not None:
-                variable.value = parent_output_value
-
-    def set_default_from_parent_dependency_config(
-        dependency_configs: list[DependencyConfig],
-        schema: list[ResourceVariableSchema],
-    ) -> None:
-        for variable in schema:
-            for config in dependency_configs:
-                if config.inherited_by_children is False:
-                    continue
-                if variable.name == config.name and config.value is not None:
-                    variable.value = config.value
-
-    schema: list[ResourceVariableSchema] = []
-
-    scv_template_references = resource_scv.template_refs
-    for scv in resource_scv.variable_configs:
-        rules = [rule.model_copy(deep=True) for rule in validation_rules_map.get(scv.name, [])]
-        rvs = ResourceVariableSchema(
+    schema: list[ResourceVariableSchema] = [
+        ResourceVariableSchema(
             name=scv.name,
             description=scv.description,
             required=scv.required,
@@ -150,32 +123,55 @@ def get_resource_variable_schema(
             type=scv.type,
             options=scv.options,
             index=scv.index,
-            validation_rules=rules,
+            validation_rules=[rule.model_copy(deep=True) for rule in validation_rules_map.get(scv.name, [])],
         )
-        schema.append(rvs)
+        for scv in resource_scv.variable_configs
+    ]
 
-    # set default values from referenced parent resources
+    # name / variable index used by both default-setting passes below.
+    schema_by_name: dict[str, ResourceVariableSchema] = {v.name: v for v in schema}
+
+    scv_template_references = resource_scv.template_refs
+
+    # Pre-build once: set of template IDs referenced by this SCV.
+    ref_template_ids: set[UUID] = {ref.reference_template_id for ref in scv_template_references}
+
+    # Pre-build once: output_config_name -> list[ref] for fast matching.
+    refs_by_output: dict[str, list[SourceConfigTemplateReferenceResponse]] = defaultdict(list)
+    for ref in scv_template_references:
+        refs_by_output[ref.output_config_name].append(ref)
+
+    # Set default values from referenced parent resources.
     for parent in parents:
         if not parent.source_code_version_id:
             continue
+
         for parent_scv in parent_scvs:
-            if parent_scv.template.id not in [ref.reference_template_id for ref in scv_template_references]:
+            if parent_scv.template.id not in ref_template_ids:
                 continue
 
-            for output in parent_scv.output_configs:
-                if output.name in [ref.output_config_name for ref in scv_template_references]:
-                    set_default_from_parent(
-                        parent.outputs,
-                        [ref for ref in scv_template_references if ref.output_config_name == output.name][0],
-                        schema,
-                    )
+            parent_outputs_map: dict[str, Any] = {f"{o.name}_{parent.template_id}": o.value for o in parent.outputs}
+
+            # Only visit output configs whose name has a matching ref.
+            for output_config in parent_scv.output_configs:
+                for ref in refs_by_output.get(output_config.name, []):
+                    output_value = parent_outputs_map.get(f"{ref.output_config_name}_{ref.reference_template_id}")
+                    if output_value is not None:
+                        variable = schema_by_name.get(ref.input_config_name)
+                        if variable is not None:
+                            variable.value = output_value
 
     # set default values from parent dependency configs
     for parent in parents:
         if not parent.dependency_config:
             continue
 
-        set_default_from_parent_dependency_config(parent.dependency_config, schema)
+        config_map: dict[str, Any] = {
+            c.name: c.value for c in parent.dependency_config if c.inherited_by_children and c.value is not None
+        }
+        for variable in schema:
+            if variable.name in config_map:
+                variable.value = config_map[variable.name]
 
     return schema
 
@@ -417,3 +413,53 @@ async def update_resource_variables_on_patch(
         variables.append(patched_variable)
 
     patched_resource.variables = variables
+
+
+async def convert_field_by_naming_convention_pattern(
+    resource: ResourceCreate, fields: list[str] | None = None, parents: list[ResourceWithConfigs] | None = None
+) -> None:
+    """
+    Converts the specified fields of the resource by replacing variables in the naming convention pattern
+    with their actual values.
+
+    Args:
+        resource (ResourceCreate): Resource object.
+        fields (list[str]): List of field names to convert.
+        parents (list[ResourceWithConfigs]): List of parent resources to use for variable replacement.
+    """
+    if not fields:
+        fields = ["name"]
+
+    for field in fields:
+        resource_field_value = getattr(resource, field, None)
+        if not resource_field_value or not isinstance(resource_field_value, str):
+            continue
+
+        if "{" not in resource_field_value and "}" not in resource_field_value:
+            continue
+
+        if resource_field_value.count("{") != resource_field_value.count("}"):
+            raise ValueError("Invalid name pattern: mismatched braces.")
+
+        matches = re.findall(r"\{([^}]+)\}", resource_field_value)
+        for var in resource.variables:
+            if var.name in matches:
+                resource_field_value = resource_field_value.replace(f"{{{var.name}}}", str(var.value))
+
+        if "{" in resource_field_value or "}" in resource_field_value:
+            for parent in parents or []:
+                for var in parent.outputs:
+                    if var.name in resource_field_value:
+                        resource_field_value = resource_field_value.replace(f"{{{var.name}}}", str(var.value))
+
+        if "{" in resource_field_value or "}" in resource_field_value:
+            for parent in parents or []:
+                for var in parent.dependency_config or []:
+                    if var.name in resource_field_value:
+                        resource_field_value = resource_field_value.replace(f"{{{var.name}}}", str(var.value))
+
+        # validate that after conversion, there are no unreplaced variables left in the fields
+        if "{" in resource_field_value or "}" in resource_field_value:
+            raise ValueError(f"Invalid name pattern: unreplaced variable in field '{field}'.")
+
+        setattr(resource, field, resource_field_value)

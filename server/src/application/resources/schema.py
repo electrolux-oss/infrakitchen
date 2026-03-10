@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal, TypeVar
+import re
 import uuid
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
 
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
@@ -15,6 +16,31 @@ from core.users.schema import UserShort
 from ..storages.schema import StorageShort
 
 OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
+
+_PATTERN_PLACEHOLDER_RE = re.compile(r"\{([^}]*)\}")
+_IDENTIFIER_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
+def _validate_string_with_pattern(value: str) -> str:
+    if "{" not in value and "}" not in value:
+        return value
+
+    if value.count("{") != value.count("}"):
+        raise ValueError("Invalid name pattern: mismatched braces.")
+
+    placeholders = _PATTERN_PLACEHOLDER_RE.findall(value)
+    if not placeholders:
+        raise ValueError("Invalid name pattern: found '{' but no valid placeholders.")
+    for placeholder in placeholders:
+        if not _IDENTIFIER_RE.match(placeholder):
+            raise ValueError(
+                f"Invalid placeholder '{{{placeholder}}}' in name pattern. "
+                "Placeholders must be valid identifiers (letters, digits, underscores)."
+            )
+    return value
+
+
+StringWithPattern = Annotated[str, AfterValidator(_validate_string_with_pattern)]
 
 
 class DependencyTag(BaseModel):
@@ -126,7 +152,7 @@ class ResourceResponse(BaseModel):
     )
 
     storage: StorageShort | None = Field(...)
-    storage_path: str | None = Field(
+    storage_path: StringWithPattern | None = Field(
         default=None,
     )
     variables: list[Variables] = Field(default=[])
@@ -153,9 +179,8 @@ class ResourceResponse(BaseModel):
 
 
 class ResourceCreate(BaseModel):
-    name: str = Field(
+    name: StringWithPattern = Field(
         ...,
-        frozen=True,
     )
     description: str = Field(default="")
     template_id: uuid.UUID = Field(..., frozen=True)
@@ -174,7 +199,7 @@ class ResourceCreate(BaseModel):
     storage_id: uuid.UUID | StorageShort | None = Field(
         default=None,
     )
-    storage_path: str | None = Field(
+    storage_path: StringWithPattern | None = Field(
         default=None,
     )
     variables: list[Variables] = Field(default=[])
