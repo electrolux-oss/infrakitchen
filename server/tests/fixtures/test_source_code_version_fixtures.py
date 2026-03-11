@@ -169,6 +169,7 @@ def source_code_version(mocked_user, mocked_template, mocked_source_code):
             ),
         ],
         status=ModelStatus.DONE,
+        resource_count=0,
     )
 
 

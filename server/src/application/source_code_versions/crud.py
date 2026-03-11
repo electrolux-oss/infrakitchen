@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import func, literal, select, case
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, with_expression
 
 from application.templates.model import Template
 from application.resources.model import Resource
@@ -20,16 +20,22 @@ class SourceCodeVersionCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
+    def _get_resource_count_subquery(self):
+        return (
+            select(func.count(Resource.id))
+            .where(Resource.source_code_version_id == SourceCodeVersion.id)
+            .scalar_subquery()
+        )
+
     async def get_by_id(self, source_code_version_id: str | UUID) -> SourceCodeVersion | None:
         if not is_valid_uuid(source_code_version_id):
             raise ValueError(f"Invalid UUID: {source_code_version_id}")
 
         statement = (
-            (
-                select(SourceCodeVersion)
-                .where(SourceCodeVersion.id == source_code_version_id)
-                .join(User, SourceCodeVersion.created_by == User.id)
-            )
+            select(SourceCodeVersion)
+            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
+            .where(SourceCodeVersion.id == source_code_version_id)
+            .join(User, SourceCodeVersion.created_by == User.id)
             .join(Template, SourceCodeVersion.template_id == Template.id)
             .join(SourceCode, SourceCodeVersion.source_code_id == SourceCode.id)
         )
@@ -44,6 +50,7 @@ class SourceCodeVersionCRUD:
     ) -> list[SourceCodeVersion]:
         statement = (
             select(SourceCodeVersion)
+            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
             .join(User, SourceCodeVersion.created_by == User.id)
             .join(Template, SourceCodeVersion.template_id == Template.id)
             .join(SourceCode, SourceCodeVersion.source_code_id == SourceCode.id)
@@ -190,6 +197,7 @@ class SourceCodeVersionCRUD:
 
         statement = (
             select(SourceCodeVersion)
+            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
             .outerjoin(SourceConfig, SourceConfig.source_code_version_id == SourceCodeVersion.id)
             .outerjoin(SourceOutputConfig, SourceOutputConfig.source_code_version_id == SourceCodeVersion.id)
             .where(SourceCodeVersion.id.in_(source_code_version_ids))
@@ -207,6 +215,7 @@ class SourceCodeVersionCRUD:
 
         statement = (
             select(SourceCodeVersion, SourceConfigTemplateReference)
+            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
             .outerjoin(
                 SourceConfigTemplateReference,
                 SourceConfigTemplateReference.template_id == SourceCodeVersion.template_id,

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
@@ -15,12 +15,18 @@ import { FavoriteButton } from "../../common/components/FavoriteButton";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
+import { SourceCodeVersionResponse } from "../../source_codes/types";
 
 export const ResourcesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [labels, setLabels] = useState<string[]>([]);
   const [templates, setTemplates] = useState<string[]>([]);
+  const [sourceCodeVersions, setSourceCodeVersions] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   useEffect(() => {
     // Load labels
@@ -42,7 +48,28 @@ export const ResourcesPage = () => {
       .catch((_) => {
         setTemplates([]);
       });
+
+    // Load SCV
+    ikApi
+      .getList("source_code_versions", {
+        pagination: { page: 1, perPage: 1000 },
+        fields: ["id", "source_code_version", "source_code_branch"],
+      })
+      .then((response: any) => {
+        const sourceCodeVersionNames = response.data.map(
+          (scv: SourceCodeVersionResponse) => ({
+            label: scv.source_code_version ?? scv.source_code_branch,
+            value: scv.id,
+          }),
+        );
+        setSourceCodeVersions(sourceCodeVersionNames);
+      })
+      .catch((_) => {
+        setSourceCodeVersions([]);
+      });
   }, [ikApi]);
+
+  const initialFilter = location.state?.filters;
 
   const columns = useMemo(
     () => [
@@ -84,7 +111,7 @@ export const ResourcesPage = () => {
       },
       {
         field: "source_code_version_id",
-        headerName: "Source Code Version",
+        headerName: "Template Version",
         flex: 1,
         valueGetter: (value: any, row: any) =>
           row.source_code_version?.identifier || "",
@@ -143,6 +170,14 @@ export const ResourcesPage = () => {
         width: 420,
       },
       {
+        id: "source_code_version",
+        type: "autocomplete" as const,
+        label: "Template Version",
+        options: sourceCodeVersions.map((s) => s.label),
+        multiple: false,
+        width: 420,
+      },
+      {
         id: "labels",
         type: "autocomplete" as const,
         label: "Labels",
@@ -151,30 +186,40 @@ export const ResourcesPage = () => {
         width: 420,
       },
     ],
-    [labels, templates],
+    [labels, templates, sourceCodeVersions],
   );
 
   // Custom API filter builder for Resources
-  const buildApiFilters = (filterValues: Record<string, any>) => {
-    const apiFilters: Record<string, any> = {};
+  const buildApiFilters = useCallback(
+    (filterValues: Record<string, any>) => {
+      const apiFilters: Record<string, any> = {};
 
-    // Handle name search
-    if (filterValues.name && filterValues.name.trim().length > 0) {
-      apiFilters["name__like"] = filterValues.name;
-    }
+      // Handle name search
+      if (filterValues.name && filterValues.name.trim().length > 0) {
+        apiFilters["name__like"] = filterValues.name;
+      }
 
-    // Handle labels filter
-    if (filterValues.labels && filterValues.labels.length > 0) {
-      apiFilters["labels__contains_all"] = filterValues.labels;
-    }
+      // Handle labels filter
+      if (filterValues.labels && filterValues.labels.length > 0) {
+        apiFilters["labels__contains_all"] = filterValues.labels;
+      }
 
-    // Handle template filter - map template names to template IDs
-    if (filterValues.template && filterValues.template.length > 0) {
-      apiFilters["template__name__in"] = filterValues.template;
-    }
+      // Handle template filter - map template names to template IDs
+      if (filterValues.template && filterValues.template.length > 0) {
+        apiFilters["template__name__in"] = filterValues.template;
+      }
 
-    return apiFilters;
-  };
+      // Handle SCV filter
+      if (filterValues.source_code_version) {
+        apiFilters["source_code_version_id"] = sourceCodeVersions.find(
+          (scv) => scv.label === filterValues.source_code_version,
+        )?.value;
+      }
+
+      return apiFilters;
+    },
+    [sourceCodeVersions],
+  );
 
   return (
     <PageContainer
@@ -199,6 +244,7 @@ export const ResourcesPage = () => {
         entityName="resource"
         columns={columns}
         filterConfigs={filterConfigs}
+        initialFilters={initialFilter}
         buildApiFilters={buildApiFilters}
         fields={[
           "id",
