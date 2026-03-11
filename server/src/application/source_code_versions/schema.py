@@ -160,7 +160,7 @@ class SourceCodeVersionResponse(BaseModel):
     outputs: list[OutputVariableModel] = Field(default_factory=list)
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
-    resource_count: int = Field(default=0)
+    resource_count: int | None = Field(default=0)
 
     model_config = ConfigDict(from_attributes=True)
 
