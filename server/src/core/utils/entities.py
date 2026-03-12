@@ -1,4 +1,5 @@
 DEFAULT_ENTITIES = [
+    "batch_operation",
     "executor",
     "template",
     "resource",
