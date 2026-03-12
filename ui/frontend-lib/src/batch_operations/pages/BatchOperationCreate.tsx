@@ -149,6 +149,10 @@ export const BatchOperationCreatePage = () => {
                 <InputLabel id="entity-type-label">Entity Type</InputLabel>
                 <Select
                   {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setValue("entity_ids", []);
+                  }}
                   labelId="entity-type-label"
                   label="Entity Type"
                   aria-label="Select entity type"
@@ -164,12 +168,15 @@ export const BatchOperationCreatePage = () => {
               </FormControl>
             )}
           />
-          <BatchOperationEntitySelector
-            control={control}
-            errors={errors}
-            entityType={entityType}
-            setValue={setValue}
-          />
+          {entityType && (
+            <BatchOperationEntitySelector
+              key={entityType}
+              control={control}
+              errors={errors}
+              entityType={entityType}
+              setValue={setValue}
+            />
+          )}
         </Box>
       </PropertyCard>
     </PageContainer>

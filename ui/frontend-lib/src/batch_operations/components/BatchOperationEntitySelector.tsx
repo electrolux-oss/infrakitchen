@@ -25,6 +25,7 @@ import {
 import { FilterConfig } from "../../common/components/filter_panel/FilterConfig";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { useConfig } from "../../common/context/ConfigContext";
+import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
@@ -43,6 +44,7 @@ export const BatchOperationEntitySelector = (
 ) => {
   const { control, errors, entityType, setValue } = props;
   const { ikApi } = useConfig();
+  const { get: getStoredValue } = useLocalStorage();
 
   const selectedEntityIds = useWatch({
     control,
@@ -51,7 +53,10 @@ export const BatchOperationEntitySelector = (
 
   const [labels, setLabels] = useState<string[]>([]);
   const [templates, setTemplates] = useState<string[]>([]);
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, any>>(() => {
+    const stored = getStoredValue(`filter_batch_operation_${entityType}`);
+    return stored && Object.keys(stored).length > 0 ? stored : {};
+  });
   const [entities, setEntities] = useState<IkEntity[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
@@ -88,12 +93,6 @@ export const BatchOperationEntitySelector = (
       });
     }
   }, [ikApi, entityType]);
-
-  useEffect(() => {
-    setValue("entity_ids", [], { shouldValidate: true });
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-    setSortModel([]);
-  }, [entityType, setValue]);
 
   const resourceColumns: GridColDef[] = useMemo(
     () => [
@@ -287,6 +286,8 @@ export const BatchOperationEntitySelector = (
   );
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchEntities = async () => {
       setLoading(true);
 
@@ -333,16 +334,22 @@ export const BatchOperationEntitySelector = (
           sort: apiSort,
           fields,
         });
-        setEntities(response.data || []);
-        setTotalRows(response.total ? response.total : 0);
+        if (!cancelled) {
+          setEntities(response.data || []);
+          setTotalRows(response.total ? response.total : 0);
+        }
       } catch (e) {
-        notifyError(e);
+        if (!cancelled) notifyError(e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchEntities();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     ikApi,
     entityType,

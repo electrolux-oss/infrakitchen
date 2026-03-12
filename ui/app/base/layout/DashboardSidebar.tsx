@@ -4,6 +4,7 @@ import { matchPath, useLocation } from "react-router";
 
 import { Icon } from "@iconify/react";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import BallotIcon from "@mui/icons-material/Ballot";
 import CodeIcon from "@mui/icons-material/Code";
 import HubIcon from "@mui/icons-material/Hub";
 import KeyIcon from "@mui/icons-material/Key";
@@ -219,6 +220,14 @@ export default function DashboardSidebar({
             href="/secrets"
             selected={!!matchPath("/secrets/*", pathname)}
             permissionKey="secret"
+          />
+          <DashboardSidebarPageItem
+            id="batch_operations"
+            title="Batch Operations"
+            icon={<BallotIcon />}
+            href="/batch_operations"
+            selected={!!matchPath("/batch_operations/*", pathname)}
+            permissionKey="batch_operation"
           />
           <DashboardSidebarPageItem
             id="users"

@@ -1,7 +1,6 @@
 import { matchPath, useLocation } from "react-router";
 
 import { PermissionWrapper } from "@electrolux-oss/infrakitchen";
-import BallotIcon from "@mui/icons-material/Ballot";
 import MiscellaneousServicesIcon from "@mui/icons-material/MiscellaneousServices";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
@@ -15,15 +14,6 @@ export const DashboardAdminSidebar = () => {
     <PermissionWrapper requiredPermission="*" permissionAction="admin">
       <DashboardSidebarDividerItem />
       <DashboardSidebarHeaderItem>Administration</DashboardSidebarHeaderItem>
-
-      <DashboardSidebarPageItem
-        id="batch_operations"
-        title="Batch Operations"
-        icon={<BallotIcon />}
-        href="/batch_operations"
-        selected={!!matchPath("/batch_operations/*", pathname)}
-        permissionKey="batch_operation"
-      />
 
       <DashboardSidebarPageItem
         id="auth_providers"

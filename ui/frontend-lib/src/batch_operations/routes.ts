@@ -14,7 +14,7 @@ export const batchOperationRoutes = [
     path: BatchOperationCreatePage.path,
     Component: BatchOperationCreatePage,
     requiredPermission: "api:batch_operation",
-    permissionAction: "write",
+    permissionAction: "read",
   },
   {
     path: BatchOperationPage.path,
