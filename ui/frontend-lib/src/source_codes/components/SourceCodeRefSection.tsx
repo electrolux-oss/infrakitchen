@@ -76,7 +76,10 @@ const SourceCodeGitRefRows = ({
             type={type}
             sourceCodeId={sourceCodeId}
             gitFolders={getFolders(ref)}
-            entity={versionMap.get(ref)}
+            entity={
+              versionMap.get(ref) ??
+              versionMap.get(ref.replace(/^origin\//, ""))
+            } // Support imported SCVs that don't have origin/ at the start of the ref
             onVersionCreate={refreshList}
             defaultOpen={ref === defaultOpenRef}
           />

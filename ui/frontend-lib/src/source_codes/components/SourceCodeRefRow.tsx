@@ -531,10 +531,11 @@ export const SourceCodeRefRow = ({
   const handleResourcesClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (entity) {
+      const filterValue = `scv:${entity.id}:${entity.template.id}`;
       navigate(`${linkPrefix}resources`, {
         state: {
           filters: {
-            source_code_version: entry,
+            template_version: filterValue,
           },
         },
       });

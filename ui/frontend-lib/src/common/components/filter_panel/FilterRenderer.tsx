@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 
 import { Box, CircularProgress } from "@mui/material";
 
-import { AutocompleteFilter, SearchFilter } from "./FilterComponents";
+import {
+  AutocompleteFilter,
+  CascadingMenuFilter,
+  SearchFilter,
+} from "./FilterComponents";
 import { FilterConfig, FilterState } from "./FilterConfig";
 
 interface FilterRendererProps {
@@ -84,6 +88,17 @@ export const FilterRenderer = ({
             value={value}
             onChange={handleChange}
             options={options}
+          />
+        </Box>
+      );
+
+    case "cascading":
+      return (
+        <Box sx={wrapperStyles}>
+          <CascadingMenuFilter
+            config={config}
+            value={value}
+            onChange={handleChange}
           />
         </Box>
       );

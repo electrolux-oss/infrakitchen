@@ -23,9 +23,11 @@ export const ResourcesPage = () => {
   const location = useLocation();
 
   const [labels, setLabels] = useState<string[]>([]);
-  const [templates, setTemplates] = useState<string[]>([]);
-  const [sourceCodeVersions, setSourceCodeVersions] = useState<
-    { label: string; value: string }[]
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>(
+    [],
+  );
+  const [allSourceCodeVersions, setAllSourceCodeVersions] = useState<
+    SourceCodeVersionResponse[]
   >([]);
 
   useEffect(() => {
@@ -42,8 +44,7 @@ export const ResourcesPage = () => {
         sort: { field: "name", order: "ASC" },
       })
       .then((response: any) => {
-        const templateNames = response.data.map((t: any) => t.name);
-        setTemplates(templateNames);
+        setTemplates(response.data);
       })
       .catch((_) => {
         setTemplates([]);
@@ -53,21 +54,37 @@ export const ResourcesPage = () => {
     ikApi
       .getList("source_code_versions", {
         pagination: { page: 1, perPage: 1000 },
-        fields: ["id", "source_code_version", "source_code_branch"],
+        fields: ["id", "source_code_version", "source_code_branch", "template"],
       })
       .then((response: any) => {
-        const sourceCodeVersionNames = response.data.map(
-          (scv: SourceCodeVersionResponse) => ({
-            label: scv.source_code_version ?? scv.source_code_branch,
-            value: scv.id,
-          }),
-        );
-        setSourceCodeVersions(sourceCodeVersionNames);
+        setAllSourceCodeVersions(response.data);
       })
       .catch((_) => {
-        setSourceCodeVersions([]);
+        setAllSourceCodeVersions([]);
       });
   }, [ikApi]);
+
+  const cascadingOptions = useMemo(() => {
+    return templates.map((t) => {
+      const versions = allSourceCodeVersions.filter(
+        (scv) => scv.template.id === t.id,
+      );
+
+      return {
+        label: t.name,
+        value: `template:${t.id}`,
+        children:
+          versions.length > 0
+            ? [
+                ...versions.map((scv) => ({
+                  label: scv.source_code_version ?? scv.source_code_branch,
+                  value: `scv:${scv.id}:${t.id}`,
+                })),
+              ].sort((a, b) => a.label.localeCompare(b.label))
+            : undefined,
+      };
+    });
+  }, [templates, allSourceCodeVersions]);
 
   const initialFilter = location.state?.filters;
 
@@ -113,13 +130,16 @@ export const ResourcesPage = () => {
         field: "source_code_version_id",
         headerName: "Template Version",
         flex: 1,
-        valueGetter: (value: any, row: any) =>
-          row.source_code_version?.identifier || "",
+        valueGetter: (value: any, row: any) => {
+          const scv = row.source_code_version;
+          if (!scv) return "";
+          return scv.source_code_version ?? scv.source_code_branch;
+        },
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code_version;
-          return (
-            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
-          );
+          const scv = params.row.source_code_version;
+          if (!scv) return null;
+          const ref = scv.source_code_version ?? scv.source_code_branch;
+          return <SourceCodeVersionLink source_code_version={scv} name={ref} />;
         },
       },
       {
@@ -153,28 +173,19 @@ export const ResourcesPage = () => {
   );
 
   // Configure filters using the new FilterConfig system
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
+  const filterConfigs: FilterConfig[] = useMemo(() => {
+    return [
+      {
+        id: "template_version",
+        type: "cascading" as const,
+        label: "Template & Version",
+        options: cascadingOptions,
+        width: 420,
+      },
       {
         id: "name",
         type: "search" as const,
         label: "Search",
-        width: 420,
-      },
-      {
-        id: "template",
-        type: "autocomplete" as const,
-        label: "Template",
-        options: templates,
-        multiple: true,
-        width: 420,
-      },
-      {
-        id: "source_code_version",
-        type: "autocomplete" as const,
-        label: "Template Version",
-        options: sourceCodeVersions.map((s) => s.label),
-        multiple: false,
         width: 420,
       },
       {
@@ -185,41 +196,37 @@ export const ResourcesPage = () => {
         multiple: true,
         width: 420,
       },
-    ],
-    [labels, templates, sourceCodeVersions],
-  );
+    ];
+  }, [labels, cascadingOptions]);
 
   // Custom API filter builder for Resources
-  const buildApiFilters = useCallback(
-    (filterValues: Record<string, any>) => {
-      const apiFilters: Record<string, any> = {};
+  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
+    const apiFilters: Record<string, any> = {};
 
-      // Handle name search
-      if (filterValues.name && filterValues.name.trim().length > 0) {
-        apiFilters["name__like"] = filterValues.name;
+    // Handle name search
+    if (filterValues.name && filterValues.name.trim().length > 0) {
+      apiFilters["name__like"] = filterValues.name;
+    }
+
+    // Handle labels filter
+    if (filterValues.labels && filterValues.labels.length > 0) {
+      apiFilters["labels__contains_all"] = filterValues.labels;
+    }
+
+    // Handle Cascading Filter
+    if (filterValues.template_version) {
+      const val = filterValues.template_version as string;
+      if (val.startsWith("template:")) {
+        apiFilters["template_id"] = val.replace("template:", "");
+      } else if (val.startsWith("scv:")) {
+        const parts = val.split(":");
+        apiFilters["source_code_version_id"] = parts[1];
+        apiFilters["template_id"] = parts[2];
       }
+    }
 
-      // Handle labels filter
-      if (filterValues.labels && filterValues.labels.length > 0) {
-        apiFilters["labels__contains_all"] = filterValues.labels;
-      }
-
-      // Handle template filter - map template names to template IDs
-      if (filterValues.template && filterValues.template.length > 0) {
-        apiFilters["template__name__in"] = filterValues.template;
-      }
-
-      // Handle SCV filter
-      if (filterValues.source_code_version) {
-        apiFilters["source_code_version_id"] = sourceCodeVersions.find(
-          (scv) => scv.label === filterValues.source_code_version,
-        )?.value;
-      }
-
-      return apiFilters;
-    },
-    [sourceCodeVersions],
-  );
+    return apiFilters;
+  }, []);
 
   return (
     <PageContainer
