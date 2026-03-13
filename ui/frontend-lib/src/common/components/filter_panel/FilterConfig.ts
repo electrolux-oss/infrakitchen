@@ -17,6 +17,7 @@ export interface CascadingOption {
   label: string;
   value: string;
   children?: CascadingOption[];
+  loadChildren?: (parentValue: string) => Promise<CascadingOption[]>;
 }
 
 export interface SearchFilterConfig extends BaseFilterConfig {
@@ -44,7 +45,8 @@ export interface MultiSelectFilterConfig extends BaseFilterConfig {
 
 export interface CascadingFilterConfig extends BaseFilterConfig {
   type: "cascading";
-  options: CascadingOption[];
+  options?: CascadingOption[];
+  loadOptions?: () => Promise<CascadingOption[]>;
 }
 
 export type FilterConfig =

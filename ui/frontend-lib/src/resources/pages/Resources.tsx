@@ -12,10 +12,10 @@ import {
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
-import { SourceCodeVersionResponse } from "../../source_codes/types";
 
 export const ResourcesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -26,9 +26,6 @@ export const ResourcesPage = () => {
   const [templates, setTemplates] = useState<{ id: string; name: string }[]>(
     [],
   );
-  const [allSourceCodeVersions, setAllSourceCodeVersions] = useState<
-    SourceCodeVersionResponse[]
-  >([]);
 
   useEffect(() => {
     // Load labels
@@ -49,42 +46,36 @@ export const ResourcesPage = () => {
       .catch((_) => {
         setTemplates([]);
       });
-
-    // Load SCV
-    ikApi
-      .getList("source_code_versions", {
-        pagination: { page: 1, perPage: 1000 },
-        fields: ["id", "source_code_version", "source_code_branch", "template"],
-      })
-      .then((response: any) => {
-        setAllSourceCodeVersions(response.data);
-      })
-      .catch((_) => {
-        setAllSourceCodeVersions([]);
-      });
   }, [ikApi]);
 
   const cascadingOptions = useMemo(() => {
-    return templates.map((t) => {
-      const versions = allSourceCodeVersions.filter(
-        (scv) => scv.template.id === t.id,
-      );
-
+    return templates.map((template) => {
       return {
-        label: t.name,
-        value: `template:${t.id}`,
-        children:
-          versions.length > 0
-            ? [
-                ...versions.map((scv) => ({
-                  label: scv.source_code_version ?? scv.source_code_branch,
-                  value: `scv:${scv.id}:${t.id}`,
-                })),
-              ].sort((a, b) => a.label.localeCompare(b.label))
-            : undefined,
+        label: template.name,
+        value: `template:${template.id}`,
+        loadChildren: async (parentValue: string) => {
+          const templateId = parentValue.replace("template:", "");
+          try {
+            const response = await ikApi.getList("source_code_versions", {
+              filter: { template_id: templateId },
+              pagination: { page: 1, perPage: 1000 },
+              fields: ["id", "source_code_version", "source_code_branch"],
+            });
+            return response.data
+              .map((version: any) => ({
+                label:
+                  version.source_code_version ?? version.source_code_branch,
+                value: `scv:${version.id}:${templateId}`,
+              }))
+              .sort((a: any, b: any) => a.label.localeCompare(b.label));
+          } catch {
+            notifyError("Failed to load options");
+            return [];
+          }
+        },
       };
     });
-  }, [templates, allSourceCodeVersions]);
+  }, [templates, ikApi]);
 
   const initialFilter = location.state?.filters;
 
@@ -215,13 +206,24 @@ export const ResourcesPage = () => {
 
     // Handle Cascading Filter
     if (filterValues.template_version) {
-      const val = filterValues.template_version as string;
-      if (val.startsWith("template:")) {
-        apiFilters["template_id"] = val.replace("template:", "");
-      } else if (val.startsWith("scv:")) {
-        const parts = val.split(":");
-        apiFilters["source_code_version_id"] = parts[1];
-        apiFilters["template_id"] = parts[2];
+      const selection = filterValues.template_version;
+
+      const stripPrefix = (val: any) => {
+        if (typeof val !== "string") return val;
+        if (val.startsWith("template:")) return val.replace("template:", "");
+        if (val.startsWith("scv:")) return val.split(":")[1];
+        return val;
+      };
+
+      if (Array.isArray(selection)) {
+        // Path provided: [template, version]
+        const [t, v] = selection;
+        if (t) apiFilters["template_id"] = stripPrefix(t);
+        if (v) apiFilters["source_code_version_id"] = stripPrefix(v);
+      } else {
+        // Single value
+        const val = stripPrefix(selection);
+        apiFilters["template_id"] = val;
       }
     }
 

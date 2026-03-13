@@ -4,7 +4,7 @@ import { Box, CircularProgress } from "@mui/material";
 
 import {
   AutocompleteFilter,
-  CascadingMenuFilter,
+  CascadingFilter,
   SearchFilter,
 } from "./FilterComponents";
 import { FilterConfig, FilterState } from "./FilterConfig";
@@ -95,7 +95,7 @@ export const FilterRenderer = ({
     case "cascading":
       return (
         <Box sx={wrapperStyles}>
-          <CascadingMenuFilter
+          <CascadingFilter
             config={config}
             value={value}
             onChange={handleChange}

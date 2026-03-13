@@ -13,6 +13,8 @@ import {
   TextField,
 } from "@mui/material";
 
+import { notifyError } from "../../hooks/useNotification";
+
 import {
   AutocompleteFilterConfig,
   CascadingFilterConfig,
@@ -173,21 +175,83 @@ export const AutocompleteFilter = ({
   );
 };
 
-interface CascadingMenuFilterProps {
+interface CascadingFilterProps {
   config: CascadingFilterConfig;
   value: any;
   onChange: (value: any) => void;
 }
 
-export const CascadingMenuFilter = ({
+export const CascadingFilter = ({
   config,
   value,
   onChange,
-}: CascadingMenuFilterProps) => {
+}: CascadingFilterProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadedOptions, setLoadedOptions] = useState<CascadingOption[]>([]);
+  const [loadingTop, setLoadingTop] = useState(false);
+  const [loadingChildren, setLoadingChildren] = useState<
+    Record<string, boolean>
+  >({});
 
   const isMenuOpen = Boolean(anchorEl);
+
+  useEffect(() => {
+    const loadTopLevel = async () => {
+      if (config.loadOptions) {
+        setLoadingTop(true);
+        try {
+          const options = await config.loadOptions();
+          setLoadedOptions(options);
+        } catch (error) {
+          notifyError(error, { preventDuplicate: true });
+        } finally {
+          setLoadingTop(false);
+        }
+      } else if (config.options) {
+        setLoadedOptions(config.options);
+      }
+    };
+    loadTopLevel();
+  }, [config.options, config.loadOptions, config]);
+
+  const optionsLength = loadedOptions.length;
+
+  // Effect to handle initial value resolution (loading children if path is provided as array)
+  useEffect(() => {
+    const resolvePath = async () => {
+      if (!value || loadedOptions.length === 0) return;
+
+      const path = Array.isArray(value) ? value : [value];
+
+      // If we have a path, try to load children for each level except the last
+      let updated = false;
+      const newOptions = [...loadedOptions];
+
+      for (let i = 0; i < path.length - 1; i++) {
+        const val = path[i];
+        const optionIdx = newOptions.findIndex((o) => o.value === val);
+        const option = newOptions[optionIdx];
+
+        if (option && option.loadChildren && !option.children) {
+          try {
+            const children = await option.loadChildren(val);
+            newOptions[optionIdx] = { ...option, children };
+            updated = true;
+          } catch (error) {
+            notifyError(error, { preventDuplicate: true });
+            break;
+          }
+        }
+      }
+
+      if (updated) {
+        setLoadedOptions(newOptions);
+      }
+    };
+
+    resolvePath();
+  }, [value, optionsLength, loadedOptions]);
 
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -198,18 +262,70 @@ export const CascadingMenuFilter = ({
     setExpandedId(null);
   };
 
-  const handleSelect = (optionValue: any) => {
-    onChange(optionValue);
+  const handleSelect = (optionValue: any, parentValue?: any) => {
+    if (parentValue) {
+      onChange([parentValue, optionValue]);
+    } else {
+      onChange(optionValue);
+    }
     handleClose();
+  };
+
+  const handleExpand = async (e: React.MouseEvent, option: CascadingOption) => {
+    e.stopPropagation();
+    if (expandedId === option.value) {
+      setExpandedId(null);
+      return;
+    }
+
+    setExpandedId(option.value);
+
+    // If static children exist, don't try to load
+    if (option.children && option.children.length > 0) {
+      return;
+    }
+
+    if (option.loadChildren) {
+      setLoadingChildren((prev) => ({ ...prev, [option.value]: true }));
+      try {
+        const children = await option.loadChildren(option.value);
+        setLoadedOptions((prev) =>
+          prev.map((opt) =>
+            opt.value === option.value ? { ...opt, children } : opt,
+          ),
+        );
+      } catch {
+        // Fallback or error handling if needed
+      } finally {
+        setLoadingChildren((prev) => ({ ...prev, [option.value]: false }));
+      }
+    }
   };
 
   const findPathLabels = (
     options: CascadingOption[],
     val: any,
   ): string[] | null => {
+    if (Array.isArray(val)) {
+      const labels: string[] = [];
+      let currentOptions = options;
+
+      for (const v of val) {
+        const opt = currentOptions.find((o) => o.value === v);
+        if (!opt) return null;
+        labels.push(opt.label);
+        if (opt.children) {
+          currentOptions = opt.children;
+        } else if (val.indexOf(v) < val.length - 1) {
+          return null;
+        }
+      }
+      return labels;
+    }
+
     for (const opt of options) {
       if (opt.value === val) return [opt.label];
-      if (opt.children) {
+      if (opt.children && Array.isArray(opt.children)) {
         const path = findPathLabels(opt.children, val);
         if (path) return [opt.label, ...path];
       }
@@ -217,12 +333,19 @@ export const CascadingMenuFilter = ({
     return null;
   };
 
-  const pathLabels = value ? findPathLabels(config.options, value) : null;
+  const pathLabels = value ? findPathLabels(loadedOptions, value) : null;
   const displayLabel = pathLabels
     ? pathLabels.length > 1
       ? `${pathLabels[0]} / ${pathLabels[pathLabels.length - 1]}`
       : pathLabels[0]
     : null;
+
+  const isSelected = (val: any) => {
+    if (Array.isArray(value)) {
+      return value.includes(val);
+    }
+    return value === val;
+  };
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -292,56 +415,86 @@ export const CascadingMenuFilter = ({
           },
         }}
       >
-        {config.options.map((opt) => (
-          <Box key={opt.value}>
-            <MenuItem
-              key={opt.value}
-              selected={value === opt.value}
-              sx={{ display: "flex", justifyContent: "space-between", pr: 1 }}
-            >
-              <Box sx={{ flexGrow: 1 }} onClick={() => handleSelect(opt.value)}>
-                {opt.label}
-              </Box>
+        {loadingTop ? (
+          <MenuItem disabled>Loading...</MenuItem>
+        ) : loadedOptions.length === 0 ? (
+          <MenuItem
+            disabled
+            sx={{ color: "text.secondary", fontStyle: "italic" }}
+          >
+            No options found
+          </MenuItem>
+        ) : (
+          loadedOptions.map((opt) => (
+            <Box key={opt.value}>
+              <MenuItem
+                key={opt.value}
+                selected={isSelected(opt.value)}
+                sx={{ display: "flex", justifyContent: "space-between", pr: 1 }}
+              >
+                <Box
+                  sx={{ flexGrow: 1 }}
+                  onClick={() => handleSelect(opt.value)}
+                >
+                  {opt.label}
+                </Box>
 
-              {opt.children && (
-                <KeyboardArrowDownIcon
-                  fontSize="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setExpandedId(expandedId === opt.value ? null : opt.value);
-                  }}
-                  sx={{
-                    ml: 1,
-                    color: "text.secondary",
-                    cursor: "pointer",
-                    transition: "transform 0.2s",
-                    transform:
-                      expandedId === opt.value ? "rotate(180deg)" : "none",
-                  }}
-                />
-              )}
-            </MenuItem>
-
-            {/* Inline children */}
-            {opt.children && expandedId === opt.value && (
-              <Box>
-                {opt.children.map((child) => (
-                  <MenuItem
-                    key={child.value}
-                    onClick={() => handleSelect(child.value)}
-                    selected={value === child.value}
+                {(opt.children || opt.loadChildren) && (
+                  <KeyboardArrowDownIcon
+                    fontSize="small"
+                    onClick={(e) => handleExpand(e, opt)}
                     sx={{
-                      pl: 3,
+                      ml: 1,
                       color: "text.secondary",
+                      cursor: "pointer",
+                      transition: "transform 0.2s",
+                      transform:
+                        expandedId === opt.value ? "rotate(180deg)" : "none",
                     }}
-                  >
-                    {child.label}
-                  </MenuItem>
-                ))}
-              </Box>
-            )}
-          </Box>
-        ))}
+                  />
+                )}
+              </MenuItem>
+
+              {/* Inline children */}
+              {expandedId === opt.value && (
+                <Box>
+                  {loadingChildren[opt.value] ? (
+                    <MenuItem disabled sx={{ pl: 3, fontSize: "0.875rem" }}>
+                      Loading...
+                    </MenuItem>
+                  ) : !opt.children || opt.children.length === 0 ? (
+                    <MenuItem
+                      disabled
+                      sx={{
+                        pl: 3,
+                        fontSize: "0.875rem",
+                        color: "text.secondary",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      No options found
+                    </MenuItem>
+                  ) : (
+                    Array.isArray(opt.children) &&
+                    opt.children.map((child) => (
+                      <MenuItem
+                        key={child.value}
+                        onClick={() => handleSelect(child.value, opt.value)}
+                        selected={isSelected(child.value)}
+                        sx={{
+                          pl: 3,
+                          color: "text.secondary",
+                        }}
+                      >
+                        {child.label}
+                      </MenuItem>
+                    ))
+                  )}
+                </Box>
+              )}
+            </Box>
+          ))
+        )}
       </Menu>
     </Box>
   );
