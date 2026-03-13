@@ -294,8 +294,6 @@ export const CascadingFilter = ({
             opt.value === option.value ? { ...opt, children } : opt,
           ),
         );
-      } catch {
-        // Fallback or error handling if needed
       } finally {
         setLoadingChildren((prev) => ({ ...prev, [option.value]: false }));
       }
