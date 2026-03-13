@@ -98,7 +98,7 @@ export const EntityTable = ({
               pagination
               disableColumnFilter
               disableColumnMenu
-              rowHeight={40}
+              getRowHeight={() => "auto"}
               sortModel={sortModel}
               onSortModelChange={handleSortModelChange}
               paginationModel={paginationModel}
@@ -114,6 +114,17 @@ export const EntityTable = ({
                     justifyContent: "space-between",
                     flexDirection: "row",
                   },
+                },
+                "& .MuiDataGrid-cell": {
+                  alignItems: "flex-start",
+                  py: 1,
+                },
+                "& .MuiDataGrid-cellContent": {
+                  whiteSpace: "normal",
+                  overflow: "visible",
+                  textOverflow: "clip",
+                  lineHeight: 1.4,
+                  wordBreak: "break-word",
                 },
               }}
               slotProps={{

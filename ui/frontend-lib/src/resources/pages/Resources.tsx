@@ -59,6 +59,7 @@ export const ResourcesPage = () => {
         field: "Favorite",
         headerName: "",
         width: 60,
+        resizable: false,
         sortable: true,
         filterable: false,
         align: "center" as const,
