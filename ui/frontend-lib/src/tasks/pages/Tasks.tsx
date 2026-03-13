@@ -6,7 +6,10 @@ import { Link } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig, FilterConfig } from "../../common";
-import { getDateValue } from "../../common/components/CommonField";
+import {
+  getDateValue,
+  GetEntityLink,
+} from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -94,6 +97,22 @@ export const TasksPage = () => {
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
+      {
+        field: "created_by",
+        headerName: "Created By",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => {
+          const cb = row.created_by;
+          return typeof cb === "object" && cb !== null ? cb.identifier : cb;
+        },
+        renderCell: (params: GridRenderCellParams) => {
+          const cb = params.row.created_by;
+          if (typeof cb === "object" && cb !== null) {
+            return <GetEntityLink {...cb} />;
+          }
+          return cb ?? null;
+        },
+      },
     ],
     [navigate, linkPrefix],
   );
@@ -112,9 +131,13 @@ export const TasksPage = () => {
           "state",
           "created_at",
           "updated_at",
+          "created_by",
         ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
+        defaultColumnVisibilityModel={{
+          created_by: false,
+        }}
       />
     </PageContainer>
   );

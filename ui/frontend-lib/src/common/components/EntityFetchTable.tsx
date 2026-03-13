@@ -24,6 +24,7 @@ interface EntityFetchTableProps {
   columns: GridColDef<any>[];
   entityName?: string;
   fields?: string[];
+  defaultColumnVisibilityModel?: GridColumnVisibilityModel;
   filterConfigs?: FilterConfig[];
   defaultFilter?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
@@ -73,6 +74,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     columns,
     entityName,
     fields = [],
+    defaultColumnVisibilityModel,
     filterConfigs,
     defaultFilter,
     buildApiFilters,
@@ -116,7 +118,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
     useState<GridColumnVisibilityModel>(
-      savedState?.columnVisibilityModel || {},
+      savedState?.columnVisibilityModel || defaultColumnVisibilityModel || {},
     );
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {

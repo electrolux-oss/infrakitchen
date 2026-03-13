@@ -9,6 +9,7 @@ import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
+  getLabels,
   getProviderValue,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
@@ -108,6 +109,49 @@ export const StoragesPage = () => {
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
+      {
+        field: "updated_at",
+        headerName: "Updated At",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) =>
+          getDateValue(params.value),
+      },
+      {
+        field: "description",
+        headerName: "Description",
+        flex: 1,
+      },
+      {
+        field: "revision_number",
+        headerName: "Revision",
+        flex: 1,
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
+      },
+      {
+        field: "integration",
+        headerName: "Integration",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => row.integration?.name || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.integration ? (
+            <GetEntityLink {...params.row.integration} />
+          ) : null,
+      },
+      {
+        field: "labels",
+        headerName: "Labels",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
+        renderCell: (params: GridRenderCellParams) =>
+          getLabels(params.row.labels || []),
+      },
     ],
     [],
   );
@@ -144,9 +188,21 @@ export const StoragesPage = () => {
           "created_at",
           "updated_at",
           "labels",
+          "creator",
+          "integration",
+          "description",
+          "revision_number",
         ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
+        defaultColumnVisibilityModel={{
+          updated_at: false,
+          description: false,
+          revision_number: false,
+          creator: false,
+          integration: false,
+          labels: false,
+        }}
       />
     </PageContainer>
   );
