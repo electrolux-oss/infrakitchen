@@ -2,6 +2,7 @@ import { SyntheticEvent, useEffect, useState } from "react";
 import React from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
 
 import CallSplitIcon from "@mui/icons-material/CallSplit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -21,6 +22,7 @@ import {
   Divider,
   Tabs,
   Tab,
+  Chip,
 } from "@mui/material";
 
 import { StyledTab, useConfig, useEntityListProvider } from "../../common";
@@ -485,6 +487,8 @@ export const SourceCodeRefRow = ({
   onVersionCreate,
 }: GitRefRow) => {
   const { loading } = useEntityListProvider();
+  const { linkPrefix } = useConfig();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<TabValue>("metadata");
@@ -522,6 +526,23 @@ export const SourceCodeRefRow = ({
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: TabValue) => {
     setActiveTab(newValue);
+  };
+
+  const handleResourcesClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (entity) {
+      const filterValue = [
+        `template:${entity.template.id}`,
+        `scv:${entity.id}:${entity.template.id}`,
+      ];
+      navigate(`${linkPrefix}resources`, {
+        state: {
+          filters: {
+            template_version: filterValue,
+          },
+        },
+      });
+    }
   };
 
   // TODO
@@ -565,6 +586,25 @@ export const SourceCodeRefRow = ({
           <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
             {entry}
           </Typography>
+          {hasVersion &&
+            !!entity.resource_count && ( // Render only when the SCV has resources
+              <Chip
+                label={`${entity.resource_count}`}
+                size="small"
+                variant="outlined"
+                onClick={handleResourcesClick}
+                sx={{
+                  height: 20,
+                  fontSize: "0.7rem",
+                  cursor: "pointer",
+                  "& .MuiChip-label": { px: 0.75 },
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    color: "primary.main",
+                  },
+                }}
+              />
+            )}
           {/* TO DO
           {(!hasVersion || isRecentlyCreated) && (
             <Chip

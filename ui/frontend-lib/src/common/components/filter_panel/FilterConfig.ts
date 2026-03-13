@@ -1,4 +1,9 @@
-export type FilterType = "search" | "autocomplete" | "select" | "multi-select";
+export type FilterType =
+  | "search"
+  | "autocomplete"
+  | "select"
+  | "multi-select"
+  | "cascading";
 
 export interface BaseFilterConfig {
   id: string;
@@ -6,6 +11,13 @@ export interface BaseFilterConfig {
   label: string;
   width?: number | string;
   placeholder?: string;
+}
+
+export interface CascadingOption {
+  label: string;
+  value: string;
+  children?: CascadingOption[];
+  loadChildren?: (parentValue: string) => Promise<CascadingOption[]>;
 }
 
 export interface SearchFilterConfig extends BaseFilterConfig {
@@ -31,11 +43,18 @@ export interface MultiSelectFilterConfig extends BaseFilterConfig {
   options: Array<{ label: string; value: string }>;
 }
 
+export interface CascadingFilterConfig extends BaseFilterConfig {
+  type: "cascading";
+  options?: CascadingOption[];
+  loadOptions?: () => Promise<CascadingOption[]>;
+}
+
 export type FilterConfig =
   | SearchFilterConfig
   | AutocompleteFilterConfig
   | SelectFilterConfig
-  | MultiSelectFilterConfig;
+  | MultiSelectFilterConfig
+  | CascadingFilterConfig;
 
 export interface FilterState {
   [filterId: string]: any;
