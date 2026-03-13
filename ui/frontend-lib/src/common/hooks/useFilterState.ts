@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import { useLocalStorage } from "../context/UIStateContext";
 
@@ -50,17 +50,23 @@ export function useMultiFilterState(
     getInitialState(),
   );
 
+  // Track last-saved value to avoid re-triggering the sync effect
+  const lastSavedRef = useRef<MultiFilterState>(filterValues);
+
   // Sync with localStorage context when it changes (enables multi-instance sync)
   useEffect(() => {
     const stored = contextValue?.[storageKey];
-    if (stored && JSON.stringify(stored) !== JSON.stringify(filterValues)) {
+    if (
+      stored &&
+      JSON.stringify(stored) !== JSON.stringify(lastSavedRef.current)
+    ) {
       setFilterValuesState(stored);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextValue, storageKey]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
+    lastSavedRef.current = filterValues;
     setKey(storageKey, filterValues);
   }, [filterValues, storageKey, setKey]);
 

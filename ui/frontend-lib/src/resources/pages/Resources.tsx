@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
@@ -13,6 +13,7 @@ import {
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { IntegrationShort } from "../../integrations/types";
@@ -23,8 +24,12 @@ import { ResourceShort } from "../types";
 export const ResourcesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [labels, setLabels] = useState<string[]>([]);
-  const [templates, setTemplates] = useState<string[]>([]);
+  const [templates, setTemplates] = useState<{ id: string; name: string }[]>(
+    [],
+  );
 
   useEffect(() => {
     // Load labels
@@ -40,13 +45,43 @@ export const ResourcesPage = () => {
         sort: { field: "name", order: "ASC" },
       })
       .then((response: any) => {
-        const templateNames = response.data.map((t: any) => t.name);
-        setTemplates(templateNames);
+        setTemplates(response.data);
       })
       .catch((_) => {
         setTemplates([]);
       });
   }, [ikApi]);
+
+  const cascadingOptions = useMemo(() => {
+    return templates.map((template) => {
+      return {
+        label: template.name,
+        value: `template:${template.id}`,
+        loadChildren: async (parentValue: string) => {
+          const templateId = parentValue.replace("template:", "");
+          try {
+            const response = await ikApi.getList("source_code_versions", {
+              filter: { template_id: templateId },
+              pagination: { page: 1, perPage: 1000 },
+              fields: ["id", "source_code_version", "source_code_branch"],
+            });
+            return response.data
+              .map((version: any) => ({
+                label:
+                  version.source_code_version ?? version.source_code_branch,
+                value: `scv:${version.id}:${templateId}`,
+              }))
+              .sort((a: any, b: any) => a.label.localeCompare(b.label));
+          } catch {
+            notifyError("Failed to load options");
+            return [];
+          }
+        },
+      };
+    });
+  }, [templates, ikApi]);
+
+  const initialFilter = location.state?.filters;
 
   const columns = useMemo(
     () => [
@@ -89,15 +124,18 @@ export const ResourcesPage = () => {
       },
       {
         field: "source_code_version",
-        headerName: "Source Code Version",
+        headerName: "Template Version",
         flex: 1,
-        valueGetter: (value: any, row: any) =>
-          row.source_code_version?.identifier || "",
+        valueGetter: (value: any, row: any) => {
+          const scv = row.source_code_version;
+          if (!scv) return "";
+          return scv.source_code_version ?? scv.source_code_branch;
+        },
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code_version;
-          return (
-            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
-          );
+          const scv = params.row.source_code_version;
+          if (!scv) return null;
+          const ref = scv.source_code_version ?? scv.source_code_branch;
+          return <SourceCodeVersionLink source_code_version={scv} name={ref} />;
         },
       },
       {
@@ -337,20 +375,19 @@ export const ResourcesPage = () => {
   );
 
   // Configure filters using the new FilterConfig system
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
+  const filterConfigs: FilterConfig[] = useMemo(() => {
+    return [
+      {
+        id: "template_version",
+        type: "cascading" as const,
+        label: "Template & Version",
+        options: cascadingOptions,
+        width: 420,
+      },
       {
         id: "name",
         type: "search" as const,
         label: "Search",
-        width: 420,
-      },
-      {
-        id: "template",
-        type: "autocomplete" as const,
-        label: "Template",
-        options: templates,
-        multiple: true,
         width: 420,
       },
       {
@@ -361,12 +398,11 @@ export const ResourcesPage = () => {
         multiple: true,
         width: 420,
       },
-    ],
-    [labels, templates],
-  );
+    ];
+  }, [labels, cascadingOptions]);
 
   // Custom API filter builder for Resources
-  const buildApiFilters = (filterValues: Record<string, any>) => {
+  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     const apiFilters: Record<string, any> = {};
 
     // Handle name search
@@ -379,13 +415,31 @@ export const ResourcesPage = () => {
       apiFilters["labels__contains_all"] = filterValues.labels;
     }
 
-    // Handle template filter - map template names to template IDs
-    if (filterValues.template && filterValues.template.length > 0) {
-      apiFilters["template__name__in"] = filterValues.template;
+    // Handle Cascading Filter
+    if (filterValues.template_version) {
+      const selection = filterValues.template_version;
+
+      const stripPrefix = (val: any) => {
+        if (typeof val !== "string") return val;
+        if (val.startsWith("template:")) return val.replace("template:", "");
+        if (val.startsWith("scv:")) return val.split(":")[1];
+        return val;
+      };
+
+      if (Array.isArray(selection)) {
+        // Path provided: [template, version]
+        const [t, v] = selection;
+        if (t) apiFilters["template_id"] = stripPrefix(t);
+        if (v) apiFilters["source_code_version_id"] = stripPrefix(v);
+      } else {
+        // Single value
+        const val = stripPrefix(selection);
+        apiFilters["template_id"] = val;
+      }
     }
 
     return apiFilters;
-  };
+  }, []);
 
   return (
     <PageContainer
@@ -411,6 +465,7 @@ export const ResourcesPage = () => {
         columns={columns}
         defaultColumnVisibilityModel={defaultColumnVisibilityModel}
         filterConfigs={filterConfigs}
+        initialFilters={initialFilter}
         buildApiFilters={buildApiFilters}
         fields={[
           "id",

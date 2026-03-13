@@ -5,9 +5,6 @@
 Batch operations let you run the same action across multiple resources or executors at once.
 They are created by selecting entities and choosing a bulk action.
 
-!!! warning "Available only for Super Admins"
-    Batch operations are currently restricted to Super Admin users only.
-
 ## Actions
 
 Batch operations currently support:

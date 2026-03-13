@@ -26,7 +26,9 @@ interface EntityFetchTableProps {
   fields?: string[];
   defaultColumnVisibilityModel?: GridColumnVisibilityModel;
   filterConfigs?: FilterConfig[];
+  onFilterChange?: (filterValues: Record<string, any>) => void;
   defaultFilter?: Record<string, any>;
+  initialFilters?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
 }
 
@@ -76,7 +78,9 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     fields = [],
     defaultColumnVisibilityModel,
     filterConfigs,
+    onFilterChange,
     defaultFilter,
+    initialFilters,
     buildApiFilters,
   } = props;
 
@@ -102,6 +106,13 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
   const storageKey = `entityTable_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const savedState = get(storageKey) as DataGridState | undefined;
+
+  useEffect(() => {
+    if (initialFilters && Object.keys(initialFilters).length > 0) {
+      multiFilterState.setFilterValues(initialFilters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on first mount
 
   const [sortModel, setSortModel] = useState<GridSortModel>(
     savedState?.sortModel || [],
@@ -222,7 +233,11 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     <>
       <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
         {showFilters && (
-          <FilterPanel filters={filterConfigs} storageKey={filterStorageKey} />
+          <FilterPanel
+            filters={filterConfigs}
+            storageKey={filterStorageKey}
+            onFilterChange={onFilterChange}
+          />
         )}
         <EntityTable
           entityName={title}

@@ -76,7 +76,10 @@ const SourceCodeGitRefRows = ({
             type={type}
             sourceCodeId={sourceCodeId}
             gitFolders={getFolders(ref)}
-            entity={versionMap.get(ref)}
+            entity={
+              versionMap.get(ref) ??
+              versionMap.get(ref.replace(/^origin\//, ""))
+            } // Support imported SCVs that don't have origin/ at the start of the ref
             onVersionCreate={refreshList}
             defaultOpen={ref === defaultOpenRef}
           />
@@ -137,6 +140,19 @@ export const SourceCodeRefSection = ({
     return filteredRefs.slice(start, start + paginationModel.pageSize);
   }, [filteredRefs, paginationModel]);
 
+  const queryRefs = useMemo(() => {
+    if (type !== RefType.BRANCH) return pagedRefs;
+    const expanded = new Set(pagedRefs);
+    pagedRefs.forEach((ref) => {
+      if (ref.startsWith("origin/")) {
+        expanded.add(ref.replace(/^origin\//, ""));
+      } else {
+        expanded.add(`origin/${ref}`);
+      }
+    });
+    return Array.from(expanded);
+  }, [pagedRefs, type]);
+
   const params = useMemo(
     () => ({
       sort: { field: "created_at", order: "DESC" as const },
@@ -144,11 +160,11 @@ export const SourceCodeRefSection = ({
         source_code_id: sourceCodeId,
         [type === RefType.BRANCH
           ? "source_code_branch"
-          : "source_code_version"]: pagedRefs,
+          : "source_code_version"]: queryRefs,
       },
       pagination: { page: 1, perPage: paginationModel.pageSize },
     }),
-    [sourceCodeId, type, pagedRefs, paginationModel.pageSize],
+    [sourceCodeId, type, queryRefs, paginationModel.pageSize],
   );
 
   const handlePageChange = (newPage: number) => {
