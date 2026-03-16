@@ -1,4 +1,4 @@
-import { SyntheticEvent, useEffect, useState } from "react";
+import { useState } from "react";
 import React from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
@@ -7,13 +7,9 @@ import { useNavigate } from "react-router";
 import CallSplitIcon from "@mui/icons-material/CallSplit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
-import { TabContext, TabPanel } from "@mui/lab";
 import {
   Typography,
   Box,
-  Autocomplete,
-  TextField,
-  Button,
   CircularProgress,
   Paper,
   Switch,
@@ -23,24 +19,26 @@ import {
   Tabs,
   Tab,
   Chip,
+  Button,
 } from "@mui/material";
 
-import { StyledTab, useConfig, useEntityListProvider } from "../../common";
+import {
+  useConfig,
+  useEntityListProvider,
+  CommonDialog,
+  usePermissionProvider,
+} from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { Revision } from "../../common/components/activity/Revision";
 import { HclItemList } from "../../common/components/HclItemList";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { notify, notifyError } from "../../common/hooks/useNotification";
-import { IkEntity, ValidationRulesByVariable } from "../../types";
-import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils";
+import { notify } from "../../common/hooks/useNotification";
+import { ENTITY_STATUS } from "../../utils";
 import { SourceCodeVersionConfigProvider } from "../context/SourceCodeVersionConfigContext";
-import {
-  RefType,
-  SourceCodeVersionCreate,
-  SourceCodeVersionResponse,
-  SourceConfigResponse,
-} from "../types";
+import { useVersionActions } from "../hooks/useVersionActions";
+import { RefType, SourceCodeVersionResponse } from "../types";
 
+import { InputTab } from "./InputTab";
+import { MetadataTab } from "./MetadataTab";
 import { SourceCodeVersionConfig } from "./SourceCodeVersionConfig";
 
 type TabValue =
@@ -48,7 +46,8 @@ type TabValue =
   | "inputs"
   | "outputs"
   | "configuration"
-  | "activity";
+  | "audit"
+  | "revision";
 
 type GitRefRow = {
   entry: string;
@@ -57,337 +56,8 @@ type GitRefRow = {
   sourceCodeId: string;
   entity?: SourceCodeVersionResponse;
   defaultOpen?: boolean;
-  onVersionCreate: () => void;
+  onRefresh: () => void;
 };
-
-const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <Typography
-    variant="caption"
-    sx={{
-      color: "text.secondary",
-      textTransform: "uppercase",
-      letterSpacing: "0.05em",
-    }}
-  >
-    {children}
-  </Typography>
-);
-
-function useVersionActions(
-  sourceCodeId: string,
-  entity: SourceCodeVersionResponse | undefined,
-  onVersionCreate: () => void,
-) {
-  const { ikApi } = useConfig();
-  const [localInProgress, setLocalInProgress] = useState(false);
-
-  const toggleEnabled = async () => {
-    if (!entity) return;
-
-    try {
-      if (entity.status === ENTITY_STATUS.DONE) {
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.DISABLE,
-        });
-        notify("Version disabled successfully", "success");
-      } else if (entity.status === ENTITY_STATUS.DISABLED) {
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.ENABLE,
-        });
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.SYNC,
-        });
-        notify("Version enabled and sync task created", "success");
-      }
-    } catch {
-      notifyError("Action failed, please try again later");
-    }
-  };
-
-  const createVersion = async (
-    entry: string,
-    type: RefType,
-    templateId: string,
-    folder: string,
-  ): Promise<void> => {
-    setLocalInProgress(true);
-
-    const payload: SourceCodeVersionCreate = {
-      source_code_id: sourceCodeId,
-      ...(type === RefType.BRANCH
-        ? { source_code_branch: entry }
-        : { source_code_version: entry }),
-      template_id: templateId,
-      source_code_folder: folder,
-      description: "",
-      labels: [],
-    };
-
-    try {
-      const response = await ikApi.postRaw("source_code_versions", payload);
-      onVersionCreate();
-      await ikApi.patchRaw(`source_code_versions/${response.id}/actions`, {
-        action: ENTITY_ACTION.SYNC,
-      });
-      notify("Version created. Sync task created.", "success");
-    } catch (error) {
-      notifyError(error);
-      throw error;
-    } finally {
-      setLocalInProgress(false);
-    }
-  };
-
-  const triggerSync = async () => {
-    if (!entity) return;
-    await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-      action: ENTITY_ACTION.SYNC,
-    });
-    notify("Sync task created.", "success");
-  };
-
-  return { localInProgress, toggleEnabled, createVersion, triggerSync };
-}
-
-type MetadataTabProps = {
-  entity: SourceCodeVersionResponse | undefined;
-  gitFolders: string[];
-  entry: string;
-  type: RefType;
-  onVersionCreate: () => void;
-  sourceCodeId: string;
-  triggerSync: () => void;
-};
-
-const MetadataTab = ({
-  entity,
-  gitFolders,
-  entry,
-  type,
-  onVersionCreate,
-  sourceCodeId,
-  triggerSync,
-}: MetadataTabProps) => {
-  const { ikApi } = useConfig();
-  const { loading } = useEntityListProvider();
-  const hasVersion = !!entity;
-
-  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
-    {},
-  );
-  const [draftFolder, setDraftFolder] = useState<string>(
-    entity?.source_code_folder ?? gitFolders[0],
-  );
-  const [draftTemplate, setDraftTemplate] = useState<string | undefined>(
-    entity?.template?.id,
-  );
-
-  const { createVersion } = useVersionActions(
-    sourceCodeId,
-    entity,
-    onVersionCreate,
-  );
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (draftTemplate && draftFolder) {
-      createVersion(entry, type, draftTemplate, draftFolder);
-    }
-  };
-
-  return (
-    <Box sx={{ pt: 0.5 }}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: "8rem 15rem auto 8rem 15rem",
-          alignItems: "center",
-          mx: "1rem",
-          gap: 1.5,
-        }}
-      >
-        <FieldLabel>Template</FieldLabel>
-
-        {hasVersion ? (
-          <Typography variant="body2">{entity.template?.name}</Typography>
-        ) : (
-          <Box onClick={(e) => e.stopPropagation()}>
-            <ReferenceInput
-              ikApi={ikApi}
-              entity_name="templates"
-              label="Select Template"
-              buffer={buffer}
-              setBuffer={setBuffer}
-              value={draftTemplate}
-              onChange={(value: string) => setDraftTemplate(value)}
-              required
-            />
-          </Box>
-        )}
-
-        <Box />
-        <FieldLabel>Path</FieldLabel>
-
-        {hasVersion ? (
-          <Typography variant="body2">
-            {entity.source_code_folder ?? "—"}
-          </Typography>
-        ) : (
-          <Box onClick={(e) => e.stopPropagation()}>
-            <Autocomplete
-              size="small"
-              options={gitFolders}
-              value={draftFolder}
-              onChange={(_, newValue) => setDraftFolder(newValue ?? "")}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Select or enter path"
-                  sx={{
-                    "& .MuiInputBase-input": {
-                      fontSize: "0.875rem",
-                    },
-                  }}
-                />
-              )}
-            />
-          </Box>
-        )}
-      </Box>
-
-      {!hasVersion && (
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5, mr: 2 }}
-        >
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSave}
-            disabled={!draftTemplate || !draftFolder || loading}
-          >
-            Save
-          </Button>
-        </Box>
-      )}
-
-      {entity?.status === "error" && (
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", mt: 1.5, mr: 2 }}
-        >
-          <Button
-            variant="contained"
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation();
-              triggerSync();
-            }}
-          >
-            Sync
-          </Button>
-        </Box>
-      )}
-    </Box>
-  );
-};
-
-type InputTabContentProps = {
-  source_code_version: SourceCodeVersionResponse;
-};
-
-const InputTabContent = ({ source_code_version }: InputTabContentProps) => {
-  const { ikApi } = useConfig();
-  const [configs, setConfigs] = useState<SourceConfigResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchConfigs = async () => {
-      if (!source_code_version?.id) {
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const configsResponse: SourceConfigResponse[] = await ikApi.get(
-          `source_code_versions/${source_code_version.id}/configs`,
-        );
-
-        let validationRulesResponse: ValidationRulesByVariable[] = [];
-        if (source_code_version?.template?.id) {
-          try {
-            validationRulesResponse = await ikApi.get(
-              `validation_rules/template/${source_code_version.template.id}`,
-            );
-          } catch (validationError: any) {
-            notifyError(validationError);
-          }
-        }
-
-        const validationRulesMap = new Map<
-          string,
-          ValidationRulesByVariable["rules"][number]
-        >();
-        validationRulesResponse.forEach(({ variable_name, rules }) => {
-          if (!rules || rules.length === 0) {
-            return;
-          }
-
-          validationRulesMap.set(variable_name, rules[0]);
-        });
-
-        const enrichedConfigs = configsResponse.map((config) => {
-          const rule = validationRulesMap.get(config.name);
-          if (!rule) {
-            return config;
-          }
-
-          const existingRegex =
-            typeof config.validation_regex === "string"
-              ? config.validation_regex
-              : config.validation_regex || "";
-
-          return {
-            ...config,
-            validation_rule_id: config.validation_rule_id ?? rule.id ?? null,
-            validation_regex: existingRegex || rule.regex_pattern || "",
-            validation_min_value:
-              config.validation_min_value ?? rule.min_value ?? null,
-            validation_max_value:
-              config.validation_max_value ?? rule.max_value ?? null,
-          };
-        });
-
-        setConfigs(enrichedConfigs);
-      } catch (error: any) {
-        notifyError(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchConfigs();
-  }, [source_code_version?.id, source_code_version?.template?.id, ikApi]);
-
-  return (
-    <Box sx={{ pt: 0.5 }}>
-      {loading ? (
-        <CircularProgress size={16} />
-      ) : (
-        <HclItemList items={configs} type="variables" />
-      )}
-    </Box>
-  );
-};
-
-type OutputTabContentProps = {
-  loading: boolean;
-  children: React.ReactNode;
-};
-
-const OutputTabContent = ({ loading, children }: OutputTabContentProps) => (
-  <Box sx={{ pt: 0.5 }}>
-    {loading ? <CircularProgress size={16} /> : children}
-  </Box>
-);
 
 type ConfigurationTabContentProps = {
   entity?: SourceCodeVersionResponse;
@@ -408,75 +78,6 @@ const ConfigurationTabContent = ({ entity }: ConfigurationTabContentProps) => {
   );
 };
 
-interface ActivityTabProps {
-  tabs: string[];
-  entity: any | undefined;
-}
-
-const ActivityTab = ({ tabs, entity }: ActivityTabProps) => {
-  const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  const handleChange = (_: SyntheticEvent, newValue: string) => {
-    setActiveTab(newValue);
-  };
-
-  if (!entity) {
-    return null;
-  }
-
-  return (
-    <Box sx={{ width: "100%", maxWidth: 1400 }}>
-      <TabContext value={activeTab}>
-        <Box sx={{ py: 1.5 }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleChange}
-            variant="fullWidth"
-            sx={{
-              "& .MuiTabs-indicator": {
-                display: "none",
-              },
-            }}
-          >
-            {tabs.map((tab) => (
-              <StyledTab
-                disableRipple
-                value={tab}
-                label={tab.charAt(0).toUpperCase() + tab.slice(1)}
-                key={tab}
-                id={`tab-${tab}`}
-                aria-controls={`tabpanel-${tab}`}
-              />
-            ))}
-          </Tabs>
-        </Box>
-
-        {tabs.includes("audit") && (
-          <TabPanel
-            value="audit"
-            sx={{ p: 0 }}
-            id="tabpanel-audit"
-            aria-labelledby="tab-audit"
-          >
-            <Audit entityId={entity.id || ""} />
-          </TabPanel>
-        )}
-
-        {tabs.includes("revisions") && (
-          <TabPanel
-            value="revisions"
-            sx={{ p: 0 }}
-            id="tabpanel-revisions"
-            aria-labelledby="tab-revisions"
-          >
-            <Revision resourceId={entity.id || ""} resourceRevision={0} />
-          </TabPanel>
-        )}
-      </TabContext>
-    </Box>
-  );
-};
-
 export const SourceCodeRefRow = ({
   entry,
   type,
@@ -484,19 +85,23 @@ export const SourceCodeRefRow = ({
   sourceCodeId,
   entity,
   defaultOpen = false,
-  onVersionCreate,
+  onRefresh,
 }: GitRefRow) => {
   const { loading } = useEntityListProvider();
   const { linkPrefix } = useConfig();
+  const { checkActionPermission } = usePermissionProvider();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<TabValue>("metadata");
+  const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
+
+  const canWrite = checkActionPermission("api:source_code_version", "write");
 
   const { localInProgress, toggleEnabled, triggerSync } = useVersionActions(
     sourceCodeId,
     entity,
-    onVersionCreate,
+    onRefresh,
   );
 
   const hasVersion = !!entity;
@@ -512,6 +117,8 @@ export const SourceCodeRefRow = ({
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    if (!canWrite) return;
+
     if (!hasVersion) {
       setOpen(true);
       notify(
@@ -521,7 +128,12 @@ export const SourceCodeRefRow = ({
       return;
     }
 
+    setToggleDialogOpen(true);
+  };
+
+  const handleConfirmToggle = () => {
     toggleEnabled();
+    setToggleDialogOpen(false);
   };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: TabValue) => {
@@ -544,12 +156,6 @@ export const SourceCodeRefRow = ({
       });
     }
   };
-
-  // TODO
-  // const isRecentlyCreated =
-  //   hasVersion &&
-  //   entity?.created_at &&
-  //   isAfter(new Date(entity.created_at), subDays(new Date(), 3));
 
   return (
     <Paper
@@ -586,45 +192,36 @@ export const SourceCodeRefRow = ({
           <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
             {entry}
           </Typography>
-          {hasVersion &&
-            !!entity.resource_count && ( // Render only when the SCV has resources
-              <Chip
-                label={`${entity.resource_count}`}
-                size="small"
-                variant="outlined"
-                onClick={handleResourcesClick}
-                sx={{
-                  height: 20,
-                  fontSize: "0.7rem",
-                  cursor: "pointer",
-                  "& .MuiChip-label": { px: 0.75 },
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    color: "primary.main",
-                  },
-                }}
-              />
-            )}
-          {/* TO DO
-          {(!hasVersion || isRecentlyCreated) && (
+          {hasVersion && !!entity.resource_count && (
             <Chip
-              label="New"
+              label={`${entity.resource_count}`}
               size="small"
-              color="info"
+              variant="outlined"
+              onClick={handleResourcesClick}
               sx={{
                 height: 20,
                 fontSize: "0.7rem",
+                cursor: "pointer",
                 "& .MuiChip-label": { px: 0.75 },
+                "&:hover": {
+                  borderColor: "primary.main",
+                  color: "primary.main",
+                },
               }}
             />
-          )} */}
+          )}
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
           {loading || inProgress ? (
             <CircularProgress size={20} sx={{ mx: 2.5 }} />
           ) : (
-            <Switch checked={isDone} onClick={handleToggle} sx={{ pl: 2 }} />
+            <Switch
+              checked={isDone}
+              onClick={handleToggle}
+              sx={{ pl: 2 }}
+              disabled={!canWrite}
+            />
           )}
         </Box>
 
@@ -648,6 +245,27 @@ export const SourceCodeRefRow = ({
         </Box>
       </Box>
 
+      <CommonDialog
+        open={toggleDialogOpen}
+        onClose={() => setToggleDialogOpen(false)}
+        title={isDone ? "Disable Version" : "Enable Version"}
+        content={
+          <Typography variant="body2">
+            Are you sure you want to {isDone ? "disable" : "enable"} this
+            version ({entry})?
+          </Typography>
+        }
+        actions={
+          <Button
+            variant="contained"
+            color={isDone ? "error" : "primary"}
+            onClick={handleConfirmToggle}
+          >
+            {isDone ? "Disable" : "Enable"}
+          </Button>
+        }
+      />
+
       <Collapse in={open} unmountOnExit>
         <Divider />
         <Box sx={{ px: 2, pb: 1.5 }}>
@@ -668,7 +286,8 @@ export const SourceCodeRefRow = ({
               disabled={!hasVersion}
             />
             <Tab label="Configure" value="configuration" disabled={!isDone} />
-            <Tab label="Activity" value="activity" />
+            <Tab label="Audit" value="audit" />
+            <Tab label="Revision" value="revision" />
           </Tabs>
 
           {activeTab === "metadata" && (
@@ -678,27 +297,35 @@ export const SourceCodeRefRow = ({
               entry={entry}
               type={type}
               sourceCodeId={sourceCodeId}
-              onVersionCreate={onVersionCreate}
+              onRefresh={onRefresh}
               triggerSync={triggerSync}
             />
           )}
 
           {activeTab === "inputs" && entity && (
-            <InputTabContent source_code_version={entity} />
+            <InputTab source_code_version={entity} />
           )}
 
           {activeTab === "outputs" && (
-            <OutputTabContent loading={loading}>
-              <HclItemList items={entity?.outputs} type="outputs" />
-            </OutputTabContent>
+            <Box sx={{ pt: 0.5 }}>
+              {loading ? (
+                <CircularProgress size={16} />
+              ) : (
+                <HclItemList items={entity?.outputs} type="outputs" />
+              )}
+            </Box>
           )}
 
           {activeTab === "configuration" && (
             <ConfigurationTabContent entity={entity} />
           )}
 
-          {activeTab === "activity" && (
-            <ActivityTab tabs={["audit", "revision"]} entity={entity} />
+          {activeTab === "audit" && entity && <Audit entityId={entity.id} />}
+
+          {activeTab === "revision" && entity && (
+            <Box sx={{ maxWidth: 1000 }}>
+              <Revision resourceId={entity.id} resourceRevision={0} />
+            </Box>
           )}
         </Box>
       </Collapse>

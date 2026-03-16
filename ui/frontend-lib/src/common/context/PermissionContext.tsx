@@ -4,6 +4,7 @@ import {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 
 import { notifyError } from "../hooks/useNotification";
@@ -15,6 +16,7 @@ interface PermissionContextType {
   loading: boolean;
   error?: string | null;
   refreshPermission?: () => void;
+  checkActionPermission: (resource: string, action: string) => boolean;
 }
 
 export const PermissionContext = createContext<
@@ -46,11 +48,42 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
     getPermission();
   }, [ikApi, refresh, setLoading, setError]);
 
+  const checkActionPermission = useCallback(
+    (resource: string, action: string): boolean => {
+      const currentPermissions = permissions || {};
+      if (currentPermissions["*"] === "admin") {
+        return true;
+      }
+
+      const userPermission = currentPermissions[resource];
+
+      if (!userPermission) {
+        return false;
+      }
+
+      if (action === "read") {
+        return true;
+      }
+
+      if (action === "write") {
+        return userPermission === "write" || userPermission === "admin";
+      }
+
+      if (action === "admin") {
+        return userPermission === "admin";
+      }
+
+      return false;
+    },
+    [permissions],
+  );
+
   const contextValue: PermissionContextType = {
     permissions: permissions || {},
     loading,
     error,
     refreshPermission: () => refreshPermission((prev) => prev + 1),
+    checkActionPermission,
   };
   return (
     <PermissionContext.Provider value={contextValue}>

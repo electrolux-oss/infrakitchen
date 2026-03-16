@@ -80,7 +80,7 @@ export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
   variables: VariableInput[];
   outputs: VariableOutput[];
   description: string;
-  resource_count?: number;
+  resource_count: number;
 }
 
 export interface SourceCodeVersionCreate {

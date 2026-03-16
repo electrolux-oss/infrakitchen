@@ -8,7 +8,8 @@ import {
   TablePagination,
   Typography,
   Chip,
-  Divider,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { GridPaginationModel } from "@mui/x-data-grid";
 
@@ -19,6 +20,7 @@ import {
   FilterRenderer,
   useLocalStorage,
 } from "../../common";
+import { ENTITY_STATUS } from "../../utils";
 import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
@@ -42,6 +44,7 @@ const SourceCodeGitRefRows = ({
   perPage,
   onPageChange,
   onRowsPerPageChange,
+  enabledOnly,
   defaultOpenRef,
 }: Omit<SourceCodeRefSectionProps, "title" | "icon"> & {
   pagedRefs: string[];
@@ -49,9 +52,10 @@ const SourceCodeGitRefRows = ({
   perPage: number;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (perPage: number) => void;
+  enabledOnly?: boolean;
   defaultOpenRef?: string;
 }) => {
-  const { entities, loading, refreshList } = useEntityListProvider();
+  const { entities, total, loading, refreshList } = useEntityListProvider();
 
   const versionMap = useMemo(() => {
     return new Map(
@@ -62,6 +66,19 @@ const SourceCodeGitRefRows = ({
     );
   }, [entities, type]);
 
+  const displayRefs = useMemo(() => {
+    if (enabledOnly) {
+      return entities
+        .map((v) =>
+          type === RefType.BRANCH
+            ? v.source_code_branch
+            : v.source_code_version,
+        )
+        .filter((r): r is string => !!r);
+    }
+    return pagedRefs;
+  }, [enabledOnly, entities, pagedRefs, type]);
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
       {loading ? (
@@ -69,7 +86,7 @@ const SourceCodeGitRefRows = ({
           <CircularProgress size={32} />
         </Box>
       ) : (
-        pagedRefs.map((ref: string) => (
+        displayRefs.map((ref: string) => (
           <SourceCodeRefRow
             key={ref}
             entry={ref}
@@ -80,7 +97,7 @@ const SourceCodeGitRefRows = ({
               versionMap.get(ref) ??
               versionMap.get(ref.replace(/^origin\//, ""))
             } // Support imported SCVs that don't have origin/ at the start of the ref
-            onVersionCreate={refreshList}
+            onRefresh={refreshList}
             defaultOpen={ref === defaultOpenRef}
           />
         ))
@@ -88,7 +105,7 @@ const SourceCodeGitRefRows = ({
 
       <TablePagination
         component="div"
-        count={refs.length}
+        count={enabledOnly ? total : refs.length}
         page={page - 1}
         onPageChange={(_, newPage) => onPageChange(newPage + 1)}
         rowsPerPage={perPage}
@@ -99,6 +116,36 @@ const SourceCodeGitRefRows = ({
         sx={{ borderTop: 1, borderColor: "divider", mt: 1 }}
       />
     </Box>
+  );
+};
+
+const HeaderCount = ({
+  localCount,
+  enabledOnly,
+}: {
+  localCount: number;
+  enabledOnly: boolean;
+}) => {
+  const { total, loading } = useEntityListProvider();
+
+  if (enabledOnly) {
+    return (
+      <Chip
+        label={loading ? "..." : total}
+        size="small"
+        variant="outlined"
+        sx={{ height: 16, fontSize: "0.65rem" }}
+      />
+    );
+  }
+
+  return (
+    <Chip
+      label={localCount}
+      size="small"
+      variant="outlined"
+      sx={{ height: 16, fontSize: "0.65rem" }}
+    />
   );
 };
 
@@ -127,6 +174,7 @@ export const SourceCodeRefSection = ({
 
   const [filterValues, setFilterValues] = useState<FilterState>({
     ref_search: initialSearch,
+    enabled_only: false,
   });
 
   const filteredRefs = useMemo(() => {
@@ -153,19 +201,39 @@ export const SourceCodeRefSection = ({
     return Array.from(expanded);
   }, [pagedRefs, type]);
 
-  const params = useMemo(
-    () => ({
-      sort: { field: "created_at", order: "DESC" as const },
-      filter: {
-        source_code_id: sourceCodeId,
-        [type === RefType.BRANCH
-          ? "source_code_branch"
-          : "source_code_version"]: queryRefs,
-      },
-      pagination: { page: 1, perPage: paginationModel.pageSize },
-    }),
-    [sourceCodeId, type, queryRefs, paginationModel.pageSize],
-  );
+  const params = useMemo(() => {
+    const baseFilter: any = { source_code_id: sourceCodeId };
+    const refField =
+      type === RefType.BRANCH ? "source_code_branch" : "source_code_version";
+    const otherField =
+      type === RefType.BRANCH ? "source_code_version" : "source_code_branch";
+
+    if (filterValues["enabled_only"]) {
+      baseFilter.status = ENTITY_STATUS.DONE;
+      baseFilter[otherField] = null; // Filter out records that belong to the other type
+
+      const search = filterValues["ref_search"];
+      if (search) {
+        baseFilter[`${refField}__like`] = search;
+      }
+
+      return {
+        sort: { field: "created_at", order: "DESC" as const },
+        filter: baseFilter,
+        pagination: {
+          page: paginationModel.page + 1,
+          perPage: paginationModel.pageSize,
+        },
+      };
+    } else {
+      baseFilter[refField] = queryRefs;
+      return {
+        sort: { field: "created_at", order: "DESC" as const },
+        filter: baseFilter,
+        pagination: { page: 1, perPage: paginationModel.pageSize },
+      };
+    }
+  }, [sourceCodeId, type, queryRefs, paginationModel, filterValues]);
 
   const handlePageChange = (newPage: number) => {
     const updatedModel = { ...paginationModel, page: newPage - 1 };
@@ -180,7 +248,7 @@ export const SourceCodeRefSection = ({
   };
 
   const handleFilterChange = (id: string, val: any) => {
-    setFilterValues({ [id]: val });
+    setFilterValues((prev) => ({ ...prev, [id]: val }));
     const updatedModel = { ...paginationModel, page: 0 };
     setPaginationModel(updatedModel);
     setKey(storageKey, updatedModel);
@@ -189,37 +257,54 @@ export const SourceCodeRefSection = ({
   if (refs.length === 0) return null;
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <Icon sx={{ fontSize: "0.95rem", color: "text.disabled" }} />
-        <Typography
-          variant="overline"
-          sx={{ color: "text.secondary", fontSize: "0.7rem" }}
-        >
-          {title}
-        </Typography>
-        <Chip
-          label={filteredRefs.length}
-          size="small"
-          variant="outlined"
-          sx={{ height: 16, fontSize: "0.65rem" }}
-        />
-        <Divider sx={{ flex: 1 }} />
-        <Box sx={{ width: "15rem", px: "1rem" }}>
-          <FilterRenderer
-            config={{
-              id: "ref_search",
-              type: "search",
-              label:
-                type === RefType.BRANCH ? "Filter branches…" : "Filter tags…",
-            }}
-            filterValues={filterValues}
-            onChange={handleFilterChange}
+    <EntityListProvider entity_name="source_code_version" params={params}>
+      <Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+          <Icon sx={{ fontSize: "0.95rem", color: "text.disabled" }} />
+          <Typography
+            variant="overline"
+            sx={{ color: "text.secondary", fontSize: "0.7rem" }}
+          >
+            {title}
+          </Typography>
+          <HeaderCount
+            localCount={filteredRefs.length}
+            enabledOnly={!!filterValues["enabled_only"]}
           />
+          <Box sx={{ flex: 1 }} />
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={!!filterValues["enabled_only"]}
+                onChange={(e) =>
+                  handleFilterChange("enabled_only", e.target.checked)
+                }
+              />
+            }
+            label="Enabled only"
+            sx={{
+              "& .MuiFormControlLabel-label": {
+                fontSize: "0.75rem",
+                color: "text.secondary",
+              },
+              ml: 1,
+            }}
+          />
+          <Box sx={{ width: "15rem", px: "1rem" }}>
+            <FilterRenderer
+              config={{
+                id: "ref_search",
+                type: "search",
+                label:
+                  type === RefType.BRANCH ? "Filter branches…" : "Filter tags…",
+              }}
+              filterValues={filterValues}
+              onChange={handleFilterChange}
+            />
+          </Box>
         </Box>
-      </Box>
 
-      <EntityListProvider entity_name="source_code_version" params={params}>
         <SourceCodeGitRefRows
           refs={filteredRefs}
           pagedRefs={pagedRefs}
@@ -230,9 +315,10 @@ export const SourceCodeRefSection = ({
           perPage={paginationModel.pageSize}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          enabledOnly={!!filterValues["enabled_only"]}
           defaultOpenRef={initialSearch || undefined}
         />
-      </EntityListProvider>
-    </Box>
+      </Box>
+    </EntityListProvider>
   );
 };
