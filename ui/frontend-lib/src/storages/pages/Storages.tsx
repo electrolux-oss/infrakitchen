@@ -93,6 +93,7 @@ export const StoragesPage = () => {
       },
       {
         field: "state",
+        fetchFields: ["state", "status"],
         headerName: "State",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

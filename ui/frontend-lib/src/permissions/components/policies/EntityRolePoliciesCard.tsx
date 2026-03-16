@@ -33,6 +33,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
     () => [
       {
         field: "resource_name",
+        fetchFields: ["resource_name", "resource_id"],
         headerName: "Resource Name",
         flex: 1,
         sortable: false,
@@ -49,6 +50,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       },
       {
         field: "action",
+        fetchFields: ["action", "v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {

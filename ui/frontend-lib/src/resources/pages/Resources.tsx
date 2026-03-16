@@ -96,6 +96,7 @@ export const ResourcesPage = () => {
       },
       {
         field: "Favorite",
+        fetchFields: [],
         headerName: "",
         width: 60,
         resizable: false,
@@ -140,6 +141,7 @@ export const ResourcesPage = () => {
       },
       {
         field: "state",
+        fetchFields: ["state", "status"],
         headerName: "State",
         flex: 1,
         valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,

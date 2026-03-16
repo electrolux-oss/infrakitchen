@@ -82,6 +82,7 @@ export const AuditLogsPage = () => {
       },
       {
         field: "model",
+        fetchFields: ["model", "entity_id"],
         headerName: "Entity",
         flex: 1,
         sortable: true,

@@ -20,12 +20,17 @@ import {
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
+export interface EntityTableColumn extends GridColDef<any> {
+  fetchFields?: string[];
+}
+
 export interface ResourceTableProps {
   entityName: string;
-  columns: GridColDef<any>[];
+  columns: EntityTableColumn[];
   entities: any[];
   loading: boolean;
   totalRows: number;
+  availableFields?: string[];
   paginationModel?: GridPaginationModel;
   sortModel?: GridSortModel;
   filterModel?: GridFilterModel;
@@ -48,6 +53,7 @@ export const EntityTable = ({
   columns,
   loading,
   totalRows,
+  availableFields,
   paginationModel,
   sortModel,
   filterModel,
@@ -61,54 +67,62 @@ export const EntityTable = ({
 
   const allColumns = useMemo(() => {
     const existingFields = new Set(columns.map((column) => column.field));
-    const inferredColumns: GridColDef<any>[] = [];
+    const inferredColumns: EntityTableColumn[] = [];
     const inferredFields = new Set<string>();
+
+    const addInferredField = (field: string) => {
+      if (field === "_entity_name") {
+        return;
+      }
+
+      if (existingFields.has(field) || inferredFields.has(field)) {
+        return;
+      }
+
+      inferredFields.add(field);
+      inferredColumns.push({
+        field,
+        headerName: field
+          .split("_")
+          .map((segment) =>
+            segment.length > 0
+              ? segment.charAt(0).toUpperCase() + segment.slice(1)
+              : segment,
+          )
+          .join(" "),
+        flex: 1,
+        valueGetter: (_value: any, row: any) => {
+          const value = row?.[field];
+
+          if (value === null || value === undefined) {
+            return "";
+          }
+
+          if (typeof value === "object") {
+            try {
+              return JSON.stringify(value);
+            } catch {
+              return String(value);
+            }
+          }
+
+          return String(value);
+        },
+      });
+    };
+
+    availableFields?.forEach((field) => {
+      addInferredField(field);
+    });
 
     entities.forEach((entity) => {
       Object.keys(entity ?? {}).forEach((field) => {
-        if (field === "_entity_name") {
-          return;
-        }
-
-        if (existingFields.has(field) || inferredFields.has(field)) {
-          return;
-        }
-
-        inferredFields.add(field);
-        inferredColumns.push({
-          field,
-          headerName: field
-            .split("_")
-            .map((segment) =>
-              segment.length > 0
-                ? segment.charAt(0).toUpperCase() + segment.slice(1)
-                : segment,
-            )
-            .join(" "),
-          flex: 1,
-          valueGetter: (_value: any, row: any) => {
-            const value = row?.[field];
-
-            if (value === null || value === undefined) {
-              return "";
-            }
-
-            if (typeof value === "object") {
-              try {
-                return JSON.stringify(value);
-              } catch {
-                return String(value);
-              }
-            }
-
-            return String(value);
-          },
-        });
+        addInferredField(field);
       });
     });
 
     return [...columns, ...inferredColumns];
-  }, [columns, entities]);
+  }, [availableFields, columns, entities]);
 
   const effectiveColumnVisibilityModel = useMemo(() => {
     if (!columnVisibilityModel) {

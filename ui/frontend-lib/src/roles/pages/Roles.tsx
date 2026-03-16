@@ -46,6 +46,7 @@ export const RolesPage = () => {
     () => [
       {
         field: "id",
+        fetchFields: ["id", "v1"],
         headerName: "Role Name",
         sortable: false,
         flex: 1,

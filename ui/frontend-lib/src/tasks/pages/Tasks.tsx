@@ -56,6 +56,7 @@ export const TasksPage = () => {
     () => [
       {
         field: "entity",
+        fetchFields: ["entity", "entity_id"],
         headerName: "Entity",
         flex: 1,
         hideable: false,
@@ -77,6 +78,7 @@ export const TasksPage = () => {
       },
       {
         field: "status",
+        fetchFields: ["status", "state"],
         headerName: "Status",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

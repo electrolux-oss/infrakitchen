@@ -92,6 +92,7 @@ export const SecretsPage = () => {
       },
       {
         field: "state",
+        fetchFields: ["status"],
         headerName: "State",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

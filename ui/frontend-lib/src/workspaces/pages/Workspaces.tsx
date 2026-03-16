@@ -87,6 +87,7 @@ export const WorkspacesPage = () => {
       },
       {
         field: "state",
+        fetchFields: ["status"],
         headerName: "State",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

@@ -35,6 +35,7 @@ export const EntityPoliciesBase = ({
     () => [
       {
         field: "v1",
+        fetchFields: ["v0", "v1"],
         headerName: "Role/User Name",
         flex: 1,
         sortable: false,
@@ -61,6 +62,7 @@ export const EntityPoliciesBase = ({
       },
       {
         field: "action",
+        fetchFields: ["action", "v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
