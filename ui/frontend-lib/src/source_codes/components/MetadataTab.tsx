@@ -149,16 +149,21 @@ export const MetadataTab = ({
           gap: 1,
         }}
       >
-        {!hasVersion && (
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSave}
-            disabled={!draftTemplate || !draftFolder || loading}
-          >
-            Save
-          </Button>
-        )}
+        <PermissionWrapper
+          requiredPermission="api:source_code_version"
+          permissionAction="write"
+        >
+          {!hasVersion && (
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSave}
+              disabled={!draftTemplate || !draftFolder || loading}
+            >
+              Save
+            </Button>
+          )}
+        </PermissionWrapper>
 
         {entity?.status === "error" && (
           <Button
