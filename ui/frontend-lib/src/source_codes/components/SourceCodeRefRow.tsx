@@ -157,6 +157,12 @@ export const SourceCodeRefRow = ({
     }
   };
 
+  // TODO
+  // const isRecentlyCreated =
+  //   hasVersion &&
+  //   entity?.created_at &&
+  //   isAfter(new Date(entity.created_at), subDays(new Date(), 3));
+
   return (
     <Paper
       variant="outlined"
@@ -192,24 +198,25 @@ export const SourceCodeRefRow = ({
           <Typography variant="body2" sx={{ fontSize: "0.82rem" }}>
             {entry}
           </Typography>
-          {hasVersion && !!entity.resource_count && (
-            <Chip
-              label={`${entity.resource_count}`}
-              size="small"
-              variant="outlined"
-              onClick={handleResourcesClick}
-              sx={{
-                height: 20,
-                fontSize: "0.7rem",
-                cursor: "pointer",
-                "& .MuiChip-label": { px: 0.75 },
-                "&:hover": {
-                  borderColor: "primary.main",
-                  color: "primary.main",
-                },
-              }}
-            />
-          )}
+          {hasVersion &&
+            !!entity.resource_count && ( // Render only when the SCV has resources
+              <Chip
+                label={`${entity.resource_count}`}
+                size="small"
+                variant="outlined"
+                onClick={handleResourcesClick}
+                sx={{
+                  height: 20,
+                  fontSize: "0.7rem",
+                  cursor: "pointer",
+                  "& .MuiChip-label": { px: 0.75 },
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    color: "primary.main",
+                  },
+                }}
+              />
+            )}
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center" }}>
