@@ -17,6 +17,7 @@ interface EntityListContextType {
   entities: any[];
   entity_name: string;
   loading: boolean;
+  total: number;
   error?: string | null;
   refreshList: () => void;
 }
@@ -35,6 +36,7 @@ export const EntityListProvider = ({
   params: GetListParams;
 }) => {
   const [entities, setEntities] = useState<Record<string, any>[]>([]);
+  const [total, setTotal] = useState<number>(0);
   const [refresh, refreshNumber] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export const EntityListProvider = ({
       try {
         const response = await ikApi.getList(`${entity_name}s`, params);
         setEntities(response.data);
+        setTotal(response.total ?? 0);
         setError(null);
       } catch (e: any) {
         notifyError(e);
@@ -82,6 +85,7 @@ export const EntityListProvider = ({
     entities,
     entity_name,
     loading,
+    total,
     error,
     refreshList,
   };
