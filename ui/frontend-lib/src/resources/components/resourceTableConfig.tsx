@@ -381,14 +381,14 @@ interface ResourceFilterConfigProps {
       parentValue: string,
     ) => Promise<Array<{ label: string; value: string }>>;
   }>;
-  versionOptions?: Array<{ label: string; value: string }>;
+  versionOptions?: string[];
   showTemplateVersionFilter: boolean;
 }
 
 export const createResourceFilterConfigs = ({
   labels,
   cascadingOptions = [],
-  versionOptions = [],
+  versionOptions = [] as string[],
   showTemplateVersionFilter,
 }: ResourceFilterConfigProps): FilterConfig[] => {
   const primaryFilter: FilterConfig = showTemplateVersionFilter
@@ -401,9 +401,11 @@ export const createResourceFilterConfigs = ({
       }
     : {
         id: "source_code_version_id",
-        type: "select",
+        type: "autocomplete",
         label: "Version",
         options: versionOptions,
+        multiple: false,
+        disableCloseOnSelect: false,
         width: 420,
       };
 

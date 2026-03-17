@@ -10,7 +10,6 @@ import {
   InputAdornment,
   Menu,
   MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 
@@ -20,9 +19,7 @@ import {
   AutocompleteFilterConfig,
   CascadingFilterConfig,
   CascadingOption,
-  MultiSelectFilterConfig,
   SearchFilterConfig,
-  SelectFilterConfig,
 } from "./FilterConfig";
 
 export const CONTROL_HEIGHT = 40;
@@ -175,88 +172,6 @@ export const AutocompleteFilter = ({
         },
       }}
     />
-  );
-};
-
-interface SelectFilterProps {
-  config: SelectFilterConfig;
-  value: string;
-  onChange: (value: string) => void;
-}
-
-export const SelectFilter = ({
-  config,
-  value,
-  onChange,
-}: SelectFilterProps) => {
-  return (
-    <TextField
-      select
-      fullWidth
-      size="small"
-      label={config.label}
-      value={value ?? ""}
-      onChange={(e) => onChange(e.target.value)}
-      sx={{
-        width: "100%",
-        "& .MuiInputBase-root": {
-          ...inputBaseHeightStyles,
-        },
-      }}
-    >
-      <MenuItem value="">All</MenuItem>
-      {config.options.map((option) => (
-        <MenuItem key={option.value} value={option.value}>
-          {option.label}
-        </MenuItem>
-      ))}
-    </TextField>
-  );
-};
-
-interface MultiSelectFilterProps {
-  config: MultiSelectFilterConfig;
-  value: string[];
-  onChange: (value: string[]) => void;
-}
-
-export const MultiSelectFilter = ({
-  config,
-  value,
-  onChange,
-}: MultiSelectFilterProps) => {
-  return (
-    <Select
-      fullWidth
-      multiple
-      size="small"
-      displayEmpty
-      value={Array.isArray(value) ? value : []}
-      onChange={(e) => onChange(e.target.value as string[])}
-      renderValue={(selected) => {
-        const values = selected as string[];
-        if (values.length === 0) {
-          return config.label;
-        }
-        return values
-          .map(
-            (selectedValue) =>
-              config.options.find((o) => o.value === selectedValue)?.label ??
-              selectedValue,
-          )
-          .join(", ");
-      }}
-      sx={{
-        width: "100%",
-        ...inputBaseHeightStyles,
-      }}
-    >
-      {config.options.map((option) => (
-        <MenuItem key={option.value} value={option.value}>
-          {option.label}
-        </MenuItem>
-      ))}
-    </Select>
   );
 };
 

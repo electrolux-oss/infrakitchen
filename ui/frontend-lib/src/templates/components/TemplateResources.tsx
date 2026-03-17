@@ -27,9 +27,10 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
   const isExpanded = expandedMap["template-resources"];
 
   const [labels, setLabels] = useState<string[]>([]);
-  const [versionOptions, setVersionOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [versionLabels, setVersionLabels] = useState<string[]>([]);
+  const [versionIdByLabel, setVersionIdByLabel] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     if (!template_id || !isExpanded) return;
@@ -55,7 +56,7 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
         fields: ["id", "source_code_version", "source_code_branch"],
       })
       .then((response) => {
-        const options = (response.data || [])
+        const sorted = (response.data || [])
           .map((version: any) => ({
             label:
               version.source_code_version ??
@@ -63,24 +64,35 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
               version.id,
             value: String(version.id),
           }))
-          .sort((a: { label: string }, b: { label: string }) =>
-            a.label.localeCompare(b.label),
+          .sort(
+            (
+              a: { label: string; value: string },
+              b: { label: string; value: string },
+            ) => a.label.localeCompare(b.label),
           );
-
-        setVersionOptions(options);
+        setVersionLabels(sorted.map((o: { label: string }) => o.label));
+        setVersionIdByLabel(
+          Object.fromEntries(
+            sorted.map((o: { label: string; value: string }) => [
+              o.label,
+              o.value,
+            ]),
+          ),
+        );
       })
       .catch(() => {
-        setVersionOptions([]);
+        setVersionLabels([]);
+        setVersionIdByLabel({});
       });
   }, [ikApi, template_id, isExpanded]);
 
   const filterConfigs: FilterConfig[] = useMemo(() => {
     return createResourceFilterConfigs({
       labels,
-      versionOptions,
+      versionOptions: versionLabels,
       showTemplateVersionFilter: false,
     });
-  }, [labels, versionOptions]);
+  }, [labels, versionLabels]);
 
   const templateResourceColumnVisibilityModel = useMemo(
     () => ({
@@ -109,9 +121,15 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
 
   const buildApiFilters = useCallback(
     (filterValues: Record<string, any>) => {
-      return buildResourceApiFilters(filterValues, template_id);
+      const resolved = { ...filterValues };
+      if (filterValues.source_code_version_id) {
+        const id = versionIdByLabel[filterValues.source_code_version_id];
+        resolved.source_code_version_id =
+          id ?? filterValues.source_code_version_id;
+      }
+      return buildResourceApiFilters(resolved, template_id);
     },
-    [template_id],
+    [template_id, versionIdByLabel],
   );
 
   if (!template_id) return null;
