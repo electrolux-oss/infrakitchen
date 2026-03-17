@@ -546,7 +546,7 @@ export const ResourceEditPageInner = (props: {
                       )}
                     />
                     <PermissionWrapper
-                      requiredPermission="storage"
+                      requiredPermission="api:storage"
                       permissionAction="admin"
                     >
                       {watchedIntegrationIds.length > 0 && (
