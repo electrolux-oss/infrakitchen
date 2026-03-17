@@ -5,7 +5,9 @@ import { Box, CircularProgress } from "@mui/material";
 import {
   AutocompleteFilter,
   CascadingFilter,
+  MultiSelectFilter,
   SearchFilter,
+  SelectFilter,
 } from "./FilterComponents";
 import { FilterConfig, FilterState } from "./FilterConfig";
 
@@ -96,6 +98,24 @@ export const FilterRenderer = ({
       return (
         <Box sx={wrapperStyles}>
           <CascadingFilter
+            config={config}
+            value={value}
+            onChange={handleChange}
+          />
+        </Box>
+      );
+
+    case "select":
+      return (
+        <Box sx={wrapperStyles}>
+          <SelectFilter config={config} value={value} onChange={handleChange} />
+        </Box>
+      );
+
+    case "multi-select":
+      return (
+        <Box sx={wrapperStyles}>
+          <MultiSelectFilter
             config={config}
             value={value}
             onChange={handleChange}
