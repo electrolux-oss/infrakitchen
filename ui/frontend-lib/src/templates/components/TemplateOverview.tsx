@@ -1,7 +1,6 @@
-import { Box, Divider } from "@mui/material";
+import { Box, Chip, Divider, Typography } from "@mui/material";
 
 import {
-  getTextValue,
   getLabels,
   CommonField,
   GetReferenceUrlValue,
@@ -19,7 +18,14 @@ export interface TemplateAboutProps {
 export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   return (
     <OverviewCard
-      name={template.name}
+      name={
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="h4">{template.name}</Typography>
+          {template.abstract && (
+            <Chip label="ABSTRACT" size="small" variant="outlined" />
+          )}
+        </Box>
+      }
       description={template.description || "No description"}
     >
       <CommonField
@@ -73,44 +79,39 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         />
       )}
 
-      <Box sx={{ width: "100%", my: 1 }}>
-        <Divider />
-      </Box>
-
-      <CommonField
-        name={"Abstract"}
-        value={getTextValue(template.abstract)}
-        size={6}
-      />
-
       {template.cloud_resource_types.length > 0 && (
-        <CommonField
-          name={"Cloud Resource Types"}
-          value={
-            <Box>
-              {template.cloud_resource_types.map((type) => (
-                <Box
-                  key={type}
-                  component="span"
-                  sx={{
-                    display: "inline-block",
-                    backgroundColor: "primary.dark",
-                    color: "primary.contrastText",
-                    borderRadius: 1,
-                    px: 1,
-                    py: 0.5,
-                    mr: 0.5,
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {type}
-                </Box>
-              ))}
-            </Box>
-          }
-          size={6}
-        />
+        <>
+          <Box sx={{ width: "100%", my: 1 }}>
+            <Divider />
+          </Box>
+          <CommonField
+            name={"Cloud Resource Types"}
+            value={
+              <Box>
+                {template.cloud_resource_types.map((type) => (
+                  <Box
+                    key={type}
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      backgroundColor: "primary.dark",
+                      color: "primary.contrastText",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      mr: 0.5,
+                      mb: 0.5,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {type}
+                  </Box>
+                ))}
+              </Box>
+            }
+            size={6}
+          />
+        </>
       )}
       {template.configuration?.one_resource_per_integration?.length > 0 && (
         <CommonField

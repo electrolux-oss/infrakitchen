@@ -149,7 +149,7 @@ export const TemplatesPage = () => {
 
   if (error) {
     return (
-      <PageContainer title="Infrastructure Templates" actions={actions}>
+      <PageContainer title="Templates" actions={actions}>
         <Box sx={{ width: "100%", py: 4 }}>
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -163,7 +163,7 @@ export const TemplatesPage = () => {
   }
 
   return (
-    <PageContainer title="Infrastructure Templates" actions={actions}>
+    <PageContainer title="Templates" actions={actions}>
       <Box sx={{ width: "100%" }}>
         <FilterPanel
           filters={filterConfigs}
