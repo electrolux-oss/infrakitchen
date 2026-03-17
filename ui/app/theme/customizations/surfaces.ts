@@ -98,6 +98,13 @@ export const surfacesCustomizations: Components<Theme> = {
         padding: 0,
         marginBottom: 24,
       },
+      title: {
+        fontSize: "1.2rem",
+        fontWeight: 600,
+      },
+      subheader: {
+        fontSize: "0.875rem",
+      },
     },
   },
   MuiCardActions: {

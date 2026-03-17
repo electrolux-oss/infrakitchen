@@ -5,8 +5,8 @@ import { useNavigate } from "react-router";
 import {
   Card,
   CardContent,
+  CardHeader,
   Box,
-  Typography,
   Chip,
   Divider,
   CardActions,
@@ -59,28 +59,14 @@ export const EntityCard = ({
         flexDirection: "column",
       }}
     >
+      <CardHeader
+        title={name}
+        subheader={description || "No description"}
+        action={status && <StatusChip status={status} />}
+        sx={{ mb: 0 }}
+      />
       <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="h5"
-              component="h2"
-              sx={{
-                whiteSpace: "normal",
-                overflow: "visible",
-                textOverflow: "unset",
-                wordBreak: "break-word",
-              }}
-            >
-              {name}
-            </Typography>
-          </Box>
-          {status && <StatusChip status={status} />}
-        </Box>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          {description || "No description"}
-        </Typography>
-        <Divider sx={{ my: 1.5 }} />
+        <Divider sx={{ mb: 1.5 }} />
         <Box
           sx={{
             display: "flex",
