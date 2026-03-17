@@ -32,6 +32,7 @@ export const RoleUsersCard = (props: { role: string }) => {
     () => [
       {
         field: "identifier",
+        fetchFields: ["identifier", "user_id"],
         headerName: "Identifier",
         flex: 1,
         hideable: false,

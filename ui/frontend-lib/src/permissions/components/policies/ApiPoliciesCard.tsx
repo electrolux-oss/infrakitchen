@@ -33,6 +33,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
     () => [
       {
         field: "resource_name",
+        fetchFields: ["resource_name", "resource_id", "v1"],
         headerName: "Entity Name",
         flex: 1,
         sortable: false,
@@ -53,6 +54,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
       },
       {
         field: "action",
+        fetchFields: ["action", "v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {

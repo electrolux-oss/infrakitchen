@@ -9,6 +9,7 @@ import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
+  getLabels,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
@@ -40,8 +41,10 @@ export const ExecutorsPage = () => {
       },
       {
         field: "Favorite",
+        fetchFields: [],
         headerName: "",
         width: 60,
+        resizable: false,
         sortable: true,
         filterable: false,
         align: "center" as const,
@@ -56,7 +59,7 @@ export const ExecutorsPage = () => {
         ),
       },
       {
-        field: "source_code_id",
+        field: "source_code",
         headerName: "Source Code",
         flex: 1,
         valueGetter: (_value: any, row: any) =>
@@ -68,6 +71,7 @@ export const ExecutorsPage = () => {
       },
       {
         field: "state",
+        fetchFields: ["state", "status"],
         headerName: "State",
         flex: 1,
         valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
@@ -84,6 +88,14 @@ export const ExecutorsPage = () => {
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
+      },
+      {
+        field: "labels",
+        headerName: "Labels",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
+        renderCell: (params: GridRenderCellParams) =>
+          getLabels(params.row.labels || []),
       },
     ],
     [],

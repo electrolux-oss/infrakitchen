@@ -6,6 +6,6 @@ export interface TaskResponse {
   status: string;
   created_at: Date;
   updated_at: Date;
-  created_by: string;
+  created_by: { id: string; identifier: string; _entity_name: string } | string;
   _entity_name: string;
 }

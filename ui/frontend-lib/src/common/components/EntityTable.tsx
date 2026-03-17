@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import {
   Box,
@@ -18,12 +20,17 @@ import {
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
+export interface EntityTableColumn extends GridColDef<any> {
+  fetchFields?: string[];
+}
+
 export interface ResourceTableProps {
   entityName: string;
-  columns: GridColDef<any>[];
+  columns: EntityTableColumn[];
   entities: any[];
   loading: boolean;
   totalRows: number;
+  availableFields?: string[];
   paginationModel?: GridPaginationModel;
   sortModel?: GridSortModel;
   filterModel?: GridFilterModel;
@@ -46,6 +53,7 @@ export const EntityTable = ({
   columns,
   loading,
   totalRows,
+  availableFields,
   paginationModel,
   sortModel,
   filterModel,
@@ -56,6 +64,86 @@ export const EntityTable = ({
   handleColumnVisibilityModelChange,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
+
+  const allColumns = useMemo(() => {
+    const existingFields = new Set(columns.map((column) => column.field));
+    const inferredColumns: EntityTableColumn[] = [];
+    const inferredFields = new Set<string>();
+
+    const addInferredField = (field: string) => {
+      if (field === "_entity_name") {
+        return;
+      }
+
+      if (existingFields.has(field) || inferredFields.has(field)) {
+        return;
+      }
+
+      inferredFields.add(field);
+      inferredColumns.push({
+        field,
+        headerName: field
+          .split("_")
+          .map((segment) =>
+            segment.length > 0
+              ? segment.charAt(0).toUpperCase() + segment.slice(1)
+              : segment,
+          )
+          .join(" "),
+        flex: 1,
+        valueGetter: (_value: any, row: any) => {
+          const value = row?.[field];
+
+          if (value === null || value === undefined) {
+            return "";
+          }
+
+          if (typeof value === "object") {
+            try {
+              return JSON.stringify(value);
+            } catch {
+              return String(value);
+            }
+          }
+
+          return String(value);
+        },
+      });
+    };
+
+    availableFields?.forEach((field) => {
+      addInferredField(field);
+    });
+
+    entities.forEach((entity) => {
+      Object.keys(entity ?? {}).forEach((field) => {
+        addInferredField(field);
+      });
+    });
+
+    return [...columns, ...inferredColumns];
+  }, [availableFields, columns, entities]);
+
+  const effectiveColumnVisibilityModel = useMemo(() => {
+    if (!columnVisibilityModel) {
+      return columnVisibilityModel;
+    }
+
+    const model: GridColumnVisibilityModel = { ...columnVisibilityModel };
+
+    allColumns.forEach((column) => {
+      if (columns.some((baseColumn) => baseColumn.field === column.field)) {
+        return;
+      }
+
+      if (model[column.field] === undefined) {
+        model[column.field] = false;
+      }
+    });
+
+    return model;
+  }, [allColumns, columnVisibilityModel, columns]);
+
   const handleColumnVisibilityClick = () => {
     apiRef.current?.showPreferences?.("columns" as GridPreferencePanelValue);
   };
@@ -94,11 +182,11 @@ export const EntityTable = ({
               rowCount={totalRows}
               paginationMode="server"
               loading={loading}
-              columns={columns}
+              columns={allColumns}
               pagination
               disableColumnFilter
               disableColumnMenu
-              rowHeight={40}
+              getRowHeight={() => "auto"}
               sortModel={sortModel}
               onSortModelChange={handleSortModelChange}
               paginationModel={paginationModel}
@@ -106,7 +194,7 @@ export const EntityTable = ({
               pageSizeOptions={[10, 25, 50, 100]}
               filterModel={filterModel}
               onFilterModelChange={setFilterModel}
-              columnVisibilityModel={columnVisibilityModel}
+              columnVisibilityModel={effectiveColumnVisibilityModel}
               onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
               sx={{
                 "& .MuiDataGrid-columnHeader": {
@@ -114,6 +202,17 @@ export const EntityTable = ({
                     justifyContent: "space-between",
                     flexDirection: "row",
                   },
+                },
+                "& .MuiDataGrid-cell": {
+                  alignItems: "flex-start",
+                  py: 1,
+                },
+                "& .MuiDataGrid-cellContent": {
+                  whiteSpace: "normal",
+                  overflow: "visible",
+                  textOverflow: "clip",
+                  lineHeight: 1.4,
+                  wordBreak: "break-word",
                 },
               }}
               slotProps={{

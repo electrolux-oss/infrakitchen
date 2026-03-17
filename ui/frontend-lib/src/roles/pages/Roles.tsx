@@ -6,7 +6,10 @@ import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import {
+  getDateValue,
+  GetEntityLink,
+} from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 
@@ -43,6 +46,7 @@ export const RolesPage = () => {
     () => [
       {
         field: "id",
+        fetchFields: ["id", "v1"],
         headerName: "Role Name",
         sortable: false,
         flex: 1,
@@ -56,6 +60,28 @@ export const RolesPage = () => {
             />
           );
         },
+      },
+      {
+        field: "created_at",
+        headerName: "Created At",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) =>
+          getDateValue(params.value),
+      },
+      {
+        field: "updated_at",
+        headerName: "Updated At",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) =>
+          getDateValue(params.value),
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
       },
     ],
     [],
@@ -83,9 +109,14 @@ export const RolesPage = () => {
         title="Roles"
         entityName="permissions/role"
         columns={columns}
-        fields={["id"]}
+        fields={["id", "v1", "created_at", "updated_at", "creator"]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
+        defaultColumnVisibilityModel={{
+          created_at: false,
+          updated_at: false,
+          creator: false,
+        }}
       />
     </PageContainer>
   );

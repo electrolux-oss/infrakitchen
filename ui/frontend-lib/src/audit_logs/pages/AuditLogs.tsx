@@ -6,7 +6,6 @@ import { useConfig, FilterConfig } from "../../common";
 import {
   getDateValue,
   GetEntityLink,
-  GetReferenceUrlValue,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
@@ -57,11 +56,22 @@ export const AuditLogsPage = () => {
           getDateValue(params.value),
       },
       {
-        field: "user_id",
+        field: "creator",
         headerName: "User",
         flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
-          return GetReferenceUrlValue(params.row.creator);
+          const creator = params.row.creator;
+          if (creator?.id) {
+            return (
+              <GetEntityLink
+                id={creator.id}
+                _entity_name="user"
+                name={creator.display_name || creator.identifier}
+              />
+            );
+          }
+          return null;
         },
       },
       {
@@ -72,6 +82,7 @@ export const AuditLogsPage = () => {
       },
       {
         field: "model",
+        fetchFields: ["model", "entity_id"],
         headerName: "Entity",
         flex: 1,
         sortable: true,
@@ -97,7 +108,15 @@ export const AuditLogsPage = () => {
         title="Audit Log"
         entityName="audit_log"
         columns={columns}
-        fields={["id", "user_id", "action", "model", "entity_id", "created_at"]}
+        fields={[
+          "id",
+          "user_id",
+          "action",
+          "model",
+          "entity_id",
+          "created_at",
+          "creator",
+        ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

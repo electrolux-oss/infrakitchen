@@ -62,7 +62,12 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
     <Link
       href={fullPath}
       onClick={handleClick}
-      style={{ textDecoration: "none", cursor: "pointer" }}
+      style={{
+        textDecoration: "none",
+        cursor: "pointer",
+        whiteSpace: "normal",
+        overflowWrap: "anywhere",
+      }}
     >
       {displayText}
     </Link>
@@ -104,7 +109,12 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
     <Link
       href={fullPath}
       onClick={handleClick}
-      style={{ textDecoration: "none", cursor: "pointer" }}
+      style={{
+        textDecoration: "none",
+        cursor: "pointer",
+        whiteSpace: "normal",
+        overflowWrap: "anywhere",
+      }}
     >
       {name || identifier}
     </Link>
