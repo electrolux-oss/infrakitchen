@@ -24,6 +24,7 @@ DEFAULT_ENTITIES = [
     "label",
     "tree",
     "schema",
+    "favorite",
 ]
 
 ADMIN_ENTITIES = [

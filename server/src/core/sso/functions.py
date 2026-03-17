@@ -56,12 +56,15 @@ async def check_api_permission(request: Request):
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    if entity == "resource" or entity == "resource_temp_state" or entity == "executor":
-        # resources has own permission control system `user_has_access_to_entity` function
+    if entity == "resource" or entity == "resource_temp_state" or entity == "executor" or entity == "favorite":
+        # Some entities have their own permission control system using the `user_has_access_to_entity` function
         if await user_has_access_to_api(user, "resource", "read"):
             return
 
         if await user_has_access_to_api(user, "executor", "read"):
+            return
+
+        if await user_has_access_to_api(user, "favorite", "read"):
             return
 
     if request.method not in request_action_mapping:
