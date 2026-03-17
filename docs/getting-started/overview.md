@@ -63,7 +63,7 @@ Want to influence the roadmap? Join our [Discord community](https://discord.gg/H
 ## ➡️ Next Steps
 
 - 👉 [Quick Start](quick-start.md) — Set up InfraKitchen in your environment.
-- 🧪 [Test Modules](https://github.com/electrolux-oss/infrakitchen-test-modules) — Try InfraKitchen with sample modules.
+- 🧪 [Example Templates](https://github.com/electrolux-oss/infrakitchen-example-templates) — Try InfraKitchen with ready-to-use example templates.
 - 🛠️ [Platform Engineer Guide](../guides/platform-engineer-guide.md) — Step-by-step setup for platform teams.
 - 👩‍💻 [Developer Guide](../guides/developer-guide.md) — How to provision resources as a developer.
 - 🧩 [Core Concepts](../core-concepts/overview.md) — Learn about InfraKitchen's main building blocks.

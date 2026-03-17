@@ -52,4 +52,4 @@ The platform distributes operational ownership and simplifies incident response:
 
 The best way to start with InfraKitchen is to check the [Documentation](https://opensource.electrolux.one/infrakitchen/).
 
-InfraKitchen can also be tried with the test modules repository: [infrakitchen-test-modules](https://github.com/electrolux-oss/infrakitchen-test-modules).
+Try InfraKitchen right away with the [example templates repository](https://github.com/electrolux-oss/infrakitchen-example-templates). It includes ready-to-use templates that help you get a proof of concept running quickly.

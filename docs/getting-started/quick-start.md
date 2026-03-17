@@ -13,7 +13,7 @@ InfraKitchen has a backend and frontend codebase. This repo (`electrolux-oss/inf
 - `server/` contains the backend (Python/FastAPI)
 - `ui/` contains the frontend (React/TypeScript)
 
-To quickly try InfraKitchen with sample resources, use the test modules repository: [`electrolux-oss/infrakitchen-test-modules`](https://github.com/electrolux-oss/infrakitchen-test-modules).
+Try InfraKitchen right away with the [example templates repository](https://github.com/electrolux-oss/infrakitchen-example-templates). It includes ready-to-use templates that help you get a proof of concept running quickly.
 
 The following services are automatically set up for you:
 
