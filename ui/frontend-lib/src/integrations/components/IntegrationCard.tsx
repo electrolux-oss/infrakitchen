@@ -37,7 +37,7 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
             {integration.name}
           </Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <StatusChip status={integration.status} />
+            <StatusChip status={integration.status} compact />
           </Box>
         </Box>
       }

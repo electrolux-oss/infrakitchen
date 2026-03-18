@@ -345,7 +345,7 @@ const IntegrationCreatePage = () => {
             )}
             sx={{ flex: 1 }}
           >
-            Save Integration
+            Save
           </Button>
         </CardActions>
       </Card>

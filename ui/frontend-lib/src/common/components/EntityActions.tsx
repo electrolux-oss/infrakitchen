@@ -208,14 +208,13 @@ export function EntityActions(props: EntityActionsProps) {
       />
 
       <CommonDialog
-        title="Request Sync"
-        content="Do you want to sync it?"
+        title="Sync Repository"
+        content="This will synchronize repository tags and branches. Do you want to continue?"
         maxWidth="xs"
         actions={
           <ActionButton
             action={ENTITY_ACTION.SYNC}
             onSubmit={() => changeDialog("sync")}
-            color="error"
             variant="contained"
           >
             Sync

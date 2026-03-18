@@ -153,9 +153,17 @@ export const getProviderDisplayName = (provider: string): string => {
 
 export const getRepoNameFromUrl = (repoUrl: string): string => {
   try {
+    // Handle HTTP/HTTPS URLs
     const url = new URL(repoUrl);
-    return url.pathname.split("/").pop() || "Unknown Repository";
+    return (
+      url.pathname.split("/").pop()?.replace(".git", "") || "Unknown Repository"
+    );
   } catch {
+    // Handle SSH git URLs
+    const sshMatch = repoUrl.match(/[:/]([^/:]+\/[^/:]+?)(\.git)?$/);
+    if (sshMatch) {
+      return sshMatch[1].split("/").pop() || "Unknown Repository";
+    }
     return repoUrl;
   }
 };

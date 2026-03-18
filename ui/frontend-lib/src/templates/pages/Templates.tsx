@@ -17,6 +17,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import StatusChip from "../../common/StatusChip";
 import { TemplateResponse } from "../types";
 
 export const TemplatesPage = () => {
@@ -133,6 +134,12 @@ export const TemplatesPage = () => {
   const templateCardFields = (template: TemplateResponse) => {
     return (
       <>
+        <Box>
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Status
+          </Typography>
+          <StatusChip status={template.status} compact />
+        </Box>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
             Last Updated

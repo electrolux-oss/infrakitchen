@@ -1,11 +1,16 @@
 import { UserShort } from "../users";
 
+import { TEMPLATE_STATUS } from "./constants";
+
 export type IntegrationProviderType =
   | "aws"
   | "azurerm"
   | "gcp"
   | "mongodb_atlas"
   | "datadog";
+
+export type TemplateStatus =
+  (typeof TEMPLATE_STATUS)[keyof typeof TEMPLATE_STATUS];
 
 export interface TemplateConfig {
   one_resource_per_integration: IntegrationProviderType[];
@@ -24,7 +29,7 @@ export interface TemplateResponse {
   id: string;
   created_at: string;
   updated_at: string;
-  status: "enabled" | "disabled";
+  status: TemplateStatus;
   abstract: boolean;
   revision_number: number;
   creator: UserShort | null;

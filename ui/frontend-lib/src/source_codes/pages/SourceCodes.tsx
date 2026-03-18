@@ -1,27 +1,24 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
 import {
+  Alert,
   Box,
-  Typography,
   Button,
   CircularProgress,
-  Alert,
+  Typography,
 } from "@mui/material";
 
-import { IconField, FilterConfig, PermissionWrapper } from "../../common";
+import { FilterConfig, IconField, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import {
-  formatTimeAgo,
-  getProviderDisplayName,
-  getRepoNameFromUrl,
-} from "../../common/utils";
+import { getRepoNameFromUrl } from "../../common/utils";
 import { SourceCodeResponse } from "../types";
 
 export const SourceCodesPage = () => {
@@ -146,28 +143,19 @@ export const SourceCodesPage = () => {
       <>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
-            Provider
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            {IconField(sourceCode.source_code_provider)}
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>
-              {getProviderDisplayName(sourceCode.source_code_provider)}
-            </Typography>
-          </Box>
-        </Box>
-        <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
             Status
           </Typography>
-          <StatusChip status={sourceCode.status} />
+          <StatusChip status={sourceCode.status} compact />
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Typography variant="caption" sx={{ display: "block" }}>
             Last Updated
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {formatTimeAgo(sourceCode.updated_at)}
-          </Typography>
+          <RelativeTime
+            date={sourceCode.updated_at}
+            variant="caption"
+            sx={{ fontWeight: 500 }}
+          />
         </Box>
       </>
     );
@@ -239,12 +227,15 @@ export const SourceCodesPage = () => {
               <EntityCard
                 key={sourceCode.id}
                 entity_name="source_code"
+                icon={
+                  <Box sx={{ fontSize: 32 }}>
+                    {IconField(sourceCode.source_code_provider)}
+                  </Box>
+                }
                 name={getRepoNameFromUrl(sourceCode.source_code_url)}
                 description={sourceCode.description}
                 detailsUrl={`${linkPrefix}source_codes/${sourceCode.id}`}
-                createUrl={`${linkPrefix}source_code_versions/create`}
                 labels={sourceCode.labels}
-                createButtonName={"Create Version"}
                 entityFields={sourceCodeCardFields(sourceCode)}
               />
             ))}
