@@ -78,24 +78,6 @@ export const ResourcesPage = () => {
 
   const initialFilter = location.state?.filters;
 
-  const defaultColumnVisibilityModel = useMemo(
-    () => ({
-      creator: false,
-      storage: false,
-      workspace: false,
-      integration_ids: false,
-      secret_ids: false,
-      parents: false,
-      children: false,
-      variables: false,
-      outputs: false,
-      labels: false,
-      dependency_tags: false,
-      dependency_config: false,
-    }),
-    [],
-  );
-
   // Configure filters using the new FilterConfig system
   const filterConfigs: FilterConfig[] = useMemo(() => {
     return createResourceFilterConfigs({

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Box } from "@mui/material";
 
-import { FilterConfig, useConfig, useLocalStorage } from "../../common";
+import { FilterConfig, useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import {
   buildResourceApiFilters,
@@ -18,13 +18,6 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
   const { template_id } = props;
   const { ikApi } = useConfig();
 
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["template-resources"];
-
   const [labels, setLabels] = useState<string[]>([]);
   const [versionLabels, setVersionLabels] = useState<string[]>([]);
   const [versionIdByLabel, setVersionIdByLabel] = useState<
@@ -32,7 +25,7 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
   >({});
 
   useEffect(() => {
-    if (!template_id || !isExpanded) return;
+    if (!template_id) return;
     ikApi
       .get("labels/resource")
       .then((response: string[]) => {
@@ -41,11 +34,10 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
       .catch(() => {
         setLabels([]);
       });
-  }, [ikApi, template_id, isExpanded]);
+  }, [ikApi, template_id]);
 
   useEffect(() => {
     if (!template_id) return;
-    if (!isExpanded) return;
 
     ikApi
       .getList("source_code_versions", {
@@ -83,7 +75,7 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
         setVersionLabels([]);
         setVersionIdByLabel({});
       });
-  }, [ikApi, template_id, isExpanded]);
+  }, [ikApi, template_id]);
 
   const filterConfigs: FilterConfig[] = useMemo(() => {
     return createResourceFilterConfigs({
