@@ -68,7 +68,7 @@ const SourceCodeCreatePageInner = () => {
 
   return (
     <PageContainer
-      title="Import Source Code Repository"
+      title="Import Code Repository"
       onBack={handleBack}
       backAriaLabel="Back to previous page"
       bottomActions={
@@ -81,7 +81,7 @@ const SourceCodeCreatePageInner = () => {
             color="primary"
             onClick={handleSubmit(handleSave)}
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Importing..." : "Import"}
           </Button>
         </>
       }
@@ -96,7 +96,7 @@ const SourceCodeCreatePageInner = () => {
           maxWidth: 1000,
         }}
       >
-        <PropertyCard title="Repository Definition">
+        <PropertyCard title="Repository Details">
           <Box>
             <Controller
               name="description"
@@ -123,12 +123,6 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
-              name="labels"
-              control={control}
-              defaultValue={[]}
-              render={({ field }) => <LabelInput {...field} errors={errors} />}
-            />
-            <Controller
               name="source_code_url"
               control={control}
               rules={{
@@ -141,19 +135,20 @@ const SourceCodeCreatePageInner = () => {
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Source Code URL"
+                  label="Repository URL"
+                  required
                   variant="outlined"
                   error={!!errors.source_code_url}
                   helperText={
                     errors.source_code_url
                       ? errors.source_code_url.message
-                      : "URL of the source code"
+                      : "The URL of the repository, e.g., https://github.com/user/repo"
                   }
                   fullWidth
                   margin="normal"
                   slotProps={{
                     htmlInput: {
-                      "aria-label": "Source code URL",
+                      "aria-label": "Repository URL",
                     },
                   }}
                 />
@@ -163,13 +158,14 @@ const SourceCodeCreatePageInner = () => {
               name="source_code_provider"
               control={control}
               rules={{
-                required: "Source code provider is required",
+                required: "Repository provider is required",
               }}
               render={({ field }) => (
                 <TextField
                   {...field}
                   select
-                  label="Source Code Provider"
+                  label="Repository Provider"
+                  required
                   fullWidth
                   margin="normal"
                   error={!!errors.source_code_provider}
@@ -177,7 +173,7 @@ const SourceCodeCreatePageInner = () => {
                   slotProps={{
                     select: {
                       inputProps: {
-                        "aria-label": "Source code provider",
+                        "aria-label": "Repository provider",
                       },
                     },
                   }}
@@ -241,14 +237,20 @@ const SourceCodeCreatePageInner = () => {
                     helpertext={
                       errors.integration_id
                         ? errors.integration_id.message
-                        : "Select credentials for the source code"
+                        : "Select integration for the repository"
                     }
                     value={field.value}
-                    label="Select Credentials"
+                    label="Select Integration"
                   />
                 )}
               />
             )}
+            <Controller
+              name="labels"
+              control={control}
+              defaultValue={[]}
+              render={({ field }) => <LabelInput {...field} errors={errors} />}
+            />
           </Box>
         </PropertyCard>
       </Box>

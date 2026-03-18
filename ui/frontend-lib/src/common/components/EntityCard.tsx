@@ -13,7 +13,6 @@ import {
   Button,
 } from "@mui/material";
 
-import StatusChip from "../../common/StatusChip";
 import { PermissionWrapper } from "../wrappers";
 
 export interface EntityCardProps {
@@ -27,6 +26,7 @@ export interface EntityCardProps {
   createButtonName?: string | undefined;
   entityFields: ReactNode;
   status?: string;
+  icon?: ReactNode;
 }
 
 export const EntityCard = ({
@@ -38,8 +38,8 @@ export const EntityCard = ({
   labels,
   createButtonName,
   entityFields,
-  status,
   entity_name,
+  icon,
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -60,9 +60,9 @@ export const EntityCard = ({
       }}
     >
       <CardHeader
+        avatar={icon}
         title={name}
         subheader={description || "No description"}
-        action={status && <StatusChip status={status} />}
         sx={{ mb: 0 }}
       />
       <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
