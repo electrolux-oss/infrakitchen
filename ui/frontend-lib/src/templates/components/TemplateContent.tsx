@@ -6,10 +6,11 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { TemplateOverview } from "./TemplateOverview";
 import { TemplateResources } from "./TemplateResources";
-import { TemplateSourceCodeVersions } from "./TemplateSourceCodeVersions";
 
 export const TemplateContent = () => {
   const { entity } = useEntityProvider();
+  if (!entity) return null;
+
   return (
     <Box
       sx={{
@@ -17,10 +18,10 @@ export const TemplateContent = () => {
         flexDirection: "column",
         alignItems: "center",
         gap: 2,
+        minWidth: 1000,
       }}
     >
       <TemplateOverview template={entity} />
-      <TemplateSourceCodeVersions template_id={entity.id} />
       <TemplateResources template_id={entity.id} />
       <EntityTreeView entity_id={entity.id} entity_name={entity._entity_name} />
       <DangerZoneCard />
