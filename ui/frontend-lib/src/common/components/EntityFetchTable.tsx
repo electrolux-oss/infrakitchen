@@ -20,6 +20,7 @@ import { FilterPanel } from "./filter_panel/FilterPanel";
 
 interface EntityFetchTableProps {
   title: string;
+  subtitle?: string;
   columns: EntityTableColumn[];
   entityName?: string;
   fields?: string[];
@@ -72,6 +73,7 @@ function buildDefaultApiFilters(
 export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const {
     title,
+    subtitle,
     columns,
     entityName,
     fields = [],
@@ -269,6 +271,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
         )}
         <EntityTable
           entityName={title}
+          subtitle={subtitle}
           columns={columns}
           availableFields={fields}
           totalRows={totalRows}

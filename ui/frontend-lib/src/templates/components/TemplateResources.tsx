@@ -4,7 +4,6 @@ import { Box } from "@mui/material";
 
 import { FilterConfig, useConfig, useLocalStorage } from "../../common";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import {
   buildResourceApiFilters,
   createResourceFilterConfigs,
@@ -135,24 +134,17 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
   if (!template_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id="template-resources"
-      title="Resources"
-      subtitle="Resources provisioned (or to be provisioned) from this template"
-    >
-      {isExpanded && (
-        <Box sx={{ width: "100%" }}>
-          <EntityFetchTable
-            title="Template Resources"
-            entityName="resource"
-            columns={resourceColumns}
-            defaultColumnVisibilityModel={templateResourceColumnVisibilityModel}
-            fields={resourceFields}
-            filterConfigs={filterConfigs}
-            buildApiFilters={buildApiFilters}
-          />
-        </Box>
-      )}
-    </PropertyCollapseCard>
+    <Box sx={{ width: "100%" }}>
+      <EntityFetchTable
+        title="Resources"
+        subtitle="Resources provisioned (or to be provisioned) from this template"
+        entityName="resource"
+        columns={resourceColumns}
+        defaultColumnVisibilityModel={templateResourceColumnVisibilityModel}
+        fields={resourceFields}
+        filterConfigs={filterConfigs}
+        buildApiFilters={buildApiFilters}
+      />
+    </Box>
   );
 };

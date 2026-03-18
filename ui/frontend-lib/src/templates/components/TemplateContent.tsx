@@ -5,7 +5,7 @@ import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/TabbedContent";
-import { EntityTreeView } from "../../common/components/tree/TreeView";
+import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { TemplateOverview } from "./TemplateOverview";
@@ -23,7 +23,7 @@ export const TemplateContent = () => {
     {
       label: "Tree View",
       content: (
-        <EntityTreeView
+        <EntityTreeViewTab
           entity_id={entity.id}
           entity_name={entity._entity_name}
         />
