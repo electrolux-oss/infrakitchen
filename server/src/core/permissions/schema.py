@@ -110,6 +110,9 @@ class ApiPolicyCreate(BaseModel):
             raise ValueError(
                 f"Role name '{self.role}' is invalid. It must contain only lowercase letters and underscores."
             )
+
+        if self.api not in get_all_entities():
+            raise ValueError(f"Api '{self.api}' is invalid.")
         return self
 
 

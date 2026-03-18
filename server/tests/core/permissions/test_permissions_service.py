@@ -266,8 +266,8 @@ class TestPolicyCreation:
         self, mock_permission_service, mock_permission_crud, mock_casbin, mock_user_dto, mocked_role_permission
     ):
         mocked_role_permission.v0 = "admin"
-        mocked_role_permission.v1 = "api:project"
-        body = ApiPolicyCreate(role="admin", api="project", action="admin")
+        mocked_role_permission.v1 = "api:template"
+        body = ApiPolicyCreate(role="admin", api="template", action="admin")
         mock_permission_crud.get_all.return_value = []
         mock_permission_crud.create.return_value = Mock(id=uuid4())
         mock_permission_crud.get_by_id.return_value = mocked_role_permission
@@ -276,15 +276,15 @@ class TestPolicyCreation:
 
         assert isinstance(result, PermissionResponse)
         assert result.v0 == "admin"
-        assert result.v1 == "api:project"
+        assert result.v1 == "api:template"
         mock_casbin.send_reload_event.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_create_api_policy_exists(self, mock_permission_service, mock_permission_crud):
-        body = ApiPolicyCreate(role="admin", api="project", action="admin")
+        body = ApiPolicyCreate(role="admin", api="template", action="admin")
         mock_permission_crud.get_all.return_value = [Mock()]
 
-        with pytest.raises(EntityExistsError, match="Api policy for project already exists"):
+        with pytest.raises(EntityExistsError, match="Api policy for template already exists"):
             await mock_permission_service.create_api_policy(body)
 
     # --- Entity Policy Tests ---
