@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
 
     websocket_manager = WebSocketConnectionManager()
     loop = asyncio.get_running_loop()
-    loop.create_task(start_rabbitmq_consumer())
+    rabbitmq_task = loop.create_task(start_rabbitmq_consumer())
 
     await init_app()
     await CasbinEnforcer().init_enforcer()
@@ -71,6 +71,11 @@ async def lifespan(app: FastAPI):
     async with mcp_context:
         yield
 
+    rabbitmq_task.cancel()
+    try:
+        await rabbitmq_task
+    except (asyncio.CancelledError, Exception):
+        pass
     await websocket_manager.close_all_connections()
 
 

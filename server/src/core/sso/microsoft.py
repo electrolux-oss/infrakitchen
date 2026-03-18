@@ -177,6 +177,5 @@ async def microsoft_callback(
         action="login",
     )
     if reload_permission:
-        await service.permission_service.commit()
         await service.casbin_enforcer.send_reload_event()
     return response

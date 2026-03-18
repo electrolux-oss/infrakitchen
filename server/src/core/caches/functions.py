@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 import functools
 import inspect
 import logging
@@ -10,17 +9,11 @@ from collections.abc import Awaitable
 from core.caches.crud import CacheCRUD
 from core.caches.schema import CacheCreate
 from core.caches.service import CacheService
-from core.database import SessionLocal
 from core.config import Settings
+from core.dependencies import get_async_session
 
 
 logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def get_async_session():
-    async with SessionLocal() as session:
-        yield session
 
 
 def cache_decorator(avoid_args: bool = False, ttl: int = 60):

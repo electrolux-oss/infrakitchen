@@ -1,17 +1,9 @@
-from collections.abc import AsyncGenerator
-
 from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from core.database import SessionLocal
 from application.resource_temp_state.crud import ResourceTempStateCrud
 from application.resource_temp_state.service import ResourceTempStateService
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
+from core.dependencies import get_db_session
 
 
 def get_resource_temp_state_service(

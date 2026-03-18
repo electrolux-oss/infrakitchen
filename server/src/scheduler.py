@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from contextlib import asynccontextmanager
 from uuid import UUID
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -9,7 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from application.logger import change_logger
 
-from core.database import SessionLocal
+from core.dependencies import get_async_session
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.utils.event_sender import EventSender
@@ -17,12 +16,6 @@ from core.utils.event_sender import EventSender
 change_logger()
 
 logger = logging.getLogger("scheduler")
-
-
-@asynccontextmanager
-async def get_async_session():
-    async with SessionLocal() as session:
-        yield session
 
 
 async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender: EventSender):

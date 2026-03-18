@@ -1,9 +1,6 @@
-from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, Security
 from fastapi.responses import RedirectResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import SessionLocal
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
 
@@ -19,12 +16,6 @@ from .microsoft import router as microsoft
 from .service_account import router as service_account
 
 auth_router = APIRouter(prefix="/auth")
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 @auth_router.get("/me", response_model=UserDTO)

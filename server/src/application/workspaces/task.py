@@ -169,6 +169,7 @@ class WorkspaceTask:
         await self.crud_workspace.refresh(self.workspace_instance)
         response_model = WorkspaceResponse.model_validate(self.workspace_instance)
         await self.event_sender.send_event(response_model, event_type)
+        await self.event_sender.flush()
 
     async def recreate_state(self):
         await self.change_state(ModelStatus.IN_PROGRESS)

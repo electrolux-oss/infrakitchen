@@ -197,6 +197,7 @@ class SourceCodeVersionTask:
         await self.crud_source_code_version.refresh(self.source_code_version_instance)
         response_model = SourceCodeVersionResponse.model_validate(self.source_code_version_instance)
         await self.event_sender.send_event(response_model, ModelActions.SYNC)
+        await self.event_sender.flush()
 
     async def make_failed(self) -> None:
         await self.change_entity_status(ModelStatus.ERROR)

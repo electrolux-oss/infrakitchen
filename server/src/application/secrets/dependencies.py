@@ -1,9 +1,8 @@
-from collections.abc import AsyncGenerator
 from fastapi import Depends
 
 from application.integrations.dependencies import get_integration_service
 from core.audit_logs.handler import AuditLogHandler
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 
@@ -11,12 +10,6 @@ from .crud import SecretCRUD
 from .service import SecretService
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 def get_secret_service(

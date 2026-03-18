@@ -11,6 +11,7 @@ from sqlalchemy.sql.selectable import Select
 from core.base_models import Base
 from core.utils.json_encoder import JsonEncoder
 from core.utils.model_tools import is_valid_uuid, valid_uuid
+from core.utils.event_sender import flush_all_pending_senders
 
 from core.config import setup_service_environment
 
@@ -26,7 +27,17 @@ engine = create_async_engine(
     json_serializer=lambda obj: json.dumps(obj, cls=JsonEncoder),
 )
 
-SessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+class EventFlushingSession(AsyncSession):
+    """AsyncSession subclass that flushes buffered EventSender messages
+    after each commit, guaranteeing consumers always see committed data."""
+
+    async def commit(self):
+        await super().commit()
+        await flush_all_pending_senders()
+
+
+SessionLocal = async_sessionmaker(engine, class_=EventFlushingSession, expire_on_commit=False)
 
 T = TypeVar("T", bound=Base)
 

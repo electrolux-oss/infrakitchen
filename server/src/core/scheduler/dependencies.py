@@ -1,18 +1,11 @@
-from collections.abc import AsyncGenerator
 from fastapi import Depends
 
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 
 from .crud import SchedulerJobCRUD
 from .service import SchedulerJobService
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 def get_scheduler_job_service(

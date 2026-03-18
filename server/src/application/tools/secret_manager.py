@@ -1,7 +1,5 @@
 import logging
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from collections.abc import AsyncGenerator
 
 from application.integrations.model import IntegrationDTO
 from application.integrations.service import IntegrationService
@@ -9,7 +7,6 @@ from application.secrets.model import SecretDTO
 from core.adapters.provider_adapters import IntegrationProvider
 from core.custom_entity_log_controller import EntityLogger
 
-from core.database import SessionLocal
 from core.errors import CannotProceed
 
 from ..providers import (
@@ -18,12 +15,6 @@ from ..providers import (
 
 
 logger = logging.getLogger(__name__)
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 class SecretManager:
