@@ -1,9 +1,8 @@
-from collections.abc import AsyncGenerator
 from fastapi import Depends
 
 from core.audit_logs.handler import AuditLogHandler
 from core.casbin.enforcer import CasbinEnforcer
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 from core.revisions.handler import RevisionHandler
 from core.users.dependencies import get_user_service
 
@@ -11,12 +10,6 @@ from .crud import PermissionCRUD
 from .service import PermissionService
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 def get_permission_service(

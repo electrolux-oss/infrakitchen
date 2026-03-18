@@ -1,11 +1,10 @@
 import logging
-from contextlib import asynccontextmanager
 from typing import cast
 
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.schema import AuthProviderCreate, GuestProviderConfig
 from core.casbin.enforcer import CasbinEnforcer
-from core.database import SessionLocal
+from core.dependencies import get_async_session
 from core.feature_flags.feature_flag_manager import reload_feature_flags_configs, init_feature_flags
 from core.permissions.dependencies import get_permission_service
 from core.permissions.schema import ActionLiteral, ApiPolicyCreate
@@ -16,12 +15,6 @@ from core.users.schema import UserCreateWithProvider
 from core.utils.entities import DEFAULT_ENTITIES, INFRA_ENTITIES
 
 logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def get_async_session():
-    async with SessionLocal() as session:
-        yield session
 
 
 async def init_app():

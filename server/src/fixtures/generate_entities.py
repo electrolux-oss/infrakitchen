@@ -29,6 +29,7 @@ from application.types import IntegrationType
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.schema import AuthProviderCreate, GuestProviderConfig
 from core.config import setup_service_environment
+from core.dependencies import get_async_session
 from core.users.dependencies import get_user_service
 from core.users.schema import UserCreateWithProvider
 from core.models.encrypted_secret import EncryptedSecretStr
@@ -41,7 +42,7 @@ from application.source_code_versions.model import SourceCodeVersion
 from application.source_codes.model import SourceCode
 from core.custom_entity_log_controller import EntityLogger
 from core.constants import ModelState, ModelStatus
-from core.database import SessionLocal, engine
+from core.database import engine
 from core.users.model import UserDTO
 
 from application.storages.schema import StorageCreate
@@ -84,7 +85,7 @@ async def drop_all_tables(engine):
 
 @asynccontextmanager
 async def get_session():
-    async with SessionLocal() as session:
+    async with get_async_session() as session:
         yield session
 
 

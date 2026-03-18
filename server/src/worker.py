@@ -1,10 +1,10 @@
 import asyncio
-from contextlib import asynccontextmanager
 import logging
 import os
 import sys
 
 from prometheus_async.aio import web
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
@@ -12,7 +12,7 @@ from application.logger import change_logger
 from core.config import setup_service_environment
 from application.workers import TaskWorker
 from core import RabbitMQConnection
-from core.database import SessionLocal
+from core.dependencies import get_async_session
 
 change_logger()
 
@@ -22,12 +22,6 @@ logger = logging.getLogger("worker")
 
 # Initialize the lock
 worker_lock = asyncio.Lock()
-
-
-@asynccontextmanager
-async def get_async_session():
-    async with SessionLocal() as session:
-        yield session
 
 
 async def run_task_worker(rabbitmq):

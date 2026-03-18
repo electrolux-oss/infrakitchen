@@ -44,7 +44,6 @@ class TestCasbinEnforcer:
         await self.enforcer.init_enforcer()
 
         fake_enforcer.load_policy.assert_awaited_once()
-        fake_enforcer.get_policy.assert_called_once()
         assert self.enforcer.enforcer is not None, "Enforcer should be initialized"
         assert self.enforcer.enforcer.get_policy() == [["alice", "data", "read"]], "Policy should match expected value"
         assert await self.enforcer.get_enforcer() is self.enforcer.enforcer, (

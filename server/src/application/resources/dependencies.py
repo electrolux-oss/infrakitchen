@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from fastapi import Depends
 
 from application.favorites.dependencies import get_favorite_service
@@ -8,7 +7,7 @@ from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.audit_logs.handler import AuditLogHandler
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
@@ -20,12 +19,6 @@ from .crud import ResourceCRUD
 from .service import ResourceService
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 def get_resource_service(

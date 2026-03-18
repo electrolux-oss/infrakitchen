@@ -8,6 +8,7 @@ import casbin_async_sqlalchemy_adapter
 
 from core.permissions.model import Permission
 from core.singleton_meta import SingletonMeta
+from core.utils.event_sender import EventSender
 from core.utils.model_tools import is_valid_uuid
 from ..base_models import ExchangeType, MessageModel
 from ..config import Settings
@@ -31,7 +32,6 @@ class CasbinEnforcer(metaclass=SingletonMeta):
 
         self.enforcer = casbin.AsyncEnforcer(model_path, self.db_adapter, enable_log=os.getenv("LOG_LEVEL") == "DEBUG")
         await self.enforcer.load_policy()
-        logger.debug(self.enforcer.get_policy())
 
     async def get_enforcer(self) -> casbin.AsyncEnforcer:
         if not self.enforcer:
@@ -41,12 +41,13 @@ class CasbinEnforcer(metaclass=SingletonMeta):
         return self.enforcer
 
     async def send_reload_event(self):
+        event_sender = EventSender(entity_name="enforcer")
         event_message = MessageModel()
         event_message.message_type = "event"
         event_message.metadata["event"] = "reload_policies"
         event_message.exchange = "ik_event_messages"
         event_message.exchange_type = ExchangeType.FANOUT
-        await self.rabbitmq.send_message(event_message)
+        await event_sender.send_message(event_message)
 
     async def get_user_roles(self, user_id: str | uuid.UUID) -> list[str]:
         if is_valid_uuid(user_id) is False:

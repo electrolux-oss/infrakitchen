@@ -185,6 +185,5 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
     )
 
     if reload_permission:
-        await service.permission_service.commit()
         await service.casbin_enforcer.send_reload_event()
     return response

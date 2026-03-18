@@ -287,6 +287,7 @@ class ExecutorTask:
 
         response_model = ExecutorResponse.model_validate(self.executor_instance)
         await self.event_sender.send_event(response_model, event_type)
+        await self.event_sender.flush()
 
     async def make_failed(self) -> None:
         if self.executor_instance.state == ModelState.DESTROYED:

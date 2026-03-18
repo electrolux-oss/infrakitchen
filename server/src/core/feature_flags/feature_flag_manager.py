@@ -4,7 +4,7 @@ import os
 
 from core.audit_logs.handler import AuditLogHandler
 from core.config import InfrakitchenConfig
-from core.database import SessionLocal
+from core.dependencies import get_async_session
 from core.feature_flags.crud import FeatureFlagCRUD
 from core.feature_flags.model import FeatureFlagDTO
 from core.feature_flags.service import FeatureFlagService
@@ -65,7 +65,7 @@ async def init_feature_flags(session):
 
 
 async def reload_feature_flags_configs():
-    async with SessionLocal() as session:
+    async with get_async_session() as session:
         service = FeatureFlagService(
             crud=FeatureFlagCRUD(session=session),
             audit_log_handler=AuditLogHandler(session=session, entity_name="feature_flag"),

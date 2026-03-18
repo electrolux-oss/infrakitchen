@@ -382,6 +382,7 @@ class ResourceTask:
 
         response_model = ResourceResponse.model_validate(self.resource_instance)
         await self.event_sender.send_event(response_model, event_type)
+        await self.event_sender.flush()
 
     async def make_failed(self) -> None:
         if self.resource_instance.state == ModelState.DESTROYED:

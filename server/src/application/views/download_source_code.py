@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import FileResponse
@@ -7,17 +6,11 @@ from application.resources.crud import ResourceCRUD
 
 from application.workers.utils import get_resource_task
 from core.constants.model import ModelActions
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 from core.errors import EntityNotFound
 from core.users.model import UserDTO
 
 router = APIRouter()
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 @router.get(

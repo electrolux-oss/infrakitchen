@@ -1,22 +1,15 @@
-from collections.abc import AsyncGenerator
 from fastapi import Depends
 
 from application.integrations.dependencies import get_integration_service
 from application.storages.dependencies import get_storage_service
 from application.use_cases.create_integration_with_storage.service import IntegrationWithStorageService
 from core.audit_logs.handler import AuditLogHandler
-from core.database import SessionLocal
+from core.dependencies import get_db_session
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
 
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
-
-async def get_db_session() -> AsyncGenerator[AsyncSession]:
-    async with SessionLocal() as session:
-        async with session.begin():
-            yield session
 
 
 def get_integration_with_storage_service(

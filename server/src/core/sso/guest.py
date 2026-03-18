@@ -106,6 +106,5 @@ async def guest_callback(scope: Literal["default", "super", "infra"], service: S
         action="login",
     )
     if reload_permission:
-        await service.permission_service.commit()
         await service.casbin_enforcer.send_reload_event()
     return response

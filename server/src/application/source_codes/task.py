@@ -140,6 +140,7 @@ class SourceCodeTask:
         await self.crud_source_code.refresh(self.source_code_instance)
         response_model = SourceCodeResponse.model_validate(self.source_code_instance)
         await self.event_sender.send_event(response_model, ModelActions.SYNC)
+        await self.event_sender.flush()
 
     async def make_failed(self) -> None:
         await self.change_entity_status(ModelStatus.ERROR)

@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 import asyncio
 import datetime
 import logging
@@ -7,19 +6,13 @@ from uuid import UUID
 
 from aio_pika import ExchangeType
 
+from core.dependencies import get_async_session
 from core.logs.model import Log
-from core.database import SessionLocal
 
 from .base_models import MessageModel
 from .rabbitmq import RabbitMQConnection
 
 logger = logging.getLogger("entity_logger")
-
-
-@asynccontextmanager
-async def get_session():
-    async with SessionLocal() as session:
-        yield session
 
 
 class LoggerProtocol(Protocol):
@@ -114,7 +107,7 @@ class EntityLogger:
     async def save_log(self):
         async with self._save_lock:
             if self.bulk_logs_operations:
-                async with get_session() as session:
+                async with get_async_session() as session:
                     session.add_all(self.bulk_logs_operations)
                     self.bulk_logs_operations = []
                     await session.commit()
