@@ -438,6 +438,21 @@ export const SourceCodeVersionConfig = () => {
           sourceCodeVersion.variables.length > 0 && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <ReferenceSelector />
+            </Box>
+          )}
+      </Box>
+
+      {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+        sourceCodeVersion.variables.length > 0 && (
+          <>
+            <ConfigList control={control} fields={fields} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mt: 3,
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
@@ -446,12 +461,7 @@ export const SourceCodeVersionConfig = () => {
                 Save
               </Button>
             </Box>
-          )}
-      </Box>
-
-      {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
-        sourceCodeVersion.variables.length > 0 && (
-          <ConfigList control={control} fields={fields} />
+          </>
         )}
     </Box>
   );
