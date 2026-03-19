@@ -225,6 +225,7 @@ export const TemplatesPage = () => {
                   })}
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
                   labels={template.labels}
+                  chip={template.abstract ? "Abstract" : undefined}
                   entityFields={templateCardFields(template)}
                 />
               );
