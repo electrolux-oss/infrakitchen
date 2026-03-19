@@ -2,14 +2,12 @@ import { SyntheticEvent } from "react";
 
 import {
   FormControl,
-  InputLabel,
   Autocomplete,
   TextField,
   Box,
   Typography,
 } from "@mui/material";
 
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import { SourceCodeVersionResponse } from "../types";
 
@@ -30,47 +28,48 @@ export const ReferenceSelector = () => {
   };
 
   return (
-    <PropertyCard
-      title="Source Code Version Reference"
-      subtitle="Choose a previous configuration of the source code version to fill fields automatically."
-    >
-      <FormControl fullWidth margin="normal" variant="outlined">
-        <InputLabel id="reference-label" shrink>
-          Source Code Version Reference
-        </InputLabel>
-        <Autocomplete
-          fullWidth
-          options={references}
-          value={selectedObject}
-          onChange={handleAutocompleteChange}
-          isOptionEqualToValue={(option, val) => option.id === val.id}
-          getOptionLabel={(option) =>
-            option.source_code_version || option.source_code_branch || ""
-          }
-          renderInput={(params) => <TextField {...params} margin="normal" />}
-          renderOption={(props, option) => {
-            return (
-              <li {...props}>
-                <Box>
-                  <Typography variant="body1">
-                    {option.source_code_version || option.source_code_branch}
+    <FormControl sx={{ minWidth: 250 }} size="small">
+      <Autocomplete
+        fullWidth
+        size="small"
+        options={references}
+        value={selectedObject}
+        onChange={handleAutocompleteChange}
+        isOptionEqualToValue={(option, val) => option.id === val.id}
+        getOptionLabel={(option) =>
+          option.source_code_version || option.source_code_branch || ""
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Inherit from"
+            variant="outlined"
+            size="small"
+            InputLabelProps={{ shrink: true }}
+          />
+        )}
+        renderOption={(props, option) => {
+          return (
+            <li {...props}>
+              <Box>
+                <Typography variant="body2">
+                  {option.source_code_version || option.source_code_branch}
+                </Typography>
+                {option.description && (
+                  <Typography variant="caption" color="text.secondary">
+                    {option.description}
                   </Typography>
-                  {option.description && (
-                    <Typography variant="body2" color="text.secondary">
-                      {option.description}
-                    </Typography>
-                  )}
-                </Box>
-              </li>
-            );
-          }}
-          noOptionsText={
-            hasReferences
-              ? "No matching source code versions"
-              : "No source code versions available"
-          }
-        />
-      </FormControl>
-    </PropertyCard>
+                )}
+              </Box>
+            </li>
+          );
+        }}
+        noOptionsText={
+          hasReferences
+            ? "No matching source code versions"
+            : "No source code versions available"
+        }
+      />
+    </FormControl>
   );
 };

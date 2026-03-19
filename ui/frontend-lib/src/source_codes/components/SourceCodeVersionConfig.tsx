@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo } from "react";
 
 import { useFieldArray, useFormContext } from "react-hook-form";
 
-import { Box, Alert, Button } from "@mui/material";
+import { Box, Alert, Button, CircularProgress } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import PageContainer from "../../common/PageContainer";
 import { ENTITY_STATUS } from "../../utils";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import { SourceConfigUpdateWithId } from "../types";
@@ -166,6 +165,7 @@ export const SourceCodeVersionConfig = () => {
     templateReferences,
     sourceCodeVersion,
     selectedReferenceId,
+    isLoading,
   } = useSourceCodeVersionConfigContext();
 
   const { control, handleSubmit, reset } = useFormContext<FormValues>();
@@ -398,74 +398,71 @@ export const SourceCodeVersionConfig = () => {
     ],
   );
 
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <CircularProgress size={28} />
+      </Box>
+    );
+  }
+
   return (
-    <PageContainer
-      bottomActions={
-        <>
-          {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
-            sourceCodeVersion.variables.length > 0 && (
+    <Box sx={{ width: "100%", pt: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          {sourceCodeVersion && (
+            <>
+              {sourceCodeVersion.status !== ENTITY_STATUS.DONE && (
+                <Alert severity="warning">
+                  Configurations can only be managed when the source code
+                  version is in the &quot;done&quot; state.
+                </Alert>
+              )}
+              {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+                sourceCodeVersion.variables.length === 0 && (
+                  <Alert severity="info">
+                    This source code version has no variables.{" "}
+                  </Alert>
+                )}
+            </>
+          )}
+        </Box>
+        {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+          sourceCodeVersion.variables.length > 0 && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <ReferenceSelector />
+            </Box>
+          )}
+      </Box>
+
+      {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+        sourceCodeVersion.variables.length > 0 && (
+          <>
+            <ConfigList control={control} fields={fields} />
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                mt: 3,
+              }}
+            >
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleSubmit(onSubmit)}
               >
-                Update
+                Save
               </Button>
-            )}
-        </>
-      }
-    >
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          flexDirection: "column",
-          width: "100%",
-        }}
-      >
-        {sourceCodeVersion && (
-          <>
-            {sourceCodeVersion.status !== ENTITY_STATUS.DONE && (
-              <Alert
-                severity="warning"
-                sx={{
-                  mt: 2,
-                  width: "75%",
-                  minWidth: 320,
-                  maxWidth: 1000,
-                  alignSelf: "center",
-                }}
-              >
-                Configurations can only be managed when the source code version
-                is in the &quot;done&quot; state.
-              </Alert>
-            )}
-            {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
-              sourceCodeVersion.variables.length === 0 && (
-                <Alert
-                  severity="info"
-                  sx={{
-                    mt: 2,
-                    width: "75%",
-                    minWidth: 320,
-                    maxWidth: 1000,
-                    alignSelf: "center",
-                  }}
-                >
-                  This source code version has no variables.{" "}
-                </Alert>
-              )}
+            </Box>
           </>
         )}
-
-        {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
-          sourceCodeVersion.variables.length > 0 && (
-            <>
-              <ReferenceSelector />
-              <ConfigList control={control} fields={fields} />
-            </>
-          )}
-      </Box>
-    </PageContainer>
+    </Box>
   );
 };

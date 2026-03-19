@@ -2,7 +2,6 @@ import { Control, FieldArrayWithId } from "react-hook-form";
 
 import { Box, CircularProgress } from "@mui/material";
 
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 
 import { SourceConfigForm } from "./SourceConfigForm";
@@ -16,7 +15,7 @@ export const ConfigList = ({ control, fields }: ConfigListProps) => {
   const { isLoading } = useSourceCodeVersionConfigContext();
 
   return (
-    <PropertyCard title="Configure Variables">
+    <Box>
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress size={28} />
@@ -32,6 +31,6 @@ export const ConfigList = ({ control, fields }: ConfigListProps) => {
           </Box>
         ))
       )}
-    </PropertyCard>
+    </Box>
   );
 };

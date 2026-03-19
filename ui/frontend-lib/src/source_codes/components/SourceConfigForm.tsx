@@ -22,9 +22,9 @@ import {
   AccordionSummary,
   AccordionDetails,
   Switch,
+  Divider,
 } from "@mui/material";
 
-import { OverviewCard } from "../../common/components/OverviewCard";
 import { parseNumericField } from "../utils/numeric";
 import { getValidationSummary } from "../utils/validationSummary";
 
@@ -135,469 +135,450 @@ export const SourceConfigForm = (props: {
   });
 
   return (
-    <Box sx={{ width: "100%", mb: 2 }}>
+    <Box
+      sx={{
+        width: "100%",
+        mb: 2,
+        p: 2,
+        borderRadius: 1,
+        border: "1px solid",
+        borderColor: "divider",
+        borderLeft: "4px solid",
+        borderLeftColor: hasChanges ? "primary.main" : "divider",
+        transition: "border-left-color 0.3s ease-in-out",
+        backgroundColor: "background.paper",
+      }}
+    >
       <Box
         sx={{
-          borderLeft: "4px solid",
-          borderLeftColor: hasChanges ? "#1976d2" : "transparent",
-          transition: "border-left-color 0.3s ease-in-out",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          width: "100%",
+          mb: 1,
         }}
       >
-        <OverviewCard
-          name={
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography
-                  variant="body1"
-                  color="text.primary"
-                  fontWeight="bold"
-                  component="span"
-                >
-                  {configName}
-                </Typography>
-                <Chip label={configType} size="small" variant="outlined" />
-                {required ? (
-                  <Chip
-                    label="required"
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                  />
-                ) : (
-                  <Chip
-                    label="optional"
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                  />
-                )}
-                {validationSummary && (
-                  <Chip
-                    label={validationSummary}
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
-                {restricted && (
-                  <Chip
-                    label="restricted"
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                  />
-                )}
-                {sensitive && (
-                  <Chip
-                    label="sensitive"
-                    size="small"
-                    color="secondary"
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            </Box>
-          }
-          description={configDescription}
-        >
-          {sensitive && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" color="error">
-                This config is marked as sensitive and cannot be viewed or used
-                in final configurations.
-              </Typography>
-            </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="subtitle1"
+            color="text.primary"
+            fontWeight="bold"
+            component="span"
+          >
+            {configName}
+          </Typography>
+          <Chip label={configType} size="small" variant="outlined" />
+          {required ? (
+            <Chip
+              label="required"
+              size="small"
+              color="warning"
+              variant="outlined"
+            />
+          ) : (
+            <Chip
+              label="optional"
+              size="small"
+              color="info"
+              variant="outlined"
+            />
           )}
-          {!sensitive && (
-            <Box sx={{ flexGrow: 1, p: 2 }}>
-              <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
-                {configType !== "boolean" && (
-                  <Box>
-                    <Controller
-                      name={`configs.${index}.default`}
-                      rules={{
-                        validate: (value) => {
-                          const isRestricted = restricted;
-                          if (
-                            isRestricted &&
-                            required &&
-                            (value === "" ||
-                              value === null ||
-                              value === undefined)
-                          ) {
-                            return "Default value is required when the field is marked as Restricted.";
-                          }
+          {validationSummary && (
+            <Chip
+              label={validationSummary}
+              size="small"
+              color="success"
+              variant="outlined"
+            />
+          )}
+          {restricted && (
+            <Chip
+              label="restricted"
+              size="small"
+              color="error"
+              variant="outlined"
+            />
+          )}
+          {sensitive && (
+            <Chip
+              label="sensitive"
+              size="small"
+              color="secondary"
+              variant="outlined"
+            />
+          )}
+        </Box>
+      </Box>
 
-                          if (configType !== "number") {
-                            return true;
-                          }
+      {configDescription && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {configDescription}
+        </Typography>
+      )}
 
-                          if (
-                            value === "" ||
-                            value === null ||
-                            value === undefined
-                          ) {
-                            return true;
-                          }
+      <Divider sx={{ mb: 2 }} />
 
-                          const parsedDefault = parseNumericField(value);
-                          if (parsedDefault === null) {
-                            return "Default value must be a valid number.";
-                          }
+      {sensitive && (
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="error">
+            This config is marked as sensitive and cannot be viewed or used in
+            final configurations.
+          </Typography>
+        </Box>
+      )}
 
-                          const parsedMin =
-                            parseNumericField(validationMinValue);
-                          const parsedMax =
-                            parseNumericField(validationMaxValue);
+      {!sensitive && (
+        <Box>
+          <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
+            {configType !== "boolean" && (
+              <Box>
+                <Controller
+                  name={`configs.${index}.default`}
+                  rules={{
+                    validate: (value) => {
+                      const isRestricted = restricted;
+                      if (
+                        isRestricted &&
+                        required &&
+                        (value === "" || value === null || value === undefined)
+                      ) {
+                        return "Default value is required when the field is marked as Restricted.";
+                      }
 
-                          if (parsedMin !== null && parsedDefault < parsedMin) {
-                            return `Default value must be greater than or equal to min value (${parsedMin}).`;
-                          }
+                      if (configType !== "number") {
+                        return true;
+                      }
 
-                          if (parsedMax !== null && parsedDefault > parsedMax) {
-                            return `Default value must be less than or equal to max value (${parsedMax}).`;
-                          }
+                      if (
+                        value === "" ||
+                        value === null ||
+                        value === undefined
+                      ) {
+                        return true;
+                      }
 
-                          return true;
+                      const parsedDefault = parseNumericField(value);
+                      if (parsedDefault === null) {
+                        return "Default value must be a valid number.";
+                      }
+
+                      const parsedMin = parseNumericField(validationMinValue);
+                      const parsedMax = parseNumericField(validationMaxValue);
+
+                      if (parsedMin !== null && parsedDefault < parsedMin) {
+                        return `Default value must be greater than or equal to min value (${parsedMin}).`;
+                      }
+
+                      if (parsedMax !== null && parsedDefault > parsedMax) {
+                        return `Default value must be less than or equal to max value (${parsedMax}).`;
+                      }
+
+                      return true;
+                    },
+                  }}
+                  control={control}
+                  render={({ field, fieldState: { error } }) => (
+                    <DefaultValueInput
+                      config_type={configType}
+                      field={field}
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Box>
+            )}
+            {configType === "string" && (
+              <Box sx={{ flexGrow: 1 }}>
+                <Controller
+                  name={`configs.${index}.options`}
+                  control={control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      multiple
+                      freeSolo
+                      size="small"
+                      options={[]}
+                      value={field.value || []}
+                      onChange={(_event, newValue) => field.onChange(newValue)}
+                      slotProps={{
+                        chip: {
+                          variant: "outlined",
+                          size: "small",
                         },
                       }}
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <DefaultValueInput
-                          config_type={configType}
-                          field={field}
-                          error={!!error}
-                          helperText={error?.message}
-                        />
-                      )}
-                    />
-                  </Box>
-                )}
-                {configType === "string" && (
-                  <Box
-                    sx={{
-                      flexGrow: 1,
-                    }}
-                  >
-                    <Controller
-                      name={`configs.${index}.options`}
-                      control={control}
-                      render={({ field }) => (
-                        <Autocomplete
-                          multiple
-                          freeSolo
-                          options={[]}
-                          value={field.value || []}
-                          onChange={(_event, newValue) =>
-                            field.onChange(newValue)
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Options"
+                          variant="outlined"
+                          size="small"
+                          error={!!errors?.options}
+                          helperText={
+                            errors?.options
+                              ? String(errors.options.message)
+                              : "Add options and press Enter"
                           }
-                          slotProps={{
-                            chip: {
-                              variant: "outlined",
-                              size: "small",
-                            },
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Options"
-                              variant="outlined"
-                              error={!!errors?.options}
-                              helperText={
-                                errors?.options
-                                  ? String(errors.options.message)
-                                  : "Add options and press Enter"
-                              }
-                              fullWidth
-                              margin="normal"
-                            />
-                          )}
+                          fullWidth
+                          margin="normal"
                         />
                       )}
                     />
-                  </Box>
-                )}
-              </Stack>
+                  )}
+                />
+              </Box>
+            )}
+          </Stack>
 
-              {configType === "boolean" && (
-                <Box sx={{ mb: 2, mt: -5 }}>
+          {configType === "boolean" && (
+            <Box sx={{ mb: 2 }}>
+              <Controller
+                name={`configs.${index}.default`}
+                control={control}
+                render={({ field }) => (
+                  <DefaultValueInput config_type={configType} field={field} />
+                )}
+              />
+            </Box>
+          )}
+
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={1}
+            sx={{ alignItems: "center", mb: 2, mt: 1 }}
+          >
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={{ xs: 0.5, md: 1 }}
+              alignItems="flex-start"
+              sx={{ flexGrow: 1 }}
+            >
+              <Box>
+                <Controller
+                  name={`configs.${index}.required`}
+                  control={control}
+                  render={({ field }) => (
+                    <Tooltip title="When checked, this field cannot be left empty during creation or updates.">
+                      <FormControlLabel
+                        control={<Checkbox {...field} checked={field.value} />}
+                        label={
+                          <Typography variant="body2">Required</Typography>
+                        }
+                      />
+                    </Tooltip>
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name={`configs.${index}.frozen`}
+                  control={control}
+                  render={({ field }) => (
+                    <Tooltip title="When checked, the value of this field cannot be changed after the initial creation.">
+                      <FormControlLabel
+                        control={<Checkbox {...field} checked={field.value} />}
+                        label={<Typography variant="body2">Frozen</Typography>}
+                      />
+                    </Tooltip>
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name={`configs.${index}.unique`}
+                  control={control}
+                  render={({ field }) => (
+                    <Tooltip title="When checked, this field must have a unique value across all instances.">
+                      <FormControlLabel
+                        control={<Checkbox {...field} checked={field.value} />}
+                        label={<Typography variant="body2">Unique</Typography>}
+                      />
+                    </Tooltip>
+                  )}
+                />
+              </Box>
+              <Box>
+                <Controller
+                  name={`configs.${index}.restricted`}
+                  control={control}
+                  render={({ field }) => (
+                    <Tooltip title="When checked, this field will be hidden during creation, default value should be provided.">
+                      <FormControlLabel
+                        control={<Checkbox {...field} checked={field.value} />}
+                        label={
+                          <Typography variant="body2">Restricted</Typography>
+                        }
+                      />
+                    </Tooltip>
+                  )}
+                />
+              </Box>
+            </Stack>
+            <ConfigReferenceInput control={control} index={index} />
+          </Stack>
+
+          {configType === "string" && (
+            <Accordion
+              expanded={isStringValidationOpen}
+              onChange={(_, expanded) => setIsStringValidationOpen(expanded)}
+              disableGutters
+              elevation={0}
+              square
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1,
+                mt: 1,
+                "&:before": { display: "none" },
+              }}
+            >
+              <AccordionSummary>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    gap: 2,
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    String Validation
+                  </Typography>
                   <Controller
-                    name={`configs.${index}.default`}
+                    name={validationEnabledField}
                     control={control}
+                    defaultValue={false}
                     render={({ field }) => (
-                      <DefaultValueInput
-                        config_type={configType}
-                        field={field}
+                      <FormControlLabel
+                        sx={{ m: 0 }}
+                        labelPlacement="start"
+                        onClick={(event) => event.stopPropagation()}
+                        onFocus={(event) => event.stopPropagation()}
+                        label={
+                          <Typography variant="caption" color="text.secondary">
+                            {field.value ? "Enabled" : "Disabled"}
+                          </Typography>
+                        }
+                        control={
+                          <Switch
+                            size="small"
+                            name={field.name}
+                            inputRef={field.ref}
+                            checked={Boolean(field.value)}
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                            onChange={(_, checked) =>
+                              handleValidationToggle(
+                                checked,
+                                field.onChange,
+                                "string",
+                              )
+                            }
+                            inputProps={{
+                              "aria-label": "Toggle string validation",
+                            }}
+                          />
+                        }
                       />
                     )}
                   />
                 </Box>
-              )}
-
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                spacing={1}
-                sx={{ alignItems: "baseline", mb: 2, mt: 2 }}
-              >
-                <Stack
-                  direction={{ xs: "column", md: "row" }}
-                  spacing={{ xs: 1, md: 2 }}
-                  alignItems="flex-start"
-                  sx={{ flexGrow: 1 }}
-                >
-                  <Box>
-                    <Controller
-                      name={`configs.${index}.required`}
-                      control={control}
-                      render={({ field }) => (
-                        <Tooltip title="When checked, this field cannot be left empty during creation or updates.">
-                          <FormControlLabel
-                            control={
-                              <Checkbox {...field} checked={field.value} />
-                            }
-                            label="Required"
-                          />
-                        </Tooltip>
-                      )}
-                    />
-                  </Box>
-                  <Box>
-                    <Controller
-                      name={`configs.${index}.frozen`}
-                      control={control}
-                      render={({ field }) => (
-                        <Tooltip title="When checked, the value of this field cannot be changed after the initial creation.">
-                          <FormControlLabel
-                            control={
-                              <Checkbox {...field} checked={field.value} />
-                            }
-                            label="Frozen"
-                          />
-                        </Tooltip>
-                      )}
-                    />
-                  </Box>
-                  <Box>
-                    <Controller
-                      name={`configs.${index}.unique`}
-                      control={control}
-                      render={({ field }) => (
-                        <Tooltip title="When checked, this field must have a unique value across all instances.">
-                          <FormControlLabel
-                            control={
-                              <Checkbox {...field} checked={field.value} />
-                            }
-                            label="Unique"
-                          />
-                        </Tooltip>
-                      )}
-                    />
-                  </Box>
-                  <Box>
-                    <Controller
-                      name={`configs.${index}.restricted`}
-                      control={control}
-                      render={({ field }) => (
-                        <Tooltip title="When checked, this field will be hidden during creation, default value should be provided.">
-                          <FormControlLabel
-                            control={
-                              <Checkbox {...field} checked={field.value} />
-                            }
-                            label="Restricted"
-                          />
-                        </Tooltip>
-                      )}
-                    />
-                  </Box>
-                </Stack>
-                <ConfigReferenceInput control={control} index={index} />
-              </Stack>
-
-              {configType === "string" && (
-                <Accordion
-                  expanded={isStringValidationOpen}
-                  onChange={(_, expanded) =>
-                    setIsStringValidationOpen(expanded)
-                  }
-                  disableGutters
-                  elevation={0}
-                  square
-                  sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    mt: 1,
-                    "&:before": { display: "none" },
-                  }}
-                >
-                  <AccordionSummary>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
-                        gap: 2,
-                      }}
-                    >
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        String Validation
-                      </Typography>
-                      <Controller
-                        name={validationEnabledField}
-                        control={control}
-                        defaultValue={false}
-                        render={({ field }) => (
-                          <FormControlLabel
-                            sx={{ m: 0 }}
-                            labelPlacement="start"
-                            onClick={(event) => event.stopPropagation()}
-                            onFocus={(event) => event.stopPropagation()}
-                            label={
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {field.value ? "Enabled" : "Disabled"}
-                              </Typography>
-                            }
-                            control={
-                              <Switch
-                                name={field.name}
-                                inputRef={field.ref}
-                                checked={Boolean(field.value)}
-                                onClick={(event) => event.stopPropagation()}
-                                onFocus={(event) => event.stopPropagation()}
-                                onChange={(_, checked) =>
-                                  handleValidationToggle(
-                                    checked,
-                                    field.onChange,
-                                    "string",
-                                  )
-                                }
-                                inputProps={{
-                                  "aria-label": "Toggle string validation",
-                                }}
-                              />
-                            }
-                          />
-                        )}
-                      />
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {validationEnabled ? (
-                      <ValidationRegexControls
-                        control={control}
-                        index={index}
-                      />
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        Validation is disabled for this variable. Toggle the
-                        switch to enable it.
-                      </Typography>
-                    )}
-                  </AccordionDetails>
-                </Accordion>
-              )}
-              {configType === "number" && (
-                <Accordion
-                  expanded={isNumberValidationOpen}
-                  onChange={(_, expanded) =>
-                    setIsNumberValidationOpen(expanded)
-                  }
-                  disableGutters
-                  elevation={0}
-                  square
-                  sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    mt: 1,
-                    "&:before": { display: "none" },
-                  }}
-                >
-                  <AccordionSummary>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
-                        gap: 2,
-                      }}
-                    >
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        Number Validation
-                      </Typography>
-                      <Controller
-                        name={validationEnabledField}
-                        control={control}
-                        defaultValue={false}
-                        render={({ field }) => (
-                          <FormControlLabel
-                            sx={{ m: 0 }}
-                            labelPlacement="start"
-                            onClick={(event) => event.stopPropagation()}
-                            onFocus={(event) => event.stopPropagation()}
-                            label={
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {field.value ? "Enabled" : "Disabled"}
-                              </Typography>
-                            }
-                            control={
-                              <Switch
-                                name={field.name}
-                                inputRef={field.ref}
-                                checked={Boolean(field.value)}
-                                onClick={(event) => event.stopPropagation()}
-                                onFocus={(event) => event.stopPropagation()}
-                                onChange={(_, checked) =>
-                                  handleValidationToggle(
-                                    checked,
-                                    field.onChange,
-                                    "number",
-                                  )
-                                }
-                                inputProps={{
-                                  "aria-label": "Toggle number validation",
-                                }}
-                              />
-                            }
-                          />
-                        )}
-                      />
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {validationEnabled ? (
-                      <ValidationNumberControls
-                        control={control}
-                        index={index}
-                      />
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        Validation is disabled for this variable. Toggle the
-                        switch to enable numeric boundaries.
-                      </Typography>
-                    )}
-                  </AccordionDetails>
-                </Accordion>
-              )}
-            </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {validationEnabled ? (
+                  <ValidationRegexControls control={control} index={index} />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Validation is disabled for this variable. Toggle the switch
+                    to enable it.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
           )}
-        </OverviewCard>
-      </Box>
+          {configType === "number" && (
+            <Accordion
+              expanded={isNumberValidationOpen}
+              onChange={(_, expanded) => setIsNumberValidationOpen(expanded)}
+              disableGutters
+              elevation={0}
+              square
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1,
+                mt: 1,
+                "&:before": { display: "none" },
+              }}
+            >
+              <AccordionSummary>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    gap: 2,
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Number Validation
+                  </Typography>
+                  <Controller
+                    name={validationEnabledField}
+                    control={control}
+                    defaultValue={false}
+                    render={({ field }) => (
+                      <FormControlLabel
+                        sx={{ m: 0 }}
+                        labelPlacement="start"
+                        onClick={(event) => event.stopPropagation()}
+                        onFocus={(event) => event.stopPropagation()}
+                        label={
+                          <Typography variant="caption" color="text.secondary">
+                            {field.value ? "Enabled" : "Disabled"}
+                          </Typography>
+                        }
+                        control={
+                          <Switch
+                            size="small"
+                            name={field.name}
+                            inputRef={field.ref}
+                            checked={Boolean(field.value)}
+                            onClick={(event) => event.stopPropagation()}
+                            onFocus={(event) => event.stopPropagation()}
+                            onChange={(_, checked) =>
+                              handleValidationToggle(
+                                checked,
+                                field.onChange,
+                                "number",
+                              )
+                            }
+                            inputProps={{
+                              "aria-label": "Toggle number validation",
+                            }}
+                          />
+                        }
+                      />
+                    )}
+                  />
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails>
+                {validationEnabled ? (
+                  <ValidationNumberControls control={control} index={index} />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Validation is disabled for this variable. Toggle the switch
+                    to enable numeric boundaries.
+                  </Typography>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };
