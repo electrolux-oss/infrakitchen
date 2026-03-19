@@ -127,9 +127,10 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   });
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
-    useState<GridColumnVisibilityModel>(
-      savedState?.columnVisibilityModel || defaultColumnVisibilityModel || {},
-    );
+    useState<GridColumnVisibilityModel>(() => ({
+      ...(defaultColumnVisibilityModel ?? {}),
+      ...(savedState?.columnVisibilityModel ?? {}),
+    }));
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
