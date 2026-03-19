@@ -109,6 +109,7 @@ export const TemplateCreatePage = () => {
               <TextField
                 {...field}
                 label="Name"
+                required
                 variant="outlined"
                 error={!!errors.name}
                 helperText={
@@ -156,12 +157,13 @@ export const TemplateCreatePage = () => {
               <TextField
                 {...field}
                 label="Template Key"
+                required
                 variant="outlined"
                 error={!!errors.template}
                 helperText={
                   errors.template
                     ? errors.template.message
-                    : "Unique key for the template"
+                    : "Unique key for the template. Only letters, numbers, and underscores are allowed."
                 }
                 fullWidth
                 margin="normal"
@@ -231,15 +233,16 @@ export const TemplateCreatePage = () => {
               <Box>
                 <FormControlLabel
                   control={<Checkbox {...field} checked={field.value} />}
-                  label="Abstract (if true, won't be instantiated)"
+                  label="Abstract Template"
                 />
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ display: "block", mt: -1, mb: 1 }}
                 >
-                  Abstract templates are used as reusable building blocks and
-                  cannot be instantiated directly.
+                  Abstract templates represent reusable entities such as Org,
+                  Team, or Project. They do not provision infrastructure
+                  directly, but provide values for other templates.
                 </Typography>
               </Box>
             )}

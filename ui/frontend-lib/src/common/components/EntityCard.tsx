@@ -27,6 +27,7 @@ export interface EntityCardProps {
   entityFields: ReactNode;
   status?: string;
   icon?: ReactNode;
+  chip?: string;
 }
 
 export const EntityCard = ({
@@ -40,6 +41,7 @@ export const EntityCard = ({
   entityFields,
   entity_name,
   icon,
+  chip,
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -63,6 +65,16 @@ export const EntityCard = ({
         avatar={icon}
         title={name}
         subheader={description || "No description"}
+        action={
+          chip ? (
+            <Chip
+              label={chip.toUpperCase()}
+              size="small"
+              variant="outlined"
+              color="info"
+            />
+          ) : undefined
+        }
         sx={{ mb: 0 }}
       />
       <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
