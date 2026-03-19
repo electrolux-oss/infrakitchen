@@ -32,7 +32,7 @@ export const TemplateContent = () => {
     {
       label: "Settings",
       content: <DangerZoneCard />,
-      requiredPermission: `template:${entity.id}`,
+      requiredPermission: `api:template`,
       permissionAction: "write",
     },
   ];
