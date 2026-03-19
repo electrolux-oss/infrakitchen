@@ -42,8 +42,12 @@ class GitClient:
         """
         self.logger.info(f"Cloning branch {branch} of repository to {self.destination_dir}")
 
-        if "/" in branch:
-            branch = branch.split("/")[-1]
+        if branch.startswith("origin/"):
+            branch = branch.removeprefix("origin/")
+        elif branch.startswith("refs/heads/"):
+            branch = branch.removeprefix("refs/heads/")
+        elif branch.startswith("refs/tags/"):
+            branch = branch.removeprefix("refs/tags/")
 
         command_args = f"clone -q --depth 1 --single-branch --branch {branch} {self.git_url} {self.destination_dir}"
         _ = await self._run_git_command(command_args, self.workspace_path)
