@@ -154,8 +154,14 @@ const ResourceCreatePageInner = () => {
   const handleSave = useCallback(
     async (data: ResourceCreate) => {
       setSaving(true);
+      const payload: ResourceCreate = {
+        ...data,
+        storage_id: data.storage_id || null,
+        workspace_id: data.workspace_id || null,
+        source_code_version_id: data.source_code_version_id || null,
+      };
       ikApi
-        .postRaw("resources", data)
+        .postRaw("resources", payload)
         .then((response: ResourceResponse) => {
           if (response.id) {
             notify("Resource created successfully", "success");
