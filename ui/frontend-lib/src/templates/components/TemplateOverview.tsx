@@ -1,4 +1,4 @@
-import { Box, Chip, Divider, Typography } from "@mui/material";
+import { Box, Divider } from "@mui/material";
 
 import {
   getLabels,
@@ -18,15 +18,9 @@ export interface TemplateAboutProps {
 export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   return (
     <OverviewCard
-      name={
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="h4">{template.name}</Typography>
-          {template.abstract && (
-            <Chip label="ABSTRACT" size="small" variant="outlined" />
-          )}
-        </Box>
-      }
+      name={template.name}
       description={template.description || "No description"}
+      chip={template.abstract ? "Abstract" : undefined}
     >
       <CommonField
         name={"Status"}
