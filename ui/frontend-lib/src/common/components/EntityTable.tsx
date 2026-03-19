@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import {
   Box,
@@ -26,6 +27,7 @@ export interface EntityTableColumn extends GridColDef<any> {
 
 export interface ResourceTableProps {
   entityName: string;
+  subtitle?: string;
   columns: EntityTableColumn[];
   entities: any[];
   loading: boolean;
@@ -49,6 +51,7 @@ type GridPreferencePanelValue = Parameters<
 
 export const EntityTable = ({
   entityName,
+  subtitle,
   entities,
   columns,
   loading,
@@ -157,7 +160,33 @@ export const EntityTable = ({
     >
       <Card sx={{ mt: 2 }}>
         <CardHeader
-          title={`${entityName} (${entities.length})`}
+          title={
+            <Box display="flex" alignItems="center">
+              {entityName}
+              <Box
+                component="span"
+                sx={{ ml: 1 }}
+              >{`(${entities.length})`}</Box>
+              {subtitle && (
+                <Tooltip title={subtitle} arrow>
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      cursor: "pointer",
+                      color: "info.main",
+                      fontSize: 16,
+                    }}
+                    tabIndex={0}
+                  >
+                    <InfoOutlined fontSize="inherit" />
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
+          }
           sx={{ pb: 2 }}
           action={
             <Tooltip title="Show or hide columns">
