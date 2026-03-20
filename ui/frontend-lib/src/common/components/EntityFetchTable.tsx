@@ -30,6 +30,7 @@ interface EntityFetchTableProps {
   defaultFilter?: Record<string, any>;
   initialFilters?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
+  filterStorageKey?: string;
 }
 
 interface DataGridState {
@@ -83,6 +84,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     defaultFilter,
     initialFilters,
     buildApiFilters,
+    filterStorageKey,
   } = props;
 
   const { ikApi } = useConfig();
@@ -92,11 +94,12 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const [data, setData] = useState<IkEntity[]>([]);
   const [totalRows, setTotalRows] = useState(0);
 
-  const filterStorageKey = `filter_${title.toLowerCase().replace(/\s+/g, "_")}`;
+  const resolvedFilterStorageKey =
+    filterStorageKey ?? `filter_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const hasFilters = Boolean(filterConfigs && filterConfigs.length > 0);
 
   const multiFilterState = useMultiFilterState({
-    storageKey: filterStorageKey,
+    storageKey: resolvedFilterStorageKey,
     initialValues: {},
   });
 
@@ -266,7 +269,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
         {showFilters && (
           <FilterPanel
             filters={filterConfigs}
-            storageKey={filterStorageKey}
+            storageKey={resolvedFilterStorageKey}
             onFilterChange={onFilterChange}
           />
         )}
