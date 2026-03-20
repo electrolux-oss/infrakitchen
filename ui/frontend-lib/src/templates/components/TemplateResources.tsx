@@ -115,8 +115,12 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
       const resolved = { ...filterValues };
       if (filterValues.source_code_version_id) {
         const id = versionIdByLabel[filterValues.source_code_version_id];
-        resolved.source_code_version_id =
-          id ?? filterValues.source_code_version_id;
+
+        if (id) {
+          resolved.source_code_version_id = id;
+        } else {
+          delete resolved.source_code_version_id;
+        }
       }
       return buildResourceApiFilters(resolved, template_id);
     },
@@ -133,6 +137,7 @@ export const TemplateResources = (props: TemplateResourcesProps) => {
         entityName="resource"
         columns={resourceColumns}
         defaultColumnVisibilityModel={templateResourceColumnVisibilityModel}
+        filterStorageKey={`filter_template_resources_${template_id}`}
         fields={resourceFields}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
