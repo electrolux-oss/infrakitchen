@@ -1,6 +1,6 @@
 <h1>
   <img style="height: 1em;" src="./docs/assets/images/ik-logo.png" alt="logo" title="InfraKitchen">
-  InfraKitchen (Beta)
+  InfraKitchen
 </h1>
 
 <p align="center">Run your infrastructure like a Michelin-starred kitchen.</p>

@@ -1,9 +1,11 @@
 import { ReactNode } from "react";
 
 import {
+  Box,
   Card,
   CardContent,
   CardHeader,
+  Chip,
   Grid,
   SxProps,
   Theme,
@@ -14,16 +16,29 @@ export interface OverviewCardProps {
   description?: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
+  chip?: string;
   sx?: SxProps<Theme>;
 }
 
 export const OverviewCard = (props: OverviewCardProps) => {
-  const { name, description, children, actions, sx } = props;
+  const { name, description, children, actions, chip, sx } = props;
   return (
     <Card sx={{ width: "100%", ...sx }}>
-      {(name || description || actions) && (
+      {(name || description || actions || chip) && (
         <CardHeader
-          title={name}
+          title={
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {name}
+              {chip && (
+                <Chip
+                  label={chip.toUpperCase()}
+                  size="small"
+                  variant="outlined"
+                  color="info"
+                />
+              )}
+            </Box>
+          }
           subheader={description}
           action={actions}
           sx={{
