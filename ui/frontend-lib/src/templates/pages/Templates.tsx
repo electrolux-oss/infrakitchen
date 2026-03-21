@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
+import InputIcon from "@mui/icons-material/Input";
 import {
   Alert,
   Box,
@@ -117,6 +119,7 @@ export const TemplatesPage = () => {
         <Button
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/create`)}
+          startIcon={<AddIcon />}
         >
           Create
         </Button>
@@ -124,6 +127,7 @@ export const TemplatesPage = () => {
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/import`)}
           sx={{ ml: 1 }}
+          startIcon={<InputIcon />}
         >
           Import
         </Button>

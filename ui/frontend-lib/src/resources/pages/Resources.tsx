@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate, useLocation } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 
 import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
@@ -103,6 +104,7 @@ export const ResourcesPage = () => {
             variant="outlined"
             color="primary"
             onClick={() => navigate(`${linkPrefix}resources/create`)}
+            startIcon={<AddIcon />}
           >
             Create
           </Button>

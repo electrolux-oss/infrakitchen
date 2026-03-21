@@ -5,12 +5,10 @@ import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  getDateValue,
-} from "../../../common/components/CommonField";
+import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
+import { RelativeTime } from "../../../common/components/RelativeTime";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -46,10 +44,14 @@ export const UserRolesCard = (props: { user_id: string }) => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "creator",

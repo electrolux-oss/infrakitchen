@@ -45,11 +45,11 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
       description={integration.description}
       metadata={[
         {
-          label: "Created At",
+          label: "Created",
           value: getDateValue(integration.created_at),
         },
         {
-          label: "Updated At",
+          label: "Last Updated",
           value: getDateValue(integration.updated_at),
         },
         {

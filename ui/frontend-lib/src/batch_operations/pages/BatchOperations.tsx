@@ -2,15 +2,14 @@ import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 
 export const BatchOperationsPage = () => {
@@ -41,10 +40,14 @@ export const BatchOperationsPage = () => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
     ],
     [],
@@ -84,6 +87,7 @@ export const BatchOperationsPage = () => {
             variant="outlined"
             color="primary"
             onClick={() => navigate(`${linkPrefix}batch_operations/create`)}
+            startIcon={<AddIcon />}
           >
             Create
           </Button>

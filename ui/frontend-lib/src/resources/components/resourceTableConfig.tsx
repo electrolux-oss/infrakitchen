@@ -4,13 +4,10 @@ import {
 } from "@mui/x-data-grid";
 
 import { FilterConfig } from "../../common";
-import {
-  getDateValue,
-  GetEntityLink,
-  getLabels,
-} from "../../common/components/CommonField";
+import { GetEntityLink, getLabels } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/EntityTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { IntegrationShort } from "../../integrations/types";
 import { SecretShort } from "../../secrets/types";
@@ -129,15 +126,25 @@ export const resourceColumns: EntityTableColumn[] = [
   },
   {
     field: "created_at",
-    headerName: "Created At",
+    headerName: "Created",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
+    renderCell: (params: GridRenderCellParams) => (
+      <RelativeTime
+        date={params.value}
+        sx={{ fontSize: "0.75rem", display: "flex" }}
+      />
+    ),
   },
   {
     field: "updated_at",
-    headerName: "Updated At",
+    headerName: "Last Updated",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
+    renderCell: (params: GridRenderCellParams) => (
+      <RelativeTime
+        date={params.value}
+        sx={{ fontSize: "0.75rem", display: "flex" }}
+      />
+    ),
   },
   {
     field: "creator",

@@ -2,6 +2,12 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import DownloadIcon from "@mui/icons-material/Download";
+import EditIcon from "@mui/icons-material/Edit";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SyncIcon from "@mui/icons-material/Sync";
 import { Button } from "@mui/material";
 
 import { ENTITY_ACTION } from "../../utils/constants";
@@ -87,7 +93,7 @@ export function EntityActions(props: EntityActionsProps) {
         <Button
           variant="outlined"
           onClick={() => changeDialog("dryrun")}
-          disabled={isLoading}
+          startIcon={<ContentPasteIcon />}
         >
           Plan
         </Button>
@@ -97,7 +103,7 @@ export function EntityActions(props: EntityActionsProps) {
           <Button
             variant="outlined"
             onClick={() => changeDialog("dryrun_with_temp_state")}
-            disabled={isLoading}
+            startIcon={<PendingActionsIcon />}
           >
             Plan (Temp State)
           </Button>
@@ -106,17 +112,13 @@ export function EntityActions(props: EntityActionsProps) {
         <Button
           variant="outlined"
           onClick={() => changeDialog("execute")}
-          disabled={isLoading}
+          startIcon={<PlayArrowIcon />}
         >
           Apply
         </Button>
       )}
       {actions.includes("retry") && (
-        <Button
-          variant="contained"
-          onClick={() => changeDialog("retry")}
-          disabled={isLoading}
-        >
+        <Button variant="contained" onClick={() => changeDialog("retry")}>
           Retry
         </Button>
       )}
@@ -125,27 +127,17 @@ export function EntityActions(props: EntityActionsProps) {
         <Button
           variant="contained"
           onClick={() => changeDialog("sync")}
-          disabled={isLoading}
+          startIcon={<SyncIcon />}
         >
           Sync
         </Button>
       )}
 
-      {actions.includes("download") && (
-        <Button
-          variant="outlined"
-          onClick={() => handleDownloadClick()}
-          disabled={isLoading}
-        >
-          Source Code
-        </Button>
-      )}
       {actions.includes("recreate") && (
         <Button
           variant="outlined"
           color="secondary"
           onClick={() => changeDialog("recreate")}
-          disabled={isLoading}
         >
           Re-create
         </Button>
@@ -155,7 +147,6 @@ export function EntityActions(props: EntityActionsProps) {
           variant="outlined"
           color="success"
           onClick={() => changeDialog("enable")}
-          disabled={isLoading}
         >
           Enable
         </Button>
@@ -166,8 +157,20 @@ export function EntityActions(props: EntityActionsProps) {
           onClick={() =>
             navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
           }
+          startIcon={<EditIcon />}
         >
           Edit
+        </Button>
+      )}
+      {actions.includes("download") && (
+        <Button
+          variant="outlined"
+          onClick={() => handleDownloadClick()}
+          loading={isLoading}
+          loadingPosition="start"
+          startIcon={<DownloadIcon />}
+        >
+          Code
         </Button>
       )}
 

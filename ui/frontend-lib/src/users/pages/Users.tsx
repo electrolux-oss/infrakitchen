@@ -2,16 +2,17 @@ import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Button, Box } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
+import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import {
-  getDateValue,
   GetEntityLink,
   getProviderValue,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 
 export const UsersPage = () => {
@@ -76,17 +77,25 @@ export const UsersPage = () => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "updated_at",
-        headerName: "Updated At",
+        headerName: "Last Updated",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "description",
@@ -171,6 +180,7 @@ export const UsersPage = () => {
             variant="outlined"
             color="primary"
             onClick={() => navigate(`${linkPrefix}users/create`)}
+            startIcon={<AddIcon />}
           >
             Create
           </Button>

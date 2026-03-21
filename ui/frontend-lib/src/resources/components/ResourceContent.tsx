@@ -48,7 +48,7 @@ export const ResourceContent = () => {
     {
       label: "Revisions",
       content: (
-        <Box sx={{ maxWidth: 1000 }}>
+        <Box sx={{ width: "100%" }}>
           <Revision resourceId={entity.id} resourceRevision={0} />
         </Box>
       ),
@@ -64,7 +64,9 @@ export const ResourceContent = () => {
   ];
 
   return (
-    <Box sx={{ gap: 2, minWidth: 1000 }}>
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    >
       <ResourceOverview resource={entity} />
       <TabbedContent tabs={tabs} />
     </Box>

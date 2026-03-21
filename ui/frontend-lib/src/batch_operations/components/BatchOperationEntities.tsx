@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
 
@@ -26,11 +26,9 @@ import {
 } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import {
-  GetEntityLink,
-  getDateValue,
-} from "../../common/components/CommonField";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCard } from "../../common/components/PropertyCard";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { LogList } from "../../common/LogsComponent/LogList";
@@ -302,10 +300,14 @@ export const BatchOperationEntities = ({
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "logs",

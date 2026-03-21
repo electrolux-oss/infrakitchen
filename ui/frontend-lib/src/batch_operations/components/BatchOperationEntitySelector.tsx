@@ -18,12 +18,10 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { FilterConfig } from "../../common/components/filter_panel/FilterConfig";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notifyError } from "../../common/hooks/useNotification";
@@ -142,10 +140,14 @@ export const BatchOperationEntitySelector = (
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
     ],
     [],
@@ -189,10 +191,14 @@ export const BatchOperationEntitySelector = (
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
     ],
     [],
