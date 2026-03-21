@@ -1,18 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Button, Box } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
+import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import {
-  getDateValue,
   GetEntityLink,
   getLabels,
   getProviderValue,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 
@@ -105,17 +106,25 @@ export const StoragesPage = () => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "updated_at",
-        headerName: "Updated At",
+        headerName: "Last Updated",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "description",
@@ -169,6 +178,7 @@ export const StoragesPage = () => {
             variant="outlined"
             color="primary"
             onClick={() => navigate(`${linkPrefix}storages/create`)}
+            startIcon={<AddIcon />}
           >
             Create
           </Button>

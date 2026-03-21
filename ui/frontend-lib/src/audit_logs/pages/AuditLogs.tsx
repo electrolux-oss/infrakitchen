@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig } from "../../common";
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { FilterConfig, useConfig } from "../../common";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 
 export const AuditLogsPage = () => {
@@ -48,13 +46,6 @@ export const AuditLogsPage = () => {
 
   const columns = useMemo(
     () => [
-      {
-        field: "created_at",
-        headerName: "Time",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
-      },
       {
         field: "creator",
         headerName: "User",
@@ -97,6 +88,17 @@ export const AuditLogsPage = () => {
             />
           );
         },
+      },
+      {
+        field: "created_at",
+        headerName: "Time",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
     ],
     [],

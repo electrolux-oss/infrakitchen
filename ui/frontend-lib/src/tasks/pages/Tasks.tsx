@@ -1,16 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
 import { Link } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig } from "../../common";
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { FilterConfig, useConfig } from "../../common";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 
@@ -87,17 +85,25 @@ export const TasksPage = () => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "updated_at",
-        headerName: "Updated At",
+        headerName: "Last Updated",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "created_by",

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import InputIcon from "@mui/icons-material/Input";
 import {
   Alert,
   Box,
@@ -132,6 +133,7 @@ export const SourceCodesPage = () => {
       <Button
         variant="outlined"
         onClick={() => navigate(`${linkPrefix}source_codes/create`)}
+        startIcon={<InputIcon />}
       >
         Import
       </Button>

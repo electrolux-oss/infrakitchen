@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Box, Tooltip, Typography } from "@mui/material";
 import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 
@@ -109,8 +110,34 @@ export default function WorkerList() {
     },
 
     { field: "host", headerName: "Host", flex: 1 },
-    { field: "created_at", headerName: "Created At", flex: 1 },
-    { field: "updated_at", headerName: "Updated At", flex: 1 },
+    {
+      field: "created_at",
+      headerName: "Created",
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <RelativeTime
+          date={params.value}
+          sx={{
+            fontSize: "0.75rem",
+            display: "flex",
+          }}
+        />
+      ),
+    },
+    {
+      field: "updated_at",
+      headerName: "Last Updated",
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => (
+        <RelativeTime
+          date={params.value}
+          sx={{
+            fontSize: "0.75rem",
+            display: "flex",
+          }}
+        />
+      ),
+    },
     HostInfoField,
   ];
 

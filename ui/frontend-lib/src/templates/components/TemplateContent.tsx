@@ -40,8 +40,10 @@ export const TemplateContent = () => {
   return (
     <Box
       sx={{
+        display: "flex",
+        flexDirection: "column",
         gap: 2,
-        minWidth: 1000,
+        width: "100%",
       }}
     >
       <TemplateOverview template={entity} />

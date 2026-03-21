@@ -2,17 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
-import {
-  getDateValue,
-  GetEntityLink,
-  getLabels,
-} from "../../common/components/CommonField";
+import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
+import { GetEntityLink, getLabels } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 
@@ -84,10 +82,14 @@ export const ExecutorsPage = () => {
       },
       {
         field: "created_at",
-        headerName: "Created At",
+        headerName: "Created",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
       },
       {
         field: "labels",
@@ -151,6 +153,7 @@ export const ExecutorsPage = () => {
             variant="outlined"
             color="primary"
             onClick={() => navigate(`${linkPrefix}executors/create`)}
+            startIcon={<AddIcon />}
           >
             Create
           </Button>

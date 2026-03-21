@@ -11,17 +11,18 @@ import {
 } from "@mui/material";
 import {
   DataGrid,
+  GridColDef,
   GridFilterModel,
-  GridSortModel,
   GridPaginationModel,
   GridRenderCellParams,
-  GridColDef,
+  GridSortModel,
 } from "@mui/x-data-grid";
 
 import { CommonDialog, useConfig } from "../../../common";
 import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
-import { getDateValue, GetReferenceUrlValue } from "../CommonField";
+import { GetReferenceUrlValue } from "../CommonField";
+import { RelativeTime } from "../RelativeTime";
 
 import { Logs } from "./Logs";
 
@@ -139,12 +140,6 @@ export const Audit = ({ entityId }: AuditProps) => {
   const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
       {
-        field: "created_at",
-        headerName: "Time",
-        flex: 1,
-        valueFormatter: (value: string) => getDateValue(value),
-      },
-      {
         field: "creator",
         headerName: "User",
         flex: 1,
@@ -160,6 +155,14 @@ export const Audit = ({ entityId }: AuditProps) => {
         field: "action",
         headerName: "Event",
         flex: 1,
+      },
+      {
+        field: "created_at",
+        headerName: "Time",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
+          <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
+        ),
       },
       {
         field: "userActions",
