@@ -13,40 +13,34 @@
     <a href="https://opensource.electrolux.one/infrakitchen/getting-started/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/core-concepts/overview/">Core Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
 </p>
 
+## What is InfraKitchen?
+
+InfraKitchen is an open source Developer Platform that brings Platform Engineering practices to infrastructure management. It enables platform teams to create and continuously maintain reusable infrastructure templates (the "golden path"), while empowering developers to provision and manage their own cloud resources. Developers can adopt new template versions as the platform team evolves best practices, ensuring infrastructure stays secure, compliant, and aligned with organizational standards.
+
 ![ik_template_demo](https://github.com/user-attachments/assets/195ed8d2-fc83-4412-96a8-4d4ac8836dad)
 
-## How to Use InfraKitchen in Your Organization
+InfraKitchen enables seamless collaboration across different roles throughout the infrastructure lifecycle:
 
-InfraKitchen helps teams move beyond **infrastructure operational bottlenecks** by enabling a platform engineering approach. Using InfraKitchen is simple and flexible across different roles and workflows:
+### 🧱 Platform Team (or SRE, Infrastructure Team)
 
-### 🧱 Platform Team (or SRE, DevOps team)
+The Platform Team's primary role shifts from fulfilling tickets to creating and continuously evolving the **golden path**:
 
-The Platform Team's primary role shifts from fulfilling tickets to creating and maintaining the **core platform abstractions**:
+* **Opinionated Infrastructure-as-Code templates:** Build standardized, versioned templates for common needs (networks, databases, Kubernetes clusters, etc.) that embed best practices and organizational standards.
 
-* **Reusable templates:** Creating reusable, standardized templates for common needs like networks, databases, Kubernetes clusters, etc.
-* **Define the "Golden Path":** Craft and maintain the approved, secure, and compliant **Infrastructure-as-Code templates**. These templates abstract away complexity, ensuring best practices are automatically applied for all developers.
+### 👩‍💻 Developers
 
-### 👩‍💻 Developers & Application Teams
+Developers are the main beneficiaries, gaining **autonomy and speed** for their infrastructure needs:
 
-Developers are the main beneficiaries, gaining **autonomy and speed** for their service delivery:
+* **Self-Service Provisioning:** Provision any cloud resources instantly in the UI or via Pull Request—no more infrastructure tickets. Adopt new golden path versions as the platform team releases improvements.
+* **Simplified Complexity:** Predefined templates abstract infrastructure details, enabling teams to provision and operate infrastructure without deep infrastructure expertise.
 
-* **Fully Self-Service Provisioning:** Use the platform to provision any cloud resources. This eliminates the need to file tickets and waiting for the infrastructure team, dramatically speeding up delivery from **weeks to minutes**.
-* **Minimal Expertise Required:** Leverage predefined templates that require very little input, removing the overhead of having to be an infrastructure expert to run applications.
-* **Choice of Interface:** InfraKitchen supports both the rapid, minimal-input **UI-driven** approach and the traditional **code-driven** Pull Request process for teams that prefer more control over their infrastructure.
+## Why InfraKitchen
 
-### 🚒 On-Call Engineers & Incident Responders
-
-The platform distributes operational ownership and simplifies incident response:
-
-* **Accountability:** The platform makes infrastructure more visible and understandable to developers and less technical roles, such as **Product Managers**, encouraging them to own more troubleshooting responsibilities. This accelerates initial incident identification and response time.
-
-## Highlights
-
-- Create your Terraform module once and apply it to any account
-- Control your infrastructure by logging and audit systems
-- Give the full picture of your infrastructure to your developers
-- Provide pre-configured, best-practice templates to accelerate development.
-- Reduce the risk of developer error and misconfigurations.
+- **Write once, apply everywhere:** Create infrastructure templates once and apply them consistently everywhere.
+- **Continuous improvement cycle:** Platform teams maintain and evolve templates; developers automatically benefit from improvements.
+- **Governance at scale:** Enforce infrastructure standards, security policies, and compliance rules centrally while enabling developer autonomy.
+- **Complete visibility:** Full audit trails show who provisioned what infrastructure, when changes were made, and why—essential for compliance and incident response.
+- **Eliminate infrastructure bottlenecks:** Reduce weeks-long provisioning cycles to minutes with self-service infrastructure, while platform teams retain control.
 
 ## Getting started
 
