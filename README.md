@@ -36,11 +36,11 @@ Developers are the main beneficiaries, gaining **autonomy and speed** for their 
 
 ## Why InfraKitchen
 
+- **Eliminate infrastructure bottlenecks:** Reduce weeks-long provisioning to minutes with self-service infrastructure, while platform teams retain control.
 - **Write once, apply everywhere:** Create infrastructure templates once and apply them consistently everywhere.
-- **Continuous improvement cycle:** Platform teams maintain and evolve templates; developers automatically benefit from improvements.
 - **Governance at scale:** Enforce infrastructure standards, security policies, and compliance rules centrally while enabling developer autonomy.
+- **Continuous improvement cycle:** Platform teams maintain and evolve templates; developers automatically benefit from improvements.
 - **Complete visibility:** Full audit trails show who provisioned what infrastructure, when changes were made, and why—essential for compliance and incident response.
-- **Eliminate infrastructure bottlenecks:** Reduce weeks-long provisioning cycles to minutes with self-service infrastructure, while platform teams retain control.
 
 ## Getting started
 
