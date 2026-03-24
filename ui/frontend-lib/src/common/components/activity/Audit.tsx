@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { useSearchParams } from "react-router";
+
 import ArticleIcon from "@mui/icons-material/Article";
 import {
   Box,
@@ -19,7 +21,6 @@ import {
 } from "@mui/x-data-grid";
 
 import { CommonDialog, useConfig } from "../../../common";
-import { useLocalStorage } from "../../../common/context/UIStateContext";
 import { AuditLogEntity } from "../../../types";
 import { GetReferenceUrlValue } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
@@ -33,11 +34,6 @@ export interface AuditProps {
 interface AuditFilterPanelProps {
   search: string;
   setSearch: (value: string) => void;
-}
-
-interface DataGridState {
-  sortModel: GridSortModel;
-  paginationModel: GridPaginationModel;
 }
 
 export const AuditFilterPanel = ({
@@ -71,33 +67,32 @@ export const AuditFilterPanel = ({
 
 export const Audit = ({ entityId }: AuditProps) => {
   const { ikApi } = useConfig();
-  const { get, setKey } = useLocalStorage<Record<string, DataGridState>>();
-  const storageKey = "auditTable";
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const actionsWithLogs = useMemo<string[]>(
     () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
     [],
   );
 
-  const savedState = get(storageKey);
+  const selectedTraceId = searchParams.get("traceId");
+  const logsOpen = !!selectedTraceId;
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
-
-  const [logsOpen, setLogsOpen] = useState<boolean>(false);
-  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
     quickFilterValues: [],
   });
 
-  const [sortModel, setSortModel] = useState<GridSortModel>(
-    savedState?.sortModel || [{ field: "created_at", sort: "desc" }],
-  );
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "created_at", sort: "desc" },
+  ]);
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
-    savedState?.paginationModel || { page: 0, pageSize: 10 },
-  );
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -109,11 +104,6 @@ export const Audit = ({ entityId }: AuditProps) => {
     }, 150);
     return () => clearTimeout(id);
   }, [search]);
-
-  // Save sort and pagination state to localStorage
-  useEffect(() => {
-    setKey(storageKey, { sortModel, paginationModel });
-  }, [sortModel, paginationModel, storageKey, setKey]);
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setSortModel(newSortModel);
@@ -184,8 +174,9 @@ export const Audit = ({ entityId }: AuditProps) => {
                 startIcon={<ArticleIcon />}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedTraceId(params.row.id);
-                  setLogsOpen(true);
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.set("traceId", params.row.id);
+                  setSearchParams(newParams);
                 }}
               >
                 Logs
@@ -195,7 +186,7 @@ export const Audit = ({ entityId }: AuditProps) => {
         ),
       },
     ],
-    [actionsWithLogs],
+    [actionsWithLogs, searchParams, setSearchParams],
   );
 
   return (
@@ -246,7 +237,11 @@ export const Audit = ({ entityId }: AuditProps) => {
                   title="Logs"
                   maxWidth="md"
                   open={logsOpen}
-                  onClose={() => setLogsOpen(false)}
+                  onClose={() => {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.delete("traceId");
+                    setSearchParams(newParams);
+                  }}
                   content={
                     <Logs entityId={entityId} traceId={selectedTraceId} />
                   }

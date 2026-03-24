@@ -24,6 +24,7 @@ export const TemplatePage = () => {
     <EntityProvider entity_name="template" entity_id={template_id || ""}>
       <EntityContainer
         title={"Template Overview"}
+        showActivity={false}
         actions={
           <Button variant="outlined" onClick={handleUseTemplate}>
             Use This Template
@@ -36,4 +37,4 @@ export const TemplatePage = () => {
   );
 };
 
-TemplatePage.path = "/templates/:template_id";
+TemplatePage.path = "/templates/:template_id/:tab?";
