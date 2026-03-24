@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+
+import { useEffectOnce } from "react-use";
 
 import { Box } from "@mui/material";
 import {
@@ -98,6 +100,17 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     filterStorageKey ?? `filter_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const hasFilters = Boolean(filterConfigs && filterConfigs.length > 0);
 
+  const filterConfigsRef = useRef(filterConfigs);
+  filterConfigsRef.current = filterConfigs;
+  const buildApiFiltersRef = useRef(buildApiFilters);
+  buildApiFiltersRef.current = buildApiFilters;
+  const defaultFilterRef = useRef(defaultFilter);
+  defaultFilterRef.current = defaultFilter;
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
+
   const multiFilterState = useMultiFilterState({
     storageKey: resolvedFilterStorageKey,
     initialValues: {},
@@ -111,12 +124,11 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const storageKey = `entityTable_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const savedState = get(storageKey) as DataGridState | undefined;
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (initialFilters && Object.keys(initialFilters).length > 0) {
       multiFilterState.setFilterValues(initialFilters);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on first mount
+  });
 
   const [sortModel, setSortModel] = useState<GridSortModel>(
     savedState?.sortModel || [],
@@ -158,10 +170,12 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   const paginationPageSize = paginationModel.pageSize;
 
   const requestedFields = useMemo(() => {
+    const cols = columnsRef.current;
+    const flds = fieldsRef.current;
     const requested = new Set<string>(["id"]);
-    const baseColumnFields = new Set(columns.map((column) => column.field));
+    const baseColumnFields = new Set(cols.map((column) => column.field));
 
-    columns.forEach((column) => {
+    cols.forEach((column) => {
       if (columnVisibilityModel[column.field] === false) {
         return;
       }
@@ -174,7 +188,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
       });
     });
 
-    fields.forEach((field) => {
+    flds.forEach((field) => {
       if (
         !baseColumnFields.has(field) &&
         columnVisibilityModel[field] === true
@@ -184,7 +198,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     });
 
     return Array.from(requested);
-  }, [columns, columnVisibilityModel, fields]);
+  }, [columnVisibilityModel]);
 
   const fetchFilteredData = useMemo(() => {
     return async () => {
@@ -193,17 +207,17 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
       let apiFilters: Record<string, any> = {};
 
-      if (filterConfigs) {
-        if (buildApiFilters) {
-          apiFilters = buildApiFilters(currentFilterValues);
+      if (filterConfigsRef.current) {
+        if (buildApiFiltersRef.current) {
+          apiFilters = buildApiFiltersRef.current(currentFilterValues);
         } else {
           apiFilters = buildDefaultApiFilters(
             currentFilterValues,
-            filterConfigs,
+            filterConfigsRef.current,
           );
         }
-      } else if (defaultFilter) {
-        apiFilters = { ...defaultFilter };
+      } else if (defaultFilterRef.current) {
+        apiFilters = { ...defaultFilterRef.current };
       }
 
       let sort: GridSortItem;
@@ -243,10 +257,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     paginationPage,
     paginationPageSize,
     sortModel,
-    filterConfigs,
-    buildApiFilters,
     currentFilterValues,
-    defaultFilter,
   ]);
 
   useEffect(() => {
@@ -289,6 +300,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           setFilterModel={setFilterModel}
           columnVisibilityModel={columnVisibilityModel}
           handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+          onRefresh={fetchFilteredData}
         />
       </Box>
     </>

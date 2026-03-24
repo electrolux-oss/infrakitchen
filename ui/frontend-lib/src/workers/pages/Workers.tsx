@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import { Box, Tooltip, Typography } from "@mui/material";
-import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -75,76 +75,59 @@ const HostInfoField = {
 };
 
 export default function WorkerList() {
-  const [counter, setCounter] = useState(1);
+  const columns = useMemo(
+    () => [
+      {
+        field: "name",
+        headerName: "Name",
+        flex: 1,
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <StatusChip status={String(params.row.status).toLowerCase()} />
+        ),
+      },
 
-  useEffect(() => {
-    let timerId: ReturnType<typeof setTimeout>;
-
-    const poll = async () => {
-      setCounter((prev) => prev + 1);
-      timerId = setTimeout(poll, 10000);
-    };
-
-    poll();
-
-    return () => {
-      if (timerId) {
-        clearTimeout(timerId);
-      }
-    };
-  }, [setCounter]);
-
-  const columns: GridColDef[] = [
-    {
-      field: "name",
-      headerName: "Name",
-      flex: 1,
-    },
-    {
-      field: "status",
-      headerName: "Status",
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <StatusChip status={String(params.row.status).toLowerCase()} />
-      ),
-    },
-
-    { field: "host", headerName: "Host", flex: 1 },
-    {
-      field: "created_at",
-      headerName: "Created",
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <RelativeTime
-          date={params.value}
-          sx={{
-            fontSize: "0.75rem",
-            display: "flex",
-          }}
-        />
-      ),
-    },
-    {
-      field: "updated_at",
-      headerName: "Last Updated",
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
-        <RelativeTime
-          date={params.value}
-          sx={{
-            fontSize: "0.75rem",
-            display: "flex",
-          }}
-        />
-      ),
-    },
-    HostInfoField,
-  ];
+      { field: "host", headerName: "Host", flex: 1 },
+      {
+        field: "created_at",
+        headerName: "Created",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{
+              fontSize: "0.75rem",
+              display: "flex",
+            }}
+          />
+        ),
+      },
+      {
+        field: "updated_at",
+        headerName: "Last Updated",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{
+              fontSize: "0.75rem",
+              display: "flex",
+            }}
+          />
+        ),
+      },
+      HostInfoField,
+    ],
+    [],
+  );
 
   return (
     <PageContainer title="Workers">
       <EntityFetchTable
-        key={counter}
         title="Workers"
         entityName="worker"
         columns={columns}
