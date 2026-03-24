@@ -1,5 +1,7 @@
 import { Box } from "@mui/material";
 
+import { Audit } from "../../common/components/activity/Audit";
+import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
@@ -28,6 +30,20 @@ export const TemplateContent = () => {
           entity_name={entity._entity_name}
         />
       ),
+    },
+    {
+      label: "Audit",
+      content: <Audit entityId={entity.id} />,
+    },
+    {
+      label: "Revisions",
+      content: (
+        <Box sx={{ maxWidth: 1000 }}>
+          <Revision resourceId={entity.id} resourceRevision={0} />
+        </Box>
+      ),
+      requiredPermission: `resource:${entity.id}`,
+      permissionAction: "write",
     },
     {
       label: "Settings",

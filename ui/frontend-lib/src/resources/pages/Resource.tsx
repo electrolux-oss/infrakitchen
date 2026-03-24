@@ -43,4 +43,4 @@ export const ResourcePage = () => {
   );
 };
 
-ResourcePage.path = "/resources/:resource_id";
+ResourcePage.path = "/resources/:resource_id/:tab?";

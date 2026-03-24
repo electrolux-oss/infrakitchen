@@ -1,4 +1,6 @@
-import { useState, SyntheticEvent, ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+
+import { useLocation, useNavigate, useParams } from "react-router";
 
 import { Box, Tab, Tabs } from "@mui/material";
 
@@ -23,6 +25,9 @@ export const TabbedContent = ({
   onChange,
 }: TabbedContentProps) => {
   const { permissions } = usePermissionProvider();
+  const { tab: activeTabFromPath } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const visibleTabs = tabs.filter(
     ({ requiredPermission, permissionAction }) => {
@@ -37,18 +42,44 @@ export const TabbedContent = ({
     },
   );
 
-  const [tab, setTab] = useState(defaultTab ?? visibleTabs[0]?.label);
+  const activeTab = visibleTabs.find(
+    (t) => t.label.toLowerCase() === activeTabFromPath?.toLowerCase(),
+  );
 
-  const handleChange = (_: SyntheticEvent, val: string) => {
-    setTab(val);
-    onChange?.(val);
-  };
+  useEffect(() => {
+    if (!activeTab && visibleTabs.length > 0) {
+      const targetLabel = (
+        visibleTabs.find((t) => t.label === defaultTab) || visibleTabs[0]
+      ).label.toLowerCase();
+
+      const parts = location.pathname.replace(/\/$/, "").split("/");
+      if (activeTabFromPath) parts[parts.length - 1] = targetLabel;
+      else parts.push(targetLabel);
+
+      navigate(parts.join("/") + location.search, { replace: true });
+    }
+  }, [
+    activeTab,
+    activeTabFromPath,
+    visibleTabs,
+    defaultTab,
+    location.pathname,
+    location.search,
+    navigate,
+  ]);
+
+  if (!activeTab) return null;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Tabs
-        value={tab}
-        onChange={handleChange}
+        value={activeTab.label}
+        onChange={(_, v) => {
+          const parts = location.pathname.replace(/\/$/, "").split("/");
+          parts[parts.length - 1] = v.toLowerCase();
+          navigate(parts.join("/") + location.search);
+          onChange?.(v);
+        }}
         variant="scrollable"
         scrollButtons="auto"
       >
@@ -56,8 +87,7 @@ export const TabbedContent = ({
           <Tab key={label} label={label} value={label} />
         ))}
       </Tabs>
-
-      {visibleTabs.find((t) => t.label === tab)?.content}
+      {activeTab.content}
     </Box>
   );
 };
