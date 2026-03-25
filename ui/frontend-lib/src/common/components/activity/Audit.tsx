@@ -29,6 +29,7 @@ import { Logs } from "./Logs";
 
 export interface AuditProps {
   entityId: string;
+  useScvId?: boolean;
 }
 
 interface AuditFilterPanelProps {
@@ -65,7 +66,7 @@ export const AuditFilterPanel = ({
   );
 };
 
-export const Audit = ({ entityId }: AuditProps) => {
+export const Audit = ({ entityId, useScvId }: AuditProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -75,7 +76,15 @@ export const Audit = ({ entityId }: AuditProps) => {
   );
 
   const selectedTraceId = searchParams.get("traceId");
-  const logsOpen = !!selectedTraceId;
+  const selectedScvId = searchParams.get("scvId");
+
+  const logsOpen = useMemo(() => {
+    if (!selectedTraceId) return false;
+    if (useScvId) {
+      return selectedScvId === entityId;
+    }
+    return true;
+  }, [selectedTraceId, selectedScvId, useScvId, entityId]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
@@ -176,6 +185,9 @@ export const Audit = ({ entityId }: AuditProps) => {
                   e.stopPropagation();
                   const newParams = new URLSearchParams(searchParams);
                   newParams.set("traceId", params.row.id);
+                  if (useScvId) {
+                    newParams.set("scvId", entityId);
+                  }
                   setSearchParams(newParams);
                 }}
               >
@@ -186,7 +198,7 @@ export const Audit = ({ entityId }: AuditProps) => {
         ),
       },
     ],
-    [actionsWithLogs, searchParams, setSearchParams],
+    [actionsWithLogs, searchParams, setSearchParams, useScvId, entityId],
   );
 
   return (
@@ -232,7 +244,7 @@ export const Audit = ({ entityId }: AuditProps) => {
                   },
                 }}
               />
-              {selectedTraceId && (
+              {logsOpen && selectedTraceId && (
                 <CommonDialog
                   title="Logs"
                   maxWidth="md"
@@ -240,6 +252,9 @@ export const Audit = ({ entityId }: AuditProps) => {
                   onClose={() => {
                     const newParams = new URLSearchParams(searchParams);
                     newParams.delete("traceId");
+                    if (useScvId) {
+                      newParams.delete("scvId");
+                    }
                     setSearchParams(newParams);
                   }}
                   content={

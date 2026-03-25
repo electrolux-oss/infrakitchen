@@ -1,6 +1,6 @@
 import { useState, ElementType, useMemo } from "react";
 
-import { useLocation } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import {
   CircularProgress,
@@ -55,6 +55,9 @@ const SourceCodeGitRefRows = ({
   enabledOnly?: boolean;
   defaultOpenRef?: string;
 }) => {
+  const [searchParams] = useSearchParams();
+  const scvIdFromUrl = searchParams.get("scvId") ?? null;
+
   const { entities, total, loading, refreshList } = useEntityListProvider();
 
   const versionMap = useMemo(() => {
@@ -86,21 +89,25 @@ const SourceCodeGitRefRows = ({
           <CircularProgress size={32} />
         </Box>
       ) : (
-        displayRefs.map((ref: string) => (
-          <SourceCodeRefRow
-            key={ref}
-            entry={ref}
-            type={type}
-            sourceCodeId={sourceCodeId}
-            gitFolders={getFolders(ref)}
-            entity={
-              versionMap.get(ref) ??
-              versionMap.get(ref.replace(/^origin\//, ""))
-            } // Support imported SCVs that don't have origin/ at the start of the ref
-            onRefresh={refreshList}
-            defaultOpen={ref === defaultOpenRef}
-          />
-        ))
+        displayRefs.map((ref: string) => {
+          const entity =
+            versionMap.get(ref) ?? versionMap.get(ref.replace(/^origin\//, "")); // Support imported SCVs that don't have origin/ at the start of the ref
+          const logSharing = entity?.id === scvIdFromUrl;
+
+          return (
+            <SourceCodeRefRow
+              key={ref}
+              entry={ref}
+              type={type}
+              sourceCodeId={sourceCodeId}
+              gitFolders={getFolders(ref)}
+              entity={entity}
+              onRefresh={refreshList}
+              defaultOpen={ref === defaultOpenRef || logSharing}
+              defaultTab={logSharing ? "audit" : "metadata"}
+            />
+          );
+        })
       )}
 
       <TablePagination
