@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -52,7 +52,7 @@ export const StoragesPage = () => {
   );
 
   // Build API filters
-  const buildApiFilters = (filterValues: Record<string, any>) => {
+  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     const apiFilters: Record<string, any> = {};
 
     if (filterValues.name && filterValues.name.trim().length > 0) {
@@ -64,7 +64,7 @@ export const StoragesPage = () => {
     }
 
     return apiFilters;
-  };
+  }, []);
 
   const columns = useMemo(
     () => [

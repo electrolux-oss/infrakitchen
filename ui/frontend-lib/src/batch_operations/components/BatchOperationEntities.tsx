@@ -102,8 +102,16 @@ export const BatchOperationEntities = ({
         sort: { field: "name", order: "ASC" },
         fields:
           batchOperation.entity_type === "resource"
-            ? ["id", "name", "state", "status", "created_at", "template"]
-            : ["id", "name", "state", "status", "created_at"],
+            ? [
+                "id",
+                "name",
+                "state",
+                "status",
+                "created_at",
+                "updated_at",
+                "template",
+              ]
+            : ["id", "name", "state", "status", "created_at", "updated_at"],
       });
 
       setEntities(response.data || []);
@@ -299,8 +307,8 @@ export const BatchOperationEntities = ({
         ),
       },
       {
-        field: "created_at",
-        headerName: "Created",
+        field: "updated_at",
+        headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime

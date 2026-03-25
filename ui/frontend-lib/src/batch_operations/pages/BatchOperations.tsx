@@ -49,6 +49,17 @@ export const BatchOperationsPage = () => {
           />
         ),
       },
+      {
+        field: "updated_at",
+        headerName: "Last Updated",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
+      },
     ],
     [],
   );

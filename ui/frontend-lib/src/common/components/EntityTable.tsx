@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import {
   Box,
@@ -21,9 +22,10 @@ import {
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
-export interface EntityTableColumn extends GridColDef<any> {
+export type EntityTableColumn = GridColDef<any> & {
+  field?: string;
   fetchFields?: string[];
-}
+};
 
 export interface ResourceTableProps {
   entityName: string;
@@ -43,6 +45,7 @@ export interface ResourceTableProps {
   handleColumnVisibilityModelChange?: (
     model: GridColumnVisibilityModel,
   ) => void;
+  onRefresh?: () => void;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -65,6 +68,7 @@ export const EntityTable = ({
   handlePaginationModelChange,
   setFilterModel,
   handleColumnVisibilityModelChange,
+  onRefresh,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
 
@@ -189,18 +193,30 @@ export const EntityTable = ({
           }
           sx={{ pb: 2 }}
           action={
-            <Tooltip title="Show or hide columns">
-              <span>
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Tooltip title="Refresh">
                 <IconButton
                   size="small"
-                  aria-label="Toggle column visibility"
-                  onClick={handleColumnVisibilityClick}
-                  disabled={!apiRef.current}
+                  aria-label="Refresh"
+                  onClick={onRefresh}
+                  disabled={!onRefresh}
                 >
-                  <ViewColumnIcon fontSize="small" />
+                  <RefreshIcon fontSize="small" />
                 </IconButton>
-              </span>
-            </Tooltip>
+              </Tooltip>
+              <Tooltip title="Show or hide columns">
+                <span>
+                  <IconButton
+                    size="small"
+                    aria-label="Toggle column visibility"
+                    onClick={handleColumnVisibilityClick}
+                    disabled={!apiRef.current}
+                  >
+                    <ViewColumnIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
           }
         />
         <CardContent>
