@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -6,17 +6,32 @@ import { FilterConfig, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import {
+  useEntityMetadataFromRows,
+  EntityMeta,
+} from "../../common/hooks/useEntityMetadata";
 import PageContainer from "../../common/PageContainer";
+import { IkEntity } from "../../types";
 
 export const AuditLogsPage = () => {
   const { ikApi } = useConfig();
   const [actions, setActions] = useState<string[]>([]);
+  const [rows, setRows] = useState<IkEntity[]>([]);
+
+  const { data: entityMeta } = useEntityMetadataFromRows(rows);
+
+  const entityMetaRef = useRef<Map<string, EntityMeta>>(entityMeta);
+  entityMetaRef.current = entityMeta;
 
   useEffect(() => {
     ikApi.get("audit_logs/actions").then((response) => {
       setActions(response);
     });
   }, [ikApi]);
+
+  const onDataLoaded = useCallback((data: IkEntity[]) => {
+    setRows(data);
+  }, []);
 
   // Configure filters
   const filterConfigs: FilterConfig[] = useMemo(
@@ -34,7 +49,7 @@ export const AuditLogsPage = () => {
   );
 
   // Build API filters
-  const buildApiFilters = (filterValues: Record<string, any>) => {
+  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     const apiFilters: Record<string, any> = {};
 
     if (filterValues.action && filterValues.action.length > 0) {
@@ -42,7 +57,7 @@ export const AuditLogsPage = () => {
     }
 
     return apiFilters;
-  };
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -80,11 +95,12 @@ export const AuditLogsPage = () => {
         hideable: false,
         valueGetter: (value: string) => value,
         renderCell: (params: GridRenderCellParams) => {
+          const meta = entityMetaRef.current.get(params.row.entity_id);
           return (
             <GetEntityLink
               id={params.row.entity_id}
               _entity_name={params.row.model}
-              name={params.row.model}
+              name={meta?.name ?? params.row.model}
             />
           );
         },
@@ -110,6 +126,7 @@ export const AuditLogsPage = () => {
         title="Audit Log"
         entityName="audit_log"
         columns={columns}
+        onDataLoaded={onDataLoaded}
         fields={[
           "id",
           "user_id",

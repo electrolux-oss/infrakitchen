@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -9,14 +9,32 @@ import { FilterConfig, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import {
+  useEntityMetadataFromRows,
+  EntityMeta,
+} from "../../common/hooks/useEntityMetadata";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { IkEntity } from "../../types";
 
 export const TasksPage = () => {
   const { linkPrefix, ikApi } = useConfig();
 
   const [entities, setEntities] = useState<string[]>([]);
+  const [rows, setRows] = useState<IkEntity[]>([]);
   const navigate = useNavigate();
+
+  const { data: entityMeta } = useEntityMetadataFromRows(rows, {
+    modelField: "entity",
+    idField: "entity_id",
+  });
+
+  const entityMetaRef = useRef<Map<string, EntityMeta>>(entityMeta);
+  entityMetaRef.current = entityMeta;
+
+  const onDataLoaded = useCallback((data: IkEntity[]) => {
+    setRows(data);
+  }, []);
 
   useEffect(() => {
     ikApi.get("entities", {}).then((response) => {
@@ -40,7 +58,7 @@ export const TasksPage = () => {
   );
 
   // Build API filters
-  const buildApiFilters = (filterValues: Record<string, any>) => {
+  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     const apiFilters: Record<string, any> = {};
 
     if (filterValues.entity && filterValues.entity.length > 0) {
@@ -48,7 +66,7 @@ export const TasksPage = () => {
     }
 
     return apiFilters;
-  };
+  }, []);
 
   const columns = useMemo(
     () => [
@@ -59,6 +77,7 @@ export const TasksPage = () => {
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
+          const meta = entityMetaRef.current.get(params.row.entity_id);
           return (
             <Link
               onClick={() => {
@@ -69,7 +88,7 @@ export const TasksPage = () => {
               rel="noopener"
               style={{ cursor: "pointer" }}
             >
-              {params.row.entity}
+              {meta?.name ?? params.row.entity}
             </Link>
           );
         },
@@ -143,6 +162,7 @@ export const TasksPage = () => {
         ]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
+        onDataLoaded={onDataLoaded}
         defaultColumnVisibilityModel={{
           created_by: false,
         }}

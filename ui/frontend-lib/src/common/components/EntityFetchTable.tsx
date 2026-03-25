@@ -29,6 +29,7 @@ interface EntityFetchTableProps {
   defaultColumnVisibilityModel?: GridColumnVisibilityModel;
   filterConfigs?: FilterConfig[];
   onFilterChange?: (filterValues: Record<string, any>) => void;
+  onDataLoaded?: (data: IkEntity[]) => void;
   defaultFilter?: Record<string, any>;
   initialFilters?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
@@ -83,6 +84,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     defaultColumnVisibilityModel,
     filterConfigs,
     onFilterChange,
+    onDataLoaded,
     defaultFilter,
     initialFilters,
     buildApiFilters,
@@ -110,6 +112,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   columnsRef.current = columns;
   const fieldsRef = useRef(fields);
   fieldsRef.current = fields;
+  const onDataLoadedRef = useRef(onDataLoaded);
+  onDataLoadedRef.current = onDataLoaded;
 
   const multiFilterState = useMultiFilterState({
     storageKey: resolvedFilterStorageKey,
@@ -244,6 +248,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
         });
         setData(response.data);
         setTotalRows(response.total ? response.total : 0);
+        onDataLoadedRef.current?.(response.data);
       } catch (e) {
         notifyError(e);
       } finally {
