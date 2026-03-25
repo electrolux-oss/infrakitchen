@@ -42,7 +42,7 @@ export const TemplateContent = () => {
           <Revision resourceId={entity.id} resourceRevision={0} />
         </Box>
       ),
-      requiredPermission: `resource:${entity.id}`,
+      requiredPermission: `api:template`,
       permissionAction: "write",
     },
     {
