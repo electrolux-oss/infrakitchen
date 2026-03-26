@@ -56,7 +56,7 @@ const SourceCodeGitRefRows = ({
   defaultOpenRef?: string;
 }) => {
   const [searchParams] = useSearchParams();
-  const scvIdFromUrl = searchParams.get("scvId") ?? null;
+  const versionIdFromUrl = searchParams.get("versionId") ?? null;
 
   const { entities, total, loading, refreshList } = useEntityListProvider();
 
@@ -92,7 +92,7 @@ const SourceCodeGitRefRows = ({
         displayRefs.map((ref: string) => {
           const entity =
             versionMap.get(ref) ?? versionMap.get(ref.replace(/^origin\//, "")); // Support imported SCVs that don't have origin/ at the start of the ref
-          const logSharing = entity?.id === scvIdFromUrl;
+          const logSharing = entity?.id === versionIdFromUrl;
 
           return (
             <SourceCodeRefRow

@@ -330,7 +330,7 @@ export const SourceCodeRefRow = ({
           )}
 
           {activeTab === "audit" && entity && (
-            <Audit entityId={entity.id} useScvId />
+            <Audit entityId={entity.id} useVersionId />
           )}
 
           {activeTab === "revision" && entity && (
