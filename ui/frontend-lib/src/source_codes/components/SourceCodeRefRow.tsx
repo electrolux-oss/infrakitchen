@@ -56,6 +56,7 @@ type GitRefRow = {
   sourceCodeId: string;
   entity?: SourceCodeVersionResponse;
   defaultOpen?: boolean;
+  defaultTab?: TabValue;
   onRefresh: () => void;
 };
 
@@ -85,6 +86,7 @@ export const SourceCodeRefRow = ({
   sourceCodeId,
   entity,
   defaultOpen = false,
+  defaultTab = "metadata",
   onRefresh,
 }: GitRefRow) => {
   const { loading } = useEntityListProvider();
@@ -93,7 +95,7 @@ export const SourceCodeRefRow = ({
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(defaultOpen);
-  const [activeTab, setActiveTab] = useState<TabValue>("metadata");
+  const [activeTab, setActiveTab] = useState<TabValue>(defaultTab);
   const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
 
   const canWrite = checkActionPermission("api:source_code_version", "write");
@@ -327,7 +329,9 @@ export const SourceCodeRefRow = ({
             <ConfigurationTabContent entity={entity} />
           )}
 
-          {activeTab === "audit" && entity && <Audit entityId={entity.id} />}
+          {activeTab === "audit" && entity && (
+            <Audit entityId={entity.id} useVersionId />
+          )}
 
           {activeTab === "revision" && entity && (
             <Box sx={{ maxWidth: 1000 }}>

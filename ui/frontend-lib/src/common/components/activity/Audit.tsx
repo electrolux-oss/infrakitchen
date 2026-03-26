@@ -29,6 +29,7 @@ import { Logs } from "./Logs";
 
 export interface AuditProps {
   entityId: string;
+  useVersionId?: boolean;
 }
 
 interface AuditFilterPanelProps {
@@ -65,7 +66,7 @@ export const AuditFilterPanel = ({
   );
 };
 
-export const Audit = ({ entityId }: AuditProps) => {
+export const Audit = ({ entityId, useVersionId }: AuditProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -75,7 +76,15 @@ export const Audit = ({ entityId }: AuditProps) => {
   );
 
   const selectedTraceId = searchParams.get("traceId");
-  const logsOpen = !!selectedTraceId;
+  const selectedVersionId = searchParams.get("versionId");
+
+  const logsOpen = useMemo(() => {
+    if (!selectedTraceId) return false;
+    if (useVersionId) {
+      return selectedVersionId === entityId;
+    }
+    return true;
+  }, [selectedTraceId, selectedVersionId, useVersionId, entityId]);
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
@@ -176,6 +185,9 @@ export const Audit = ({ entityId }: AuditProps) => {
                   e.stopPropagation();
                   const newParams = new URLSearchParams(searchParams);
                   newParams.set("traceId", params.row.id);
+                  if (useVersionId) {
+                    newParams.set("versionId", entityId);
+                  }
                   setSearchParams(newParams);
                 }}
               >
@@ -186,7 +198,7 @@ export const Audit = ({ entityId }: AuditProps) => {
         ),
       },
     ],
-    [actionsWithLogs, searchParams, setSearchParams],
+    [actionsWithLogs, searchParams, setSearchParams, useVersionId, entityId],
   );
 
   return (
@@ -232,7 +244,7 @@ export const Audit = ({ entityId }: AuditProps) => {
                   },
                 }}
               />
-              {selectedTraceId && (
+              {logsOpen && selectedTraceId && (
                 <CommonDialog
                   title="Logs"
                   maxWidth="md"
@@ -240,6 +252,9 @@ export const Audit = ({ entityId }: AuditProps) => {
                   onClose={() => {
                     const newParams = new URLSearchParams(searchParams);
                     newParams.delete("traceId");
+                    if (useVersionId) {
+                      newParams.delete("versionId");
+                    }
                     setSearchParams(newParams);
                   }}
                   content={
