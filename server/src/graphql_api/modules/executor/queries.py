@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.executors.model import Executor
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.executor.converters import convert_executor, executor_options
 from graphql_api.modules.executor.types import ExecutorType
 
 
 @strawberry.type
 class ExecutorQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def executor(self, info: Info, id: uuid.UUID) -> ExecutorType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class ExecutorQuery:
             return None
         return convert_executor(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def executors(
         self,
         info: Info,

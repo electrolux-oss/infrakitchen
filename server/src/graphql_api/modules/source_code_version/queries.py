@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.source_code_versions.model import SourceCodeVersion
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.source_code_version.converters import convert_source_code_version, source_code_version_options
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
 
 
 @strawberry.type
 class SourceCodeVersionQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code_version(self, info: Info, id: uuid.UUID) -> SourceCodeVersionType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class SourceCodeVersionQuery:
             return None
         return convert_source_code_version(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code_versions(
         self,
         info: Info,

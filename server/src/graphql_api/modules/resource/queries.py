@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.resources.model import Resource
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.resource.converters import convert_resource, resource_options
 from graphql_api.modules.resource.types import ResourceType
 
 
 @strawberry.type
 class ResourceQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource(self, info: Info, id: uuid.UUID) -> ResourceType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class ResourceQuery:
             return None
         return convert_resource(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def resources(
         self,
         info: Info,

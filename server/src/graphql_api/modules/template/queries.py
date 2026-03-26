@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.templates.model import Template
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.template.converters import convert_template, template_options
 from graphql_api.modules.template.types import TemplateType
 
 
 @strawberry.type
 class TemplateQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def template(self, info: Info, id: uuid.UUID) -> TemplateType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class TemplateQuery:
             return None
         return convert_template(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def templates(
         self,
         info: Info,

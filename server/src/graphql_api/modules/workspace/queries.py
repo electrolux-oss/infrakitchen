@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.workspaces.model import Workspace
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.workspace.converters import convert_workspace, workspace_options
 from graphql_api.modules.workspace.types import WorkspaceType
 
 
 @strawberry.type
 class WorkspaceQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def workspace(self, info: Info, id: uuid.UUID) -> WorkspaceType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class WorkspaceQuery:
             return None
         return convert_workspace(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def workspaces(
         self,
         info: Info,

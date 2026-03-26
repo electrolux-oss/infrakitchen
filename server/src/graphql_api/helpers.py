@@ -4,8 +4,19 @@ from typing import Any
 
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import load_only
+from strawberry.permission import BasePermission
 from strawberry.types import Info
 from strawberry.types.nodes import SelectedField
+
+
+# --- Auth permission ---
+
+
+class IsAuthenticated(BasePermission):
+    message = "Not authenticated. Please provide a valid bearer token in the Authorization header."
+
+    def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+        return info.context.get("user") is not None
 
 
 # --- Field introspection ---

@@ -8,14 +8,14 @@ from sqlalchemy import select
 
 from application.source_codes.model import SourceCode
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import get_requested_fields, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
 from graphql_api.modules.source_code.converters import convert_source_code, source_code_options
 from graphql_api.modules.source_code.types import SourceCodeType
 
 
 @strawberry.type
 class SourceCodeQuery:
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code(self, info: Info, id: uuid.UUID) -> SourceCodeType | None:
         session = info.context["session"]
         fields = get_requested_fields(info)
@@ -26,7 +26,7 @@ class SourceCodeQuery:
             return None
         return convert_source_code(obj, fields)
 
-    @strawberry.field
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_codes(
         self,
         info: Info,
