@@ -37,11 +37,7 @@ export const TemplateContent = () => {
     },
     {
       label: "Revisions",
-      content: (
-        <Box sx={{ maxWidth: 1000 }}>
-          <Revision resourceId={entity.id} resourceRevision={0} />
-        </Box>
-      ),
+      content: <Revision resourceId={entity.id} resourceRevision={0} />,
       requiredPermission: `api:template`,
       permissionAction: "write",
     },
