@@ -10,7 +10,7 @@ export const SourceCodePage = () => {
 
   return (
     <EntityProvider entity_name="source_code" entity_id={source_code_id || ""}>
-      <EntityContainer title={"Code Repository"}>
+      <EntityContainer title={"Code Repository"} showActivity={false}>
         <SourceCodeContent />
         <LogLiveTail />
       </EntityContainer>
@@ -18,4 +18,4 @@ export const SourceCodePage = () => {
   );
 };
 
-SourceCodePage.path = "/source_codes/:source_code_id";
+SourceCodePage.path = "/source_codes/:source_code_id/:tab?";

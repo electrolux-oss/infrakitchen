@@ -1,4 +1,4 @@
-import { useState, ElementType, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 import { useLocation, useSearchParams } from "react-router";
 
@@ -6,8 +6,6 @@ import {
   CircularProgress,
   Box,
   TablePagination,
-  Typography,
-  Chip,
   FormControlLabel,
   Switch,
 } from "@mui/material";
@@ -20,14 +18,13 @@ import {
   FilterRenderer,
   useLocalStorage,
 } from "../../common";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { ENTITY_STATUS } from "../../utils";
 import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
 
 type SourceCodeRefSectionProps = {
-  title: string;
-  icon: ElementType;
   refs: string[];
   type: RefType;
   sourceCodeId: string;
@@ -126,39 +123,7 @@ const SourceCodeGitRefRows = ({
   );
 };
 
-const HeaderCount = ({
-  localCount,
-  enabledOnly,
-}: {
-  localCount: number;
-  enabledOnly: boolean;
-}) => {
-  const { total, loading } = useEntityListProvider();
-
-  if (enabledOnly) {
-    return (
-      <Chip
-        label={loading ? "..." : total}
-        size="small"
-        variant="outlined"
-        sx={{ height: 16, fontSize: "0.65rem" }}
-      />
-    );
-  }
-
-  return (
-    <Chip
-      label={localCount}
-      size="small"
-      variant="outlined"
-      sx={{ height: 16, fontSize: "0.65rem" }}
-    />
-  );
-};
-
 export const SourceCodeRefSection = ({
-  title,
-  icon: Icon,
   refs,
   type,
   sourceCodeId,
@@ -166,7 +131,7 @@ export const SourceCodeRefSection = ({
 }: SourceCodeRefSectionProps) => {
   const { get, setKey } =
     useLocalStorage<Record<string, GridPaginationModel>>();
-  const storageKey = `sourceCodeVersion_entities_${title.toLowerCase().replace(/\s+/g, "_")}`;
+  const storageKey = `sourceCodeVersion_entities_${type === RefType.BRANCH ? "branches" : "tags"}`;
 
   const savedState = get(storageKey);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
@@ -265,67 +230,68 @@ export const SourceCodeRefSection = ({
 
   return (
     <EntityListProvider entity_name="source_code_version" params={params}>
-      <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-          <Icon sx={{ fontSize: "0.95rem", color: "text.disabled" }} />
-          <Typography
-            variant="overline"
-            sx={{ color: "text.secondary", fontSize: "0.7rem" }}
-          >
-            {title}
-          </Typography>
-          <HeaderCount
-            localCount={filteredRefs.length}
-            enabledOnly={!!filterValues["enabled_only"]}
-          />
-          <Box sx={{ flex: 1 }} />
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={!!filterValues["enabled_only"]}
-                onChange={(e) =>
-                  handleFilterChange("enabled_only", e.target.checked)
-                }
-              />
-            }
-            label="Enabled only"
-            sx={{
-              "& .MuiFormControlLabel-label": {
-                fontSize: "0.75rem",
-                color: "text.secondary",
-              },
-              ml: 1,
-            }}
-          />
-          <Box sx={{ width: "15rem", px: "1rem" }}>
-            <FilterRenderer
-              config={{
-                id: "ref_search",
-                type: "search",
-                label:
-                  type === RefType.BRANCH ? "Filter branches…" : "Filter tags…",
+      <OverviewCard>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            maxWidth: "100%",
+            p: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+            <Box sx={{ flex: 1 }} />
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={!!filterValues["enabled_only"]}
+                  onChange={(e) =>
+                    handleFilterChange("enabled_only", e.target.checked)
+                  }
+                />
+              }
+              label="Enabled only"
+              sx={{
+                "& .MuiFormControlLabel-label": {
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                },
+                ml: 1,
               }}
-              filterValues={filterValues}
-              onChange={handleFilterChange}
             />
+            <Box sx={{ width: "15rem", px: "1rem" }}>
+              <FilterRenderer
+                config={{
+                  id: "ref_search",
+                  type: "search",
+                  label:
+                    type === RefType.BRANCH
+                      ? "Filter branches…"
+                      : "Filter tags…",
+                }}
+                filterValues={filterValues}
+                onChange={handleFilterChange}
+              />
+            </Box>
           </Box>
-        </Box>
 
-        <SourceCodeGitRefRows
-          refs={filteredRefs}
-          pagedRefs={pagedRefs}
-          type={type}
-          sourceCodeId={sourceCodeId}
-          getFolders={getFolders}
-          page={paginationModel.page + 1}
-          perPage={paginationModel.pageSize}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          enabledOnly={!!filterValues["enabled_only"]}
-          defaultOpenRef={initialSearch || undefined}
-        />
-      </Box>
+          <SourceCodeGitRefRows
+            refs={filteredRefs}
+            pagedRefs={pagedRefs}
+            type={type}
+            sourceCodeId={sourceCodeId}
+            getFolders={getFolders}
+            page={paginationModel.page + 1}
+            perPage={paginationModel.pageSize}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            enabledOnly={!!filterValues["enabled_only"]}
+            defaultOpenRef={initialSearch || undefined}
+          />
+        </Box>
+      </OverviewCard>
     </EntityListProvider>
   );
 };
