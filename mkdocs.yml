@@ -94,6 +94,7 @@ nav:
           - Custom Secrets: secrets/providers/custom.md
   - Operations:
       - Kubernetes: operations/kubernetes.md
+      - GraphQL API: operations/graphql.md
       - Activity:
           - Overview: operations/activity/overview.md
           - Audit Logs: operations/activity/audit.md
