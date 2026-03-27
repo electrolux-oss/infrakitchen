@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Control, Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
@@ -177,7 +177,7 @@ export const IntegrationEditPageInner = (props: {
           <PropertyCard title="Configuration">
             {renderFieldsForProvider(
               entity.integration_provider,
-              control,
+              control as Control<any>,
               errors,
             )}
           </PropertyCard>

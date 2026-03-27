@@ -54,7 +54,7 @@ const renderIconWithText = (
       <Tooltip title={stateValue.toUpperCase()}>
         <Icon
           fontSize="small"
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             color: getThemeColor(theme, colors.backgroundColor),
             cursor: "pointer",
           })}
@@ -67,7 +67,7 @@ const renderIconWithText = (
     <Box sx={{ display: "flex", alignItems: "center", gap: "6px" }}>
       <Icon
         fontSize="small"
-        sx={(theme) => ({
+        sx={(theme: Theme) => ({
           color: getThemeColor(theme, colors.backgroundColor),
         })}
       />

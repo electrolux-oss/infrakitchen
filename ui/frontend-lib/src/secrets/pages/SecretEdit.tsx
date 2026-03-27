@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Control, Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
@@ -144,7 +144,11 @@ export const SecretEditPageInner = (props: { entity: SecretResponse }) => {
           </PropertyCard>
 
           <PropertyCard title="Configuration">
-            {renderFieldsForProvider(entity.secret_provider, control, errors)}
+            {renderFieldsForProvider(
+              entity.secret_provider,
+              control as Control<any>,
+              errors,
+            )}
           </PropertyCard>
         </Box>
       </PageContainer>

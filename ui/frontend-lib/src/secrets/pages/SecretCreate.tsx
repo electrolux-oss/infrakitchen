@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 
 import {
+  Control,
   useForm,
   Controller,
   useFormContext,
@@ -291,7 +292,11 @@ const SecretCreatePageInner = () => {
             title={`Configuration for ${secret_provider_mapping[selectedProvider] || ""}`}
           >
             <Box>
-              {renderFieldsForProvider(selectedProvider, control, errors)}
+              {renderFieldsForProvider(
+                selectedProvider,
+                control as Control<any>,
+                errors,
+              )}
             </Box>
           </PropertyCard>
         )}
