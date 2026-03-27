@@ -112,7 +112,20 @@ export default function DashboardLayout() {
             minHeight: 0,
           }}
         >
-          <Outlet />
+          <React.Suspense
+            fallback={
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                flex={1}
+              >
+                <GradientCircularProgress />
+              </Box>
+            }
+          >
+            <Outlet />
+          </React.Suspense>
         </Box>
       </Box>
     </Box>

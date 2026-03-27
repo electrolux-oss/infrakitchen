@@ -1,4 +1,1 @@
-export * from "./pages/Integrations";
-export * from "./pages/IntegrationCreate";
-export * from "./pages/Integrations";
-export { integrationRoutes } from "./routes";
+// page components are lazy-loaded via filterRoutes.ts
