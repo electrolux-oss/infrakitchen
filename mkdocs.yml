@@ -94,7 +94,6 @@ nav:
           - Custom Secrets: secrets/providers/custom.md
   - Operations:
       - Kubernetes: operations/kubernetes.md
-      - GraphQL API: operations/graphql.md
       - Activity:
           - Overview: operations/activity/overview.md
           - Audit Logs: operations/activity/audit.md
@@ -104,6 +103,8 @@ nav:
       - Feature Flags: operations/feature_flags.md
       - Batch Operations: operations/batch_operations.md
   - Architecture: architecture.md
+  - References:
+      - GraphQL API: references/api/graphql.md
   - FAQ: faq.md
 
 markdown_extensions:

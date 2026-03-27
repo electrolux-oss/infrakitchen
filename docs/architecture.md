@@ -131,7 +131,7 @@ server/src/
       - [Strawberry GraphQL](https://strawberry.rocks/) schema and types
       - Per-entity query resolvers with field-level optimization
       - Bearer token authentication via permission classes
-      - See [GraphQL API](operations/graphql.md) for usage details
+      - See [GraphQL API](references/api/graphql.md) for usage details
 
 ---
 
