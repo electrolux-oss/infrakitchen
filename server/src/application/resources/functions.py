@@ -460,6 +460,10 @@ async def convert_field_by_naming_convention_pattern(
 
         # validate that after conversion, there are no unreplaced variables left in the fields
         if "{" in resource_field_value or "}" in resource_field_value:
-            raise ValueError(f"Invalid name pattern: unreplaced variable in field '{field}'.")
+            matches = re.findall(r"\{([^}]+)\}", resource_field_value)
+            raise ValueError(
+                f"Invalid name pattern: unreplaced variable in field '{field}'. "
+                f"Unreplaced variables: {', '.join(matches)}"
+            )
 
         setattr(resource, field, resource_field_value)
