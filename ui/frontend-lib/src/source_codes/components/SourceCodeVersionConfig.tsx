@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { Control, useFieldArray, useFormContext } from "react-hook-form";
 
 import { Box, Alert, Button, CircularProgress } from "@mui/material";
 
@@ -445,7 +445,7 @@ export const SourceCodeVersionConfig = () => {
       {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
         sourceCodeVersion.variables.length > 0 && (
           <>
-            <ConfigList control={control} fields={fields} />
+            <ConfigList control={control as Control<any>} fields={fields} />
             <Box
               sx={{
                 display: "flex",

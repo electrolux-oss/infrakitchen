@@ -18,5 +18,24 @@ export default defineConfig({
         ws: true,
       },
     }
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@mui/') || id.includes('@emotion/') || id.includes('@mui/x-')) {
+              return 'vendor-mui';
+            }
+            if (id.includes('react-router') || id.includes('@remix-run')) {
+              return 'vendor-router';
+            }
+            if (id.includes('react-dom') || id.includes('react/')) {
+              return 'vendor-react';
+            }
+          }
+        },
+      },
+    },
+  },
 });

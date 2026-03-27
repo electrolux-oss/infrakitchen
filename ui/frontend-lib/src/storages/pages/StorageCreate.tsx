@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 
 import {
+  Control,
   useForm,
   Controller,
   useFormContext,
@@ -242,7 +243,11 @@ const StorageCreatePageInner = () => {
 
         <PropertyCard title="Configuration">
           <Box>
-            {renderFieldsForProvider(selectedProvider, control, errors)}
+            {renderFieldsForProvider(
+              selectedProvider,
+              control as Control<any>,
+              errors,
+            )}
           </Box>
         </PropertyCard>
       </Box>

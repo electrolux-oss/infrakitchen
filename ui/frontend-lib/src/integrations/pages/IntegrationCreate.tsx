@@ -1,6 +1,6 @@
 import { useCallback, useState, useMemo } from "react";
 
-import { useForm, Controller } from "react-hook-form";
+import { Control, useForm, Controller } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
 import {
@@ -323,7 +323,7 @@ const IntegrationCreatePage = () => {
           />
           {renderFieldsForProvider(
             formProviderSlug,
-            control,
+            control as Control<any>,
             errors,
             false,
             true,

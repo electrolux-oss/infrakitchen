@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-import { Controller, useForm, FormProvider } from "react-hook-form";
+import { Control, Controller, useForm, FormProvider } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
@@ -207,7 +207,11 @@ export const AuthProviderEditPageInner = (props: {
             />
           </PropertyCard>
           <PropertyCard title="Configuration">
-            {renderFieldsForProvider(entity.auth_provider, control, errors)}
+            {renderFieldsForProvider(
+              entity.auth_provider,
+              control as Control<any>,
+              errors,
+            )}
           </PropertyCard>
         </Box>
       </PageContainer>
