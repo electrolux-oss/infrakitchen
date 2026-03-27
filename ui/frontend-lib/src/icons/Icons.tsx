@@ -8,7 +8,7 @@ import CloudIcon from "@mui/icons-material/Cloud";
 export type IconProps = Omit<React.ComponentProps<typeof Icon>, "icon">;
 
 export const AwsIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:aws" {...props} />
+  <Icon icon="simple-icons:amazonaws" {...props} />
 );
 
 export const AzureLogoIcon: React.FC<IconProps> = (props) => (
