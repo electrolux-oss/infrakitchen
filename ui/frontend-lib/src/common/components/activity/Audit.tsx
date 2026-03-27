@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { useSearchParams } from "react-router";
-
 import ArticleIcon from "@mui/icons-material/Article";
 import {
   Box,
@@ -21,6 +19,7 @@ import {
 } from "@mui/x-data-grid";
 
 import { CommonDialog, useConfig } from "../../../common";
+import { useHashParams } from "../../../common/hooks/useHashParams";
 import { AuditLogEntity } from "../../../types";
 import { GetReferenceUrlValue } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
@@ -68,15 +67,15 @@ export const AuditFilterPanel = ({
 
 export const Audit = ({ entityId, useVersionId }: AuditProps) => {
   const { ikApi } = useConfig();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [hashParams, setHashParams] = useHashParams();
 
   const actionsWithLogs = useMemo<string[]>(
     () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
     [],
   );
 
-  const selectedTraceId = searchParams.get("traceId");
-  const selectedVersionId = searchParams.get("versionId");
+  const selectedTraceId = hashParams.get("traceId");
+  const selectedVersionId = hashParams.get("versionId");
 
   const logsOpen = useMemo(() => {
     if (!selectedTraceId) return false;
@@ -183,12 +182,12 @@ export const Audit = ({ entityId, useVersionId }: AuditProps) => {
                 startIcon={<ArticleIcon />}
                 onClick={(e) => {
                   e.stopPropagation();
-                  const newParams = new URLSearchParams(searchParams);
+                  const newParams = new URLSearchParams(hashParams);
                   newParams.set("traceId", params.row.id);
                   if (useVersionId) {
                     newParams.set("versionId", entityId);
                   }
-                  setSearchParams(newParams);
+                  setHashParams(newParams);
                 }}
               >
                 Logs
@@ -198,7 +197,7 @@ export const Audit = ({ entityId, useVersionId }: AuditProps) => {
         ),
       },
     ],
-    [actionsWithLogs, searchParams, setSearchParams, useVersionId, entityId],
+    [actionsWithLogs, hashParams, setHashParams, useVersionId, entityId],
   );
 
   return (
@@ -250,12 +249,12 @@ export const Audit = ({ entityId, useVersionId }: AuditProps) => {
                   maxWidth="md"
                   open={logsOpen}
                   onClose={() => {
-                    const newParams = new URLSearchParams(searchParams);
+                    const newParams = new URLSearchParams(hashParams);
                     newParams.delete("traceId");
                     if (useVersionId) {
                       newParams.delete("versionId");
                     }
-                    setSearchParams(newParams);
+                    setHashParams(newParams);
                   }}
                   content={
                     <Logs entityId={entityId} traceId={selectedTraceId} />
