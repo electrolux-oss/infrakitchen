@@ -109,7 +109,7 @@ const IntegrationsPage = () => {
       {
         id: "type_provider",
         type: "cascading" as const,
-        label: "`Provider",
+        label: "Provider",
         options: cascadingOptions,
         width: 320,
       },
