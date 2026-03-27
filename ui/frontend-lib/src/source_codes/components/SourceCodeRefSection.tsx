@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 
-import { useLocation, useSearchParams } from "react-router";
+import { useLocation } from "react-router";
 
 import {
   CircularProgress,
@@ -19,6 +19,7 @@ import {
   useLocalStorage,
 } from "../../common";
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { useHashParams } from "../../common/hooks/useHashParams";
 import { ENTITY_STATUS } from "../../utils";
 import { RefType } from "../types";
 
@@ -52,8 +53,8 @@ const SourceCodeGitRefRows = ({
   enabledOnly?: boolean;
   defaultOpenRef?: string;
 }) => {
-  const [searchParams] = useSearchParams();
-  const versionIdFromUrl = searchParams.get("versionId") ?? null;
+  const [hashParams] = useHashParams();
+  const versionIdFromUrl = hashParams.get("versionId") ?? null;
 
   const { entities, total, loading, refreshList } = useEntityListProvider();
 
