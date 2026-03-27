@@ -3,7 +3,6 @@ import { IntegrationActivityPage } from "./pages/IntegrationActivity";
 import { IntegrationCreatePage } from "./pages/IntegrationCreate";
 import { IntegrationEditPage } from "./pages/IntegrationEdit";
 import { IntegrationsPage } from "./pages/Integrations";
-import { ListIntegrationsPage } from "./pages/ListIntegrations";
 
 export const integrationRoutes = [
   {
@@ -30,12 +29,7 @@ export const integrationRoutes = [
     requiredPermission: "api:integration",
     permissionAction: "read",
   },
-  {
-    path: ListIntegrationsPage.path,
-    Component: ListIntegrationsPage,
-    requiredPermission: "api:integration",
-    permissionAction: "read",
-  },
+
   {
     path: IntegrationPage.path,
     Component: IntegrationPage,

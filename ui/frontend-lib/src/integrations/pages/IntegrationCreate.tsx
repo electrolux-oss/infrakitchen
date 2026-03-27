@@ -97,7 +97,7 @@ const IntegrationCreatePage = () => {
         .postRaw("use_cases/create_integration_with_storage", payload)
         .then((response: IntegrationResponse) => {
           if (response.id) {
-            navigate(`${linkPrefix}integrations/${providerObject?.slug}`);
+            navigate(`${linkPrefix}integrations`);
             notify("Integration created successfully!", "success");
           }
         })
@@ -105,7 +105,7 @@ const IntegrationCreatePage = () => {
           notifyError(error);
         });
     },
-    [ikApi, linkPrefix, providerObject, trigger, navigate, formProviderSlug],
+    [ikApi, linkPrefix, trigger, navigate, formProviderSlug],
   );
 
   const handleValidation = useCallback(async () => {
@@ -165,9 +165,7 @@ const IntegrationCreatePage = () => {
   return (
     <PageContainer
       title={`Set up ${providerObject?.name} Integration`}
-      onBack={() =>
-        navigate(`${linkPrefix}integrations/${providerObject?.slug}`)
-      }
+      onBack={() => navigate(`${linkPrefix}integrations`)}
     >
       {hasMultipleAuthMethods && (
         <Box
