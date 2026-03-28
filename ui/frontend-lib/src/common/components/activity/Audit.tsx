@@ -3,13 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import ArticleIcon from "@mui/icons-material/Article";
+import HistoryIcon from "@mui/icons-material/History";
+import SummarizeIcon from "@mui/icons-material/Summarize";
 import {
   Box,
-  Button,
   Card,
   CardContent,
+  IconButton,
   Stack,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import {
   DataGrid,
@@ -22,6 +25,7 @@ import {
 
 import { CommonDialog, useConfig } from "../../../common";
 import { AuditLogEntity } from "../../../types";
+import { ENTITY_ACTION } from "../../../utils/constants";
 import { GetReferenceUrlValue } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
 
@@ -75,10 +79,34 @@ export const Audit = ({ entityId }: AuditProps) => {
   );
 
   const selectedTraceId = searchParams.get("traceId");
-  const logsOpen = !!selectedTraceId;
+  const selectedView = searchParams.get("view") as
+    | "summary"
+    | "logs"
+    | "revision"
+    | null;
+  const logsOpen = !!selectedTraceId && !!selectedView;
+
+  const getDialogTitle = (
+    view: "summary" | "logs" | "revision",
+    action?: string | null,
+  ): string => {
+    if (view === "logs") return "Logs";
+    if (view === "revision") return "Revision";
+
+    switch (action) {
+      case ENTITY_ACTION.DRYRUN:
+      case ENTITY_ACTION.DRYRUN_WITH_TEMP_STATE:
+        return "Plan Summary";
+      case ENTITY_ACTION.EXECUTE:
+        return "Apply Summary";
+      default:
+        return "Execution Summary";
+    }
+  };
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -156,8 +184,9 @@ export const Audit = ({ entityId }: AuditProps) => {
       },
       {
         field: "userActions",
-        headerName: "Actions",
+        headerName: "",
         flex: 1,
+        sortable: false,
         renderCell: (params) => (
           <Box
             sx={{
@@ -168,19 +197,55 @@ export const Audit = ({ entityId }: AuditProps) => {
             }}
           >
             {actionsWithLogs.includes(params.row.action) && (
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<ArticleIcon />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.set("traceId", params.row.id);
-                  setSearchParams(newParams);
-                }}
-              >
-                Logs
-              </Button>
+              <>
+                {params.row.action !== "sync" && (
+                  <Tooltip title="Summary">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedAction(params.row.action);
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set("traceId", params.row.id);
+                        newParams.set("view", "summary");
+                        setSearchParams(newParams);
+                      }}
+                    >
+                      <SummarizeIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
+                <Tooltip title="Logs">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedAction(params.row.action);
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.set("traceId", params.row.id);
+                      newParams.set("view", "logs");
+                      setSearchParams(newParams);
+                    }}
+                  >
+                    <ArticleIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Revision">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedAction(params.row.action);
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.set("traceId", params.row.id);
+                      newParams.set("view", "revision");
+                      setSearchParams(newParams);
+                    }}
+                  >
+                    <HistoryIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </>
             )}
           </Box>
         ),
@@ -232,18 +297,25 @@ export const Audit = ({ entityId }: AuditProps) => {
                   },
                 }}
               />
-              {selectedTraceId && (
+              {selectedTraceId && selectedView && (
                 <CommonDialog
-                  title="Logs"
+                  title={getDialogTitle(selectedView, selectedAction)}
                   maxWidth="md"
+                  footerActions={false}
                   open={logsOpen}
                   onClose={() => {
                     const newParams = new URLSearchParams(searchParams);
                     newParams.delete("traceId");
+                    newParams.delete("view");
                     setSearchParams(newParams);
                   }}
                   content={
-                    <Logs entityId={entityId} traceId={selectedTraceId} />
+                    <Logs
+                      entityId={entityId}
+                      traceId={selectedTraceId}
+                      eventAction={selectedAction ?? undefined}
+                      view={selectedView}
+                    />
                   }
                 />
               )}

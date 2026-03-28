@@ -3,7 +3,7 @@ import { useState, useCallback, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useEffectOnce } from "react-use";
 
-import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
+import { List, ListItem, ListItemText, Typography } from "@mui/material";
 import Ansi from "ansi-to-react";
 
 import { LogEntity } from "../../types";
@@ -33,13 +33,13 @@ function createLog(log: LogEntity[]) {
 export const LogView = (props: {
   entity_id: string;
   execution_time: number;
+  scrollableTarget: string;
 }) => {
-  const { entity_id, execution_time } = props;
+  const { entity_id, execution_time, scrollableTarget } = props;
   const { ikApi } = useConfig();
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFetching = useRef(false);
   const indexRef = useRef(1);
 
@@ -73,19 +73,7 @@ export const LogView = (props: {
   });
 
   return (
-    <Box
-      id="logScrollContainer"
-      ref={scrollContainerRef}
-      sx={{
-        height: "calc(100vh - 300px)",
-        minHeight: 400,
-        maxHeight: "80vh",
-        overflowY: "auto",
-        padding: 1,
-        display: "flex",
-        flexDirection: "column-reverse",
-      }}
-    >
+    <>
       {logs.length > 0 ? (
         <List dense>
           <InfiniteScroll
@@ -94,7 +82,7 @@ export const LogView = (props: {
             hasMore={hasMore}
             inverse={true}
             loader={<GradientCircularProgress />}
-            scrollableTarget="logScrollContainer"
+            scrollableTarget={scrollableTarget}
           >
             {createLog(logs).map((log) => (
               <ListItem disablePadding key={log.id}>
@@ -110,6 +98,6 @@ export const LogView = (props: {
       ) : (
         <Typography>No logs found</Typography>
       )}
-    </Box>
+    </>
   );
 };

@@ -19,6 +19,7 @@ interface CommonDialogProps {
   onClose: () => void;
   maxWidth?: "xs" | "sm" | "md" | "lg" | "xl" | false;
   fullWidth?: boolean;
+  footerActions?: boolean;
 }
 
 export const CommonDialog: React.FC<CommonDialogProps> = ({
@@ -29,6 +30,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
   onClose,
   maxWidth = "sm",
   fullWidth = true,
+  footerActions = true,
 }) => {
   return (
     <Dialog
@@ -57,12 +59,14 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
       <DialogContent dividers sx={{ minWidth: { xs: 300, sm: 400 } }}>
         <Typography component="span">{content}</Typography>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary" variant="outlined">
-          Cancel
-        </Button>
-        {actions}
-      </DialogActions>
+      {footerActions && (
+        <DialogActions>
+          <Button onClick={onClose} color="primary" variant="outlined">
+            Cancel
+          </Button>
+          {actions}
+        </DialogActions>
+      )}
     </Dialog>
   );
 };
