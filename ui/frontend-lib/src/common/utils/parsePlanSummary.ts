@@ -6,6 +6,7 @@ export interface ChangeSummary {
   resourceType: string;
   resourceName: string;
   rawLines: string[];
+  executionStatus?: "IN_PROGRESS" | "COMPLETE" | "ERROR";
 }
 
 export type ExecutionStatus = "DONE" | "ERROR" | "IN_PROGRESS";
@@ -42,7 +43,10 @@ export const getExecutionStatus = (
   return "IN_PROGRESS";
 };
 
-export const parsePlanSummary = (logs: LogEntity[]): ChangeSummary[] => {
+export const parsePlanSummary = (
+  logs: LogEntity[],
+  trackExecution = false,
+): ChangeSummary[] => {
   const changes: Map<string, ChangeSummary> = new Map();
   const resourcePattern =
     /# (.+?) (?:(?:will be (created|destroyed|updated|replaced))|(?:must be (replaced)))/;
@@ -129,6 +133,101 @@ export const parsePlanSummary = (logs: LogEntity[]): ChangeSummary[] => {
     UPDATE: 2,
     CREATE: 3,
   };
+
+  if (trackExecution) {
+    const resourceExecutionPattern =
+      /^(?:\d{2}:\d{2}:\d{2}\.\s*)?([A-Za-z0-9_][^:\s]*):\s+(.+)$/;
+    const inProgressPattern =
+      /\b(?:Destroying|Creating|Modifying|Still\s+destroying|Still\s+creating|Still\s+modifying)\.\.\./i;
+    const completePattern =
+      /\b(?:Modifications complete after|Creation complete after|Destruction complete after)\b/i;
+    const withPattern = /\bwith\s+([A-Za-z0-9_][^,\s]*),/i;
+    const errorPattern = /\berror:/i;
+
+    const byResource = new Map<string, ChangeSummary>();
+    changes.forEach((change) => {
+      byResource.set(`${change.resourceType}.${change.resourceName}`, change);
+    });
+
+    const markResourceError = (resourceAddress?: string) => {
+      if (!resourceAddress) return;
+      const target = byResource.get(resourceAddress.trim());
+      if (target) {
+        target.executionStatus = "ERROR";
+      }
+    };
+
+    let inErrorBlock = false;
+    let errorBlockLines: string[] = [];
+    let errorBlockResources = new Set<string>();
+
+    logs.forEach((log) => {
+      const rawLine = String(log.data ?? "");
+      const line = rawLine.replace(ansiPattern, "");
+
+      if (/^\s*(?:│\s*)?Error:/i.test(line)) {
+        inErrorBlock = true;
+        errorBlockLines = [rawLine];
+        errorBlockResources = new Set<string>();
+      }
+
+      if (inErrorBlock) {
+        if (errorBlockLines.length === 0) {
+          errorBlockLines.push(rawLine);
+        } else if (errorBlockLines[errorBlockLines.length - 1] !== rawLine) {
+          errorBlockLines.push(rawLine);
+        }
+
+        const withMatch = line.match(withPattern);
+        if (withMatch) {
+          errorBlockResources.add(withMatch[1].trim());
+          markResourceError(withMatch[1]);
+        }
+
+        if (line.includes("╵")) {
+          errorBlockResources.forEach((resourceAddress) => {
+            const target = byResource.get(resourceAddress);
+            if (!target) return;
+
+            if (target.rawLines.length > 0) {
+              target.rawLines.push("");
+            }
+            target.rawLines.push(...errorBlockLines);
+          });
+
+          inErrorBlock = false;
+          errorBlockLines = [];
+          errorBlockResources = new Set<string>();
+        }
+      }
+
+      const m = line.match(resourceExecutionPattern);
+      if (!m) return;
+
+      const resourceName = m[1];
+      const message = m[2];
+      const change = byResource.get(resourceName);
+      if (!change) return;
+
+      if (errorPattern.test(message) || /\bfailed\b/i.test(message)) {
+        change.executionStatus = "ERROR";
+        return;
+      }
+
+      if (inProgressPattern.test(message)) {
+        if (change.executionStatus !== "ERROR") {
+          change.executionStatus = "IN_PROGRESS";
+        }
+        return;
+      }
+
+      if (completePattern.test(message)) {
+        if (change.executionStatus !== "ERROR") {
+          change.executionStatus = "COMPLETE";
+        }
+      }
+    });
+  }
 
   const result = Array.from(changes.values()).sort(
     (a, b) => (actionOrder[a.action] ?? 999) - (actionOrder[b.action] ?? 999),

@@ -106,7 +106,14 @@ export const Audit = ({ entityId }: AuditProps) => {
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
+
+  const selectedAction = useMemo(() => {
+    if (!selectedTraceId) return null;
+    const matchingRow = auditLogs.find(
+      (row) => String(row.id) === String(selectedTraceId),
+    );
+    return matchingRow?.action ?? null;
+  }, [auditLogs, selectedTraceId]);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -204,7 +211,6 @@ export const Audit = ({ entityId }: AuditProps) => {
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedAction(params.row.action);
                         const newParams = new URLSearchParams(searchParams);
                         newParams.set("traceId", params.row.id);
                         newParams.set("view", "summary");
@@ -220,7 +226,6 @@ export const Audit = ({ entityId }: AuditProps) => {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedAction(params.row.action);
                       const newParams = new URLSearchParams(searchParams);
                       newParams.set("traceId", params.row.id);
                       newParams.set("view", "logs");
@@ -235,7 +240,6 @@ export const Audit = ({ entityId }: AuditProps) => {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedAction(params.row.action);
                       const newParams = new URLSearchParams(searchParams);
                       newParams.set("traceId", params.row.id);
                       newParams.set("view", "revision");

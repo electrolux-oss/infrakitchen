@@ -80,10 +80,9 @@ export const Logs = (props: {
         sort: { field: "created_at", order: "ASC" },
       });
       setAllLogs(allLogsResult.data || []);
-      setStatus(getExecutionStatus(allLogsResult.data || [], eventAction));
     }
     setLoaded(true);
-  }, [ikApi, entityId, traceId, eventAction]);
+  }, [ikApi, entityId, traceId]);
 
   const fetchRevision = useCallback(() => {
     if (!revisionNumber || revision) return;
@@ -103,6 +102,28 @@ export const Logs = (props: {
     }
   }, [view, revisionNumber, fetchRevision]);
 
+  useEffect(() => {
+    if (view === "revision") {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      fetchLogsExecutionTime();
+    }, 5000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [view, fetchLogsExecutionTime]);
+
+  useEffect(() => {
+    if (!loaded || !hasExecution || eventAction === undefined) {
+      setStatus(undefined);
+      return;
+    }
+    setStatus(getExecutionStatus(allLogs, eventAction));
+  }, [allLogs, eventAction, loaded, hasExecution]);
+
   return (
     <Box>
       {view === "summary" && (
@@ -115,7 +136,10 @@ export const Logs = (props: {
             </Typography>
           ) : (
             <PlanSummary
-              changes={parsePlanSummary(allLogs)}
+              changes={parsePlanSummary(
+                allLogs,
+                eventAction === ENTITY_ACTION.EXECUTE,
+              )}
               status={status}
               description={getSummaryDescription(eventAction)}
             />

@@ -42,6 +42,24 @@ const getStatusChipValue = (status?: string): string => {
   }
 };
 
+const getChangeExecutionChip = (
+  executionStatus?: ChangeSummary["executionStatus"],
+) => {
+  if (executionStatus === "ERROR") {
+    return { label: "Error", color: "error" as const };
+  }
+
+  if (executionStatus === "IN_PROGRESS") {
+    return { label: "In progress", color: "info" as const };
+  }
+
+  if (executionStatus === "COMPLETE") {
+    return { label: "Complete", color: "success" as const };
+  }
+
+  return null;
+};
+
 export const PlanSummary = ({
   changes,
   status,
@@ -69,7 +87,9 @@ export const PlanSummary = ({
             component="span"
             sx={{ display: "inline-flex", verticalAlign: "middle" }}
           >
-            <StatusChip status={getStatusChipValue(status)} />
+            {status !== undefined && (
+              <StatusChip status={getStatusChipValue(status)} />
+            )}
           </Box>
         </Typography>
       </Box>
@@ -87,23 +107,48 @@ export const PlanSummary = ({
           disableGutters
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Chip
-                label={change.action}
-                size="small"
-                color={getActionColor(change.action)}
-                variant="outlined"
-                sx={{ minWidth: 100, fontWeight: 600 }}
-              />
-              <Typography
-                sx={{
-                  fontFamily: "monospace",
-                  fontSize: "0.95rem",
-                  fontWeight: 500,
-                }}
-              >
-                {change.resourceType}.{change.resourceName}
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Chip
+                  label={change.action}
+                  size="small"
+                  color={getActionColor(change.action)}
+                  variant="outlined"
+                  sx={{ minWidth: 100, fontWeight: 600 }}
+                />
+                <Typography
+                  sx={{
+                    fontFamily: "monospace",
+                    fontSize: "0.95rem",
+                    fontWeight: 500,
+                  }}
+                >
+                  {change.resourceType}.{change.resourceName}
+                </Typography>
+              </Box>
+              {(() => {
+                const executionChip = getChangeExecutionChip(
+                  change.executionStatus,
+                );
+                if (!executionChip) return null;
+                return (
+                  <Chip
+                    label={executionChip.label}
+                    size="small"
+                    color={executionChip.color}
+                    variant="outlined"
+                    sx={{ minWidth: 110, fontWeight: 600 }}
+                  />
+                );
+              })()}
             </Box>
           </AccordionSummary>
           <AccordionDetails sx={{ p: 0 }}>
@@ -125,7 +170,7 @@ export const PlanSummary = ({
                   <ListItem disablePadding key={`${change.id}-${index}`}>
                     <ListItemText sx={{ margin: 0 }}>
                       <pre style={{ margin: 0 }}>
-                        <Ansi>{line}</Ansi>
+                        <Ansi>{line || " "}</Ansi>
                       </pre>
                     </ListItemText>
                   </ListItem>
