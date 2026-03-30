@@ -46,6 +46,7 @@ export const IntegrationPage = () => {
     <EntityProvider entity_name="integration" entity_id={integration_id || ""}>
       <EntityContainer
         title={"Integration Overview"}
+        showActivity={false}
         actions={
           <PermissionWrapper
             requiredPermission="api:integration"
@@ -68,4 +69,4 @@ export const IntegrationPage = () => {
   );
 };
 
-IntegrationPage.path = "/integrations/:provider/:integration_id";
+IntegrationPage.path = "/integrations/:provider/:integration_id/:tab?";
