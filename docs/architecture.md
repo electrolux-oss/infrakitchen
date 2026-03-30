@@ -13,7 +13,7 @@ InfraKitchen follows a modern web application architecture with separated fronte
 ### Components
 
 - **Frontend (React/TypeScript)** - User interface for managing infrastructure
-- **Backend (Python/FastAPI)** - REST API and business logic
+- **Backend (Python/FastAPI)** - REST API, GraphQL API, and business logic
 - **PostgreSQL** - Relational database for storing infrastructure state
 - **RabbitMQ** - Message broker for asynchronous task processing
 - **Worker Processes** - Execute infrastructure provisioning tasks
@@ -85,6 +85,12 @@ server/src/
 │   ├── integrations/    # Integration management
 │   ├── workspaces/      # Workspace sync
 │   └── ...
+├── graphql_api/          # GraphQL API (Strawberry)
+│   ├── context.py       # Auth context & DB session
+│   ├── endpoint.py      # GraphQLRouter mount
+│   ├── helpers.py       # Permissions, field optimization
+│   ├── schema.py        # Merged query schema
+│   └── modules/         # Per-entity types, converters, queries
 ├── core/                # Core utilities
 │   ├── adapters/        # External service adapters
 │   ├── config.py        # Configuration
@@ -120,6 +126,12 @@ server/src/
       - SQLAlchemy ORM models
       - Pydantic schemas
       - Data structures
+
+6. **GraphQL Layer** (`graphql_api/`)
+      - [Strawberry GraphQL](https://strawberry.rocks/) schema and types
+      - Per-entity query resolvers with field-level optimization
+      - Bearer token authentication via permission classes
+      - See [GraphQL API](references/api/graphql.md) for usage details
 
 ---
 

@@ -118,6 +118,7 @@ dependencies = [
   "python-gitlab>=8.0.0",
   "prometheus-fastapi-instrumentator>=7.1.0",
   "prometheus-async>=25.1.0",
+  "strawberry-graphql[fastapi]>=0.262.0",
 ]
 requires-python = "==3.14.*"
 readme = "README.md"
