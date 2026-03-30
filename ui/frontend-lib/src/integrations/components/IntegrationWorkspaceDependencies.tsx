@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress, useLocalStorage } from "../../common";
+import { GradientCircularProgress } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { WorkspaceResponse } from "../../workspaces/types";
@@ -21,15 +21,8 @@ export const IntegrationWorkspaceDependencies = (
   const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["integration-workspace-dependencies"];
   const fetchRelatedData = useCallback(async () => {
     if (!integration_id) return;
-    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("workspaces", {
@@ -47,7 +40,7 @@ export const IntegrationWorkspaceDependencies = (
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, integration_id, isExpanded]);
+  }, [ikApi, integration_id]);
 
   useEffect(() => {
     fetchRelatedData();
@@ -56,13 +49,9 @@ export const IntegrationWorkspaceDependencies = (
   if (!integration_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id={`integration-workspace-dependencies`}
-      title="Workspaces"
-      subtitle="Workspaces published with this integration"
-    >
+    <OverviewCard>
       {loading && <GradientCircularProgress />}
-      {workspaces.length === 0 && (
+      {!loading && workspaces.length === 0 && (
         <Typography variant="body2" color="text.secondary">
           No dependencies for this integration.
         </Typography>
@@ -79,6 +68,7 @@ export const IntegrationWorkspaceDependencies = (
             display: "flex",
             flexDirection: "column",
             gap: 0.5,
+            width: "100%",
           }}
         >
           <Typography variant="body1" fontWeight={500}>
@@ -95,6 +85,6 @@ export const IntegrationWorkspaceDependencies = (
           </Box>
         </Box>
       ))}
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };

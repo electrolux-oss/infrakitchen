@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress, useLocalStorage } from "../../common";
+import { GradientCircularProgress } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ResourceResponse } from "../../resources/types";
@@ -18,15 +18,8 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["integration-resources"];
   const fetchRelatedData = useCallback(async () => {
     if (!integration_id) return;
-    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -52,7 +45,7 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, integration_id, isExpanded]);
+  }, [ikApi, integration_id]);
 
   useEffect(() => {
     fetchRelatedData();
@@ -61,13 +54,9 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
   if (!integration_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id={`integration-resources`}
-      title="Resources"
-      subtitle="Instances published in this integration"
-    >
+    <OverviewCard>
       {loading && <GradientCircularProgress />}
-      {resources.length === 0 && (
+      {!loading && resources.length === 0 && (
         <Typography variant="body2" color="text.secondary">
           No resources for this integration.
         </Typography>
@@ -84,6 +73,7 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
             display: "flex",
             flexDirection: "column",
             gap: 0.5,
+            width: "100%",
           }}
         >
           <Typography variant="body1" fontWeight={500}>
@@ -101,6 +91,6 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
           </Box>
         </Box>
       ))}
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };
