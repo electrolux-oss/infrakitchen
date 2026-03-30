@@ -205,15 +205,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/integrations/:provider",
-    Component: lz(
-      () => import("./integrations/pages/ListIntegrations"),
-      "ListIntegrationsPage",
-    ),
-    requiredPermission: "api:integration",
-    permissionAction: "read",
-  },
-  {
     path: "/integrations/:provider/:integration_id",
     Component: lz(
       () => import("./integrations/pages/Integration"),
