@@ -9,8 +9,18 @@ from application.resources.service import ResourceService
 from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.tools.kubernetes_client import KubernetesClient
+from core.users.functions import user_has_access_to_entity
+from core.users.model import UserDTO
 
 router = APIRouter()
+
+
+async def check_resource_write_access(request: Request, resource_id: str) -> None:
+    requester: UserDTO | None = getattr(request.state, "user", None)
+    if not requester:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if not await user_has_access_to_entity(requester, resource_id, "write", "resource"):
+        raise HTTPException(status_code=403, detail="Write access to resource is required for provider API")
 
 
 async def get_kubernetes_client(
@@ -18,6 +28,7 @@ async def get_kubernetes_client(
     resource_id: str,
     integration_service: IntegrationService = Depends(get_integration_service),
     resource_service: ResourceService = Depends(get_resource_service),
+    _access: None = Depends(check_resource_write_access),
 ) -> KubernetesClient:
     resource = await resource_service.get_by_id(resource_id)
     if not resource:
