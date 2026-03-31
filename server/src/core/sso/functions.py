@@ -56,7 +56,11 @@ async def check_api_permission(request: Request):
     else:
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    if entity in ("resource", "resource_temp_state", "executor", "favorite", "provider"):
+    if entity == "provider":
+        if "kubernetes" in request.url.path:
+            entity = "provider_kubernetes"
+
+    if entity in ("resource", "resource_temp_state", "executor", "favorite", "provider_kubernetes"):
         # Some entities have their own permission control system using the `user_has_access_to_entity` function
         if await user_has_access_to_api(user, "resource", "read"):
             return
