@@ -381,12 +381,18 @@ export const buildResourceApiFilters = (
 
 interface ResourceFilterConfigProps {
   labels: string[];
-  cascadingOptions?: Array<{
-    label: string;
-    value: string;
-    loadChildren?: (
-      parentValue: string,
-    ) => Promise<Array<{ label: string; value: string }>>;
+  loadTemplateOptions?: (
+    search: string,
+    page: number,
+  ) => Promise<{
+    options: Array<{
+      label: string;
+      value: string;
+      loadChildren?: (
+        parentValue: string,
+      ) => Promise<Array<{ label: string; value: string }>>;
+    }>;
+    hasMore: boolean;
   }>;
   versionOptions?: string[];
   showTemplateVersionFilter: boolean;
@@ -394,7 +400,7 @@ interface ResourceFilterConfigProps {
 
 export const createResourceFilterConfigs = ({
   labels,
-  cascadingOptions = [],
+  loadTemplateOptions,
   versionOptions = [] as string[],
   showTemplateVersionFilter,
 }: ResourceFilterConfigProps): FilterConfig[] => {
@@ -403,7 +409,7 @@ export const createResourceFilterConfigs = ({
         id: "template_version",
         type: "cascading",
         label: "Template & Version",
-        options: cascadingOptions,
+        loadOptions: loadTemplateOptions,
         width: 420,
       }
     : {

@@ -23,59 +23,55 @@ export const ResourcesPage = () => {
   const location = useLocation();
 
   const [labels, setLabels] = useState<string[]>([]);
-  const [templates, setTemplates] = useState<{ id: string; name: string }[]>(
-    [],
-  );
 
   useEffect(() => {
-    // Load labels
     ikApi.get("labels/resource").then((response: string[]) => {
       setLabels(response);
     });
-
-    // Load templates
-    ikApi
-      .getList("templates", {
-        pagination: { page: 1, perPage: 1000 },
-        fields: ["id", "name"],
-        sort: { field: "name", order: "ASC" },
-      })
-      .then((response: any) => {
-        setTemplates(response.data);
-      })
-      .catch((_) => {
-        setTemplates([]);
-      });
   }, [ikApi]);
 
-  const cascadingOptions = useMemo(() => {
-    return templates.map((template) => {
+  const loadTemplateOptions = useCallback(
+    async (search: string, page: number) => {
+      const perPage = 10;
+      const response = await ikApi.getList("templates", {
+        pagination: { page, perPage },
+        fields: ["id", "name"],
+        sort: { field: "name", order: "ASC" },
+        filter: search ? { name__like: search } : {},
+      });
+      const options = response.data.map(
+        (template: { id: string; name: string }) => ({
+          label: template.name,
+          value: `template:${template.id}`,
+          loadChildren: async (parentValue: string) => {
+            const templateId = parentValue.replace("template:", "");
+            try {
+              const scvResponse = await ikApi.getList("source_code_versions", {
+                filter: { template_id: templateId },
+                pagination: { page: 1, perPage: 1000 },
+                fields: ["id", "source_code_version", "source_code_branch"],
+              });
+              return scvResponse.data
+                .map((version: any) => ({
+                  label:
+                    version.source_code_version ?? version.source_code_branch,
+                  value: `scv:${version.id}:${templateId}`,
+                }))
+                .sort((a: any, b: any) => a.label.localeCompare(b.label));
+            } catch {
+              notifyError("Failed to load versions");
+              return [];
+            }
+          },
+        }),
+      );
       return {
-        label: template.name,
-        value: `template:${template.id}`,
-        loadChildren: async (parentValue: string) => {
-          const templateId = parentValue.replace("template:", "");
-          try {
-            const response = await ikApi.getList("source_code_versions", {
-              filter: { template_id: templateId },
-              pagination: { page: 1, perPage: 1000 },
-              fields: ["id", "source_code_version", "source_code_branch"],
-            });
-            return response.data
-              .map((version: any) => ({
-                label:
-                  version.source_code_version ?? version.source_code_branch,
-                value: `scv:${version.id}:${templateId}`,
-              }))
-              .sort((a: any, b: any) => a.label.localeCompare(b.label));
-          } catch {
-            notifyError("Failed to load options");
-            return [];
-          }
-        },
+        options,
+        hasMore: response.data.length === perPage,
       };
-    });
-  }, [templates, ikApi]);
+    },
+    [ikApi],
+  );
 
   const initialFilter = location.state?.filters;
 
@@ -83,10 +79,10 @@ export const ResourcesPage = () => {
   const filterConfigs: FilterConfig[] = useMemo(() => {
     return createResourceFilterConfigs({
       labels,
-      cascadingOptions,
+      loadTemplateOptions,
       showTemplateVersionFilter: true,
     });
-  }, [labels, cascadingOptions]);
+  }, [labels, loadTemplateOptions]);
 
   const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     return buildResourceApiFilters(filterValues);
