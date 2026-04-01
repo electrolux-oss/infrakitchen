@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -190,30 +190,22 @@ export const CascadingFilter = ({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [loadedOptions, setLoadedOptions] = useState<CascadingOption[]>([]);
   const [loadingTop, setLoadingTop] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [optionSearch, setOptionSearch] = useState("");
   const [loadingChildren, setLoadingChildren] = useState<
     Record<string, boolean>
   >({});
 
   const isMenuOpen = Boolean(anchorEl);
+  const { loadOptions } = config;
 
   useEffect(() => {
-    const loadTopLevel = async () => {
-      if (config.loadOptions) {
-        setLoadingTop(true);
-        try {
-          const options = await config.loadOptions();
-          setLoadedOptions(options);
-        } catch (error) {
-          notifyError(error, { preventDuplicate: true });
-        } finally {
-          setLoadingTop(false);
-        }
-      } else if (config.options) {
-        setLoadedOptions(config.options);
-      }
-    };
-    loadTopLevel();
-  }, [config.options, config.loadOptions, config]);
+    if (config.options) {
+      setLoadedOptions(config.options);
+    }
+  }, [config.options]);
 
   const optionsLength = loadedOptions.length;
 
@@ -253,8 +245,62 @@ export const CascadingFilter = ({
     resolvePath();
   }, [value, optionsLength, loadedOptions]);
 
+  useEffect(() => {
+    if (!loadOptions) return;
+    const timer = setTimeout(async () => {
+      setLoadingTop(true);
+      setPage(1);
+      try {
+        const result = await loadOptions(optionSearch, 1);
+        setLoadedOptions(result.options);
+        setHasMore(result.hasMore);
+      } catch (error) {
+        notifyError(error, { preventDuplicate: true });
+      } finally {
+        setLoadingTop(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [
+    optionSearch,
+    loadOptions,
+    setLoadingTop,
+    setPage,
+    setLoadedOptions,
+    setHasMore,
+  ]);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!loadOptions || loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    try {
+      const result = await loadOptions(optionSearch, nextPage);
+      setLoadedOptions((prev) => [...prev, ...result.options]);
+      setHasMore(result.hasMore);
+      setPage(nextPage);
+    } catch (error) {
+      notifyError(error, { preventDuplicate: true });
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    loadOptions,
+    hasMore,
+    loadingMore,
+    page,
+    optionSearch,
+    setLoadingMore,
+    setLoadedOptions,
+    setHasMore,
+    setPage,
+  ]);
+
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
+    if (loadOptions && loadedOptions.length === 0) {
+      setOptionSearch("");
+    }
   };
 
   const handleClose = () => {
@@ -413,86 +459,122 @@ export const CascadingFilter = ({
           },
         }}
       >
-        {loadingTop ? (
-          <MenuItem disabled>Loading...</MenuItem>
-        ) : loadedOptions.length === 0 ? (
-          <MenuItem
-            disabled
-            sx={{ color: "text.secondary", fontStyle: "italic" }}
-          >
-            No options found
-          </MenuItem>
-        ) : (
-          loadedOptions.map((opt) => (
-            <Box key={opt.value}>
-              <MenuItem
-                key={opt.value}
-                selected={isSelected(opt.value)}
-                sx={{ display: "flex", justifyContent: "space-between", pr: 1 }}
-              >
-                <Box
-                  sx={{ flexGrow: 1 }}
-                  onClick={() => handleSelect(opt.value)}
+        {loadOptions && (
+          <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
+            <TextField
+              size="small"
+              placeholder="Search options..."
+              value={optionSearch}
+              onChange={(e) => setOptionSearch(e.target.value)}
+              autoFocus
+              fullWidth
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+            />
+          </Box>
+        )}
+        <Box
+          sx={{ maxHeight: 300, overflowY: "auto" }}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            if (el.scrollHeight - el.scrollTop - el.clientHeight < 30) {
+              handleLoadMore();
+            }
+          }}
+        >
+          {loadingTop ? (
+            <MenuItem disabled>Loading...</MenuItem>
+          ) : loadedOptions.length === 0 ? (
+            <MenuItem
+              disabled
+              sx={{ color: "text.secondary", fontStyle: "italic" }}
+            >
+              No options found
+            </MenuItem>
+          ) : (
+            loadedOptions.map((opt) => (
+              <Box key={opt.value}>
+                <MenuItem
+                  key={opt.value}
+                  selected={isSelected(opt.value)}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    pr: 1,
+                  }}
                 >
-                  {opt.label}
-                </Box>
+                  <Box
+                    sx={{ flexGrow: 1 }}
+                    onClick={() => handleSelect(opt.value)}
+                  >
+                    {opt.label}
+                  </Box>
 
-                {(opt.children || opt.loadChildren) && (
-                  <KeyboardArrowDownIcon
-                    fontSize="small"
-                    onClick={(e) => handleExpand(e, opt)}
-                    sx={{
-                      ml: 1,
-                      color: "text.secondary",
-                      cursor: "pointer",
-                      transition: "transform 0.2s",
-                      transform:
-                        expandedId === opt.value ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                )}
-              </MenuItem>
-
-              {/* Inline children */}
-              {expandedId === opt.value && (
-                <Box>
-                  {loadingChildren[opt.value] ? (
-                    <MenuItem disabled sx={{ pl: 3, fontSize: "0.875rem" }}>
-                      Loading...
-                    </MenuItem>
-                  ) : !opt.children || opt.children.length === 0 ? (
-                    <MenuItem
-                      disabled
+                  {(opt.children || opt.loadChildren) && (
+                    <KeyboardArrowDownIcon
+                      fontSize="small"
+                      onClick={(e) => handleExpand(e, opt)}
                       sx={{
-                        pl: 3,
-                        fontSize: "0.875rem",
+                        ml: 1,
                         color: "text.secondary",
-                        fontStyle: "italic",
+                        cursor: "pointer",
+                        transition: "transform 0.2s",
+                        transform:
+                          expandedId === opt.value ? "rotate(180deg)" : "none",
                       }}
-                    >
-                      No options found
-                    </MenuItem>
-                  ) : (
-                    Array.isArray(opt.children) &&
-                    opt.children.map((child) => (
+                    />
+                  )}
+                </MenuItem>
+
+                {/* Inline children */}
+                {expandedId === opt.value && (
+                  <Box>
+                    {loadingChildren[opt.value] ? (
+                      <MenuItem disabled sx={{ pl: 3, fontSize: "0.875rem" }}>
+                        Loading...
+                      </MenuItem>
+                    ) : !opt.children || opt.children.length === 0 ? (
                       <MenuItem
-                        key={child.value}
-                        onClick={() => handleSelect(child.value, opt.value)}
-                        selected={isSelected(child.value)}
+                        disabled
                         sx={{
                           pl: 3,
+                          fontSize: "0.875rem",
                           color: "text.secondary",
+                          fontStyle: "italic",
                         }}
                       >
-                        {child.label}
+                        No options found
                       </MenuItem>
-                    ))
-                  )}
-                </Box>
-              )}
-            </Box>
-          ))
-        )}
+                    ) : (
+                      Array.isArray(opt.children) &&
+                      opt.children.map((child) => (
+                        <MenuItem
+                          key={child.value}
+                          onClick={() => handleSelect(child.value, opt.value)}
+                          selected={isSelected(child.value)}
+                          sx={{
+                            pl: 3,
+                            color: "text.secondary",
+                          }}
+                        >
+                          {child.label}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Box>
+                )}
+              </Box>
+            ))
+          )}
+          {loadingMore && (
+            <MenuItem
+              disabled
+              sx={{ justifyContent: "center", fontSize: "0.8rem" }}
+            >
+              Loading...
+            </MenuItem>
+          )}
+        </Box>
       </Menu>
     </Box>
   );

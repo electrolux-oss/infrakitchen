@@ -46,7 +46,10 @@ export interface MultiSelectFilterConfig extends BaseFilterConfig {
 export interface CascadingFilterConfig extends BaseFilterConfig {
   type: "cascading";
   options?: CascadingOption[];
-  loadOptions?: () => Promise<CascadingOption[]>;
+  loadOptions?: (
+    search: string,
+    page: number,
+  ) => Promise<{ options: CascadingOption[]; hasMore: boolean }>;
 }
 
 export type FilterConfig =
