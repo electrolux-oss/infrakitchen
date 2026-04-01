@@ -27,7 +27,7 @@ export const ResourcePage = () => {
         actions={
           <PermissionWrapper
             requiredPermission="api:resource"
-            permissionAction="write"
+            permissionAction="read"
           >
             <Button variant="outlined" onClick={handleMetadata}>
               Metadata
