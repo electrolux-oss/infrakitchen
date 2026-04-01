@@ -193,7 +193,7 @@ export const CascadingFilter = ({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+  const [optionSearch, setOptionSearch] = useState("");
   const [loadingChildren, setLoadingChildren] = useState<
     Record<string, boolean>
   >({});
@@ -251,7 +251,7 @@ export const CascadingFilter = ({
       setLoadingTop(true);
       setPage(1);
       try {
-        const result = await loadOptions(search, 1);
+        const result = await loadOptions(optionSearch, 1);
         setLoadedOptions(result.options);
         setHasMore(result.hasMore);
       } catch (error) {
@@ -262,7 +262,7 @@ export const CascadingFilter = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [
-    search,
+    optionSearch,
     loadOptions,
     setLoadingTop,
     setPage,
@@ -275,7 +275,7 @@ export const CascadingFilter = ({
     const nextPage = page + 1;
     setLoadingMore(true);
     try {
-      const result = await loadOptions(search, nextPage);
+      const result = await loadOptions(optionSearch, nextPage);
       setLoadedOptions((prev) => [...prev, ...result.options]);
       setHasMore(result.hasMore);
       setPage(nextPage);
@@ -289,7 +289,7 @@ export const CascadingFilter = ({
     hasMore,
     loadingMore,
     page,
-    search,
+    optionSearch,
     setLoadingMore,
     setLoadedOptions,
     setHasMore,
@@ -299,7 +299,7 @@ export const CascadingFilter = ({
   const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
     if (loadOptions && loadedOptions.length === 0) {
-      setSearch("");
+      setOptionSearch("");
     }
   };
 
@@ -463,9 +463,9 @@ export const CascadingFilter = ({
           <Box sx={{ px: 1, pt: 1, pb: 0.5 }}>
             <TextField
               size="small"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search options..."
+              value={optionSearch}
+              onChange={(e) => setOptionSearch(e.target.value)}
               autoFocus
               fullWidth
               onClick={(e) => e.stopPropagation()}
