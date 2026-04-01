@@ -1,96 +1,57 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, Typography, Chip } from "@mui/material";
-
-import { GradientCircularProgress } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { FilterConfig } from "../../common";
+import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
-import { notifyError } from "../../common/hooks/useNotification";
-import { ResourceResponse } from "../../resources/types";
+import {
+  buildResourceApiFilters,
+  createResourceFilterConfigs,
+  resourceColumns,
+  resourceDefaultColumnVisibilityModel,
+  resourceFields,
+} from "../../resources/components/resourceTableConfig";
 
 interface IntegrationResourcesProps {
   integration_id: string;
 }
+
 export const IntegrationResources = (props: IntegrationResourcesProps) => {
   const { integration_id } = props;
   const { ikApi } = useConfig();
-  const [resources, setResources] = useState<ResourceResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchRelatedData = useCallback(async () => {
-    if (!integration_id) return;
-    setLoading(true);
-    ikApi
-      .getList("resources", {
-        pagination: { page: 1, perPage: 100 },
-        sort: { field: "updated_at", order: "DESC" },
-        filter: { integration_ids__any: [integration_id] },
-        fields: [
-          "id",
-          "name",
-          "description",
-          "state",
-          "status",
-          "labels",
-          "template_id",
-        ],
-      })
-      .then((response) => {
-        setResources(response.data || []);
-      })
-      .catch((e) => {
-        notifyError(e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [ikApi, integration_id]);
+  const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchRelatedData();
-  }, [fetchRelatedData]);
+    ikApi.get("labels/resource").then((response: string[]) => {
+      setLabels(response);
+    });
+  }, [ikApi]);
 
-  if (!integration_id) return null;
+  const filterConfigs: FilterConfig[] = useMemo(() => {
+    return createResourceFilterConfigs({
+      labels,
+      showTemplateVersionFilter: false,
+    });
+  }, [labels]);
+
+  const buildApiFilters = useCallback(
+    (filterValues: Record<string, any>) => {
+      return {
+        ...buildResourceApiFilters(filterValues),
+        integration_ids__any: [integration_id],
+      };
+    },
+    [integration_id],
+  );
 
   return (
-    <OverviewCard>
-      {loading && <GradientCircularProgress />}
-      {!loading && resources.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
-          No resources for this integration.
-        </Typography>
-      )}
-      {resources.map((r) => (
-        <Box
-          key={r.id}
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            p: 2,
-            mb: 2,
-            borderRadius: 1,
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.5,
-            width: "100%",
-          }}
-        >
-          <Typography variant="body1" fontWeight={500}>
-            <GetEntityLink {...r} />
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {r.description}
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Chip size="small" label={r.state} />
-            <Chip size="small" label={r.status} variant="outlined" />
-            {r.labels?.slice(0, 4).map((l) => (
-              <Chip key={l} size="small" label={l} variant="outlined" />
-            ))}
-          </Box>
-        </Box>
-      ))}
-    </OverviewCard>
+    <EntityFetchTable
+      title="Resources"
+      entityName="resource"
+      columns={resourceColumns}
+      defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
+      filterConfigs={filterConfigs}
+      buildApiFilters={buildApiFilters}
+      fields={resourceFields}
+    />
   );
 };
