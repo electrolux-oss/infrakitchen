@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -8,10 +8,58 @@ import {
   GetEntityLink,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { getGraphQLClient, initGraphQLClient } from "../../graphql/client";
+import { WORKFLOWS_QUERY, WORKFLOWS_COUNT_QUERY } from "../graphql/queries";
+import {
+  GqlWorkflowListItem,
+  transformWorkflowListItem,
+} from "../graphql/transforms";
 
 export const WorkflowsPage = () => {
+  const { ikApi } = useConfig();
+
+  const fetchWorkflows = useCallback(
+    async (params: {
+      filter: Record<string, any>;
+      sort: { field: string; order: "ASC" | "DESC" };
+      pagination: { page: number; perPage: number };
+    }) => {
+      try {
+        getGraphQLClient();
+      } catch {
+        initGraphQLClient(ikApi);
+      }
+      const client = getGraphQLClient();
+
+      const gqlFilter =
+        Object.keys(params.filter).length > 0 ? params.filter : null;
+      const gqlSort = [params.sort.field, params.sort.order];
+      const skip = (params.pagination.page - 1) * params.pagination.perPage;
+      const end = skip + params.pagination.perPage;
+      const gqlRange = [skip, end];
+
+      const [listResult, countResult] = await Promise.all([
+        client.request<{ workflows: GqlWorkflowListItem[] }>(WORKFLOWS_QUERY, {
+          filter: gqlFilter,
+          sort: gqlSort,
+          range: gqlRange,
+        }),
+        client.request<{ workflowsCount: number }>(WORKFLOWS_COUNT_QUERY, {
+          filter: gqlFilter,
+        }),
+      ]);
+
+      return {
+        data: listResult.workflows.map(transformWorkflowListItem),
+        total: countResult.workflowsCount,
+      };
+    },
+    [ikApi],
+  );
+
   const columns = useMemo(
     () => [
       {
@@ -31,13 +79,19 @@ export const WorkflowsPage = () => {
         field: "blueprint_id",
         headerName: "Blueprint",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <GetEntityLink
-            id={params.row.blueprint_id}
-            _entity_name="blueprint"
-            name={params.row.blueprint_id.slice(0, 8) + "…"}
-          />
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.blueprint_id ? (
+            <GetEntityLink
+              id={params.row.blueprint_id}
+              _entity_name="blueprint"
+              name={
+                params.row.blueprint_name ??
+                params.row.blueprint_id.slice(0, 8) + "…"
+              }
+            />
+          ) : (
+            "—"
+          ),
       },
       {
         field: "status",
@@ -116,6 +170,7 @@ export const WorkflowsPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
+        fetchListFn={fetchWorkflows}
         fields={[
           "id",
           "blueprint_id",

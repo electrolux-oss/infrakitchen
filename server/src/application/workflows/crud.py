@@ -14,7 +14,7 @@ from core.utils.model_tools import is_valid_uuid
 from .model import Workflow, WorkflowStep
 
 
-def _workflow_load_options() -> list:
+def _workflow_load_options() -> list[Any]:
     """Eager-load options for Workflow queries."""
     step_load = selectinload(Workflow.steps)
     return [
@@ -24,6 +24,8 @@ def _workflow_load_options() -> list:
         step_load.selectinload(WorkflowStep.secret_ids),
         step_load.joinedload(WorkflowStep.template),
         step_load.joinedload(WorkflowStep.resource),
+        step_load.joinedload(WorkflowStep.source_code_version),
+        step_load.selectinload(WorkflowStep.parent_resources),
     ]
 
 
@@ -98,7 +100,10 @@ class WorkflowCRUD:
             self.session.add(step)
         await self.session.flush()
 
-        return await self.get_by_id(workflow.id)  # type: ignore
+        result = await self.get_by_id(workflow.id)
+        if result is None:
+            raise ValueError("Failed to retrieve workflow after creation")
+        return result
 
     async def update_step(self, step_id: UUID, data: dict[str, Any]) -> WorkflowStep | None:
         statement = select(WorkflowStep).where(WorkflowStep.id == step_id)

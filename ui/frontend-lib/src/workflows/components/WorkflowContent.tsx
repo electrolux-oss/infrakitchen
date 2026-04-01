@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import ListIcon from "@mui/icons-material/List";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
-import { BlueprintResponse } from "../../blueprints/types";
 import { useLocalStorage } from "../../common";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import { PropertyCard } from "../../common/components/PropertyCard";
-import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { useWorkflowMetadata } from "../hooks/useWorkflowMetadata";
 import { WorkflowResponse } from "../types";
 
 import { WorkflowOverview } from "./WorkflowOverview";
@@ -19,9 +16,6 @@ import { WorkflowWiringViewer } from "./WorkflowWiringViewer";
 
 export const WorkflowContent = () => {
   const { entity } = useEntityProvider();
-  const { ikApi } = useConfig();
-
-  const [blueprint, setBlueprint] = useState<BlueprintResponse | null>(null);
 
   const storageKey = `workflow_view`;
   const { get, setKey } = useLocalStorage<Record<string, any>>();
@@ -33,33 +27,14 @@ export const WorkflowContent = () => {
 
   const workflow = entity as WorkflowResponse | undefined;
 
-  const { resources, integrations, sourceCodeVersions } = useWorkflowMetadata(
-    workflow?.steps ?? [],
-  );
-
   const setViewAndPersist = (v: "list" | "diagram") => {
     setView(v);
     setKey(storageKey, { view: v });
   };
 
-  const fetchBlueprint = useCallback(async () => {
-    if (!workflow?.blueprint_id) return;
-    try {
-      const bp: BlueprintResponse = await ikApi.get(
-        `blueprints/${workflow.blueprint_id}`,
-      );
-      setBlueprint(bp);
-    } catch {
-      // Blueprint may have been deleted — continue without it
-    }
-  }, [ikApi, workflow?.blueprint_id]);
-
-  useEffect(() => {
-    fetchBlueprint();
-  }, [fetchBlueprint]);
-
   if (!workflow) return null;
 
+  const blueprint = workflow.blueprint;
   const hasWiring = workflow.wiring_snapshot.length > 0;
 
   return (
@@ -99,28 +74,15 @@ export const WorkflowContent = () => {
         }
       >
         {view === "list" ? (
-          <WorkflowSteps
-            steps={workflow.steps}
-            blueprint={blueprint}
-            resources={resources}
-            integrations={integrations}
-            sourceCodeVersions={sourceCodeVersions}
-          />
+          <WorkflowSteps steps={workflow.steps} blueprint={blueprint} />
         ) : hasWiring && blueprint ? (
           <WorkflowWiringViewer
             templates={blueprint.templates}
             wiring={workflow.wiring_snapshot}
             steps={workflow.steps}
-            resources={resources}
           />
         ) : (
-          <WorkflowSteps
-            steps={workflow.steps}
-            blueprint={blueprint}
-            resources={resources}
-            integrations={integrations}
-            sourceCodeVersions={sourceCodeVersions}
-          />
+          <WorkflowSteps steps={workflow.steps} blueprint={blueprint} />
         )}
       </PropertyCard>
 

@@ -24,24 +24,14 @@ import {
 } from "../../common/components/CommonField";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { EntityMeta } from "../hooks/useWorkflowMetadata";
 import { WorkflowStepResponse } from "../types";
 
 interface WorkflowStepsProps {
   steps: WorkflowStepResponse[];
   blueprint: BlueprintResponse | null;
-  resources?: Map<string, EntityMeta>;
-  integrations?: Map<string, EntityMeta>;
-  sourceCodeVersions?: Map<string, EntityMeta>;
 }
 
-export const WorkflowSteps = ({
-  steps,
-  blueprint,
-  resources,
-  integrations,
-  sourceCodeVersions,
-}: WorkflowStepsProps) => {
+export const WorkflowSteps = ({ steps, blueprint }: WorkflowStepsProps) => {
   const [expandedVars, setExpandedVars] = useState<string | null>(null);
 
   const templateNameMap = new Map(
@@ -61,7 +51,8 @@ export const WorkflowSteps = ({
   return (
     <Box sx={{ width: "100%" }}>
       {sorted.map((step) => {
-        const templateName = templateNameMap.get(step.template_id);
+        const templateName =
+          step.template?.name ?? templateNameMap.get(step.template_id);
         const hasVars = Object.keys(step.resolved_variables).length > 0;
 
         return (
@@ -147,7 +138,7 @@ export const WorkflowSteps = ({
                         id={step.resource_id}
                         _entity_name="resource"
                         identifier={
-                          resources?.get(step.resource_id)?.name ??
+                          step.resource?.name ??
                           step.resource_id.slice(0, 8) + "…"
                         }
                       />
@@ -170,8 +161,7 @@ export const WorkflowSteps = ({
                         id={step.source_code_version_id}
                         _entity_name="source_code_version"
                         identifier={
-                          sourceCodeVersions?.get(step.source_code_version_id)
-                            ?.name ??
+                          step.source_code_version?.identifier ??
                           step.source_code_version_id.slice(0, 8) + "…"
                         }
                       />
@@ -194,7 +184,7 @@ export const WorkflowSteps = ({
                 )}
 
                 {/* Parents */}
-                {step.parent_resource_ids.length > 0 && (
+                {step.parent_resources.length > 0 && (
                   <Box sx={{ mt: 1.5 }}>
                     <Typography
                       variant="caption"
@@ -211,16 +201,14 @@ export const WorkflowSteps = ({
                         mt: 0.5,
                       }}
                     >
-                      {step.parent_resource_ids.map((id) => (
+                      {step.parent_resources.map((res) => (
                         <Chip
-                          key={id}
+                          key={res.id}
                           label={
                             <GetReferenceUrlValue
-                              id={id}
+                              id={res.id}
                               _entity_name="resource"
-                              identifier={
-                                resources?.get(id)?.name ?? id.slice(0, 8) + "…"
-                              }
+                              identifier={res.name ?? res.id.slice(0, 8) + "…"}
                             />
                           }
                           size="small"
@@ -249,17 +237,14 @@ export const WorkflowSteps = ({
                         mt: 0.5,
                       }}
                     >
-                      {step.integration_ids.map((id) => (
+                      {step.integration_ids.map((integration) => (
                         <Chip
-                          key={id}
+                          key={integration.id}
                           label={
                             <GetReferenceUrlValue
-                              id={id}
+                              id={integration.id}
                               _entity_name="integration"
-                              identifier={
-                                integrations?.get(id)?.name ??
-                                id.slice(0, 8) + "…"
-                              }
+                              name={integration.name}
                             />
                           }
                           size="small"
