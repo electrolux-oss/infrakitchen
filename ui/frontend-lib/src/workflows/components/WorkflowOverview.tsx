@@ -103,12 +103,12 @@ export const WorkflowOverview = ({ blueprint }: WorkflowOverviewProps) => {
           size={6}
           value={
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {workflow.integration_ids.map((id) => (
+              {workflow.integration_ids.map((integration) => (
                 <GetReferenceUrlValue
-                  key={id}
-                  id={id}
+                  key={integration.id}
+                  id={integration.id}
                   _entity_name="integration"
-                  identifier={id.slice(0, 8) + "…"}
+                  identifier={integration.name}
                 />
               ))}
             </Box>
@@ -122,12 +122,12 @@ export const WorkflowOverview = ({ blueprint }: WorkflowOverviewProps) => {
           size={6}
           value={
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {workflow.secret_ids.map((id) => (
+              {workflow.secret_ids.map((secret) => (
                 <GetReferenceUrlValue
-                  key={id}
-                  id={id}
+                  key={secret.id}
+                  id={secret.id}
                   _entity_name="secret"
-                  identifier={id.slice(0, 8) + "…"}
+                  identifier={secret.name}
                 />
               ))}
             </Box>

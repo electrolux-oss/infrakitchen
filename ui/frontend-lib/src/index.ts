@@ -19,6 +19,7 @@ export * from "./integrations";
 export * from "./templates";
 export * from "./blueprints";
 export * from "./workflows";
+export * from "./graphql";
 export * from "./resources";
 export * from "./batch_operations";
 export * from "./administration";

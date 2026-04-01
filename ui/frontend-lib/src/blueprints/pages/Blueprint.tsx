@@ -17,7 +17,6 @@ export const BlueprintPage = () => {
     <EntityProvider entity_name="blueprint" entity_id={blueprint_id || ""}>
       <EntityContainer
         title="Blueprint Overview"
-        showActivity={false}
         actions={
           <Button
             variant="contained"

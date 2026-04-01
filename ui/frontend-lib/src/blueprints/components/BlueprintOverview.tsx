@@ -4,9 +4,9 @@ import StorageIcon from "@mui/icons-material/Storage";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Chip } from "@mui/material";
 
+import { Labels } from "../../common";
 import {
   CommonField,
-  getLabels,
   GetEntityLink,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
@@ -64,7 +64,7 @@ export const BlueprintOverview = () => {
 
       <CommonField
         name="Labels"
-        value={getLabels(blueprint.labels)}
+        value={<Labels labels={blueprint.labels} />}
         size={12}
       />
 

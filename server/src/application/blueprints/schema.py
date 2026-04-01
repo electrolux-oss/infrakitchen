@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 import uuid
 
@@ -78,8 +78,8 @@ class BlueprintResponse(BaseModel):
     revision_number: int = Field(default=1)
     created_by: UserShort | uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 

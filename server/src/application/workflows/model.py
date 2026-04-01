@@ -5,8 +5,10 @@ import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, Column, DateTime, ForeignKey, JSON, Table, func, Integer, Text
 
+from application.blueprints.model import Blueprint
 from application.integrations.model import Integration
 from application.secrets.model import Secret
+from application.source_code_versions.model import SourceCodeVersion
 from application.templates.model import Template
 from core.base_models import Base
 from core.constants.model import ModelStatus
@@ -43,12 +45,22 @@ workflow_step_secrets = Table(
     Column("secret_id", ForeignKey("secrets.id", ondelete="CASCADE"), primary_key=True),
 )
 
+workflow_step_parent_resources = Table(
+    "workflow_step_parent_resources",
+    Base.metadata,
+    Column("workflow_step_id", ForeignKey("workflow_steps.id", ondelete="CASCADE"), primary_key=True),
+    Column("resource_id", ForeignKey("resources.id", ondelete="CASCADE"), primary_key=True),
+)
+
 
 class Workflow(Base):
     __tablename__: str = "workflows"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    blueprint_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    blueprint_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("blueprints.id", ondelete="SET NULL"), nullable=True
+    )
+    blueprint: Mapped[Blueprint | None] = relationship("Blueprint", lazy="joined")
 
     # Snapshot of wiring at execution time (immutable after creation)
     wiring_snapshot: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
@@ -72,6 +84,8 @@ class Workflow(Base):
         back_populates="workflow",
         lazy="selectin",
         order_by="WorkflowStep.position",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -88,10 +102,16 @@ class WorkflowStep(Base):
 
     template_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("templates.id"))
     template: Mapped[Template] = relationship("Template", lazy="joined")
-    resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("resources.id"), nullable=True)
-    resource: Mapped["Resource | None"] = relationship("Resource", lazy="joined")
-    source_code_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("resources.id", ondelete="SET NULL"), nullable=True
+    )
+    resource: Mapped["Resource | None"] = relationship("Resource", foreign_keys=[resource_id], lazy="joined")
+    source_code_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("source_code_versions.id"), nullable=True
+    )
+    source_code_version: Mapped[SourceCodeVersion | None] = relationship("SourceCodeVersion", lazy="joined")
     parent_resource_ids: Mapped[list[uuid.UUID]] = mapped_column(JSON, default=list)
+    parent_resources: Mapped[list["Resource"]] = relationship("Resource", secondary=workflow_step_parent_resources)
     integration_ids: Mapped[list[Integration]] = relationship(secondary=workflow_step_integrations)
     secret_ids: Mapped[list[Secret]] = relationship(secondary=workflow_step_secrets)
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

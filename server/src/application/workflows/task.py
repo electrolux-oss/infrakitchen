@@ -290,7 +290,9 @@ class WorkflowTask:
             self.workflow_instance.status = new_status
 
         await self.session.commit()
-        await self.session.refresh(self.workflow_instance)
+        refreshed = await self.workflow_service.crud.get_by_id(self.workflow_instance.id)
+        if refreshed:
+            self.workflow_instance = refreshed
 
         response_model = WorkflowResponse.model_validate(self.workflow_instance)
         await self.event_sender.send_event(response_model, event_type)
@@ -308,7 +310,9 @@ class WorkflowTask:
         step.error_message = error_message
 
         await self.session.commit()
-        await self.session.refresh(self.workflow_instance)
+        refreshed = await self.workflow_service.crud.get_by_id(self.workflow_instance.id)
+        if refreshed:
+            self.workflow_instance = refreshed
 
         response_model = WorkflowResponse.model_validate(self.workflow_instance)
         await self.event_sender.send_event(response_model, ModelActions.EXECUTE)
