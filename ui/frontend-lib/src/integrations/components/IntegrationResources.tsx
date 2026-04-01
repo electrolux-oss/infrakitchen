@@ -5,7 +5,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
 import {
   buildResourceApiFilters,
-  createResourceFilterConfigs,
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
   resourceFields,
@@ -26,20 +25,26 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
     });
   }, [ikApi]);
 
-  const filterConfigs: FilterConfig[] = useMemo(() => {
-    return createResourceFilterConfigs({
-      labels,
-      showTemplateVersionFilter: false,
-    });
-  }, [labels]);
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      { id: "name", type: "search", label: "Search", width: 420 },
+      {
+        id: "labels",
+        type: "autocomplete",
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
+  );
 
   const buildApiFilters = useCallback(
-    (filterValues: Record<string, any>) => {
-      return {
-        ...buildResourceApiFilters(filterValues),
-        integration_ids__any: [integration_id],
-      };
-    },
+    (filterValues: Record<string, any>) => ({
+      ...buildResourceApiFilters(filterValues),
+      integration_ids__any: [integration_id],
+    }),
     [integration_id],
   );
 
