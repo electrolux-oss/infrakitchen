@@ -7,7 +7,9 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from application.integrations.schema import IntegrationShort
 from application.resources.schema import ResourceShort
 from application.secrets.schema import SecretShort
+from application.source_code_versions.schema import SourceCodeVersionShort
 from application.templates.schema import TemplateShort
+from core.constants.model import ModelStatus
 from core.users.schema import UserShort
 
 
@@ -54,6 +56,26 @@ class WorkflowRequest(BaseModel):
     )
 
 
+class WorkflowStepCreate(BaseModel):
+    template_id: uuid.UUID
+    position: int
+    status: str = ModelStatus.PENDING
+    resolved_variables: dict[str, Any] = Field(default_factory=dict)
+    parent_resource_ids: list[uuid.UUID] = Field(default_factory=list)
+    source_code_version_id: uuid.UUID | None = None
+    integration_ids: list[uuid.UUID] = Field(default_factory=list)
+    secret_ids: list[uuid.UUID] = Field(default_factory=list)
+    storage_id: uuid.UUID | None = None
+
+
+class WorkflowCreate(BaseModel):
+    wiring_snapshot: list[WiringRule] = Field(default_factory=list)
+    variable_overrides: dict[str, Any] = Field(default_factory=dict)
+    status: str = ModelStatus.PENDING
+    created_by: uuid.UUID
+    steps: list[WorkflowStepCreate] = Field(default_factory=list)
+
+
 class WorkflowStepResponse(BaseModel):
     id: uuid.UUID
     template_id: uuid.UUID
@@ -65,9 +87,11 @@ class WorkflowStepResponse(BaseModel):
     error_message: str | None = None
     resolved_variables: dict[str, Any] = Field(default_factory=dict)
     parent_resource_ids: list[uuid.UUID] = Field(default_factory=list)
+    parent_resources: list[ResourceShort] = Field(default_factory=list)
     integration_ids: list[IntegrationShort] = Field(default_factory=list)
     secret_ids: list[SecretShort] = Field(default_factory=list)
     source_code_version_id: uuid.UUID | None = None
+    source_code_version: SourceCodeVersionShort | None = None
     storage_id: uuid.UUID | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
@@ -77,16 +101,11 @@ class WorkflowStepResponse(BaseModel):
 
 class WorkflowResponse(BaseModel):
     id: uuid.UUID
-    blueprint_id: uuid.UUID
     status: str
     error_message: str | None = None
     steps: list[WorkflowStepResponse] = Field(default_factory=list)
     wiring_snapshot: list[WiringRule] = Field(default_factory=list)
     variable_overrides: dict[str, Any] = Field(default_factory=dict)
-    parent_overrides: dict[str, list[uuid.UUID]] = Field(default_factory=dict)
-    source_code_version_overrides: dict[str, uuid.UUID] = Field(default_factory=dict)
-    integration_ids: list[IntegrationShort] = Field(default_factory=list)
-    secret_ids: list[SecretShort] = Field(default_factory=list)
     creator: UserShort | None = Field(default=None)
     started_at: datetime | None = None
     completed_at: datetime | None = None

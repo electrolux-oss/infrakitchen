@@ -66,7 +66,10 @@ class BlueprintCRUD:
             )
         await self.session.flush()
         # Re-fetch with selectinload so the templates relationship is populated
-        return await self.get_by_id(blueprint.id)
+        result = await self.get_by_id(blueprint.id)
+        if result is None:
+            raise ValueError("Failed to create blueprint")
+        return result
 
     async def update(self, blueprint_id: str | UUID, data: dict[str, Any]) -> Blueprint | None:
         blueprint = await self.get_by_id(blueprint_id)

@@ -4,7 +4,7 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from application.workflows.model import Workflow
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
@@ -44,3 +44,17 @@ class WorkflowQuery:
         stmt = evaluate_sqlalchemy_pagination(stmt, parse_range(range))
         result = await session.execute(stmt)
         return [x for x in (convert_workflow(w, fields) for w in result.scalars().unique().all()) if x is not None]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def workflows_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        session = info.context["session"]
+        stmt = select(func.count()).select_from(Workflow)
+        stmt = evaluate_sqlalchemy_filters(
+            Workflow, stmt, cast(dict[str, Any], cast(object, filter)) if filter else None
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one()

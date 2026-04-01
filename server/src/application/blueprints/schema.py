@@ -1,24 +1,13 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from application.templates.schema import TemplateShort
+from application.workflows.schema import WiringRule
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
-
-
-class WiringRule(BaseModel):
-    """
-    Defines how an output from one template's resource feeds into
-    a variable of another template's resource.
-    """
-
-    source_template_id: uuid.UUID = Field(..., description="Template whose resource produces the output")
-    source_output: str = Field(..., description="Name of the output variable on the source resource")
-    target_template_id: uuid.UUID = Field(..., description="Template whose resource consumes the value")
-    target_variable: str = Field(..., description="Name of the input variable on the target resource")
 
 
 class BlueprintCreate(BaseModel):
@@ -78,8 +67,8 @@ class BlueprintResponse(BaseModel):
     revision_number: int = Field(default=1)
     created_by: UserShort | uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 

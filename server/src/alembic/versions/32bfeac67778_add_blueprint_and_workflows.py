@@ -1,8 +1,8 @@
 """add blueprint and workflows
 
-Revision ID: 12060c301304
-Revises: a94fd5a63385
-Create Date: 2026-04-01 11:33:20.367123
+Revision ID: 32bfeac67778
+Revises: 6f73b5194d89
+Create Date: 2026-04-17 15:51:42.545417
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "12060c301304"
-down_revision: str | None = "a94fd5a63385"
+revision: str = "32bfeac67778"
+down_revision: str | None = "6f73b5194d89"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -44,27 +44,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_blueprints_name"), "blueprints", ["name"], unique=True)
     op.create_table(
-        "workflows",
-        sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("blueprint_id", sa.UUID(), nullable=True),
-        sa.Column("wiring_snapshot", sa.JSON(), nullable=False),
-        sa.Column("variable_overrides", sa.JSON(), nullable=False),
-        sa.Column("parent_overrides", sa.JSON(), nullable=False),
-        sa.Column("source_code_version_overrides", sa.JSON(), nullable=False),
-        sa.Column("storage_id", sa.UUID(), nullable=True),
-        sa.Column("status", sa.String(), nullable=False),
-        sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column("created_by", sa.UUID(), nullable=False),
-        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["created_by"],
-            ["users.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_table(
         "blueprint_templates",
         sa.Column("blueprint_id", sa.UUID(), nullable=False),
         sa.Column("template_id", sa.UUID(), nullable=False),
@@ -74,20 +53,23 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("blueprint_id", "template_id"),
     )
     op.create_table(
-        "workflow_integrations",
-        sa.Column("workflow_id", sa.UUID(), nullable=False),
-        sa.Column("integration_id", sa.UUID(), nullable=False),
-        sa.ForeignKeyConstraint(["integration_id"], ["integrations.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["workflow_id"], ["workflows.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("workflow_id", "integration_id"),
-    )
-    op.create_table(
-        "workflow_secrets",
-        sa.Column("workflow_id", sa.UUID(), nullable=False),
-        sa.Column("secret_id", sa.UUID(), nullable=False),
-        sa.ForeignKeyConstraint(["secret_id"], ["secrets.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["workflow_id"], ["workflows.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("workflow_id", "secret_id"),
+        "workflows",
+        sa.Column("id", sa.UUID(), nullable=False),
+        sa.Column("blueprint_id", sa.UUID(), nullable=True),
+        sa.Column("wiring_snapshot", sa.JSON(), nullable=False),
+        sa.Column("variable_overrides", sa.JSON(), nullable=False),
+        sa.Column("status", sa.String(), nullable=False),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("created_by", sa.UUID(), nullable=False),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["blueprint_id"], ["blueprints.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "workflow_steps",
@@ -104,9 +86,10 @@ def upgrade() -> None:
         sa.Column("resolved_variables", sa.JSON(), nullable=False),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
+        sa.ForeignKeyConstraint(["resource_id"], ["resources.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(
-            ["resource_id"],
-            ["resources.id"],
+            ["source_code_version_id"],
+            ["source_code_versions.id"],
         ),
         sa.ForeignKeyConstraint(
             ["template_id"],
@@ -124,6 +107,14 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("workflow_step_id", "integration_id"),
     )
     op.create_table(
+        "workflow_step_parent_resources",
+        sa.Column("workflow_step_id", sa.UUID(), nullable=False),
+        sa.Column("resource_id", sa.UUID(), nullable=False),
+        sa.ForeignKeyConstraint(["resource_id"], ["resources.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["workflow_step_id"], ["workflow_steps.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("workflow_step_id", "resource_id"),
+    )
+    op.create_table(
         "workflow_step_secrets",
         sa.Column("workflow_step_id", sa.UUID(), nullable=False),
         sa.Column("secret_id", sa.UUID(), nullable=False),
@@ -138,12 +129,11 @@ def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table("workflow_step_secrets")
+    op.drop_table("workflow_step_parent_resources")
     op.drop_table("workflow_step_integrations")
     op.drop_table("workflow_steps")
-    op.drop_table("workflow_secrets")
-    op.drop_table("workflow_integrations")
-    op.drop_table("blueprint_templates")
     op.drop_table("workflows")
+    op.drop_table("blueprint_templates")
     op.drop_index(op.f("ix_blueprints_name"), table_name="blueprints")
     op.drop_table("blueprints")
     # ### end Alembic commands ###

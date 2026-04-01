@@ -82,7 +82,6 @@ class BaseMessagesWorker:
                     self.worker.status = "busy"
                 message = MessageHandler(msg)
                 try:
-                    await asyncio.sleep(1)  # Small delay to ensure DB transactions are committed
                     await self.process_message(message)
                 except Exception as e:
                     logger.error(f"Task failed: {e}")

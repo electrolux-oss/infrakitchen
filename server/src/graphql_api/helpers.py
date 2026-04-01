@@ -50,7 +50,7 @@ def build_load_only(model: type, graphql_fields: set[str]) -> list[Any]:
         snake = _camel_to_snake(gql_field)
         if snake in column_keys:
             requested.add(snake)
-    if len(requested) >= len(column_keys) - 1:
+    if not requested or len(requested) >= len(column_keys) - 1:
         return []
     return [load_only(*[getattr(model, c) for c in requested])]
 

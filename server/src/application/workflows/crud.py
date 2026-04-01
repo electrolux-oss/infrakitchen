@@ -14,16 +14,16 @@ from core.utils.model_tools import is_valid_uuid
 from .model import Workflow, WorkflowStep
 
 
-def _workflow_load_options() -> list:
+def _workflow_load_options() -> list[Any]:
     """Eager-load options for Workflow queries."""
     step_load = selectinload(Workflow.steps)
     return [
-        selectinload(Workflow.integration_ids),
-        selectinload(Workflow.secret_ids),
         step_load.selectinload(WorkflowStep.integration_ids),
         step_load.selectinload(WorkflowStep.secret_ids),
         step_load.joinedload(WorkflowStep.template),
         step_load.joinedload(WorkflowStep.resource),
+        step_load.joinedload(WorkflowStep.source_code_version),
+        step_load.selectinload(WorkflowStep.parent_resources),
     ]
 
 
@@ -80,12 +80,8 @@ class WorkflowCRUD:
 
     async def create(self, data: dict[str, Any]) -> Workflow:
         steps_data = data.pop("steps", [])
-        integration_ids = data.pop("integration_ids", [])
-        secret_ids = data.pop("secret_ids", [])
 
         workflow = Workflow(**data)
-        workflow.integration_ids = await self._resolve_integrations(integration_ids)
-        workflow.secret_ids = await self._resolve_secrets(secret_ids)
         self.session.add(workflow)
         await self.session.flush()
 
@@ -98,7 +94,10 @@ class WorkflowCRUD:
             self.session.add(step)
         await self.session.flush()
 
-        return await self.get_by_id(workflow.id)  # type: ignore
+        result = await self.get_by_id(workflow.id)
+        if result is None:
+            raise ValueError("Failed to retrieve workflow after creation")
+        return result
 
     async def update_step(self, step_id: UUID, data: dict[str, Any]) -> WorkflowStep | None:
         statement = select(WorkflowStep).where(WorkflowStep.id == step_id)
@@ -122,11 +121,6 @@ class WorkflowCRUD:
         execution = await self.get_by_id(workflow_id)
         if execution is None:
             return None
-
-        if "integration_ids" in data:
-            execution.integration_ids = await self._resolve_integrations(data.pop("integration_ids"))
-        if "secret_ids" in data:
-            execution.secret_ids = await self._resolve_secrets(data.pop("secret_ids"))
 
         for key, value in data.items():
             if hasattr(execution, key):

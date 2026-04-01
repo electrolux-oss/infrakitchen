@@ -185,6 +185,14 @@ export default function DashboardSidebar({
             selected={!!matchPath("/blueprints/*", pathname)}
             permissionKey="blueprint"
           />
+          <DashboardSidebarPageItem
+            id="workflows"
+            title="Workflows"
+            icon={<ListAltIcon />}
+            href="/workflows"
+            selected={!!matchPath("/workflows/*", pathname)}
+            permissionKey="workflow"
+          />
 
           <DashboardSidebarDividerItem />
           <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>

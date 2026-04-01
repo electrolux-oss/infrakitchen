@@ -117,7 +117,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/blueprints/:blueprint_id",
+    path: "/blueprints/:blueprint_id/:tab?",
     Component: lz(
       () => import("./blueprints/pages/Blueprint"),
       "BlueprintPage",
@@ -487,7 +487,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/workflows/:workflow_id",
+    path: "/workflows/:workflow_id/:tab?",
     Component: lz(() => import("./workflows/pages/Workflow"), "WorkflowPage"),
     requiredPermission: "api:workflow",
     permissionAction: "read",

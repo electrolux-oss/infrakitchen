@@ -2,12 +2,7 @@ import { useNavigate } from "react-router";
 
 import { Box, Chip } from "@mui/material";
 
-import { BlueprintResponse } from "../../blueprints/types";
-import {
-  CommonField,
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -15,11 +10,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import StatusChip from "../../common/StatusChip";
 import { WorkflowResponse } from "../types";
 
-interface WorkflowOverviewProps {
-  blueprint: BlueprintResponse | null;
-}
-
-export const WorkflowOverview = ({ blueprint }: WorkflowOverviewProps) => {
+export const WorkflowOverview = () => {
   const { entity } = useEntityProvider();
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -27,34 +18,19 @@ export const WorkflowOverview = ({ blueprint }: WorkflowOverviewProps) => {
   if (!entity) return null;
   const workflow = entity as WorkflowResponse;
 
+  // Derive unique templates from steps
+  const templates = workflow.steps
+    .map((s) => s.template)
+    .filter(
+      (t, i, arr): t is NonNullable<typeof t> =>
+        t !== null && arr.findIndex((x) => x?.id === t.id) === i,
+    );
+
   return (
-    <OverviewCard
-      name={`Workflow ${workflow.id.slice(0, 8)}…`}
-      description={
-        blueprint
-          ? `Blueprint: ${blueprint.name}`
-          : `Blueprint: ${workflow.blueprint_id.slice(0, 8)}…`
-      }
-    >
+    <OverviewCard name={`Workflow ${workflow.id.slice(0, 8)}…`} description="">
       <CommonField
         name="Status"
         value={<StatusChip status={workflow.status} />}
-        size={4}
-      />
-
-      <CommonField
-        name="Blueprint"
-        value={
-          blueprint ? (
-            <GetEntityLink
-              id={workflow.blueprint_id}
-              _entity_name="blueprint"
-              name={blueprint.name}
-            />
-          ) : (
-            workflow.blueprint_id.slice(0, 8) + "…"
-          )
-        }
         size={4}
       />
 
@@ -97,51 +73,13 @@ export const WorkflowOverview = ({ blueprint }: WorkflowOverviewProps) => {
         />
       )}
 
-      {workflow.integration_ids.length > 0 && (
-        <CommonField
-          name="Integrations"
-          size={6}
-          value={
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {workflow.integration_ids.map((id) => (
-                <GetReferenceUrlValue
-                  key={id}
-                  id={id}
-                  _entity_name="integration"
-                  identifier={id.slice(0, 8) + "…"}
-                />
-              ))}
-            </Box>
-          }
-        />
-      )}
-
-      {workflow.secret_ids.length > 0 && (
-        <CommonField
-          name="Secrets"
-          size={6}
-          value={
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {workflow.secret_ids.map((id) => (
-                <GetReferenceUrlValue
-                  key={id}
-                  id={id}
-                  _entity_name="secret"
-                  identifier={id.slice(0, 8) + "…"}
-                />
-              ))}
-            </Box>
-          }
-        />
-      )}
-
-      {blueprint && blueprint.templates.length > 0 && (
+      {templates.length > 0 && (
         <CommonField
           name="Templates"
           size={12}
           value={
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {blueprint.templates.map((t) => (
+              {templates.map((t) => (
                 <Chip
                   key={t.id}
                   label={t.name}

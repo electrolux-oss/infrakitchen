@@ -40,6 +40,7 @@ export interface BlueprintResponse {
   status: "enabled" | "disabled";
   revision_number: number;
   created_by: UserShort | string;
+  workflows: BlueprintExecutionResponse[];
   created_at: string;
   updated_at: string;
   _entity_name: string;
@@ -74,16 +75,11 @@ export interface ExecutionStepResponse {
 
 export interface BlueprintExecutionResponse {
   id: string;
-  blueprint_id: string;
   status: "pending" | "in_progress" | "done" | "error" | "cancelled";
   error_message: string | null;
   steps: ExecutionStepResponse[];
   wiring_snapshot: WiringRule[];
   variable_overrides: Record<string, any>;
-  parent_overrides: Record<string, string[]>;
-  source_code_version_overrides: Record<string, string>;
-  integration_ids: string[];
-  secret_ids: string[];
   created_by: UserShort | string;
   started_at: string | null;
   completed_at: string | null;

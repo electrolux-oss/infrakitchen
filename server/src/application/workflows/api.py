@@ -55,7 +55,7 @@ async def get_all(
     "/workflows/{workflow_id}",
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_200_OK,
-    response_description="Get a single blueprint execution with its steps",
+    response_description="Get a single workflow with its steps",
 )
 @mcp_group(get_one_group, "workflows")
 async def get_workflow(

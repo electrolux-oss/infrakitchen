@@ -3,7 +3,8 @@ from collections import defaultdict
 from typing import Any
 from uuid import UUID
 
-from application.workflows.schema import WorkflowRequest, WorkflowResponse
+from application.blueprints.model import blueprint_workflows
+from application.workflows.schema import WorkflowCreate, WorkflowRequest, WorkflowResponse, WorkflowStepCreate
 from application.workflows.service import WorkflowService
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
@@ -52,8 +53,6 @@ class BlueprintService:
         self.revision_handler = revision_handler
         self.event_sender = event_sender
         self.audit_log_handler = audit_log_handler
-
-    # ── Blueprint CRUD ──────────────────────────────────────────────────────
 
     async def get_by_id(self, blueprint_id: str | UUID) -> BlueprintResponse | None:
         blueprint = await self.crud.get_by_id(blueprint_id)
@@ -167,10 +166,6 @@ class BlueprintService:
     ) -> WorkflowResponse:
         """
         Create a BlueprintExecution with steps in topological order.
-
-        The actual resource creation is intentionally left as a stub —
-        in production this would be dispatched to a background worker
-        (Celery / RabbitMQ task) that processes steps sequentially.
         """
         blueprint = await self.crud.get_by_id(blueprint_id)
         if blueprint is None:
@@ -183,7 +178,7 @@ class BlueprintService:
         ordered_templates = self._topological_sort(template_ids, wiring_rules)
 
         # Build steps
-        steps = []
+        steps: list[WorkflowStepCreate] = []
         for tid, position in ordered_templates:
             merged_vars = self._resolve_variables_for_step(
                 template_id=tid,
@@ -193,37 +188,33 @@ class BlueprintService:
                 completed_outputs={},  # no outputs yet; will be resolved at runtime
             )
             steps.append(
-                {
-                    "template_id": tid,
-                    "position": position,
-                    "status": ModelStatus.PENDING,
-                    "resolved_variables": merged_vars,
-                    "parent_resource_ids": request.parent_overrides.get(str(tid), []),
-                    "source_code_version_id": request.source_code_version_overrides.get(str(tid)),
-                    "integration_ids": request.integration_ids,
-                    "secret_ids": request.secret_ids,
-                    "storage_id": request.storage_id,
-                }
+                WorkflowStepCreate(
+                    template_id=tid,
+                    position=position,
+                    resolved_variables=merged_vars,
+                    parent_resource_ids=request.parent_overrides.get(str(tid), []),
+                    source_code_version_id=request.source_code_version_overrides.get(str(tid)),
+                    integration_ids=request.integration_ids,
+                    secret_ids=request.secret_ids,
+                    storage_id=request.storage_id,
+                )
             )
 
-        execution_data = {
-            "blueprint_id": blueprint.id,
-            "wiring_snapshot": [w.model_dump(mode="json") for w in wiring_rules],
-            "variable_overrides": request.model_dump().get("variable_overrides", {}),
-            "parent_overrides": request.model_dump().get("parent_overrides", {}),
-            "source_code_version_overrides": request.model_dump().get("source_code_version_overrides", {}),
-            "integration_ids": request.model_dump().get("integration_ids", []),
-            "secret_ids": request.model_dump().get("secret_ids", []),
-            "storage_id": request.model_dump().get("storage_id"),
-            "status": ModelStatus.PENDING,
-            "created_by": requester.id,
-            "steps": steps,
-        }
+        workflow_create = WorkflowCreate(
+            wiring_snapshot=wiring_rules,
+            variable_overrides=request.variable_overrides,
+            created_by=requester.id,
+            steps=steps,
+        )
 
-        execution = await self.workflow_service.create(execution_data, requester)
+        execution = await self.workflow_service.create(workflow_create.model_dump(mode="json"), requester)
+
+        # Link the workflow to this blueprint via the association table
+        _ = await self.crud.session.execute(
+            blueprint_workflows.insert().values(blueprint_id=blueprint.id, workflow_id=execution.id)
+        )
+
         return WorkflowResponse.model_validate(execution)
-
-    # ── Helpers ─────────────────────────────────────────────────────────────
 
     @staticmethod
     def _topological_sort(template_ids: list[UUID], wiring_rules: list[WiringRule]) -> list[tuple[UUID, int]]:

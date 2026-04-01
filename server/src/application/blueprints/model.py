@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from application.templates.model import Template
+    from application.workflows.model import Workflow
 
 
 blueprint_templates = Table(
@@ -21,6 +22,13 @@ blueprint_templates = Table(
     Column("blueprint_id", ForeignKey("blueprints.id", ondelete="CASCADE"), primary_key=True),
     Column("template_id", ForeignKey("templates.id", ondelete="CASCADE"), primary_key=True),
     Column("position", Integer, nullable=False, default=0),
+)
+
+blueprint_workflows = Table(
+    "blueprint_workflows",
+    Base.metadata,
+    Column("blueprint_id", ForeignKey("blueprints.id", ondelete="CASCADE"), primary_key=True),
+    Column("workflow_id", ForeignKey("workflows.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
@@ -42,6 +50,13 @@ class Blueprint(BaseRevision):
         secondary=blueprint_templates,
         lazy="selectin",
         order_by=blueprint_templates.c.position,
+    )
+
+    # Workflows created from this blueprint
+    workflows: Mapped[list["Workflow"]] = relationship(
+        "Workflow",
+        secondary=blueprint_workflows,
+        lazy="noload",
     )
 
     # Wiring config: maps template outputs → template inputs

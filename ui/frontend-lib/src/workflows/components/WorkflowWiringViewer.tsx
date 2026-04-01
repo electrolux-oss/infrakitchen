@@ -35,7 +35,6 @@ import "@xyflow/react/dist/style.css";
 
 import { GetReferenceUrlValue } from "../../common/components/CommonField";
 import { TemplateShort } from "../../templates/types";
-import { EntityMeta } from "../hooks/useWorkflowMetadata";
 import { WiringRule, WorkflowStepResponse } from "../types";
 
 // ── Status color helpers ──────────────────────────────────────────────────
@@ -544,20 +543,24 @@ const nodeTypes = {
 // ── Props ─────────────────────────────────────────────────────────────────
 
 interface WorkflowWiringViewerProps {
-  templates: TemplateShort[];
   wiring: WiringRule[];
   steps: WorkflowStepResponse[];
-  resources?: Map<string, EntityMeta>;
   height?: number;
 }
 
 export const WorkflowWiringViewer = ({
-  templates,
   wiring,
   steps,
-  resources,
   height = 500,
 }: WorkflowWiringViewerProps) => {
+  // Derive templates from steps
+  const templates = useMemo(
+    () =>
+      steps
+        .map((s) => s.template)
+        .filter((t): t is TemplateShort => t !== null),
+    [steps],
+  );
   const theme = useTheme();
   const { mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
@@ -701,9 +704,7 @@ export const WorkflowWiringViewer = ({
             status: step?.status,
             errorMessage: step?.error_message,
             resourceId: step?.resource_id,
-            resourceName: step?.resource_id
-              ? resources?.get(step.resource_id)?.name
-              : undefined,
+            resourceName: step?.resource?.name,
             position: step?.position,
             nodeKind: "template" as const,
           },
@@ -712,14 +713,7 @@ export const WorkflowWiringViewer = ({
     }
 
     return [...extNodes, ...constNodes, ...tplNodes];
-  }, [
-    templates,
-    externalIds,
-    constantIds,
-    portsByTemplate,
-    stepByTemplate,
-    resources,
-  ]);
+  }, [templates, externalIds, constantIds, portsByTemplate, stepByTemplate]);
 
   // Draggable node state — syncs when computed nodes change (e.g. status update)
   const [draggableNodes, setDraggableNodes, onNodesChange] =
