@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, Typography, Chip } from "@mui/material";
+import { Chip } from "@mui/material";
+import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GradientCircularProgress } from "../../common";
+import { FilterConfig, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { useConfig } from "../../common/context/ConfigContext";
-import { notifyError } from "../../common/hooks/useNotification";
-import { WorkspaceResponse } from "../../workspaces/types";
+import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { RelativeTime } from "../../common/components/RelativeTime";
+import StatusChip from "../../common/StatusChip";
 
 interface IntegrationWorkspaceDependenciesProps {
   integration_id: string;
@@ -18,73 +18,136 @@ export const IntegrationWorkspaceDependencies = (
 ) => {
   const { integration_id } = props;
   const { ikApi } = useConfig();
-  const [workspaces, setWorkspaces] = useState<WorkspaceResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchRelatedData = useCallback(async () => {
-    if (!integration_id) return;
-    setLoading(true);
-    ikApi
-      .getList("workspaces", {
-        pagination: { page: 1, perPage: 100 },
-        sort: { field: "updated_at", order: "DESC" },
-        filter: { integration_id: integration_id },
-        fields: ["id", "name", "description", "updated_at"],
-      })
-      .then((response) => {
-        setWorkspaces(response.data || []);
-      })
-      .catch((e) => {
-        notifyError(e);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [ikApi, integration_id]);
+  const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchRelatedData();
-  }, [fetchRelatedData]);
+    ikApi.get("labels/workspace").then((response: string[]) => {
+      setLabels(response);
+    });
+  }, [ikApi]);
 
-  if (!integration_id) return null;
+  const columns = useMemo(
+    () => [
+      {
+        field: "name",
+        headerName: "Name",
+        flex: 1,
+        hideable: false,
+        renderCell: (params: GridRenderCellParams) => (
+          <GetEntityLink {...params.row} />
+        ),
+      },
+      {
+        field: "state",
+        fetchFields: ["status"],
+        headerName: "State",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <StatusChip status={String(params.row.status).toLowerCase()} />
+        ),
+      },
+      {
+        field: "created_at",
+        headerName: "Created",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
+      },
+      {
+        field: "updated_at",
+        headerName: "Last Updated",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <RelativeTime
+            date={params.value}
+            sx={{ fontSize: "0.75rem", display: "flex" }}
+          />
+        ),
+      },
+      {
+        field: "description",
+        headerName: "Description",
+        flex: 2,
+      },
+      {
+        field: "link",
+        headerName: "Link",
+        flex: 2,
+      },
+      {
+        field: "labels",
+        headerName: "Labels",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <>
+            {(params.value || []).map((l: string) => (
+              <Chip key={l} label={l} size="small" sx={{ mr: 0.5 }} />
+            ))}
+          </>
+        ),
+      },
+    ],
+    [],
+  );
+
+  const defaultColumnVisibilityModel = {
+    description: false,
+    link: false,
+  };
+
+  const filterConfigs: FilterConfig[] = useMemo(
+    () => [
+      { id: "name", type: "search", label: "Search", width: 420 },
+      {
+        id: "labels",
+        type: "autocomplete",
+        label: "Labels",
+        options: labels,
+        multiple: true,
+        width: 420,
+      },
+    ],
+    [labels],
+  );
+
+  const buildApiFilters = useCallback(
+    (filterValues: Record<string, any>) => {
+      const apiFilters: Record<string, any> = { integration_id };
+
+      if (filterValues.name?.trim()) {
+        apiFilters.name__like = filterValues.name;
+      }
+      if (filterValues.labels?.length > 0) {
+        apiFilters.labels__contains_all = filterValues.labels;
+      }
+
+      return apiFilters;
+    },
+    [integration_id],
+  );
 
   return (
-    <OverviewCard>
-      {loading && <GradientCircularProgress />}
-      {!loading && workspaces.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
-          No dependencies for this integration.
-        </Typography>
-      )}
-      {workspaces.map((r) => (
-        <Box
-          key={r.id}
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            p: 2,
-            mb: 2,
-            borderRadius: 1,
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.5,
-            width: "100%",
-          }}
-        >
-          <Typography variant="body1" fontWeight={500}>
-            <GetEntityLink {...r} />
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {r.description}
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            <Chip size="small" label={r.status} variant="outlined" />
-            {r.labels?.slice(0, 4).map((l) => (
-              <Chip key={l} size="small" label={l} variant="outlined" />
-            ))}
-          </Box>
-        </Box>
-      ))}
-    </OverviewCard>
+    <EntityFetchTable
+      title="Workspaces"
+      entityName="workspace"
+      columns={columns}
+      defaultColumnVisibilityModel={defaultColumnVisibilityModel}
+      filterConfigs={filterConfigs}
+      buildApiFilters={buildApiFilters}
+      fields={[
+        "id",
+        "name",
+        "status",
+        "updated_at",
+        "created_at",
+        "labels",
+        "description",
+        "link",
+      ]}
+    />
   );
 };
