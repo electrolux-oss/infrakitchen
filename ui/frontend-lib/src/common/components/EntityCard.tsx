@@ -59,6 +59,11 @@ export const EntityCard = ({
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        transition: "all 0.2s ease-in-out",
+        "&:hover": {
+          borderColor: "text.disabled",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+        },
       }}
     >
       <CardHeader
