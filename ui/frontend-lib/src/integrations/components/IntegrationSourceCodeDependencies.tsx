@@ -142,7 +142,7 @@ export const IntegrationSourceCodeDependencies = (
 
   return (
     <EntityFetchTable
-      title="Source Codes"
+      title="Code Repositories"
       entityName="source_code"
       columns={columns}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
