@@ -21,6 +21,7 @@ logger = logging.getLogger("scheduler")
 async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender: EventSender):
     logger.info(f"Sending scheduler job {job_id} to worker")
     await event_sender.send_scheduler_job(job_id=job_id, job_type=job_type, job_script=job_script)
+    await event_sender.flush()
     logger.info(f"Scheduler job {job_id} sent successfully to worker")
 
 
