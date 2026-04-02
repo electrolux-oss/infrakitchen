@@ -7,7 +7,7 @@ from collections.abc import Callable
 from pydantic import BaseModel, ConfigDict, ValidationError, Field
 import httpx
 
-from fastmcp.tools.tool import Tool, ToolResult
+from fastmcp.tools.base import Tool, ToolResult
 
 
 class GetOneParams(BaseModel):

@@ -11,7 +11,7 @@ from infrakitchen_mcp.transforms import (
     _compress_dict,
     _compress_results_fn,
 )
-from fastmcp.tools.tool import Tool, ToolResult
+from fastmcp.tools.base import Tool, ToolResult
 
 
 class TestCompression:

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import json
 
 from fastmcp.server.transforms import Transform
-from fastmcp.tools.tool import Tool, ToolResult
+from fastmcp.tools.base import Tool, ToolResult
 from fastmcp.tools.tool_transform import TransformedTool, forward_raw
 from mcp.types import TextContent
 

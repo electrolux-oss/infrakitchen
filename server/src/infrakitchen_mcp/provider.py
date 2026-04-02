@@ -2,12 +2,12 @@ from collections.abc import Sequence
 from contextvars import ContextVar
 from typing import Any
 
+from fastmcp.tools.base import Tool
 import httpx
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
 from fastmcp.server.providers.base import Provider
-from fastmcp.tools.tool import Tool
 
 from .dispatch_framework import (
     DispatchTool,
