@@ -30,7 +30,7 @@ export const IntegrationContent = () => {
     ...(isGit
       ? [
           {
-            label: "Source Codes",
+            label: "Code Repositories",
             content: (
               <IntegrationSourceCodeDependencies integration_id={entity.id} />
             ),
