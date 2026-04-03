@@ -137,6 +137,7 @@ export const IntegrationWorkspaceDependencies = (
       columns={columns}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
       filterConfigs={filterConfigs}
+      filterStorageKey={`filter_integration_workspaces_${integration_id}`}
       buildApiFilters={buildApiFilters}
       fields={[
         "id",

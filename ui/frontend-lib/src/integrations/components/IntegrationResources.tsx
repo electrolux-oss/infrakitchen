@@ -54,6 +54,7 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
       entityName="resource"
       columns={resourceColumns}
       defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
+      filterStorageKey={`filter_integration_resources_${integration_id}`}
       filterConfigs={filterConfigs}
       buildApiFilters={buildApiFilters}
       fields={resourceFields}
