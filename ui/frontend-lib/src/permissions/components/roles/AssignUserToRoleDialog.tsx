@@ -68,7 +68,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
   const resolvedFormId = formId ?? generatedFormId;
 
   return (
-    <Box sx={{ width: "50%", mt: 4 }}>
+    <Box sx={{ width: "50%" }}>
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {user_id && (
           <Controller
@@ -87,7 +87,6 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
                 setBuffer={setBuffer}
                 value={field.value}
                 label="Select Role"
-                sx={{ mb: 3 }}
               />
             )}
           />
@@ -109,7 +108,6 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
                 setBuffer={setBuffer}
                 value={field.value}
                 label="Select User"
-                sx={{ mb: 3 }}
               />
             )}
           />

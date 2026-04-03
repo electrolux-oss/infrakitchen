@@ -112,7 +112,7 @@ export const EntityRolePolicyCreateCard = (
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
         {!role_name && (
           <Controller
