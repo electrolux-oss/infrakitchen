@@ -147,6 +147,7 @@ export const IntegrationSourceCodeDependencies = (
       columns={columns}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
       filterConfigs={filterConfigs}
+      filterStorageKey={`filter_integration_code_repos_${integration_id}`}
       buildApiFilters={buildApiFilters}
       fields={[
         "id",
