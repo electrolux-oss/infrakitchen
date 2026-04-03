@@ -99,7 +99,7 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form id="policy-api-create-form" onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="selectedApiPermissions"
           control={control}
@@ -163,9 +163,10 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                         sx={{
                           mb: 1.5,
                           p: 1.5,
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "8px",
-                          bgcolor: "#f9f9f9",
+                          border: "1px solid",
+                          borderColor: "divider",
+                          borderRadius: 2,
+                          bgcolor: "background.paper",
                         }}
                       >
                         <FormControlLabel
@@ -220,14 +221,6 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
             );
           }}
         />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          sx={{ mt: 2, py: 1.5, px: 4, borderRadius: "8px" }}
-        >
-          Submit
-        </Button>
       </form>
     </Box>
   );
@@ -248,6 +241,16 @@ export const PolicyApiCreateDialog = (props: PolicyApiCreateDialogProps) => {
       onClose={onClose}
       title="Assign Resource Policy"
       content={<PolicyApiCreate role_name={role_name} onClose={onClose} />}
+      actions={
+        <Button
+          type="submit"
+          form="policy-api-create-form"
+          variant="contained"
+          color="primary"
+        >
+          Submit
+        </Button>
+      }
     />
   );
 };
