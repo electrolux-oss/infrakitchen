@@ -98,7 +98,7 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
   );
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto", mt: 4, p: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
       <form id="policy-api-create-form" onSubmit={handleSubmit(onSubmit)}>
         <Controller
           name="selectedApiPermissions"
