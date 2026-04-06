@@ -1,9 +1,8 @@
-import { forwardRef, useState, useEffect, useRef } from "react";
+import { forwardRef } from "react";
 
 import {
   Add as AddIcon,
-  Remove as RemoveIcon,
-  ExpandMore as ExpandMoreIcon,
+  DeleteOutline as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import {
   TextField,
@@ -11,9 +10,7 @@ import {
   Typography,
   Grid,
   Box,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Tooltip,
 } from "@mui/material";
 
 import { CustomSecret } from "../types";
@@ -29,45 +26,15 @@ interface CustomSecretInputProps {
 const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
   (props, _ref) => {
     const { errors, label, value, onChange } = props;
-    const [localValue, setLocalValue] = useState<CustomSecret[]>(value || []);
-    const [isOpen, setIsOpen] = useState(true);
-    const accordionRef = useRef<HTMLDivElement>(null);
-    const stringifiedValue = JSON.stringify(value);
-
-    useEffect(() => {
-      if (isOpen) {
-        setTimeout(() => {
-          accordionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }, 100);
-      }
-    }, [isOpen]);
-
-    useEffect(() => {
-      setLocalValue(value || []);
-    }, [value]);
-
-    useEffect(() => {
-      if (stringifiedValue !== JSON.stringify(localValue)) {
-        onChange(localValue);
-      }
-    }, [localValue, onChange, stringifiedValue]);
+    const currentValue: CustomSecret[] = Array.isArray(value) ? value : [];
 
     const handleAdd = () => {
-      const newLocalValue = [...localValue, { name: "", value: "" }];
-      setLocalValue(newLocalValue);
-      onChange(newLocalValue);
-      if (localValue.length === 0) {
-        setIsOpen(true);
-      }
+      onChange([...currentValue, { name: "", value: "" }]);
     };
 
     const handleRemove = (index: number) => {
-      const newValue = [...localValue];
+      const newValue = [...currentValue];
       newValue.splice(index, 1);
-      setLocalValue(newValue);
       onChange(newValue);
     };
 
@@ -76,110 +43,84 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
       fieldName: keyof CustomSecret,
       fieldValue: any,
     ) => {
-      const newValue = [...localValue];
+      const newValue = [...currentValue];
       newValue[index] = { ...newValue[index], [fieldName]: fieldValue };
-      setLocalValue(newValue);
       onChange(newValue);
     };
 
-    if (localValue.length === 0) {
-      return (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            marginTop: "16px",
-            padding: "0px 16px",
-          }}
-        >
-          <Typography variant="h5" component="h3" sx={{ flexGrow: 1, mb: 0 }}>
-            {label}
-          </Typography>
-          <IconButton onClick={handleAdd} aria-label="Add">
-            <AddIcon />
-          </IconButton>
-        </Box>
-      );
-    }
-
     return (
-      <Accordion
-        ref={accordionRef}
-        expanded={isOpen}
-        onChange={() => setIsOpen(!isOpen)}
-        elevation={0}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography gutterBottom variant="h5" component="h3" sx={{ mb: 0 }}>
-            {label}
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {localValue.map((item, index) => (
-            <Grid container spacing={2} alignItems="center" key={index}>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 4,
-                }}
-              >
-                <TextField
-                  label="Name"
-                  variant="outlined"
-                  margin="normal"
-                  value={item.name}
-                  onChange={(e) =>
-                    handleFieldChange(index, "name", e.target.value)
-                  }
-                  error={errors?.[item.name]?.[index]?.name ? true : false}
-                  helperText={errors?.[item.name]?.[index]?.name?.message}
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 4,
-                }}
-              >
-                <TextField
-                  label="Value"
-                  variant="outlined"
-                  type="password"
-                  value={item.value}
-                  onChange={(e) =>
-                    handleFieldChange(index, "value", e.target.value)
-                  }
-                  error={errors?.[item.name]?.[index]?.value ? true : false}
-                  helperText={errors?.[item.name]?.[index]?.value?.message}
-                  margin="normal"
-                />
-              </Grid>
-              <Grid
-                size={{
-                  xs: 12,
-                  sm: 1,
-                }}
-              >
+      <Box sx={{ mt: 2, px: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+          <Grid size={{ xs: 12, sm: 11 }}>
+            <Typography variant="h5" component="h3" sx={{ mb: 0 }}>
+              {label}
+            </Typography>
+          </Grid>
+          <Grid
+            size={{ xs: 12, sm: 1 }}
+            sx={{ display: "flex", justifyContent: "center" }}
+          >
+            <Tooltip title="Add secret">
+              <IconButton onClick={handleAdd} aria-label="Add secret">
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+        {currentValue.map((item, index) => (
+          <Grid container spacing={2} alignItems="flex-end" key={index}>
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <TextField
+                label="Name"
+                variant="outlined"
+                margin="normal"
+                value={item.name}
+                onChange={(e) =>
+                  handleFieldChange(index, "name", e.target.value)
+                }
+                error={!!errors?.[item.name]?.[index]?.name}
+                helperText={errors?.[item.name]?.[index]?.name?.message || ""}
+                fullWidth
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <TextField
+                label="Value"
+                variant="outlined"
+                type="password"
+                margin="normal"
+                value={item.value}
+                onChange={(e) =>
+                  handleFieldChange(index, "value", e.target.value)
+                }
+                error={!!errors?.[item.name]?.[index]?.value}
+                helperText={errors?.[item.name]?.[index]?.value?.message || ""}
+                fullWidth
+              />
+            </Grid>
+            <Grid
+              size={{ xs: 0, sm: 1 }}
+              sx={{ display: { xs: "none", sm: "block" } }}
+            />
+            <Grid
+              size={{ xs: 12, sm: 1 }}
+              sx={{ display: "flex", justifyContent: "center", mb: 1 }}
+            >
+              <Tooltip title="Remove secret">
                 <IconButton
                   onClick={() => handleRemove(index)}
-                  aria-label="Remove"
+                  aria-label="Remove secret"
                 >
-                  <RemoveIcon />
+                  <DeleteOutlineIcon />
                 </IconButton>
-              </Grid>
+              </Tooltip>
             </Grid>
-          ))}
-
-          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-            <IconButton onClick={handleAdd} aria-label="Add">
-              <AddIcon />
-            </IconButton>
-          </Box>
-        </AccordionDetails>
-      </Accordion>
+          </Grid>
+        ))}
+      </Box>
     );
   },
 );
 
-CustomSecretInput.displayName = "TagInput";
+CustomSecretInput.displayName = "CustomSecretInput";
 export default CustomSecretInput;
