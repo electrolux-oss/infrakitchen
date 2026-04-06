@@ -313,7 +313,12 @@ export const BatchOperationEntities = ({
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
+            sx={{
+              fontSize: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              height: "100%",
+            }}
           />
         ),
       },

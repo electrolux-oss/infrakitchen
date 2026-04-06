@@ -95,7 +95,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
         </Grid>
       </Grid>
       {currentValue.map((item: Tag, index: number) => (
-        <Grid container spacing={2} alignItems="center" key={index}>
+        <Grid container spacing={2} alignItems="flex-end" key={index}>
           <Grid
             size={{
               xs: 12,
@@ -147,6 +147,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
               xs: 12,
               sm: 3,
             }}
+            sx={{ mb: 1 }}
           >
             <FormControlLabel
               control={
@@ -171,7 +172,7 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
               xs: 12,
               sm: 1,
             }}
-            sx={{ display: "flex", justifyContent: "center" }}
+            sx={{ display: "flex", justifyContent: "center", mb: 1 }}
           >
             <Tooltip title="Remove entry">
               <IconButton

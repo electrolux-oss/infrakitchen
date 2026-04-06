@@ -82,7 +82,7 @@ const GithubRepos = forwardRef<any, GithubReposProps>((props, _ref) => {
       value={value || null}
       onChange={handleEntityChange}
       getOptionLabel={(option) => option.name || ""}
-      isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
+      isOptionEqualToValue={(option, val) => !!val?.id && option.id === val.id}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -94,7 +94,7 @@ const GithubRepos = forwardRef<any, GithubReposProps>((props, _ref) => {
             ...params.InputProps,
             endAdornment: (
               <>
-                {isLoading ? <GradientCircularProgress /> : null}
+                {isLoading ? <GradientCircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
               </>
             ),

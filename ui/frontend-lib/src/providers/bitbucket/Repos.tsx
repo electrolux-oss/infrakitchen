@@ -95,7 +95,7 @@ const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
             ...params.InputProps,
             endAdornment: (
               <>
-                {isLoading ? <GradientCircularProgress /> : null}
+                {isLoading ? <GradientCircularProgress size={20} /> : null}
                 {params.InputProps.endAdornment}
               </>
             ),
