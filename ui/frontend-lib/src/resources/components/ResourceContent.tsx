@@ -43,7 +43,14 @@ export const ResourceContent = () => {
     },
     {
       label: "Audit",
-      content: <Audit entityId={entity.id} />,
+      content: (
+        <Audit
+          entityId={entity.id}
+          sourceCodeLanguage={
+            entity.source_code_version?.source_code?.source_code_language
+          }
+        />
+      ),
     },
     {
       label: "Revisions",

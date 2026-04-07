@@ -1,6 +1,6 @@
 import { Theme, alpha, Components } from "@mui/material/styles";
 
-import { grey, orange } from "../themePrimitives";
+import { brand, green, grey, orange, red } from "../themePrimitives";
 
 export const feedbackCustomizations: Components<Theme> = {
   MuiSnackbarContent: {
@@ -43,16 +43,51 @@ export const feedbackCustomizations: Components<Theme> = {
     styleOverrides: {
       root: ({ theme }) => ({
         borderRadius: 10,
-        backgroundColor: orange[100],
         color: (theme.vars || theme).palette.text.primary,
-        border: `1px solid ${alpha(orange[300], 0.5)}`,
-        "& .MuiAlert-icon": {
-          color: orange[500],
+
+        // warning (default / orange)
+        "&.MuiAlert-colorWarning": {
+          backgroundColor: orange[100],
+          border: `1px solid ${alpha(orange[300], 0.5)}`,
+          "& .MuiAlert-icon": { color: orange[500] },
+          ...theme.applyStyles("dark", {
+            backgroundColor: alpha(orange[900], 0.5),
+            border: `1px solid ${alpha(orange[800], 0.5)}`,
+          }),
         },
-        ...theme.applyStyles("dark", {
-          backgroundColor: `${alpha(orange[900], 0.5)}`,
-          border: `1px solid ${alpha(orange[800], 0.5)}`,
-        }),
+
+        // error (red)
+        "&.MuiAlert-colorError": {
+          backgroundColor: red[100],
+          border: `1px solid ${alpha(red[300], 0.5)}`,
+          "& .MuiAlert-icon": { color: red[400] },
+          ...theme.applyStyles("dark", {
+            backgroundColor: alpha(red[900], 0.5),
+            border: `1px solid ${alpha(red[800], 0.5)}`,
+          }),
+        },
+
+        // success (green)
+        "&.MuiAlert-colorSuccess": {
+          backgroundColor: green[100],
+          border: `1px solid ${alpha(green[300], 0.5)}`,
+          "& .MuiAlert-icon": { color: green[500] },
+          ...theme.applyStyles("dark", {
+            backgroundColor: alpha(green[900], 0.5),
+            border: `1px solid ${alpha(green[800], 0.5)}`,
+          }),
+        },
+
+        // info (brand blue)
+        "&.MuiAlert-colorInfo": {
+          backgroundColor: brand[100],
+          border: `1px solid ${alpha(brand[300], 0.5)}`,
+          "& .MuiAlert-icon": { color: brand[400] },
+          ...theme.applyStyles("dark", {
+            backgroundColor: alpha(brand[900], 0.5),
+            border: `1px solid ${alpha(brand[800], 0.5)}`,
+          }),
+        },
       }),
     },
   },
