@@ -11,8 +11,14 @@ import { useConfig } from "../context";
 import { getProviderDisplayName } from "../utils";
 
 export const getRemoteUrlValue = (url: string) => {
+  // Convert SSH URL to HTTPS URL
+  // Pattern: git@github.com:owner/repo.git → https://github.com/owner/repo.git
+  const convertedUrl = url.includes("@")
+    ? url.replace(/git@([^:]+):(.+)/, "https://$1/$2")
+    : url;
+
   return (
-    <Link href={url} target="_blank" rel="noopener" underline="hover">
+    <Link href={convertedUrl} target="_blank" rel="noopener" underline="hover">
       {url}
     </Link>
   );
