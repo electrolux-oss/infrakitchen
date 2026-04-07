@@ -102,7 +102,7 @@ const AzureDevopsRepos = forwardRef<any, AzureDevopsReposProps>(
               ...params.InputProps,
               endAdornment: (
                 <>
-                  {isLoading ? <GradientCircularProgress /> : null}
+                  {isLoading ? <GradientCircularProgress size={20} /> : null}
                   {params.InputProps.endAdornment}
                 </>
               ),

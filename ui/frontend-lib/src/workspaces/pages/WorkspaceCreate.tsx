@@ -36,6 +36,7 @@ const WorkspaceCreatePageInner = () => {
     getValues,
     trigger,
     handleSubmit,
+    setValue,
   } = useFormContext<WorkspaceCreate>();
 
   const selectedProvider = watch("workspace_provider");
@@ -149,6 +150,12 @@ const WorkspaceCreatePageInner = () => {
               render={({ field }) => (
                 <TextField
                   {...field}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setValue("integration_id", "");
+                    setValue("configuration", {});
+                    setBuffer({});
+                  }}
                   select
                   label="Workspace Provider"
                   variant="outlined"
@@ -181,6 +188,15 @@ const WorkspaceCreatePageInner = () => {
                     buffer={buffer}
                     setBuffer={setBuffer}
                     {...field}
+                    onChange={(val: any) => {
+                      field.onChange(val);
+                      setValue("configuration", {});
+                      setBuffer(
+                        (prev: Record<string, IkEntity | IkEntity[]>) => ({
+                          integrations: prev["integrations"],
+                        }),
+                      );
+                    }}
                     entity_name="integrations"
                     filter={{
                       integration_type: "git",
