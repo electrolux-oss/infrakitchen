@@ -2,17 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import AddIcon from "@mui/icons-material/Add";
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
+import { Icon } from "@iconify/react";
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
-  Menu,
-  MenuItem,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Typography,
 } from "@mui/material";
 
@@ -35,7 +34,6 @@ const IntegrationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [submenuAnchor, setSubmenuAnchor] = useState<null | HTMLElement>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -172,7 +170,6 @@ const IntegrationsPage = () => {
   );
 
   const closeAllMenus = () => {
-    setMenuAnchor(null);
     setSubmenuAnchor(null);
     setActiveCategory(null);
   };
@@ -182,38 +179,32 @@ const IntegrationsPage = () => {
       requiredPermission="api:integration"
       permissionAction="write"
     >
-      <Button
-        variant="outlined"
-        startIcon={<AddIcon />}
-        onClick={(e) => setMenuAnchor(e.currentTarget)}
-      >
-        Connect
-      </Button>
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={closeAllMenus}
-      >
-        {cascadingOptions.map((category) => (
-          <MenuItem
-            key={category.value}
-            onClick={(e) => {
-              setSubmenuAnchor(e.currentTarget);
-              setActiveCategory(String(category.value));
-            }}
-            selected={activeCategory === String(category.value)}
-          >
-            <ListItemText>{category.label}</ListItemText>
-            <ArrowRightIcon fontSize="small" sx={{ ml: 1 }} />
-          </MenuItem>
-        ))}
-      </Menu>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button
+          variant="outlined"
+          startIcon={<Icon icon="octicon:git-branch-24" />}
+          onClick={(e) => {
+            setSubmenuAnchor(e.currentTarget);
+            setActiveCategory(String(IntegrationType.GIT));
+          }}
+        >
+          Connect Git
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<Icon icon="octicon:cloud-24" />}
+          onClick={(e) => {
+            setSubmenuAnchor(e.currentTarget);
+            setActiveCategory(String(IntegrationType.CLOUD));
+          }}
+        >
+          Connect Cloud
+        </Button>
+      </Box>
       <Menu
         anchorEl={submenuAnchor}
         open={Boolean(submenuAnchor)}
         onClose={closeAllMenus}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
         {cascadingOptions
           .find((c) => String(c.value) === activeCategory)
@@ -256,7 +247,36 @@ const IntegrationsPage = () => {
   }
 
   return (
-    <PageContainer title="Integrations" actions={actions}>
+    <PageContainer
+      title="Integrations"
+      description={
+        <>
+          Manage your Git and Cloud{" "}
+          <a
+            href="https://opensource.electrolux.one/infrakitchen/integrations/overview/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "inherit", textDecoration: "underline" }}
+          >
+            integrations
+          </a>
+          .{" "}
+          <span style={{ fontStyle: "italic", fontSize: "0.9em" }}>
+            Need another one?{" "}
+            <a
+              href="https://github.com/electrolux-oss/infrakitchen/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "inherit", textDecoration: "underline" }}
+            >
+              Let us know
+            </a>
+            !
+          </span>
+        </>
+      }
+      actions={actions}
+    >
       <Box sx={{ width: "100%" }}>
         <FilterPanel
           filters={filterConfigs}
@@ -349,6 +369,12 @@ const IntegrationsPage = () => {
                     provider ? (
                       <provider.icon width="40" height="40" />
                     ) : undefined
+                  }
+                  chip={integration.integration_type}
+                  chipColor={
+                    integration.integration_type === IntegrationType.CLOUD
+                      ? "primary"
+                      : "secondary"
                   }
                   entityFields={integrationEntityFields(integration)}
                 />

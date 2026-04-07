@@ -123,7 +123,6 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
         display: "flex",
         flexDirection: "row",
         gap: 2,
-        mt: 2,
       }}
     >
       <Box

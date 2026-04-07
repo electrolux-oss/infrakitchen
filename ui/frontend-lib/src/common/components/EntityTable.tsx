@@ -247,6 +247,9 @@ export const EntityTable = ({
                     justifyContent: "space-between",
                     flexDirection: "row",
                   },
+                  "& .MuiButtonBase-root": {
+                    border: "none",
+                  },
                 },
                 "& .MuiDataGrid-cell": {
                   alignItems: "flex-start",
@@ -258,6 +261,11 @@ export const EntityTable = ({
                   textOverflow: "clip",
                   lineHeight: 1.4,
                   wordBreak: "break-word",
+                },
+                "& .MuiTablePagination-root": {
+                  "& .MuiButtonBase-root": {
+                    border: "none",
+                  },
                 },
               }}
               slotProps={{

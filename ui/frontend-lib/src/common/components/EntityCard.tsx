@@ -28,6 +28,14 @@ export interface EntityCardProps {
   status?: string;
   icon?: ReactNode;
   chip?: string;
+  chipColor?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "error"
+    | "warning"
+    | "info"
+    | "success";
 }
 
 export const EntityCard = ({
@@ -42,6 +50,7 @@ export const EntityCard = ({
   entity_name,
   icon,
   chip,
+  chipColor = "info",
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -76,7 +85,8 @@ export const EntityCard = ({
               label={chip.toUpperCase()}
               size="small"
               variant="outlined"
-              color="info"
+              color={chipColor}
+              sx={{ marginRight: 1 }}
             />
           ) : undefined
         }
