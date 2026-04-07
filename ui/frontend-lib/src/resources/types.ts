@@ -28,6 +28,7 @@ export interface VariableOutput {
   name: string;
   value: any;
   sensitive: boolean;
+  description: string;
 }
 
 export interface DependencyVariable {

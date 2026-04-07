@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import { useParams } from "react-router";
 
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
@@ -53,11 +54,12 @@ export const IntegrationPage = () => {
             permissionAction="write"
           >
             <Button
+              startIcon={<TaskAltIcon />}
               variant="outlined"
               onClick={handleValidation}
-              disabled={loading}
+              loading={loading}
             >
-              {loading ? "Validating..." : "Validate"}
+              Validate
             </Button>
           </PermissionWrapper>
         }

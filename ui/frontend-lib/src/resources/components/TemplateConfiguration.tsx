@@ -1,13 +1,24 @@
 import { useState } from "react";
 
+import InfoIcon from "@mui/icons-material/Info";
 import SyncIcon from "@mui/icons-material/Sync";
-import { Box, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Grid,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tooltip,
+} from "@mui/material";
 
 import { PermissionWrapper, useConfig } from "../../common";
 import {
-  getTextValue,
   CommonField,
   GetReferenceUrlValue,
+  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -25,41 +36,61 @@ const getSourceCodeVariables = (
     return getTextValue("-");
   }
   return (
-    <Box sx={{ ml: 3, mt: 2 }}>
-      {variables.map((variable) => (
-        <Box
-          key={variable.name}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "400px 1fr",
-            alignItems: "center",
-            columnGap: 2,
-            mb: 2,
-          }}
-        >
-          <Typography
-            variant="body2"
-            sx={{ color: "text.primary" }}
-            fontWeight="bold"
-          >
-            {variable.name}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {typeof variable.value === "object" ? (
-              <Tooltip title={JSON.stringify(variable.value)}>
-                <Typography component="span">
-                  {JSON.stringify(variable.value).length > 50
-                    ? JSON.stringify(variable.value).slice(0, 50) + "..."
-                    : JSON.stringify(variable.value)}
-                </Typography>
-              </Tooltip>
-            ) : (
-              variable.value.toString()
-            )}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
+    <Table
+      sx={{
+        ml: 3,
+        mr: 3,
+        "& td, & th": {
+          py: 1,
+          px: 1.5,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        },
+      }}
+    >
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ fontWeight: "bold", width: "30%" }}>Name</TableCell>
+          <TableCell sx={{ fontWeight: "bold", width: "70%" }}>Value</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {variables
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((variable) => (
+            <TableRow key={variable.name}>
+              <TableCell sx={{ color: "text.primary" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  {variable.name}
+                  {variable.description && (
+                    <Tooltip title={variable.description}>
+                      <InfoIcon
+                        sx={{ fontSize: "1rem", color: "text.secondary" }}
+                      />
+                    </Tooltip>
+                  )}
+                </Box>
+              </TableCell>
+              <TableCell sx={{ color: "text.secondary" }}>
+                <Box
+                  component="pre"
+                  sx={{
+                    p: 1,
+                    overflow: "auto",
+                    fontSize: "0.75rem",
+                    fontFamily: "monospace",
+                    m: 0,
+                  }}
+                >
+                  {typeof variable.value === "object"
+                    ? JSON.stringify(variable.value, null, 2)
+                    : variable.value.toString()}
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+      </TableBody>
+    </Table>
   );
 };
 

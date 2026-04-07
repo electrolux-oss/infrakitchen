@@ -21,7 +21,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   return (
     <OverviewCard
       name={resource.name}
-      description={resource.description}
+      description={resource.description || "No description"}
       actions={
         <FavoriteButton
           componentId={String(resource.id)}

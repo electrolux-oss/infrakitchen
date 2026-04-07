@@ -16,18 +16,20 @@ export interface OverviewCardProps {
   description?: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
+  icon?: ReactNode;
   chip?: string;
   sx?: SxProps<Theme>;
 }
 
 export const OverviewCard = (props: OverviewCardProps) => {
-  const { name, description, children, actions, chip, sx } = props;
+  const { name, description, children, actions, icon, chip, sx } = props;
   return (
     <Card sx={{ width: "100%", ...sx }}>
       {(name || description || actions || chip) && (
         <CardHeader
           title={
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {icon}
               {name}
               {chip && (
                 <Chip

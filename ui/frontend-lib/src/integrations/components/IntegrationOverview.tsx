@@ -1,7 +1,8 @@
-import { getLabels, CommonField } from "../../common/components/CommonField";
+import { CommonField, getLabels } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { IconField } from "../../icons/Icons";
 import { IntegrationResponse } from "../types";
 
 export interface IntegrationAboutProps {
@@ -10,7 +11,12 @@ export interface IntegrationAboutProps {
 
 export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
   return (
-    <OverviewCard name={integration.name} description={integration.description}>
+    <OverviewCard
+      name={integration.name}
+      description={integration.description || "No description"}
+      icon={IconField(integration.integration_provider)}
+      chip={integration.integration_type}
+    >
       <CommonField
         name={"Status"}
         value={<StatusChip status={integration.status} />}

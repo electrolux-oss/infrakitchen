@@ -27,6 +27,7 @@ const PageHeaderToolbar = styled("div")(({ theme }) => ({
 export interface PageContainerProps extends ContainerProps {
   children?: React.ReactNode;
   title?: string;
+  description?: React.ReactNode;
   /** Actions/buttons to render at the right side of the page header */
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
@@ -40,6 +41,7 @@ export default function PageContainer(props: PageContainerProps) {
   const {
     children,
     title,
+    description,
     actions = null,
     bottomActions = null,
     onBack,
@@ -70,11 +72,16 @@ export default function PageContainer(props: PageContainerProps) {
                   </IconButton>
                 </Tooltip>
               ) : null}
-              {title ? (
-                <Typography variant="h4" component="h1">
-                  {title}
-                </Typography>
-              ) : null}
+              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                {title ? (
+                  <Typography variant="h4" component="h1">
+                    {title}
+                  </Typography>
+                ) : null}
+                {description ? (
+                  <Box sx={{ color: "text.secondary" }}>{description}</Box>
+                ) : null}
+              </Box>
             </Box>
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
           </PageContentHeader>

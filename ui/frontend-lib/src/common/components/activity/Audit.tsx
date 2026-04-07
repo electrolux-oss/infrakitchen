@@ -49,7 +49,7 @@ export const AuditFilterPanel = ({
 }: AuditFilterPanelProps) => {
   return (
     <Box>
-      <Card sx={{ mt: 1 }}>
+      <Card>
         <CardContent
           sx={{
             p: 0,
@@ -325,6 +325,14 @@ export const Audit = ({
                     "& .MuiDataGrid-columnHeaderTitleContainer": {
                       justifyContent: "space-between",
                       flexDirection: "row",
+                    },
+                    "& .MuiButtonBase-root": {
+                      border: "none",
+                    },
+                  },
+                  "& .MuiTablePagination-root": {
+                    "& .MuiButtonBase-root": {
+                      border: "none",
                     },
                   },
                 }}
