@@ -109,6 +109,7 @@ export const EntityCard = ({
               size="small"
               variant="outlined"
               color={chipColor}
+              sx={{ marginRight: 1 }}
             />
           )
         }
