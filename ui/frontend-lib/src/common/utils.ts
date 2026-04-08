@@ -154,18 +154,27 @@ export const getProviderDisplayName = (provider: string): string => {
   );
 };
 
+const extractOwnerRepo = (path: string): string | null => {
+  const parts = path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => part.replace(/\.git$/, ""));
+
+  if (parts.length < 2) return null;
+
+  return `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+};
+
 export const getRepoNameFromUrl = (repoUrl: string): string => {
   try {
     // Handle HTTP/HTTPS URLs
     const url = new URL(repoUrl);
-    return (
-      url.pathname.split("/").pop()?.replace(".git", "") || "Unknown Repository"
-    );
+    return extractOwnerRepo(url.pathname) || "Unknown Repository";
   } catch {
     // Handle SSH git URLs
     const sshMatch = repoUrl.match(/[:/]([^/:]+\/[^/:]+?)(\.git)?$/);
     if (sshMatch) {
-      return sshMatch[1].split("/").pop() || "Unknown Repository";
+      return extractOwnerRepo(sshMatch[1]) || sshMatch[1].replace(/\.git$/, "");
     }
     return repoUrl;
   }

@@ -36,7 +36,7 @@ export interface EntityCardProps {
     | "warning"
     | "info"
     | "success";
-  lastUpdated?: string;
+  lastUpdated?: string | Date;
 }
 
 export const EntityCard = ({
@@ -80,27 +80,31 @@ export const EntityCard = ({
         display: "flex",
         flexDirection: "column",
         transition: "all 0.2s ease-in-out",
+        position: "relative",
+        overflow: "visible",
         "&:hover": {
           borderColor: "text.disabled",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
         },
       }}
     >
+      {isRecentlyUpdated && (
+        <Chip
+          label="Updated"
+          size="small"
+          color="success"
+          variant="filled"
+          sx={{
+            position: "absolute",
+            top: -10,
+            left: 16,
+            zIndex: 1,
+          }}
+        />
+      )}
       <CardHeader
         avatar={icon}
-        title={
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            {name}
-            {isRecentlyUpdated && (
-              <Chip
-                label="Updated"
-                size="small"
-                color="success"
-                variant="filled"
-              />
-            )}
-          </Box>
-        }
+        title={name}
         subheader={description || "No description"}
         action={
           chip && (

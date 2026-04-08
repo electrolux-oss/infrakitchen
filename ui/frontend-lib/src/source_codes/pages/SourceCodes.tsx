@@ -24,7 +24,7 @@ import { SourceCodeResponse } from "../types";
 
 export const SourceCodesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const [sourceCodes, setSourceCodes] = useState<SourceCodeResponse[]>([]);
+  const [repositories, setRepositories] = useState<SourceCodeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
@@ -68,7 +68,7 @@ export const SourceCodesPage = () => {
         ],
       })
       .then((response) => {
-        setSourceCodes(response.data || []);
+        setRepositories(response.data || []);
         setIsInitialLoad(false);
       })
       .catch((e: any) => {
@@ -91,17 +91,17 @@ export const SourceCodesPage = () => {
     fetchSourceCodes();
   }, [fetchSourceCodes]);
 
-  const filteredSourceCodes = useMemo(
+  const filteredRepositories = useMemo(
     () =>
-      sourceCodes.filter((sourceCode) => {
+      repositories.filter((repository) => {
         const s = (filterValues.name || "").toLowerCase();
         return (
           !s ||
-          sourceCode.identifier.toLowerCase().includes(s) ||
-          sourceCode.description.toLowerCase().includes(s)
+          repository.identifier.toLowerCase().includes(s) ||
+          repository.description.toLowerCase().includes(s)
         );
       }),
-    [sourceCodes, filterValues.name],
+    [repositories, filterValues.name],
   );
 
   // Configure filters
@@ -140,21 +140,21 @@ export const SourceCodesPage = () => {
     </PermissionWrapper>
   );
 
-  const sourceCodeCardFields = (sourceCode: SourceCodeResponse) => {
+  const repositoryCardFields = (repository: SourceCodeResponse) => {
     return (
       <>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
             Status
           </Typography>
-          <StatusChip status={sourceCode.status} compact />
+          <StatusChip status={repository.status} compact />
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Typography variant="caption" sx={{ display: "block" }}>
             Last Updated
           </Typography>
           <RelativeTime
-            date={sourceCode.updated_at}
+            date={repository.updated_at}
             variant="caption"
             sx={{ fontWeight: 500 }}
           />
@@ -204,12 +204,12 @@ export const SourceCodesPage = () => {
           storageKey={`filter_${entityName}s`}
           onFilterChange={handleFilterChange}
         />
-        {filteredSourceCodes.length === 0 ? (
+        {filteredRepositories.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
             <Typography variant="h5">
-              {sourceCodes.length === 0
-                ? "No source codes available"
-                : "No source codes match your filters"}
+              {repositories.length === 0
+                ? "No code repositories available"
+                : "No code repositories match your filters"}
             </Typography>
           </Box>
         ) : (
@@ -225,20 +225,21 @@ export const SourceCodesPage = () => {
               mt: 4,
             }}
           >
-            {filteredSourceCodes.map((sourceCode) => (
+            {filteredRepositories.map((repository) => (
               <EntityCard
-                key={sourceCode.id}
+                key={repository.id}
                 entity_name="source_code"
                 icon={
                   <Box sx={{ fontSize: 32 }}>
-                    {IconField(sourceCode.source_code_provider)}
+                    {IconField(repository.source_code_provider)}
                   </Box>
                 }
-                name={getRepoNameFromUrl(sourceCode.source_code_url)}
-                description={sourceCode.description}
-                detailsUrl={`${linkPrefix}source_codes/${sourceCode.id}`}
-                labels={sourceCode.labels}
-                entityFields={sourceCodeCardFields(sourceCode)}
+                name={getRepoNameFromUrl(repository.source_code_url)}
+                description={repository.description}
+                detailsUrl={`${linkPrefix}source_codes/${repository.id}`}
+                labels={repository.labels}
+                lastUpdated={repository.updated_at}
+                entityFields={repositoryCardFields(repository)}
               />
             ))}
           </Box>
