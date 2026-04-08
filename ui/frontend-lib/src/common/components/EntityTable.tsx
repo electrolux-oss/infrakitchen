@@ -11,6 +11,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   DataGrid,
   GridFilterModel,
@@ -249,6 +250,12 @@ export const EntityTable = ({
                   },
                   "& .MuiButtonBase-root": {
                     border: "none",
+                  },
+                },
+                "& .MuiDataGrid-row": {
+                  "&:hover": {
+                    backgroundColor: (theme) =>
+                      alpha(theme.palette.primary.main, 0.08),
                   },
                 },
                 "& .MuiDataGrid-cell": {

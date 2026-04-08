@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Icon } from "@iconify/react";
-import CloudIcon from "@mui/icons-material/Cloud";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
 
 // Wrapper to keep a consistent signature with other MUI SvgIcon-based components.
 // Accept only Iconify props (width/height/color/className/style). Ignore MUI-specific props like sx.
@@ -11,15 +11,19 @@ export const AwsIcon: React.FC<IconProps> = (props) => (
   <Icon icon="logos:aws" {...props} />
 );
 
-export const AzureLogoIcon: React.FC<IconProps> = (props) => (
+export const AzureIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-azure" {...props} />
+);
+
+export const MicrosoftIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="logos:microsoft-icon" {...props} />
 );
 
 export const GoogleCloudIcon: React.FC<IconProps> = (props) => (
   <Icon icon="logos:google-cloud" {...props} />
 );
 
-export const GithubIcon: React.FC<IconProps> = (props) => (
+export const GitHubIcon: React.FC<IconProps> = (props) => (
   <Icon icon="octicon:mark-github-24" {...props} />
 );
 
@@ -45,13 +49,13 @@ export const OpenTofuIcon: React.FC<IconProps> = (props) => (
 
 const resourceIcons = new Map<string, React.ElementType>([
   ["aws", AwsIcon],
-  ["azure", AzureLogoIcon],
-  ["azurerm", AzureLogoIcon],
-  ["azure_devops", AzureLogoIcon],
-  ["azure_devops_ssh", AzureLogoIcon],
-  ["microsoft", AzureLogoIcon],
-  ["github", GithubIcon],
-  ["github_ssh", GithubIcon],
+  ["azure", AzureIcon],
+  ["azurerm", AzureIcon],
+  ["azure_devops", AzureIcon],
+  ["azure_devops_ssh", AzureIcon],
+  ["microsoft", MicrosoftIcon],
+  ["github", GitHubIcon],
+  ["github_ssh", GitHubIcon],
   ["gitlab", GitLabIcon],
   ["bitbucket", BitbucketIcon],
   ["bitbucket_ssh", BitbucketIcon],
@@ -66,10 +70,11 @@ export const getResourceIcon = (type: string | undefined) => {
     return resourceIcons.get(type as string) as any;
   }
 
-  return CloudIcon as any;
+  return CloudQueueIcon as any;
 };
 
-export const IconField = (type: string) => {
+export const IconField = (type: string, size?: number) => {
   const LabelIcon: any = getResourceIcon(type);
-  return <LabelIcon />;
+  const sizeProps = size ? { width: size, height: size } : {};
+  return <LabelIcon {...sizeProps} />;
 };

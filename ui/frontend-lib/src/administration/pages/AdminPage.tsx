@@ -24,6 +24,12 @@ export const AdminPage = () => {
             value={activeTab}
             onChange={handleTabChange}
             aria-label="Administration tabs"
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              mb: 1.5,
+              "& .MuiTab-root": { textTransform: "none" },
+            }}
           >
             <Tab label="Permissions" />
             <Tab label="Feature Flags" />

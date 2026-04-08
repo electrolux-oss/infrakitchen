@@ -281,7 +281,12 @@ export const SourceCodeRefRow = ({
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            sx={{ borderBottom: 1, borderColor: "divider", mb: 1.5 }}
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              mb: 1.5,
+              "& .MuiTab-root": { textTransform: "none" },
+            }}
           >
             <Tab label="Metadata" value="metadata" />
             <Tab

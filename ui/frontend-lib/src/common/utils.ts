@@ -14,11 +14,14 @@ export const getStateColor = (
       borderColor: "success.main",
     };
 
-  if (status === ENTITY_STATUS.DONE && state === ENTITY_STATE.DESTROYED)
+  if (
+    (status === ENTITY_STATUS.DONE && state === ENTITY_STATE.DESTROYED) ||
+    status === ENTITY_STATUS.DISABLED
+  )
     return {
-      backgroundColor: "grey.200",
+      backgroundColor: "grey.400",
       color: "text.primary",
-      borderColor: "grey.300",
+      borderColor: "grey.400",
     };
 
   if (status === ENTITY_STATUS.DONE || status === ENTITY_STATUS.ENABLED)

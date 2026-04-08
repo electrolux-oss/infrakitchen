@@ -1,5 +1,6 @@
 import React from "react";
 
+import BlockIcon from "@mui/icons-material/Block";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
@@ -25,6 +26,7 @@ interface StatusChipProps {
 const iconMap: Record<string, React.ComponentType<any>> = {
   "success.main": CheckCircleIcon,
   "error.main": CancelIcon,
+  "grey.400": BlockIcon,
 };
 
 const getThemeColor = (theme: any, colorPath: string) => {

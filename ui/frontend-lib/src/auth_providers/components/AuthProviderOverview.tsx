@@ -1,7 +1,7 @@
 import {
-  getTextValue,
   CommonField,
   getBooleanLabel,
+  getProviderValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -21,7 +21,7 @@ export const AuthProviderOverview = ({
     >
       <CommonField
         name={"Auth Provider Type"}
-        value={getTextValue(authProvider.auth_provider)}
+        value={getProviderValue(authProvider.auth_provider)}
       />
       <CommonField
         name={"Enabled"}

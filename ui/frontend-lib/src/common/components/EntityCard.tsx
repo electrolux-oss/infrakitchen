@@ -36,6 +36,7 @@ export interface EntityCardProps {
     | "warning"
     | "info"
     | "success";
+  lastUpdated?: string;
 }
 
 export const EntityCard = ({
@@ -51,6 +52,7 @@ export const EntityCard = ({
   icon,
   chip,
   chipColor = "info",
+  lastUpdated,
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -61,6 +63,15 @@ export const EntityCard = ({
       navigate(createUrl);
     }
   };
+
+  // Show "Updated" chip if lastUpdated is within the last 7 days
+  const daysSinceUpdate = lastUpdated
+    ? Math.floor(
+        (new Date().getTime() - new Date(lastUpdated).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : Infinity;
+  const isRecentlyUpdated = daysSinceUpdate <= 7;
 
   return (
     <Card
@@ -77,18 +88,29 @@ export const EntityCard = ({
     >
       <CardHeader
         avatar={icon}
-        title={name}
+        title={
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            {name}
+            {isRecentlyUpdated && (
+              <Chip
+                label="Updated"
+                size="small"
+                color="success"
+                variant="filled"
+              />
+            )}
+          </Box>
+        }
         subheader={description || "No description"}
         action={
-          chip ? (
+          chip && (
             <Chip
               label={chip.toUpperCase()}
               size="small"
               variant="outlined"
               color={chipColor}
-              sx={{ marginRight: 1 }}
             />
-          ) : undefined
+          )
         }
         sx={{ mb: 0 }}
       />
@@ -110,12 +132,19 @@ export const EntityCard = ({
         </Box>
       </CardContent>
       <CardActions sx={{ pt: 0, px: 2 }}>
-        <Box sx={{ display: "flex", gap: 1, width: "100%" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            width: "100%",
+            justifyContent: "center",
+          }}
+        >
           <Button
-            fullWidth
             size="small"
             variant="outlined"
             onClick={() => navigate(detailsUrl)}
+            sx={{ flex: 1 }}
           >
             View Details
           </Button>
@@ -125,10 +154,10 @@ export const EntityCard = ({
               permissionAction="write"
             >
               <Button
-                fullWidth
                 size="small"
                 variant="contained"
                 onClick={handleCreateClick}
+                sx={{ flex: 1 }}
               >
                 {createButtonName}
               </Button>

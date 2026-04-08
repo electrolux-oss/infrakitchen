@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Link,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -252,25 +253,25 @@ const IntegrationsPage = () => {
       description={
         <>
           Manage your Git and Cloud{" "}
-          <a
+          <Link
             href="https://opensource.electrolux.one/infrakitchen/integrations/overview/"
             target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "inherit", textDecoration: "underline" }}
+            rel="noopener"
+            sx={{ color: "inherit", textDecoration: "underline" }}
           >
             integrations
-          </a>
+          </Link>
           .{" "}
           <span style={{ fontStyle: "italic", fontSize: "0.9em" }}>
             Need another one?{" "}
-            <a
+            <Link
               href="https://github.com/electrolux-oss/infrakitchen/issues"
               target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "inherit", textDecoration: "underline" }}
+              rel="noopener"
+              sx={{ color: "inherit", textDecoration: "underline" }}
             >
               Let us know
-            </a>
+            </Link>
             !
           </span>
         </>
