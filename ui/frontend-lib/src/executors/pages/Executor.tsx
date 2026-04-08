@@ -18,4 +18,4 @@ export const ExecutorPage = () => {
   );
 };
 
-ExecutorPage.path = "/executors/:executor_id";
+ExecutorPage.path = "/executors/:executor_id/:tab?";
