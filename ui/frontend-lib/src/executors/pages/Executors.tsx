@@ -29,15 +29,6 @@ export const ExecutorsPage = () => {
   const columns = useMemo(
     () => [
       {
-        field: "name",
-        headerName: "Name",
-        flex: 1,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
-        },
-      },
-      {
         field: "Favorite",
         fetchFields: [],
         headerName: "",
@@ -57,8 +48,17 @@ export const ExecutorsPage = () => {
         ),
       },
       {
+        field: "name",
+        headerName: "Name",
+        flex: 1,
+        hideable: false,
+        renderCell: (params: GridRenderCellParams) => {
+          return <GetEntityLink {...params.row} />;
+        },
+      },
+      {
         field: "source_code",
-        headerName: "Source Code",
+        headerName: "Code Repository",
         flex: 1,
         valueGetter: (_value: any, row: any) =>
           row.source_code?.identifier || "",

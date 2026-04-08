@@ -58,15 +58,6 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
 
 export const resourceColumns: EntityTableColumn[] = [
   {
-    field: "name",
-    headerName: "Name",
-    flex: 1,
-    hideable: false,
-    renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
-    },
-  },
-  {
     field: "Favorite",
     fetchFields: [],
     headerName: "",
@@ -84,6 +75,15 @@ export const resourceColumns: EntityTableColumn[] = [
         format="table"
       />
     ),
+  },
+  {
+    field: "name",
+    headerName: "Name",
+    flex: 1,
+    hideable: false,
+    renderCell: (params: GridRenderCellParams) => {
+      return <GetEntityLink {...params.row} />;
+    },
   },
   {
     field: "template",

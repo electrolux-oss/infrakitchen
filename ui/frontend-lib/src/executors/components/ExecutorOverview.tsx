@@ -18,7 +18,7 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
   return (
     <OverviewCard
       name={executor.name}
-      description={executor.description}
+      description={executor.description || "No description"}
       actions={
         <FavoriteButton
           componentId={String(executor.id)}
