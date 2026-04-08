@@ -10,6 +10,7 @@ import {
   Button,
   CircularProgress,
   Typography,
+  Link,
 } from "@mui/material";
 
 import { FilterConfig, PermissionWrapper } from "../../common";
@@ -174,7 +175,24 @@ export const TemplatesPage = () => {
   }
 
   return (
-    <PageContainer title="Templates" actions={actions}>
+    <PageContainer
+      title="Templates"
+      description={
+        <>
+          <Link
+            href="https://opensource.electrolux.one/infrakitchen/core-concepts/templates/overview/"
+            target="_blank"
+            rel="noopener"
+            sx={{ color: "inherit", textDecoration: "underline" }}
+          >
+            Templates
+          </Link>{" "}
+          are versioned, reusable building blocks that enable consistent
+          self-service infrastructure provisioning and management.
+        </>
+      }
+      actions={actions}
+    >
       <Box sx={{ width: "100%" }}>
         <FilterPanel
           filters={filterConfigs}
@@ -213,6 +231,7 @@ export const TemplatesPage = () => {
           >
             {filteredTemplates.map((template) => {
               const enabled = template.status !== "disabled";
+
               return (
                 <EntityCard
                   key={template.id}
@@ -230,6 +249,7 @@ export const TemplatesPage = () => {
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
                   labels={template.labels}
                   chip={template.abstract ? "Abstract" : undefined}
+                  lastUpdated={template.updated_at}
                   entityFields={templateCardFields(template)}
                 />
               );

@@ -2,8 +2,8 @@ import React, { FC, ReactNode, useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ToggleOffIcon from "@mui/icons-material/ToggleOff";
+import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import { Box, Typography, Chip, Grid, GridSize, Link } from "@mui/material";
 
 import { IconField } from "../../icons/Icons";
@@ -142,20 +142,16 @@ export const getTextValue = (text: any) => {
 
 export const getBooleanLabel = (value: boolean) => {
   return value ? (
-    <CheckCircleOutlineIcon
-      color="success"
-      fontSize="small"
-      titleAccess="Enabled"
-    />
+    <ToggleOnIcon color="success" titleAccess="Enabled" />
   ) : (
-    <CancelOutlinedIcon color="error" fontSize="small" titleAccess="Disabled" />
+    <ToggleOffIcon color="disabled" titleAccess="Disabled" />
   );
 };
 
-export const getProviderValue = (provider: string) => {
+export const getProviderValue = (provider: string, iconSize: number = 24) => {
   return (
     <Box display="flex" alignItems="center" justifyContent="flex-start" gap={1}>
-      {IconField(provider)}
+      {IconField(provider, iconSize)}
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
         {getProviderDisplayName(provider)}
       </Typography>

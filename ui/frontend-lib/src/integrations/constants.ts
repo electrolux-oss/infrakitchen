@@ -1,9 +1,9 @@
 import {
   AwsIcon,
-  AzureLogoIcon,
+  AzureIcon,
   BitbucketIcon,
   DatadogIcon,
-  GithubIcon,
+  GitHubIcon,
   GitLabIcon,
   GoogleCloudIcon,
   MongoDBIcon,
@@ -45,7 +45,7 @@ export const providers: Provider[] = [
     type: IntegrationType.GIT,
     connectionType: ConnectionType.TOKEN,
     name: "GitHub",
-    icon: GithubIcon,
+    icon: GitHubIcon,
     slug: "github",
     instructions: [
       'Go to <a href="https://github.com/settings/personal-access-tokens" target="_blank"><strong>GitHub Personal Access Tokens</strong></a> and click <strong>Generate new token</strong>',
@@ -63,7 +63,7 @@ export const providers: Provider[] = [
     type: IntegrationType.GIT,
     connectionType: ConnectionType.SSH,
     name: "GitHub SSH",
-    icon: GithubIcon,
+    icon: GitHubIcon,
     slug: "github",
     instructions: [
       "Generate a new SSH key pair on your local machine using the command: ssh-keygen -t rsa -b 4096",
@@ -95,7 +95,7 @@ export const providers: Provider[] = [
     type: IntegrationType.GIT,
     connectionType: ConnectionType.TOKEN,
     name: "Azure Repos",
-    icon: AzureLogoIcon,
+    icon: AzureIcon,
     slug: "azure_devops",
     instructions: [
       "Go to User settings → Personal access tokens → New Token in your Azure DevOps account",
@@ -112,7 +112,7 @@ export const providers: Provider[] = [
     type: IntegrationType.GIT,
     connectionType: ConnectionType.SSH,
     name: "Azure Repos SSH",
-    icon: AzureLogoIcon,
+    icon: AzureIcon,
     slug: "azure_devops",
     instructions: [
       "Generate a new SSH key pair on your local machine using the command: ssh-keygen -t rsa -b 4096",
@@ -142,7 +142,7 @@ export const providers: Provider[] = [
   {
     type: IntegrationType.CLOUD,
     name: "Azure",
-    icon: AzureLogoIcon,
+    icon: AzureIcon,
     slug: "azurerm",
     instructions: [
       "Log in to the <strong>Azure Portal</strong> and navigate to the <strong>Azure Active Directory</strong> service",

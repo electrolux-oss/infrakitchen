@@ -82,7 +82,12 @@ export const TabbedContent = ({
         }}
         variant="scrollable"
         scrollButtons="auto"
-        sx={{ "& .MuiTab-root": { textTransform: "none" } }}
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          mb: 1.5,
+          "& .MuiTab-root": { textTransform: "none" },
+        }}
       >
         {visibleTabs.map(({ label }) => (
           <Tab key={label} label={label} value={label} />

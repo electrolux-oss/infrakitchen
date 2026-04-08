@@ -89,7 +89,7 @@ const AuthProviderCreatePageInner = () => {
 
   return (
     <PageContainer
-      title="Create AuthProvider"
+      title="Create Auth Provider"
       onBack={handleBack}
       backAriaLabel="Back to auth_providers"
       bottomActions={
@@ -117,7 +117,7 @@ const AuthProviderCreatePageInner = () => {
           maxWidth: 1000,
         }}
       >
-        <PropertyCard title="AuthProvider Definition">
+        <PropertyCard title="Auth Provider Definition">
           <Box>
             <Controller
               name="name"
@@ -127,6 +127,7 @@ const AuthProviderCreatePageInner = () => {
                 <TextField
                   {...field}
                   label="Name"
+                  required={true}
                   variant="outlined"
                   error={!!errors.name}
                   helperText={
@@ -165,6 +166,7 @@ const AuthProviderCreatePageInner = () => {
                   {...field}
                   select
                   label="Auth Provider"
+                  required={true}
                   variant="outlined"
                   error={!!errors.auth_provider}
                   helperText={

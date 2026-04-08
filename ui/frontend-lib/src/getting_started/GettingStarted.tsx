@@ -10,7 +10,7 @@ const steps = [
     title: "Integrate Git Provider(s)",
     description:
       "Connect your git providers (GitHub, GitLab, Bitbucket, Azure Repos) to access infrastructure templates",
-    button: "Integrate Git",
+    button: "Connect Git",
     navigateTo: "integrations#git",
     icon: <Icon icon="noto:fork-and-knife" width="24" height="24" />,
   },
@@ -18,7 +18,7 @@ const steps = [
     title: "Integrate Cloud Provider(s)",
     description:
       "Link your cloud providers (AWS, Azure, GCP) for resource provisioning",
-    button: "Integrate Cloud",
+    button: "Connect Cloud",
     navigateTo: "integrations#cloud",
     icon: <Icon icon="noto:fork-and-knife" width="24" height="24" />,
   },

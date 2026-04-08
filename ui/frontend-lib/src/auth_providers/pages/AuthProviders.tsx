@@ -10,6 +10,7 @@ import { PermissionWrapper, useConfig } from "../../common";
 import {
   GetEntityLink,
   getProviderValue,
+  getBooleanLabel,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -51,7 +52,7 @@ export const AuthProvidersPage = () => {
         headerName: "Enabled",
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
-          String(params.row.enabled).toLowerCase(),
+          getBooleanLabel(params.row.enabled),
       },
       {
         field: "created_at",

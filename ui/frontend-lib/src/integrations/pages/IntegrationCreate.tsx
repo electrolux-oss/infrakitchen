@@ -327,12 +327,16 @@ const IntegrationCreatePage = () => {
             true,
           )}
         </CardContent>
-        <CardActions sx={{ display: "flex", gap: 2, mt: 2, mb: 1 }}>
-          <Button
-            variant="outlined"
-            onClick={handleValidation}
-            sx={{ flex: 1 }}
-          >
+        <CardActions
+          sx={{
+            display: "flex",
+            gap: 2,
+            mt: 2,
+            mb: 1,
+            justifyContent: "center",
+          }}
+        >
+          <Button variant="outlined" onClick={handleValidation}>
             Test Connection
           </Button>
           <Button
@@ -341,7 +345,6 @@ const IntegrationCreatePage = () => {
             onClick={handleSubmit(handleSave, () =>
               notifyError(new Error("Fix validation errors before saving.")),
             )}
-            sx={{ flex: 1 }}
           >
             Save
           </Button>
