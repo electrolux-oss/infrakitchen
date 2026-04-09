@@ -29,7 +29,7 @@ import Ansi from "ansi-to-react";
 import { LogEntity } from "../../../types";
 import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context";
-
+import { RelativeTime } from "../RelativeTime";
 import { LogLine } from "./LogLine";
 
 const ExecutionAction = {
@@ -547,6 +547,18 @@ export const SummaryView = (props: {
                     status={overallStatus}
                     showLabel
                     iconFirst
+                  />
+                )}
+                {allLogs.length > 0 && (
+                  <RelativeTime
+                    date={allLogs[allLogs.length - 1].created_at}
+                    sx={{
+                      color: "text.secondary",
+                      ml: 1.5,
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
                   />
                 )}
               </Box>
