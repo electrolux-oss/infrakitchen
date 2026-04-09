@@ -1,15 +1,15 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useEffectOnce } from "react-use";
 
-import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
-import Ansi from "ansi-to-react";
+import { Box, Typography } from "@mui/material";
 
 import { LogEntity } from "../../../types";
 import { useConfig } from "../../context";
 import GradientCircularProgress from "../../GradientCircularProgress";
 import { getTimeOnlyValue } from "../CommonField";
+import { LogLine } from "./LogLine";
 
 function createLog(log: LogEntity[]) {
   const result: { id: string; data: string }[] = [];
@@ -86,26 +86,18 @@ export const LogsView = (props: {
       }}
     >
       {logs.length > 0 ? (
-        <List dense>
-          <InfiniteScroll
-            dataLength={logs.length}
-            next={fetchMoreData}
-            hasMore={hasMore}
-            inverse={true}
-            loader={<GradientCircularProgress />}
-            scrollableTarget={scrollContainerId}
-          >
-            {createLog(logs).map((log) => (
-              <ListItem disablePadding key={log.id}>
-                <ListItemText sx={{ margin: 0 }}>
-                  <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                    <Ansi>{log.data}</Ansi>
-                  </pre>
-                </ListItemText>
-              </ListItem>
-            ))}
-          </InfiniteScroll>
-        </List>
+        <InfiniteScroll
+          dataLength={logs.length}
+          next={fetchMoreData}
+          hasMore={hasMore}
+          inverse={true}
+          loader={<GradientCircularProgress />}
+          scrollableTarget={scrollContainerId}
+        >
+          {createLog(logs).map((log) => (
+            <LogLine key={log.id} line={log.data} />
+          ))}
+        </InfiniteScroll>
       ) : (
         <Typography color="text.secondary">No logs available.</Typography>
       )}
