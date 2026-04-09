@@ -578,7 +578,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/workspaces/:workspace_id",
+    path: "/workspaces/:workspace_id/:tab?",
     Component: lz(
       () => import("./workspaces/pages/Workspace"),
       "WorkspacePage",

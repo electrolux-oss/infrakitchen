@@ -22,6 +22,7 @@ export const WorkspacePage = () => {
     <EntityProvider entity_name="workspace" entity_id={workspace_id || ""}>
       <EntityContainer
         title={"Workspace Overview"}
+        showActivity={false}
         actions={
           <Button variant="outlined" onClick={handleMetadata}>
             Metadata
@@ -35,4 +36,4 @@ export const WorkspacePage = () => {
   );
 };
 
-WorkspacePage.path = "/workspaces/:workspace_id";
+WorkspacePage.path = "/workspaces/:workspace_id/:tab?";
