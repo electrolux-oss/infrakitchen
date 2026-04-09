@@ -299,8 +299,10 @@ class ResourceService:
 
         result = await self.crud.get_by_id(new_resource.id)
 
-        await self.revision_handler.handle_revision(new_resource)
-        await self.audit_log_handler.create_log(new_resource.id, requester.id, ModelActions.CREATE)
+        revision_number = await self.revision_handler.handle_revision(new_resource)
+        await self.audit_log_handler.create_log(
+            new_resource.id, requester.id, ModelActions.CREATE, revision_number=revision_number
+        )
         response = ResourceResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         await add_resource_parent_policy(
@@ -511,11 +513,14 @@ class ResourceService:
             and resource_temp_state is not None
         ):
             # when resource edited after creation and first approval
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
-            )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
-            await self.revision_handler.handle_revision(existing_resource)
+            revision_number = await self.revision_handler.handle_revision(existing_resource)
+            await self.audit_log_handler.create_log(
+                pydantic_resource.id,
+                resource_temp_state.created_by,
+                ModelActions.UPDATE,
+                revision_number=revision_number,
+            )
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
@@ -524,11 +529,14 @@ class ResourceService:
         elif resource_temp_state is not None and pydantic_resource.state == ModelState.PROVISIONED:
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
-            )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
-            await self.revision_handler.handle_revision(existing_resource)
+            revision_number = await self.revision_handler.handle_revision(existing_resource)
+            await self.audit_log_handler.create_log(
+                pydantic_resource.id,
+                resource_temp_state.created_by,
+                ModelActions.UPDATE,
+                revision_number=revision_number,
+            )
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 
@@ -617,7 +625,10 @@ class ResourceService:
         # wrap existing_resource to pydantic model to avoid sqlalchemy object state issues
         pydantic_resource = ResourceDTO.model_validate(existing_resource)
 
-        await self.audit_log_handler.create_log(pydantic_resource.id, requester.id, body.action)
+        if body.action != ModelActions.APPROVE:
+            await self.audit_log_handler.create_log(
+                pydantic_resource.id, requester.id, body.action, revision_number=pydantic_resource.revision_number
+            )
 
         match body.action:
             case ModelActions.REJECT:
@@ -637,6 +648,9 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 await self.action_approve(existing_resource, pydantic_resource, requester)
+                await self.audit_log_handler.create_log(
+                    pydantic_resource.id, requester.id, body.action, revision_number=existing_resource.revision_number
+                )
 
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)

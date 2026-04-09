@@ -85,8 +85,10 @@ class TemplateService:
         new_template.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_template.id)
 
-        await self.revision_handler.handle_revision(new_template)
-        await self.audit_log_handler.create_log(new_template.id, requester.id, ModelActions.CREATE)
+        revision_number = await self.revision_handler.handle_revision(new_template)
+        await self.audit_log_handler.create_log(
+            new_template.id, requester.id, ModelActions.CREATE, revision_number=revision_number
+        )
         response = TemplateResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return response
@@ -114,10 +116,12 @@ class TemplateService:
             # If the template is disabled, we can move it back
             existing_template.status = ModelStatus.ENABLED
 
-        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.UPDATE)
         await self.crud.update(existing_template, body)
 
-        await self.revision_handler.handle_revision(existing_template)
+        revision_number = await self.revision_handler.handle_revision(existing_template)
+        await self.audit_log_handler.create_log(
+            template_id, requester.id, ModelActions.UPDATE, revision_number=revision_number
+        )
         await self.crud.refresh(existing_template)
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -135,7 +139,9 @@ class TemplateService:
         if not existing_template:
             raise EntityNotFound("Template not found")
 
-        await self.audit_log_handler.create_log(existing_template.id, requester.id, body.action)
+        await self.audit_log_handler.create_log(
+            existing_template.id, requester.id, body.action, revision_number=existing_template.revision_number
+        )
         match body.action:
             case ModelActions.DISABLE:
                 existing_template.status = ModelStatus.DISABLED

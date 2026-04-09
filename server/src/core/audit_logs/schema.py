@@ -13,5 +13,6 @@ class AuditLogResponse(BaseModel):
     entity_id: str | uuid.UUID = Field(..., title="Entity ID")
     created_at: datetime = Field(default_factory=datetime.now, frozen=True)
     creator: UserShort | None = Field(default=None)
+    revision_number: int | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)

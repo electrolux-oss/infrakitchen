@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.users.model import User
 from ..base_models import Base
-from sqlalchemy import UUID, ForeignKey, DateTime, func
+from sqlalchemy import UUID, ForeignKey, DateTime, Integer, func
 
 
 class AuditLog(Base):
@@ -15,4 +15,5 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column()
     entity_id: Mapped[uuid.UUID] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=func.now())
+    revision_number: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     creator: Mapped[User] = relationship("User", lazy="joined")

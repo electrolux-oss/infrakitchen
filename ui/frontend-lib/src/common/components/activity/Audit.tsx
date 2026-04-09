@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, ReactNode } from "react";
 
+import { Link, useLocation } from "react-router";
+
 import ArticleIcon from "@mui/icons-material/Article";
-import HistoryIcon from "@mui/icons-material/History";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import {
   Box,
@@ -36,6 +37,7 @@ export interface AuditProps {
   entityId: string;
   useVersionId?: boolean;
   sourceCodeLanguage?: string;
+  showRevisionColumn?: boolean;
 }
 
 interface AuditFilterPanelProps {
@@ -73,11 +75,10 @@ export const AuditFilterPanel = ({
 };
 
 const getDialogTitle = (
-  view: "summary" | "logs" | "revision",
+  view: "summary" | "logs",
   action?: string | null,
 ): string => {
   if (view === "logs") return "Logs";
-  if (view === "revision") return "Revision";
 
   switch (action) {
     case "dryrun":
@@ -94,9 +95,11 @@ export const Audit = ({
   entityId,
   useVersionId,
   sourceCodeLanguage,
+  showRevisionColumn,
 }: AuditProps) => {
   const { ikApi } = useConfig();
   const [hashParams, setHashParams] = useHashParams();
+  const location = useLocation();
 
   const actionsWithLogs = useMemo<string[]>(
     () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
@@ -105,11 +108,7 @@ export const Audit = ({
 
   const selectedTraceId = hashParams.get("traceId");
   const selectedVersionId = hashParams.get("versionId");
-  const selectedView = hashParams.get("view") as
-    | "summary"
-    | "logs"
-    | "revision"
-    | null;
+  const selectedView = hashParams.get("view") as "summary" | "logs" | null;
 
   const logsOpen = useMemo(() => {
     if (!selectedTraceId || !selectedView) return false;
@@ -211,6 +210,31 @@ export const Audit = ({
           <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
         ),
       },
+      ...(showRevisionColumn
+        ? [
+            {
+              field: "revision_number",
+              headerName: "Revision",
+              flex: 0.5,
+              renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+                const rev = params.row.revision_number;
+                if (!rev) return null;
+                const parts = location.pathname.replace(/\/$/, "").split("/");
+                parts[parts.length - 1] = "revisions";
+                const target = `${parts.join("/")}?left=${rev - 1}&right=${rev}`;
+                return (
+                  <Link
+                    to={target}
+                    style={{ textDecoration: "none" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {rev}
+                  </Link>
+                );
+              },
+            } as GridColDef<AuditLogEntity>,
+          ]
+        : []),
       {
         field: "userActions",
         headerName: "Actions",
@@ -265,24 +289,6 @@ export const Audit = ({
                     <ArticleIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Revision">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newParams = new URLSearchParams(hashParams);
-                      newParams.set("traceId", params.row.id);
-                      newParams.set("view", "revision");
-                      if (useVersionId) {
-                        newParams.set("versionId", entityId);
-                      }
-                      setHashParams(newParams);
-                      setHeaderAction(undefined);
-                    }}
-                  >
-                    <HistoryIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               </>
             )}
           </Box>
@@ -296,6 +302,8 @@ export const Audit = ({
       useVersionId,
       entityId,
       sourceCodeLanguage,
+      showRevisionColumn,
+      location,
     ],
   );
 

@@ -339,6 +339,7 @@ export const SourceCodeRefRow = ({
               entityId={entity.id}
               useVersionId
               sourceCodeLanguage={entity?.source_code?.source_code_language}
+              showRevisionColumn
             />
           )}
 

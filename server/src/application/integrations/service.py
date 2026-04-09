@@ -98,8 +98,10 @@ class IntegrationService:
         new_integration.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_integration.id)
 
-        await self.revision_handler.handle_revision(new_integration)
-        await self.audit_log_handler.create_log(new_integration.id, requester.id, ModelActions.CREATE)
+        revision_number = await self.revision_handler.handle_revision(new_integration)
+        await self.audit_log_handler.create_log(
+            new_integration.id, requester.id, ModelActions.CREATE, revision_number=revision_number
+        )
         response = IntegrationResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return response
@@ -126,8 +128,10 @@ class IntegrationService:
 
         await self.crud.update(existing_integration, body)
 
-        await self.audit_log_handler.create_log(existing_integration.id, requester.id, ModelActions.UPDATE)
-        await self.revision_handler.handle_revision(existing_integration)
+        revision_number = await self.revision_handler.handle_revision(existing_integration)
+        await self.audit_log_handler.create_log(
+            existing_integration.id, requester.id, ModelActions.UPDATE, revision_number=revision_number
+        )
         await self.crud.refresh(existing_integration)
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -145,7 +149,9 @@ class IntegrationService:
         if not existing_integration:
             raise EntityNotFound("Integration not found")
 
-        await self.audit_log_handler.create_log(existing_integration.id, requester.id, body.action)
+        await self.audit_log_handler.create_log(
+            existing_integration.id, requester.id, body.action, revision_number=existing_integration.revision_number
+        )
         match body.action:
             case ModelActions.DISABLE:
                 existing_integration.status = ModelStatus.DISABLED
