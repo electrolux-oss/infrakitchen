@@ -253,7 +253,11 @@ async def insert_source_code_and_version(session: AsyncSession, user: UserDTO):
         sc_result = await source_code_service.create(src, user)
         await session.commit()
         await generate_logs(
-            session=session, entity_name="source_code", entity_id=str(sc_result.id), user_id=str(user.id)
+            session=session,
+            entity_name="source_code",
+            entity_id=str(sc_result.id),
+            user_id=str(user.id),
+            revision_number=sc_result.revision_number,
         )
         # Add git tags and branches that can be added only through automation
         statement = update(SourceCode).values(
@@ -305,6 +309,7 @@ async def insert_source_code_and_version(session: AsyncSession, user: UserDTO):
             entity_name="source_code_version",
             entity_id=str(current_code_version.id),
             user_id=str(user.id),
+            revision_number=current_code_version.revision_number,
         )
         scv_with_variables = SourceCodeVersionVariablesCreate(
             source_code_version_id=str(current_code_version.id),
@@ -536,7 +541,11 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
         created_storage = await storage_service.create(storage, user)
         await session.commit()
         await generate_logs(
-            session=session, entity_name="storage", entity_id=str(created_storage.id), user_id=str(user.id)
+            session=session,
+            entity_name="storage",
+            entity_id=str(created_storage.id),
+            user_id=str(user.id),
+            revision_number=created_storage.revision_number,
         )
 
     await change_state(
@@ -670,7 +679,11 @@ async def insert_resources(session: AsyncSession, env: str, user: UserDTO):
             await session.commit()
 
             await generate_logs(
-                session=session, entity_name="resource", entity_id=str(current_resource.id), user_id=str(user.id)
+                session=session,
+                entity_name="resource",
+                entity_id=str(current_resource.id),
+                user_id=str(user.id),
+                revision_number=current_resource.revision_number,
             )
 
     await change_state(
@@ -681,7 +694,9 @@ async def insert_resources(session: AsyncSession, env: str, user: UserDTO):
     )
 
 
-async def generate_logs(session: AsyncSession, entity_name: str, entity_id: str, user_id: str):
+async def generate_logs(
+    session: AsyncSession, entity_name: str, entity_id: str, user_id: str, revision_number: int | None = None
+):
     async def insert_logs(log_controller: EntityLogger):
         for _ in range(100):
             lvl = random.choice(levels)
@@ -700,6 +715,7 @@ async def generate_logs(session: AsyncSession, entity_name: str, entity_id: str,
         entity_id=entity_id,
         requester_id=user_id,
         action="execute",
+        revision_number=revision_number,
     )
     await session.commit()
 
