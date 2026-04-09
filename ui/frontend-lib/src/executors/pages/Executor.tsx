@@ -10,7 +10,7 @@ export const ExecutorPage = () => {
 
   return (
     <EntityProvider entity_name="executor" entity_id={executor_id || ""}>
-      <EntityContainer title={"Executor Overview"}>
+      <EntityContainer title={"Executor Overview"} showActivity={false}>
         <ExecutorContent />
         <LogLiveTail />
       </EntityContainer>
