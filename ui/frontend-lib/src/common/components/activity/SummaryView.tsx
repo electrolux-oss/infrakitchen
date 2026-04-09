@@ -640,11 +640,11 @@ export const SummaryView = (props: {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: 2,
+                      gap: 1,
                       width: "100%",
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Chip
                         label={change.action}
                         size="small"
