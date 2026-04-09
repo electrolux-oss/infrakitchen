@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress, useLocalStorage } from "../../common";
+import { GradientCircularProgress } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ResourceResponse } from "../../resources/types";
@@ -18,15 +18,8 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["workspace-resources"];
   const fetchRelatedData = useCallback(async () => {
     if (!workspace_id) return;
-    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -43,7 +36,7 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, workspace_id, isExpanded]);
+  }, [ikApi, workspace_id]);
 
   useEffect(() => {
     fetchRelatedData();
@@ -52,10 +45,9 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
   if (!workspace_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id="workspace-resources"
-      title="Resources"
-      subtitle="Instances published in this workspace"
+    <OverviewCard
+      name="Resources"
+      description="Instances published in this workspace"
     >
       {loading && <GradientCircularProgress />}
       {resources.length === 0 && (
@@ -92,6 +84,6 @@ export const WorkspaceResources = (props: WorkspaceResourcesProps) => {
           </Box>
         </Box>
       ))}
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };
