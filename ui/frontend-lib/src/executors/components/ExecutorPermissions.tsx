@@ -1,4 +1,4 @@
-import { EntityPoliciesCard } from "../../permissions/components/policies/EntityPoliciesCard";
+import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
 import { ExecutorResponse } from "../types";
 
 export interface AdvancedSettingsProps {
@@ -7,7 +7,7 @@ export interface AdvancedSettingsProps {
 
 export const ExecutorPermissions = ({ executor }: AdvancedSettingsProps) => {
   return (
-    <EntityPoliciesCard
+    <EntityPoliciesTab
       entity_id={executor.id}
       entity_name={executor._entity_name}
     />
