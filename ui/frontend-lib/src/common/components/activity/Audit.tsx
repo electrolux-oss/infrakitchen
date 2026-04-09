@@ -237,8 +237,8 @@ export const Audit = ({
         : []),
       {
         field: "userActions",
-        headerName: "Actions",
-        flex: 1,
+        headerName: "",
+        flex: 0.5,
         renderCell: (params) => (
           <Box
             sx={{
