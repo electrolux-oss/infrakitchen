@@ -1,6 +1,15 @@
-import { type SyntheticEvent, useCallback, useEffect, useState } from "react";
+import {
+  type ComponentType,
+  type SyntheticEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import PendingIcon from "@mui/icons-material/Pending";
 import {
   Accordion,
   AccordionDetails,
@@ -10,32 +19,48 @@ import {
   Box,
   Button,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
   Stack,
+  type SvgIconProps,
   Typography,
+  accordionSummaryClasses,
 } from "@mui/material";
 import Ansi from "ansi-to-react";
 
 import { LogEntity } from "../../../types";
-import { ENTITY_ACTION, ENTITY_STATUS } from "../../../utils/constants";
+import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context";
-import StatusChip from "../../StatusChip";
+import { RelativeTime } from "../RelativeTime";
+import { LogLine } from "./LogLine";
 
-type SummaryAction = "CREATE" | "DESTROY" | "UPDATE" | "REPLACE";
-type ExecutionStatus = "DONE" | "ERROR" | "IN_PROGRESS";
-type ChangeExecutionStatus = "IN_PROGRESS" | "COMPLETE" | "ERROR";
+const ExecutionAction = {
+  CREATE: "CREATE",
+  DESTROY: "DESTROY",
+  UPDATE: "UPDATE",
+  REPLACE: "REPLACE",
+} as const;
+
+// eslint-disable-next-line no-redeclare
+type ExecutionAction = (typeof ExecutionAction)[keyof typeof ExecutionAction];
+
+const ExecutionStatus = {
+  COMPLETE: "COMPLETE",
+  ERROR: "ERROR",
+  IN_PROGRESS: "IN_PROGRESS",
+} as const;
+
+// eslint-disable-next-line no-redeclare
+type ExecutionStatus = (typeof ExecutionStatus)[keyof typeof ExecutionStatus];
 
 type SummaryChange = {
   id: string;
   address: string;
-  action: SummaryAction;
+  action: ExecutionAction;
   resourceType: string;
   resourceName: string;
   rawLines: string[];
   errorLines?: string[];
-  executionStatus?: ChangeExecutionStatus;
+  executionStatus?: ExecutionStatus;
+  duration?: string;
 };
 
 type ErrorBlock = {
@@ -58,69 +83,45 @@ const isFatalErrorLine = (line: string): boolean => {
 
 const parseResourceHeader = (
   line: string,
-): { address: string; action: SummaryAction } | null => {
+): { address: string; action: ExecutionAction } | null => {
   const sanitized = stripAnsi(line);
 
   const createdMatch = sanitized.match(/^#\s+([^\s]+)\s+will\s+be\s+created$/);
   if (createdMatch) {
-    return { address: createdMatch[1], action: "CREATE" };
+    return { address: createdMatch[1], action: ExecutionAction.CREATE };
   }
 
   const updatedMatch = sanitized.match(
     /^#\s+([^\s]+)\s+will\s+be\s+updated\s+in-place$/,
   );
   if (updatedMatch) {
-    return { address: updatedMatch[1], action: "UPDATE" };
+    return { address: updatedMatch[1], action: ExecutionAction.UPDATE };
   }
 
   const destroyedMatch = sanitized.match(
     /^#\s+([^\s]+)\s+will\s+be\s+destroyed$/,
   );
   if (destroyedMatch) {
-    return { address: destroyedMatch[1], action: "DESTROY" };
+    return { address: destroyedMatch[1], action: ExecutionAction.DESTROY };
   }
 
   const replacedMatch = sanitized.match(
     /^#\s+([^\s]+)\s+must\s+be\s+replaced$/,
   );
   if (replacedMatch) {
-    return { address: replacedMatch[1], action: "REPLACE" };
+    return { address: replacedMatch[1], action: ExecutionAction.REPLACE };
   }
 
   return null;
 };
 
-const getStatusChipValue = (status?: ExecutionStatus): string => {
-  const normalizedStatus = String(status ?? "")
-    .trim()
-    .toUpperCase();
-
-  switch (normalizedStatus) {
-    case "ERROR":
-      return ENTITY_STATUS.ERROR;
-    case "IN_PROGRESS":
-      return ENTITY_STATUS.IN_PROGRESS;
-    case "DONE":
-      return ENTITY_STATUS.DONE;
-    default:
-      return ENTITY_STATUS.UNKNOWN;
-  }
-};
-
-const getChangeExecutionChip = (executionStatus?: ChangeExecutionStatus) => {
-  if (executionStatus === "ERROR") {
-    return { label: "Error", color: "error" as const };
-  }
-
-  if (executionStatus === "IN_PROGRESS") {
-    return { label: "In progress", color: "info" as const };
-  }
-
-  if (executionStatus === "COMPLETE") {
-    return { label: "Complete", color: "success" as const };
-  }
-
-  return null;
+const executionStatusIcons: Record<
+  ExecutionStatus,
+  { color: "error" | "info" | "success"; icon: ComponentType<SvgIconProps> }
+> = {
+  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorIcon },
+  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingIcon },
+  [ExecutionStatus.COMPLETE]: { color: "success", icon: CheckCircleIcon },
 };
 
 const stripBoxPrefix = (s: string): string => s.replace(/^[│╷╵]\s*/, "");
@@ -193,44 +194,91 @@ const collectErrorBlocks = (lines: string[]): ErrorBlock[] => {
   return blocks;
 };
 
+type ExecutionStatusEntry = { status: ExecutionStatus; duration?: string };
+
 const collectExecutionStatuses = (
   lines: string[],
-): Map<string, ChangeExecutionStatus> => {
-  const statuses = new Map<string, ChangeExecutionStatus>();
+): Map<string, ExecutionStatusEntry> => {
+  const statuses = new Map<string, ExecutionStatusEntry>();
 
   const progressPattern =
     /^([^\s:][^:]*):\s*(Creating|Modifying|Destroying)\.\.\./i;
   const completePattern =
-    /^([^\s:][^:]*):\s*(Creation|Modifications|Destruction) complete/i;
+    /^([^\s:][^:]*):\s*(Creation|Modifications|Destruction) complete(?: after (\S+))?/i;
 
   for (const line of lines) {
     const clean = stripAnsi(line);
 
     const progressMatch = clean.match(progressPattern);
     if (progressMatch) {
-      statuses.set(progressMatch[1], "IN_PROGRESS");
+      statuses.set(progressMatch[1], { status: ExecutionStatus.IN_PROGRESS });
       continue;
     }
 
     const completeMatch = clean.match(completePattern);
     if (completeMatch) {
-      statuses.set(completeMatch[1], "COMPLETE");
+      statuses.set(completeMatch[1], {
+        status: ExecutionStatus.COMPLETE,
+        duration: completeMatch[3],
+      });
     }
   }
 
   return statuses;
 };
 
+// Collects raw lines belonging to a single resource block
+const collectResourceBlock = (
+  lines: string[],
+  startIndex: number,
+): { rawLines: string[]; endIndex: number } => {
+  const rawLines: string[] = [];
+  let braceDepth = 0;
+  let startedBlock = false;
+
+  for (let index = startIndex; index < lines.length; index++) {
+    const currentLine = lines[index];
+    const clean = stripAnsi(currentLine);
+
+    if (clean.startsWith("# ") && parseResourceHeader(currentLine)) {
+      return { rawLines, endIndex: index - 1 };
+    }
+
+    if (clean.startsWith("Plan:")) {
+      return { rawLines, endIndex: index - 1 };
+    }
+
+    rawLines.push(currentLine);
+
+    for (const char of clean) {
+      if (char === "{") {
+        braceDepth += 1;
+        startedBlock = true;
+      } else if (char === "}") {
+        braceDepth = Math.max(0, braceDepth - 1);
+      }
+    }
+
+    if (startedBlock && braceDepth === 0) {
+      return { rawLines, endIndex: index };
+    }
+  }
+
+  return { rawLines, endIndex: lines.length - 1 };
+};
+
 const parsePlanSummary = (
   logs: LogEntity[],
   trackExecution: boolean,
 ): SummaryChange[] => {
-  const lines = logs.map((l) => l.data ?? "");
+  const lines = logs.map((log) => log.data ?? "");
   const result: SummaryChange[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const header = parseResourceHeader(lines[i]);
+  let lineIndex = 0;
+  while (lineIndex < lines.length) {
+    const header = parseResourceHeader(lines[lineIndex]);
     if (!header) {
+      lineIndex++;
       continue;
     }
 
@@ -242,40 +290,8 @@ const parsePlanSummary = (
         ? addressParts[addressParts.length - 2]
         : "resource";
 
-    const rawLines: string[] = [lines[i]];
-    let braceDepth = 0;
-    let startedBlock = false;
-
-    for (let j = i + 1; j < lines.length; j++) {
-      const currentLine = lines[j];
-      const cleanCurrent = stripAnsi(currentLine);
-
-      if (cleanCurrent.startsWith("# ") && parseResourceHeader(currentLine)) {
-        i = j - 1;
-        break;
-      }
-
-      if (cleanCurrent.startsWith("Plan:")) {
-        i = j - 1;
-        break;
-      }
-
-      rawLines.push(currentLine);
-
-      for (const ch of cleanCurrent) {
-        if (ch === "{") {
-          braceDepth += 1;
-          startedBlock = true;
-        } else if (ch === "}") {
-          braceDepth = Math.max(0, braceDepth - 1);
-        }
-      }
-
-      if (startedBlock && braceDepth === 0) {
-        i = j;
-        break;
-      }
-    }
+    const { rawLines, endIndex } = collectResourceBlock(lines, lineIndex + 1);
+    lineIndex = endIndex + 1;
 
     result.push({
       id: `${header.address}-${result.length}`,
@@ -290,9 +306,10 @@ const parsePlanSummary = (
   if (trackExecution) {
     const executionStatuses = collectExecutionStatuses(lines);
     for (const change of result) {
-      const executionStatus = executionStatuses.get(change.address);
-      if (executionStatus) {
-        change.executionStatus = executionStatus;
+      const entry = executionStatuses.get(change.address);
+      if (entry) {
+        change.executionStatus = entry.status;
+        change.duration = entry.duration;
       }
     }
 
@@ -311,7 +328,7 @@ const parsePlanSummary = (
           ([k]) => k.trim() === normalisedAddress,
         )?.[1];
       if (errorLines) {
-        change.executionStatus = "ERROR";
+        change.executionStatus = ExecutionStatus.ERROR;
         change.errorLines = errorLines;
       }
     }
@@ -320,11 +337,54 @@ const parsePlanSummary = (
   return result;
 };
 
-const getActionColor = (action: SummaryAction) => {
-  if (action === "CREATE") return "success" as const;
-  if (action === "DESTROY" || action === "REPLACE") return "error" as const;
-  if (action === "UPDATE") return "warning" as const;
+const getActionColor = (action: ExecutionAction) => {
+  if (action === ExecutionAction.CREATE) return "success" as const;
+  if (action === ExecutionAction.DESTROY || action === ExecutionAction.REPLACE)
+    return "error" as const;
+  if (action === ExecutionAction.UPDATE) return "warning" as const;
   return "info" as const;
+};
+
+const ExecutionStatusIcon = ({
+  status,
+  showLabel,
+  duration,
+  iconFirst,
+}: {
+  status: ExecutionStatus;
+  showLabel?: boolean;
+  duration?: string;
+  iconFirst?: boolean;
+}) => {
+  const { icon: Icon, color } = executionStatusIcons[status];
+  const icon = <Icon color={color} fontSize="small" />;
+  const label = showLabel && (
+    <Typography color={`${color}.main`} fontWeight={500}>
+      {status}
+    </Typography>
+  );
+  const durationText = duration && (
+    <Typography variant="caption" color="text.secondary">
+      {duration}
+    </Typography>
+  );
+  return (
+    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+      {iconFirst ? (
+        <>
+          {icon}
+          {label}
+          {durationText}
+        </>
+      ) : (
+        <>
+          {label}
+          {durationText}
+          {icon}
+        </>
+      )}
+    </Box>
+  );
 };
 
 export const SummaryView = (props: {
@@ -340,7 +400,9 @@ export const SummaryView = (props: {
   const [allLogs, setAllLogs] = useState<LogEntity[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState<string | false>(false);
-  const [status, setStatus] = useState<ExecutionStatus | undefined>(undefined);
+  const [overallStatus, setOverallStatus] = useState<
+    ExecutionStatus | undefined
+  >(undefined);
 
   const fetchAllLogsForExecution = useCallback(
     async (executionStart: number): Promise<LogEntity[]> => {
@@ -399,11 +461,11 @@ export const SummaryView = (props: {
 
   useEffect(() => {
     if (!loaded || allLogs.length === 0 || !eventAction) {
-      setStatus(undefined);
+      setOverallStatus(undefined);
       return;
     }
 
-    const lines = allLogs.map((l) => stripAnsi(l.data ?? ""));
+    const lines = allLogs.map((log) => stripAnsi(log.data ?? ""));
     if (
       lines.some(
         (line) =>
@@ -412,7 +474,7 @@ export const SummaryView = (props: {
           isFatalErrorLine(line),
       )
     ) {
-      setStatus("ERROR");
+      setOverallStatus(ExecutionStatus.ERROR);
       return;
     }
 
@@ -421,17 +483,17 @@ export const SummaryView = (props: {
         lines.some((line) => /^(Apply|Destroy) complete!/i.test(line)) ||
         lines.some((line) => /task is done$/i.test(line))
       ) {
-        setStatus("DONE");
+        setOverallStatus(ExecutionStatus.COMPLETE);
       } else {
-        setStatus("IN_PROGRESS");
+        setOverallStatus(ExecutionStatus.IN_PROGRESS);
       }
       return;
     }
 
     if (lines.some((line) => /^Plan:/i.test(line))) {
-      setStatus("DONE");
+      setOverallStatus(ExecutionStatus.COMPLETE);
     } else {
-      setStatus("IN_PROGRESS");
+      setOverallStatus(ExecutionStatus.IN_PROGRESS);
     }
   }, [allLogs, loaded, eventAction]);
 
@@ -440,7 +502,7 @@ export const SummaryView = (props: {
     eventAction === ENTITY_ACTION.EXECUTE,
   );
   const fatalErrorLines = allLogs
-    .map((l) => l.data ?? "")
+    .map((log) => log.data ?? "")
     .filter((line) => isFatalErrorLine(stripAnsi(line)));
 
   const handleAccordionChange =
@@ -480,16 +542,30 @@ export const SummaryView = (props: {
                 component="span"
                 sx={{ display: "inline-flex", verticalAlign: "middle" }}
               >
-                {status !== undefined && (
-                  <StatusChip status={getStatusChipValue(status)} />
+                {overallStatus !== undefined && (
+                  <ExecutionStatusIcon
+                    status={overallStatus}
+                    showLabel
+                    iconFirst
+                  />
+                )}
+                {allLogs.length > 0 && (
+                  <RelativeTime
+                    date={allLogs[allLogs.length - 1].created_at}
+                    sx={{
+                      color: "text.secondary",
+                      ml: 1.5,
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  />
                 )}
               </Box>
             </Typography>
             {changes.length > 0 && (
               <Stack direction="row" spacing={1}>
-                {(
-                  ["CREATE", "UPDATE", "REPLACE", "DESTROY"] as SummaryAction[]
-                ).map((action) => {
+                {Object.values(ExecutionAction).map((action) => {
                   const count = changes.filter(
                     (c) => c.action === action,
                   ).length;
@@ -548,18 +624,39 @@ export const SummaryView = (props: {
                 onChange={handleAccordionChange(change.id)}
                 variant="outlined"
                 disableGutters
+                sx={{ "& + &": { borderTop: 0 } }}
               >
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <AccordionSummary
+                  expandIcon={
+                    <ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />
+                  }
+                  sx={{
+                    flexDirection: "row-reverse",
+                    minHeight: 0,
+                    py: 0.5,
+                    "&:hover": { bgcolor: "action.hover" },
+                    [`&.${accordionSummaryClasses.expanded}`]: {
+                      minHeight: 0,
+                    },
+                    [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]:
+                      {
+                        transform: "rotate(90deg)",
+                      },
+                    [`& .${accordionSummaryClasses.content}`]: {
+                      margin: "0 0 0 8px !important",
+                    },
+                  }}
+                >
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: 2,
+                      gap: 1,
                       width: "100%",
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Chip
                         label={change.action}
                         size="small"
@@ -570,7 +667,7 @@ export const SummaryView = (props: {
                       <Typography
                         sx={{
                           fontFamily: "monospace",
-                          fontSize: "0.95rem",
+                          fontSize: "0.85rem",
                           fontWeight: 500,
                         }}
                       >
@@ -578,49 +675,26 @@ export const SummaryView = (props: {
                       </Typography>
                     </Box>
                     {eventAction === ENTITY_ACTION.EXECUTE &&
-                      (() => {
-                        const executionChip = getChangeExecutionChip(
-                          change.executionStatus,
-                        );
-                        if (!executionChip) return null;
-                        return (
-                          <Chip
-                            label={executionChip.label}
-                            size="small"
-                            color={executionChip.color}
-                            variant="outlined"
-                            sx={{ minWidth: 110, fontWeight: 600 }}
-                          />
-                        );
-                      })()}
+                      change.executionStatus && (
+                        <ExecutionStatusIcon
+                          status={change.executionStatus}
+                          duration={change.duration}
+                        />
+                      )}
                   </Box>
                 </AccordionSummary>
-                <AccordionDetails sx={{ p: 0 }}>
-                  <Box
-                    component="div"
-                    sx={{
-                      m: 0,
-                      p: 1.5,
-                      fontFamily: "monospace",
-                      fontSize: "0.8rem",
-                      bgcolor: "background.default",
-                      borderTop: "1px solid",
-                      borderColor: "divider",
-                      overflowX: "auto",
-                    }}
-                  >
-                    <List dense>
-                      {change.rawLines.map((line, index) => (
-                        <ListItem disablePadding key={`${change.id}-${index}`}>
-                          <ListItemText sx={{ margin: 0 }}>
-                            <pre style={{ margin: 0 }}>
-                              <Ansi>{line || " "}</Ansi>
-                            </pre>
-                          </ListItemText>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
+                <AccordionDetails
+                  sx={{
+                    p: 1.5,
+                    fontFamily: "monospace",
+                    fontSize: "0.8rem",
+                    bgcolor: "action.hover",
+                    overflowX: "auto",
+                  }}
+                >
+                  {change.rawLines.map((line, index) => (
+                    <LogLine key={`${change.id}-${index}`} line={line} />
+                  ))}
                   {change.errorLines && change.errorLines.length > 0 && (
                     <Box
                       sx={{
@@ -640,20 +714,9 @@ export const SummaryView = (props: {
                       >
                         Error
                       </Typography>
-                      <List dense>
-                        {change.errorLines.map((line, i) => (
-                          <ListItem
-                            disablePadding
-                            key={`${change.id}-err-${i}`}
-                          >
-                            <ListItemText sx={{ margin: 0 }}>
-                              <pre style={{ margin: 0 }}>
-                                <Ansi>{line || " "}</Ansi>
-                              </pre>
-                            </ListItemText>
-                          </ListItem>
-                        ))}
-                      </List>
+                      {change.errorLines.map((line, i) => (
+                        <LogLine key={`${change.id}-err-${i}`} line={line} />
+                      ))}
                     </Box>
                   )}
                 </AccordionDetails>

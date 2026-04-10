@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, ReactNode } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
-import ArticleIcon from "@mui/icons-material/Article";
+import { Icon } from "@iconify/react";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import HistoryIcon from "@mui/icons-material/History";
-import SummarizeIcon from "@mui/icons-material/Summarize";
 import {
   Box,
   Card,
@@ -12,6 +12,7 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   DataGrid,
   GridColDef,
@@ -243,7 +244,7 @@ export const Audit = ({
                           setHeaderAction(undefined);
                         }}
                       >
-                        <SummarizeIcon fontSize="small" />
+                        <AutoAwesomeIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                   )}
@@ -262,7 +263,7 @@ export const Audit = ({
                       setHeaderAction(undefined);
                     }}
                   >
-                    <ArticleIcon fontSize="small" />
+                    <Icon icon="ix:log" />
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Revision">
@@ -333,6 +334,12 @@ export const Audit = ({
                   "& .MuiTablePagination-root": {
                     "& .MuiButtonBase-root": {
                       border: "none",
+                    },
+                  },
+                  "& .MuiDataGrid-row": {
+                    "&:hover": {
+                      backgroundColor: (theme) =>
+                        alpha(theme.palette.primary.main, 0.08),
                     },
                   },
                 }}
