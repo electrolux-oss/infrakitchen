@@ -10,7 +10,7 @@ export const StoragePage = () => {
 
   return (
     <EntityProvider entity_name="storage" entity_id={storage_id || ""}>
-      <EntityContainer title={"Storage Overview"}>
+      <EntityContainer title={"Storage Overview"} showActivity={false}>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>
@@ -18,4 +18,4 @@ export const StoragePage = () => {
   );
 };
 
-StoragePage.path = "/storages/:storage_id";
+StoragePage.path = "/storages/:storage_id/:tab?";
