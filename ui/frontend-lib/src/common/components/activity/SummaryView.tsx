@@ -624,7 +624,7 @@ export const SummaryView = (props: {
                 onChange={handleAccordionChange(change.id)}
                 variant="outlined"
                 disableGutters
-                sx={{ "&:not(:first-of-type)": { borderTop: 0 } }}
+                sx={{ "& + &": { borderTop: 0 } }}
               >
                 <AccordionSummary
                   expandIcon={
