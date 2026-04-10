@@ -84,9 +84,6 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
 
   return (
     <Box sx={{ width: "100%", typography: "body1", p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Pull Requests for {organization}/{repoName}
-      </Typography>
       {pullRequests.map((pr) => (
         <Accordion key={pr.id} sx={{ mb: 1, boxShadow: 1, borderRadius: 2 }}>
           <AccordionSummary

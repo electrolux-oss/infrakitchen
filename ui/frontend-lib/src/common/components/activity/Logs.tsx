@@ -13,11 +13,11 @@ const getSummaryDescription = (eventAction?: string) => {
   switch (eventAction) {
     case "dryrun":
     case "dryrun_with_temp_state":
-      return "This view shows the dry-run plan. It previews the infrastructure changes before they are applied.";
+      return "Preview the infrastructure changes before applying them.";
     case "execute":
-      return "This view shows the result of an execution. It summarizes the infrastructure changes that were applied in this run.";
+      return "Here's what changed in your infrastructure from this run.";
     default:
-      return "This view shows a summary of the infrastructure changes for the selected activity run.";
+      return "Summary of infrastructure changes for this activity.";
   }
 };
 
@@ -142,9 +142,7 @@ export const Logs = (props: {
               onOpenLogs={onOpenLogs}
             />
           ) : (
-            <Typography color="text.secondary">
-              No execution data available.
-            </Typography>
+            <Typography color="text.secondary">No data available.</Typography>
           )}
         </>
       )}
@@ -185,7 +183,9 @@ export const Logs = (props: {
               No revision available for this run.
             </Typography>
           ) : revision ? (
-            <pre style={{ margin: 0 }}>{JSON.stringify(revision, null, 2)}</pre>
+            <pre style={{ margin: 0, fontSize: "0.8rem" }}>
+              {JSON.stringify(revision, null, 2)}
+            </pre>
           ) : (
             <Typography color="text.secondary">Loading revision...</Typography>
           )}

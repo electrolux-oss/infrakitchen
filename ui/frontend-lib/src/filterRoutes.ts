@@ -424,7 +424,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/storages/:storage_id",
+    path: "/storages/:storage_id/:tab?",
     Component: lz(() => import("./storages/pages/Storage"), "StoragePage"),
     requiredPermission: "api:storage",
     permissionAction: "read",
@@ -564,15 +564,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./workspaces/pages/WorkspaceActivity"),
       "WorkspaceActivityPage",
-    ),
-    requiredPermission: "api:workspace",
-    permissionAction: "read",
-  },
-  {
-    path: "/workspaces/:workspace_id/metadata",
-    Component: lz(
-      () => import("./workspaces/pages/WorkspaceMetadata"),
-      "WorkspaceMetadataPage",
     ),
     requiredPermission: "api:workspace",
     permissionAction: "read",
