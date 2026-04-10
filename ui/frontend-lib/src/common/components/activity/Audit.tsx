@@ -186,6 +186,36 @@ export const Audit = ({
 
   const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
+      ...(showRevisionColumn
+        ? [
+            {
+              field: "revision_number",
+              headerName: "",
+              flex: 0.25,
+              renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+                const rev = params.row.revision_number;
+                if (!rev) return null;
+                const parts = location.pathname.replace(/\/$/, "").split("/");
+                parts[parts.length - 1] = "revisions";
+                const target = `${parts.join("/")}?left=${rev - 1}&right=${rev}`;
+                return (
+                  <Link
+                    to={target}
+                    style={{ textDecoration: "none" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    v{rev}
+                  </Link>
+                );
+              },
+            } as GridColDef<AuditLogEntity>,
+          ]
+        : []),
+      {
+        field: "action",
+        headerName: "Event",
+        flex: 1,
+      },
       {
         field: "creator",
         headerName: "User",
@@ -199,11 +229,6 @@ export const Audit = ({
         },
       },
       {
-        field: "action",
-        headerName: "Event",
-        flex: 1,
-      },
-      {
         field: "created_at",
         headerName: "Time",
         flex: 1,
@@ -211,35 +236,10 @@ export const Audit = ({
           <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
         ),
       },
-      ...(showRevisionColumn
-        ? [
-            {
-              field: "revision_number",
-              headerName: "Revision",
-              flex: 0.5,
-              renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
-                const rev = params.row.revision_number;
-                if (!rev) return null;
-                const parts = location.pathname.replace(/\/$/, "").split("/");
-                parts[parts.length - 1] = "revisions";
-                const target = `${parts.join("/")}?left=${rev - 1}&right=${rev}`;
-                return (
-                  <Link
-                    to={target}
-                    style={{ textDecoration: "none" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {rev}
-                  </Link>
-                );
-              },
-            } as GridColDef<AuditLogEntity>,
-          ]
-        : []),
       {
         field: "userActions",
         headerName: "",
-        flex: 0.5,
+        flex: 1,
         renderCell: (params) => (
           <Box
             sx={{
