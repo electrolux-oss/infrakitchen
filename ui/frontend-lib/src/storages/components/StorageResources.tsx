@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress, useLocalStorage } from "../../common";
+import { GradientCircularProgress } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ResourceResponse } from "../../resources/types";
@@ -18,15 +18,7 @@ export const StorageResources = (props: StorageResourcesProps) => {
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["storage-resources"];
-
   const fetchRelatedData = useCallback(async () => {
-    if (!isExpanded) return;
     if (!storage_id) return;
     setLoading(true);
     ikApi
@@ -53,7 +45,7 @@ export const StorageResources = (props: StorageResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, storage_id, isExpanded]);
+  }, [ikApi, storage_id]);
 
   useEffect(() => {
     fetchRelatedData();
@@ -62,10 +54,9 @@ export const StorageResources = (props: StorageResourcesProps) => {
   if (!storage_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id="storage-resources"
-      title="Resources"
-      subtitle="Instances published in this storage"
+    <OverviewCard
+      name="Resources"
+      description="Resources using this storage as their state backend"
     >
       {loading && <GradientCircularProgress />}
       {resources.length === 0 && (
@@ -102,6 +93,6 @@ export const StorageResources = (props: StorageResourcesProps) => {
           </Box>
         </Box>
       ))}
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };
