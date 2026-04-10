@@ -336,7 +336,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/secrets/:secret_id",
+    path: "/secrets/:secret_id/:tab?",
     Component: lz(() => import("./secrets/pages/Secret"), "SecretPage"),
     requiredPermission: "api:secret",
     permissionAction: "read",
