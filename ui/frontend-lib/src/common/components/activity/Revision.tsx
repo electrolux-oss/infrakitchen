@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { useSearchParams } from "react-router";
-
 import { Difference, SwapHoriz } from "@mui/icons-material";
 import {
   Alert,
@@ -32,9 +30,6 @@ export interface RevisionProps {
 
 export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   const { ikApi } = useConfig();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const leftParam = searchParams.get("left");
-  const rightParam = searchParams.get("right");
 
   const [revisions, setRevisions] = useState<RevisionShort[]>([]);
   const [selectedRevisionLeft, setSelectedRevisionLeft] = useState<number | "">(
@@ -83,18 +78,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
     }
     const nums = revisions.map((r) => r.revision_number).sort((a, b) => a - b);
 
-    const leftFromParam = leftParam ? Number(leftParam) : null;
-    const rightFromParam = rightParam ? Number(rightParam) : null;
-
     if (
-      leftFromParam &&
-      rightFromParam &&
-      nums.includes(leftFromParam) &&
-      nums.includes(rightFromParam)
-    ) {
-      setSelectedRevisionLeft(leftFromParam);
-      setSelectedRevisionRight(rightFromParam);
-    } else if (
       resourceRevision > 1 &&
       nums.includes(resourceRevision) &&
       nums.includes(resourceRevision - 1)
@@ -108,20 +92,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       setSelectedRevisionLeft(nums[0]);
       setSelectedRevisionRight(nums[0]);
     }
-  }, [revisions, resourceRevision, leftParam, rightParam]);
-
-  useEffect(() => {
-    if (selectedRevisionLeft === "" || selectedRevisionRight === "") return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set("left", String(selectedRevisionLeft));
-        next.set("right", String(selectedRevisionRight));
-        return next;
-      },
-      { replace: true },
-    );
-  }, [selectedRevisionLeft, selectedRevisionRight, setSearchParams]);
+  }, [revisions, resourceRevision]);
 
   useEffect(() => {
     if (!selectedRevisionLeft || !selectedRevisionRight) {
