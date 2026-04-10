@@ -86,9 +86,6 @@ export function AzureDevopsPullRequestsList(
 
   return (
     <Box sx={{ width: "100%", typography: "body1", p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Pull Requests for {organization}/{repoName}
-      </Typography>
       {pullRequests.map((pr) => (
         <Accordion
           key={pr.pullRequestId}
