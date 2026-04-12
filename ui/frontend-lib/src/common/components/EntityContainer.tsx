@@ -3,7 +3,13 @@ import { ReactNode } from "react";
 import { useNavigate } from "react-router";
 
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, CircularProgress, Alert, IconButton } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Alert,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
@@ -85,9 +91,11 @@ export const EntityContainer = (props: EntityContainerProps) => {
             show_activity={showActivity}
           />
           {actions}
-          <IconButton onClick={() => handleRefresh()} aria-label="refresh">
-            <RefreshIcon />
-          </IconButton>
+          <Tooltip title="Refresh">
+            <IconButton onClick={() => handleRefresh()} aria-label="refresh">
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
         </>
       }
     >

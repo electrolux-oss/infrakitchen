@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router";
 
-import { Button } from "@mui/material";
+import { Button, Tooltip } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
@@ -29,9 +29,11 @@ export const ResourcePage = () => {
             requiredPermission="api:resource"
             permissionAction="read"
           >
-            <Button variant="outlined" onClick={handleMetadata}>
-              Metadata
-            </Button>
+            <Tooltip title="View resource metadata">
+              <Button variant="outlined" onClick={handleMetadata}>
+                Metadata
+              </Button>
+            </Tooltip>
           </PermissionWrapper>
         }
       >
