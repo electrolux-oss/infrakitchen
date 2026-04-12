@@ -6,8 +6,8 @@ import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SyncIcon from "@mui/icons-material/Sync";
+import UpdateIcon from "@mui/icons-material/Update";
 import { Button } from "@mui/material";
 
 import { ENTITY_ACTION } from "../../utils/constants";
@@ -112,7 +112,7 @@ export function EntityActions(props: EntityActionsProps) {
         <Button
           variant="outlined"
           onClick={() => changeDialog("execute")}
-          startIcon={<PlayArrowIcon />}
+          startIcon={<UpdateIcon />}
         >
           Apply
         </Button>

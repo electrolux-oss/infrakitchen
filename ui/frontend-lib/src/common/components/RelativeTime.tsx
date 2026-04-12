@@ -5,7 +5,8 @@ import { Tooltip, Typography, TypographyProps } from "@mui/material";
 import { UserShort } from "../../users/types";
 import { formatTimeAgo } from "../utils";
 
-import { getDateValue, GetReferenceUrlValue } from "./CommonField";
+import { getDateValue } from "./CommonField";
+import { UserAvatar } from "./UserAvatar";
 
 interface RelativeTimeProps {
   date: string | Date;
@@ -43,8 +44,14 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
     <Typography
       component={component}
       variant={variant}
-      sx={sx || { color: "text.secondary" }}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 1,
+        ...(sx || { color: "text.secondary" }),
+      }}
     >
+      {user && <UserAvatar id={user.id} identifier={user.identifier} />}
       <Tooltip title={exactTimestamp}>
         <Typography
           component="span"
@@ -59,12 +66,6 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
           {timeAgoText}
         </Typography>
       </Tooltip>
-      {user && (
-        <>
-          {" "}
-          by <GetReferenceUrlValue {...user} />
-        </>
-      )}
     </Typography>
   );
 };

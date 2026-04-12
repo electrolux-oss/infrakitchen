@@ -57,7 +57,7 @@ export const FavoriteButton = ({
     >
       {favoriteState ? (
         <FavoriteIcon
-          color="error"
+          sx={{ color: "#e91e63" }}
           fontSize={format === "table" ? "small" : "medium"}
         />
       ) : (

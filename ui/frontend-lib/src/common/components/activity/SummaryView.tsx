@@ -30,6 +30,7 @@ import { LogEntity } from "../../../types";
 import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context";
 import { RelativeTime } from "../RelativeTime";
+
 import { LogLine } from "./LogLine";
 
 const ExecutionAction = {
@@ -624,7 +625,13 @@ export const SummaryView = (props: {
                 onChange={handleAccordionChange(change.id)}
                 variant="outlined"
                 disableGutters
-                sx={{ "& + &": { borderTop: 0 } }}
+                sx={{
+                  "& + &": { borderTop: 0 },
+                  "&:last-of-type": {
+                    borderBottomLeftRadius: 0,
+                    borderBottomRightRadius: 0,
+                  },
+                }}
               >
                 <AccordionSummary
                   expandIcon={
