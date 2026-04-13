@@ -368,12 +368,8 @@ class TestPatchAction:
 
         mock_audit_log_handler.create_log.assert_has_calls(
             [
-                call(
-                    existing_resource.id,
-                    mocked_resource_temp_state.created_by,
-                    ModelActions.UPDATE,
-                ),
                 call(existing_resource.id, mocked_user.id, ModelActions.APPROVE),
+                call(existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE),
             ]
         )
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_resource)
@@ -443,12 +439,8 @@ class TestPatchAction:
 
         mock_audit_log_handler.create_log.assert_has_calls(
             [
-                call(
-                    existing_resource.id,
-                    mocked_resource_temp_state.created_by,
-                    ModelActions.UPDATE,
-                ),
                 call(existing_resource.id, mocked_user.id, ModelActions.APPROVE),
+                call(existing_resource.id, mocked_resource_temp_state.created_by, ModelActions.UPDATE),
             ]
         )
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_resource)

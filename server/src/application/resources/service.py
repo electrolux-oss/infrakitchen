@@ -516,7 +516,6 @@ class ResourceService:
             )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
-
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
@@ -618,8 +617,7 @@ class ResourceService:
         # wrap existing_resource to pydantic model to avoid sqlalchemy object state issues
         pydantic_resource = ResourceDTO.model_validate(existing_resource)
 
-        if body.action != ModelActions.APPROVE:
-            await self.audit_log_handler.create_log(pydantic_resource.id, requester.id, body.action)
+        await self.audit_log_handler.create_log(pydantic_resource.id, requester.id, body.action)
 
         match body.action:
             case ModelActions.REJECT:
@@ -639,8 +637,6 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 await self.action_approve(existing_resource, pydantic_resource, requester)
-                await self.audit_log_handler.create_log(pydantic_resource.id, requester.id, body.action)
-
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
             case ModelActions.EXECUTE:
