@@ -30,6 +30,7 @@ import { LogEntity } from "../../../types";
 import { ENTITY_ACTION } from "../../../utils/constants";
 import { useConfig } from "../../context";
 import { RelativeTime } from "../RelativeTime";
+
 import { LogLine } from "./LogLine";
 
 const ExecutionAction = {

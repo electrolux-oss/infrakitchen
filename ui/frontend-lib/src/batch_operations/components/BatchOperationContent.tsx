@@ -1,6 +1,11 @@
 import { Box } from "@mui/material";
 
+import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import {
+  TabbedContent,
+  TabDefinition,
+} from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { BatchOperationEntities } from "./BatchOperationEntities";
@@ -11,20 +16,30 @@ export const BatchOperationContent = () => {
   const { entity } = useEntityProvider();
   if (!entity) return null;
 
+  const tabs: TabDefinition[] = [
+    {
+      label: "Entities",
+      content: <BatchOperationEntities batchOperation={entity} />,
+    },
+    {
+      label: "Audit",
+      content: <Audit entityId={entity.id} />,
+    },
+    {
+      label: "Settings",
+      content: <DangerZoneCard />,
+      requiredPermission: "api:batch_operation",
+      permissionAction: "write" as const,
+    },
+  ];
+
   return (
     <Box
-      sx={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 2,
-      }}
+      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
       <BatchOperationOverview batchOperation={entity} />
       <BatchOperationErrorEntities batchOperation={entity} />
-      <BatchOperationEntities batchOperation={entity} />
-      <DangerZoneCard />
+      <TabbedContent tabs={tabs} />
     </Box>
   );
 };
