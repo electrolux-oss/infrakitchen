@@ -49,6 +49,7 @@ export const ResourceContent = () => {
           sourceCodeLanguage={
             entity.source_code_version?.source_code?.source_code_language
           }
+          showRevisionColumn
         />
       ),
     },

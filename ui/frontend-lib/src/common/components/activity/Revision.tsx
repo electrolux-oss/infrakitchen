@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Difference, History } from "@mui/icons-material";
+import { Difference, SwapHoriz } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -8,14 +8,11 @@ import {
   CardContent,
   CardHeader,
   FormControl,
+  IconButton,
   InputLabel,
-  List,
-  ListItem,
-  ListItemText,
   MenuItem,
   Select,
   SelectChangeEvent,
-  Stack,
   Typography,
 } from "@mui/material";
 
@@ -41,10 +38,10 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   const [selectedRevisionRight, setSelectedRevisionRight] = useState<
     number | ""
   >("");
-  const [revisionNumbers, setRevisionNumbers] = useState<number[]>([]);
   const [leftRevision, setLeftRevision] = useState<RevisionResponse>();
   const [rightRevision, setRightRevision] = useState<RevisionResponse>();
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [diffLoading, setDiffLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const handleChangeLeft = (event: SelectChangeEvent) => {
@@ -56,8 +53,13 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
     setSelectedRevisionRight(val === "" ? "" : Number(val));
   };
 
+  const handleSwap = () => {
+    setSelectedRevisionLeft(selectedRevisionRight);
+    setSelectedRevisionRight(selectedRevisionLeft);
+  };
+
   useEffect(() => {
-    setLoading(true);
+    setInitialLoading(true);
     ikApi
       .get(`revisions/${resourceId}`)
       .then((response) => {
@@ -65,17 +67,16 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       })
       .catch((error) => {
         setError(error);
-        setLoading(false);
+        setInitialLoading(false);
       });
   }, [ikApi, resourceId]);
 
   useEffect(() => {
     if (!revisions.length) {
-      setLoading(false);
+      setInitialLoading(false);
       return;
     }
     const nums = revisions.map((r) => r.revision_number).sort((a, b) => a - b);
-    setRevisionNumbers(nums);
 
     if (
       resourceRevision > 1 &&
@@ -95,10 +96,11 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
 
   useEffect(() => {
     if (!selectedRevisionLeft || !selectedRevisionRight) {
-      setLoading(false);
+      setDiffLoading(false);
       return;
     }
-    setLoading(true);
+    setDiffLoading(true);
+    setInitialLoading(false);
     Promise.all([
       ikApi.get(`revisions/${resourceId}/${selectedRevisionLeft}`),
       ikApi.get(`revisions/${resourceId}/${selectedRevisionRight}`),
@@ -106,241 +108,161 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       .then(([leftRes, rightRes]) => {
         setLeftRevision(leftRes);
         setRightRevision(rightRes);
-        setLoading(false);
+        setDiffLoading(false);
       })
       .catch((err) => {
         setError(err);
-        setLoading(false);
+        setDiffLoading(false);
       });
   }, [ikApi, resourceId, selectedRevisionLeft, selectedRevisionRight]);
 
-  if (loading) return <GradientCircularProgress />;
+  if (initialLoading) return <GradientCircularProgress />;
   if (error) return <Alert severity="error">{error.toString()}</Alert>;
 
   return (
     <Box
       sx={{
+        height: "80vh",
         display: "flex",
-        flexDirection: "row",
-        gap: 2,
+        flexDirection: "column",
+        minHeight: 0,
       }}
     >
-      <Box
+      <Card
         sx={{
-          width: 350,
-          height: 500,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Card
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-            flex: 1,
-            p: 0,
-          }}
-        >
-          <CardHeader
-            title={
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 1,
-                  p: 2,
-                }}
-              >
-                <History fontSize="small" />
-                <Typography variant="body1">Revisions</Typography>
-              </Box>
-            }
-          />
-          <CardContent sx={{ overflow: "auto", p: 0 }}>
-            <List sx={{ p: 0 }}>
-              {revisions.map((rev: RevisionShort) => (
-                <Box key={rev.revision_number}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={
-                        <Typography
-                          component="span"
-                          variant="body1"
-                          fontWeight="bold"
-                        >
-                          {`v${rev.revision_number}`}
-                        </Typography>
-                      }
-                      secondary={
-                        <>
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                          >
-                            {`${getDateValue(rev.created_at)}`}
-                          </Typography>
-                          <br />
-                          {rev.name && (
-                            <>
-                              <Typography
-                                component="span"
-                                variant="body1"
-                                color="text.primary"
-                              >
-                                {rev.name}
-                              </Typography>
-                              <br />
-                            </>
-                          )}
-                          {rev.description && (
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.secondary"
-                            >
-                              {rev.description}
-                            </Typography>
-                          )}
-                        </>
-                      }
-                    />
-                  </ListItem>
-                </Box>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-        <Card sx={{ p: 1, mt: 2 }}>
-          <CardHeader
-            title={
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 1,
-                  p: 1,
-                }}
-              >
-                <Difference fontSize="small" />
-                <Typography variant="body2">Compare</Typography>
-              </Box>
-            }
-          />
-          <CardContent sx={{ p: 1, mt: 2 }}>
-            <Stack direction="row" spacing={2}>
-              <FormControl fullWidth>
-                <InputLabel id="left-rev-label">Left revision</InputLabel>
-                <Select
-                  labelId="left-rev-label"
-                  label="Left revision"
-                  value={
-                    selectedRevisionLeft === ""
-                      ? ""
-                      : String(selectedRevisionLeft)
-                  }
-                  onChange={handleChangeLeft}
-                >
-                  {revisionNumbers.map((v) => (
-                    <MenuItem key={v} value={v}>
-                      {v}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth>
-                <InputLabel id="right-rev-label">Right revision</InputLabel>
-                <Select
-                  labelId="right-rev-label"
-                  label="Right revision"
-                  value={
-                    selectedRevisionRight === ""
-                      ? ""
-                      : String(selectedRevisionRight)
-                  }
-                  onChange={handleChangeRight}
-                >
-                  {revisionNumbers.map((v) => (
-                    <MenuItem key={v} value={v}>
-                      {v}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Box>
-      <Box
-        sx={{
-          width: 900,
-          height: 500,
           display: "flex",
           flexDirection: "column",
           minHeight: 0,
+          flex: 1,
+          p: 0,
         }}
       >
-        <Card
+        <CardHeader
+          sx={{ mt: 2, mb: 0, ml: 1 }}
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 2,
+                p: 1,
+              }}
+            >
+              <Difference fontSize="small" sx={{ mt: 0.75 }} />
+              <FormControl>
+                <InputLabel>From</InputLabel>
+                <Select
+                  label="From"
+                  variant="outlined"
+                  value={String(selectedRevisionLeft)}
+                  onChange={handleChangeLeft}
+                  sx={{ minWidth: 180 }}
+                  renderValue={(v) => {
+                    const r = revisions.find(
+                      (r) => String(r.revision_number) === v,
+                    );
+                    return r
+                      ? `v${r.revision_number} - ${getDateValue(r.created_at)}`
+                      : v;
+                  }}
+                >
+                  {revisions.map((r) => (
+                    <MenuItem key={r.id} value={String(r.revision_number)}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          v{r.revision_number}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {getDateValue(r.created_at)}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <IconButton
+                size="small"
+                onClick={handleSwap}
+                title="Swap revisions"
+                sx={{ mt: 0.75 }}
+              >
+                <SwapHoriz fontSize="small" />
+              </IconButton>
+              <FormControl>
+                <InputLabel>To</InputLabel>
+                <Select
+                  label="To"
+                  variant="outlined"
+                  value={String(selectedRevisionRight)}
+                  onChange={handleChangeRight}
+                  sx={{ minWidth: 180 }}
+                  renderValue={(v) => {
+                    const r = revisions.find(
+                      (r) => String(r.revision_number) === v,
+                    );
+                    return r
+                      ? `v${r.revision_number} - ${getDateValue(r.created_at)}`
+                      : v;
+                  }}
+                >
+                  {revisions.map((r) => (
+                    <MenuItem key={r.id} value={String(r.revision_number)}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          v{r.revision_number}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {getDateValue(r.created_at)}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          }
+        />
+        <CardContent
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            borderTop: "none",
-            minHeight: 0,
+            p: 1,
             flex: 1,
-            p: 0,
+            display: "flex",
+            minHeight: 0,
+            overflow: "hidden",
           }}
         >
-          <CardHeader
-            title={
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 1,
-                  p: 2,
-                }}
-              >
-                <Difference fontSize="small" />
-                <Typography variant="body2">
-                  {`v${selectedRevisionLeft} ➔ v${selectedRevisionRight} `}
-                </Typography>
-              </Box>
-            }
-          />
-          <CardContent
-            sx={{
-              p: 1,
-              flex: 1,
-              display: "flex",
-              minHeight: 0,
-              overflow: "hidden",
-            }}
-          >
-            {leftRevision && rightRevision ? (
-              <Box sx={{ flex: 1, minHeight: 0 }}>
-                <DiffEditor
-                  originalText={
-                    leftRevision?.data
-                      ? JSON.stringify(leftRevision.data, null, 2)
-                      : "{}"
-                  }
-                  modifiedText={
-                    rightRevision?.data
-                      ? JSON.stringify(rightRevision.data, null, 2)
-                      : "{}"
-                  }
-                />
-              </Box>
-            ) : (
-              <Alert severity="warning">No revisions found</Alert>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+          {diffLoading ? (
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <GradientCircularProgress />
+            </Box>
+          ) : leftRevision && rightRevision ? (
+            <Box sx={{ flex: 1, minHeight: 0 }}>
+              <DiffEditor
+                originalText={
+                  leftRevision?.data
+                    ? JSON.stringify(leftRevision.data, null, 2)
+                    : "{}"
+                }
+                modifiedText={
+                  rightRevision?.data
+                    ? JSON.stringify(rightRevision.data, null, 2)
+                    : "{}"
+                }
+              />
+            </Box>
+          ) : (
+            <Alert severity="warning">No revisions found</Alert>
+          )}
+        </CardContent>
+      </Card>
     </Box>
   );
 };

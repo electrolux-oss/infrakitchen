@@ -491,7 +491,10 @@ export const SummaryView = (props: {
       return;
     }
 
-    if (lines.some((line) => /^Plan:/i.test(line))) {
+    if (
+      lines.some((line) => /^Plan:/i.test(line)) ||
+      lines.some((line) => /^No changes\./i.test(line))
+    ) {
       setOverallStatus(ExecutionStatus.COMPLETE);
     } else {
       setOverallStatus(ExecutionStatus.IN_PROGRESS);

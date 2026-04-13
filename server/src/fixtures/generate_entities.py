@@ -253,7 +253,10 @@ async def insert_source_code_and_version(session: AsyncSession, user: UserDTO):
         sc_result = await source_code_service.create(src, user)
         await session.commit()
         await generate_logs(
-            session=session, entity_name="source_code", entity_id=str(sc_result.id), user_id=str(user.id)
+            session=session,
+            entity_name="source_code",
+            entity_id=str(sc_result.id),
+            user_id=str(user.id),
         )
         # Add git tags and branches that can be added only through automation
         statement = update(SourceCode).values(
@@ -536,7 +539,10 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
         created_storage = await storage_service.create(storage, user)
         await session.commit()
         await generate_logs(
-            session=session, entity_name="storage", entity_id=str(created_storage.id), user_id=str(user.id)
+            session=session,
+            entity_name="storage",
+            entity_id=str(created_storage.id),
+            user_id=str(user.id),
         )
 
     await change_state(
@@ -670,7 +676,10 @@ async def insert_resources(session: AsyncSession, env: str, user: UserDTO):
             await session.commit()
 
             await generate_logs(
-                session=session, entity_name="resource", entity_id=str(current_resource.id), user_id=str(user.id)
+                session=session,
+                entity_name="resource",
+                entity_id=str(current_resource.id),
+                user_id=str(user.id),
             )
 
     await change_state(

@@ -1,13 +1,14 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Icon } from "@iconify/react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import HistoryIcon from "@mui/icons-material/History";
 import {
+  Alert,
   Box,
   Card,
   CardContent,
   IconButton,
+  Link,
   Stack,
   TextField,
   Tooltip,
@@ -23,11 +24,14 @@ import {
 } from "@mui/x-data-grid";
 
 import { CommonDialog, useConfig } from "../../../common";
+import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
+import { RevisionResponse } from "../../../revision/types";
 import { AuditLogEntity } from "../../../types";
 import { GetReferenceUrlValue } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
 
+import { DiffEditor } from "./DiffEditor";
 import { Logs } from "./Logs";
 
 const isTerraformLanguage = (lang?: string): boolean =>
@@ -37,6 +41,7 @@ export interface AuditProps {
   entityId: string;
   useVersionId?: boolean;
   sourceCodeLanguage?: string;
+  showRevisionColumn?: boolean;
 }
 
 interface AuditFilterPanelProps {
@@ -74,11 +79,10 @@ export const AuditFilterPanel = ({
 };
 
 const getDialogTitle = (
-  view: "summary" | "logs" | "revision",
+  view: "summary" | "logs",
   action?: string | null,
 ): string => {
   if (view === "logs") return "Logs";
-  if (view === "revision") return "Revision";
 
   switch (action) {
     case "dryrun":
@@ -95,6 +99,7 @@ export const Audit = ({
   entityId,
   useVersionId,
   sourceCodeLanguage,
+  showRevisionColumn,
 }: AuditProps) => {
   const { ikApi } = useConfig();
   const [hashParams, setHashParams] = useHashParams();
@@ -106,11 +111,7 @@ export const Audit = ({
 
   const selectedTraceId = hashParams.get("traceId");
   const selectedVersionId = hashParams.get("versionId");
-  const selectedView = hashParams.get("view") as
-    | "summary"
-    | "logs"
-    | "revision"
-    | null;
+  const selectedView = hashParams.get("view") as "summary" | "logs" | null;
 
   const logsOpen = useMemo(() => {
     if (!selectedTraceId || !selectedView) return false;
@@ -129,6 +130,41 @@ export const Audit = ({
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
   const [headerAction, setHeaderAction] = useState<ReactNode>(undefined);
+
+  const [revisionDialogLeft, setRevisionDialogLeft] =
+    useState<RevisionResponse | null>(null);
+  const [revisionDialogRight, setRevisionDialogRight] =
+    useState<RevisionResponse | null>(null);
+  const [revisionDialogRev, setRevisionDialogRev] = useState<number | null>(
+    null,
+  );
+  const [revisionDialogLoading, setRevisionDialogLoading] = useState(false);
+
+  const handleRevisionClick = useCallback(
+    (resourceId: string, rev: number) => {
+      setRevisionDialogRev(rev);
+      setRevisionDialogLeft(null);
+      setRevisionDialogRight(null);
+      setRevisionDialogLoading(true);
+      const fetches =
+        rev === 1
+          ? [Promise.resolve(null), ikApi.get(`revisions/${resourceId}/${rev}`)]
+          : [
+              ikApi.get(`revisions/${resourceId}/${rev - 1}`),
+              ikApi.get(`revisions/${resourceId}/${rev}`),
+            ];
+      Promise.all(fetches)
+        .then(([leftRes, rightRes]) => {
+          setRevisionDialogLeft(leftRes);
+          setRevisionDialogRight(rightRes);
+          setRevisionDialogLoading(false);
+        })
+        .catch(() => {
+          setRevisionDialogLoading(false);
+        });
+    },
+    [ikApi],
+  );
 
   const selectedAction = useMemo(() => {
     if (!selectedTraceId) return null;
@@ -187,6 +223,36 @@ export const Audit = ({
 
   const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
+      ...(showRevisionColumn
+        ? [
+            {
+              field: "revision_number",
+              headerName: "",
+              flex: 0.25,
+              renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
+                const rev = params.row.revision_number;
+                if (!rev) return null;
+                return (
+                  <Link
+                    component="button"
+                    variant="body2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRevisionClick(entityId, rev);
+                    }}
+                  >
+                    v{rev}
+                  </Link>
+                );
+              },
+            } as GridColDef<AuditLogEntity>,
+          ]
+        : []),
+      {
+        field: "action",
+        headerName: "Event",
+        flex: 1,
+      },
       {
         field: "creator",
         headerName: "User",
@@ -200,11 +266,6 @@ export const Audit = ({
         },
       },
       {
-        field: "action",
-        headerName: "Event",
-        flex: 1,
-      },
-      {
         field: "created_at",
         headerName: "Time",
         flex: 1,
@@ -214,7 +275,7 @@ export const Audit = ({
       },
       {
         field: "userActions",
-        headerName: "Actions",
+        headerName: "",
         flex: 1,
         renderCell: (params) => (
           <Box
@@ -266,24 +327,6 @@ export const Audit = ({
                     <Icon icon="ix:log" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Revision">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const newParams = new URLSearchParams(hashParams);
-                      newParams.set("traceId", params.row.id);
-                      newParams.set("view", "revision");
-                      if (useVersionId) {
-                        newParams.set("versionId", entityId);
-                      }
-                      setHashParams(newParams);
-                      setHeaderAction(undefined);
-                    }}
-                  >
-                    <HistoryIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               </>
             )}
           </Box>
@@ -297,6 +340,8 @@ export const Audit = ({
       useVersionId,
       entityId,
       sourceCodeLanguage,
+      showRevisionColumn,
+      handleRevisionClick,
     ],
   );
 
@@ -394,6 +439,52 @@ export const Audit = ({
                   }
                 />
               )}
+              <CommonDialog
+                title={
+                  revisionDialogRev === 1
+                    ? `v1`
+                    : `v${revisionDialogRev! - 1} → v${revisionDialogRev}`
+                }
+                maxWidth="lg"
+                hasFooterActions={false}
+                open={revisionDialogRev !== null}
+                onClose={() => {
+                  setRevisionDialogRev(null);
+                  setRevisionDialogLeft(null);
+                  setRevisionDialogRight(null);
+                }}
+                content={
+                  revisionDialogLoading ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "60vh",
+                      }}
+                    >
+                      <GradientCircularProgress />
+                    </Box>
+                  ) : revisionDialogRight ? (
+                    <Box sx={{ height: "60vh" }}>
+                      <DiffEditor
+                        originalText={
+                          revisionDialogLeft
+                            ? JSON.stringify(revisionDialogLeft.data, null, 2)
+                            : "{}"
+                        }
+                        modifiedText={JSON.stringify(
+                          revisionDialogRight.data,
+                          null,
+                          2,
+                        )}
+                      />
+                    </Box>
+                  ) : (
+                    <Alert severity="warning">No diff available</Alert>
+                  )
+                }
+              />
             </Box>
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 # pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false, reportAssignmentType=false
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest

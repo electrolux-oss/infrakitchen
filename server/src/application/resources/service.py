@@ -637,7 +637,6 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 await self.action_approve(existing_resource, pydantic_resource, requester)
-
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
             case ModelActions.EXECUTE:

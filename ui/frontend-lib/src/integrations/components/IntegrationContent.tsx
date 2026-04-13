@@ -53,7 +53,7 @@ export const IntegrationContent = () => {
       : []),
     {
       label: "Audit",
-      content: <Audit entityId={entity.id} />,
+      content: <Audit entityId={entity.id} showRevisionColumn />,
     },
     {
       label: "Revisions",

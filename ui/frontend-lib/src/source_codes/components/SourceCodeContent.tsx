@@ -50,6 +50,7 @@ export const SourceCodeContent = () => {
         <Audit
           entityId={entity.id}
           sourceCodeLanguage={entity.source_code_language}
+          showRevisionColumn
         />
       ),
     },
