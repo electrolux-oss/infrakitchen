@@ -10,7 +10,7 @@ import {
   GetReferenceUrlValue,
 } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
-import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -101,11 +101,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
   );
 
   return (
-    <PropertyCollapseCard
-      title={"User Policies"}
-      expanded={true}
-      id="user-policies-card"
-    >
+    <OverviewCard name="User Policies">
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
@@ -130,6 +126,6 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         defaultFilter={{ policy_type: "resource" }}
         fields={["id"]}
       />
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };
