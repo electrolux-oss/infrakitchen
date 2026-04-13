@@ -9,6 +9,7 @@ import { LogEntity } from "../../../types";
 import { useConfig } from "../../context";
 import GradientCircularProgress from "../../GradientCircularProgress";
 import { getTimeOnlyValue } from "../CommonField";
+
 import { LogLine } from "./LogLine";
 
 function createLog(log: LogEntity[]) {

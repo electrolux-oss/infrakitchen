@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router";
 
-import { Button } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Button, Tooltip } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
@@ -26,9 +27,15 @@ export const TemplatePage = () => {
         title={"Template Overview"}
         showActivity={false}
         actions={
-          <Button variant="outlined" onClick={handleUseTemplate}>
-            Use This Template
-          </Button>
+          <Tooltip title="Create a new resource from this template">
+            <Button
+              variant="outlined"
+              onClick={handleUseTemplate}
+              startIcon={<AddIcon />}
+            >
+              Create Resource
+            </Button>
+          </Tooltip>
         }
       >
         <TemplateContent />

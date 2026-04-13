@@ -2,13 +2,13 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import BugReportIcon from "@mui/icons-material/BugReport";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SyncIcon from "@mui/icons-material/Sync";
-import { Button } from "@mui/material";
+import UpdateIcon from "@mui/icons-material/Update";
+import { Button, Tooltip } from "@mui/material";
 
 import { ENTITY_ACTION } from "../../utils/constants";
 import { useConfig } from "../context/ConfigContext";
@@ -90,13 +90,15 @@ export function EntityActions(props: EntityActionsProps) {
         </Button>
       )}
       {actions.includes("dryrun") && (
-        <Button
-          variant="outlined"
-          onClick={() => changeDialog("dryrun")}
-          startIcon={<ContentPasteIcon />}
-        >
-          Plan
-        </Button>
+        <Tooltip title="Preview what will change before applying">
+          <Button
+            variant="outlined"
+            onClick={() => changeDialog("dryrun")}
+            startIcon={<ContentPasteIcon />}
+          >
+            Plan
+          </Button>
+        </Tooltip>
       )}
       {actions.includes("dryrun") &&
         actions.includes("has_temporary_state") && (
@@ -109,13 +111,15 @@ export function EntityActions(props: EntityActionsProps) {
           </Button>
         )}
       {actions.includes("execute") && (
-        <Button
-          variant="outlined"
-          onClick={() => changeDialog("execute")}
-          startIcon={<PlayArrowIcon />}
-        >
-          Apply
-        </Button>
+        <Tooltip title="Apply changes to infrastructure">
+          <Button
+            variant="outlined"
+            onClick={() => changeDialog("execute")}
+            startIcon={<UpdateIcon />}
+          >
+            Apply
+          </Button>
+        </Tooltip>
       )}
       {actions.includes("retry") && (
         <Button variant="contained" onClick={() => changeDialog("retry")}>
@@ -152,26 +156,29 @@ export function EntityActions(props: EntityActionsProps) {
         </Button>
       )}
       {actions.includes("edit") && (
-        <Button
-          variant="outlined"
-          onClick={() =>
-            navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
-          }
-          startIcon={<EditIcon />}
-        >
-          Edit
-        </Button>
+        <Tooltip title="Edit configuration">
+          <Button
+            variant="outlined"
+            onClick={() =>
+              navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
+            }
+            sx={{ minWidth: 0, px: 1 }}
+          >
+            <EditIcon />
+          </Button>
+        </Tooltip>
       )}
       {actions.includes("download") && (
-        <Button
-          variant="outlined"
-          onClick={() => handleDownloadClick()}
-          loading={isLoading}
-          loadingPosition="start"
-          startIcon={<DownloadIcon />}
-        >
-          Code
-        </Button>
+        <Tooltip title="Download source code for debugging">
+          <Button
+            variant="outlined"
+            onClick={() => handleDownloadClick()}
+            loading={isLoading}
+            sx={{ minWidth: 0, px: 1 }}
+          >
+            <BugReportIcon />
+          </Button>
+        </Tooltip>
       )}
 
       <CommonDialog

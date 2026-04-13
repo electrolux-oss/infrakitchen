@@ -10,6 +10,8 @@ import { IconField } from "../../icons/Icons";
 import { useConfig } from "../context";
 import { getProviderDisplayName } from "../utils";
 
+import { UserAvatar } from "./UserAvatar";
+
 export const getRemoteUrlValue = (url: string) => {
   // Convert SSH URL to HTTPS URL
   // Pattern: git@github.com:owner/repo.git → https://github.com/owner/repo.git
@@ -97,6 +99,7 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   const navigate = useNavigate();
 
   const fullPath = `${linkPrefix}${_entity_name}s/${id}`;
+  const displayText = name || identifier;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -112,18 +115,23 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   );
 
   return (
-    <Link
-      href={fullPath}
-      onClick={handleClick}
-      style={{
-        textDecoration: "none",
-        cursor: "pointer",
-        whiteSpace: "normal",
-        overflowWrap: "anywhere",
-      }}
-    >
-      {name || identifier}
-    </Link>
+    <Box display="inline-flex" alignItems="center" gap={1}>
+      {_entity_name === "user" && (
+        <UserAvatar id={id} identifier={displayText} />
+      )}
+      <Link
+        href={fullPath}
+        onClick={handleClick}
+        style={{
+          textDecoration: "none",
+          cursor: "pointer",
+          whiteSpace: "normal",
+          overflowWrap: "anywhere",
+        }}
+      >
+        {displayText}
+      </Link>
+    </Box>
   );
 };
 
