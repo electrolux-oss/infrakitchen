@@ -37,7 +37,7 @@ export const UserContent = () => {
     {
       label: "Settings",
       content: <DangerZoneCard />,
-      requiredPermission: `user:${entity.id}`,
+      requiredPermission: "api:user",
       permissionAction: "write" as const,
     },
   ];
