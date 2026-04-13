@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
-import { GradientCircularProgress, useLocalStorage } from "../../common";
+import { GradientCircularProgress } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ResourceResponse } from "../../resources/types";
@@ -17,16 +17,9 @@ export const SecretResources = (props: SecretResourcesProps) => {
   const { ikApi } = useConfig();
   const [resources, setResources] = useState<ResourceResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const { value } = useLocalStorage<{
-    expanded?: Record<string, boolean>;
-  }>();
-
-  const expandedMap = value.expanded ?? {};
-  const isExpanded = expandedMap["secret-resources"];
 
   const fetchRelatedData = useCallback(async () => {
     if (!secret_id) return;
-    if (!isExpanded) return;
     setLoading(true);
     ikApi
       .getList("resources", {
@@ -43,7 +36,7 @@ export const SecretResources = (props: SecretResourcesProps) => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, secret_id, isExpanded]);
+  }, [ikApi, secret_id]);
 
   useEffect(() => {
     fetchRelatedData();
@@ -52,11 +45,7 @@ export const SecretResources = (props: SecretResourcesProps) => {
   if (!secret_id) return null;
 
   return (
-    <PropertyCollapseCard
-      id="secret-resources"
-      title="Resources"
-      subtitle="Instances published in this secret"
-    >
+    <OverviewCard name="Resources" description="Resources using this secret">
       {loading && <GradientCircularProgress />}
       {resources.length === 0 && (
         <Typography variant="body2" color="text.secondary">
@@ -92,6 +81,6 @@ export const SecretResources = (props: SecretResourcesProps) => {
           </Box>
         </Box>
       ))}
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };

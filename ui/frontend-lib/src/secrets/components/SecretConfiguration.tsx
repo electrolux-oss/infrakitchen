@@ -8,7 +8,6 @@ import {
   getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
-import { PropertyCollapseCard } from "../../common/components/PropertyCollapseCard";
 import { CustomSecret, SecretResponse } from "../types";
 
 export interface SecretConfigurationProps {
@@ -42,44 +41,38 @@ const getCustomSecrets = (secrets: CustomSecret[]) => {
 
 export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
   return (
-    <PropertyCollapseCard
-      title={"Secret Configuration"}
-      expanded={true}
-      id="secret-config"
-    >
-      <OverviewCard>
-        {secret.integration && (
-          <CommonField
-            name={"Integration"}
-            value={
-              <GetReferenceUrlValue
-                {...secret.integration}
-                urlProvider={secret.integration.integration_provider}
-              />
-            }
-          />
-        )}
+    <OverviewCard name="Secret Configuration">
+      {secret.integration && (
         <CommonField
-          name={"Secret Provider"}
-          value={getProviderValue(secret.secret_provider)}
+          name={"Integration"}
+          value={
+            <GetReferenceUrlValue
+              {...secret.integration}
+              urlProvider={secret.integration.integration_provider}
+            />
+          }
         />
+      )}
+      <CommonField
+        name={"Secret Provider"}
+        value={getProviderValue(secret.secret_provider)}
+      />
+      <CommonField
+        name={"Secret Type"}
+        value={getTextValue(secret.secret_type)}
+      />
+      {secret.secret_provider !== "custom" &&
+        Object.entries(secret.configuration).map(([k, v]) => {
+          return (
+            <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />
+          );
+        })}
+      {secret.secret_provider === "custom" && (
         <CommonField
-          name={"Secret Type"}
-          value={getTextValue(secret.secret_type)}
+          name={"Secret List"}
+          value={getCustomSecrets(secret.configuration.secrets)}
         />
-        {secret.secret_provider !== "custom" &&
-          Object.entries(secret.configuration).map(([k, v]) => {
-            return (
-              <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />
-            );
-          })}
-        {secret.secret_provider === "custom" && (
-          <CommonField
-            name={"Secret List"}
-            value={getCustomSecrets(secret.configuration.secrets)}
-          />
-        )}
-      </OverviewCard>
-    </PropertyCollapseCard>
+      )}
+    </OverviewCard>
   );
 };
