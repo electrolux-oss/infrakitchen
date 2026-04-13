@@ -82,10 +82,8 @@ class SourceCodeService:
         source_code_to_create.status = ModelStatus.READY
         created_source_code = await self.crud.get_by_id(source_code_to_create.id)
 
-        revision_number = await self.revision_handler.handle_revision(source_code_to_create)
-        await self.audit_log_handler.create_log(
-            source_code_to_create.id, requester.id, ModelActions.CREATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(source_code_to_create)
+        await self.audit_log_handler.create_log(source_code_to_create.id, requester.id, ModelActions.CREATE)
         response = SourceCodeResponse.model_validate(created_source_code)
         await self.event_sender.send_event(response, ModelActions.CREATE)
 
@@ -117,10 +115,8 @@ class SourceCodeService:
 
         await self.crud.update(existing_source_code, body)
 
-        revision_number = await self.revision_handler.handle_revision(existing_source_code)
-        await self.audit_log_handler.create_log(
-            source_code_id, requester.id, ModelActions.UPDATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(existing_source_code)
+        await self.audit_log_handler.create_log(source_code_id, requester.id, ModelActions.UPDATE)
 
         await self.crud.refresh(existing_source_code)
         response = SourceCodeResponse.model_validate(existing_source_code)
@@ -139,9 +135,7 @@ class SourceCodeService:
         if not existing_source_code:
             raise EntityNotFound("SourceCode not found")
 
-        await self.audit_log_handler.create_log(
-            existing_source_code.id, requester.id, body.action, revision_number=existing_source_code.revision_number
-        )
+        await self.audit_log_handler.create_log(existing_source_code.id, requester.id, body.action)
 
         match body.action:
             case ModelActions.DISABLE:

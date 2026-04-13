@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -218,9 +218,7 @@ class TestCreate:
         assert new_resource.status == expected_status
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_resource)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            new_resource.id, requester.id, ModelActions.CREATE, revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_resource.id, requester.id, ModelActions.CREATE)
         response = ResourceResponse.model_validate(new_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 
@@ -287,9 +285,7 @@ class TestCreate:
         assert new_resource.status == ModelStatus.APPROVAL_PENDING
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_resource)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            new_resource.id, requester.id, ModelActions.CREATE, revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_resource.id, requester.id, ModelActions.CREATE)
         response = ResourceResponse.model_validate(new_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 

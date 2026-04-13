@@ -90,10 +90,8 @@ class SecretService:
         new_secret.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_secret.id)
 
-        revision_number = await self.revision_handler.handle_revision(new_secret)
-        await self.audit_log_handler.create_log(
-            new_secret.id, requester.id, ModelActions.CREATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(new_secret)
+        await self.audit_log_handler.create_log(new_secret.id, requester.id, ModelActions.CREATE)
         response = SecretResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return response
@@ -117,10 +115,8 @@ class SecretService:
         body = model_db_dump(secret, exclude_unset=True)
         await self.crud.update(existing_secret, body)
 
-        revision_number = await self.revision_handler.handle_revision(existing_secret)
-        await self.audit_log_handler.create_log(
-            secret_id, requester.id, ModelActions.UPDATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(existing_secret)
+        await self.audit_log_handler.create_log(secret_id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_secret)
 
         response = SecretResponse.model_validate(existing_secret)
@@ -139,9 +135,7 @@ class SecretService:
         if not existing_secret:
             raise EntityNotFound("Secret not found")
 
-        await self.audit_log_handler.create_log(
-            existing_secret.id, requester.id, body.action, revision_number=existing_secret.revision_number
-        )
+        await self.audit_log_handler.create_log(existing_secret.id, requester.id, body.action)
         match body.action:
             case ModelActions.DISABLE:
                 existing_secret.status = ModelStatus.DISABLED

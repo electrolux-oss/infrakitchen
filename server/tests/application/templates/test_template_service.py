@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import ANY, Mock
+from unittest.mock import Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -179,9 +179,7 @@ class TestCreate:
         assert result.status == ModelStatus.ENABLED
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(expected_created_template)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            expected_created_template.id, requester.id, "create", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(expected_created_template.id, requester.id, "create")
         mock_event_sender.send_event.assert_awaited_once_with(result, ModelActions.CREATE)
 
         assert result.template == "template1"
@@ -310,9 +308,7 @@ class TestUpdate:
         mock_template_crud.get_by_id.await_count = 2
         mock_template_crud.update.assert_awaited_once_with(existing_template, template_update_body)
 
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            updated_template.id, requester.id, "update", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(updated_template.id, requester.id, "update")
         response = TemplateResponse.model_validate(updated_template)
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
 
@@ -429,7 +425,7 @@ class TestPatch:
 
         mock_template_crud.get_by_id.assert_awaited_once_with(TEMPLATE_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_template.id, requester.id, ModelActions.DISABLE, revision_number=ANY
+            existing_template.id, requester.id, ModelActions.DISABLE
         )
         response = TemplateResponse.model_validate(existing_template)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.DISABLE)
@@ -461,7 +457,7 @@ class TestPatch:
 
         mock_template_crud.get_by_id.assert_awaited_once_with(TEMPLATE_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_template.id, requester.id, ModelActions.ENABLE, revision_number=ANY
+            existing_template.id, requester.id, ModelActions.ENABLE
         )
         response = TemplateResponse.model_validate(existing_template)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.ENABLE)

@@ -1,4 +1,4 @@
-from unittest.mock import ANY, Mock, call
+from unittest.mock import Mock, call
 from uuid import uuid4
 
 import pytest
@@ -309,7 +309,7 @@ class TestPatchAction:
         mocked_resource_temp_state_handler.delete_by_resource_id.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.APPROVE
         )
 
         response = ResourceResponse.model_validate(existing_resource)
@@ -372,9 +372,8 @@ class TestPatchAction:
                     existing_resource.id,
                     mocked_resource_temp_state.created_by,
                     ModelActions.UPDATE,
-                    revision_number=ANY,
                 ),
-                call(existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=ANY),
+                call(existing_resource.id, mocked_user.id, ModelActions.APPROVE),
             ]
         )
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_resource)
@@ -448,9 +447,8 @@ class TestPatchAction:
                     existing_resource.id,
                     mocked_resource_temp_state.created_by,
                     ModelActions.UPDATE,
-                    revision_number=ANY,
                 ),
-                call(existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=ANY),
+                call(existing_resource.id, mocked_user.id, ModelActions.APPROVE),
             ]
         )
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_resource)
@@ -493,7 +491,7 @@ class TestPatchAction:
         mock_resource_crud.get_by_id.assert_awaited_once_with(resource_id)
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.APPROVE, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.APPROVE
         )
         response = ResourceResponse.model_validate(existing_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.APPROVE)
@@ -574,9 +572,7 @@ class TestPatchAction:
         mock_resource_crud.update.assert_not_awaited()
         mock_revision_handler.handle_revision.assert_not_awaited()
         mocked_resource_temp_state_handler.delete_by_resource_id.assert_not_awaited()
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            resource_id, mocked_user.id, ModelActions.REJECT, revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(resource_id, mocked_user.id, ModelActions.REJECT)
 
         response = ResourceResponse.model_validate(existing_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.REJECT)
@@ -632,7 +628,7 @@ class TestPatchAction:
         )
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.REJECT, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.REJECT
         )
 
         response = ResourceResponse.model_validate(existing_resource)
@@ -694,7 +690,7 @@ class TestPatchAction:
         mocked_resource_temp_state_handler.delete_by_resource_id.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.DESTROY, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.DESTROY
         )
 
         response = ResourceResponse.model_validate(existing_resource)
@@ -791,7 +787,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.RECREATE, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.RECREATE
         )
 
         response = ResourceResponse.model_validate(existing_resource)
@@ -907,7 +903,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.EXECUTE, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.EXECUTE
         )
 
         response = ResourceResponse.model_validate(existing_resource)
@@ -940,7 +936,7 @@ class TestPatchAction:
         mock_resource_crud.get_by_id.assert_awaited_once_with(resource_id)
         mock_revision_handler.handle_revision.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mocked_user.id, ModelActions.RETRY, revision_number=ANY
+            existing_resource.id, mocked_user.id, ModelActions.RETRY
         )
         response = ResourceResponse.model_validate(existing_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RETRY)

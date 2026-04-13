@@ -141,10 +141,8 @@ class ExecutorService:
 
         result = await self.crud.get_by_id(new_executor.id)
 
-        revision_number = await self.revision_handler.handle_revision(new_executor)
-        await self.audit_log_handler.create_log(
-            new_executor.id, requester.id, ModelActions.CREATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(new_executor)
+        await self.audit_log_handler.create_log(new_executor.id, requester.id, ModelActions.CREATE)
         response = ExecutorResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         await self.permission_service.casbin_enforcer.send_reload_event()
@@ -188,10 +186,8 @@ class ExecutorService:
             raise ValueError("No fields to update")
 
         await self.crud.update(existing_executor, body)
-        revision_number = await self.revision_handler.handle_revision(existing_executor)
-        await self.audit_log_handler.create_log(
-            existing_executor_pydantic.id, requester.id, ModelActions.UPDATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(existing_executor)
+        await self.audit_log_handler.create_log(existing_executor_pydantic.id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_executor)
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -228,10 +224,7 @@ class ExecutorService:
         # wrap existing_executor to pydantic model to avoid sqlalchemy object state issues
         pydantic_executor = ExecutorDTO.model_validate(existing_executor)
 
-        await self.audit_log_handler.create_log(
-            pydantic_executor.id, requester.id, body.action, revision_number=existing_executor.revision_number
-        )
-
+        await self.audit_log_handler.create_log(pydantic_executor.id, requester.id, body.action)
         match body.action:
             case ModelActions.RETRY:
                 if existing_executor.status == ModelStatus.QUEUED:

@@ -141,10 +141,8 @@ class SourceCodeVersionService:
         new_source_code_version.status = ModelStatus.READY
         result = await self.crud.get_by_id(new_source_code_version.id)
 
-        revision_number = await self.revision_handler.handle_revision(new_source_code_version)
-        await self.audit_log_handler.create_log(
-            new_source_code_version.id, requester.id, ModelActions.CREATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(new_source_code_version)
+        await self.audit_log_handler.create_log(new_source_code_version.id, requester.id, ModelActions.CREATE)
         response = SourceCodeVersionResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return response
@@ -188,10 +186,8 @@ class SourceCodeVersionService:
 
         await self.crud.update(existing_source_code_version, body)
 
-        revision_number = await self.revision_handler.handle_revision(existing_source_code_version)
-        await self.audit_log_handler.create_log(
-            source_code_version_id, requester.id, ModelActions.UPDATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(existing_source_code_version)
+        await self.audit_log_handler.create_log(source_code_version_id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_source_code_version)
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -218,10 +214,8 @@ class SourceCodeVersionService:
 
         await self.crud.update(existing_source_code_version, body)
 
-        revision_number = await self.revision_handler.handle_revision(existing_source_code_version)
-        await self.audit_log_handler.create_log(
-            existing_source_code_version.id, requester.id, ModelActions.UPDATE, revision_number=revision_number
-        )
+        await self.revision_handler.handle_revision(existing_source_code_version)
+        await self.audit_log_handler.create_log(existing_source_code_version.id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_source_code_version)
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -245,7 +239,6 @@ class SourceCodeVersionService:
             existing_source_code_version.id,
             requester.id,
             body.action,
-            revision_number=existing_source_code_version.revision_number,
         )
 
         match body.action:

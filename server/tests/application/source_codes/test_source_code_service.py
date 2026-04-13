@@ -1,4 +1,4 @@
-from unittest.mock import ANY, Mock
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
@@ -194,9 +194,7 @@ class TestCreate:
         assert created_source_code.status == ModelStatus.READY
 
         mock_revision_handler.handle_revision.assert_called_once_with(created_source_code)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            created_source_code.id, mock_user_dto.id, "create", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(created_source_code.id, mock_user_dto.id, "create")
         response = SourceCodeResponse.model_validate(mocked_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, "create")
 
@@ -249,9 +247,7 @@ class TestUpdate:
         mocked_source_code_update.model_dump.assert_called_once_with(exclude_unset=True)
         mock_source_code_crud.update.assert_awaited_once_with(existing_source_code, update_body)
         mock_source_code_crud.refresh.assert_called_once_with(updated_source_code)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            updated_source_code.id, mock_user_dto.id, "update", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(updated_source_code.id, mock_user_dto.id, "update")
         mock_revision_handler.handle_revision.assert_called_once_with(existing_source_code)
         response = SourceCodeResponse.model_validate(updated_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
@@ -326,7 +322,7 @@ class TestPatch:
         assert result.status == ModelStatus.DISABLED
         mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_source_code.id, mock_user_dto.id, ModelActions.DISABLE, revision_number=ANY
+            mocked_source_code.id, mock_user_dto.id, ModelActions.DISABLE
         )
         response = SourceCodeResponse.model_validate(mocked_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.DISABLE)

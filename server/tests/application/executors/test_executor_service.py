@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -223,9 +223,7 @@ class TestCreate:
         assert result.status == ModelStatus.READY
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_executor)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            new_executor.id, requester.id, ModelActions.CREATE, revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_executor.id, requester.id, ModelActions.CREATE)
         response = ExecutorResponse.model_validate(new_executor)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 
@@ -744,7 +742,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mocked_user.id, ModelActions.DESTROY, revision_number=ANY
+            existing_executor.id, mocked_user.id, ModelActions.DESTROY
         )
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -852,7 +850,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mocked_user.id, ModelActions.RECREATE, revision_number=ANY
+            existing_executor.id, mocked_user.id, ModelActions.RECREATE
         )
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -905,7 +903,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mocked_user.id, ModelActions.EXECUTE, revision_number=ANY
+            existing_executor.id, mocked_user.id, ModelActions.EXECUTE
         )
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -955,7 +953,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mocked_user.id, ModelActions.DRYRUN, revision_number=ANY
+            existing_executor.id, mocked_user.id, ModelActions.DRYRUN
         )
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -1017,7 +1015,7 @@ class TestPatchAction:
         mock_revision_handler.handle_revision.assert_not_awaited()
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_executor.id, mocked_user.id, ModelActions.RETRY, revision_number=ANY
+            existing_executor.id, mocked_user.id, ModelActions.RETRY
         )
 
         response = ExecutorResponse.model_validate(existing_executor)

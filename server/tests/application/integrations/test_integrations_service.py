@@ -1,6 +1,6 @@
 # pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false, reportAssignmentType=false
 from datetime import datetime
-from unittest.mock import ANY, AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -193,9 +193,7 @@ class TestCreate:
         assert created_integration.status == ModelStatus.ENABLED
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_integration)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            new_integration.id, mock_user_dto.id, "create", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_integration.id, mock_user_dto.id, "create")
         response = IntegrationResponse.model_validate(new_integration)
         mock_event_sender.send_event.assert_awaited_once_with(response, "create")
 
@@ -346,9 +344,7 @@ class TestUpdate:
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
 
         mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_integration.id, mock_user_dto.id, "update", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(mocked_integration.id, mock_user_dto.id, "update")
         mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_integration)
         response = IntegrationResponse.model_validate(mocked_integration)
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
@@ -416,9 +412,7 @@ class TestUpdate:
         integration_update.model_dump.assert_called_once_with(by_alias=True, exclude={"_entity_name"})
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
         mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_integration.id, mock_user_dto.id, "update", revision_number=ANY
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(mocked_integration.id, mock_user_dto.id, "update")
         mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_integration)
         response = IntegrationResponse.model_validate(mocked_integration)
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
@@ -469,7 +463,7 @@ class TestPatch:
 
         mock_integration_crud.get_by_id.assert_awaited_once_with(INTEGRATION_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_integration.id, mock_user_dto.id, ModelActions.DISABLE, revision_number=ANY
+            mocked_integration.id, mock_user_dto.id, ModelActions.DISABLE
         )
         response = IntegrationResponse.model_validate(mocked_integration)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.DISABLE)

@@ -10,15 +10,12 @@ class AuditLogHandler:
         self.entity_name: str = entity_name
         self.trace_id: str | None = None
 
-    async def create_log(
-        self, entity_id: str | UUID, requester_id: str | UUID, action: str, revision_number: int | None = None
-    ) -> None:
+    async def create_log(self, entity_id: str | UUID, requester_id: str | UUID, action: str) -> None:
         audit_log = AuditLog(
             model=str(self.entity_name),
             user_id=requester_id,
             action=action,
             entity_id=entity_id,
-            revision_number=revision_number,
         )
         self.session.add(audit_log)
         await self.session.flush()
