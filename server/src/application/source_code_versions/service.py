@@ -186,8 +186,8 @@ class SourceCodeVersionService:
 
         await self.crud.update(existing_source_code_version, body)
 
-        await self.revision_handler.handle_revision(existing_source_code_version)
         await self.audit_log_handler.create_log(source_code_version_id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_source_code_version)
         await self.crud.refresh(existing_source_code_version)
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -214,8 +214,8 @@ class SourceCodeVersionService:
 
         await self.crud.update(existing_source_code_version, body)
 
-        await self.revision_handler.handle_revision(existing_source_code_version)
         await self.audit_log_handler.create_log(existing_source_code_version.id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_source_code_version)
         await self.crud.refresh(existing_source_code_version)
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
@@ -235,11 +235,7 @@ class SourceCodeVersionService:
         if not existing_source_code_version:
             raise EntityNotFound("SourceCodeVersion not found")
 
-        await self.audit_log_handler.create_log(
-            existing_source_code_version.id,
-            requester.id,
-            body.action,
-        )
+        await self.audit_log_handler.create_log(existing_source_code_version.id, requester.id, body.action)
 
         match body.action:
             case ModelActions.DISABLE:

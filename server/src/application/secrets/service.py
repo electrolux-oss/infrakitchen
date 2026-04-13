@@ -115,8 +115,8 @@ class SecretService:
         body = model_db_dump(secret, exclude_unset=True)
         await self.crud.update(existing_secret, body)
 
-        await self.revision_handler.handle_revision(existing_secret)
         await self.audit_log_handler.create_log(secret_id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_secret)
         await self.crud.refresh(existing_secret)
 
         response = SecretResponse.model_validate(existing_secret)

@@ -511,13 +511,12 @@ class ResourceService:
             and resource_temp_state is not None
         ):
             # when resource edited after creation and first approval
+            await self.audit_log_handler.create_log(
+                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
+            )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id,
-                resource_temp_state.created_by,
-                ModelActions.UPDATE,
-            )
+
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
@@ -526,13 +525,11 @@ class ResourceService:
         elif resource_temp_state is not None and pydantic_resource.state == ModelState.PROVISIONED:
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
+            await self.audit_log_handler.create_log(
+                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
+            )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
-            await self.audit_log_handler.create_log(
-                pydantic_resource.id,
-                resource_temp_state.created_by,
-                ModelActions.UPDATE,
-            )
             await self.resource_temp_state_handler.delete_by_resource_id(resource_id=pydantic_resource.id)
             await self.crud.refresh(existing_resource)
 

@@ -124,8 +124,8 @@ class StorageService:
 
         await self.crud.update(existing_storage, body)
 
-        await self.revision_handler.handle_revision(existing_storage)
         await self.audit_log_handler.create_log(storage_id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_storage)
         await self.crud.refresh(existing_storage)
 
         response = StorageResponse.model_validate(existing_storage)

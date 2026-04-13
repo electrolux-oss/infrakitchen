@@ -126,8 +126,8 @@ class IntegrationService:
 
         await self.crud.update(existing_integration, body)
 
-        await self.revision_handler.handle_revision(existing_integration)
         await self.audit_log_handler.create_log(existing_integration.id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_integration)
         await self.crud.refresh(existing_integration)
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, ModelActions.UPDATE)

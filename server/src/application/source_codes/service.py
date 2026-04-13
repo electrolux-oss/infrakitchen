@@ -113,10 +113,10 @@ class SourceCodeService:
 
         existing_source_code.status = ModelStatus.READY
 
+        await self.audit_log_handler.create_log(source_code_id, requester.id, ModelActions.UPDATE)
         await self.crud.update(existing_source_code, body)
 
         await self.revision_handler.handle_revision(existing_source_code)
-        await self.audit_log_handler.create_log(source_code_id, requester.id, ModelActions.UPDATE)
 
         await self.crud.refresh(existing_source_code)
         response = SourceCodeResponse.model_validate(existing_source_code)

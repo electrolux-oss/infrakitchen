@@ -186,8 +186,8 @@ class ExecutorService:
             raise ValueError("No fields to update")
 
         await self.crud.update(existing_executor, body)
-        await self.revision_handler.handle_revision(existing_executor)
         await self.audit_log_handler.create_log(existing_executor_pydantic.id, requester.id, ModelActions.UPDATE)
+        await self.revision_handler.handle_revision(existing_executor)
         await self.crud.refresh(existing_executor)
 
         response = ExecutorResponse.model_validate(existing_executor)
@@ -225,6 +225,7 @@ class ExecutorService:
         pydantic_executor = ExecutorDTO.model_validate(existing_executor)
 
         await self.audit_log_handler.create_log(pydantic_executor.id, requester.id, body.action)
+
         match body.action:
             case ModelActions.RETRY:
                 if existing_executor.status == ModelStatus.QUEUED:

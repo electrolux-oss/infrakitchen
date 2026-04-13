@@ -114,10 +114,10 @@ class TemplateService:
             # If the template is disabled, we can move it back
             existing_template.status = ModelStatus.ENABLED
 
+        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.UPDATE)
         await self.crud.update(existing_template, body)
 
         await self.revision_handler.handle_revision(existing_template)
-        await self.audit_log_handler.create_log(template_id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_template)
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
