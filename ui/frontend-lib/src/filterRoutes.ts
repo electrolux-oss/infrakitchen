@@ -117,7 +117,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/batch_operations/:id",
+    path: "/batch_operations/:batch_operation_id/:tab?",
     Component: lz(
       () => import("./batch_operations/pages/BatchOperation"),
       "BatchOperationPage",
