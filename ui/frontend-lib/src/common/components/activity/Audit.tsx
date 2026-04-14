@@ -17,7 +17,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
@@ -35,11 +34,11 @@ import { useHashParams } from "../../../common/hooks/useHashParams";
 import { RevisionResponse } from "../../../revision/types";
 import { AuditLogEntity } from "../../../types";
 import { GetEntityLink } from "../CommonField";
-import { HorizontalTimeline } from "../HorizontalTimeline";
 import { RelativeTime } from "../RelativeTime";
 
 import { DiffEditor } from "./DiffEditor";
 import { Logs } from "./Logs";
+import { RevisionTimeline } from "./RevisionTimeline";
 
 const isTerraformLanguage = (lang?: string): boolean =>
   lang === "opentofu" || lang === "terraform";
@@ -262,16 +261,19 @@ export const Audit = ({
     return groups;
   }, [filteredLogs]);
 
-  const openDialog = (rowId: string, view: "summary" | "logs") => {
-    const newParams = new URLSearchParams(hashParams);
-    newParams.set("traceId", rowId);
-    newParams.set("view", view);
-    if (useVersionId) {
-      newParams.set("versionId", entityId);
-    }
-    setHashParams(newParams);
-    setHeaderAction(undefined);
-  };
+  const openDialog = useCallback(
+    (rowId: string, view: "summary" | "logs") => {
+      const newParams = new URLSearchParams(hashParams);
+      newParams.set("traceId", rowId);
+      newParams.set("view", view);
+      if (useVersionId) {
+        newParams.set("versionId", entityId);
+      }
+      setHashParams(newParams);
+      setHeaderAction(undefined);
+    },
+    [hashParams, setHashParams, useVersionId, entityId],
+  );
 
   const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
@@ -468,98 +470,16 @@ export const Audit = ({
                   {groupedByRevision
                     .slice(0, timelineLimit)
                     .map(([revision, logs]) => (
-                      <Box key={revision} sx={{ mb: 3 }}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Chip
-                            label={revision}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                            sx={{
-                              cursor:
-                                showRevisionColumn && logs[0].revision_number
-                                  ? "pointer"
-                                  : "default",
-                            }}
-                            onClick={() => {
-                              if (
-                                showRevisionColumn &&
-                                logs[0].revision_number
-                              ) {
-                                handleRevisionClick(
-                                  entityId,
-                                  logs[0].revision_number,
-                                );
-                              }
-                            }}
-                          />
-                          <RelativeTime
-                            date={logs[0].created_at}
-                            sx={{ fontSize: "0.75rem" }}
-                          />
-                        </Stack>
-                        <Box sx={{ mt: 3 }}>
-                          <HorizontalTimeline
-                            items={[...logs].reverse()}
-                            renderItem={(log) => (
-                              <>
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={500}
-                                  sx={{ mt: 0.5 }}
-                                >
-                                  {log.action}
-                                </Typography>
-                                <RelativeTime
-                                  date={log.created_at}
-                                  user={log.creator}
-                                  sx={{ fontSize: "0.7rem" }}
-                                />
-                                {actionsWithLogs.includes(log.action) && (
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.25}
-                                    sx={{
-                                      mt: 0.25,
-                                      "& .MuiIconButton-root": {
-                                        border: "none",
-                                      },
-                                    }}
-                                  >
-                                    {log.action !== "sync" &&
-                                      isTerraformLanguage(
-                                        sourceCodeLanguage,
-                                      ) && (
-                                        <Tooltip title="Summary">
-                                          <IconButton
-                                            size="small"
-                                            onClick={() =>
-                                              openDialog(log.id, "summary")
-                                            }
-                                          >
-                                            <AutoAwesomeIcon
-                                              sx={{ fontSize: "1rem" }}
-                                            />
-                                          </IconButton>
-                                        </Tooltip>
-                                      )}
-                                    <Tooltip title="Logs">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                          openDialog(log.id, "logs")
-                                        }
-                                      >
-                                        <Icon icon="ix:log" width={16} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Stack>
-                                )}
-                              </>
-                            )}
-                          />
-                        </Box>
-                      </Box>
+                      <RevisionTimeline
+                        key={revision}
+                        revision={revision}
+                        logs={logs}
+                        actionsWithLogs={actionsWithLogs}
+                        onRevisionClick={(rev) =>
+                          handleRevisionClick(entityId, rev)
+                        }
+                        onOpenDialog={openDialog}
+                      />
                     ))}
                   {groupedByRevision.length > 0 && (
                     <Box
