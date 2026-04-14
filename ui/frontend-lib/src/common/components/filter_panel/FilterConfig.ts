@@ -50,6 +50,7 @@ export interface CascadingFilterConfig extends BaseFilterConfig {
     search: string,
     page: number,
   ) => Promise<{ options: CascadingOption[]; hasMore: boolean }>;
+  loadOptionByValue?: (value: string) => Promise<CascadingOption | null>;
 }
 
 export type FilterConfig =

@@ -30,6 +30,33 @@ export const ResourcesPage = () => {
     });
   }, [ikApi]);
 
+  const makeTemplateOption = useCallback(
+    (template: { id: string; name: string }) => ({
+      label: template.name,
+      value: `template:${template.id}`,
+      loadChildren: async (parentValue: string) => {
+        const templateId = parentValue.replace("template:", "");
+        try {
+          const scvResponse = await ikApi.getList("source_code_versions", {
+            filter: { template_id: templateId },
+            pagination: { page: 1, perPage: 1000 },
+            fields: ["id", "source_code_version", "source_code_branch"],
+          });
+          return scvResponse.data
+            .map((version: any) => ({
+              label: version.source_code_version ?? version.source_code_branch,
+              value: `scv:${version.id}:${templateId}`,
+            }))
+            .sort((a: any, b: any) => a.label.localeCompare(b.label));
+        } catch {
+          notifyError("Failed to load versions");
+          return [];
+        }
+      },
+    }),
+    [ikApi],
+  );
+
   const loadTemplateOptions = useCallback(
     async (search: string, page: number) => {
       const perPage = 10;
@@ -39,38 +66,25 @@ export const ResourcesPage = () => {
         sort: { field: "name", order: "ASC" },
         filter: search ? { name__like: search } : {},
       });
-      const options = response.data.map(
-        (template: { id: string; name: string }) => ({
-          label: template.name,
-          value: `template:${template.id}`,
-          loadChildren: async (parentValue: string) => {
-            const templateId = parentValue.replace("template:", "");
-            try {
-              const scvResponse = await ikApi.getList("source_code_versions", {
-                filter: { template_id: templateId },
-                pagination: { page: 1, perPage: 1000 },
-                fields: ["id", "source_code_version", "source_code_branch"],
-              });
-              return scvResponse.data
-                .map((version: any) => ({
-                  label:
-                    version.source_code_version ?? version.source_code_branch,
-                  value: `scv:${version.id}:${templateId}`,
-                }))
-                .sort((a: any, b: any) => a.label.localeCompare(b.label));
-            } catch {
-              notifyError("Failed to load versions");
-              return [];
-            }
-          },
-        }),
-      );
       return {
-        options,
+        options: response.data.map(makeTemplateOption),
         hasMore: response.data.length === perPage,
       };
     },
-    [ikApi],
+    [ikApi, makeTemplateOption],
+  );
+
+  const loadTemplateOptionByValue = useCallback(
+    async (value: string) => {
+      const id = value.replace("template:", "");
+      try {
+        const template = await ikApi.get(`templates/${id}`);
+        return template ? makeTemplateOption(template) : null;
+      } catch {
+        return null;
+      }
+    },
+    [ikApi, makeTemplateOption],
   );
 
   const initialFilter = location.state?.filters;
@@ -80,9 +94,10 @@ export const ResourcesPage = () => {
     return createResourceFilterConfigs({
       labels,
       loadTemplateOptions,
+      loadTemplateOptionByValue,
       showTemplateVersionFilter: true,
     });
-  }, [labels, loadTemplateOptions]);
+  }, [labels, loadTemplateOptions, loadTemplateOptionByValue]);
 
   const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
     return buildResourceApiFilters(filterValues);
