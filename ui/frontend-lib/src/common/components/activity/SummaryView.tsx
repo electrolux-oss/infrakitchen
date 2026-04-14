@@ -390,12 +390,20 @@ const ExecutionStatusIcon = ({
 
 export const SummaryView = (props: {
   entityId: string;
-  traceId: string;
+  traceId?: string;
+  executionStart?: number;
   eventAction?: string;
   refreshKey?: number;
   onOpenLogs?: () => void;
 }) => {
-  const { entityId, traceId, eventAction, refreshKey, onOpenLogs } = props;
+  const {
+    entityId,
+    traceId,
+    executionStart,
+    eventAction,
+    refreshKey,
+    onOpenLogs,
+  } = props;
   const { ikApi } = useConfig();
 
   const [allLogs, setAllLogs] = useState<LogEntity[]>([]);
@@ -405,44 +413,51 @@ export const SummaryView = (props: {
     ExecutionStatus | undefined
   >(undefined);
 
-  const fetchAllLogsForExecution = useCallback(
-    async (traceId: string): Promise<LogEntity[]> => {
-      const perPage = 1000;
-      let page = 1;
-      const collected: LogEntity[] = [];
+  const fetchAllLogsForExecution = useCallback(async (): Promise<
+    LogEntity[]
+  > => {
+    const perPage = 1000;
+    let page = 1;
+    const collected: LogEntity[] = [];
 
-      while (true) {
-        const pageResult = await ikApi.getList("logs", {
-          filter: { entity_id: entityId, audit_log_id: traceId },
-          pagination: { page, perPage },
-          sort: { field: "created_at", order: "ASC" },
-        });
+    const filter: Record<string, string | number> = { entity_id: entityId };
+    if (traceId) {
+      filter.audit_log_id = traceId;
+    }
+    if (executionStart) {
+      filter.execution_start = executionStart;
+    }
 
-        const chunk = pageResult.data || [];
-        if (chunk.length === 0) {
-          break;
-        }
+    while (true) {
+      const pageResult = await ikApi.getList("logs", {
+        filter,
+        pagination: { page, perPage },
+        sort: { field: "created_at", order: "ASC" },
+      });
 
-        collected.push(...chunk);
-
-        if (chunk.length < perPage) {
-          break;
-        }
-
-        page += 1;
+      const chunk = pageResult.data || [];
+      if (chunk.length === 0) {
+        break;
       }
 
-      setLoaded(true);
-      return collected;
-    },
-    [ikApi, entityId],
-  );
+      collected.push(...chunk);
+
+      if (chunk.length < perPage) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    setLoaded(true);
+    return collected;
+  }, [ikApi, entityId, traceId, executionStart]);
 
   useEffect(() => {
-    fetchAllLogsForExecution(traceId).then((logs) => {
+    fetchAllLogsForExecution().then((logs) => {
       setAllLogs(logs);
     });
-  }, [fetchAllLogsForExecution, refreshKey, traceId]);
+  }, [fetchAllLogsForExecution, refreshKey]);
 
   useEffect(() => {
     if (!loaded || allLogs.length === 0 || !eventAction) {

@@ -34,9 +34,10 @@ function createLog(log: LogEntity[]) {
 export const LogsView = (props: {
   entityId: string;
   auditLogId?: string;
+  executionTime?: number;
   scrollContainerId: string;
 }) => {
-  const { entityId, auditLogId, scrollContainerId } = props;
+  const { entityId, auditLogId, scrollContainerId, executionTime } = props;
   const { ikApi } = useConfig();
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
@@ -48,9 +49,17 @@ export const LogsView = (props: {
     if (isFetching.current) return; // prevent concurrent fetches
     isFetching.current = true;
 
+    const filter: Record<string, string | number> = { entity_id: entityId };
+    if (auditLogId) {
+      filter.audit_log_id = auditLogId;
+    }
+    if (executionTime) {
+      filter.execution_start = executionTime;
+    }
+
     ikApi
       .getList("logs", {
-        filter: { entity_id: entityId, audit_log_id: auditLogId },
+        filter,
         pagination: { page: indexRef.current, perPage: 600 },
         sort: { field: "created_at", order: "DESC" },
       })
@@ -67,7 +76,7 @@ export const LogsView = (props: {
       .finally(() => {
         isFetching.current = false;
       });
-  }, [ikApi, entityId, auditLogId]);
+  }, [ikApi, entityId, auditLogId, executionTime]);
 
   useEffectOnce(() => {
     fetchMoreData();
