@@ -64,6 +64,19 @@ export const UsersPage = () => {
         field: "email",
         headerName: "Email",
         flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <Box
+            display="flex"
+            height="100%"
+            sx={{
+              wordBreak: "break-all",
+              whiteSpace: "normal",
+              alignItems: "center",
+            }}
+          >
+            {params.value}
+          </Box>
+        ),
       },
       {
         field: "provider",

@@ -5,6 +5,7 @@ import {
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { UserAvatar } from "../../common/components/UserAvatar";
 import { UserResponse } from "../types";
 
 export interface UserAboutProps {
@@ -13,7 +14,11 @@ export interface UserAboutProps {
 
 export const UserOverview = ({ user }: UserAboutProps) => {
   return (
-    <OverviewCard name={user.identifier} description={user.description}>
+    <OverviewCard
+      name={user.identifier}
+      description={user.description}
+      icon={<UserAvatar identifier={user.identifier} />}
+    >
       <CommonField
         name={"Deactivated"}
         value={user.deactivated ? "Yes" : "No"}
