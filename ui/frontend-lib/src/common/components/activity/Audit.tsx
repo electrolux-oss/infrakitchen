@@ -2,16 +2,22 @@ import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Icon } from "@iconify/react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import TableRowsIcon from "@mui/icons-material/TableRows";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
+  Chip,
   IconButton,
-  Link,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
@@ -28,7 +34,8 @@ import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
 import { RevisionResponse } from "../../../revision/types";
 import { AuditLogEntity } from "../../../types";
-import { GetReferenceUrlValue } from "../CommonField";
+import { GetEntityLink } from "../CommonField";
+import { HorizontalTimeline } from "../HorizontalTimeline";
 import { RelativeTime } from "../RelativeTime";
 
 import { DiffEditor } from "./DiffEditor";
@@ -42,6 +49,7 @@ export interface AuditProps {
   useVersionId?: boolean;
   sourceCodeLanguage?: string;
   showRevisionColumn?: boolean;
+  showTimelineView?: boolean;
 }
 
 interface AuditFilterPanelProps {
@@ -100,6 +108,7 @@ export const Audit = ({
   useVersionId,
   sourceCodeLanguage,
   showRevisionColumn,
+  showTimelineView,
 }: AuditProps) => {
   const { ikApi } = useConfig();
   const [hashParams, setHashParams] = useHashParams();
@@ -130,6 +139,8 @@ export const Audit = ({
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
   const [headerAction, setHeaderAction] = useState<ReactNode>(undefined);
+  const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
+  const [timelineLimit, setTimelineLimit] = useState(3);
 
   const [revisionDialogLeft, setRevisionDialogLeft] =
     useState<RevisionResponse | null>(null);
@@ -221,6 +232,47 @@ export const Audit = ({
       });
   }, [ikApi, entityId]);
 
+  // Search filtering for timeline view (DataGrid handles its own filtering for table view)
+  const filteredLogs = useMemo(() => {
+    const tokens = search.toLowerCase().split(" ").filter(Boolean);
+    if (tokens.length === 0) return auditLogs;
+    return auditLogs.filter((log) =>
+      tokens.every(
+        (token) =>
+          log.action.toLowerCase().includes(token) ||
+          (log.creator?.identifier ?? "system").toLowerCase().includes(token),
+      ),
+    );
+  }, [auditLogs, search]);
+
+  // Groups filtered logs by revision for timeline view, preserving insertion order
+  const groupedByRevision = useMemo(() => {
+    const groups: [string, AuditLogEntity[]][] = [];
+    const map = new Map<string, AuditLogEntity[]>();
+    for (const log of filteredLogs) {
+      // Falls back to "v1" when revision_number is not available
+      const revision = `v${log.revision_number ?? 1}`;
+      if (!map.has(revision)) {
+        const arr: AuditLogEntity[] = [];
+        map.set(revision, arr);
+        groups.push([revision, arr]);
+      }
+      map.get(revision)!.push(log);
+    }
+    return groups;
+  }, [filteredLogs]);
+
+  const openDialog = (rowId: string, view: "summary" | "logs") => {
+    const newParams = new URLSearchParams(hashParams);
+    newParams.set("traceId", rowId);
+    newParams.set("view", view);
+    if (useVersionId) {
+      newParams.set("versionId", entityId);
+    }
+    setHashParams(newParams);
+    setHeaderAction(undefined);
+  };
+
   const columns: GridColDef<AuditLogEntity>[] = useMemo(
     () => [
       ...(showRevisionColumn
@@ -233,16 +285,17 @@ export const Audit = ({
                 const rev = params.row.revision_number;
                 if (!rev) return null;
                 return (
-                  <Link
-                    component="button"
-                    variant="body2"
+                  <Chip
+                    label={`v${rev}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ cursor: "pointer" }}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRevisionClick(entityId, rev);
                     }}
-                  >
-                    v{rev}
-                  </Link>
+                  />
                 );
               },
             } as GridColDef<AuditLogEntity>,
@@ -262,7 +315,7 @@ export const Audit = ({
             return "System";
           }
           const creatorData = params.row.creator;
-          return <GetReferenceUrlValue {...creatorData} />;
+          return <GetEntityLink {...creatorData} />;
         },
       },
       {
@@ -277,6 +330,7 @@ export const Audit = ({
         field: "userActions",
         headerName: "",
         flex: 1,
+        sortable: false,
         renderCell: (params) => (
           <Box
             sx={{
@@ -348,60 +402,196 @@ export const Audit = ({
   return (
     <Box>
       <AuditFilterPanel search={search} setSearch={setSearch} />
+      {showTimelineView && (
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, value) => value && setViewMode(value)}
+            size="small"
+            sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
+          >
+            <ToggleButton value="table">
+              <Tooltip title="Table view">
+                <TableRowsIcon sx={{ fontSize: "1rem" }} />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="timeline">
+              <Tooltip title="Timeline view">
+                <TimelineIcon sx={{ fontSize: "1rem" }} />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      )}
       <Box>
         <Card sx={{ mt: 2 }}>
           <CardContent>
-            <Box sx={{ width: "100%", overflowX: "auto" }}>
-              <DataGrid
-                rows={auditLogs}
-                columns={columns}
-                pagination
-                disableColumnFilter
-                disableColumnMenu
-                disableRowSelectionOnClick
-                sortModel={sortModel}
-                onSortModelChange={handleSortModelChange}
-                paginationModel={paginationModel}
-                onPaginationModelChange={handlePaginationModelChange}
-                pageSizeOptions={[10, 25, 50, 100]}
-                filterModel={filterModel}
-                onFilterModelChange={setFilterModel}
-                sx={{
-                  "& .MuiDataGrid-columnHeader": {
-                    "& .MuiDataGrid-columnHeaderTitleContainer": {
-                      justifyContent: "space-between",
-                      flexDirection: "row",
-                    },
-                    "& .MuiButtonBase-root": {
-                      border: "none",
-                    },
-                  },
-                  "& .MuiTablePagination-root": {
-                    "& .MuiButtonBase-root": {
-                      border: "none",
-                    },
-                  },
-                  "& .MuiDataGrid-row": {
-                    "&:hover": {
-                      backgroundColor: (theme) =>
-                        alpha(theme.palette.primary.main, 0.08),
-                    },
-                  },
-                }}
-                slotProps={{
-                  pagination: {
-                    SelectProps: {
-                      inputProps: {
-                        "aria-label": "Rows per page",
-                        "aria-labelledby": "audit-pagination-label",
+            <Box sx={{ width: "100%", overflowX: "auto", minHeight: 300 }}>
+              {viewMode === "table" ? (
+                <DataGrid
+                  rows={auditLogs}
+                  columns={columns}
+                  pagination
+                  disableColumnFilter
+                  disableColumnMenu
+                  disableRowSelectionOnClick
+                  sortModel={sortModel}
+                  onSortModelChange={handleSortModelChange}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={handlePaginationModelChange}
+                  pageSizeOptions={[10, 25, 50, 100]}
+                  filterModel={filterModel}
+                  onFilterModelChange={setFilterModel}
+                  sx={{
+                    "& .MuiDataGrid-columnHeader": {
+                      "& .MuiDataGrid-columnHeaderTitleContainer": {
+                        justifyContent: "space-between",
+                        flexDirection: "row",
                       },
-                      "aria-label": "Rows per page",
+                      "& .MuiButtonBase-root": {
+                        border: "none",
+                      },
                     },
-                    labelRowsPerPage: "Rows per page:",
-                    labelId: "audit-pagination-label",
-                  },
-                }}
-              />
+                    "& .MuiTablePagination-root": {
+                      "& .MuiButtonBase-root": {
+                        border: "none",
+                      },
+                    },
+                    "& .MuiDataGrid-row": {
+                      "&:hover": {
+                        backgroundColor: (theme) =>
+                          alpha(theme.palette.primary.main, 0.08),
+                      },
+                    },
+                  }}
+                  slotProps={{
+                    pagination: {
+                      SelectProps: {
+                        inputProps: {
+                          "aria-label": "Rows per page",
+                          "aria-labelledby": "audit-pagination-label",
+                        },
+                        "aria-label": "Rows per page",
+                      },
+                      labelRowsPerPage: "Rows per page:",
+                      labelId: "audit-pagination-label",
+                    },
+                  }}
+                />
+              ) : (
+                <>
+                  {groupedByRevision
+                    .slice(0, timelineLimit)
+                    .map(([revision, logs]) => (
+                      <Box key={revision} sx={{ mb: 3 }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Chip
+                            label={revision}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            sx={{
+                              cursor:
+                                showRevisionColumn && logs[0].revision_number
+                                  ? "pointer"
+                                  : "default",
+                            }}
+                            onClick={() => {
+                              if (
+                                showRevisionColumn &&
+                                logs[0].revision_number
+                              ) {
+                                handleRevisionClick(
+                                  entityId,
+                                  logs[0].revision_number,
+                                );
+                              }
+                            }}
+                          />
+                          <RelativeTime
+                            date={logs[0].created_at}
+                            sx={{ fontSize: "0.75rem" }}
+                          />
+                        </Stack>
+                        <Box sx={{ mt: 3 }}>
+                          <HorizontalTimeline
+                            items={[...logs].reverse()}
+                            renderItem={(log) => (
+                              <>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={500}
+                                  sx={{ mt: 0.5 }}
+                                >
+                                  {log.action}
+                                </Typography>
+                                <RelativeTime
+                                  date={log.created_at}
+                                  user={log.creator}
+                                  sx={{ fontSize: "0.7rem" }}
+                                />
+                                {actionsWithLogs.includes(log.action) && (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.25}
+                                    sx={{
+                                      mt: 0.25,
+                                      "& .MuiIconButton-root": {
+                                        border: "none",
+                                      },
+                                    }}
+                                  >
+                                    {log.action !== "sync" &&
+                                      isTerraformLanguage(
+                                        sourceCodeLanguage,
+                                      ) && (
+                                        <Tooltip title="Summary">
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              openDialog(log.id, "summary")
+                                            }
+                                          >
+                                            <AutoAwesomeIcon
+                                              sx={{ fontSize: "1rem" }}
+                                            />
+                                          </IconButton>
+                                        </Tooltip>
+                                      )}
+                                    <Tooltip title="Logs">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          openDialog(log.id, "logs")
+                                        }
+                                      >
+                                        <Icon icon="ix:log" width={16} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Stack>
+                                )}
+                              </>
+                            )}
+                          />
+                        </Box>
+                      </Box>
+                    ))}
+                  {groupedByRevision.length > 0 && (
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+                    >
+                      <Button
+                        variant="text"
+                        disabled={groupedByRevision.length <= timelineLimit}
+                        onClick={() => setTimelineLimit((prev) => prev + 3)}
+                      >
+                        Show more
+                      </Button>
+                    </Box>
+                  )}
+                </>
+              )}
               {logsOpen && selectedTraceId && selectedView && (
                 <CommonDialog
                   title={getDialogTitle(selectedView, selectedAction)}

@@ -6,6 +6,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import EditIcon from "@mui/icons-material/Edit";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import RedoIcon from "@mui/icons-material/Redo";
 import SyncIcon from "@mui/icons-material/Sync";
 import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
@@ -140,10 +141,10 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("recreate") && (
         <Button
           variant="outlined"
-          color="secondary"
           onClick={() => changeDialog("recreate")}
+          startIcon={<RedoIcon />}
         >
-          Re-create
+          Recreate
         </Button>
       )}
       {actions.includes("enable") && (
@@ -270,8 +271,8 @@ export function EntityActions(props: EntityActionsProps) {
       />
 
       <CommonDialog
-        title="Request re-create"
-        content="Re-create will return entity back. Do you want to approve the request?"
+        title="Request recreate"
+        content="Recreate will return entity back. Do you want to approve the request?"
         maxWidth="xs"
         actions={
           <ActionButton

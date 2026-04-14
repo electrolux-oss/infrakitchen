@@ -50,6 +50,7 @@ export const ResourceContent = () => {
             entity.source_code_version?.source_code?.source_code_language
           }
           showRevisionColumn
+          showTimelineView
         />
       ),
     },
