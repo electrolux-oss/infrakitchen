@@ -68,7 +68,11 @@ export const UsersPage = () => {
           <Box
             display="flex"
             height="100%"
-            sx={{ wordBreak: "break-all", whiteSpace: "normal", alignItems: "center" }}
+            sx={{
+              wordBreak: "break-all",
+              whiteSpace: "normal",
+              alignItems: "center",
+            }}
           >
             {params.value}
           </Box>
