@@ -229,19 +229,6 @@ export const Audit = ({
       });
   }, [ikApi, entityId]);
 
-  // Search filtering for timeline view (DataGrid handles its own filtering for table view)
-  const filteredLogs = useMemo(() => {
-    const tokens = search.toLowerCase().split(" ").filter(Boolean);
-    if (tokens.length === 0) return auditLogs;
-    return auditLogs.filter((log) =>
-      tokens.every(
-        (token) =>
-          log.action.toLowerCase().includes(token) ||
-          (log.creator?.identifier ?? "system").toLowerCase().includes(token),
-      ),
-    );
-  }, [auditLogs, search]);
-
   const openDialog = useCallback(
     (rowId: string, view: "summary" | "logs") => {
       const newParams = new URLSearchParams(hashParams);
@@ -369,31 +356,31 @@ export const Audit = ({
   return (
     <Box>
       <AuditFilterPanel search={search} setSearch={setSearch} />
-      {showTimelineView && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(_, value) => value && setViewMode(value)}
-            size="small"
-            sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
-          >
-            <ToggleButton value="table">
-              <Tooltip title="Table view">
-                <TableRowsIcon sx={{ fontSize: "1rem" }} />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="timeline">
-              <Tooltip title="Timeline view">
-                <TimelineIcon sx={{ fontSize: "1rem" }} />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      )}
       <Box>
         <Card sx={{ mt: 2 }}>
           <CardContent>
+            {showTimelineView && (
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={(_, value) => value && setViewMode(value)}
+                  size="small"
+                  sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
+                >
+                  <ToggleButton value="table">
+                    <Tooltip title="Table view">
+                      <TableRowsIcon sx={{ fontSize: "1rem" }} />
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="timeline">
+                    <Tooltip title="Timeline view">
+                      <TimelineIcon sx={{ fontSize: "1rem" }} />
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            )}
             <Box sx={{ width: "100%", overflowX: "auto", minHeight: 300 }}>
               {viewMode === "table" ? (
                 <DataGrid
@@ -448,7 +435,8 @@ export const Audit = ({
                 />
               ) : (
                 <RevisionTimelines
-                  logs={filteredLogs}
+                  logs={auditLogs}
+                  search={search}
                   actionsWithLogs={actionsWithLogs}
                   onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
                   onOpenDialog={openDialog}

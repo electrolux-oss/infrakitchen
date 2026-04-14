@@ -8,6 +8,7 @@ import { RevisionTimeline } from "./RevisionTimeline";
 
 interface RevisionTimelinesProps {
   logs: AuditLogEntity[];
+  search: string;
   actionsWithLogs: string[];
   onRevisionClick?: (revisionNumber: number) => void;
   onOpenDialog: (rowId: string, view: "summary" | "logs") => void;
@@ -15,17 +16,31 @@ interface RevisionTimelinesProps {
 
 export const RevisionTimelines = ({
   logs,
+  search,
   actionsWithLogs,
   onRevisionClick,
   onOpenDialog,
 }: RevisionTimelinesProps) => {
   const [limit, setLimit] = useState(3);
 
+  // Search filtering for timeline view
+  const filteredLogs = useMemo(() => {
+    const tokens = search.toLowerCase().split(" ").filter(Boolean);
+    if (tokens.length === 0) return logs;
+    return logs.filter((log) =>
+      tokens.every(
+        (token) =>
+          log.action.toLowerCase().includes(token) ||
+          (log.creator?.identifier ?? "system").toLowerCase().includes(token),
+      ),
+    );
+  }, [logs, search]);
+
   // Groups logs by revision, preserving insertion order
   const groups = useMemo(() => {
     const result: [string, AuditLogEntity[]][] = [];
     const map = new Map<string, AuditLogEntity[]>();
-    for (const log of logs) {
+    for (const log of filteredLogs) {
       // Falls back to "v1" when revision_number is not available
       const revision = `v${log.revision_number ?? 1}`;
       if (!map.has(revision)) {
@@ -36,7 +51,7 @@ export const RevisionTimelines = ({
       map.get(revision)!.push(log);
     }
     return result;
-  }, [logs]);
+  }, [filteredLogs]);
 
   return (
     <>
