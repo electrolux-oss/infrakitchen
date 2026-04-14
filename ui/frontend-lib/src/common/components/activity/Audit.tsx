@@ -349,14 +349,7 @@ export const Audit = ({
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const newParams = new URLSearchParams(hashParams);
-                          newParams.set("traceId", params.row.id);
-                          newParams.set("view", "summary");
-                          if (useVersionId) {
-                            newParams.set("versionId", entityId);
-                          }
-                          setHashParams(newParams);
-                          setHeaderAction(undefined);
+                          openDialog(params.row.id, "summary");
                         }}
                       >
                         <AutoAwesomeIcon fontSize="small" />
@@ -368,14 +361,7 @@ export const Audit = ({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      const newParams = new URLSearchParams(hashParams);
-                      newParams.set("traceId", params.row.id);
-                      newParams.set("view", "logs");
-                      if (useVersionId) {
-                        newParams.set("versionId", entityId);
-                      }
-                      setHashParams(newParams);
-                      setHeaderAction(undefined);
+                      openDialog(params.row.id, "logs");
                     }}
                   >
                     <Icon icon="ix:log" />
@@ -389,9 +375,7 @@ export const Audit = ({
     ],
     [
       actionsWithLogs,
-      hashParams,
-      setHashParams,
-      useVersionId,
+      openDialog,
       entityId,
       sourceCodeLanguage,
       showRevisionColumn,
