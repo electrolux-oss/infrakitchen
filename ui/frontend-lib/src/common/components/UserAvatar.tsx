@@ -6,12 +6,17 @@ import { Avatar, Link, Tooltip, Typography } from "@mui/material";
 
 import { useConfig } from "../context";
 
-const getInitials = (identifier: string): string =>
-  identifier
-    .split(/[\s_-]+/)
+// Extracts up to two initials from a user identifier by splitting on whitespace, underscores, hyphens, or dots, ignoring numeric-only segments.
+// Strips Backstage entity ref prefix ([<kind>:][<namespace>/]) before extracting initials.
+const getInitials = (identifier: string): string => {
+  const name = identifier.replace(/^(?:[^:]*:)?(?:[^/]*\/)?/, "");
+  return name
+    .split(/[\s_\-.]+/)
+    .filter((word) => !/^\d+$/.test(word))
     .slice(0, 2)
     .map((word) => word.charAt(0).toUpperCase())
     .join("");
+};
 
 // Derives a deterministic background color from the user identifier using a hash-to-HSL mapping.
 const getAvatarColor = (identifier: string): string => {
