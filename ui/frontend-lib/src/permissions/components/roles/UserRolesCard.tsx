@@ -7,7 +7,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { PermissionWrapper } from "../../../common";
 import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
-import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
+import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -79,11 +79,7 @@ export const UserRolesCard = (props: { user_id: string }) => {
   );
 
   return (
-    <PropertyCollapseCard
-      title={"User Roles"}
-      expanded={true}
-      id="user-roles-card"
-    >
+    <OverviewCard name="User Roles">
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
@@ -109,6 +105,6 @@ export const UserRolesCard = (props: { user_id: string }) => {
         columns={columns}
         fields={["id"]}
       />
-    </PropertyCollapseCard>
+    </OverviewCard>
   );
 };
