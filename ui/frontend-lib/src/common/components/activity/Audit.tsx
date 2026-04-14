@@ -511,7 +511,7 @@ export const Audit = ({
                         originalText={
                           revisionDialogLeft
                             ? JSON.stringify(revisionDialogLeft.data, null, 2)
-                            : "{}"
+                            : ""
                         }
                         modifiedText={JSON.stringify(
                           revisionDialogRight.data,

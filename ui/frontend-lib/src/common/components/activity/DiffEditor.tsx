@@ -1,4 +1,4 @@
-import DiffViewer from "react-diff-viewer-continued";
+import DiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
 import { Box, useColorScheme, useTheme } from "@mui/material";
 
@@ -50,6 +50,7 @@ export function DiffEditor(props: DiffEditorProps) {
         showDiffOnly={false}
         styles={diffStyles}
         useDarkTheme={mode === "dark"}
+        compareMethod={DiffMethod.WORDS}
       />
     </Box>
   );
