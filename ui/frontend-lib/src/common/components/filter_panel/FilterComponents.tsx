@@ -209,6 +209,30 @@ export const CascadingFilter = ({
 
   const optionsLength = loadedOptions.length;
 
+  // When loadedOptions has populated but the stored value's top-level option is
+  // missing (e.g. not on the first page), fetch it by value.
+  // Uses loadOptionByValue if provided, otherwise falls back to loadOptions.
+  useEffect(() => {
+    if (!value || loadedOptions.length === 0) return;
+    const topValue = Array.isArray(value) ? value[0] : value;
+    if (loadedOptions.some((o) => o.value === topValue)) return;
+
+    const fetch = config.loadOptionByValue
+      ? config.loadOptionByValue(topValue).then((opt) => (opt ? [opt] : []))
+      : (loadOptions?.(topValue, 1).then((r) => r.options) ??
+        Promise.resolve([]));
+
+    fetch.then((opts) =>
+      setLoadedOptions((prev) => {
+        const incoming = opts.filter(
+          (o) => !prev.some((p) => p.value === o.value),
+        );
+        return incoming.length > 0 ? [...incoming, ...prev] : prev;
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, optionsLength]);
+
   // Effect to handle initial value resolution (loading children if path is provided as array)
   useEffect(() => {
     const resolvePath = async () => {
