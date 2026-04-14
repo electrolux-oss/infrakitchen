@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
+import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
@@ -27,8 +28,21 @@ export const ExecutorContent = () => {
       content: <ExecutorPermissions executor={entity} />,
     },
     {
+      label: "Logs",
+      content: (
+        <EntityLogs entityId={entity.id} sourceCodeLanguage={"opentofu"} />
+      ),
+    },
+    {
       label: "Audit",
-      content: <Audit entityId={entity.id} showRevisionColumn />,
+      content: (
+        <Audit
+          entityId={entity.id}
+          showRevisionColumn
+          showTimelineView
+          sourceCodeLanguage={"opentofu"}
+        />
+      ),
     },
     {
       label: "Revisions",

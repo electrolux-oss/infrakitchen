@@ -58,6 +58,7 @@ async def get_source_code_task(
         logger=EntityLogger(
             entity_name="source_code",
             entity_id=source_code_instance.id,
+            revision_number=int(source_code_instance.revision_number),
             trace_id=trace_id,
             audit_log_id=audit_log_id,
         ),
@@ -105,6 +106,7 @@ async def get_source_code_version_task(
         logger=EntityLogger(
             entity_name="source_code_version",
             entity_id=str(source_code_version_instance.id),
+            revision_number=int(source_code_version_instance.revision_number),
             trace_id=trace_id,
             audit_log_id=audit_log_id,
         ),
@@ -141,6 +143,7 @@ async def get_storage_task(
         logger=EntityLogger(
             entity_name="storage",
             entity_id=storage_instance.id,
+            revision_number=int(storage_instance.revision_number),
             trace_id=trace_id,
             audit_log_id=audit_log_id,
         ),
@@ -179,6 +182,7 @@ async def get_resource_task(
     r_logger = EntityLogger(
         entity_name="resource",
         entity_id=resource_instance.id,
+        revision_number=int(resource_instance.revision_number),
         trace_id=trace_id,
         audit_log_id=audit_log_id,
     )
@@ -227,6 +231,7 @@ async def get_executor_task(
     r_logger = EntityLogger(
         entity_name="executor",
         entity_id=executor_instance.id,
+        revision_number=int(executor_instance.revision_number),
         trace_id=trace_id,
         audit_log_id=audit_log_id,
     )

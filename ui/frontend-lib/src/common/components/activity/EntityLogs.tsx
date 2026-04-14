@@ -114,6 +114,12 @@ export const EntityLogs = ({
           <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
         ),
       },
+
+      {
+        field: "revision",
+        headerName: "Revision",
+        flex: 0.2,
+      },
       {
         field: "actions",
         headerName: "",

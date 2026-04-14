@@ -43,6 +43,17 @@ export const ResourceContent = () => {
       content: <ResourcePermissions resource={entity} />,
     },
     {
+      label: "Logs",
+      content: (
+        <EntityLogs
+          entityId={entity.id}
+          sourceCodeLanguage={
+            entity.source_code_version?.source_code?.source_code_language
+          }
+        />
+      ),
+    },
+    {
       label: "Audit",
       content: (
         <Audit
@@ -55,17 +66,7 @@ export const ResourceContent = () => {
         />
       ),
     },
-    {
-      label: "Logs",
-      content: (
-        <EntityLogs
-          entityId={entity.id}
-          sourceCodeLanguage={
-            entity.source_code_version?.source_code?.source_code_language
-          }
-        />
-      ),
-    },
+
     {
       label: "Revisions",
       content: (
