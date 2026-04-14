@@ -7,7 +7,6 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -38,7 +37,7 @@ import { RelativeTime } from "../RelativeTime";
 
 import { DiffEditor } from "./DiffEditor";
 import { Logs } from "./Logs";
-import { RevisionTimeline } from "./RevisionTimeline";
+import { RevisionTimelines } from "./RevisionTimelines";
 
 const isTerraformLanguage = (lang?: string): boolean =>
   lang === "opentofu" || lang === "terraform";
@@ -139,7 +138,6 @@ export const Audit = ({
   const [search, setSearch] = useState<string>("");
   const [headerAction, setHeaderAction] = useState<ReactNode>(undefined);
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
-  const [timelineLimit, setTimelineLimit] = useState(3);
 
   const [revisionDialogLeft, setRevisionDialogLeft] =
     useState<RevisionResponse | null>(null);
@@ -243,23 +241,6 @@ export const Audit = ({
       ),
     );
   }, [auditLogs, search]);
-
-  // Groups filtered logs by revision for timeline view, preserving insertion order
-  const groupedByRevision = useMemo(() => {
-    const groups: [string, AuditLogEntity[]][] = [];
-    const map = new Map<string, AuditLogEntity[]>();
-    for (const log of filteredLogs) {
-      // Falls back to "v1" when revision_number is not available
-      const revision = `v${log.revision_number ?? 1}`;
-      if (!map.has(revision)) {
-        const arr: AuditLogEntity[] = [];
-        map.set(revision, arr);
-        groups.push([revision, arr]);
-      }
-      map.get(revision)!.push(log);
-    }
-    return groups;
-  }, [filteredLogs]);
 
   const openDialog = useCallback(
     (rowId: string, view: "summary" | "logs") => {
@@ -466,35 +447,12 @@ export const Audit = ({
                   }}
                 />
               ) : (
-                <>
-                  {groupedByRevision
-                    .slice(0, timelineLimit)
-                    .map(([revision, logs]) => (
-                      <RevisionTimeline
-                        key={revision}
-                        revision={revision}
-                        logs={logs}
-                        actionsWithLogs={actionsWithLogs}
-                        onRevisionClick={(rev) =>
-                          handleRevisionClick(entityId, rev)
-                        }
-                        onOpenDialog={openDialog}
-                      />
-                    ))}
-                  {groupedByRevision.length > 0 && (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", mt: 2 }}
-                    >
-                      <Button
-                        variant="text"
-                        disabled={groupedByRevision.length <= timelineLimit}
-                        onClick={() => setTimelineLimit((prev) => prev + 3)}
-                      >
-                        Show more
-                      </Button>
-                    </Box>
-                  )}
-                </>
+                <RevisionTimelines
+                  logs={filteredLogs}
+                  actionsWithLogs={actionsWithLogs}
+                  onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
+                  onOpenDialog={openDialog}
+                />
               )}
               {logsOpen && selectedTraceId && selectedView && (
                 <CommonDialog
