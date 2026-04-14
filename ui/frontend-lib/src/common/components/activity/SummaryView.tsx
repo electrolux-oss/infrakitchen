@@ -406,14 +406,14 @@ export const SummaryView = (props: {
   >(undefined);
 
   const fetchAllLogsForExecution = useCallback(
-    async (executionStart: number): Promise<LogEntity[]> => {
+    async (traceId: string): Promise<LogEntity[]> => {
       const perPage = 1000;
       let page = 1;
       const collected: LogEntity[] = [];
 
       while (true) {
         const pageResult = await ikApi.getList("logs", {
-          filter: { entity_id: entityId, execution_start: executionStart },
+          filter: { entity_id: entityId, audit_log_id: traceId },
           pagination: { page, perPage },
           sort: { field: "created_at", order: "ASC" },
         });
@@ -432,33 +432,17 @@ export const SummaryView = (props: {
         page += 1;
       }
 
+      setLoaded(true);
       return collected;
     },
     [ikApi, entityId],
   );
 
-  const fetchLogsExecutionTime = useCallback(async () => {
-    const execution_start_result = await ikApi.get(
-      `logs/execution_time/${entityId}`,
-      { trace_id: traceId },
-    );
-    const sorted = execution_start_result.sort(
-      (a: LogEntity, b: LogEntity) => b.execution_start - a.execution_start,
-    );
-    const selectedExec = sorted.length > 0 ? sorted[0].execution_start : null;
-
-    if (selectedExec) {
-      const logsForExecution = await fetchAllLogsForExecution(selectedExec);
-      setAllLogs(logsForExecution);
-    } else {
-      setAllLogs([]);
-    }
-    setLoaded(true);
-  }, [ikApi, entityId, traceId, fetchAllLogsForExecution]);
-
   useEffect(() => {
-    void fetchLogsExecutionTime();
-  }, [fetchLogsExecutionTime, refreshKey]);
+    fetchAllLogsForExecution(traceId).then((logs) => {
+      setAllLogs(logs);
+    });
+  }, [fetchAllLogsForExecution, refreshKey, traceId]);
 
   useEffect(() => {
     if (!loaded || allLogs.length === 0 || !eventAction) {

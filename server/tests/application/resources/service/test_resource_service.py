@@ -204,7 +204,9 @@ class TestCreate:
 
         mock_template_crud.get_by_id.return_value = template_response
 
-        new_resource = Resource(name=mocked_resource.name, template_id=template_response.id, created_by=requester.id)
+        new_resource = Resource(
+            name=mocked_resource.name, template_id=template_response.id, created_by=requester.id, revision_number=1
+        )
         mock_resource_crud.create.return_value = new_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
 
@@ -218,7 +220,9 @@ class TestCreate:
         assert new_resource.status == expected_status
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_resource)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(new_resource.id, requester.id, ModelActions.CREATE)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            new_resource.id, requester.id, ModelActions.CREATE, revision_number=1
+        )
         response = ResourceResponse.model_validate(new_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 
@@ -270,7 +274,9 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = mocked_storage
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
 
-        new_resource = Resource(name=mocked_resource.name, template_id=template_response.id, created_by=requester.id)
+        new_resource = Resource(
+            name=mocked_resource.name, template_id=template_response.id, created_by=requester.id, revision_number=1
+        )
         mock_resource_crud.create.return_value = new_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
 
@@ -285,7 +291,9 @@ class TestCreate:
         assert new_resource.status == ModelStatus.APPROVAL_PENDING
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(new_resource)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(new_resource.id, requester.id, ModelActions.CREATE)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            new_resource.id, requester.id, ModelActions.CREATE, revision_number=1
+        )
         response = ResourceResponse.model_validate(new_resource)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 

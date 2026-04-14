@@ -153,6 +153,7 @@ class SourceCodeService:
                     existing_source_code.id,
                     requester=requester,
                     trace_id=self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                     action=ModelActions.SYNC,
                 )
             case _:

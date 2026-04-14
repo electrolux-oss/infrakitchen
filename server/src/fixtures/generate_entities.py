@@ -712,7 +712,12 @@ async def generate_logs(session: AsyncSession, entity_name: str, entity_id: str,
     )
     await session.commit()
 
-    log_controller = EntityLogger(entity_name=entity_name, entity_id=entity_id, trace_id=audit_log_handler.trace_id)
+    log_controller = EntityLogger(
+        entity_name=entity_name,
+        entity_id=entity_id,
+        trace_id=audit_log_handler.trace_id,
+        audit_log_id=audit_log_handler.audit_log_id,
+    )
     for i in range(1, 4):
         log_controller.execution_start = int(datetime.datetime.now().timestamp()) - i * 3000
         log_controller.add_log_header(f"User: {user_id} Action: Unknown")

@@ -33,10 +33,10 @@ function createLog(log: LogEntity[]) {
 
 export const LogsView = (props: {
   entityId: string;
-  executionTime: number;
+  auditLogId?: string;
   scrollContainerId: string;
 }) => {
-  const { entityId, executionTime, scrollContainerId } = props;
+  const { entityId, auditLogId, scrollContainerId } = props;
   const { ikApi } = useConfig();
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
@@ -50,7 +50,7 @@ export const LogsView = (props: {
 
     ikApi
       .getList("logs", {
-        filter: { entity_id: entityId, execution_start: executionTime },
+        filter: { entity_id: entityId, audit_log_id: auditLogId },
         pagination: { page: indexRef.current, perPage: 600 },
         sort: { field: "created_at", order: "DESC" },
       })
@@ -67,7 +67,7 @@ export const LogsView = (props: {
       .finally(() => {
         isFetching.current = false;
       });
-  }, [ikApi, entityId, executionTime]);
+  }, [ikApi, entityId, auditLogId]);
 
   useEffectOnce(() => {
     fetchMoreData();

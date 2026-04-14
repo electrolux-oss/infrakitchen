@@ -10,6 +10,7 @@ class LogResponse(BaseModel):
     entity_id: str | uuid.UUID = Field(...)
     entity: str = Field(...)
     revision: int = Field(default=1)
+    audit_log_id: str | uuid.UUID | None = Field(default=None)
     level: str = Field(default="info")
     data: str = Field(...)
     created_at: datetime = Field(default_factory=datetime.now)

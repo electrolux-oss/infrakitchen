@@ -66,7 +66,7 @@ export interface AuditLogEntity extends IkEntity {
   model: string;
   entity_id: string;
   action: string;
-  revision_number?: number | null;
+  revision_number?: number;
 }
 
 export type ValidationRuleTargetType = "string" | "number";

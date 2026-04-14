@@ -300,7 +300,9 @@ class ResourceService:
         result = await self.crud.get_by_id(new_resource.id)
 
         await self.revision_handler.handle_revision(new_resource)
-        await self.audit_log_handler.create_log(new_resource.id, requester.id, ModelActions.CREATE)
+        await self.audit_log_handler.create_log(
+            new_resource.id, requester.id, ModelActions.CREATE, revision_number=new_resource.revision_number
+        )
         response = ResourceResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         await add_resource_parent_policy(
@@ -311,7 +313,13 @@ class ResourceService:
         )
 
         if response.workspace is not None:
-            await self.workspace_event_sender.send_task(response.id, requester=requester, action=ModelActions.CREATE)
+            await self.workspace_event_sender.send_task(
+                response.id,
+                requester=requester,
+                action=ModelActions.CREATE,
+                audit_log_id=self.audit_log_handler.audit_log_id,
+                trace_id=self.audit_log_handler.trace_id,
+            )
 
         await self.permission_service.casbin_enforcer.send_reload_event()
         return response
@@ -512,7 +520,10 @@ class ResourceService:
         ):
             # when resource edited after creation and first approval
             await self.audit_log_handler.create_log(
-                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
+                pydantic_resource.id,
+                resource_temp_state.created_by,
+                ModelActions.UPDATE,
+                revision_number=pydantic_resource.revision_number,
             )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
@@ -525,7 +536,10 @@ class ResourceService:
             if resource_variables_differ():
                 await approve_entity(existing_resource, abstract=existing_resource.abstract)
             await self.audit_log_handler.create_log(
-                pydantic_resource.id, resource_temp_state.created_by, ModelActions.UPDATE
+                pydantic_resource.id,
+                resource_temp_state.created_by,
+                ModelActions.UPDATE,
+                revision_number=pydantic_resource.revision_number,
             )
             existing_resource = await self.crud.update(existing_resource, resource_temp_state.value)
             await self.revision_handler.handle_revision(existing_resource)
@@ -617,7 +631,9 @@ class ResourceService:
         # wrap existing_resource to pydantic model to avoid sqlalchemy object state issues
         pydantic_resource = ResourceDTO.model_validate(existing_resource)
 
-        await self.audit_log_handler.create_log(pydantic_resource.id, requester.id, body.action)
+        await self.audit_log_handler.create_log(
+            pydantic_resource.id, requester.id, body.action, revision_number=pydantic_resource.revision_number
+        )
 
         match body.action:
             case ModelActions.REJECT:
@@ -629,6 +645,7 @@ class ResourceService:
                         existing_resource.id,
                         requester=requester,
                         trace_id=trace_id or self.audit_log_handler.trace_id,
+                        audit_log_id=self.audit_log_handler.audit_log_id,
                         action=ModelActions.EXECUTE,
                     )
                 else:
@@ -642,7 +659,10 @@ class ResourceService:
             case ModelActions.EXECUTE:
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
-                    pydantic_resource.id, requester=requester, trace_id=trace_id or self.audit_log_handler.trace_id
+                    pydantic_resource.id,
+                    requester=requester,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
             case ModelActions.DRYRUN:
                 if existing_resource.status not in [
@@ -659,6 +679,7 @@ class ResourceService:
                     requester=requester,
                     action=ModelActions.DRYRUN,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
             case ModelActions.DRYRUN_WITH_TEMP_STATE:
                 resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(
@@ -682,6 +703,7 @@ class ResourceService:
                     requester=requester,
                     action=ModelActions.DRYRUN_WITH_TEMP_STATE,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)

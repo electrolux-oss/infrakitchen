@@ -15,6 +15,7 @@ def mock_entity_logger():
         revision_number=1,
         should_be_expired=False,
         trace_id=None,
+        audit_log_id=str(uuid.uuid4()),
     )
 
     # Mock async methods
@@ -30,7 +31,6 @@ def mock_log_crud():
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()
-    crud.get_logs_execution_time = AsyncMock()
     crud.delete_by_entity_id = AsyncMock()
     return crud
 

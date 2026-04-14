@@ -91,9 +91,15 @@ class TaskWorker(BaseMessagesWorker):
             raise CannotProceed(f"User {user_id} not found")
 
         trace_id = msg.metadata.get("trace_id")
+        audit_log_id = msg.metadata.get("audit_log_id")
 
         task_controller = await self.get_task_controller(
-            entity_controller=entity_controller, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+            entity_controller=entity_controller,
+            obj_id=obj_id,
+            user=user,
+            action=action,
+            trace_id=trace_id,
+            audit_log_id=audit_log_id,
         )
         # Main task flow
         try:
@@ -122,32 +128,68 @@ class TaskWorker(BaseMessagesWorker):
         await job_executor.execute(job_type=job_type, script=job_script)
 
     async def get_task_controller(
-        self, entity_controller: str, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+        self,
+        entity_controller: str,
+        obj_id: UUID,
+        user: UserDTO,
+        action: ModelActions,
+        trace_id: str | None = None,
+        audit_log_id: UUID | None = None,
     ) -> SourceCodeTask | SourceCodeVersionTask | StorageTask | ResourceTask | WorkspaceTask | ExecutorTask:
         match entity_controller:
             case "source_code":
                 return await get_source_code_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case "source_code_version":
                 return await get_source_code_version_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case "storage":
                 return await get_storage_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case "resource":
                 return await get_resource_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case "workspace":
                 return await get_workspace_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case "executor":
                 return await get_executor_task(
-                    session=self.session, obj_id=obj_id, user=user, action=action, trace_id=trace_id
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case _:
                 raise CannotProceed(f"Unknown entity controller: {entity_controller}")

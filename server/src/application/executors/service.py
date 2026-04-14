@@ -233,6 +233,7 @@ class ExecutorService:
                         existing_executor.id,
                         requester=requester,
                         trace_id=trace_id or self.audit_log_handler.trace_id,
+                        audit_log_id=self.audit_log_handler.audit_log_id,
                         action=ModelActions.EXECUTE,
                     )
                 else:
@@ -243,7 +244,10 @@ class ExecutorService:
             case ModelActions.EXECUTE:
                 await execute_entity(existing_executor)
                 await self.event_sender.send_task(
-                    pydantic_executor.id, requester=requester, trace_id=trace_id or self.audit_log_handler.trace_id
+                    pydantic_executor.id,
+                    requester=requester,
+                    trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
             case ModelActions.DRYRUN:
                 if existing_executor.status not in [
@@ -259,6 +263,7 @@ class ExecutorService:
                     requester=requester,
                     action=ModelActions.DRYRUN,
                     trace_id=trace_id or self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_executor, requester)

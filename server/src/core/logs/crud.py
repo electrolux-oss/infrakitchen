@@ -42,24 +42,6 @@ class LogCRUD:
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 
-    async def get_logs_execution_time(self, entity_id: str, trace_id: str | None = None) -> list[Log]:
-        """
-        Execution time logs for a specific entity.
-        """
-        if trace_id:
-            statement = select(Log).where(
-                Log.entity_id == entity_id,
-                Log.level == "header",
-                Log.trace_id == trace_id,
-            )
-        else:
-            statement = select(Log).where(
-                Log.entity_id == entity_id,
-                Log.level == "header",
-            )
-        result = await self.session.execute(statement)
-        return list(result.scalars().all())
-
     async def delete_by_entity_id(self, entity_id: str) -> None:
         statement = select(Log).where(Log.entity_id == entity_id)
         result = await self.session.execute(statement)
