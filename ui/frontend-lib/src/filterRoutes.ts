@@ -79,7 +79,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/auth_providers/:auth_provider_id",
+    path: "/auth_providers/:auth_provider_id/:tab?",
     Component: lz(
       () => import("./auth_providers/pages/AuthProvider"),
       "AuthProviderPage",

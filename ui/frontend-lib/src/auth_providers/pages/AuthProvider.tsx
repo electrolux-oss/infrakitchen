@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { AuthProviderContent } from "../components/AuthProvderContent";
+import { AuthProviderContent } from "../components/AuthProviderContent";
 
 export const AuthProviderPage = () => {
   const { auth_provider_id } = useParams();
@@ -12,11 +12,11 @@ export const AuthProviderPage = () => {
       entity_name="auth_provider"
       entity_id={auth_provider_id || ""}
     >
-      <EntityContainer title={"Auth Provider Overview"}>
+      <EntityContainer title={"Auth Provider Overview"} showActivity={false}>
         <AuthProviderContent />
       </EntityContainer>
     </EntityProvider>
   );
 };
 
-AuthProviderPage.path = "/auth_providers/:auth_provider_id";
+AuthProviderPage.path = "/auth_providers/:auth_provider_id/:tab?";
