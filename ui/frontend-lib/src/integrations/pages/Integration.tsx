@@ -47,7 +47,6 @@ export const IntegrationPage = () => {
     <EntityProvider entity_name="integration" entity_id={integration_id || ""}>
       <EntityContainer
         title={"Integration Overview"}
-        showActivity={false}
         actions={
           <PermissionWrapper
             requiredPermission="api:integration"

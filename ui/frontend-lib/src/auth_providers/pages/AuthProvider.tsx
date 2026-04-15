@@ -12,7 +12,7 @@ export const AuthProviderPage = () => {
       entity_name="auth_provider"
       entity_id={auth_provider_id || ""}
     >
-      <EntityContainer title={"Auth Provider Overview"} showActivity={false}>
+      <EntityContainer title={"Auth Provider Overview"}>
         <AuthProviderContent />
       </EntityContainer>
     </EntityProvider>

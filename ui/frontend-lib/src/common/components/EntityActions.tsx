@@ -22,10 +22,9 @@ import { CommonDialog } from "./CommonDialog";
 export interface EntityActionsProps {
   entity_name: string;
   entity_id: string;
-  show_activity?: boolean;
 }
 export function EntityActions(props: EntityActionsProps) {
-  const { entity_id, entity_name, show_activity = true } = props;
+  const { entity_id, entity_name } = props;
 
   const { linkPrefix, ikApi } = useConfig();
   const { actions } = useEntityProvider();
@@ -76,20 +75,6 @@ export function EntityActions(props: EntityActionsProps) {
 
   return (
     <>
-      {show_activity && (
-        <Button
-          variant="outlined"
-          onClick={() =>
-            navigate(`${linkPrefix}${entity_name}s/${entity_id}/activity`, {
-              state: {
-                entityName: entity_name,
-              },
-            })
-          }
-        >
-          Activity
-        </Button>
-      )}
       {actions.includes("dryrun") && (
         <Tooltip title="Preview what will change before applying">
           <Button

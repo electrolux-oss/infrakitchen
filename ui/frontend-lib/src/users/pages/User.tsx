@@ -9,7 +9,7 @@ export const UserPage = () => {
 
   return (
     <EntityProvider entity_name="user" entity_id={user_id || ""}>
-      <EntityContainer title={"User Overview"} showActivity={false}>
+      <EntityContainer title={"User Overview"}>
         <UserContent />
       </EntityContainer>
     </EntityProvider>

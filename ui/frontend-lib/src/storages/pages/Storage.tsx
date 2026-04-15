@@ -10,7 +10,7 @@ export const StoragePage = () => {
 
   return (
     <EntityProvider entity_name="storage" entity_id={storage_id || ""}>
-      <EntityContainer title={"Storage Overview"} showActivity={false}>
+      <EntityContainer title={"Storage Overview"}>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

@@ -10,7 +10,7 @@ export const SourceCodePage = () => {
 
   return (
     <EntityProvider entity_name="source_code" entity_id={source_code_id || ""}>
-      <EntityContainer title={"Code Repository"} showActivity={false}>
+      <EntityContainer title={"Code Repository"}>
         <SourceCodeContent />
         <LogLiveTail />
       </EntityContainer>

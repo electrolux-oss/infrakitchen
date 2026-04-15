@@ -10,7 +10,7 @@ export const WorkspacePage = () => {
 
   return (
     <EntityProvider entity_name="workspace" entity_id={workspace_id || ""}>
-      <EntityContainer title={"Workspace Overview"} showActivity={false}>
+      <EntityContainer title={"Workspace Overview"}>
         <WorkspaceContent />
         <LogLiveTail />
       </EntityContainer>

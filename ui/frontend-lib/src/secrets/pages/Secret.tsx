@@ -48,7 +48,6 @@ export const SecretPage = () => {
     <EntityProvider entity_name="secret" entity_id={secret_id || ""}>
       <EntityContainer
         title={"Secret Overview"}
-        showActivity={false}
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"
