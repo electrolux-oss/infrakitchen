@@ -9,9 +9,9 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import {
   GetEntityLink,
-import { Labels } from "../../common/components/Labels";
   getProviderValue,
 } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
