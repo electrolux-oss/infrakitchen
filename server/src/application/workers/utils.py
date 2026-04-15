@@ -32,7 +32,12 @@ from core.utils.event_sender import EventSender
 
 
 async def get_source_code_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ):
     crud_source_code = SourceCodeCRUD(session=session)
     event_sender = EventSender(entity_name="source_code")
@@ -55,6 +60,7 @@ async def get_source_code_task(
             entity_id=source_code_instance.id,
             revision_number=int(source_code_instance.revision_number),
             trace_id=trace_id,
+            audit_log_id=audit_log_id,
         ),
         user=user,
         event_sender=event_sender,
@@ -63,7 +69,12 @@ async def get_source_code_task(
 
 
 async def get_source_code_version_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ):
     crud_source_code_version = SourceCodeVersionCRUD(session=session)
     source_code_service = get_source_code_service(session=session)
@@ -97,6 +108,7 @@ async def get_source_code_version_task(
             entity_id=str(source_code_version_instance.id),
             revision_number=int(source_code_version_instance.revision_number),
             trace_id=trace_id,
+            audit_log_id=audit_log_id,
         ),
         user=user,
         event_sender=event_sender,
@@ -105,7 +117,12 @@ async def get_source_code_version_task(
 
 
 async def get_storage_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ):
     crud_storage = StorageCRUD(session=session)
     event_sender = EventSender(entity_name="storage")
@@ -128,6 +145,7 @@ async def get_storage_task(
             entity_id=storage_instance.id,
             revision_number=int(storage_instance.revision_number),
             trace_id=trace_id,
+            audit_log_id=audit_log_id,
         ),
         user=user,
         event_sender=event_sender,
@@ -136,7 +154,12 @@ async def get_storage_task(
 
 
 async def get_resource_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ) -> ResourceTask:
     crud_resource = ResourceCRUD(session=session)
     crud_resource_temp_state = ResourceTempStateCrud(session=session)
@@ -161,6 +184,7 @@ async def get_resource_task(
         entity_id=resource_instance.id,
         revision_number=int(resource_instance.revision_number),
         trace_id=trace_id,
+        audit_log_id=audit_log_id,
     )
 
     secret_manager = get_secret_manager(
@@ -186,7 +210,12 @@ async def get_resource_task(
 
 
 async def get_executor_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ) -> ExecutorTask:
     crud_executor = ExecutorCRUD(session=session)
     event_sender = EventSender(entity_name="executor")
@@ -204,6 +233,7 @@ async def get_executor_task(
         entity_id=executor_instance.id,
         revision_number=int(executor_instance.revision_number),
         trace_id=trace_id,
+        audit_log_id=audit_log_id,
     )
 
     secret_manager = get_secret_manager(
@@ -227,7 +257,12 @@ async def get_executor_task(
 
 
 async def get_workspace_task(
-    session: AsyncSession, obj_id: UUID, user: UserDTO, action: ModelActions, trace_id: str | None = None
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
 ):
     resource_service = get_resource_service(session=session)
     crud_workspace = WorkspaceCRUD(session=session)
@@ -248,6 +283,7 @@ async def get_workspace_task(
         entity_name="workspace",
         entity_id=str(workspace_instance.id),
         trace_id=trace_id,
+        audit_log_id=audit_log_id,
     )
 
     resource_task = await get_resource_task(

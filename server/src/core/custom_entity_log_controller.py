@@ -28,6 +28,7 @@ class EntityLogger:
         entity_name: str,
         entity_id: str | UUID,
         revision_number: int = 1,
+        audit_log_id: str | UUID | None = None,
         should_be_expired: bool = False,
         trace_id: str | None = None,
     ):
@@ -37,6 +38,7 @@ class EntityLogger:
         self.entity_id: str | UUID = entity_id
         self.revision_number: int = revision_number
         self.execution_start: int = int(datetime.datetime.now().timestamp())
+        self.audit_log_id: str | UUID | None = audit_log_id
         self.trace_id: str | None = trace_id
         self._save_lock = asyncio.Lock()
         # setup ttl for logs to be expired ex. dry run logs
@@ -56,6 +58,7 @@ class EntityLogger:
             level="header",
             created_at=datetime.datetime.now(datetime.UTC),
             execution_start=self.execution_start,
+            audit_log_id=self.audit_log_id,
             expire_at=self.expire_at,
             trace_id=self.trace_id,
         )
@@ -83,6 +86,7 @@ class EntityLogger:
             level=level,
             created_at=datetime.datetime.now(datetime.UTC),
             execution_start=self.execution_start,
+            audit_log_id=self.audit_log_id,
             expire_at=self.expire_at,
             trace_id=self.trace_id,
         )

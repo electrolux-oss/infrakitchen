@@ -70,19 +70,19 @@ Global audit logs can be filtered by event types:
 
 ## 🔗 Correlation with Execution Logs
 
-Audit logs are automatically correlated with execution logs through a `trace_id`:
+Audit logs are automatically correlated with execution logs through a `audit_log_id`:
 
-1. When an action creates an audit log, the audit log ID is stored as `trace_id`
-2. Any execution logs generated during that action reference the same `trace_id`
+1. When an action creates an audit log, the audit log ID is stored as `audit_log_id`
+2. Any execution logs generated during that action reference the same `audit_log_id`
 3. This allows you to see both **what was done** (audit) and **how it was done** (execution logs)
 
 Example flow:
 
 ```
 User executes resource
-  └─> Audit log created (action: "execute", trace_id: abc-123)
+  └─> Audit log created (action: "execute", audit_log_id: abc-123)
        └─> Execution begins
-            └─> Logs written with trace_id: abc-123
+            └─> Logs written with audit_log_id: abc-123
 ```
 
 This enables complete traceability from user action to system execution.

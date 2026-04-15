@@ -1,7 +1,5 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Icon } from "@iconify/react";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import {
@@ -10,7 +8,6 @@ import {
   Card,
   CardContent,
   Chip,
-  IconButton,
   Stack,
   TextField,
   ToggleButton,
@@ -32,15 +29,16 @@ import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
 import { RevisionResponse } from "../../../revision/types";
 import { AuditLogEntity } from "../../../types";
+import {
+  LogActionButtons,
+  ACTIONS_WITH_LOGS,
+} from "../../LogsComponent/LogActionButtons";
+import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { GetEntityLink } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
 
 import { DiffEditor } from "./DiffEditor";
-import { Logs } from "./Logs";
 import { RevisionTimelines } from "./RevisionTimelines";
-
-const isTerraformLanguage = (lang?: string): boolean =>
-  lang === "opentofu" || lang === "terraform";
 
 export interface AuditProps {
   entityId: string;
@@ -84,23 +82,6 @@ export const AuditFilterPanel = ({
   );
 };
 
-const getDialogTitle = (
-  view: "summary" | "logs",
-  action?: string | null,
-): string => {
-  if (view === "logs") return "Logs";
-
-  switch (action) {
-    case "dryrun":
-    case "dryrun_with_temp_state":
-      return "Plan Summary";
-    case "execute":
-      return "Apply Summary";
-    default:
-      return "Execution Summary";
-  }
-};
-
 export const Audit = ({
   entityId,
   useVersionId,
@@ -111,23 +92,19 @@ export const Audit = ({
   const { ikApi } = useConfig();
   const [hashParams, setHashParams] = useHashParams();
 
-  const actionsWithLogs = useMemo<string[]>(
-    () => ["sync", "dryrun", "dryrun_with_temp_state", "execute"],
-    [],
-  );
-
+  const selectedAuditLogId = hashParams.get("auditLogId");
   const selectedTraceId = hashParams.get("traceId");
   const selectedVersionId = hashParams.get("versionId");
   const selectedView = hashParams.get("view") as "summary" | "logs" | null;
 
   const logsOpen = useMemo(() => {
-    if (!selectedTraceId || !selectedView) return false;
+    if (!selectedAuditLogId || !selectedView) return false;
     if (useVersionId) {
       return selectedVersionId === entityId;
     }
     return true;
   }, [
-    selectedTraceId,
+    selectedAuditLogId,
     selectedView,
     selectedVersionId,
     useVersionId,
@@ -136,7 +113,6 @@ export const Audit = ({
 
   const [auditLogs, setAuditLogs] = useState<AuditLogEntity[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [headerAction, setHeaderAction] = useState<ReactNode>(undefined);
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
 
   const [revisionDialogLeft, setRevisionDialogLeft] =
@@ -175,12 +151,12 @@ export const Audit = ({
   );
 
   const selectedAction = useMemo(() => {
-    if (!selectedTraceId) return null;
+    if (!selectedAuditLogId) return null;
     const matchingRow = auditLogs.find(
-      (row) => String(row.id) === String(selectedTraceId),
+      (row) => String(row.id) === String(selectedAuditLogId),
     );
     return matchingRow?.action ?? null;
-  }, [auditLogs, selectedTraceId]);
+  }, [auditLogs, selectedAuditLogId]);
 
   const [filterModel, setFilterModel] = useState<GridFilterModel>({
     items: [],
@@ -232,13 +208,12 @@ export const Audit = ({
   const openDialog = useCallback(
     (rowId: string, view: "summary" | "logs") => {
       const newParams = new URLSearchParams(hashParams);
-      newParams.set("traceId", rowId);
+      newParams.set("auditLogId", rowId);
       newParams.set("view", view);
       if (useVersionId) {
         newParams.set("versionId", entityId);
       }
       setHashParams(newParams);
-      setHeaderAction(undefined);
     },
     [hashParams, setHashParams, useVersionId, entityId],
   );
@@ -302,49 +277,16 @@ export const Audit = ({
         flex: 1,
         sortable: false,
         renderCell: (params) => (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            {actionsWithLogs.includes(params.row.action) && (
-              <>
-                {params.row.action !== "sync" &&
-                  isTerraformLanguage(sourceCodeLanguage) && (
-                    <Tooltip title="Summary">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDialog(params.row.id, "summary");
-                        }}
-                      >
-                        <AutoAwesomeIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                <Tooltip title="Logs">
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openDialog(params.row.id, "logs");
-                    }}
-                  >
-                    <Icon icon="ix:log" />
-                  </IconButton>
-                </Tooltip>
-              </>
-            )}
-          </Box>
+          <LogActionButtons
+            action={params.row.action}
+            sourceCodeLanguage={sourceCodeLanguage}
+            onOpenSummary={() => openDialog(params.row.id, "summary")}
+            onOpenLogs={() => openDialog(params.row.id, "logs")}
+          />
         ),
       },
     ],
     [
-      actionsWithLogs,
       openDialog,
       entityId,
       sourceCodeLanguage,
@@ -437,48 +379,45 @@ export const Audit = ({
                 <RevisionTimelines
                   logs={auditLogs}
                   search={search}
-                  actionsWithLogs={actionsWithLogs}
+                  actionsWithLogs={ACTIONS_WITH_LOGS}
                   onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
                   onOpenDialog={openDialog}
                 />
               )}
-              {logsOpen && selectedTraceId && selectedView && (
-                <CommonDialog
-                  title={getDialogTitle(selectedView, selectedAction)}
-                  maxWidth="md"
-                  hasFooterActions={false}
-                  open={logsOpen}
-                  onClose={() => {
-                    const newParams = new URLSearchParams(hashParams);
-                    newParams.delete("traceId");
-                    newParams.delete("view");
-                    if (useVersionId) {
-                      newParams.delete("versionId");
-                    }
-                    setHashParams(newParams);
-                    setHeaderAction(undefined);
-                  }}
-                  headerAction={headerAction}
-                  content={
-                    <Logs
-                      entityId={entityId}
-                      traceId={selectedTraceId}
-                      eventAction={selectedAction ?? undefined}
-                      view={selectedView}
-                      onHeaderActionReady={setHeaderAction}
-                      onOpenLogs={() => {
-                        const newParams = new URLSearchParams(hashParams);
+              {logsOpen &&
+                (selectedAuditLogId || selectedTraceId) &&
+                selectedView && (
+                  <LogsDialog
+                    entityId={entityId}
+                    action={selectedAction ?? undefined}
+                    view={selectedView}
+                    auditLogId={selectedAuditLogId ?? undefined}
+                    traceId={selectedTraceId ?? undefined}
+                    onClose={() => {
+                      const newParams = new URLSearchParams(hashParams);
+                      newParams.delete("auditLogId");
+                      newParams.delete("traceId");
+                      newParams.delete("view");
+                      if (useVersionId) {
+                        newParams.delete("versionId");
+                      }
+                      setHashParams(newParams);
+                    }}
+                    onViewChange={(view) => {
+                      const newParams = new URLSearchParams(hashParams);
+                      if (selectedTraceId) {
                         newParams.set("traceId", selectedTraceId);
-                        newParams.set("view", "logs");
-                        if (useVersionId) {
-                          newParams.set("versionId", entityId);
-                        }
-                        setHashParams(newParams);
-                      }}
-                    />
-                  }
-                />
-              )}
+                      } else if (selectedAuditLogId) {
+                        newParams.set("auditLogId", selectedAuditLogId);
+                      }
+                      newParams.set("view", view);
+                      if (useVersionId) {
+                        newParams.set("versionId", entityId);
+                      }
+                      setHashParams(newParams);
+                    }}
+                  />
+                )}
               <CommonDialog
                 title={
                   revisionDialogRev === 1

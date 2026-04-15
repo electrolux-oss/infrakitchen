@@ -24,12 +24,5 @@ class LogService:
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
-    async def get_logs_execution_time(self, entity_id: str, trace_id: str | None = None) -> list[LogResponse]:
-        """
-        Execution time logs for a specific entity.
-        """
-        result = await self.crud.get_logs_execution_time(entity_id, trace_id)
-        return list(LogResponse.model_validate(log) for log in result)
-
     async def delete_by_entity_id(self, entity_id: str) -> None:
         await self.crud.delete_by_entity_id(entity_id)

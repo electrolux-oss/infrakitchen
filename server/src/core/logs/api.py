@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi import status as http_status
 
 from core.logs.schema import LogResponse
@@ -50,21 +50,4 @@ async def get_all(
 
     headers = {"Content-Range": f"logs 0-{len(result)}/{total}"}
     response.headers.update(headers)
-    return result
-
-
-@router.get(
-    "/logs/execution_time/{entity_id}",
-    response_description="Logs execution time",
-    response_model=list[LogResponse],
-)
-async def get_logs_execution_time(
-    entity_id: str,
-    service: LogService = Depends(get_log_service),
-    trace_id: str = Query(default=None, description="Trace ID for filtering logs"),
-):
-    """
-    Execution time logs for a specific entity.
-    """
-    result = await service.get_logs_execution_time(entity_id=entity_id, trace_id=trace_id)
     return result

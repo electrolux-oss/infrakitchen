@@ -1,15 +1,16 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useEffectOnce } from "react-use";
 
-import { Box, List, ListItem, ListItemText, Typography } from "@mui/material";
-import Ansi from "ansi-to-react";
+import { Box, Typography } from "@mui/material";
 
 import { LogEntity } from "../../types";
 import { getTimeOnlyValue } from "../components/CommonField";
 import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
+
+import { LogLine } from "./LogLine";
 
 function createLog(log: LogEntity[]) {
   const result: { id: string; data: string }[] = [];
@@ -30,16 +31,19 @@ function createLog(log: LogEntity[]) {
   return result;
 }
 
-export const LogView = (props: {
-  entity_id: string;
-  execution_time: number;
+export const LogsView = (props: {
+  entityId: string;
+  auditLogId?: string;
+  traceId?: string;
+  executionTime?: number;
+  scrollContainerId: string;
 }) => {
-  const { entity_id, execution_time } = props;
+  const { entityId, auditLogId, traceId, scrollContainerId, executionTime } =
+    props;
   const { ikApi } = useConfig();
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFetching = useRef(false);
   const indexRef = useRef(1);
 
@@ -47,16 +51,26 @@ export const LogView = (props: {
     if (isFetching.current) return; // prevent concurrent fetches
     isFetching.current = true;
 
+    const filter: Record<string, string | number> = { entity_id: entityId };
+    if (auditLogId) {
+      filter.audit_log_id = auditLogId;
+    }
+    if (executionTime) {
+      filter.execution_start = executionTime;
+    }
+    if (traceId) {
+      filter.trace_id = traceId;
+    }
+
     ikApi
       .getList("logs", {
-        filter: { entity_id, execution_start: execution_time },
+        filter,
         pagination: { page: indexRef.current, perPage: 600 },
         sort: { field: "created_at", order: "DESC" },
       })
       .then((response) => {
-        setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
-
         if (response.data.length > 0) {
+          setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
           indexRef.current += 1;
         } else {
           setHasMore(false);
@@ -66,7 +80,7 @@ export const LogView = (props: {
       .finally(() => {
         isFetching.current = false;
       });
-  }, [ikApi, entity_id, execution_time]);
+  }, [ikApi, entityId, auditLogId, traceId, executionTime]);
 
   useEffectOnce(() => {
     fetchMoreData();
@@ -74,8 +88,7 @@ export const LogView = (props: {
 
   return (
     <Box
-      id="logScrollContainer"
-      ref={scrollContainerRef}
+      id={scrollContainerId}
       sx={{
         height: "calc(100vh - 300px)",
         minHeight: 400,
@@ -87,28 +100,20 @@ export const LogView = (props: {
       }}
     >
       {logs.length > 0 ? (
-        <List dense>
-          <InfiniteScroll
-            dataLength={logs.length}
-            next={fetchMoreData}
-            hasMore={hasMore}
-            inverse={true}
-            loader={<GradientCircularProgress />}
-            scrollableTarget="logScrollContainer"
-          >
-            {createLog(logs).map((log) => (
-              <ListItem disablePadding key={log.id}>
-                <ListItemText sx={{ margin: 0 }}>
-                  <pre style={{ margin: 0 }}>
-                    <Ansi>{log.data}</Ansi>
-                  </pre>
-                </ListItemText>
-              </ListItem>
-            ))}
-          </InfiniteScroll>
-        </List>
+        <InfiniteScroll
+          dataLength={logs.length}
+          next={fetchMoreData}
+          hasMore={hasMore}
+          inverse={true}
+          loader={<GradientCircularProgress />}
+          scrollableTarget={scrollContainerId}
+        >
+          {createLog(logs).map((log) => (
+            <LogLine key={log.id} line={log.data} />
+          ))}
+        </InfiniteScroll>
       ) : (
-        <Typography>No logs found</Typography>
+        <Typography color="text.secondary">No logs available.</Typography>
       )}
     </Box>
   );

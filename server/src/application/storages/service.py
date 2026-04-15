@@ -157,6 +157,7 @@ class StorageService:
                         existing_storage.id,
                         requester=requester,
                         trace_id=self.audit_log_handler.trace_id,
+                        audit_log_id=self.audit_log_handler.audit_log_id,
                         action=ModelActions.EXECUTE,
                     )
                 else:
@@ -189,7 +190,10 @@ class StorageService:
             case ModelActions.EXECUTE:
                 await execute_entity(existing_storage)
                 await self.event_sender.send_task(
-                    existing_storage.id, requester=requester, trace_id=self.audit_log_handler.trace_id
+                    existing_storage.id,
+                    requester=requester,
+                    trace_id=self.audit_log_handler.trace_id,
+                    audit_log_id=self.audit_log_handler.audit_log_id,
                 )
 
             case ModelActions.RECREATE:

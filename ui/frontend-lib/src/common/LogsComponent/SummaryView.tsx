@@ -26,10 +26,10 @@ import {
 } from "@mui/material";
 import Ansi from "ansi-to-react";
 
-import { LogEntity } from "../../../types";
-import { ENTITY_ACTION } from "../../../utils/constants";
-import { useConfig } from "../../context";
-import { RelativeTime } from "../RelativeTime";
+import { LogEntity } from "../../types";
+import { ENTITY_ACTION } from "../../utils/constants";
+import { RelativeTime } from "../components/RelativeTime";
+import { useConfig } from "../context";
 
 import { LogLine } from "./LogLine";
 
@@ -390,12 +390,22 @@ const ExecutionStatusIcon = ({
 
 export const SummaryView = (props: {
   entityId: string;
-  traceId: string;
+  auditLogId?: string;
+  traceId?: string;
+  executionStart?: number;
   eventAction?: string;
   refreshKey?: number;
   onOpenLogs?: () => void;
 }) => {
-  const { entityId, traceId, eventAction, refreshKey, onOpenLogs } = props;
+  const {
+    entityId,
+    auditLogId,
+    traceId,
+    executionStart,
+    eventAction,
+    refreshKey,
+    onOpenLogs,
+  } = props;
   const { ikApi } = useConfig();
 
   const [allLogs, setAllLogs] = useState<LogEntity[]>([]);
@@ -405,60 +415,54 @@ export const SummaryView = (props: {
     ExecutionStatus | undefined
   >(undefined);
 
-  const fetchAllLogsForExecution = useCallback(
-    async (executionStart: number): Promise<LogEntity[]> => {
-      const perPage = 1000;
-      let page = 1;
-      const collected: LogEntity[] = [];
+  const fetchAllLogsForExecution = useCallback(async (): Promise<
+    LogEntity[]
+  > => {
+    const perPage = 1000;
+    let page = 1;
+    const collected: LogEntity[] = [];
 
-      while (true) {
-        const pageResult = await ikApi.getList("logs", {
-          filter: { entity_id: entityId, execution_start: executionStart },
-          pagination: { page, perPage },
-          sort: { field: "created_at", order: "ASC" },
-        });
+    const filter: Record<string, string | number> = { entity_id: entityId };
+    if (auditLogId) {
+      filter.audit_log_id = auditLogId;
+    }
+    if (executionStart) {
+      filter.execution_start = executionStart;
+    }
+    if (traceId) {
+      filter.trace_id = traceId;
+    }
 
-        const chunk = pageResult.data || [];
-        if (chunk.length === 0) {
-          break;
-        }
+    while (true) {
+      const pageResult = await ikApi.getList("logs", {
+        filter,
+        pagination: { page, perPage },
+        sort: { field: "created_at", order: "ASC" },
+      });
 
-        collected.push(...chunk);
-
-        if (chunk.length < perPage) {
-          break;
-        }
-
-        page += 1;
+      const chunk = pageResult.data || [];
+      if (chunk.length === 0) {
+        break;
       }
 
-      return collected;
-    },
-    [ikApi, entityId],
-  );
+      collected.push(...chunk);
 
-  const fetchLogsExecutionTime = useCallback(async () => {
-    const execution_start_result = await ikApi.get(
-      `logs/execution_time/${entityId}`,
-      { trace_id: traceId },
-    );
-    const sorted = execution_start_result.sort(
-      (a: LogEntity, b: LogEntity) => b.execution_start - a.execution_start,
-    );
-    const selectedExec = sorted.length > 0 ? sorted[0].execution_start : null;
+      if (chunk.length < perPage) {
+        break;
+      }
 
-    if (selectedExec) {
-      const logsForExecution = await fetchAllLogsForExecution(selectedExec);
-      setAllLogs(logsForExecution);
-    } else {
-      setAllLogs([]);
+      page += 1;
     }
+
     setLoaded(true);
-  }, [ikApi, entityId, traceId, fetchAllLogsForExecution]);
+    return collected;
+  }, [ikApi, entityId, auditLogId, traceId, executionStart]);
 
   useEffect(() => {
-    void fetchLogsExecutionTime();
-  }, [fetchLogsExecutionTime, refreshKey]);
+    fetchAllLogsForExecution().then((logs) => {
+      setAllLogs(logs);
+    });
+  }, [fetchAllLogsForExecution, refreshKey]);
 
   useEffect(() => {
     if (!loaded || allLogs.length === 0 || !eventAction) {

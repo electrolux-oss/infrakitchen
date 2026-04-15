@@ -31,7 +31,8 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { LogList } from "../../common/LogsComponent/LogList";
+import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
+import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { BatchOperation, BatchOperationCreate } from "../types";
 
@@ -52,6 +53,8 @@ export const BatchOperationEntities = ({
   );
   const [entitiesLoading, setEntitiesLoading] = useState(false);
   const [logsEntityId, setLogsEntityId] = useState<string | null>(null);
+  const [auditId, setAuditId] = useState<string | null>(null);
+  const [logView, setLogView] = useState<"summary" | "logs">("logs");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
@@ -138,9 +141,33 @@ export const BatchOperationEntities = ({
     loadEntities();
   };
 
-  const handleOpenLogs = (entityId: string) => {
-    setLogsEntityId(entityId);
-  };
+  const fetchLastAuditLog = useCallback(
+    async (entity_id: string) => {
+      await ikApi
+        .getList("audit_logs", {
+          filter: { entity_id, model: batchOperation.entity_type },
+          pagination: { page: 1, perPage: 1 },
+          sort: { field: "created_at", order: "DESC" },
+        })
+        .then((response) => {
+          const lastLog = response.data?.[0];
+          setAuditId(lastLog?.id || null);
+          setLogsEntityId(entity_id);
+        })
+        .catch(() => {
+          setAuditId(null);
+        });
+    },
+    [ikApi, batchOperation.entity_type],
+  );
+
+  const handleOpenLogs = useCallback(
+    (entityId: string, view: string) => {
+      setLogView(view as "summary" | "logs");
+      fetchLastAuditLog(entityId);
+    },
+    [fetchLastAuditLog],
+  );
 
   const handleCloseLogs = () => {
     setLogsEntityId(null);
@@ -329,13 +356,12 @@ export const BatchOperationEntities = ({
         sortable: false,
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => handleOpenLogs(params.row.id)}
-          >
-            Logs
-          </Button>
+          <LogActionButtons
+            action={"any"}
+            sourceCodeLanguage={"opentofu"}
+            onOpenSummary={() => handleOpenLogs(params.row.id, "summary")}
+            onOpenLogs={() => handleOpenLogs(params.row.id, "logs")}
+          />
         ),
       },
       {
@@ -373,7 +399,7 @@ export const BatchOperationEntities = ({
     }
 
     return baseColumns;
-  }, [batchOperation?.entity_type, handleRemoveEntity]);
+  }, [batchOperation?.entity_type, handleRemoveEntity, handleOpenLogs]);
 
   return (
     <PropertyCard
@@ -449,7 +475,9 @@ export const BatchOperationEntities = ({
       >
         <DialogTitle>Latest Logs</DialogTitle>
         <DialogContent>
-          {logsEntityId && <LogList entity_id={logsEntityId} />}
+          {logsEntityId && auditId && (
+            <Logs entityId={logsEntityId} auditLogId={auditId} view={logView} />
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseLogs} color="primary" variant="outlined">

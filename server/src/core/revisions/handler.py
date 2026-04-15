@@ -46,7 +46,7 @@ class RevisionHandler:
             return revision.revision_number + 1
         return 1
 
-    async def handle_revision(self, entity_instance: BaseRevision) -> int | None:
+    async def handle_revision(self, entity_instance: BaseRevision) -> None:
         dumped_model = to_dict(entity_instance)
         self.remove_hidden_from_user_fields(dumped_model)
         mask_secret_values(dumped_model)
@@ -60,7 +60,7 @@ class RevisionHandler:
 
             if dumped_model == previous_entity_dump:
                 logger.info("No changes detected, skipping revision")
-                return None
+                return
         revision_number = await self.get_next_revision(entity_instance.id)
         revision = RevisionCreate(
             model=self.entity_name,
@@ -71,7 +71,6 @@ class RevisionHandler:
         body = revision.model_dump(exclude_unset=True)
         entity_instance.revision_number = revision.revision_number
         await self.crud.create(body)
-        return revision_number
 
     async def delete_revisions(self, entity_id: UUID | str) -> None:
         await self.crud.delete_by_entity_id(entity_id)

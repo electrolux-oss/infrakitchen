@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
+import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
@@ -42,6 +43,17 @@ export const ResourceContent = () => {
       content: <ResourcePermissions resource={entity} />,
     },
     {
+      label: "Logs",
+      content: (
+        <EntityLogs
+          entityId={entity.id}
+          sourceCodeLanguage={
+            entity.source_code_version?.source_code?.source_code_language
+          }
+        />
+      ),
+    },
+    {
       label: "Audit",
       content: (
         <Audit
@@ -54,6 +66,7 @@ export const ResourceContent = () => {
         />
       ),
     },
+
     {
       label: "Revisions",
       content: (
