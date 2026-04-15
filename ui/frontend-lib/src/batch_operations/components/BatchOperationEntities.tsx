@@ -2,25 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormProvider, useForm } from "react-hook-form";
 
-import { Icon } from "@iconify/react";
 import AddIcon from "@mui/icons-material/Add";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
-  Box,
   Button,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
   List,
   ListItem,
   ListItemText,
   Stack,
-  Tooltip,
 } from "@mui/material";
 import {
   DataGrid,
@@ -31,12 +26,13 @@ import {
 } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { Logs } from "../../common/components/activity/Logs";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
+import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { BatchOperation, BatchOperationCreate } from "../types";
 
@@ -360,37 +356,12 @@ export const BatchOperationEntities = ({
         sortable: false,
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            <Tooltip title="Logs">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenLogs(params.row.id, "logs");
-                }}
-              >
-                <Icon icon="ix:log" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Summary">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenLogs(params.row.id, "summary");
-                }}
-              >
-                <AutoAwesomeIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
+          <LogActionButtons
+            action={"any"}
+            sourceCodeLanguage={"opentofu"}
+            onOpenSummary={() => handleOpenLogs(params.row.id, "summary")}
+            onOpenLogs={() => handleOpenLogs(params.row.id, "logs")}
+          />
         ),
       },
       {
@@ -505,7 +476,7 @@ export const BatchOperationEntities = ({
         <DialogTitle>Latest Logs</DialogTitle>
         <DialogContent>
           {logsEntityId && auditId && (
-            <Logs entityId={logsEntityId} traceId={auditId} view={logView} />
+            <Logs entityId={logsEntityId} auditLogId={auditId} view={logView} />
           )}
         </DialogContent>
         <DialogActions>

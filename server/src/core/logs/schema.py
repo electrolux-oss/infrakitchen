@@ -16,6 +16,6 @@ class LogResponse(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     execution_start: int = Field(default=1)
     expire_at: datetime | None = Field(default=None)
-    trace_id: str | None = Field(default=None)
+    trace_id: str | uuid.UUID | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)

@@ -20,7 +20,9 @@ const getSummaryDescription = (eventAction?: string) => {
 
 export const Logs = (props: {
   entityId: string;
-  traceId: string;
+  auditLogId?: string;
+  traceId?: string;
+  executionStart?: number;
   eventAction?: string;
   view: "summary" | "logs" | "revision";
   onHeaderActionReady?: (headerAction: ReactNode) => void;
@@ -28,7 +30,9 @@ export const Logs = (props: {
 }) => {
   const {
     entityId,
+    auditLogId,
     traceId,
+    executionStart,
     eventAction,
     view,
     onHeaderActionReady,
@@ -37,7 +41,7 @@ export const Logs = (props: {
   const logsScrollContainerId = "activityLogsScrollContainer";
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(1);
 
   const handleManualRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -90,7 +94,9 @@ export const Logs = (props: {
           </Box>
           <SummaryView
             entityId={entityId}
+            auditLogId={auditLogId}
             traceId={traceId}
+            executionStart={executionStart}
             eventAction={eventAction}
             refreshKey={refreshKey}
             onOpenLogs={onOpenLogs}
@@ -109,8 +115,11 @@ export const Logs = (props: {
             }}
           ></Box>
           <LogsView
+            key={refreshKey}
             entityId={entityId}
-            auditLogId={traceId}
+            auditLogId={auditLogId}
+            traceId={traceId}
+            executionTime={executionStart}
             scrollContainerId={logsScrollContainerId}
           />
         </>

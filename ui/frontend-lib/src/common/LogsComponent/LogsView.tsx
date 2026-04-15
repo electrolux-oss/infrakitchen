@@ -5,10 +5,10 @@ import { useEffectOnce } from "react-use";
 
 import { Box, Typography } from "@mui/material";
 
-import { LogEntity } from "../../../types";
-import { useConfig } from "../../context";
-import GradientCircularProgress from "../../GradientCircularProgress";
-import { getTimeOnlyValue } from "../CommonField";
+import { LogEntity } from "../../types";
+import { getTimeOnlyValue } from "../components/CommonField";
+import { useConfig } from "../context";
+import GradientCircularProgress from "../GradientCircularProgress";
 
 import { LogLine } from "./LogLine";
 
@@ -34,10 +34,12 @@ function createLog(log: LogEntity[]) {
 export const LogsView = (props: {
   entityId: string;
   auditLogId?: string;
+  traceId?: string;
   executionTime?: number;
   scrollContainerId: string;
 }) => {
-  const { entityId, auditLogId, scrollContainerId, executionTime } = props;
+  const { entityId, auditLogId, traceId, scrollContainerId, executionTime } =
+    props;
   const { ikApi } = useConfig();
 
   const [logs, setLogs] = useState<LogEntity[]>([]);
@@ -56,6 +58,9 @@ export const LogsView = (props: {
     if (executionTime) {
       filter.execution_start = executionTime;
     }
+    if (traceId) {
+      filter.trace_id = traceId;
+    }
 
     ikApi
       .getList("logs", {
@@ -64,9 +69,8 @@ export const LogsView = (props: {
         sort: { field: "created_at", order: "DESC" },
       })
       .then((response) => {
-        setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
-
         if (response.data.length > 0) {
+          setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
           indexRef.current += 1;
         } else {
           setHasMore(false);
@@ -76,7 +80,7 @@ export const LogsView = (props: {
       .finally(() => {
         isFetching.current = false;
       });
-  }, [ikApi, entityId, auditLogId, executionTime]);
+  }, [ikApi, entityId, auditLogId, traceId, executionTime]);
 
   useEffectOnce(() => {
     fetchMoreData();

@@ -24,7 +24,4 @@ class AuditLogHandler:
         )
         self.session.add(audit_log)
         await self.session.flush()
-        # by default we can use audit log id as trace id for better tracking of logs and audit logs in the system,
-        # but it can be overridden by passing trace_id in the header of the request
-        self.trace_id = str(audit_log.id)
         self.audit_log_id = audit_log.id

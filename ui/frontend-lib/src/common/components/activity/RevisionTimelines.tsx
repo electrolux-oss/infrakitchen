@@ -44,7 +44,7 @@ export const RevisionTimelines = ({
       // Falls back to "v1" when revision_number is not available
       const revision = log.revision_number
         ? `v${log.revision_number}`
-        : "uncategorized";
+        : "No revision";
       if (!map.has(revision)) {
         const arr: AuditLogEntity[] = [];
         map.set(revision, arr);

@@ -26,10 +26,10 @@ import {
 } from "@mui/material";
 import Ansi from "ansi-to-react";
 
-import { LogEntity } from "../../../types";
-import { ENTITY_ACTION } from "../../../utils/constants";
-import { useConfig } from "../../context";
-import { RelativeTime } from "../RelativeTime";
+import { LogEntity } from "../../types";
+import { ENTITY_ACTION } from "../../utils/constants";
+import { RelativeTime } from "../components/RelativeTime";
+import { useConfig } from "../context";
 
 import { LogLine } from "./LogLine";
 
@@ -390,6 +390,7 @@ const ExecutionStatusIcon = ({
 
 export const SummaryView = (props: {
   entityId: string;
+  auditLogId?: string;
   traceId?: string;
   executionStart?: number;
   eventAction?: string;
@@ -398,6 +399,7 @@ export const SummaryView = (props: {
 }) => {
   const {
     entityId,
+    auditLogId,
     traceId,
     executionStart,
     eventAction,
@@ -421,11 +423,14 @@ export const SummaryView = (props: {
     const collected: LogEntity[] = [];
 
     const filter: Record<string, string | number> = { entity_id: entityId };
-    if (traceId) {
-      filter.audit_log_id = traceId;
+    if (auditLogId) {
+      filter.audit_log_id = auditLogId;
     }
     if (executionStart) {
       filter.execution_start = executionStart;
+    }
+    if (traceId) {
+      filter.trace_id = traceId;
     }
 
     while (true) {
@@ -451,7 +456,7 @@ export const SummaryView = (props: {
 
     setLoaded(true);
     return collected;
-  }, [ikApi, entityId, traceId, executionStart]);
+  }, [ikApi, entityId, auditLogId, traceId, executionStart]);
 
   useEffect(() => {
     fetchAllLogsForExecution().then((logs) => {
