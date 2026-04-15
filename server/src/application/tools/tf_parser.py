@@ -106,7 +106,10 @@ class OtfProvider:
         self.directory: str | None = None
 
     def parse_tf_to_json(self, tf_data: str) -> dict[str, Any]:
-        dict_data: dict[str, Any] = hcl2.loads(tf_data)
+        dict_data: dict[str, Any] = hcl2.loads(
+            tf_data,
+            serialization_options=hcl2.SerializationOptions(strip_string_quotes=True, explicit_blocks=False),
+        )
 
         variables = dict_data.get("variable", [])
         if not variables:
