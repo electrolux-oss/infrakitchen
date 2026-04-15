@@ -92,7 +92,9 @@ class StorageService:
         result = await self.crud.get_by_id(new_storage.id)
 
         await self.revision_handler.handle_revision(new_storage)
-        await self.audit_log_handler.create_log(new_storage.id, requester.id, ModelActions.CREATE)
+        await self.audit_log_handler.create_log(
+            new_storage.id, requester.id, ModelActions.CREATE, revision_number=new_storage.revision_number
+        )
         response = StorageResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return response
@@ -124,8 +126,10 @@ class StorageService:
 
         await self.crud.update(existing_storage, body)
 
-        await self.audit_log_handler.create_log(storage_id, requester.id, ModelActions.UPDATE)
         await self.revision_handler.handle_revision(existing_storage)
+        await self.audit_log_handler.create_log(
+            storage_id, requester.id, ModelActions.UPDATE, revision_number=existing_storage.revision_number
+        )
         await self.crud.refresh(existing_storage)
 
         response = StorageResponse.model_validate(existing_storage)
@@ -148,7 +152,9 @@ class StorageService:
             logger.error(f"Entity has wrong status for patching {existing_storage.status}")
             raise EntityWrongState(f"Entity has wrong status for patching {existing_storage.status}")
 
-        await self.audit_log_handler.create_log(existing_storage.id, requester.id, body.action)
+        await self.audit_log_handler.create_log(
+            existing_storage.id, requester.id, body.action, revision_number=existing_storage.revision_number
+        )
 
         match body.action:
             case ModelActions.RETRY:

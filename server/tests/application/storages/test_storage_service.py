@@ -188,7 +188,7 @@ class TestCreate:
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_storage)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_storage.id, mocked_user.id, ModelActions.CREATE
+            mocked_storage.id, mocked_user.id, ModelActions.CREATE, revision_number=mocked_storage.revision_number
         )
         response = StorageResponse.model_validate(mocked_storage)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
@@ -291,7 +291,7 @@ class TestUpdate:
         )
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            updated_storage.id, requester.id, ModelActions.UPDATE
+            updated_storage.id, requester.id, ModelActions.UPDATE, revision_number=existing_storage.revision_number
         )
         mock_storage_crud.refresh.assert_awaited_once_with(existing_storage)
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_storage)
@@ -401,7 +401,9 @@ class TestPatch:
         result = await mock_storage_service.patch_action(storage_id=storage_id, body=patch_body, requester=mocked_user)
 
         mock_storage_crud.get_by_id.assert_awaited_once_with(storage_id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(storage_id, mocked_user.id, action)
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            storage_id, mocked_user.id, action, revision_number=existing_storage.revision_number
+        )
         mock_event_sender.send_event.assert_awaited_once_with(result, action)
 
         assert result.status == expected_status
