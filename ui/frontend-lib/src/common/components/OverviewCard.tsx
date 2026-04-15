@@ -18,11 +18,28 @@ export interface OverviewCardProps {
   actions?: ReactNode;
   icon?: ReactNode;
   chip?: string;
+  chipColor?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning";
   sx?: SxProps<Theme>;
 }
 
 export const OverviewCard = (props: OverviewCardProps) => {
-  const { name, description, children, actions, icon, chip, sx } = props;
+  const {
+    name,
+    description,
+    children,
+    actions,
+    icon,
+    chip,
+    chipColor = "info",
+    sx,
+  } = props;
   return (
     <Card sx={{ width: "100%", ...sx }}>
       {(name || description || actions || chip) && (
@@ -36,7 +53,7 @@ export const OverviewCard = (props: OverviewCardProps) => {
                   label={chip.toUpperCase()}
                   size="small"
                   variant="outlined"
-                  color="info"
+                  color={chipColor}
                 />
               )}
             </Box>

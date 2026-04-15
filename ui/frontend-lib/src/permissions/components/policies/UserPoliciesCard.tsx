@@ -101,7 +101,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
   );
 
   return (
-    <OverviewCard name="User Policies">
+    <OverviewCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"

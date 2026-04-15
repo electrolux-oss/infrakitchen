@@ -1,12 +1,12 @@
-import { Box } from "@mui/material";
+import { Box, Divider } from "@mui/material";
 
 import {
-  getLabels,
   CommonField,
   GetReferenceUrlValue,
   GetEntityLink,
 } from "../../common/components/CommonField";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -69,13 +69,21 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         size={4}
       />
 
-      <CommonField name="Labels" value={getLabels(resource.labels)} size={12} />
+      <CommonField
+        name="Labels"
+        value={<Labels labels={resource.labels} />}
+        size={12}
+      />
 
-      {resource.parents.length > 0 && (
-        <CommonField
-          name={`Parents (${resource.parents.length})`}
-          size={6}
-          value={
+      <Box sx={{ width: "100%", my: 1 }}>
+        <Divider />
+      </Box>
+
+      <CommonField
+        name="Parents"
+        size={6}
+        value={
+          resource.parents.length > 0 ? (
             <Box
               sx={(theme) => ({
                 display: "flex",
@@ -97,14 +105,14 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                 />
               ))}
             </Box>
-          }
-        />
-      )}
-      {resource.children.length > 0 && (
-        <CommonField
-          name={`Children (${resource.children.length})`}
-          size={6}
-          value={
+          ) : null
+        }
+      />
+      <CommonField
+        name="Children"
+        size={6}
+        value={
+          resource.children.length > 0 ? (
             <Box
               sx={(theme) => ({
                 display: "flex",
@@ -126,9 +134,9 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                 />
               ))}
             </Box>
-          }
-        />
-      )}
+          ) : null
+        }
+      />
     </OverviewCard>
   );
 };

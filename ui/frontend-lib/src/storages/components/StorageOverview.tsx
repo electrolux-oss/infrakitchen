@@ -1,4 +1,5 @@
-import { getLabels, CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -27,7 +28,7 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
       />
       <CommonField
         name={"Storage Tags"}
-        value={getLabels(storage.labels)}
+        value={<Labels labels={storage.labels} />}
         size={12}
       />
     </OverviewCard>

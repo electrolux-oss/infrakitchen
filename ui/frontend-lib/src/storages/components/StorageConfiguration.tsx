@@ -3,7 +3,6 @@ import {
   CommonField,
   getProviderValue,
   GetReferenceUrlValue,
-  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { StorageResponse } from "../types";
@@ -30,10 +29,7 @@ export const StorageConfiguration = ({
         name={"Storage Provider"}
         value={getProviderValue(storage.storage_provider)}
       />
-      <CommonField
-        name={"Storage Type"}
-        value={getTextValue(storage.storage_type)}
-      />
+      <CommonField name={"Storage Type"} value={storage.storage_type} />
       {Object.entries(storage.configuration).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
       })}

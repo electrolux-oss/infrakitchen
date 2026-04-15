@@ -1,9 +1,6 @@
 import { formatLabel } from "../../common";
-import {
-  CommonField,
-  getLabels,
-  getTextValue,
-} from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { AuthProviderResponse } from "../types";
 
@@ -18,11 +15,11 @@ export const AuthProviderConfiguration = ({
     <OverviewCard name="Auth Provider Configuration">
       <CommonField
         name={"Auth Provider Type"}
-        value={getTextValue(auth_provider.auth_provider)}
+        value={auth_provider.auth_provider}
       />
       <CommonField
         name={"Filter By Domain"}
-        value={getLabels(auth_provider.filter_by_domain)}
+        value={<Labels labels={auth_provider.filter_by_domain} />}
       />
       {Object.entries(auth_provider.configuration).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;

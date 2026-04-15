@@ -4,9 +4,9 @@ import { IconField } from "../../common";
 import {
   CommonField,
   GetReferenceUrlValue,
-  getLabels,
   getRemoteUrlValue,
 } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -53,9 +53,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
               {...sourceCode.integration}
               urlProvider={sourceCode.integration.integration_provider}
             />
-          ) : (
-            "N/A"
-          )
+          ) : null
         }
       />
       <CommonField
@@ -71,7 +69,10 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         name={"Last Updated"}
         value={<RelativeTime date={sourceCode.updated_at} />}
       />
-      <CommonField name={"Labels"} value={getLabels(sourceCode.labels)} />
+      <CommonField
+        name={"Labels"}
+        value={<Labels labels={sourceCode.labels} />}
+      />
     </OverviewCard>
   );
 };

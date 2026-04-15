@@ -5,6 +5,8 @@ export * from "./filter_panel/FilterConfig";
 export * from "./filter_panel/FilterRenderer";
 export * from "./GlobalNotificationPopup";
 export * from "./HorizontalTimeline";
+export * from "./InlineCode";
 export * from "./inputs";
+export * from "./Labels";
 export * from "./notifications";
 export * from "./UserAvatar";

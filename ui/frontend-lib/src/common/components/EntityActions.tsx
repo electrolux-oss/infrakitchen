@@ -123,14 +123,14 @@ export function EntityActions(props: EntityActionsProps) {
         </Tooltip>
       )}
       {actions.includes("retry") && (
-        <Button variant="contained" onClick={() => changeDialog("retry")}>
+        <Button variant="outlined" onClick={() => changeDialog("retry")}>
           Retry
         </Button>
       )}
 
       {actions.includes("sync") && (
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={() => changeDialog("sync")}
           startIcon={<SyncIcon />}
         >

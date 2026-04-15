@@ -1,4 +1,5 @@
-import { getLabels, CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -27,7 +28,7 @@ export const WorkspaceOverview = ({ workspace }: WorkspaceAboutProps) => {
       />
       <CommonField
         name={"Labels"}
-        value={getLabels(workspace.labels)}
+        value={<Labels labels={workspace.labels} />}
         size={12}
       />
     </OverviewCard>

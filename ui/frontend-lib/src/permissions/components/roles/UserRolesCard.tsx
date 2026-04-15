@@ -79,7 +79,7 @@ export const UserRolesCard = (props: { user_id: string }) => {
   );
 
   return (
-    <OverviewCard name="User Roles">
+    <OverviewCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"

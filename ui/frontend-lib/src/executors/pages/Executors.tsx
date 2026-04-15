@@ -7,9 +7,10 @@ import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
-import { GetEntityLink, getLabels } from "../../common/components/CommonField";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -107,8 +108,9 @@ export const ExecutorsPage = () => {
         headerName: "Labels",
         flex: 1,
         valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-        renderCell: (params: GridRenderCellParams) =>
-          getLabels(params.row.labels || []),
+        renderCell: (params: GridRenderCellParams) => (
+          <Labels labels={params.row.labels} />
+        ),
       },
     ],
     [],
