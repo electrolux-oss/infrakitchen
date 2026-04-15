@@ -93,7 +93,7 @@ async def test_variables_configurations():
     assert variables_dict["name"]["type"] == "string"
     assert variables_dict["name"]["default"] == "test"
     assert variables_dict["name"]["original_type"] == "string"
-    assert variables_dict["parameters"]["type"] == '${object({"parameters": "${optional(list(any), [])}"})}'
+    assert variables_dict["parameters"]["type"] == "${object({parameters = optional(list(any), [])})}"
     assert variables_dict["parameters"]["original_type"] == "object({\n  parameters = optional(list(any), [])\n})"
     assert variables_dict["parameters"]["default"] == {"parameters": []}
 
