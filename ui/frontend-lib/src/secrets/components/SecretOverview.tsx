@@ -1,4 +1,5 @@
-import { getLabels, CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -25,7 +26,7 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       />
       <CommonField
         name={"Secret Tags"}
-        value={getLabels(secret.labels)}
+        value={<Labels labels={secret.labels} />}
         size={12}
       />
     </OverviewCard>

@@ -1,5 +1,4 @@
 import {
-  getTextValue,
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
@@ -13,7 +12,7 @@ export interface PermissionAboutProps {
 
 export const getPermissionReference = (text: any) => {
   if (text === null || text === undefined || text === "") {
-    return "N/A";
+    return null;
   }
   if (text.startsWith("resource:")) {
     return (
@@ -33,7 +32,7 @@ export const PermissionOverview = ({ permission }: PermissionAboutProps) => {
       name={permission.ptype === "p" ? "Policy" : "Role"}
       description={permission.description}
     >
-      <CommonField name={"PType"} value={getTextValue(permission.ptype)} />
+      <CommonField name={"PType"} value={permission.ptype} />
       <CommonField name={"V0"} value={getPermissionReference(permission.v0)} />
       <CommonField name={"V1"} value={getPermissionReference(permission.v1)} />
       <CommonField name={"V2"} value={getPermissionReference(permission.v2)} />

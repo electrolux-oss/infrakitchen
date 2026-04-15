@@ -18,7 +18,6 @@ import { PermissionWrapper, useConfig } from "../../common";
 import {
   CommonField,
   GetReferenceUrlValue,
-  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -134,15 +133,13 @@ export const TemplateConfiguration = ({
                     resource.source_code_version.source_code_branch
                   }
                 />
-              ) : (
-                "N/A"
-              )
+              ) : null
             }
           />
-          {resource.integration_ids.length > 0 && (
-            <CommonField
-              name="Integrations"
-              value={
+          <CommonField
+            name="Integrations"
+            value={
+              resource.integration_ids.length > 0 ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {resource.integration_ids.map((parent) => (
                     <span key={parent.id}>
@@ -153,14 +150,14 @@ export const TemplateConfiguration = ({
                     </span>
                   ))}
                 </Box>
-              }
-              size={6}
-            />
-          )}
-          {resource.secret_ids.length > 0 && (
-            <CommonField
-              name="Secrets"
-              value={
+              ) : null
+            }
+            size={6}
+          />
+          <CommonField
+            name="Secrets"
+            value={
+              resource.secret_ids.length > 0 ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {resource.secret_ids.map((parent) => (
                     <span key={parent.id}>
@@ -168,27 +165,23 @@ export const TemplateConfiguration = ({
                     </span>
                   ))}
                 </Box>
-              }
-              size={6}
-            />
-          )}
-          {resource.storage && (
-            <CommonField
-              name="Storage"
-              value={<GetReferenceUrlValue {...resource.storage} />}
-            />
-          )}
-          {resource.storage_path && (
-            <CommonField
-              name={"Storage Path"}
-              value={getTextValue(resource.storage_path || "N/A")}
-              size={12}
-            />
-          )}
-          {resource.workspace && (
-            <CommonField
-              name="Workspace"
-              value={
+              ) : null
+            }
+            size={6}
+          />
+          <CommonField
+            name="Storage"
+            value={
+              resource.storage ? (
+                <GetReferenceUrlValue {...resource.storage} />
+              ) : null
+            }
+          />
+          <CommonField name="Storage Path" value={resource.storage_path} />
+          <CommonField
+            name="Workspace"
+            value={
+              resource.workspace ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <GetReferenceUrlValue {...resource.workspace} />
                   <PermissionWrapper
@@ -209,9 +202,9 @@ export const TemplateConfiguration = ({
                     </Tooltip>
                   </PermissionWrapper>
                 </Box>
-              }
-            />
-          )}
+              ) : null
+            }
+          />
         </Grid>
       </OverviewCard>
 

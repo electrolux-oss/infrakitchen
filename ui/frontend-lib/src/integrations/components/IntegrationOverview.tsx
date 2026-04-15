@@ -1,4 +1,5 @@
-import { CommonField, getLabels } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -36,7 +37,7 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
       />
       <CommonField
         name={"Labels"}
-        value={getLabels(integration.labels)}
+        value={<Labels labels={integration.labels} />}
         size={12}
       />
     </OverviewCard>

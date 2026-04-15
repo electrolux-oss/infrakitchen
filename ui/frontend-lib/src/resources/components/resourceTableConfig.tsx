@@ -4,7 +4,8 @@ import {
 } from "@mui/x-data-grid";
 
 import { FilterConfig } from "../../common";
-import { GetEntityLink, getLabels } from "../../common/components/CommonField";
+import { GetEntityLink } from "../../common/components/CommonField";
+import { Labels } from "../../common/components/Labels";
 import { EntityTableColumn } from "../../common/components/EntityTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -292,8 +293,9 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Labels",
     flex: 1,
     valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) =>
-      getLabels(params.row.labels || []),
+    renderCell: (params: GridRenderCellParams) => (
+      <Labels labels={params.row.labels || []} />
+    ),
   },
   {
     field: "dependency_tags",

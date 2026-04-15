@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 
 import {
-  getTextValue,
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
@@ -21,15 +20,13 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
         value={
           executor.storage ? (
             <GetReferenceUrlValue {...executor.storage} />
-          ) : (
-            "N/A"
-          )
+          ) : null
         }
       />
-      {executor.integration_ids.length > 0 && (
-        <CommonField
-          name={"Integrations"}
-          value={
+      <CommonField
+        name={"Integrations"}
+        value={
+          executor.integration_ids.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.integration_ids.map((parent) => (
                 <span key={parent.id}>
@@ -40,14 +37,14 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
                 </span>
               ))}
             </Box>
-          }
-          size={6}
-        />
-      )}
-      {executor.secret_ids.length > 0 && (
-        <CommonField
-          name={"Secrets"}
-          value={
+          ) : null
+        }
+        size={6}
+      />
+      <CommonField
+        name={"Secrets"}
+        value={
+          executor.secret_ids.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.secret_ids.map((parent) => (
                 <span key={parent.id}>
@@ -55,19 +52,19 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
                 </span>
               ))}
             </Box>
-          }
-          size={6}
-        />
-      )}
+          ) : null
+        }
+        size={6}
+      />
 
       <CommonField
         name={"Storage Path"}
-        value={getTextValue(executor.storage_path || "N/A")}
+        value={executor.storage_path}
         size={12}
       />
       <CommonField
         name={"Command arguments"}
-        value={getTextValue(executor.command_args || "N/A")}
+        value={executor.command_args}
         size={12}
       />
     </OverviewCard>

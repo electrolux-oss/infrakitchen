@@ -1,10 +1,9 @@
 import {
-  getLabels,
   CommonField,
   GetReferenceUrlValue,
-  getTextValue,
 } from "../../common/components/CommonField";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -31,36 +30,20 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
         name={"State"}
         value={<StatusChip status={executor.status} state={executor.state} />}
       />
-      {executor.source_code && (
-        <CommonField
-          name={"Source Code"}
-          value={<GetReferenceUrlValue {...executor.source_code} />}
-        />
-      )}
       <CommonField
-        name={"Source Code Directory"}
-        value={getTextValue(
-          executor.source_code_folder
-            ? executor.source_code_folder
-            : "No Source Code Folder",
-        )}
+        name={"Code Repository"}
+        value={
+          executor.source_code ? (
+            <GetReferenceUrlValue {...executor.source_code} />
+          ) : null
+        }
       />
       <CommonField
-        name={"Branch"}
-        value={getTextValue(
-          executor.source_code_branch
-            ? executor.source_code_branch
-            : "No Branch",
-        )}
+        name={"Directory Path"}
+        value={executor.source_code_folder}
       />
-      <CommonField
-        name={"Source Code Tag"}
-        value={getTextValue(
-          executor.source_code_version
-            ? executor.source_code_version
-            : "No Tag",
-        )}
-      />
+      <CommonField name={"Branch"} value={executor.source_code_branch} />
+      <CommonField name={"Git Tag"} value={executor.source_code_version} />
 
       <CommonField
         name={"Created"}
@@ -74,7 +57,7 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
       />
       <CommonField
         name={"Labels"}
-        value={getLabels(executor.labels)}
+        value={<Labels labels={executor.labels} />}
         size={12}
       />
     </OverviewCard>

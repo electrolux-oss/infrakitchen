@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
-import { Box, Typography, Chip, Grid, GridSize, Link } from "@mui/material";
+import { Box, Typography, Grid, GridSize, Link } from "@mui/material";
 
 import { IconField } from "../../icons/Icons";
 import { useConfig } from "../context";
@@ -126,7 +126,6 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
           textDecoration: "none",
           cursor: "pointer",
           whiteSpace: "normal",
-          overflowWrap: "anywhere",
         }}
       >
         {displayText}
@@ -199,20 +198,6 @@ export const getTimeOnlyValue = (date: Date | string) => {
   }
 };
 
-export const getLabels = (labels: string[]) => {
-  if (!labels || labels.length === 0) {
-    return getTextValue("No labels");
-  }
-
-  return (
-    <Box display="flex" gap={1} flexWrap="wrap" marginTop={1} marginBottom={2}>
-      {labels.map((label: string) => (
-        <Chip key={label} label={label} size="small" variant="outlined" />
-      ))}
-    </Box>
-  );
-};
-
 export interface ParameterFieldProps {
   name: string;
   value: ReactNode;
@@ -221,6 +206,7 @@ export interface ParameterFieldProps {
 
 export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
   const gridSize = size || { xs: 12, md: 6 };
+  const isEmptyValue = value === null || value === undefined || value === "";
   const isStringOrNumber =
     typeof value === "string" || typeof value === "number";
 
@@ -229,7 +215,11 @@ export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
       <Typography variant="body1" sx={{ fontWeight: "bold" }}>
         {name}
       </Typography>
-      {isStringOrNumber ? (
+      {isEmptyValue ? (
+        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          None
+        </Typography>
+      ) : isStringOrNumber ? (
         <Typography variant="body2">{value}</Typography>
       ) : (
         value

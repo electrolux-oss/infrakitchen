@@ -1,5 +1,4 @@
 import {
-  getTextValue,
   CommonField,
   getProviderValue,
 } from "../../common/components/CommonField";
@@ -18,19 +17,14 @@ export const UserOverview = ({ user }: UserAboutProps) => {
       name={user.identifier}
       description={user.description}
       icon={<UserAvatar identifier={user.identifier} />}
+      chip={user.deactivated ? "Deactivated" : undefined}
+      chipColor="error"
     >
-      <CommonField
-        name={"Deactivated"}
-        value={user.deactivated ? "Yes" : "No"}
-      />
-      <CommonField
-        name={"Display Name"}
-        value={getTextValue(user.display_name)}
-      />
-      <CommonField name={"Email"} value={getTextValue(user.email)} />
-      <CommonField name={"First Name"} value={getTextValue(user.first_name)} />
-      <CommonField name={"Last Name"} value={getTextValue(user.last_name)} />
-      <CommonField name={"Identifier"} value={getTextValue(user.identifier)} />
+      <CommonField name={"Display Name"} value={user.display_name} />
+      <CommonField name={"Email"} value={user.email} />
+      <CommonField name={"First Name"} value={user.first_name} />
+      <CommonField name={"Last Name"} value={user.last_name} />
+      <CommonField name={"Identifier"} value={user.identifier} />
       <CommonField name={"Is Primary"} value={user.is_primary ? "Yes" : "No"} />
       <CommonField name={"Provider"} value={getProviderValue(user.provider)} />
       <CommonField

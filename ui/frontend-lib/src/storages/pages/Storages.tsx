@@ -9,7 +9,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import {
   GetEntityLink,
-  getLabels,
+import { Labels } from "../../common/components/Labels";
   getProviderValue,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
@@ -160,7 +160,7 @@ export const StoragesPage = () => {
         flex: 1,
         valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
         renderCell: (params: GridRenderCellParams) =>
-          getLabels(params.row.labels || []),
+          <Labels labels={params.row.labels || []} />,
       },
     ],
     [],

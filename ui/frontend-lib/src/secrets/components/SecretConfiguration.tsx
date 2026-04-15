@@ -5,7 +5,6 @@ import {
   CommonField,
   getProviderValue,
   GetReferenceUrlValue,
-  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { CustomSecret, SecretResponse } from "../types";
@@ -16,7 +15,7 @@ export interface SecretConfigurationProps {
 
 const getCustomSecrets = (secrets: CustomSecret[]) => {
   if (!secrets || secrets.length === 0) {
-    return getTextValue("-");
+    return null;
   }
   return (
     <Box sx={{ ml: 3 }}>
@@ -42,25 +41,22 @@ const getCustomSecrets = (secrets: CustomSecret[]) => {
 export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
   return (
     <OverviewCard name="Secret Configuration">
-      {secret.integration && (
-        <CommonField
-          name={"Integration"}
-          value={
+      <CommonField
+        name={"Integration"}
+        value={
+          secret.integration ? (
             <GetReferenceUrlValue
               {...secret.integration}
               urlProvider={secret.integration.integration_provider}
             />
-          }
-        />
-      )}
+          ) : null
+        }
+      />
       <CommonField
         name={"Secret Provider"}
         value={getProviderValue(secret.secret_provider)}
       />
-      <CommonField
-        name={"Secret Type"}
-        value={getTextValue(secret.secret_type)}
-      />
+      <CommonField name={"Secret Type"} value={secret.secret_type} />
       {secret.secret_provider !== "custom" &&
         Object.entries(secret.configuration).map(([k, v]) => {
           return (

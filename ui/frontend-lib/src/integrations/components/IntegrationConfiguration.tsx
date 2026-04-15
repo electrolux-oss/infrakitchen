@@ -4,7 +4,6 @@ import { formatLabel } from "../../common";
 import {
   CommonField,
   getProviderValue,
-  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { IntegrationResponse } from "../types";
@@ -28,7 +27,7 @@ export const IntegrationConfiguration = ({
       />
       <CommonField
         name={"Integration Type"}
-        value={getTextValue(integration.integration_type)}
+        value={integration.integration_type}
       />
       {Object.entries(integration.configuration).map(([k, v]) => {
         if (k !== "integration_provider" && v !== null && v !== "") {

@@ -5,28 +5,42 @@ import { Button, Tooltip } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
-import { EntityProvider } from "../../common/context/EntityContext";
+import {
+  EntityProvider,
+  useEntityProvider,
+} from "../../common/context/EntityContext";
+import { ENTITY_STATUS } from "../../utils/constants";
 import { TemplateContent } from "../components/TemplateContent";
 
 export const TemplatePage = () => {
   const { template_id } = useParams();
+
+  return (
+    <EntityProvider entity_name="template" entity_id={template_id || ""}>
+      <TemplatePageContent />
+    </EntityProvider>
+  );
+};
+
+const TemplatePageContent = () => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
+  const { entity } = useEntityProvider();
 
   const handleUseTemplate = () => {
-    if (template_id) {
+    if (entity?.id) {
       navigate(`${linkPrefix}resources/create`, {
-        state: { template_id: template_id },
+        state: { template_id: entity.id },
       });
     }
   };
 
   return (
-    <EntityProvider entity_name="template" entity_id={template_id || ""}>
-      <EntityContainer
-        title={"Template Overview"}
-        showActivity={false}
-        actions={
+    <EntityContainer
+      title={"Template Overview"}
+      showActivity={false}
+      actions={
+        entity?.status !== ENTITY_STATUS.DISABLED ? (
           <Tooltip title="Create a new resource from this template">
             <Button
               variant="outlined"
@@ -36,11 +50,11 @@ export const TemplatePage = () => {
               Create Resource
             </Button>
           </Tooltip>
-        }
-      >
-        <TemplateContent />
-      </EntityContainer>
-    </EntityProvider>
+        ) : undefined
+      }
+    >
+      <TemplateContent />
+    </EntityContainer>
   );
 };
 

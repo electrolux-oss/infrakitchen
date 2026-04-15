@@ -7,7 +7,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { PermissionWrapper } from "../../../common";
 import {
   GetEntityLink,
-  GetReferenceUrlValue,
   capitalizeFirstLetter,
 } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
@@ -36,7 +35,7 @@ export const EntityPoliciesBase = ({
       {
         field: "v1",
         fetchFields: ["v0", "v1"],
-        headerName: "Role/User Name",
+        headerName: "Role/User",
         flex: 1,
         sortable: false,
         hideable: false,
@@ -91,7 +90,7 @@ export const EntityPoliciesBase = ({
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
-          return creator ? <GetReferenceUrlValue {...creator} /> : "No User";
+          return creator ? <GetEntityLink {...creator} /> : "No User";
         },
       },
       {

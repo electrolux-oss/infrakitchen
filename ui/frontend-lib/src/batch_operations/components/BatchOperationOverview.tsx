@@ -1,4 +1,4 @@
-import { getTextValue, CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { BatchOperation } from "../types";
@@ -17,13 +17,13 @@ export const BatchOperationOverview = ({
     >
       <CommonField
         name={"Entity Type"}
-        value={getTextValue(
-          batchOperation.entity_type === "resource" ? "Resources" : "Executors",
-        )}
+        value={
+          batchOperation.entity_type === "resource" ? "Resources" : "Executors"
+        }
       />
       <CommonField
         name={"Total Entities"}
-        value={getTextValue(String(batchOperation?.entity_ids?.length || 0))}
+        value={batchOperation?.entity_ids?.length || 0}
       />
       <CommonField
         name={"Created"}
