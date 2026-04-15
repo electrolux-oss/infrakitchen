@@ -16,7 +16,7 @@ class AuditLogHandler:
         self, entity_id: str | UUID, requester_id: str | UUID, action: str, revision_number: int | None = None
     ) -> None:
         audit_log = AuditLog(
-            model=str(self.entity_name),
+            model=self.entity_name,
             user_id=requester_id,
             action=action,
             entity_id=entity_id,

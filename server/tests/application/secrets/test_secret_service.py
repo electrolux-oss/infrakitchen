@@ -198,7 +198,7 @@ class TestCreate:
 
         mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_secret)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_secret.id, mocked_user.id, ModelActions.CREATE
+            mocked_secret.id, mocked_user.id, ModelActions.CREATE, revision_number=mocked_secret.revision_number
         )
         response = SecretResponse.model_validate(mocked_secret)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
@@ -294,7 +294,7 @@ class TestUpdate:
         mock_secret_crud.update.assert_awaited_once_with(existing_secret, secret_update.model_dump(exclude_unset=True))
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            updated_secret.id, mock_user_dto.id, ModelActions.UPDATE
+            updated_secret.id, mock_user_dto.id, ModelActions.UPDATE, revision_number=existing_secret.revision_number
         )
         mock_secret_crud.refresh.assert_awaited_once_with(existing_secret)
         mock_revision_handler.handle_revision.assert_awaited_once_with(existing_secret)
@@ -377,7 +377,7 @@ class TestUpdate:
         mock_secret_crud.update.assert_called_once_with(mocked_secret, update_secret_body)
         mock_secret_crud.refresh.assert_called_once_with(mocked_secret)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_secret.id, mock_user_dto.id, ModelActions.UPDATE
+            mocked_secret.id, mock_user_dto.id, ModelActions.UPDATE, revision_number=mocked_secret.revision_number
         )
         mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_secret)
         response = SecretResponse.model_validate(mocked_secret)
@@ -426,7 +426,7 @@ class TestPatch:
 
         mock_secret_crud.get_by_id.assert_awaited_once_with(SECRET_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_secret.id, mock_user_dto.id, ModelActions.DISABLE
+            mocked_secret.id, mock_user_dto.id, ModelActions.DISABLE, revision_number=mocked_secret.revision_number
         )
         response = SecretResponse.model_validate(mocked_secret)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.DISABLE)

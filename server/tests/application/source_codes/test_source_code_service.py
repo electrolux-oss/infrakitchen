@@ -194,9 +194,14 @@ class TestCreate:
         assert created_source_code.status == ModelStatus.READY
 
         mock_revision_handler.handle_revision.assert_called_once_with(created_source_code)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(created_source_code.id, mock_user_dto.id, "create")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            created_source_code.id,
+            mock_user_dto.id,
+            ModelActions.CREATE,
+            revision_number=created_source_code.revision_number,
+        )
         response = SourceCodeResponse.model_validate(mocked_source_code_response)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "create")
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 
         assert saved_source_code.description == mocked_source_code_create.description
         assert saved_source_code.source_code_url == mocked_source_code_create.source_code_url
@@ -247,7 +252,12 @@ class TestUpdate:
         mocked_source_code_update.model_dump.assert_called_once_with(exclude_unset=True)
         mock_source_code_crud.update.assert_awaited_once_with(existing_source_code, update_body)
         mock_source_code_crud.refresh.assert_called_once_with(updated_source_code)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(updated_source_code.id, mock_user_dto.id, "update")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            updated_source_code.id,
+            mock_user_dto.id,
+            ModelActions.UPDATE,
+            revision_number=updated_source_code.revision_number,
+        )
         mock_revision_handler.handle_revision.assert_called_once_with(existing_source_code)
         response = SourceCodeResponse.model_validate(updated_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
@@ -322,7 +332,10 @@ class TestPatch:
         assert result.status == ModelStatus.DISABLED
         mock_source_code_crud.get_by_id.assert_awaited_once_with(mocked_source_code.id)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_source_code.id, mock_user_dto.id, ModelActions.DISABLE
+            mocked_source_code.id,
+            mock_user_dto.id,
+            ModelActions.DISABLE,
+            revision_number=mocked_source_code.revision_number,
         )
         response = SourceCodeResponse.model_validate(mocked_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.DISABLE)
