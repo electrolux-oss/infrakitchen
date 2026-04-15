@@ -8,9 +8,9 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { Labels } from "../../common/components/Labels";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";

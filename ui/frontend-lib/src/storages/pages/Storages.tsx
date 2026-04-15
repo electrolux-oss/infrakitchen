@@ -11,8 +11,8 @@ import {
   GetEntityLink,
   getProviderValue,
 } from "../../common/components/CommonField";
-import { Labels } from "../../common/components/Labels";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -159,8 +159,9 @@ export const StoragesPage = () => {
         headerName: "Labels",
         flex: 1,
         valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-        renderCell: (params: GridRenderCellParams) =>
-          <Labels labels={params.row.labels || []} />,
+        renderCell: (params: GridRenderCellParams) => (
+          <Labels labels={params.row.labels || []} />
+        ),
       },
     ],
     [],

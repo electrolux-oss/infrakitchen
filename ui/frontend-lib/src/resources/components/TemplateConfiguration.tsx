@@ -18,6 +18,7 @@ import { PermissionWrapper, useConfig } from "../../common";
 import {
   CommonField,
   GetReferenceUrlValue,
+  getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";

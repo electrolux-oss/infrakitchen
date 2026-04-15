@@ -5,9 +5,9 @@ import {
 
 import { FilterConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { Labels } from "../../common/components/Labels";
 import { EntityTableColumn } from "../../common/components/EntityTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { IntegrationShort } from "../../integrations/types";
