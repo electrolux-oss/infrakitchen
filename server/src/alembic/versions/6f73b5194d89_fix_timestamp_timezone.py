@@ -1,7 +1,7 @@
 """fix timestamp timezone
 
 Revision ID: 6f73b5194d89
-Revises: a94fd5a63385
+Revises: 6a3ed2c3aa2b
 Create Date: 2026-04-15 15:08:10.074044
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "6f73b5194d89"
-down_revision: str | None = "a94fd5a63385"
+down_revision: str | None = "6a3ed2c3aa2b"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
