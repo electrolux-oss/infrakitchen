@@ -12,7 +12,7 @@ export const BatchOperationPage = () => {
       entity_name="batch_operation"
       entity_id={batch_operation_id || ""}
     >
-      <EntityContainer title={"Batch Operation Overview"} showActivity={false}>
+      <EntityContainer title={"Batch Operation Overview"}>
         <BatchOperationContent />
       </EntityContainer>
     </EntityProvider>

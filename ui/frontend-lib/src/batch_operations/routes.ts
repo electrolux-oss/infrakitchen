@@ -1,5 +1,4 @@
 import { BatchOperationPage } from "./pages/BatchOperation";
-import { BatchOperationActivityPage } from "./pages/BatchOperationActivity";
 import { BatchOperationCreatePage } from "./pages/BatchOperationCreate";
 import { BatchOperationsPage } from "./pages/BatchOperations";
 
@@ -19,12 +18,6 @@ export const batchOperationRoutes = [
   {
     path: BatchOperationPage.path,
     Component: BatchOperationPage,
-    requiredPermission: "api:batch_operation",
-    permissionAction: "read",
-  },
-  {
-    path: BatchOperationActivityPage.path,
-    Component: BatchOperationActivityPage,
     requiredPermission: "api:batch_operation",
     permissionAction: "read",
   },

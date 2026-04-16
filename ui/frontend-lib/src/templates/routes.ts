@@ -1,5 +1,4 @@
 import { TemplatePage } from "./pages/Template";
-import { TemplateActivityPage } from "./pages/TemplateActivity";
 import { TemplateCreatePage } from "./pages/TemplateCreate";
 import { TemplateEditPage } from "./pages/TemplateEdit";
 import { TemplateImportPage } from "./pages/TemplateImport";
@@ -27,12 +26,6 @@ export const templateRoutes = [
   {
     path: TemplatePage.path,
     Component: TemplatePage,
-    requiredPermission: "api:template",
-    permissionAction: "read",
-  },
-  {
-    path: TemplateActivityPage.path,
-    Component: TemplateActivityPage,
     requiredPermission: "api:template",
     permissionAction: "read",
   },

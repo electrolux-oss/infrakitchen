@@ -1,5 +1,4 @@
 import { AuthProviderPage } from "./pages/AuthProvider";
-import { AuthProviderActivityPage } from "./pages/AuthProviderActivity";
 import { AuthProviderCreatePage } from "./pages/AuthProviderCreate";
 import { AuthProviderEditPage } from "./pages/AuthProviderEdit";
 import { AuthProvidersPage } from "./pages/AuthProviders";
@@ -28,11 +27,5 @@ export const authProviderRoutes = [
     Component: AuthProviderEditPage,
     requiredPermission: "api:auth_provider",
     permissionAction: "write",
-  },
-  {
-    path: AuthProviderActivityPage.path,
-    Component: AuthProviderActivityPage,
-    requiredPermission: "api:auth_provider",
-    permissionAction: "read",
   },
 ];

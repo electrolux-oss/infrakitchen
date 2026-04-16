@@ -1,5 +1,4 @@
 import { UserPage } from "./pages/User";
-import { UserActivityPage } from "./pages/UserActivity";
 import { UserCreatePage } from "./pages/UserCreate";
 import { UserEditPage } from "./pages/UserEdit";
 import { UsersPage } from "./pages/Users";
@@ -14,12 +13,6 @@ export const usersRoutes = [
   {
     path: UserPage.path,
     Component: UserPage,
-    requiredPermission: "api:user",
-    permissionAction: "read",
-  },
-  {
-    path: UserActivityPage.path,
-    Component: UserActivityPage,
     requiredPermission: "api:user",
     permissionAction: "read",
   },

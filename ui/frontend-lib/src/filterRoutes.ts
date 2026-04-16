@@ -70,15 +70,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/auth_providers/:auth_provider_id/activity",
-    Component: lz(
-      () => import("./auth_providers/pages/AuthProviderActivity"),
-      "AuthProviderActivityPage",
-    ),
-    requiredPermission: "api:auth_provider",
-    permissionAction: "read",
-  },
-  {
     path: "/auth_providers/:auth_provider_id/:tab?",
     Component: lz(
       () => import("./auth_providers/pages/AuthProvider"),
@@ -108,15 +99,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/batch_operations/:batch_operation_id/activity",
-    Component: lz(
-      () => import("./batch_operations/pages/BatchOperationActivity"),
-      "BatchOperationActivityPage",
-    ),
-    requiredPermission: "api:batch_operation",
-    permissionAction: "read",
-  },
-  {
     path: "/batch_operations/:batch_operation_id/:tab?",
     Component: lz(
       () => import("./batch_operations/pages/BatchOperation"),
@@ -138,15 +120,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./executors/pages/ExecutorCreate"),
       "ExecutorCreatePage",
-    ),
-    requiredPermission: "api:executor",
-    permissionAction: "read",
-  },
-  {
-    path: "/executors/:executor_id/activity",
-    Component: lz(
-      () => import("./executors/pages/ExecutorActivity"),
-      "ExecutorActivityPage",
     ),
     requiredPermission: "api:executor",
     permissionAction: "read",
@@ -196,15 +169,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/integrations/:integration_id/activity",
-    Component: lz(
-      () => import("./integrations/pages/IntegrationActivity"),
-      "IntegrationActivityPage",
-    ),
-    requiredPermission: "api:integration",
-    permissionAction: "read",
-  },
-  {
     path: "/integrations/:provider/:integration_id/:tab?",
     Component: lz(
       () => import("./integrations/pages/Integration"),
@@ -215,15 +179,6 @@ const allRoutes: LazyRouteDefinition[] = [
   },
 
   // ── Permissions ───────────────────────────────────────────────────────────────
-  {
-    path: "/permissions/:permission_id/activity",
-    Component: lz(
-      () => import("./permissions/pages/PermissionActivity"),
-      "PermissionActivityPage",
-    ),
-    requiredPermission: "api:permission",
-    permissionAction: "read",
-  },
   {
     path: "/permissions/:permission_id",
     Component: lz(
@@ -246,15 +201,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./resources/pages/ResourceCreate"),
       "ResourceCreatePage",
-    ),
-    requiredPermission: "api:resource",
-    permissionAction: "read",
-  },
-  {
-    path: "/resources/:resource_id/activity",
-    Component: lz(
-      () => import("./resources/pages/ResourceActivity"),
-      "ResourceActivityPage",
     ),
     requiredPermission: "api:resource",
     permissionAction: "read",
@@ -321,15 +267,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/secrets/:secret_id/activity",
-    Component: lz(
-      () => import("./secrets/pages/SecretActivity"),
-      "SecretActivityPage",
-    ),
-    requiredPermission: "api:secret",
-    permissionAction: "read",
-  },
-  {
     path: "/secrets/:secret_id/edit",
     Component: lz(() => import("./secrets/pages/SecretEdit"), "SecretEditPage"),
     requiredPermission: "api:secret",
@@ -360,15 +297,6 @@ const allRoutes: LazyRouteDefinition[] = [
     ),
     requiredPermission: "api:source_code",
     permissionAction: "write",
-  },
-  {
-    path: "/source_codes/:source_code_id/activity",
-    Component: lz(
-      () => import("./source_codes/pages/SourceCodeActivity"),
-      "SourceCodeActivityPage",
-    ),
-    requiredPermission: "api:source_code",
-    permissionAction: "read",
   },
   {
     path: "/source_codes/:source_code_id/edit",
@@ -404,15 +332,6 @@ const allRoutes: LazyRouteDefinition[] = [
     ),
     requiredPermission: "api:storage",
     permissionAction: "write",
-  },
-  {
-    path: "/storages/:storage_id/activity",
-    Component: lz(
-      () => import("./storages/pages/StorageActivity"),
-      "StorageActivityPage",
-    ),
-    requiredPermission: "api:storage",
-    permissionAction: "read",
   },
   {
     path: "/storages/:storage_id/edit",
@@ -473,15 +392,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/templates/:template_id/activity",
-    Component: lz(
-      () => import("./templates/pages/TemplateActivity"),
-      "TemplateActivityPage",
-    ),
-    requiredPermission: "api:template",
-    permissionAction: "read",
-  },
-  {
     path: "/templates/:template_id/:tab?",
     Component: lz(() => import("./templates/pages/Template"), "TemplatePage"),
     requiredPermission: "api:template",
@@ -500,15 +410,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(() => import("./users/pages/UserCreate"), "UserCreatePage"),
     requiredPermission: "api:user",
     permissionAction: "write",
-  },
-  {
-    path: "/users/:user_id/activity",
-    Component: lz(
-      () => import("./users/pages/UserActivity"),
-      "UserActivityPage",
-    ),
-    requiredPermission: "api:user",
-    permissionAction: "read",
   },
   {
     path: "/users/:user_id/edit",
@@ -558,15 +459,6 @@ const allRoutes: LazyRouteDefinition[] = [
     ),
     requiredPermission: "api:workspace",
     permissionAction: "write",
-  },
-  {
-    path: "/workspaces/:workspace_id/activity",
-    Component: lz(
-      () => import("./workspaces/pages/WorkspaceActivity"),
-      "WorkspaceActivityPage",
-    ),
-    requiredPermission: "api:workspace",
-    permissionAction: "read",
   },
   {
     path: "/workspaces/:workspace_id/:tab?",
