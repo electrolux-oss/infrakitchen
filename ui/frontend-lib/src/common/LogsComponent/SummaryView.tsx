@@ -268,10 +268,7 @@ const collectResourceBlock = (
   return { rawLines, endIndex: lines.length - 1 };
 };
 
-const parsePlanSummary = (
-  logs: LogEntity[],
-  trackExecution: boolean,
-): SummaryChange[] => {
+const parsePlanSummary = (logs: LogEntity[]): SummaryChange[] => {
   const lines = logs.map((log) => log.data ?? "");
   const result: SummaryChange[] = [];
 
@@ -304,34 +301,32 @@ const parsePlanSummary = (
     });
   }
 
-  if (trackExecution) {
-    const executionStatuses = collectExecutionStatuses(lines);
-    for (const change of result) {
-      const entry = executionStatuses.get(change.address);
-      if (entry) {
-        change.executionStatus = entry.status;
-        change.duration = entry.duration;
-      }
+  const executionStatuses = collectExecutionStatuses(lines);
+  for (const change of result) {
+    const entry = executionStatuses.get(change.address);
+    if (entry) {
+      change.executionStatus = entry.status;
+      change.duration = entry.duration;
     }
+  }
 
-    const errorBlocks = collectErrorBlocks(lines);
-    const errorByAddress = new Map<string, string[]>();
+  const errorBlocks = collectErrorBlocks(lines);
+  const errorByAddress = new Map<string, string[]>();
 
-    for (const block of errorBlocks) {
-      errorByAddress.set(block.address, block.lines);
-    }
+  for (const block of errorBlocks) {
+    errorByAddress.set(block.address, block.lines);
+  }
 
-    for (const change of result) {
-      const normalisedAddress = stripAnsi(change.address).trim();
-      const errorLines =
-        errorByAddress.get(normalisedAddress) ??
-        [...errorByAddress.entries()].find(
-          ([k]) => k.trim() === normalisedAddress,
-        )?.[1];
-      if (errorLines) {
-        change.executionStatus = ExecutionStatus.ERROR;
-        change.errorLines = errorLines;
-      }
+  for (const change of result) {
+    const normalisedAddress = stripAnsi(change.address).trim();
+    const errorLines =
+      errorByAddress.get(normalisedAddress) ??
+      [...errorByAddress.entries()].find(
+        ([k]) => k.trim() === normalisedAddress,
+      )?.[1];
+    if (errorLines) {
+      change.executionStatus = ExecutionStatus.ERROR;
+      change.errorLines = errorLines;
     }
   }
 
@@ -360,17 +355,20 @@ const ExecutionStatusIcon = ({
   const { icon: Icon, color } = executionStatusIcons[status];
   const icon = <Icon color={color} fontSize="small" />;
   const label = showLabel && (
-    <Typography color={`${color}.main`} fontWeight={500}>
+    <Typography component="span" color={`${color}.main`} fontWeight={500}>
       {status}
     </Typography>
   );
   const durationText = duration && (
-    <Typography variant="caption" color="text.secondary">
+    <Typography component="span" variant="caption" color="text.secondary">
       {duration}
     </Typography>
   );
   return (
-    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+    <Box
+      component="span"
+      sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
+    >
       {iconFirst ? (
         <>
           {icon}
@@ -505,10 +503,7 @@ export const SummaryView = (props: {
     }
   }, [allLogs, loaded, eventAction]);
 
-  const changes = parsePlanSummary(
-    allLogs,
-    eventAction === ENTITY_ACTION.EXECUTE,
-  );
+  const changes = parsePlanSummary(allLogs);
   const fatalErrorLines = allLogs
     .map((log) => log.data ?? "")
     .filter((line) => isFatalErrorLine(stripAnsi(line)));
@@ -688,13 +683,12 @@ export const SummaryView = (props: {
                         {change.resourceType}.{change.resourceName}
                       </Typography>
                     </Box>
-                    {eventAction === ENTITY_ACTION.EXECUTE &&
-                      change.executionStatus && (
-                        <ExecutionStatusIcon
-                          status={change.executionStatus}
-                          duration={change.duration}
-                        />
-                      )}
+                    {change.duration && change.executionStatus && (
+                      <ExecutionStatusIcon
+                        status={change.executionStatus}
+                        duration={change.duration}
+                      />
+                    )}
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails
