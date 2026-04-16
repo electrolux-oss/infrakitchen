@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from pydantic import ConfigDict, Field
@@ -13,7 +13,7 @@ class LogResponse(BaseModel):
     audit_log_id: str | uuid.UUID | None = Field(default=None)
     level: str = Field(default="info")
     data: str = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     execution_start: int = Field(default=1)
     expire_at: datetime | None = Field(default=None)
     trace_id: str | uuid.UUID | None = Field(default=None)

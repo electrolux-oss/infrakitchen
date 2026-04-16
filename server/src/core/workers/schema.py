@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal
 import uuid
 
@@ -11,8 +11,8 @@ class WorkerResponse(BaseModel):
     host: str = Field(..., title="Worker host")
     host_metadata: dict[str, str] = Field(default={}, title="Worker metadata")
     status: Literal["free", "busy"] = Field(default="free", title="Worker status")
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 

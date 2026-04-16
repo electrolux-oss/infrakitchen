@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal
 import uuid
 from pydantic import ConfigDict, Field, computed_field
@@ -52,8 +52,8 @@ class TaskEntityModel(BaseModel):
         ModelStatus.READY,
     ] = Field(default=ModelStatus.QUEUED)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by: UserDTO | uuid.UUID = Field()
 
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)

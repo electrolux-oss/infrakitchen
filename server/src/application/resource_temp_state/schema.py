@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from pydantic import Field, ConfigDict
@@ -27,7 +27,7 @@ class ResourceTempStateResponse(BaseModel):
     value: dict[str, Any] = Field(...)
 
     created_by: str | uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
 
     model_config = ConfigDict(from_attributes=True)

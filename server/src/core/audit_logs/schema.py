@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,7 +11,7 @@ class AuditLogResponse(BaseModel):
     user_id: uuid.UUID = Field()
     action: str = Field(..., title="Action")
     entity_id: str | uuid.UUID = Field(..., title="Entity ID")
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     creator: UserShort | None = Field(default=None)
     revision_number: int | None = Field(default=None)
 

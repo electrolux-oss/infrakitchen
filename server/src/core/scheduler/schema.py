@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 from typing import Literal
 from .model import JobType
@@ -17,7 +17,7 @@ class SchedulerJobResponse(BaseModel):
     type: Literal[JobType.SQL, JobType.BASH]
     script: str = Field(...)
     cron: str = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)
 

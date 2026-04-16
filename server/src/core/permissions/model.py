@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 from typing import Literal, override
 import uuid
@@ -57,8 +57,8 @@ class PermissionDTO(BaseModel):
     v4: str | None = Field(default=None)
     v5: str | None = Field(default=None)
     _users: list[str] = PrivateAttr(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by: uuid.UUID | None = Field(default=None)
     model_config = ConfigDict(
         extra="allow",

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -69,7 +69,7 @@ class UserDTO(BaseModel):
     is_primary: bool | None = Field(default=False, title="Is primary user")
     secondary_accounts: list[UserShort] = Field(default_factory=list, title="Secondary accounts")
     primary_account: list[UserShort] = Field(default_factory=list, title="Primary account for secondary users")
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)

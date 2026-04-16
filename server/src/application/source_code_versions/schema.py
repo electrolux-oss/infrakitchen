@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Literal, Self
 import uuid
 
@@ -138,8 +138,8 @@ class VariableConfigModel(BaseModel):
 class SourceCodeVersionResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: Literal[
         ModelStatus.IN_PROGRESS,
         ModelStatus.DONE,
@@ -249,8 +249,8 @@ class SourceConfigShort(BaseModel):
 class SourceConfigResponse(BaseModel):
     id: uuid.UUID = Field(...)
     index: int = Field(default=0)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     source_code_version_id: uuid.UUID = Field(...)
     required: bool = Field(default=False)
     sensitive: bool = Field(default=False)
@@ -319,8 +319,8 @@ class SourceConfigUpdateWithId(BaseModel):
 
 class SourceOutputConfigResponse(BaseModel):
     id: uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     index: int = Field(default=0)
     source_code_version_id: uuid.UUID = Field(...)
@@ -332,8 +332,8 @@ class SourceOutputConfigResponse(BaseModel):
 class SourceOutputConfigTemplateResponse(BaseModel):
     name: str = Field(...)
     description: str = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: Literal[
         "active",
         "deleted",

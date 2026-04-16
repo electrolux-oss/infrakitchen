@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 from typing import Literal
 import uuid
@@ -22,8 +22,8 @@ class Worker(Base):
     host: Mapped[str] = mapped_column()
     host_metadata: Mapped[dict[str, str]] = mapped_column(JSON, default={})
     status: Mapped[str] = mapped_column()
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=False), onupdate=func.now(), default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
 
 class WorkerDTO(BaseModel):
@@ -32,6 +32,6 @@ class WorkerDTO(BaseModel):
     host: str = Field(..., title="Worker host")
     host_metadata: dict[str, str] = Field(default={}, title="Worker metadata")
     status: Literal["free", "busy"] = Field(default="free", title="Worker status")
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     model_config = ConfigDict(from_attributes=True)

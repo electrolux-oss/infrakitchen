@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 from typing import Literal
 import uuid
@@ -101,8 +101,8 @@ class TemplateResponse(BaseModel):
 
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     status: Literal[
         ModelStatus.ENABLED,
