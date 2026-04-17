@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Literal
 import uuid
 
@@ -141,8 +141,8 @@ class SourceConfigTemplateReference(Base):
 class SourceCodeVersionDTO(BaseModel):
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     status: Literal[
         ModelStatus.IN_PROGRESS,
@@ -173,8 +173,8 @@ class SourceCodeVersionDTO(BaseModel):
 
 class SourceConfigDTO:
     id: uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     index: int = Field(default=0)
     source_code_version_id: uuid.UUID = Field(...)
@@ -193,8 +193,8 @@ class SourceConfigDTO:
 
 class SourceOutputConfigDTO:
     id: uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     index: int = Field(default=0)
     source_code_version_id: uuid.UUID = Field(...)
@@ -208,7 +208,7 @@ class SourceConfigTemplateReferenceDTO(BaseModel):
     reference_template_id: uuid.UUID = Field(...)
     input_config_name: str = Field(...)
     output_config_name: str = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config = ConfigDict(from_attributes=True)

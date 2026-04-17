@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Annotated, Any, Literal
 import uuid
 
@@ -36,8 +36,8 @@ class AuthProvider(Base):
 class AuthProviderDTO(BaseModel):
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by: UserDTO | uuid.UUID = Field()
 
     name: str = Field(

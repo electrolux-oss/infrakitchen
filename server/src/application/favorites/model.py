@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -31,6 +31,6 @@ class FavoriteDTO(BaseModel):
     user_id: uuid.UUID = Field(...)
     component_type: FavoriteComponentType = Field(...)
     component_id: uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
 
     model_config = ConfigDict(from_attributes=True)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Annotated, Literal
 import uuid
 
@@ -58,8 +58,8 @@ class IKServiceAccountProviderConfig(BaseModel):
 class AuthProviderResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     creator: UserShort | None = Field(default=None)
 

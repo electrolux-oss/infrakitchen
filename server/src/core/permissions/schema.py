@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 from typing import Literal, Self
 import uuid
@@ -26,8 +26,8 @@ class PermissionResponse(BaseModel):
     v3: str | None = Field(default=None)
     v4: str | None = Field(default=None)
     v5: str | None = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     creator: UserShort | None = Field(default=None)
     model_config = ConfigDict(
         from_attributes=True,

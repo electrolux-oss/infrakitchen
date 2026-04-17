@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import uuid
 
 from pydantic import ConfigDict, Field
@@ -28,8 +28,8 @@ class RevisionDTO(BaseModel):
     model: str = Field(...)
     data: dict[str, Any] = Field(default_factory=dict)
     entity_id: str | uuid.UUID = Field(...)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     revision_number: int = Field(...)
 
     model_config = ConfigDict(from_attributes=True)

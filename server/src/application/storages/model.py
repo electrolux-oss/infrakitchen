@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Annotated, Any, Literal
 import uuid
 
@@ -47,8 +47,8 @@ class Storage(BaseEntity):
 class StorageDTO(BaseModel):
     id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     state: Literal[
         ModelState.PROVISIONED,
         ModelState.PROVISION,

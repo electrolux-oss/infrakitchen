@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 from enum import StrEnum
 import uuid
@@ -112,8 +112,8 @@ class ValidationRuleDTO(BaseModel):
     regex_pattern: str | None = Field(default=None)
     max_length: int | None = Field(default=None)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by: uuid.UUID | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
@@ -126,8 +126,8 @@ class ValidationRuleTemplateReferenceDTO(BaseModel):
     variable_name: str = Field(...)
     validation_rule_id: uuid.UUID = Field(...)
 
-    created_at: datetime = Field(default_factory=datetime.now, frozen=True)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     created_by: uuid.UUID | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
