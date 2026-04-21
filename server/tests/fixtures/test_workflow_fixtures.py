@@ -70,6 +70,7 @@ def mocked_workflow(mocked_user, mocked_workflow_step):
     mocked_workflow_step.workflow_id = workflow_id
     return Workflow(
         id=workflow_id,
+        action="create",
         wiring_snapshot=[],
         variable_overrides={},
         status="pending",

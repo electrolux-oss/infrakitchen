@@ -10,7 +10,7 @@ from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
 from application.templates.model import Template
 from core.base_models import Base
-from core.constants.model import ModelStatus
+from core.constants.model import ModelStatus, WorkflowAction
 from core.users.model import User
 
 if TYPE_CHECKING:
@@ -42,6 +42,8 @@ class Workflow(Base):
     __tablename__: str = "workflows"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    action: Mapped[str] = mapped_column(default=WorkflowAction.CREATE)
 
     # Snapshot of wiring at execution time (immutable after creation)
     wiring_snapshot: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)

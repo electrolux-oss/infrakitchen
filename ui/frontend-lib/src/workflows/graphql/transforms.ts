@@ -45,38 +45,41 @@ export interface GqlUser {
 
 export interface GqlWorkflowStep {
   id: string;
-  workflowId: string;
   templateId: string;
   template: GqlTemplate | null;
-  resourceId: string | null;
   resource: GqlResource | null;
-  sourceCodeVersionId: string | null;
-  sourceCodeVersion: GqlSourceCodeVersion | null;
-  parentResourceIds: string[];
-  parentResources: GqlResource[] | null;
-  integrationIds: GqlIntegration[] | null;
-  secretIds: GqlSecret[] | null;
-  storageId: string | null;
   position: number;
   status: string;
   errorMessage: string | null;
-  resolvedVariables: Record<string, any> | null;
   startedAt: string | null;
   completedAt: string | null;
+  // Optional — only fetched in the full workflow detail query
+  workflowId?: string;
+  resourceId?: string | null;
+  sourceCodeVersionId?: string | null;
+  sourceCodeVersion?: GqlSourceCodeVersion | null;
+  parentResourceIds?: string[] | null;
+  parentResources?: GqlResource[] | null;
+  integrationIds?: GqlIntegration[] | null;
+  secretIds?: GqlSecret[] | null;
+  storageId?: string | null;
+  resolvedVariables?: Record<string, any> | null;
 }
 
 export interface GqlWorkflow {
   id: string;
-  wiringSnapshot: any;
-  variableOverrides: any;
+  action: string;
   status: string;
   errorMessage: string | null;
-  createdBy: string | null;
-  creator: GqlUser | null;
   steps: GqlWorkflowStep[] | null;
   startedAt: string | null;
   completedAt: string | null;
   createdAt: string;
+  // Optional — only fetched in the full workflow detail query
+  wiringSnapshot?: any;
+  variableOverrides?: any;
+  createdBy?: string | null;
+  creator?: GqlUser | null;
 }
 
 /* ── Transformers ─────────────────────────────────────────────── */
@@ -155,9 +158,9 @@ function toWorkflowStep(g: GqlWorkflowStep): WorkflowStepResponse {
     id: g.id,
     template_id: g.templateId,
     template: g.template ? toTemplateShort(g.template) : null,
-    resource_id: g.resourceId,
+    resource_id: g.resourceId ?? null,
     resource: g.resource ? toResourceShort(g.resource) : null,
-    source_code_version_id: g.sourceCodeVersionId,
+    source_code_version_id: g.sourceCodeVersionId ?? null,
     source_code_version: g.sourceCodeVersion
       ? toSourceCodeVersionShort(g.sourceCodeVersion)
       : null,
@@ -177,6 +180,7 @@ function toWorkflowStep(g: GqlWorkflowStep): WorkflowStepResponse {
 export function transformWorkflow(gql: GqlWorkflow): WorkflowResponse {
   return {
     id: gql.id,
+    action: (gql.action || "create") as WorkflowResponse["action"],
     status: gql.status as WorkflowResponse["status"],
     error_message: gql.errorMessage,
     steps: (gql.steps ?? []).map(toWorkflowStep),
@@ -196,6 +200,7 @@ export function transformWorkflow(gql: GqlWorkflow): WorkflowResponse {
 
 export interface GqlWorkflowListItem {
   id: string;
+  action: string;
   status: string;
   errorMessage: string | null;
   creator: GqlUser | null;
@@ -210,6 +215,7 @@ export function transformWorkflowListItem(
 ): Record<string, any> {
   return {
     id: g.id,
+    action: g.action || "create",
     status: g.status,
     error_message: g.errorMessage,
     creator: g.creator

@@ -44,26 +44,26 @@ export const BlueprintContent = () => {
   const tabs: TabDefinition[] = [
     ...(hasWiring
       ? [
-          {
-            label: "Wiring",
-            content: (
-              <PropertyCard title="Wiring Diagram">
-                <WiringViewer
-                  templates={blueprint.templates}
-                  wiring={[...blueprint.wiring, ...constantWires]}
-                  externalTemplates={externalTemplates}
-                  constants={constants}
-                />
-              </PropertyCard>
-            ),
-          },
-        ]
+        {
+          label: "Wiring",
+          content: (
+            <PropertyCard title="Wiring Diagram">
+              <WiringViewer
+                templates={blueprint.templates}
+                wiring={[...blueprint.wiring, ...constantWires]}
+                externalTemplates={externalTemplates}
+                constants={constants}
+              />
+            </PropertyCard>
+          ),
+        },
+      ]
       : []),
     {
-      label: "Executions",
+      label: "Workflows",
       content: (
-        <PropertyCard title="Executions">
-          <WorkflowTimeline executions={blueprint.workflows} />
+        <PropertyCard title="Workflows">
+          <WorkflowTimeline workflows={blueprint.workflows} />
         </PropertyCard>
       ),
     },

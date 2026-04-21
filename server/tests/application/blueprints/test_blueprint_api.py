@@ -8,7 +8,7 @@ from http import HTTPStatus
 from application.blueprints.api import router
 from application.blueprints.dependencies import get_blueprint_service
 from application.blueprints.schema import BlueprintCreate, BlueprintUpdate
-from application.workflows.schema import WorkflowRequest, WorkflowResponse
+from application.workflows.schema import WorkflowRequest
 from core import UserDTO
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
@@ -302,9 +302,7 @@ class TestExecuteBlueprint:
     def test_execute_forbidden_no_user(self, client_without_user):
         body = {}
 
-        response = client_without_user.post(
-            f"/blueprints/{BLUEPRINT_ID}/create_execution", json=body
-        )
+        response = client_without_user.post(f"/blueprints/{BLUEPRINT_ID}/create_execution", json=body)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {"detail": "Access denied"}
@@ -314,9 +312,7 @@ class TestExecuteBlueprint:
         service = MockBlueprintService(workflow_result=workflow_response)
         override_service(service)
 
-        response = client_with_user.post(
-            f"/blueprints/{BLUEPRINT_ID}/create_execution", json=body
-        )
+        response = client_with_user.post(f"/blueprints/{BLUEPRINT_ID}/create_execution", json=body)
         json_response = response.json()
 
         assert response.status_code == HTTPStatus.CREATED

@@ -218,9 +218,7 @@ class TestUpdate:
         mock_blueprint_crud.update.return_value = mocked_blueprint
 
         user_dto = UserDTO.model_validate(mocked_user)
-        result = await mock_blueprint_service.update(
-            mocked_blueprint.id, blueprint_update, user_dto
-        )
+        result = await mock_blueprint_service.update(mocked_blueprint.id, blueprint_update, user_dto)
 
         assert result.id == mocked_blueprint.id
         mock_blueprint_crud.update.assert_awaited_once_with(
@@ -268,9 +266,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action=ModelActions.DISABLE)
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
-        result = await mock_blueprint_service.patch(
-            str(mocked_blueprint.id), patch_body, mock_user_dto
-        )
+        result = await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
         assert result.status == ModelStatus.DISABLED
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -292,9 +288,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action=ModelActions.ENABLE)
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
-        result = await mock_blueprint_service.patch(
-            str(mocked_blueprint.id), patch_body, mock_user_dto
-        )
+        result = await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
         assert result.status == ModelStatus.ENABLED
         mock_event_sender.send_event.assert_awaited_once()
@@ -312,9 +306,7 @@ class TestPatch:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         with pytest.raises(EntityWrongState, match="Blueprint is already enabled"):
-            await mock_blueprint_service.patch(
-                str(mocked_blueprint.id), patch_body, mock_user_dto
-            )
+            await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_patch_not_found(self, mock_blueprint_service, mock_blueprint_crud, mock_user_dto):
@@ -332,9 +324,7 @@ class TestPatch:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         with pytest.raises(ValueError, match="Action unsupported_action is not supported"):
-            await mock_blueprint_service.patch(
-                str(mocked_blueprint.id), patch_body, mock_user_dto
-            )
+            await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
 
 class TestDelete:
@@ -352,9 +342,7 @@ class TestDelete:
         await mock_blueprint_service.delete(blueprint_id, mock_user_dto)
 
         mock_blueprint_crud.delete.assert_awaited_once_with(blueprint_id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            blueprint_id, mock_user_dto.id, ModelActions.DELETE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(blueprint_id, mock_user_dto.id, ModelActions.DELETE)
 
     @pytest.mark.asyncio
     async def test_delete_error(self, mock_blueprint_service, mock_blueprint_crud, mock_user_dto):
@@ -401,9 +389,7 @@ class TestGetActions:
         )
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
-        result = await mock_blueprint_service.get_actions(
-            str(mocked_blueprint.id), mock_user_dto
-        )
+        result = await mock_blueprint_service.get_actions(str(mocked_blueprint.id), mock_user_dto)
 
         assert sorted(result) == sorted(expected_actions)
 
@@ -442,9 +428,7 @@ class TestCreateWorkflow:
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
 
         request = WorkflowRequest()
-        result = await mock_blueprint_service.create_workflow(
-            mocked_blueprint.id, request, mock_user_dto
-        )
+        result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
 
         assert result.id == mocked_workflow.id
         assert result.status == mocked_workflow.status
@@ -512,9 +496,7 @@ class TestCreateWorkflow:
         request = WorkflowRequest(
             variable_overrides={str(template_id_1): {"region": "us-east-1"}},
         )
-        result = await mock_blueprint_service.create_workflow(
-            mocked_blueprint.id, request, mock_user_dto
-        )
+        result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
 
         assert result.id == mocked_workflow.id
         mock_workflow_service.create.assert_awaited_once()
@@ -525,6 +507,130 @@ class TestCreateWorkflow:
         assert len(body["steps"]) == 2
         step_template_ids = [s["template_id"] for s in body["steps"]]
         assert step_template_ids.index(str(template_id_1)) < step_template_ids.index(str(template_id_2))
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_missing_required_constant_raises(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_template,
+        mock_user_dto,
+    ):
+        constant_id = str(uuid4())
+        mocked_blueprint.configuration = {
+            "constants": [{"id": constant_id, "name": "env"}],
+            "constant_wires": [
+                {
+                    "source_template_id": constant_id,
+                    "source_output": "value",
+                    "target_template_id": str(mocked_template.id),
+                    "target_variable": "environment",
+                }
+            ],
+        }
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock()
+
+        request = WorkflowRequest()
+
+        with pytest.raises(ValueError, match="Missing required constant values: env"):
+            await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+        mock_workflow_service.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_empty_constant_value_raises(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_template,
+        mock_user_dto,
+    ):
+        constant_id = str(uuid4())
+        mocked_blueprint.configuration = {
+            "constants": [{"id": constant_id, "name": "env"}],
+            "constant_wires": [
+                {
+                    "source_template_id": constant_id,
+                    "source_output": "value",
+                    "target_template_id": str(mocked_template.id),
+                    "target_variable": "environment",
+                }
+            ],
+        }
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock()
+
+        request = WorkflowRequest(
+            variable_overrides={str(mocked_template.id): {"environment": "   "}},
+        )
+
+        with pytest.raises(ValueError, match="Missing required constant values: env"):
+            await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_filled_constant_passes(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_workflow,
+        mocked_template,
+        mock_user_dto,
+    ):
+        constant_id = str(uuid4())
+        mocked_blueprint.configuration = {
+            "constants": [{"id": constant_id, "name": "env"}],
+            "constant_wires": [
+                {
+                    "source_template_id": constant_id,
+                    "source_output": "value",
+                    "target_template_id": str(mocked_template.id),
+                    "target_variable": "environment",
+                }
+            ],
+        }
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+
+        request = WorkflowRequest(
+            variable_overrides={str(mocked_template.id): {"environment": "prod"}},
+        )
+        result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+        assert result.id == mocked_workflow.id
+        mock_workflow_service.create.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_unwired_constant_is_ignored(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_workflow,
+        mock_user_dto,
+    ):
+        # A constant is declared but never wired to any template — no value required.
+        mocked_blueprint.configuration = {
+            "constants": [{"id": str(uuid4()), "name": "unused"}],
+            "constant_wires": [],
+        }
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+
+        result = await mock_blueprint_service.create_workflow(
+            mocked_blueprint.id, WorkflowRequest(), mock_user_dto
+        )
+
+        assert result.id == mocked_workflow.id
+        mock_workflow_service.create.assert_awaited_once()
+
 
 
 class TestTopologicalSort:

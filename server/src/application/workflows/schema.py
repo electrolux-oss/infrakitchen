@@ -9,7 +9,7 @@ from application.resources.schema import ResourceShort
 from application.secrets.schema import SecretShort
 from application.source_code_versions.schema import SourceCodeVersionShort
 from application.templates.schema import TemplateShort
-from core.constants.model import ModelStatus
+from core.constants.model import ModelStatus, WorkflowAction
 from core.users.schema import UserShort
 
 
@@ -69,11 +69,32 @@ class WorkflowStepCreate(BaseModel):
 
 
 class WorkflowCreate(BaseModel):
+    action: str = WorkflowAction.CREATE
     wiring_snapshot: list[WiringRule] = Field(default_factory=list)
     variable_overrides: dict[str, Any] = Field(default_factory=dict)
     status: str = ModelStatus.PENDING
     created_by: uuid.UUID
     steps: list[WorkflowStepCreate] = Field(default_factory=list)
+
+
+class WorkflowStepUpdate(BaseModel):
+    """Per-step editable fields. ``id`` identifies the existing step."""
+
+    id: uuid.UUID
+    resolved_variables: dict[str, Any] | None = None
+    parent_resource_ids: list[uuid.UUID] | None = None
+    source_code_version_id: uuid.UUID | None = None
+    integration_ids: list[uuid.UUID] | None = None
+    secret_ids: list[uuid.UUID] | None = None
+    storage_id: uuid.UUID | None = None
+
+
+class WorkflowUpdate(BaseModel):
+    """Fields that can be updated while a workflow is still pending."""
+
+    variable_overrides: dict[str, Any] | None = None
+    steps: list[WorkflowStepUpdate] | None = None
+
 
 
 class WorkflowStepResponse(BaseModel):
@@ -101,6 +122,7 @@ class WorkflowStepResponse(BaseModel):
 
 class WorkflowResponse(BaseModel):
     id: uuid.UUID
+    action: str = WorkflowAction.CREATE
     status: str
     error_message: str | None = None
     steps: list[WorkflowStepResponse] = Field(default_factory=list)

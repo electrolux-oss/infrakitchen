@@ -171,6 +171,8 @@ class BlueprintService:
         if blueprint is None:
             raise EntityNotFound("Blueprint not found")
 
+        self._validate_constants(blueprint, request.variable_overrides)
+
         wiring_rules = [WiringRule(**w) for w in (blueprint.wiring or [])]
         template_ids = [t.id for t in blueprint.templates]
 
@@ -215,6 +217,44 @@ class BlueprintService:
         )
 
         return WorkflowResponse.model_validate(execution)
+
+    @staticmethod
+    def _validate_constants(blueprint: Any, variable_overrides: dict[str, dict[str, Any]]) -> None:
+        """
+        Ensure every constant declared in ``blueprint.configuration.constants``
+        has a non-empty value supplied through ``variable_overrides`` for each
+        of its wired targets (``blueprint.configuration.constant_wires``).
+        """
+        configuration = blueprint.configuration or {}
+        constants = configuration.get("constants") or []
+        constant_wires = configuration.get("constant_wires") or []
+        if not constants:
+            return
+
+        # Group wires by constant id (stored in source_template_id).
+        wires_by_constant: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for wire in constant_wires:
+            wires_by_constant[str(wire["source_template_id"])].append(wire)
+
+        missing: list[str] = []
+        for constant in constants:
+            constant_id = str(constant["id"])
+            name = constant.get("name") or constant_id
+            wires = wires_by_constant.get(constant_id, [])
+            if not wires:
+                # Constant declared but not wired anywhere — nothing to validate.
+                continue
+            for wire in wires:
+                target_template = str(wire["target_template_id"])
+                target_variable = wire["target_variable"]
+                value = (variable_overrides.get(target_template) or {}).get(target_variable)
+                if value is None or (isinstance(value, str) and value.strip() == ""):
+                    missing.append(name)
+                    break
+
+        if missing:
+            unique = sorted(set(missing))
+            raise ValueError(f"Missing required constant values: {', '.join(unique)}")
 
     @staticmethod
     def _topological_sort(template_ids: list[UUID], wiring_rules: list[WiringRule]) -> list[tuple[UUID, int]]:

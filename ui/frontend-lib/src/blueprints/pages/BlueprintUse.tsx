@@ -36,6 +36,7 @@ import { ResourceVariableSchema } from "../../resources/types";
 import { TemplateResponse, TemplateShort } from "../../templates/types";
 import { IkEntity } from "../../types";
 import { BlueprintResponse, WiringRule } from "../types";
+import { WorkflowResponse } from "../../workflows/types";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -267,10 +268,10 @@ export const BlueprintUsePage = () => {
     () =>
       blueprint
         ? computeWiredVariables(
-            [...blueprint.wiring, ...constantWires],
-            [...blueprint.templates, ...externalTemplates],
-            constantBlocks,
-          )
+          [...blueprint.wiring, ...constantWires],
+          [...blueprint.templates, ...externalTemplates],
+          constantBlocks,
+        )
         : {},
     [blueprint, constantWires, externalTemplates, constantBlocks],
   );
@@ -289,6 +290,36 @@ export const BlueprintUsePage = () => {
       ),
     );
   }, [templateDetails, missingParents, parentSelections]);
+
+  // All constants declared in the blueprint must be filled in by the user.
+  const allConstantsFilled = useMemo(
+    () =>
+      constantBlocks.every((c) => {
+        const v = constantValues[c.id];
+        return v !== undefined && v !== null && String(v).trim() !== "";
+      }),
+    [constantBlocks, constantValues],
+  );
+
+  // Every required, user-editable, non-wired variable must have a value
+  // (either a schema default or a user-provided override).
+  const allRequiredVariablesFilled = useMemo(() => {
+    if (!blueprint) return false;
+    const isEmpty = (v: unknown) =>
+      v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+
+    return blueprint.templates.every((t) => {
+      const schemas = variableSchemas[t.id] || [];
+      const wired = wiredVariables[t.id] || {};
+      const values = variableValues[t.id] || {};
+      return schemas.every((v) => {
+        if (!v.required || v.restricted || v.sensitive) return true;
+        if (wired[v.name]) return true; // value supplied by wiring/constant
+        if (!isEmpty(values[v.name])) return true;
+        return !isEmpty(v.value); // schema default
+      });
+    });
+  }, [blueprint, variableSchemas, wiredVariables, variableValues]);
 
   // ── Load SCVs only after all required parents are selected ───────────
   useEffect(() => {
@@ -479,7 +510,7 @@ export const BlueprintUsePage = () => {
         if (allIds.length > 0) parent_overrides[templateId] = allIds;
       }
 
-      await ikApi.postRaw(`blueprints/${blueprint_id}/create_execution`, {
+      await ikApi.postRaw(`blueprints/${blueprint_id}/create_workflow`, {
         variable_overrides,
         integration_ids: integrationIds,
         storage_id: storageId,
@@ -487,10 +518,10 @@ export const BlueprintUsePage = () => {
         secret_ids: secretIds,
         source_code_version_overrides: selectedScv,
         parent_overrides,
+      }).then((response: WorkflowResponse) => {
+        notify("Workflow was created", "success");
+        navigate(`${linkPrefix}workflows/${response.id}`);
       });
-
-      notify("Blueprint resources are being created", "success");
-      navigate(`${linkPrefix}blueprints/${blueprint_id}`);
     } catch (e: any) {
       notifyError(e);
     } finally {
@@ -548,6 +579,12 @@ export const BlueprintUsePage = () => {
   }
 
   const hasAllScvs = blueprint.templates.every((t) => selectedScv[t.id]);
+  const canSubmit =
+    !submitting &&
+    allParentsResolved &&
+    hasAllScvs &&
+    allConstantsFilled &&
+    allRequiredVariablesFilled;
 
   // ── Render: main form ────────────────────────────────────────────────
   return (
@@ -567,7 +604,7 @@ export const BlueprintUsePage = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            disabled={submitting || !allParentsResolved || !hasAllScvs}
+            disabled={!canSubmit}
           >
             {submitting ? "Creating…" : "Create Resources"}
           </Button>
@@ -581,6 +618,15 @@ export const BlueprintUsePage = () => {
           to continue.
         </Alert>
       )}
+
+      {allParentsResolved &&
+        hasAllScvs &&
+        !allRequiredVariablesFilled && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Some required input variables are empty. Fill them in to create
+            resources.
+          </Alert>
+        )}
 
       {/* ── General Configuration ──────────────────────────────── */}
       <PropertyCard title="General Configuration">
@@ -618,22 +664,64 @@ export const BlueprintUsePage = () => {
           />
 
           {integrationIds.length > 0 && (
-            <ReferenceInput
-              ikApi={ikApi}
-              entity_name="storages"
-              buffer={buffer}
-              showFields={["name", "storage_provider"]}
-              setBuffer={setBuffer}
-              error={false}
-              helpertext="Select storage for TF state"
-              filter={{ integration_id: integrationIds }}
-              value={storageId}
-              label="Storage for TF State"
-              required
-              onChange={(val: string | null) => setStorageId(val)}
-            />
-          )}
+            <>
+              <ReferenceInput
+                ikApi={ikApi}
+                entity_name="storages"
+                buffer={buffer}
+                showFields={["name", "storage_provider"]}
+                setBuffer={setBuffer}
+                error={false}
+                helpertext="Select storage for TF state"
+                filter={{ integration_id: integrationIds }}
+                value={storageId}
+                label="Storage for TF State"
+                required
+                onChange={(val: string | null) => setStorageId(val)}
+              />
 
+              {/* Parent resource selectors */}
+              {uniqueParentTemplates.map((parent) => {
+                // Get current selection from any template that has this parent
+                const currentValue =
+                  Object.values(parentSelections).find(
+                    (sel) => sel[parent.id]?.length > 0,
+                  )?.[parent.id] || [];
+
+                return (
+                  <ArrayReferenceInput
+                    key={parent.id}
+                    ikApi={ikApi}
+                    entity_name="resources"
+                    bufferKey={`parent_global_${parent.id}`}
+                    buffer={buffer}
+                    setBuffer={setBuffer}
+                    showFields={["template.name", "name"]}
+                    fields={[
+                      "name",
+                      "template",
+                      "integration_ids",
+                      "storage",
+                      "workspace",
+                      "secret_ids",
+                      "id",
+                    ]}
+                    error={false}
+                    helpertext={`Select existing "${parent.name}" resources as parent`}
+                    filter={{ template_id: [parent.id], integration_ids__any: integrationIds }}
+                    value={currentValue}
+                    label={`Parent: ${parent.name}`}
+                    required
+                    multiple
+                    fullWidth
+                    onChange={(ids: string[]) =>
+                      handleParentSelection(parent.id, ids)
+                    }
+                  />
+                );
+              })}
+            </>
+          )}
           <ReferenceInput
             ikApi={ikApi}
             entity_name="workspaces"
@@ -641,52 +729,11 @@ export const BlueprintUsePage = () => {
             showFields={["name", "workspace_provider"]}
             setBuffer={setBuffer}
             error={false}
-            helpertext="Select workspace"
+            helpertext="Select workspace for the resources (optional)"
             value={workspaceId}
             label="Workspace"
             onChange={(val: string | null) => setWorkspaceId(val)}
           />
-
-          {/* Parent resource selectors */}
-          {uniqueParentTemplates.map((parent) => {
-            // Get current selection from any template that has this parent
-            const currentValue =
-              Object.values(parentSelections).find(
-                (sel) => sel[parent.id]?.length > 0,
-              )?.[parent.id] || [];
-
-            return (
-              <ArrayReferenceInput
-                key={parent.id}
-                ikApi={ikApi}
-                entity_name="resources"
-                bufferKey={`parent_global_${parent.id}`}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                showFields={["template.name", "name"]}
-                fields={[
-                  "name",
-                  "template",
-                  "integration_ids",
-                  "storage",
-                  "workspace",
-                  "secret_ids",
-                  "id",
-                ]}
-                error={false}
-                helpertext={`Select existing "${parent.name}" resources as parent`}
-                filter={{ template_id: [parent.id] }}
-                value={currentValue}
-                label={`Parent: ${parent.name}`}
-                required
-                multiple
-                fullWidth
-                onChange={(ids: string[]) =>
-                  handleParentSelection(parent.id, ids)
-                }
-              />
-            );
-          })}
         </Box>
       </PropertyCard>
 
@@ -698,33 +745,40 @@ export const BlueprintUsePage = () => {
               Enter values for each constant. These values will be applied to
               all wired template inputs.
             </Typography>
-            {constantBlocks.map((c) => (
-              <TextField
-                key={c.id}
-                label={c.name}
-                value={constantValues[c.id] || ""}
-                onChange={(e) =>
-                  setConstantValues((prev) => ({
-                    ...prev,
-                    [c.id]: e.target.value,
-                  }))
-                }
-                fullWidth
-                margin="normal"
-                InputProps={{
-                  startAdornment: (
-                    <Chip
-                      icon={<TuneIcon />}
-                      label="Constant"
-                      size="small"
-                      color="secondary"
-                      variant="outlined"
-                      sx={{ mr: 1 }}
-                    />
-                  ),
-                }}
-              />
-            ))}
+            {constantBlocks.map((c) => {
+              const raw = constantValues[c.id] ?? "";
+              const isEmpty = String(raw).trim() === "";
+              return (
+                <TextField
+                  key={c.id}
+                  label={c.name}
+                  value={raw}
+                  onChange={(e) =>
+                    setConstantValues((prev) => ({
+                      ...prev,
+                      [c.id]: e.target.value,
+                    }))
+                  }
+                  required
+                  error={isEmpty}
+                  helperText={isEmpty ? "This constant is required" : " "}
+                  fullWidth
+                  margin="normal"
+                  InputProps={{
+                    startAdornment: (
+                      <Chip
+                        icon={<TuneIcon />}
+                        label="Constant"
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                        sx={{ mr: 1 }}
+                      />
+                    ),
+                  }}
+                />
+              );
+            })}
           </Box>
         </PropertyCard>
       )}
@@ -894,13 +948,13 @@ export const BlueprintUsePage = () => {
                                   : (vals[variable.name] ?? variable.value),
                                 name: `${t.id}.${variable.name}`,
                                 onChange: isConstantWired
-                                  ? () => {} // value set via constant input above
+                                  ? () => { } // value set via constant input above
                                   : (value: any) =>
-                                      handleVariableChange(
-                                        t.id,
-                                        variable.name,
-                                        value,
-                                      ),
+                                    handleVariableChange(
+                                      t.id,
+                                      variable.name,
+                                      value,
+                                    ),
                               }}
                               isDisabled={isConstantWired}
                             >

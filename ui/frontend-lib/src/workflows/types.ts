@@ -34,6 +34,7 @@ export interface WorkflowStepResponse {
 
 export interface WorkflowResponse {
   id: string;
+  action: "create" | "destroy";
   status: "pending" | "in_progress" | "done" | "error" | "cancelled";
   error_message: string | null;
   steps: WorkflowStepResponse[];

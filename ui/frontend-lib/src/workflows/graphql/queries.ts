@@ -4,6 +4,7 @@ export const WORKFLOW_QUERY = gql`
   query Workflow($id: UUID!) {
     workflow(id: $id) {
       id
+      action
       wiringSnapshot
       variableOverrides
       status
@@ -71,6 +72,7 @@ export const WORKFLOWS_QUERY = gql`
   query Workflows($filter: JSON, $sort: [String!], $range: [Int!]) {
     workflows(filter: $filter, sort: $sort, range: $range) {
       id
+      action
       status
       errorMessage
       creator {

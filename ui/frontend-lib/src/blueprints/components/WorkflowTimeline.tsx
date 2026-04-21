@@ -1,10 +1,8 @@
-import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
 import {
   Box,
-  Button,
   Chip,
   LinearProgress,
   Link,
@@ -19,21 +17,18 @@ import {
 
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { IkEntity } from "../../types";
-import { BlueprintExecutionResponse } from "../types";
+import { WorkflowResponse } from "../../workflows/types";
 
-interface ExecutionTimelineProps {
-  executions: BlueprintExecutionResponse[];
+interface WorkflowTimelineProps {
+  workflows: WorkflowResponse[];
 }
 
-export const WorkflowTimeline = ({ executions }: ExecutionTimelineProps) => {
-  const [loading, setLoading] = useState(false);
-  const { ikApi, linkPrefix } = useConfig();
+export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
+  const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  if (executions.length === 0) {
+  if (workflows.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
         No executions yet.
@@ -41,26 +36,9 @@ export const WorkflowTimeline = ({ executions }: ExecutionTimelineProps) => {
     );
   }
 
-  const handleClick = (execution_id: string) => {
-    setLoading(true);
-    ikApi
-      .patchRaw(`workflows/${execution_id}/actions`, {
-        action: "execute",
-      })
-      .then((_response: IkEntity) => {
-        notify(`Execute task sent successfully`, "success");
-      })
-      .catch((error) => {
-        notifyError(error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
   return (
     <Box sx={{ width: "100%" }}>
-      {executions.map((exec) => (
+      {workflows.map((exec) => (
         <Box
           key={exec.id}
           sx={{
@@ -95,16 +73,6 @@ export const WorkflowTimeline = ({ executions }: ExecutionTimelineProps) => {
                 </Link>
               </Typography>
               <StatusChip status={exec.status} />
-              <Button
-                color="error"
-                onClick={() => handleClick(exec.id)}
-                variant="contained"
-                disabled={loading}
-                aria-label="Action Button"
-              >
-                Run
-                {loading && " ..."}
-              </Button>
             </Box>
             <Typography variant="caption" color="text.secondary">
               {new Date(exec.created_at).toLocaleString()}
@@ -131,24 +99,20 @@ export const WorkflowTimeline = ({ executions }: ExecutionTimelineProps) => {
                     <TableCell>
                       <GetEntityLink
                         _entity_name="template"
-                        id={step.template_id}
-                        identifier="Template"
+                        id={step.template?.id || ""}
+                        name={step.template?.name || "Template"}
                       />
                     </TableCell>
                     <TableCell>
                       <StatusChip status={step.status} />
                     </TableCell>
                     <TableCell>
-                      {step.resource_id ? (
-                        <Chip
-                          label={step.resource_id.slice(0, 8) + "…"}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ) : (
-                        "—"
-                      )}
+
+                      {step.resource ? <GetEntityLink
+                        _entity_name="resource"
+                        id={step.resource?.id || ""}
+                        name={step.resource?.name || "Resource"}
+                      /> : "—"}
                     </TableCell>
                     <TableCell>
                       {step.error_message ? (

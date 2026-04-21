@@ -57,3 +57,9 @@ class ModelState(StrEnum):
     PROVISIONED = "provisioned"
     DESTROY = "destroy"
     DESTROYED = "destroyed"
+
+
+@unique
+class WorkflowAction(StrEnum):
+    CREATE = "create"
+    DESTROY = "destroy"

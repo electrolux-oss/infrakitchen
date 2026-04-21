@@ -12,6 +12,7 @@ from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from .schema import (
     WorkflowResponse,
+    WorkflowUpdate,
 )
 from .dependencies import get_workflow_service
 
@@ -66,6 +67,25 @@ async def get_workflow(
     if not entity:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Execution not found")
     return entity
+
+
+@router.patch(
+    "/workflows/{workflow_id}",
+    response_model=WorkflowResponse,
+    status_code=http_status.HTTP_200_OK,
+    response_description="Update a pending workflow and its steps",
+)
+async def update_workflow(
+    request: Request,
+    workflow_id: str,
+    body: WorkflowUpdate,
+    service: WorkflowService = Depends(get_workflow_service),
+):
+    requester: UserDTO | None = request.state.user
+    if not requester:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await service.update_with_steps(workflow_id=workflow_id, request=body, requester=requester)
 
 
 @router.patch(

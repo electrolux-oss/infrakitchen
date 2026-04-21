@@ -94,6 +94,7 @@ def convert_workflow(obj: Any, fields: set[str] | None = None) -> WorkflowType |
         obj = SafeORM(obj)
     return WorkflowType(
         id=obj.id,
+        action=enum_val(obj.action) if hasattr(obj, "action") else "create",
         wiring_snapshot=obj.wiring_snapshot,
         variable_overrides=obj.variable_overrides,
         status=enum_val(obj.status),

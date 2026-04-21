@@ -1,5 +1,6 @@
 import { TemplateShort } from "../templates/types";
 import { UserShort } from "../users";
+import { WorkflowResponse } from "../workflows/types";
 
 export interface WiringRule {
   source_template_id: string;
@@ -40,49 +41,11 @@ export interface BlueprintResponse {
   status: "enabled" | "disabled";
   revision_number: number;
   created_by: UserShort | string;
-  workflows: BlueprintExecutionResponse[];
+  workflows: WorkflowResponse[];
   created_at: string;
   updated_at: string;
   _entity_name: string;
 }
 
-export interface BlueprintExecuteRequest {
-  variable_overrides: Record<string, Record<string, any>>;
-  workspace_id?: string;
-  name_prefix?: string;
-  integration_ids?: string[];
-  storage_id?: string | null;
-  secret_ids?: string[];
-  source_code_version_overrides?: Record<string, string>;
-  parent_overrides?: Record<string, string[]>;
-}
-
-export interface ExecutionStepResponse {
-  id: string;
-  template_id: string;
-  resource_id: string | null;
-  position: number;
-  status: "pending" | "in_progress" | "done" | "error" | "cancelled";
-  error_message: string | null;
-  resolved_variables: Record<string, any>;
-  parent_resource_ids: string[];
-  integration_ids: string[];
-  secret_ids: string[];
-  source_code_version_id: string | null;
-  started_at: string | null;
-  completed_at: string | null;
-}
-
-export interface BlueprintExecutionResponse {
-  id: string;
-  status: "pending" | "in_progress" | "done" | "error" | "cancelled";
-  error_message: string | null;
-  steps: ExecutionStepResponse[];
-  wiring_snapshot: WiringRule[];
-  variable_overrides: Record<string, any>;
-  created_by: UserShort | string;
-  started_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  _entity_name?: string;
-}
+// Re-export for convenience; blueprint pages use the full workflow shape.
+export type { WorkflowResponse, WorkflowStepResponse } from "../workflows/types";

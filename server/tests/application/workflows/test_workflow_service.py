@@ -1,12 +1,11 @@
 import pytest
-from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
-from application.workflows.model import Workflow, WorkflowStep
-from application.workflows.schema import WorkflowResponse, WorkflowStepResponse
+from application.workflows.model import Workflow
+from application.workflows.schema import WorkflowStepUpdate, WorkflowUpdate
 from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions
-from core.errors import EntityNotFound
+from core.constants.model import ModelActions, ModelStatus
+from core.errors import EntityNotFound, EntityWrongState
 from core import UserDTO
 
 WORKFLOW_ID = str(uuid4())
@@ -60,6 +59,7 @@ class TestGetAll:
     async def test_get_all_success(self, mock_workflow_service, mock_workflow_crud, mocked_workflow):
         workflow2 = Workflow(
             id=uuid4(),
+            action="create",
             wiring_snapshot=[],
             variable_overrides={},
             status="pending",
@@ -136,9 +136,7 @@ class TestCreate:
         assert result.id == mocked_workflow.id
         assert result.status == mocked_workflow.status
         mock_workflow_crud.create.assert_awaited_once_with(body)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_workflow.id, user_dto.id, ModelActions.CREATE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(mocked_workflow.id, user_dto.id, ModelActions.CREATE)
 
     @pytest.mark.asyncio
     async def test_create_with_steps(
@@ -205,9 +203,7 @@ class TestDelete:
         await mock_workflow_service.delete(workflow_id, mock_user_dto)
 
         mock_workflow_crud.delete.assert_awaited_once_with(workflow_id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            workflow_id, mock_user_dto.id, ModelActions.DELETE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once_with(workflow_id, mock_user_dto.id, ModelActions.DELETE)
 
     @pytest.mark.asyncio
     async def test_delete_error(self, mock_workflow_service, mock_workflow_crud, mock_user_dto):
@@ -257,9 +253,7 @@ class TestPatchAction:
         mock_workflow_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Execution not found"):
-            await mock_workflow_service.patch_action(
-                workflow_id=WORKFLOW_ID, body=patch_body, requester=mock_user_dto
-            )
+            await mock_workflow_service.patch_action(workflow_id=WORKFLOW_ID, body=patch_body, requester=mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_patch_unsupported_action(
@@ -276,9 +270,7 @@ class TestPatchAction:
 
 class TestUpdate:
     @pytest.mark.asyncio
-    async def test_update_success(
-        self, mock_workflow_service, mock_workflow_crud, mocked_workflow
-    ):
+    async def test_update_success(self, mock_workflow_service, mock_workflow_crud, mocked_workflow):
         update_data = {"status": "in_progress"}
         mocked_workflow.status = "in_progress"
         mock_workflow_crud.update.return_value = mocked_workflow
@@ -313,21 +305,15 @@ class TestUpdate:
 
 class TestUpdateStep:
     @pytest.mark.asyncio
-    async def test_update_step_success(
-        self, mock_workflow_service, mock_workflow_crud, mocked_workflow_step
-    ):
+    async def test_update_step_success(self, mock_workflow_service, mock_workflow_crud, mocked_workflow_step):
         mocked_workflow_step.status = "done"
         mock_workflow_crud.update_step.return_value = mocked_workflow_step
 
-        result = await mock_workflow_service.update_step(
-            mocked_workflow_step.id, {"status": "done"}
-        )
+        result = await mock_workflow_service.update_step(mocked_workflow_step.id, {"status": "done"})
 
         assert result.id == mocked_workflow_step.id
         assert result.status == "done"
-        mock_workflow_crud.update_step.assert_awaited_once_with(
-            mocked_workflow_step.id, {"status": "done"}
-        )
+        mock_workflow_crud.update_step.assert_awaited_once_with(mocked_workflow_step.id, {"status": "done"})
 
     @pytest.mark.asyncio
     async def test_update_step_not_found(self, mock_workflow_service, mock_workflow_crud):
@@ -359,8 +345,11 @@ class TestGetWorkflowActions:
             (None, []),
             ({}, []),
             ({"api:workflow": "read"}, []),
-            ({"api:workflow": "write"}, [ModelActions.EXECUTE]),
-            ({"api:workflow": "admin"}, [ModelActions.EXECUTE, ModelActions.DELETE]),
+            ({"api:workflow": "write"}, [ModelActions.EXECUTE, ModelActions.EDIT]),
+            (
+                {"api:workflow": "admin"},
+                [ModelActions.EXECUTE, ModelActions.EDIT, ModelActions.DELETE],
+            ),
         ],
     )
     async def test_get_workflow_actions(
@@ -381,9 +370,7 @@ class TestGetWorkflowActions:
         )
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
-        result = await mock_workflow_service.get_workflow_actions(
-            str(mocked_workflow.id), mock_user_dto
-        )
+        result = await mock_workflow_service.get_workflow_actions(str(mocked_workflow.id), mock_user_dto)
 
         assert sorted(result) == sorted(expected_actions)
 
@@ -405,3 +392,101 @@ class TestGetWorkflowActions:
 
         with pytest.raises(EntityNotFound, match="Workflow not found"):
             await mock_workflow_service.get_workflow_actions(WORKFLOW_ID, mock_user_dto)
+
+
+class TestUpdateWithSteps:
+    @pytest.mark.asyncio
+    async def test_update_with_steps_not_found(
+        self, mock_workflow_service, mock_workflow_crud, mock_user_dto
+    ):
+        mock_workflow_crud.get_by_id.return_value = None
+
+        with pytest.raises(EntityNotFound, match="Workflow not found"):
+            await mock_workflow_service.update_with_steps(
+                WORKFLOW_ID, WorkflowUpdate(), mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_with_steps_wrong_state(
+        self, mock_workflow_service, mock_workflow_crud, mocked_workflow, mock_user_dto
+    ):
+        mocked_workflow.status = ModelStatus.IN_PROGRESS
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+
+        with pytest.raises(EntityWrongState, match="cannot be edited"):
+            await mock_workflow_service.update_with_steps(
+                mocked_workflow.id, WorkflowUpdate(), mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", [ModelStatus.PENDING, ModelStatus.ERROR])
+    async def test_update_with_steps_allowed_statuses(
+        self,
+        status,
+        mock_workflow_service,
+        mock_workflow_crud,
+        mocked_workflow,
+        mock_user_dto,
+    ):
+        mocked_workflow.status = status
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+
+        result = await mock_workflow_service.update_with_steps(
+            mocked_workflow.id, WorkflowUpdate(variable_overrides={"x": 1}), mock_user_dto
+        )
+
+        assert result.id == mocked_workflow.id
+        mock_workflow_crud.update.assert_any_await(
+            mocked_workflow.id, {"variable_overrides": {"x": 1}}
+        )
+
+    @pytest.mark.asyncio
+    async def test_update_with_steps_unknown_step_raises(
+        self, mock_workflow_service, mock_workflow_crud, mocked_workflow, mock_user_dto
+    ):
+        mocked_workflow.status = ModelStatus.PENDING
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+
+        request = WorkflowUpdate(
+            steps=[WorkflowStepUpdate(id=uuid4(), resolved_variables={"x": 1})]
+        )
+
+        with pytest.raises(EntityNotFound, match="does not belong"):
+            await mock_workflow_service.update_with_steps(
+                mocked_workflow.id, request, mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_update_with_steps_success(
+        self,
+        mock_workflow_service,
+        mock_workflow_crud,
+        mocked_workflow,
+        mocked_workflow_step,
+        mock_user_dto,
+    ):
+        mocked_workflow.status = ModelStatus.PENDING
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+
+        request = WorkflowUpdate(
+            variable_overrides={"a": 1},
+            steps=[
+                WorkflowStepUpdate(
+                    id=mocked_workflow_step.id,
+                    resolved_variables={"region": "eu-west-1"},
+                )
+            ],
+        )
+
+        result = await mock_workflow_service.update_with_steps(
+            mocked_workflow.id, request, mock_user_dto
+        )
+
+        assert result.id == mocked_workflow.id
+        mock_workflow_crud.update.assert_any_await(
+            mocked_workflow.id, {"variable_overrides": {"a": 1}}
+        )
+        mock_workflow_crud.update_step.assert_awaited_once()
+        args, _ = mock_workflow_crud.update_step.call_args
+        assert args[0] == mocked_workflow_step.id
+        assert args[1] == {"resolved_variables": {"region": "eu-west-1"}}

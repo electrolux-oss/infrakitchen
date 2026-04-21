@@ -145,12 +145,12 @@ async def get_actions(request: Request, blueprint_id: str, service: BlueprintSer
 
 
 @router.post(
-    "/blueprints/{blueprint_id}/create_execution",
+    "/blueprints/{blueprint_id}/create_workflow",
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_201_CREATED,
-    response_description="Execute a blueprint — creates resources in dependency order",
+    response_description="Create workflows — creates resources in dependency order",
 )
-async def execute_blueprint(
+async def create_workflow_from_blueprint(
     request: Request,
     blueprint_id: str,
     body: WorkflowRequest,

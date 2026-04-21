@@ -38,6 +38,7 @@ class WorkflowStepType:
 @strawberry.type
 class WorkflowType:
     id: uuid.UUID
+    action: str = "create"
     wiring_snapshot: JSON | None = None
     variable_overrides: JSON | None = None
     status: str = ""
