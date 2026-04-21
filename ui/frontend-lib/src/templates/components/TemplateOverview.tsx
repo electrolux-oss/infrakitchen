@@ -20,7 +20,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   return (
     <OverviewCard
       name={template.name}
-      description={template.description || "No description"}
       chip={template.abstract ? "Abstract" : undefined}
     >
       <CommonField
