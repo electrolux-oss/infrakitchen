@@ -15,6 +15,7 @@ import {
 
 import { LabelInput, useConfig } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -150,23 +151,15 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                 name="description"
                 control={control}
                 render={({ field }) => (
-                  <TextField
+                  <MarkdownEditor
                     {...field}
-                    label="Description"
-                    variant="outlined"
+                    label="Documentation"
                     error={!!errors.description}
                     helperText={
                       errors.description
                         ? errors.description.message
-                        : "Provide a short description"
+                        : "Markdown-formatted guidance for users of this template. Supports headings, lists, tables, and code blocks."
                     }
-                    fullWidth
-                    margin="normal"
-                    slotProps={{
-                      htmlInput: {
-                        "aria-label": "Template description",
-                      },
-                    }}
                   />
                 )}
               />
