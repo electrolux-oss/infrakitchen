@@ -28,6 +28,7 @@ export interface WorkflowStepResponse {
   secret_ids: SecretShort[];
   source_code_version_id: string | null;
   source_code_version: SourceCodeVersionShort | null;
+  storage_id: string | null;
   started_at: string | null;
   completed_at: string | null;
 }
@@ -39,7 +40,6 @@ export interface WorkflowResponse {
   error_message: string | null;
   steps: WorkflowStepResponse[];
   wiring_snapshot: WiringRule[];
-  variable_overrides: Record<string, any>;
   creator: UserShort;
   started_at: string | null;
   completed_at: string | null;

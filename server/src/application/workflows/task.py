@@ -251,14 +251,14 @@ class WorkflowTask:
         current_steps = [s for s in steps if s.position == current_position]
 
         # If any step at this level is in-progress, wait for callbacks
-        if all(s.status in (ModelStatus.IN_PROGRESS, ModelStatus.APPROVAL_PENDING) for s in current_steps):
+        if all(s.status in (ModelStatus.IN_PROGRESS) for s in current_steps):
             return
 
         has_error = False
         for step in current_steps:
             if step.status == ModelStatus.DONE:
                 continue
-            if step.status in (ModelStatus.IN_PROGRESS, ModelStatus.APPROVAL_PENDING):
+            if step.status in (ModelStatus.IN_PROGRESS):
                 continue
 
             try:

@@ -48,8 +48,6 @@ class Workflow(Base):
     # Snapshot of wiring at execution time (immutable after creation)
     wiring_snapshot: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
 
-    # Variable overrides provided at execution time
-    variable_overrides: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(default=ModelStatus.PENDING)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 

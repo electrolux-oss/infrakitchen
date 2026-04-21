@@ -488,7 +488,10 @@ const allRoutes: LazyRouteDefinition[] = [
   },
   {
     path: "/workflows/:workflow_id/edit",
-    Component: lz(() => import("./workflows/pages/WorkflowEdit"), "WorkflowEditPage"),
+    Component: lz(
+      () => import("./workflows/pages/WorkflowEdit"),
+      "WorkflowEditPage",
+    ),
     requiredPermission: "api:workflow",
     permissionAction: "write",
   },

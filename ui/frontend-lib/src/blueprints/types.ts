@@ -48,4 +48,7 @@ export interface BlueprintResponse {
 }
 
 // Re-export for convenience; blueprint pages use the full workflow shape.
-export type { WorkflowResponse, WorkflowStepResponse } from "../workflows/types";
+export type {
+  WorkflowResponse,
+  WorkflowStepResponse,
+} from "../workflows/types";

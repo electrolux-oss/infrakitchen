@@ -204,7 +204,6 @@ class BlueprintService:
 
         workflow_create = WorkflowCreate(
             wiring_snapshot=wiring_rules,
-            variable_overrides=request.variable_overrides,
             created_by=requester.id,
             steps=steps,
         )

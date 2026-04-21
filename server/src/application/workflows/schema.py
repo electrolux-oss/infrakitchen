@@ -71,7 +71,6 @@ class WorkflowStepCreate(BaseModel):
 class WorkflowCreate(BaseModel):
     action: str = WorkflowAction.CREATE
     wiring_snapshot: list[WiringRule] = Field(default_factory=list)
-    variable_overrides: dict[str, Any] = Field(default_factory=dict)
     status: str = ModelStatus.PENDING
     created_by: uuid.UUID
     steps: list[WorkflowStepCreate] = Field(default_factory=list)
@@ -92,9 +91,7 @@ class WorkflowStepUpdate(BaseModel):
 class WorkflowUpdate(BaseModel):
     """Fields that can be updated while a workflow is still pending."""
 
-    variable_overrides: dict[str, Any] | None = None
     steps: list[WorkflowStepUpdate] | None = None
-
 
 
 class WorkflowStepResponse(BaseModel):
@@ -127,7 +124,6 @@ class WorkflowResponse(BaseModel):
     error_message: str | None = None
     steps: list[WorkflowStepResponse] = Field(default_factory=list)
     wiring_snapshot: list[WiringRule] = Field(default_factory=list)
-    variable_overrides: dict[str, Any] = Field(default_factory=dict)
     creator: UserShort | None = Field(default=None)
     started_at: datetime | None = None
     completed_at: datetime | None = None

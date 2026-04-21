@@ -61,7 +61,6 @@ class TestGetAll:
             id=uuid4(),
             action="create",
             wiring_snapshot=[],
-            variable_overrides={},
             status="pending",
             created_by=mocked_workflow.created_by,
             creator=mocked_workflow.creator,
@@ -123,7 +122,6 @@ class TestCreate:
     ):
         body = {
             "wiring_snapshot": [],
-            "variable_overrides": {},
             "status": "pending",
             "created_by": str(mocked_user.id),
             "steps": [],
@@ -396,15 +394,11 @@ class TestGetWorkflowActions:
 
 class TestUpdateWithSteps:
     @pytest.mark.asyncio
-    async def test_update_with_steps_not_found(
-        self, mock_workflow_service, mock_workflow_crud, mock_user_dto
-    ):
+    async def test_update_with_steps_not_found(self, mock_workflow_service, mock_workflow_crud, mock_user_dto):
         mock_workflow_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Workflow not found"):
-            await mock_workflow_service.update_with_steps(
-                WORKFLOW_ID, WorkflowUpdate(), mock_user_dto
-            )
+            await mock_workflow_service.update_with_steps(WORKFLOW_ID, WorkflowUpdate(), mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_update_with_steps_wrong_state(
@@ -414,9 +408,7 @@ class TestUpdateWithSteps:
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         with pytest.raises(EntityWrongState, match="cannot be edited"):
-            await mock_workflow_service.update_with_steps(
-                mocked_workflow.id, WorkflowUpdate(), mock_user_dto
-            )
+            await mock_workflow_service.update_with_steps(mocked_workflow.id, WorkflowUpdate(), mock_user_dto)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("status", [ModelStatus.PENDING, ModelStatus.ERROR])
@@ -431,14 +423,9 @@ class TestUpdateWithSteps:
         mocked_workflow.status = status
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
-        result = await mock_workflow_service.update_with_steps(
-            mocked_workflow.id, WorkflowUpdate(variable_overrides={"x": 1}), mock_user_dto
-        )
+        result = await mock_workflow_service.update_with_steps(mocked_workflow.id, WorkflowUpdate(), mock_user_dto)
 
         assert result.id == mocked_workflow.id
-        mock_workflow_crud.update.assert_any_await(
-            mocked_workflow.id, {"variable_overrides": {"x": 1}}
-        )
 
     @pytest.mark.asyncio
     async def test_update_with_steps_unknown_step_raises(
@@ -447,14 +434,10 @@ class TestUpdateWithSteps:
         mocked_workflow.status = ModelStatus.PENDING
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
-        request = WorkflowUpdate(
-            steps=[WorkflowStepUpdate(id=uuid4(), resolved_variables={"x": 1})]
-        )
+        request = WorkflowUpdate(steps=[WorkflowStepUpdate(id=uuid4(), resolved_variables={"x": 1})])
 
         with pytest.raises(EntityNotFound, match="does not belong"):
-            await mock_workflow_service.update_with_steps(
-                mocked_workflow.id, request, mock_user_dto
-            )
+            await mock_workflow_service.update_with_steps(mocked_workflow.id, request, mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_update_with_steps_success(
@@ -469,7 +452,6 @@ class TestUpdateWithSteps:
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         request = WorkflowUpdate(
-            variable_overrides={"a": 1},
             steps=[
                 WorkflowStepUpdate(
                     id=mocked_workflow_step.id,
@@ -478,14 +460,9 @@ class TestUpdateWithSteps:
             ],
         )
 
-        result = await mock_workflow_service.update_with_steps(
-            mocked_workflow.id, request, mock_user_dto
-        )
+        result = await mock_workflow_service.update_with_steps(mocked_workflow.id, request, mock_user_dto)
 
         assert result.id == mocked_workflow.id
-        mock_workflow_crud.update.assert_any_await(
-            mocked_workflow.id, {"variable_overrides": {"a": 1}}
-        )
         mock_workflow_crud.update_step.assert_awaited_once()
         args, _ = mock_workflow_crud.update_step.call_args
         assert args[0] == mocked_workflow_step.id

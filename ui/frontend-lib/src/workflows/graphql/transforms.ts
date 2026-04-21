@@ -77,7 +77,6 @@ export interface GqlWorkflow {
   createdAt: string;
   // Optional — only fetched in the full workflow detail query
   wiringSnapshot?: any;
-  variableOverrides?: any;
   createdBy?: string | null;
   creator?: GqlUser | null;
 }
@@ -185,7 +184,6 @@ export function transformWorkflow(gql: GqlWorkflow): WorkflowResponse {
     error_message: gql.errorMessage,
     steps: (gql.steps ?? []).map(toWorkflowStep),
     wiring_snapshot: gql.wiringSnapshot ?? [],
-    variable_overrides: gql.variableOverrides ?? {},
     creator: gql.creator
       ? toUserShort(gql.creator)
       : { id: "", identifier: "", _entity_name: "user", provider: "" },

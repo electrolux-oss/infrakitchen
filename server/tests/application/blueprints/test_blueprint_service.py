@@ -624,13 +624,10 @@ class TestCreateWorkflow:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
 
-        result = await mock_blueprint_service.create_workflow(
-            mocked_blueprint.id, WorkflowRequest(), mock_user_dto
-        )
+        result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, WorkflowRequest(), mock_user_dto)
 
         assert result.id == mocked_workflow.id
         mock_workflow_service.create.assert_awaited_once()
-
 
 
 class TestTopologicalSort:

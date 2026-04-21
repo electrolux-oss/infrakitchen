@@ -72,7 +72,6 @@ def mocked_workflow(mocked_user, mocked_workflow_step):
         id=workflow_id,
         action="create",
         wiring_snapshot=[],
-        variable_overrides={},
         status="pending",
         error_message=None,
         created_by=mocked_user.id,

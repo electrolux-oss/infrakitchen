@@ -96,23 +96,19 @@ class WorkflowService:
         requester: UserDTO,
     ) -> WorkflowResponse:
         """
-        Update a pending workflow — edits to ``variable_overrides`` and to each
-        step's resolved variables / SCV / integrations / secrets / storage /
-        parent resources. Only allowed while the workflow is still pending.
+        Update a pending workflow — edits each step's resolved variables / SCV
+        / integrations / secrets / storage / parent resources. Only allowed
+        while the workflow is still pending or in error state.
         """
         workflow = await self.crud.get_by_id(workflow_id)
         if workflow is None:
             raise EntityNotFound("Workflow not found")
         if workflow.status not in (ModelStatus.PENDING, ModelStatus.ERROR):
             raise EntityWrongState(
-                f"Workflow cannot be edited in status {workflow.status}; "
-                "only pending or error workflows are editable"
+                f"Workflow cannot be edited in status {workflow.status}; only pending or error workflows are editable"
             )
 
         existing_step_ids = {step.id for step in workflow.steps}
-
-        if request.variable_overrides is not None:
-            await self.crud.update(workflow.id, {"variable_overrides": request.variable_overrides})
 
         for step_update in request.steps or []:
             if step_update.id not in existing_step_ids:

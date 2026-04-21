@@ -1,9 +1,7 @@
-
 import { useNavigate } from "react-router";
 
 import {
   Box,
-  Chip,
   LinearProgress,
   Link,
   Table,
@@ -31,7 +29,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
   if (workflows.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-        No executions yet.
+        No workflows yet.
       </Typography>
     );
   }
@@ -107,12 +105,15 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                       <StatusChip status={step.status} />
                     </TableCell>
                     <TableCell>
-
-                      {step.resource ? <GetEntityLink
-                        _entity_name="resource"
-                        id={step.resource?.id || ""}
-                        name={step.resource?.name || "Resource"}
-                      /> : "—"}
+                      {step.resource ? (
+                        <GetEntityLink
+                          _entity_name="resource"
+                          id={step.resource?.id || ""}
+                          name={step.resource?.name || "Resource"}
+                        />
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>
                       {step.error_message ? (

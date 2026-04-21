@@ -6,7 +6,6 @@ export const WORKFLOW_QUERY = gql`
       id
       action
       wiringSnapshot
-      variableOverrides
       status
       errorMessage
       createdBy

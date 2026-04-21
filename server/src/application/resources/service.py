@@ -267,7 +267,10 @@ class ResourceService:
                 raise ValueError("Source code version ID is required for non-abstract templates")
 
             # validate that storage_id is valid
-            if resource.storage_id and source_code_version.source_code.source_code_language in ["opentofu"]:
+            if source_code_version.source_code.source_code_language in ["opentofu"]:
+                if resource.storage_id is None:
+                    raise ValueError("Storage ID is required for Terraform and OpenTofu resources")
+
                 storage = await self.storage_service.get_by_id(str(resource.storage_id))
                 if not storage:
                     raise EntityNotFound("Storage not found")

@@ -32,6 +32,32 @@ def get_requested_fields(info: Info) -> set[str]:
     return fields
 
 
+def get_nested_fields(info: Info, *path: str) -> set[str]:
+    """Extract field names at a nested level in the GraphQL selection.
+
+    Example: ``get_nested_fields(info, "steps")`` returns the set of field
+    names requested inside the ``steps`` sub-selection of the query.
+    ``get_nested_fields(info, "workflows", "steps")`` goes two levels deep.
+    """
+    current: list[Any] = list(info.selected_fields)
+    for field_name in path:
+        next_level: list[Any] = []
+        for node in current:
+            for sub in getattr(node, "selections", []):
+                if isinstance(sub, SelectedField) and sub.name == field_name:
+                    next_level.append(sub)
+        if not next_level:
+            return set()
+        current = next_level
+    fields: set[str] = set()
+    for node in current:
+        for sub in getattr(node, "selections", []):
+            if isinstance(sub, SelectedField):
+                fields.add(sub.name)
+
+    return fields
+
+
 # --- Column-level load_only ---
 
 _CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")

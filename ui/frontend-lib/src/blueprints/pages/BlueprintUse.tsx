@@ -35,8 +35,8 @@ import { ResourceVariableRow } from "../../resources/components/variables/Resour
 import { ResourceVariableSchema } from "../../resources/types";
 import { TemplateResponse, TemplateShort } from "../../templates/types";
 import { IkEntity } from "../../types";
-import { BlueprintResponse, WiringRule } from "../types";
 import { WorkflowResponse } from "../../workflows/types";
+import { BlueprintResponse, WiringRule } from "../types";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -268,10 +268,10 @@ export const BlueprintUsePage = () => {
     () =>
       blueprint
         ? computeWiredVariables(
-          [...blueprint.wiring, ...constantWires],
-          [...blueprint.templates, ...externalTemplates],
-          constantBlocks,
-        )
+            [...blueprint.wiring, ...constantWires],
+            [...blueprint.templates, ...externalTemplates],
+            constantBlocks,
+          )
         : {},
     [blueprint, constantWires, externalTemplates, constantBlocks],
   );
@@ -306,7 +306,9 @@ export const BlueprintUsePage = () => {
   const allRequiredVariablesFilled = useMemo(() => {
     if (!blueprint) return false;
     const isEmpty = (v: unknown) =>
-      v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+      v === undefined ||
+      v === null ||
+      (typeof v === "string" && v.trim() === "");
 
     return blueprint.templates.every((t) => {
       const schemas = variableSchemas[t.id] || [];
@@ -510,18 +512,20 @@ export const BlueprintUsePage = () => {
         if (allIds.length > 0) parent_overrides[templateId] = allIds;
       }
 
-      await ikApi.postRaw(`blueprints/${blueprint_id}/create_workflow`, {
-        variable_overrides,
-        integration_ids: integrationIds,
-        storage_id: storageId,
-        workspace_id: workspaceId,
-        secret_ids: secretIds,
-        source_code_version_overrides: selectedScv,
-        parent_overrides,
-      }).then((response: WorkflowResponse) => {
-        notify("Workflow was created", "success");
-        navigate(`${linkPrefix}workflows/${response.id}`);
-      });
+      await ikApi
+        .postRaw(`blueprints/${blueprint_id}/create_workflow`, {
+          variable_overrides,
+          integration_ids: integrationIds,
+          storage_id: storageId,
+          workspace_id: workspaceId,
+          secret_ids: secretIds,
+          source_code_version_overrides: selectedScv,
+          parent_overrides,
+        })
+        .then((response: WorkflowResponse) => {
+          notify("Workflow was created", "success");
+          navigate(`${linkPrefix}workflows/${response.id}`);
+        });
     } catch (e: any) {
       notifyError(e);
     } finally {
@@ -619,14 +623,12 @@ export const BlueprintUsePage = () => {
         </Alert>
       )}
 
-      {allParentsResolved &&
-        hasAllScvs &&
-        !allRequiredVariablesFilled && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            Some required input variables are empty. Fill them in to create
-            resources.
-          </Alert>
-        )}
+      {allParentsResolved && hasAllScvs && !allRequiredVariablesFilled && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Some required input variables are empty. Fill them in to create
+          resources.
+        </Alert>
+      )}
 
       {/* ── General Configuration ──────────────────────────────── */}
       <PropertyCard title="General Configuration">
@@ -708,7 +710,10 @@ export const BlueprintUsePage = () => {
                     ]}
                     error={false}
                     helpertext={`Select existing "${parent.name}" resources as parent`}
-                    filter={{ template_id: [parent.id], integration_ids__any: integrationIds }}
+                    filter={{
+                      template_id: [parent.id],
+                      integration_ids__any: integrationIds,
+                    }}
                     value={currentValue}
                     label={`Parent: ${parent.name}`}
                     required
@@ -948,13 +953,13 @@ export const BlueprintUsePage = () => {
                                   : (vals[variable.name] ?? variable.value),
                                 name: `${t.id}.${variable.name}`,
                                 onChange: isConstantWired
-                                  ? () => { } // value set via constant input above
+                                  ? () => {} // value set via constant input above
                                   : (value: any) =>
-                                    handleVariableChange(
-                                      t.id,
-                                      variable.name,
-                                      value,
-                                    ),
+                                      handleVariableChange(
+                                        t.id,
+                                        variable.name,
+                                        value,
+                                      ),
                               }}
                               isDisabled={isConstantWired}
                             >

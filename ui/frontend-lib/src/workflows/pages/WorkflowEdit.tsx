@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { json as jsonLang } from "@codemirror/lang-json";
-import { lintGutter } from "@codemirror/lint";
-import CodeMirror from "@uiw/react-codemirror";
 import { useNavigate, useParams } from "react-router";
 
+import { json as jsonLang } from "@codemirror/lang-json";
+import { lintGutter } from "@codemirror/lint";
 import {
   Alert,
   Autocomplete,
@@ -18,6 +17,7 @@ import {
   Typography,
   useColorScheme,
 } from "@mui/material";
+import CodeMirror from "@uiw/react-codemirror";
 
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -49,7 +49,6 @@ const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
     setText(JSON.stringify(value ?? {}, null, 2));
     setError(null);
     // Only re-sync when the underlying object reference changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const handleChange = useCallback(
@@ -115,7 +114,7 @@ function stepToDraft(step: WorkflowStepResponse): StepDraft {
     source_code_version_id: step.source_code_version_id,
     integration_ids: step.integration_ids.map((i) => i.id),
     secret_ids: step.secret_ids.map((s) => s.id),
-    storage_id: null, // not exposed on response; re-selected here
+    storage_id: step.storage_id,
     parent_resource_ids: step.parent_resource_ids,
     resolved_variables: step.resolved_variables,
   };
@@ -133,9 +132,6 @@ export const WorkflowEditPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [workflow, setWorkflow] = useState<WorkflowResponse | null>(null);
-  const [variableOverrides, setVariableOverrides] = useState<
-    Record<string, any>
-  >({});
   const [steps, setSteps] = useState<StepDraft[]>([]);
   const [scvsByTemplate, setScvsByTemplate] = useState<
     Record<string, IkEntity[]>
@@ -153,8 +149,9 @@ export const WorkflowEditPage = () => {
       .get(`workflows/${workflow_id}`)
       .then((wf: WorkflowResponse) => {
         setWorkflow(wf);
-        setVariableOverrides(wf.variable_overrides || {});
-        setSteps(wf.steps.map(stepToDraft).sort((a, b) => a.position - b.position));
+        setSteps(
+          wf.steps.map(stepToDraft).sort((a, b) => a.position - b.position),
+        );
       })
       .catch((e: any) => setError(e.message || "Failed to load workflow"))
       .finally(() => setLoading(false));
@@ -211,7 +208,6 @@ export const WorkflowEditPage = () => {
     setSubmitting(true);
     try {
       const payload = {
-        variable_overrides: variableOverrides,
         steps: steps.map((s) => ({
           id: s.id,
           resolved_variables: s.resolved_variables,
@@ -233,7 +229,7 @@ export const WorkflowEditPage = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [workflow_id, workflow, variableOverrides, steps, ikApi, navigate, linkPrefix]);
+  }, [workflow_id, workflow, steps, ikApi, navigate, linkPrefix]);
 
   // ── Render: loading / error ─────────────────────────────────────────
   if (loading) {
@@ -293,24 +289,10 @@ export const WorkflowEditPage = () => {
     >
       {!canEdit && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          This workflow cannot be edited. Only pending or errored workflows
-          are editable. Current status:{" "}
-          <StatusChip status={workflow.status} />
+          This workflow cannot be edited. Only pending or errored workflows are
+          editable. Current status: <StatusChip status={workflow.status} />
         </Alert>
       )}
-
-      {/* Workflow-level overrides */}
-      <PropertyCard title="Variable Overrides">
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Keyed by template ID. Applied on top of each step's resolved
-          variables at execution time.
-        </Typography>
-        <JsonField
-          label="variable_overrides"
-          value={variableOverrides}
-          onChange={setVariableOverrides}
-        />
-      </PropertyCard>
 
       {/* Per-step sections */}
       {steps.map((step, idx) => {

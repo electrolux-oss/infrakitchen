@@ -1,11 +1,13 @@
-import { BlueprintResponse } from "../types";
 import { GqlWorkflow, transformWorkflow } from "../../workflows/graphql";
+import { BlueprintResponse } from "../types";
 
 export interface GqlBlueprint {
   id: string;
   name: string;
   description: string | null;
-  templates: { id: string; name: string; cloudResourceTypes: string[] }[] | null;
+  templates:
+    | { id: string; name: string; cloudResourceTypes: string[] }[]
+    | null;
   wiring: any;
   defaultVariables: any;
   configuration: any;

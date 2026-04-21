@@ -185,14 +185,6 @@ export default function DashboardSidebar({
             selected={!!matchPath("/blueprints/*", pathname)}
             permissionKey="blueprint"
           />
-          <DashboardSidebarPageItem
-            id="workflows"
-            title="Workflows"
-            icon={<ListAltIcon />}
-            href="/workflows"
-            selected={!!matchPath("/workflows/*", pathname)}
-            permissionKey="workflow"
-          />
 
           <DashboardSidebarDividerItem />
           <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>
@@ -244,6 +236,14 @@ export default function DashboardSidebar({
             href="/batch_operations"
             selected={!!matchPath("/batch_operations/*", pathname)}
             permissionKey="batch_operation"
+          />
+          <DashboardSidebarPageItem
+            id="workflows"
+            title="Workflows"
+            icon={<ListAltIcon />}
+            href="/workflows"
+            selected={!!matchPath("/workflows/*", pathname)}
+            permissionKey="workflow"
           />
           <DashboardSidebarPageItem
             id="users"

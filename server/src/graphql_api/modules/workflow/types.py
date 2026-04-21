@@ -40,7 +40,6 @@ class WorkflowType:
     id: uuid.UUID
     action: str = "create"
     wiring_snapshot: JSON | None = None
-    variable_overrides: JSON | None = None
     status: str = ""
     error_message: str | None = None
     created_by: uuid.UUID | None = None

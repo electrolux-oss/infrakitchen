@@ -17,6 +17,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { WorkflowResponse } from "../types";
 
 import { WorkflowOverview } from "./WorkflowOverview";
+import { WorkflowResolvedVariables } from "./WorkflowResolvedVariables";
 import { WorkflowSteps } from "./WorkflowSteps";
 import { WorkflowWiringViewer } from "./WorkflowWiringViewer";
 
@@ -83,28 +84,14 @@ export const WorkflowContent = () => {
   const tabs: TabDefinition[] = [
     {
       label: "Steps",
+      content: <WorkflowStepsTab workflow={workflow} />,
+    },
+    {
+      label: "Variables",
       content: (
-        <>
-          <WorkflowStepsTab workflow={workflow} />
-          {Object.keys(workflow.variable_overrides).length > 0 && (
-            <PropertyCard title="Variable Overrides">
-              <Box
-                component="pre"
-                sx={{
-                  p: 2,
-                  bgcolor: "background.default",
-                  borderRadius: 1,
-                  overflow: "auto",
-                  maxHeight: 400,
-                  fontSize: 13,
-                  fontFamily: "monospace",
-                }}
-              >
-                {JSON.stringify(workflow.variable_overrides, null, 2)}
-              </Box>
-            </PropertyCard>
-          )}
-        </>
+        <PropertyCard title="Resolved Variables">
+          <WorkflowResolvedVariables steps={workflow.steps} />
+        </PropertyCard>
       ),
     },
     {

@@ -1,8 +1,8 @@
 """add blueprint and workflows
 
-Revision ID: 5e93f15e9ca6
+Revision ID: 6fa729b28583
 Revises: 6f73b5194d89
-Create Date: 2026-04-21 08:27:39.174622
+Create Date: 2026-04-21 15:05:47.154699
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "5e93f15e9ca6"
+revision: str = "6fa729b28583"
 down_revision: str | None = "6f73b5194d89"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -48,7 +48,6 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("action", sa.String(), nullable=False),
         sa.Column("wiring_snapshot", sa.JSON(), nullable=False),
-        sa.Column("variable_overrides", sa.JSON(), nullable=False),
         sa.Column("status", sa.String(), nullable=False),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("created_by", sa.UUID(), nullable=False),
