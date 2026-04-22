@@ -12,6 +12,7 @@ from application.source_code_versions.task import SourceCodeVersionTask
 from application.source_codes.task import SourceCodeTask
 from application.storages.task import StorageTask
 from application.workers.utils import (
+    get_workflow_task,
     get_executor_task,
     get_source_code_task,
     get_source_code_version_task,
@@ -19,6 +20,7 @@ from application.workers.utils import (
     get_resource_task,
     get_workspace_task,
 )
+from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core import BaseMessagesWorker, MessageHandler, MessageModel
 from core.constants.model import ModelActions
@@ -92,6 +94,8 @@ class TaskWorker(BaseMessagesWorker):
 
         trace_id = msg.metadata.get("trace_id")
         audit_log_id = msg.metadata.get("audit_log_id")
+        step_id = msg.metadata.get("step_id")
+        resource_id = msg.metadata.get("resource_id")
 
         task_controller = await self.get_task_controller(
             entity_controller=entity_controller,
@@ -100,6 +104,8 @@ class TaskWorker(BaseMessagesWorker):
             action=action,
             trace_id=trace_id,
             audit_log_id=audit_log_id,
+            step_id=step_id,
+            resource_id=resource_id,
         )
         # Main task flow
         try:
@@ -135,7 +141,17 @@ class TaskWorker(BaseMessagesWorker):
         action: ModelActions,
         trace_id: str | None = None,
         audit_log_id: UUID | None = None,
-    ) -> SourceCodeTask | SourceCodeVersionTask | StorageTask | ResourceTask | WorkspaceTask | ExecutorTask:
+        step_id: str | None = None,
+        resource_id: str | None = None,
+    ) -> (
+        SourceCodeTask
+        | SourceCodeVersionTask
+        | StorageTask
+        | ResourceTask
+        | WorkspaceTask
+        | ExecutorTask
+        | WorkflowTask
+    ):
         match entity_controller:
             case "source_code":
                 return await get_source_code_task(
@@ -191,6 +207,16 @@ class TaskWorker(BaseMessagesWorker):
                     trace_id=trace_id,
                     audit_log_id=audit_log_id,
                 )
+            case "workflow":
+                return await get_workflow_task(
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    step_id=step_id,
+                    resource_id=resource_id,
+                )
             case _:
                 raise CannotProceed(f"Unknown entity controller: {entity_controller}")
 
@@ -243,12 +269,12 @@ class TaskWorker(BaseMessagesWorker):
         raise TaskFailure from e
 
     async def handle_unexpected_exception(self, e, task_controller):
+        logger.error(f"Unhandled exception: {e}", exc_info=True)
         task_controller.logger.error("Unhandled exception occurred")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
 
         error_message = f"UnhandledException: {e}"
-        logger.error(f"Unhandled exception: {e}", exc_info=True)
         await self.send_task_notification(
             task_controller, f"Task failed for {task_controller.logger.entity_id}: {error_message}"
         )

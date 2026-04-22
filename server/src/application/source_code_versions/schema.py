@@ -399,3 +399,27 @@ class SourceCodeVersionWithConfigs(SourceCodeVersionResponse):
     variable_configs: list[SourceConfigResponse] = Field(default_factory=list)
     output_configs: list[SourceOutputConfigResponse] = Field(default_factory=list)
     template_refs: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)
+
+
+# ── Batch ports (blueprint optimization) ─────────────────────────────────
+
+
+class BatchTemplatePortsRequest(BaseModel):
+    """Request body for fetching ports for multiple templates at once."""
+
+    template_ids: list[uuid.UUID] = Field(..., min_length=1, max_length=50)
+
+
+class TemplatePortsItem(BaseModel):
+    """Ports data for a single template."""
+
+    configs: list[SourceConfigResponse] = Field(default_factory=list)
+    outputs: list[SourceOutputConfigTemplateResponse] = Field(default_factory=list)
+    references: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)
+    parents: list[TemplateShort] = Field(default_factory=list)
+
+
+class BatchTemplatePortsResponse(BaseModel):
+    """Response for batch template ports — keyed by template ID."""
+
+    templates: dict[str, TemplatePortsItem] = Field(default_factory=dict)
