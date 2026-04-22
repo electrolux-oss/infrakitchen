@@ -98,6 +98,74 @@ Status: done
 - **Task-oriented** - Designed for single-purpose operations
 - **No hierarchy** - Executors don't follow parent-child relationships
 
+**Learn more:** [Executors Documentation](executors/overview.md)
+
+---
+
+## � Blueprint
+
+A **Blueprint** is a reusable definition that combines multiple Templates into a single, executable plan. Blueprints define which infrastructure components to provision and how their outputs wire together — turning a multi-resource stack into a one-click operation.
+
+### What a Blueprint Contains
+
+- **Templates** — ordered list of infrastructure components to provision
+- **Wiring Rules** — output → input mappings between templates
+- **Default Variables** — pre-configured values per template
+- **Configuration** — general blueprint settings
+- **Labels** — tags for organizing and filtering
+
+### How Blueprints Work
+
+1. Select templates that make up your infrastructure stack
+2. Define wiring rules to connect outputs to inputs across templates
+3. Set default variables for consistent values across executions
+4. Execute the blueprint — a Workflow is created with steps in topological order
+5. Each step provisions a resource, passing outputs from completed steps to downstream steps
+
+### Key Features
+
+- **Multi-resource orchestration** — provision entire environments in one click
+- **Automatic dependency resolution** — wiring rules define the execution graph
+- **Reusable definitions** — execute the same blueprint for dev, staging, and production
+- **Variable overrides** — customize each execution without modifying the blueprint
+
+**Learn more:** [Blueprints Documentation](blueprints/overview.md)
+
+---
+
+## �🔄 Workflow
+
+A **Workflow** is an automated execution plan that orchestrates the provisioning of multiple resources in dependency order. Workflows are created from Blueprints.
+
+### How Workflows Work
+
+1. A Blueprint defines templates and wiring rules (output → input mappings)
+2. When executed, a Workflow is created with steps sorted in topological order
+3. Each step provisions a resource, passing outputs from completed steps to downstream steps
+
+### Workflow Example
+
+```yaml
+Blueprint: Production Environment
+Wiring:
+  - VPC.vpc_id → EKS Cluster.vpc_id
+  - VPC.private_subnet_ids → EKS Cluster.subnet_ids
+  - VPC.vpc_id → RDS Database.vpc_id
+
+Execution Order:
+  Level 0: VPC (no dependencies)
+  Level 1: EKS Cluster, RDS Database (parallel, both depend on VPC)
+```
+
+### Key Features
+
+- **Automatic dependency resolution** via topological sort
+- **Output wiring** — upstream outputs feed into downstream inputs
+- **Parallel execution** — independent steps run simultaneously
+- **Step-level tracking** — monitor progress per resource
+
+**Learn more:** [Workflows Documentation](workflows/overview.md)
+
 ---
 
 ## 📦 Resource

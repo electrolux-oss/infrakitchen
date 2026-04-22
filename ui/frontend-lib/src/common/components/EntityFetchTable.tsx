@@ -34,6 +34,12 @@ interface EntityFetchTableProps {
   initialFilters?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
   filterStorageKey?: string;
+  fetchListFn?: (params: {
+    filter: Record<string, any>;
+    sort: { field: string; order: "ASC" | "DESC" };
+    pagination: { page: number; perPage: number };
+    fields: string[];
+  }) => Promise<{ data: IkEntity[] | any[]; total: number }>;
 }
 
 interface DataGridState {
@@ -89,6 +95,7 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     initialFilters,
     buildApiFilters,
     filterStorageKey,
+    fetchListFn,
   } = props;
 
   const { ikApi } = useConfig();
@@ -114,6 +121,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   fieldsRef.current = fields;
   const onDataLoadedRef = useRef(onDataLoaded);
   onDataLoadedRef.current = onDataLoaded;
+  const fetchListFnRef = useRef(fetchListFn);
+  fetchListFnRef.current = fetchListFn;
 
   const multiFilterState = useMultiFilterState({
     storageKey: resolvedFilterStorageKey,
@@ -240,12 +249,15 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
       setLoading(true);
       try {
-        const response = await ikApi.getList(`${entityName}s`, {
+        const fetchParams = {
           filter: apiFilters,
           pagination: { page: page + 1, perPage: pageSize },
           sort: apiSort,
           fields: requestedFields,
-        });
+        };
+        const response = fetchListFnRef.current
+          ? await fetchListFnRef.current(fetchParams)
+          : await ikApi.getList(`${entityName}s`, fetchParams);
         setData(response.data);
         setTotalRows(response.total ? response.total : 0);
         onDataLoadedRef.current?.(response.data);

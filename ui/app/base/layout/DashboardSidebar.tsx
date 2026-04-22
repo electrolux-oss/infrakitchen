@@ -177,6 +177,14 @@ export default function DashboardSidebar({
             selected={!!matchPath("/executors/*", pathname)}
             permissionKey="executor"
           />
+          <DashboardSidebarPageItem
+            id="blueprints"
+            title="Blueprints"
+            icon={<Icon icon="noto:spiral-notepad" width="20" height="20" />}
+            href="/blueprints"
+            selected={!!matchPath("/blueprints/*", pathname)}
+            permissionKey="blueprint"
+          />
 
           <DashboardSidebarDividerItem />
           <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>
@@ -228,6 +236,14 @@ export default function DashboardSidebar({
             href="/batch_operations"
             selected={!!matchPath("/batch_operations/*", pathname)}
             permissionKey="batch_operation"
+          />
+          <DashboardSidebarPageItem
+            id="workflows"
+            title="Workflows"
+            icon={<ListAltIcon />}
+            href="/workflows"
+            selected={!!matchPath("/workflows/*", pathname)}
+            permissionKey="workflow"
           />
           <DashboardSidebarPageItem
             id="users"

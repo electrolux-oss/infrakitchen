@@ -14,8 +14,9 @@ export const PropertyCard = (props: {
   subtitle?: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
+  action?: ReactNode;
 }) => {
-  const { title = "Properties", subtitle, children, actions } = props;
+  const { title = "Properties", subtitle, children, actions, action } = props;
   return (
     <Card
       sx={{
@@ -32,6 +33,7 @@ export const PropertyCard = (props: {
           </Box>
         }
         subheader={subtitle}
+        action={action}
       />
       <CardContent>{children}</CardContent>
       <CardActions sx={{ justifyContent: "center", mt: 2 }}>
