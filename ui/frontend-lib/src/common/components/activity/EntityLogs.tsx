@@ -15,7 +15,7 @@ import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { RelativeTime } from "../RelativeTime";
 
-export interface EntityLogsProps {
+interface EntityLogsProps {
   entityId: string;
   sourceCodeLanguage?: string;
 }

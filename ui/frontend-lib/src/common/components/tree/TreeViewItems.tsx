@@ -11,7 +11,7 @@ import { getStateColor } from "../../utils";
 
 import { TreeResponse } from "./types";
 
-export interface TreeViewItemProps {
+interface TreeViewItemProps {
   entity_name: string;
   tree: TreeResponse;
   setExpanded: Dispatch<React.SetStateAction<string[]>>;

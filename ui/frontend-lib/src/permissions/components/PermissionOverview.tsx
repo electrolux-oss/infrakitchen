@@ -6,11 +6,11 @@ import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { PermissionResponse } from "../types";
 
-export interface PermissionAboutProps {
+interface PermissionAboutProps {
   permission: PermissionResponse;
 }
 
-export const getPermissionReference = (text: any) => {
+const getPermissionReference = (text: any) => {
   if (text === null || text === undefined || text === "") {
     return null;
   }

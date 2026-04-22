@@ -40,7 +40,7 @@ import { RelativeTime } from "../RelativeTime";
 import { DiffEditor } from "./DiffEditor";
 import { RevisionTimelines } from "./RevisionTimelines";
 
-export interface AuditProps {
+interface AuditProps {
   entityId: string;
   useVersionId?: boolean;
   sourceCodeLanguage?: string;
@@ -53,10 +53,7 @@ interface AuditFilterPanelProps {
   setSearch: (value: string) => void;
 }
 
-export const AuditFilterPanel = ({
-  search,
-  setSearch,
-}: AuditFilterPanelProps) => {
+const AuditFilterPanel = ({ search, setSearch }: AuditFilterPanelProps) => {
   return (
     <Box>
       <Card>

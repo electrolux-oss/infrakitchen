@@ -7,7 +7,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { ExecutorResponse } from "../types";
 
-export interface AdvancedSettingsProps {
+interface AdvancedSettingsProps {
   executor: ExecutorResponse;
 }
 

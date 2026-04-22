@@ -1,7 +1,7 @@
 import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
 import { ResourceResponse } from "../types";
 
-export interface AdvancedSettingsProps {
+interface AdvancedSettingsProps {
   resource: ResourceResponse;
 }
 

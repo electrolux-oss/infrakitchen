@@ -244,7 +244,6 @@ export const TemplateImportPage = () => {
           />
         </Box>
       </PropertyCard>
-
       <PropertyCard title="Template Metadata">
         <Box>
           <Controller

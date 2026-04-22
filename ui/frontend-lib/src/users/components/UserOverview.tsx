@@ -7,7 +7,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { UserAvatar } from "../../common/components/UserAvatar";
 import { UserResponse } from "../types";
 
-export interface UserAboutProps {
+interface UserAboutProps {
   user: UserResponse;
 }
 

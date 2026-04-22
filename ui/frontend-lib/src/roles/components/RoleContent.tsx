@@ -4,7 +4,7 @@ import { ApiPoliciesCard } from "../../permissions/components/policies/ApiPolici
 import { EntityRolePoliciesCard } from "../../permissions/components/policies/EntityRolePoliciesCard";
 import { RoleUsersCard } from "../../permissions/components/roles/RoleUsersCard";
 
-export interface RoleContentProps {
+interface RoleContentProps {
   role: string | undefined;
 }
 

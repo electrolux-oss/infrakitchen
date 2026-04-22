@@ -14,7 +14,7 @@ import { UserResponse, UserShort } from "../types";
 import { LinkUserDialog } from "./LinkAccountDialog";
 import { UnlinkAccountButton } from "./UnlinkAccountDialog";
 
-export interface TemplateConfigurationProps {
+interface TemplateConfigurationProps {
   user: UserResponse;
 }
 

@@ -24,13 +24,34 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@mui/') || id.includes('@emotion/') || id.includes('@mui/x-')) {
+            // TreeView — no cycle with material core, page-specific
+            if (id.includes('@mui/x-tree-view')) {
+              return 'vendor-mui-treeview';
+            }
+            // Icons — largest by source, kept separate for cache granularity
+            if (id.includes('@mui/icons-material')) {
+              return 'vendor-mui-icons';
+            }
+            // MUI core: material + system + x-data-grid (datagrid imports material internally,
+            // splitting it causes a circular chunk)
+            if (id.includes('@mui/')) {
               return 'vendor-mui';
+            }
+            // CodeMirror — editor only used on specific pages
+            if (id.includes('@codemirror/') || id.includes('@uiw/react-codemirror') || id.includes('@lezer/')) {
+              return 'vendor-codemirror';
+            }
+            // date-fns — large locale data, kept separate
+            if (id.includes('node_modules/date-fns/')) {
+              return 'vendor-date-fns';
+            }
+            if (id.includes('@emotion/')) {
+              return 'vendor-react';
             }
             if (id.includes('react-router') || id.includes('@remix-run')) {
               return 'vendor-router';
             }
-            if (id.includes('react-dom') || id.includes('react/')) {
+            if (id.includes('node_modules/react-dom/') || id.includes('node_modules/react/')) {
               return 'vendor-react';
             }
           }

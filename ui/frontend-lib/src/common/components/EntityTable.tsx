@@ -28,7 +28,7 @@ export type EntityTableColumn = GridColDef<any> & {
   fetchFields?: string[];
 };
 
-export interface ResourceTableProps {
+interface ResourceTableProps {
   entityName: string;
   subtitle?: string;
   columns: EntityTableColumn[];

@@ -12,7 +12,7 @@ import StatusChip from "../../common/StatusChip";
 import { getProviderDisplayName } from "../../common/utils";
 import { TemplateResponse } from "../types";
 
-export interface TemplateAboutProps {
+interface TemplateAboutProps {
   template: TemplateResponse;
 }
 

@@ -33,7 +33,7 @@ interface SourceCodeVersionConfigContextType {
   isLoading: boolean;
 }
 
-export const SourceCodeVersionConfigContext = createContext<
+const SourceCodeVersionConfigContext = createContext<
   SourceCodeVersionConfigContextType | undefined
 >(undefined);
 

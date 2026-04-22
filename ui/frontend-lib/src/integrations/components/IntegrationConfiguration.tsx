@@ -8,7 +8,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { IntegrationResponse } from "../types";
 
-export interface TemplateConfigurationProps {
+interface TemplateConfigurationProps {
   integration: IntegrationResponse;
 }
 

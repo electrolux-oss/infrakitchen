@@ -13,7 +13,7 @@ import StatusChip from "../../common/StatusChip";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse } from "../types";
 
-export interface ResourceAboutProps {
+interface ResourceAboutProps {
   resource: ResourceResponse;
 }
 

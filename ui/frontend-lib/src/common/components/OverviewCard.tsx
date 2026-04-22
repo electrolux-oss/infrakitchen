@@ -11,7 +11,7 @@ import {
   Theme,
 } from "@mui/material";
 
-export interface OverviewCardProps {
+interface OverviewCardProps {
   name?: ReactNode;
   description?: ReactNode;
   children?: ReactNode;

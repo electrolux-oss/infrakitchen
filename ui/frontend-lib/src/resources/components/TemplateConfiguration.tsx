@@ -25,7 +25,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
 
-export interface TemplateConfigurationProps {
+interface TemplateConfigurationProps {
   resource: ResourceResponse;
 }
 

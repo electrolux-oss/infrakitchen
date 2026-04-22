@@ -9,7 +9,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { ExecutorResponse } from "../types";
 
-export interface ExecutorAboutProps {
+interface ExecutorAboutProps {
   executor: ExecutorResponse;
 }
 
