@@ -5,7 +5,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { WorkspaceResponse } from "../types";
 
-export interface WorkspaceAboutProps {
+interface WorkspaceAboutProps {
   workspace: WorkspaceResponse;
 }
 

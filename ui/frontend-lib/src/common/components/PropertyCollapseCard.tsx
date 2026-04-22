@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton";
 
 import { useLocalStorage } from "../context/UIStateContext";
 
-export interface PropertyCollapseCardProps {
+interface PropertyCollapseCardProps {
   title: string | ReactNode;
   subtitle?: string;
   children?: ReactNode;

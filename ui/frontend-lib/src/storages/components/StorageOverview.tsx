@@ -5,7 +5,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { StorageResponse } from "../types";
 
-export interface StorageAboutProps {
+interface StorageAboutProps {
   storage: StorageResponse;
 }
 

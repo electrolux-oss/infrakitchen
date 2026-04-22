@@ -7,7 +7,7 @@ import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { AuthProviderResponse } from "../types";
 
-export interface AuthProviderAboutProps {
+interface AuthProviderAboutProps {
   authProvider: AuthProviderResponse;
 }
 

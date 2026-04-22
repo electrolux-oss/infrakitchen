@@ -2,7 +2,7 @@ import DiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
 import { Box, useColorScheme, useTheme } from "@mui/material";
 
-export interface DiffEditorProps {
+interface DiffEditorProps {
   originalText: string;
   modifiedText: string;
 }

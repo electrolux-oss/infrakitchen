@@ -19,11 +19,11 @@ import { notifyError } from "../hooks/useNotification";
 import { ActionButton } from "./buttons/ActionButton";
 import { CommonDialog } from "./CommonDialog";
 
-export interface EntityActionsProps {
+interface EntityActionsProps {
   entity_name: string;
   entity_id: string;
 }
-export function EntityActions(props: EntityActionsProps) {
+function EntityActions(props: EntityActionsProps) {
   const { entity_id, entity_name } = props;
 
   const { linkPrefix, ikApi } = useConfig();

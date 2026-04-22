@@ -21,9 +21,7 @@ export enum ENTITY_STATUS {
 }
 
 export enum ENTITY_ACTION {
-  CREATE = "create",
   DESTROY = "destroy",
-  DELETE = "delete",
   REJECT = "reject",
   APPROVE = "approve",
   EXECUTE = "execute",

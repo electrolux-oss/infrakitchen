@@ -19,7 +19,7 @@ import type {} from "@mui/material/themeCssVarsAugmentation";
 import { MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
-export interface DashboardSidebarPageItemProps {
+interface DashboardSidebarPageItemProps {
   id: string;
   title: string;
   icon?: React.ReactNode;

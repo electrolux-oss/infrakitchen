@@ -8,7 +8,7 @@ import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
 import { getDrawerSxTransitionMixin } from "./mixins";
 
-export interface DashboardSidebarHeaderItemProps {
+interface DashboardSidebarHeaderItemProps {
   children?: React.ReactNode;
 }
 

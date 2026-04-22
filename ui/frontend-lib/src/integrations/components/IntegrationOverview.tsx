@@ -6,7 +6,7 @@ import StatusChip from "../../common/StatusChip";
 import { IconField } from "../../icons/Icons";
 import { IntegrationResponse } from "../types";
 
-export interface IntegrationAboutProps {
+interface IntegrationAboutProps {
   integration: IntegrationResponse;
 }
 

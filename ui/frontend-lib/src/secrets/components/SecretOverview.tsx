@@ -5,7 +5,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { SecretResponse } from "../types";
 
-export interface SecretAboutProps {
+interface SecretAboutProps {
   secret: SecretResponse;
 }
 
