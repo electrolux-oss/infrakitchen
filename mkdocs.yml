@@ -58,11 +58,12 @@ nav:
       - Overview: core-concepts/overview.md
       - Templates: core-concepts/templates/overview.md
       - Executors: core-concepts/executors/overview.md
+      - Workflows: core-concepts/workflows/overview.md
       - Resources:
           - Overview: core-concepts/resources/overview.md
           - Workflow: core-concepts/resources/workflow.md
       - Workspaces: core-concepts/workspaces/overview.md
-      # - Blueprints: core-concepts/blueprints/overview.md - we do not support it yet
+      - Blueprints: core-concepts/blueprints/overview.md
   - Integrations:
       - Overview: integrations/overview.md
       - Troubleshooting: integrations/troubleshooting.md

@@ -31,10 +31,12 @@ export const EntityProvider = ({
   children,
   entity_name,
   entity_id,
+  fetchFn,
 }: {
   children: ReactNode;
   entity_name: string;
   entity_id: string;
+  fetchFn?: (entityName: string, entityId: string) => Promise<any>;
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
@@ -72,7 +74,9 @@ export const EntityProvider = ({
       if (!entity_id) return;
       setLoading(true);
       try {
-        const response = await ikApi.get(`${entity_name}s/${entity_id}`);
+        const response = fetchFn
+          ? await fetchFn(entity_name, entity_id)
+          : await ikApi.get(`${entity_name}s/${entity_id}`);
         setEntity(response);
         setError(null);
       } catch (e: any) {
@@ -84,7 +88,7 @@ export const EntityProvider = ({
     };
 
     getEntity();
-  }, [ikApi, entity_name, entity_id, refresh, setLoading, setError]);
+  }, [ikApi, entity_name, entity_id, refresh, fetchFn, setLoading, setError]);
 
   const refreshEntity = useCallback(
     (updatedEntity?: IkEntity) => {

@@ -438,6 +438,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_storage_crud,
+        mocked_storage,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
@@ -448,10 +450,13 @@ class TestCreate:
             template_id=mocked_template.id,
             source_code_version_id=source_code_version.id,
             integration_ids=[mocked_integration.id],
+            storage_id=mocked_storage.id,
+            storage_path="path/to/storage",
         )
 
         requester = mocked_user
         mock_template_crud.get_by_id.return_value = mocked_template
+        mock_storage_crud.get_by_id.return_value = mocked_storage
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource

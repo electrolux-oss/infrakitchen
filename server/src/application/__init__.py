@@ -17,6 +17,8 @@ from .workspaces import WorkspaceDTO
 from .tools.cloud_api_manager import CloudApiManager
 from .tools.secret_manager import SecretManager
 from .batch_operations import BatchOperationDTO
+from .blueprints import BlueprintShort
+from .workflows import Workflow
 
 __all__ = [
     "ExecutorDTO",
@@ -40,4 +42,6 @@ __all__ = [
     "VariableReferenceModel",
     "Variables",
     "WorkspaceDTO",
+    "BlueprintShort",
+    "Workflow",
 ]

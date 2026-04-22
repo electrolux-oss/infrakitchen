@@ -97,6 +97,20 @@ from .fixtures.test_task_worker_fixutres import (
     mock_task_controller,
     mock_task_controller_factory,
 )
+from .fixtures.test_workflow_fixtures import (
+    mock_workflow_crud,
+    mock_workflow_service,
+    mocked_workflow,
+    mocked_workflow_step,
+    workflow_response,
+    workflow_step_response,
+)
+from .fixtures.test_blueprint_fixtures import (
+    mock_blueprint_crud,
+    mock_blueprint_service,
+    mocked_blueprint,
+    blueprint_response,
+)
 from .fixtures.test_batch_operation_fixtures import (
     mock_batch_operation_crud,
     mock_batch_operation_service,
@@ -216,4 +230,14 @@ __all__ = [
     "mock_favorite_service",
     "favorite_dto",
     "mocked_favorite",
+    "mock_workflow_crud",
+    "mock_workflow_service",
+    "mocked_workflow",
+    "mocked_workflow_step",
+    "workflow_response",
+    "workflow_step_response",
+    "mock_blueprint_crud",
+    "mock_blueprint_service",
+    "mocked_blueprint",
+    "blueprint_response",
 ]

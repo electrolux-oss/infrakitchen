@@ -256,3 +256,61 @@ class SourceCodeVersionCRUD:
         # Attach the list to a new attribute on the retrieved ORM object
         scv.template_refs = template_references
         return scv
+
+    # ── Batch methods for blueprint optimization ─────────────────────────
+
+    async def get_configs_by_template_ids(self, template_ids: list[UUID]) -> dict[str, list[SourceConfig]]:
+        """Get configs for multiple templates in a single query, grouped by template_id."""
+        if not template_ids:
+            return {}
+        statement = (
+            select(SourceConfig, SourceCodeVersion.template_id)
+            .join(SourceCodeVersion, SourceConfig.source_code_version_id == SourceCodeVersion.id)
+            .where(SourceCodeVersion.template_id.in_(template_ids))
+            .order_by(SourceConfig.index.asc())
+        )
+        result = await self.session.execute(statement)
+        grouped: dict[str, list[SourceConfig]] = {}
+        for config, template_id in result.unique().all():
+            tid = str(template_id)
+            if tid not in grouped:
+                grouped[tid] = []
+            grouped[tid].append(config)
+        return grouped
+
+    async def get_outputs_by_template_ids(self, template_ids: list[UUID]) -> dict[str, list[SourceOutputConfig]]:
+        """Get output configs for multiple templates in a single query, grouped by template_id."""
+        if not template_ids:
+            return {}
+        statement = (
+            select(SourceOutputConfig, SourceCodeVersion.template_id)
+            .join(SourceCodeVersion, SourceOutputConfig.source_code_version_id == SourceCodeVersion.id)
+            .where(SourceCodeVersion.template_id.in_(template_ids))
+            .order_by(SourceCodeVersion.created_at.asc())
+        )
+        result = await self.session.execute(statement)
+        grouped: dict[str, list[SourceOutputConfig]] = {}
+        for output, template_id in result.unique().all():
+            tid = str(template_id)
+            if tid not in grouped:
+                grouped[tid] = []
+            grouped[tid].append(output)
+        return grouped
+
+    async def get_references_by_template_ids(
+        self, template_ids: list[UUID]
+    ) -> dict[str, list[SourceConfigTemplateReference]]:
+        """Get template references for multiple templates in a single query, grouped by template_id."""
+        if not template_ids:
+            return {}
+        statement = select(SourceConfigTemplateReference).where(
+            SourceConfigTemplateReference.template_id.in_(template_ids)
+        )
+        result = await self.session.execute(statement)
+        grouped: dict[str, list[SourceConfigTemplateReference]] = {}
+        for ref in result.unique().scalars().all():
+            tid = str(ref.template_id)
+            if tid not in grouped:
+                grouped[tid] = []
+            grouped[tid].append(ref)
+        return grouped

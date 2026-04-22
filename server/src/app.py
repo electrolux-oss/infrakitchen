@@ -76,6 +76,7 @@ async def lifespan(app: FastAPI):
         await rabbitmq_task
     except (asyncio.CancelledError, Exception):
         pass
+
     await websocket_manager.close_all_connections()
 
 
