@@ -11,7 +11,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { getGraphQLClient, initGraphQLClient } from "../../graphql/client";
 import { WORKFLOWS_QUERY, WORKFLOWS_COUNT_QUERY } from "../graphql/queries";
 import {
   GqlWorkflowListItem,
@@ -28,13 +27,6 @@ export const WorkflowsPage = () => {
       pagination: { page: number; perPage: number };
       fields: string[];
     }) => {
-      try {
-        getGraphQLClient();
-      } catch {
-        initGraphQLClient(ikApi);
-      }
-      const client = getGraphQLClient();
-
       const gqlFilter =
         Object.keys(params.filter).length > 0 ? params.filter : null;
       const gqlSort = [params.sort.field, params.sort.order];
@@ -43,14 +35,20 @@ export const WorkflowsPage = () => {
       const gqlRange = [skip, end];
 
       const [listResult, countResult] = await Promise.all([
-        client.request<{ workflows: GqlWorkflowListItem[] }>(WORKFLOWS_QUERY, {
-          filter: gqlFilter,
-          sort: gqlSort,
-          range: gqlRange,
-        }),
-        client.request<{ workflowsCount: number }>(WORKFLOWS_COUNT_QUERY, {
-          filter: gqlFilter,
-        }),
+        ikApi.graphqlRequest<{ workflows: GqlWorkflowListItem[] }>(
+          WORKFLOWS_QUERY,
+          {
+            filter: gqlFilter,
+            sort: gqlSort,
+            range: gqlRange,
+          },
+        ),
+        ikApi.graphqlRequest<{ workflowsCount: number }>(
+          WORKFLOWS_COUNT_QUERY,
+          {
+            filter: gqlFilter,
+          },
+        ),
       ]);
 
       return {

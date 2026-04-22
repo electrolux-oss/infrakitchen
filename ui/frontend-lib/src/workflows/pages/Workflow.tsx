@@ -5,7 +5,6 @@ import { useParams } from "react-router";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { getGraphQLClient, initGraphQLClient } from "../../graphql/client";
 import { WorkflowContent } from "../components/WorkflowContent";
 import { WORKFLOW_QUERY } from "../graphql/queries";
 import { GqlWorkflow, transformWorkflow } from "../graphql/transforms";
@@ -16,13 +15,7 @@ export const WorkflowPage = () => {
 
   const fetchWorkflow = useCallback(
     async (_name: string, id: string) => {
-      try {
-        getGraphQLClient();
-      } catch {
-        initGraphQLClient(ikApi);
-      }
-      const client = getGraphQLClient();
-      const { workflow } = await client.request<{
+      const { workflow } = await ikApi.graphqlRequest<{
         workflow: GqlWorkflow | null;
       }>(WORKFLOW_QUERY, { id });
       if (!workflow) throw new Error("Workflow not found");

@@ -1,6 +1,4 @@
-import { gql } from "graphql-request";
-
-export const BLUEPRINT_QUERY = gql`
+export const BLUEPRINT_QUERY = `
   query Blueprint($id: UUID!) {
     blueprint(id: $id) {
       id

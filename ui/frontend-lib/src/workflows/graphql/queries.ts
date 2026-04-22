@@ -1,6 +1,4 @@
-import { gql } from "graphql-request";
-
-export const WORKFLOW_QUERY = gql`
+export const WORKFLOW_QUERY = `
   query Workflow($id: UUID!) {
     workflow(id: $id) {
       id
@@ -67,7 +65,7 @@ export const WORKFLOW_QUERY = gql`
   }
 `;
 
-export const WORKFLOWS_QUERY = gql`
+export const WORKFLOWS_QUERY = `
   query Workflows($filter: JSON, $sort: [String!], $range: [Int!]) {
     workflows(filter: $filter, sort: $sort, range: $range) {
       id
@@ -89,7 +87,7 @@ export const WORKFLOWS_QUERY = gql`
   }
 `;
 
-export const WORKFLOWS_COUNT_QUERY = gql`
+export const WORKFLOWS_COUNT_QUERY = `
   query WorkflowsCount($filter: JSON) {
     workflowsCount(filter: $filter)
   }
