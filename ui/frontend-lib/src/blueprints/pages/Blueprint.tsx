@@ -8,7 +8,6 @@ import { Button } from "@mui/material";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
-import { getGraphQLClient, initGraphQLClient } from "../../graphql/client";
 import { BlueprintContent } from "../components/BlueprintContent";
 import { BLUEPRINT_QUERY, GqlBlueprint, transformBlueprint } from "../graphql";
 
@@ -19,13 +18,7 @@ export const BlueprintPage = () => {
 
   const fetchBlueprint = useCallback(
     async (_name: string, id: string) => {
-      try {
-        getGraphQLClient();
-      } catch {
-        initGraphQLClient(ikApi);
-      }
-      const client = getGraphQLClient();
-      const { blueprint } = await client.request<{
+      const { blueprint } = await ikApi.graphqlRequest<{
         blueprint: GqlBlueprint | null;
       }>(BLUEPRINT_QUERY, { id });
       if (!blueprint) throw new Error("Blueprint not found");
