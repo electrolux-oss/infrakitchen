@@ -15,7 +15,7 @@ from fixtures.resources import insert_resources
 from fixtures.source_code_and_version import insert_source_code_and_version
 from fixtures.storages import insert_storages
 from fixtures.templates import insert_template
-from fixtures.users import create_user
+from fixtures.users import create_guest_super_user, create_regular_user
 from fixtures.validation_rules import insert_validation_rules
 
 
@@ -44,8 +44,9 @@ async def create_fixtures():
     await drop_all_tables(engine)
     envs = ["dev", "staging", "prod"]
     async with get_session() as session:
-        user = await create_user(session)
+        user = await create_guest_super_user(session)
         await create_auth_provider(session, user)
+        await create_regular_user(session, user)
         await insert_template(session, user)
         await insert_validation_rules(session, user)
         await session.commit()
