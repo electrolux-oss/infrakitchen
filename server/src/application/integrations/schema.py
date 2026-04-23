@@ -132,6 +132,13 @@ class BitbucketSshIntegrationConfig(BaseModel):
         return [("bitbucket_ssh_private_key", self.bitbucket_ssh_private_key)] if self.bitbucket_ssh_private_key else []
 
 
+class GitPublicIntegrationConfig(BaseModel):
+    integration_provider: Literal["git_public"] = Field(default="git_public", frozen=True)
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return []
+
+
 type IntegrationConfigType = Annotated[
     AWSIntegrationConfig
     | GCPIntegrationConfig
@@ -144,7 +151,8 @@ type IntegrationConfigType = Annotated[
     | GitLabIntegrationConfig
     | BitbucketIntegrationConfig
     | BitbucketSshIntegrationConfig
-    | DatadogIntegrationConfig,
+    | DatadogIntegrationConfig
+    | GitPublicIntegrationConfig,
     Field(discriminator="integration_provider"),
 ]
 

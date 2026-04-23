@@ -21,6 +21,7 @@ from .schema import (
     GCPIntegrationConfig,
     AzureRMIntegrationConfig,
     AzureReposIntegrationConfig,
+    GitPublicIntegrationConfig,
     MongoDBAtlasIntegrationConfig,
     GithubIntegrationConfig,
     GithubSshIntegrationConfig,
@@ -96,7 +97,8 @@ class IntegrationDTO(BaseModel):
         | GitLabIntegrationConfig
         | BitbucketIntegrationConfig
         | BitbucketSshIntegrationConfig
-        | DatadogIntegrationConfig,
+        | DatadogIntegrationConfig
+        | GitPublicIntegrationConfig,
         Field(discriminator="integration_provider"),
     ] = Field(...)
     model_config = ConfigDict(from_attributes=True)
