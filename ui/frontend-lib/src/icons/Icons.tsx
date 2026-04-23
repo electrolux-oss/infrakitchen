@@ -35,6 +35,10 @@ export const BitbucketIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-bitbucketpipeline" {...props} />
 );
 
+export const GitIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="skill-icons:git" {...props} />
+);
+
 export const MongoDBIcon: React.FC<IconProps> = (props) => (
   <Icon icon="devicon:mongodb" {...props} />
 );
@@ -59,6 +63,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["gitlab", GitLabIcon],
   ["bitbucket", BitbucketIcon],
   ["bitbucket_ssh", BitbucketIcon],
+  ["git_public", GitIcon],
   ["gcp", GoogleCloudIcon],
   ["mongodb_atlas", MongoDBIcon],
   ["datadog", DatadogIcon],
