@@ -10,11 +10,16 @@ from core.base_models import Base, MessageModel
 from core.database import engine
 
 from fixtures.auth_providers import create_auth_provider
-from fixtures.integrations import insert_integrations
+from fixtures.batch_operations import insert_batch_operations
+from fixtures.executors import insert_executors
+from fixtures.insert_secrets import insert_secrets
+from fixtures.integrations import insert_env_integrations, insert_integrations
 from fixtures.resources import insert_resources
-from fixtures.source_code_and_version import insert_source_code_and_version
+
+from fixtures.source_code import insert_source_code
+from fixtures.source_code_and_version import insert_source_code_version
 from fixtures.storages import insert_storages
-from fixtures.templates import insert_template
+from fixtures.templates import insert_templates
 from fixtures.users import create_guest_super_user, create_regular_user
 from fixtures.validation_rules import insert_validation_rules
 
@@ -47,16 +52,19 @@ async def create_fixtures():
         user = await create_guest_super_user(session)
         await create_auth_provider(session, user)
         await create_regular_user(session, user)
-        await insert_template(session, user)
+        await insert_integrations(session, user)
+        await insert_source_code(session, user)
+        await insert_templates(session, user)
+        await insert_source_code_version(session, user)
         await insert_validation_rules(session, user)
-        await session.commit()
         for env in envs:
-            await insert_integrations(session, env, user)
+            await insert_env_integrations(session, env, user)
             await insert_storages(session, env, user)
+            await insert_secrets(session, [env], user)
 
-        await insert_source_code_and_version(session, user)
-        for env in envs:
-            await insert_resources(session, env, user)
+        await insert_executors(session, user)
+        await insert_resources(session, envs, user)
+        await insert_batch_operations(session, envs, user)
 
 
 if __name__ == "__main__":

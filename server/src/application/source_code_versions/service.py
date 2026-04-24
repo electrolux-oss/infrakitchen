@@ -27,7 +27,6 @@ from .schema import (
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
-    SourceCodeVersionVariablesCreate,
     SourceCodeVersionWithConfigs,
     SourceConfigCreate,
     SourceConfigResponse,
@@ -194,39 +193,6 @@ class SourceCodeVersionService:
         await self.revision_handler.handle_revision(existing_source_code_version)
         await self.audit_log_handler.create_log(
             source_code_version_id,
-            requester.id,
-            ModelActions.UPDATE,
-            revision_number=existing_source_code_version.revision_number,
-        )
-        await self.crud.refresh(existing_source_code_version)
-        response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
-
-    async def update_variables(
-        self, source_code_version_variables: SourceCodeVersionVariablesCreate, requester: UserDTO
-    ) -> SourceCodeVersionResponse:
-        body = source_code_version_variables.model_dump(exclude_unset=True)
-        existing_source_code_version = await self.crud.get_by_id(
-            str(source_code_version_variables.source_code_version_id)
-        )
-
-        if not existing_source_code_version:
-            raise EntityNotFound("SourceCodeVersion not found")
-
-        if existing_source_code_version.status in [ModelStatus.DISABLED, ModelStatus.IN_PROGRESS]:
-            logger.error(f"Entity has wrong status for updating {existing_source_code_version.status}")
-            raise ValueError(f"Entity has wrong status for updating {existing_source_code_version.status}")
-
-        self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code_version)
-
-        existing_source_code_version.status = ModelStatus.READY
-
-        await self.crud.update(existing_source_code_version, body)
-
-        await self.revision_handler.handle_revision(existing_source_code_version)
-        await self.audit_log_handler.create_log(
-            existing_source_code_version.id,
             requester.id,
             ModelActions.UPDATE,
             revision_number=existing_source_code_version.revision_number,
@@ -433,7 +399,7 @@ class SourceCodeVersionService:
                 await self.crud.create_template_references(tr.model_dump(exclude_unset=True))
 
     async def update_configs(
-        self, source_code_version_id: str, configs: list[SourceConfigUpdateWithId]
+        self, source_code_version_id: str | UUID, configs: list[SourceConfigUpdateWithId]
     ) -> list[SourceConfigResponse]:
         """
         Update existing source code version configs.

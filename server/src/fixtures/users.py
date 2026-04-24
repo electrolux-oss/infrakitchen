@@ -91,7 +91,7 @@ async def create_guest_super_user(session: AsyncSession):
     user_service = get_user_service(session=session)
 
     user = UserCreateWithProvider(
-        email="guest_super@test.com",
+        email="guest_super@infrakitchen.io",
         identifier="guest_super",
         first_name="Guest",
         last_name="User",

@@ -4,10 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.integrations.dependencies import get_integration_service
 from application.storages.dependencies import get_storage_service
 from application.storages.model import Storage
-from application.storages.schema import AWSStorageConfig, AzureRMStorageConfig, StorageCreate
+from application.storages.schema import AWSStorageConfig, AzureRMStorageConfig, GCPStorageConfig, StorageCreate
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import UserDTO
-from fixtures.logs import generate_logs
 from fixtures.utils import change_state
 
 
@@ -24,6 +23,11 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
             azurerm_container_name=f"test_container_{env}",
             storage_provider="azurerm",
         ),
+        "gcp": GCPStorageConfig(
+            gcp_bucket_name=f"test_bucket_{env}",
+            gcp_region="US",
+            storage_provider="gcp",
+        ),
     }
 
     storage_service = get_storage_service(session=session)
@@ -33,7 +37,7 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
         integration = await integration_service.get_all(
             filter={
                 "integration_type": "cloud",
-                "name": f"{provider}_{env}_account",
+                "name": f"{provider.upper()} {env.capitalize()} Account",
                 "integration_provider": provider,
             }
         )
@@ -52,14 +56,8 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
             configuration=config,
             labels=[provider, "storage", "tofu"],
         )
-        created_storage = await storage_service.create(storage, user)
+        _ = await storage_service.create(storage, user)
         await session.commit()
-        await generate_logs(
-            session=session,
-            entity_name="storage",
-            entity_id=str(created_storage.id),
-            user_id=str(user.id),
-        )
 
     await change_state(
         session=session,
