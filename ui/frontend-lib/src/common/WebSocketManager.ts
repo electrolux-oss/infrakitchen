@@ -1,5 +1,5 @@
 import { InfraKitchenApi } from "../api/InfraKitchenApi";
-export interface WebSocketEventHandler {
+interface WebSocketEventHandler {
   (event: MessageEvent): void;
 }
 

@@ -17,7 +17,7 @@ import PageContainer from "../PageContainer";
 
 import EntityActions from "./EntityActions";
 
-export interface EntityContainerProps {
+interface EntityContainerProps {
   children: ReactNode;
   title?: string;
   actions?: ReactNode;

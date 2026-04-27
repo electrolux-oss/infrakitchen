@@ -51,7 +51,7 @@ const PermissionFilteredRouter = () => {
   return <RouterProvider router={router} />;
 };
 
-export function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
+function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme>

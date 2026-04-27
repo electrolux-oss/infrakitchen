@@ -25,7 +25,7 @@ interface FormValues {
   secondary_account?: string;
 }
 
-export const LinkUserAccount = (props: PolicyCreateProps) => {
+const LinkUserAccount = (props: PolicyCreateProps) => {
   const { control, errors } = props;
   const { ikApi } = useConfig();
 

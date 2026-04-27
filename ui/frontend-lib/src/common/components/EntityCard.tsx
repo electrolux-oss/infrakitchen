@@ -15,7 +15,7 @@ import {
 
 import { PermissionWrapper } from "../wrappers";
 
-export interface EntityCardProps {
+interface EntityCardProps {
   name: string;
   entity_name: string;
   description: string;

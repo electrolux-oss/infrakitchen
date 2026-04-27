@@ -7,7 +7,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { StorageResponse } from "../types";
 
-export interface StorageConfigurationProps {
+interface StorageConfigurationProps {
   storage: StorageResponse;
 }
 

@@ -107,7 +107,6 @@ const SourceCodeGitRefRows = ({
           );
         })
       )}
-
       <TablePagination
         component="div"
         count={enabledOnly ? total : refs.length}

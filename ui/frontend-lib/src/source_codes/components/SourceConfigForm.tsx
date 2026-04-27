@@ -209,15 +209,12 @@ export const SourceConfigForm = (props: {
           )}
         </Box>
       </Box>
-
       {configDescription && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {configDescription}
         </Typography>
       )}
-
       <Divider sx={{ mb: 2 }} />
-
       {sensitive && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="error">
@@ -226,7 +223,6 @@ export const SourceConfigForm = (props: {
           </Typography>
         </Box>
       )}
-
       {!sensitive && (
         <Box>
           <Stack direction="column" spacing={1} sx={{ mb: 1 }}>

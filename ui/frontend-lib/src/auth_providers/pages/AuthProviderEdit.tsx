@@ -174,9 +174,9 @@ export const AuthProviderEditPageInner = (props: {
                   options={[]}
                   value={field.value}
                   onChange={(_event, newValue) => field.onChange(newValue)}
-                  renderTags={(value: readonly string[], getTagProps) =>
+                  renderValue={(value: readonly string[], getItemProps) =>
                     value.map((option: string, index: number) => {
-                      const { key, ...rest } = getTagProps({ index });
+                      const { key, ...rest } = getItemProps({ index });
                       return (
                         <Chip
                           key={key}

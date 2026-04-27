@@ -9,7 +9,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { CustomSecret, SecretResponse } from "../types";
 
-export interface SecretConfigurationProps {
+interface SecretConfigurationProps {
   secret: SecretResponse;
 }
 

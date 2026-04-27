@@ -13,7 +13,7 @@ import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
 import { SourceCodeResponse } from "../types";
 
-export interface SourceCodeOverviewProps {
+interface SourceCodeOverviewProps {
   sourceCode: SourceCodeResponse;
 }
 

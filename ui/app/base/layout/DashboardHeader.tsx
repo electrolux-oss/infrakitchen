@@ -31,7 +31,7 @@ const LogoContainer = styled("div")({
   "& svg": { width: 32, height: 32, marginLeft: 10 },
 });
 
-export interface DashboardHeaderProps {
+interface DashboardHeaderProps {
   logo?: React.ReactNode;
   title?: string;
   menuOpen: boolean;

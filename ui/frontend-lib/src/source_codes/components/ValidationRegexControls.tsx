@@ -383,13 +383,6 @@ export const ValidationRegexControls = ({
                   fullWidth
                   margin="normal"
                   onBlur={field.onBlur}
-                  InputProps={{
-                    ...params.InputProps,
-                    sx: {
-                      fontFamily:
-                        '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
-                    },
-                  }}
                   error={Boolean(fieldState.error)}
                   helperText={
                     fieldState.error?.message ||
@@ -397,19 +390,24 @@ export const ValidationRegexControls = ({
                       ? `Selected rule: ${selectedOption.label}`
                       : "Select a predefined rule or enter a custom regex.")
                   }
+                  InputProps={{
+                    ...params.InputProps,
+                    sx: {
+                      fontFamily:
+                        '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                    },
+                  }}
                 />
               )}
             />
           );
         }}
       />
-
       {isComplexRegex && (
         <Alert severity="warning" sx={{ mt: 1 }}>
           This regex is too complex to edit using toggles.
         </Alert>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -438,7 +436,6 @@ export const ValidationRegexControls = ({
           </Box>
         ))}
       </Stack>
-
       {toggleError && (
         <Typography
           variant="caption"
@@ -448,7 +445,6 @@ export const ValidationRegexControls = ({
           {toggleError}
         </Typography>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -491,7 +487,6 @@ export const ValidationRegexControls = ({
           label="Infinite max length"
         />
       </Stack>
-
       {lengthError && (
         <Typography
           variant="caption"
@@ -501,7 +496,6 @@ export const ValidationRegexControls = ({
           {lengthError}
         </Typography>
       )}
-
       <TextField
         label="Test Input"
         value={testValue}

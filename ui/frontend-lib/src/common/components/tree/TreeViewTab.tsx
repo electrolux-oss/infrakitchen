@@ -13,7 +13,7 @@ const getAllNodeIds = (node: TreeResponse): string[] => [
   ...(node.children?.flatMap(getAllNodeIds) ?? []),
 ];
 
-export interface TreeViewProps {
+interface TreeViewProps {
   entity_name: string;
   entity_id: string;
 }

@@ -22,7 +22,7 @@ interface FormValues {
   user_id: string;
 }
 
-export const AssignUserToRole = (props: RoleCreateProps) => {
+const AssignUserToRole = (props: RoleCreateProps) => {
   const { user_id, role_name, onClose, formId } = props;
   const { ikApi } = useConfig();
   const {

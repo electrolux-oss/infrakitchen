@@ -24,12 +24,6 @@ export interface EntityPolicyCreate {
   inherits_children: boolean;
 }
 
-export interface ResourceUserPolicyCreate {
-  resource_id: string;
-  user_id: string;
-  action: string;
-}
-
 export interface ApiPolicyCreate {
   role: string;
   action: string;

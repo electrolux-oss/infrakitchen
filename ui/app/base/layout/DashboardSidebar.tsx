@@ -35,7 +35,7 @@ import {
 } from "./mixins";
 import OptionsMenu from "./UserSidebar";
 
-export interface DashboardSidebarProps {
+interface DashboardSidebarProps {
   expanded?: boolean;
   setExpanded: (expanded: boolean) => void;
   disableCollapsibleSidebar?: boolean;

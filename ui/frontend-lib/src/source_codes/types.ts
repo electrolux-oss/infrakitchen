@@ -160,14 +160,6 @@ export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   validation_enabled: boolean;
 }
 
-export interface SourceOutputConfigResponse extends Record<string, any> {
-  id: string;
-  index: number;
-  name: string;
-  description: string;
-  source_code_version_id: string;
-}
-
 export interface SourceOutputConfigTemplateResponse {
   name: string;
   description: string;

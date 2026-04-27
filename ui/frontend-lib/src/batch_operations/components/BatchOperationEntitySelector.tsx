@@ -30,7 +30,7 @@ import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeV
 import { IkEntity } from "../../types";
 import { BatchOperationCreate } from "../types";
 
-export interface BatchOperationEntitySelectorProps {
+interface BatchOperationEntitySelectorProps {
   control: Control<BatchOperationCreate>;
   errors: FieldErrors<BatchOperationCreate>;
   entityType: "resource" | "executor";

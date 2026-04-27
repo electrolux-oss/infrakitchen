@@ -4,7 +4,7 @@ import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { AuthProviderResponse } from "../types";
 
-export interface AuthProviderConfigurationProps {
+interface AuthProviderConfigurationProps {
   auth_provider: AuthProviderResponse;
 }
 

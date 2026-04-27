@@ -8,7 +8,7 @@ import dts from 'vite-plugin-dts'
 export default defineConfig({
   plugins: [react(), dts({ include: ['src'] })],
   build: {
-    minify: false,
+    minify: true,
     sourcemap: true,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -16,9 +16,13 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react-router",
-        'react/jsx-runtime',
-      ],
+      external: (id) => {
+        // Bundle only our own source code; externalize everything else
+        if (id.startsWith('.') || id.startsWith('/') || id.startsWith('src/')) {
+          return false;
+        }
+        return true;
+      },
       output: {
         chunkFileNames: '[name].[format].js',
       },

@@ -4,7 +4,7 @@ import { getTextValue } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { DependencyVariable, ResourceResponse } from "../types";
 
-export interface DependencyConfigurationProps {
+interface DependencyConfigurationProps {
   resource: ResourceResponse;
 }
 

@@ -30,7 +30,7 @@ const actions = [
   { id: "admin", name: "Admin" },
 ];
 
-export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
+const PolicyApiCreate = (props: PolicyApiCreateProps) => {
   const { role_name, onClose } = props;
   const { ikApi } = useConfig();
   const { control, handleSubmit } = useForm<ApiPolicyCreate>({

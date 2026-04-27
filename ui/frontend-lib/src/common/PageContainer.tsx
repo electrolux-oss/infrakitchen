@@ -24,7 +24,7 @@ const PageHeaderToolbar = styled("div")(({ theme }) => ({
   marginLeft: "auto",
 }));
 
-export interface PageContainerProps extends ContainerProps {
+interface PageContainerProps extends ContainerProps {
   children?: React.ReactNode;
   title?: string;
   description?: React.ReactNode;

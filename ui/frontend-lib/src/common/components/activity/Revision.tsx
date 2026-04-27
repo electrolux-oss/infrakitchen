@@ -23,7 +23,7 @@ import { getDateValue } from "../CommonField";
 
 import { DiffEditor } from "./DiffEditor";
 
-export interface RevisionProps {
+interface RevisionProps {
   resourceId: string;
   resourceRevision: number;
 }

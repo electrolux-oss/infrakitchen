@@ -8,7 +8,7 @@ import { useConfig, GradientCircularProgress } from "../../../common";
 import { notifyError } from "../../../common/hooks/useNotification";
 import { ResourceResponse } from "../../types";
 
-export interface ResourceMetadataProps {
+interface ResourceMetadataProps {
   entity: ResourceResponse;
 }
 

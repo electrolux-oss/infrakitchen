@@ -9,7 +9,7 @@ import queryString from "query-string";
 
 import inMemoryToken from "../auth/inMemoryToken";
 
-export interface IKDataProvider extends InfraKitchenApi {
+interface IKDataProvider extends InfraKitchenApi {
   getToken: () => Promise<string | null>;
   getVariableSchema: (
     id: string,

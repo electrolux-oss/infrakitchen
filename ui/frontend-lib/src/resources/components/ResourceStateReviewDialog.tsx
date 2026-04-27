@@ -32,7 +32,7 @@ function JsonDiffViewer({ originalText, modifiedText }: JsonDiffViewerProps) {
   );
 }
 
-export interface ResourceStateReviewDialogProps {
+interface ResourceStateReviewDialogProps {
   open: boolean;
   onClose: () => void;
   actions?: string[];
@@ -42,9 +42,7 @@ export interface ResourceStateReviewDialogProps {
   entity_name?: string;
 }
 
-export const ResourceStateReviewDialog: React.FC<
-  ResourceStateReviewDialogProps
-> = ({
+const ResourceStateReviewDialog: React.FC<ResourceStateReviewDialogProps> = ({
   open,
   onClose,
   entity,

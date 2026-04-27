@@ -52,7 +52,7 @@ export interface LengthState {
   max: string;
 }
 
-export interface ParsedRegex {
+interface ParsedRegex {
   toggles: Record<ToggleKey, boolean>;
   min: number;
   max: number;

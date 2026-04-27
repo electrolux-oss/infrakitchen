@@ -199,7 +199,6 @@ const IntegrationCreatePage = () => {
           </Tabs>
         </Box>
       )}
-
       <Card
         sx={{
           mb: 4,
@@ -228,7 +227,7 @@ const IntegrationCreatePage = () => {
         <CardContent>
           <Box
             sx={{
-              backgroundColor: (t) => alpha(t.palette.grey[600], 0.2),
+              backgroundColor: (theme) => alpha(theme.palette.grey[600], 0.2),
               p: "1rem 2rem",
               m: "0 3rem",
               borderRadius: 1,
@@ -257,7 +256,6 @@ const IntegrationCreatePage = () => {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           width: "75%",

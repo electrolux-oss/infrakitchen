@@ -198,7 +198,7 @@ export const getTimeOnlyValue = (date: Date | string) => {
   }
 };
 
-export interface ParameterFieldProps {
+interface ParameterFieldProps {
   name: string;
   value: ReactNode;
   size?: GridSize | { xs: GridSize; md: GridSize } | undefined;

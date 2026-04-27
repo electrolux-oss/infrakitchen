@@ -7,7 +7,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { WorkspaceResponse } from "../types";
 
-export interface TemplateConfigurationProps {
+interface TemplateConfigurationProps {
   workspace: WorkspaceResponse;
 }
 
