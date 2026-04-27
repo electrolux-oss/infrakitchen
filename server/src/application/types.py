@@ -1,7 +1,7 @@
 from typing import Literal
 
 
-type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops"]
+type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops", "git_public"]
 type CodeLanguageType = Literal["opentofu"]
 type StorageProviderType = Literal["aws", "azurerm", "gcp"]
 type IacToolType = Literal["tofu"]
@@ -18,6 +18,7 @@ type IntegrationProviderType = Literal[
     "gitlab",
     "bitbucket",
     "bitbucket_ssh",
+    "git_public",
     "mongodb_atlas",
     "datadog",
 ]

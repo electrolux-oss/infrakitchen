@@ -187,18 +187,6 @@ class SourceCodeVersionCreate(BaseModel):
     labels: list[str] = Field(default_factory=list)
 
 
-class SourceCodeVersionVariablesCreate(SourceCodeVersionCreate):
-    """
-    Request model for creating a new source code version with variables.
-    Used for generating fixtures
-    """
-
-    source_code_version_id: str | None = Field(default=None, frozen=True)
-    variables: list[VariableModel] = Field(default_factory=list)
-    outputs: list[OutputVariableModel] = Field(default_factory=list)
-    variables_config: list[VariableConfigModel] = Field(default_factory=list)
-
-
 class SourceCodeVersionUpdate(BaseModel):
     """
     Request model for updating an existing source code version.

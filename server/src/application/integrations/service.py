@@ -84,6 +84,7 @@ class IntegrationService:
             "azure_devops_ssh",
             "github_ssh",
             "bitbucket_ssh",
+            "git_public",
         ]
         if integration.integration_type == "cloud":
             if integration.integration_provider not in cloud_providers:

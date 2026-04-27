@@ -28,7 +28,7 @@ class PublicAuthentication:
 
 
 class PublicProvider(IntegrationProvider, PublicAuthentication):
-    __integration_provider_name__: str = "public"
+    __integration_provider_name__: str = "git_public"
     __integration_provider_type__: str = "git"
     logger: logging.Logger | EntityLogger = log
 

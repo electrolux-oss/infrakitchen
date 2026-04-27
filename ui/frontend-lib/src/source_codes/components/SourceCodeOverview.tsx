@@ -49,10 +49,13 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         name={"Integration"}
         value={
           sourceCode.integration ? (
-            <GetReferenceUrlValue
-              {...sourceCode.integration}
-              urlProvider={sourceCode.integration.integration_provider}
-            />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {IconField(sourceCode.source_code_provider)}
+              <GetReferenceUrlValue
+                {...sourceCode.integration}
+                urlProvider={sourceCode.integration.integration_provider}
+              />
+            </Box>
           ) : null
         }
       />

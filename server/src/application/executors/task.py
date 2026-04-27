@@ -137,7 +137,7 @@ class ExecutorTask:
             await self.secret_manager.get_credentials(pydantic_secret, self.environment_variables)
 
         if not self.source_code_instance.integration:
-            provider_adapter: type[IntegrationProvider] | None = IntegrationProvider.adapters.get("public")
+            provider_adapter: type[IntegrationProvider] | None = IntegrationProvider.adapters.get("git_public")
             if not provider_adapter:
                 raise CannotProceed("Public provider is not supported")
             provider_adapter_instance: IntegrationProvider = provider_adapter(**{"logger": self.logger})
