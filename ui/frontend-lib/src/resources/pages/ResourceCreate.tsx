@@ -200,7 +200,7 @@ const ResourceCreatePageInner = () => {
   const watchedStorage = watch("storage_id");
   const watchedParentIds = watch("parents");
   const watchedSourceCodeVersionId = watch("source_code_version_id");
-  const hasDocs = Boolean(watchedTemplate?.description);
+  const hasDocs = Boolean(watchedTemplate?.documentation);
 
   const filter_storage = useMemo(
     () => ({
@@ -409,7 +409,7 @@ const ResourceCreatePageInner = () => {
               }
             />
             <CardContent sx={{ pt: 0 }}>
-              <MarkdownViewer content={watchedTemplate?.description || ""} />
+              <MarkdownViewer content={watchedTemplate?.documentation || ""} />
             </CardContent>
           </Card>
         )}

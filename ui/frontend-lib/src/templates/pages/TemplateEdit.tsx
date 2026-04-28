@@ -45,6 +45,7 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
     defaultValues: {
       name: entity.name,
       description: entity.description,
+      documentation: entity.documentation || "",
       parents: entity.parents.map((parent: TemplateShort) => parent.id),
       children: entity.children.map((child: TemplateShort) => child.id),
       labels: entity.labels,
@@ -151,13 +152,37 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                 name="description"
                 control={control}
                 render={({ field }) => (
-                  <MarkdownEditor
+                  <TextField
                     {...field}
-                    label="Documentation"
+                    label="Description"
+                    variant="outlined"
                     error={!!errors.description}
                     helperText={
                       errors.description
                         ? errors.description.message
+                        : "Provide a short summary"
+                    }
+                    fullWidth
+                    margin="normal"
+                    slotProps={{
+                      htmlInput: {
+                        "aria-label": "Template description",
+                      },
+                    }}
+                  />
+                )}
+              />
+              <Controller
+                name="documentation"
+                control={control}
+                render={({ field }) => (
+                  <MarkdownEditor
+                    {...field}
+                    label="Documentation"
+                    error={!!errors.documentation}
+                    helperText={
+                      errors.documentation
+                        ? errors.documentation.message
                         : "Markdown-formatted guidance for users of this template. Supports headings, lists, tables, and code blocks."
                     }
                   />

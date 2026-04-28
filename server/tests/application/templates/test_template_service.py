@@ -154,6 +154,8 @@ class TestCreate:
         template_create = TemplateCreate(
             name="Test Template",
             template="template1",
+            description="Short description",
+            documentation="# Docs",
             parents=[parent_template.id],
         )
         requester = mocked_user
@@ -161,6 +163,8 @@ class TestCreate:
         expected_created_template.id = uuid4()
         expected_created_template.name = "Test Template"
         expected_created_template.template = "template1"
+        expected_created_template.description = "Short description"
+        expected_created_template.documentation = "# Docs"
         expected_created_template.parents = [parent_template]
         expected_created_template.created_by = requester.id
 
@@ -188,6 +192,8 @@ class TestCreate:
         mock_event_sender.send_event.assert_awaited_once_with(result, ModelActions.CREATE)
 
         assert result.template == "template1"
+        assert result.description == "Short description"
+        assert result.documentation == "# Docs"
         assert result.parents[0].id == parent_template.id
 
     @pytest.mark.asyncio
@@ -281,7 +287,11 @@ class TestUpdate:
         monkeypatch,
     ):
         template_update = Mock(spec=TemplateUpdate)
-        template_update_body = {"name": "Test Template", "description": "Template description"}
+        template_update_body = {
+            "name": "Test Template",
+            "description": "Template description",
+            "documentation": "# Updated docs",
+        }
         template_id = uuid4()
         existing_template = Template(id=template_id, name="Test Template", template="template1")
         updated_template = Template(
@@ -293,6 +303,7 @@ class TestUpdate:
         template_response = TemplateResponse(
             id=template_id,
             name="Test Template",
+            documentation="# Updated docs",
             template="template1",
             status=ModelStatus.ENABLED,
         )
@@ -320,6 +331,7 @@ class TestUpdate:
         mock_event_sender.send_event.assert_awaited_once_with(response, "update")
 
         assert result.status == ModelStatus.ENABLED
+        assert result.documentation == "# Updated docs"
 
     @pytest.mark.asyncio
     async def test_update_template_does_not_exist(self, mock_template_service, mock_template_crud):

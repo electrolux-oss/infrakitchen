@@ -166,6 +166,7 @@ class TestCreate:
         template_create = {
             "name": "Test Template 1",
             "description": "New description",
+            "documentation": "# Docs",
             "template": "template1",
             "parents": [],
             "children": [],
@@ -183,6 +184,7 @@ class TestCreate:
         template_create = {
             "name": "Test Template 1",
             "description": "New description",
+            "documentation": "# Docs",
             "template": "template1",
             "parents": [],
             "children": [],
@@ -199,6 +201,7 @@ class TestCreate:
         assert response.status_code == HTTPStatus.CREATED
         assert json_response["name"] == template_response.name
         assert json_response["template"] == template_response.template
+        assert json_response["documentation"] == template_response.documentation
 
 
 class TestUpdate:
@@ -206,6 +209,7 @@ class TestUpdate:
         template_update = {
             "name": "Test Template 1",
             "description": "New description",
+            "documentation": "# Updated docs",
             "parents": [],
             "children": [],
             "cloud_resource_types": [],
@@ -224,6 +228,7 @@ class TestUpdate:
         template_update = {
             "name": "Test Template 1",
             "description": "New description",
+            "documentation": "# Updated docs",
             "parents": [],
             "children": [],
             "cloud_resource_types": [],
@@ -240,6 +245,7 @@ class TestUpdate:
         assert response.status_code == HTTPStatus.OK
         assert json_response["name"] == template_response.name
         assert json_response["template"] == template_response.template
+        assert json_response["documentation"] == template_response.documentation
 
 
 class TestPatchAction:

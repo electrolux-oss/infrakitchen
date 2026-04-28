@@ -41,6 +41,7 @@ export const TemplateCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
+      documentation: "",
       template: "",
       parents: [],
       children: [],
@@ -130,13 +131,37 @@ export const TemplateCreatePage = () => {
             name="description"
             control={control}
             render={({ field }) => (
-              <MarkdownEditor
+              <TextField
                 {...field}
-                label="Documentation"
+                label="Description"
+                variant="outlined"
                 error={!!errors.description}
                 helperText={
                   errors.description
                     ? errors.description.message
+                    : "Short summary of the template"
+                }
+                fullWidth
+                margin="normal"
+                slotProps={{
+                  htmlInput: {
+                    "aria-label": "Template description",
+                  },
+                }}
+              />
+            )}
+          />
+          <Controller
+            name="documentation"
+            control={control}
+            render={({ field }) => (
+              <MarkdownEditor
+                {...field}
+                label="Documentation"
+                error={!!errors.documentation}
+                helperText={
+                  errors.documentation
+                    ? errors.documentation.message
                     : "Markdown-formatted guidance for users of this template. Supports headings, lists, tables, and code blocks."
                 }
               />

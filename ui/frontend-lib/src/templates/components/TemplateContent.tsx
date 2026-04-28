@@ -19,13 +19,13 @@ export const TemplateContent = () => {
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
-    ...(entity.description
+    ...(entity.documentation
       ? [
           {
             label: "Documentation",
             content: (
               <Box sx={{ px: 2, pb: 2 }}>
-                <MarkdownViewer content={entity.description} />
+                <MarkdownViewer content={entity.documentation} />
               </Box>
             ),
           },
