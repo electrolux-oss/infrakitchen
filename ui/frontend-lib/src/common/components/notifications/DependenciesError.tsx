@@ -8,7 +8,7 @@ import CardActions from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useSnackbar, SnackbarContent } from "notistack";
+import { toast } from "sonner";
 
 import { IkEntity } from "../../../types";
 import { ExpandIconButton } from "../buttons/ExpandIconButton";
@@ -34,7 +34,6 @@ const StyledCardActions = styled(CardActions)({
 export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
   (props, ref) => {
     const { id, message, metadata } = props;
-    const { closeSnackbar } = useSnackbar();
     const [expanded, setExpanded] = useState(true);
 
     const handleExpandClick = useCallback(() => {
@@ -42,11 +41,11 @@ export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
     }, []);
 
     const handleDismiss = useCallback(() => {
-      closeSnackbar(id);
-    }, [id, closeSnackbar]);
+      toast.dismiss(id);
+    }, [id]);
 
     return (
-      <SnackbarContent ref={ref} role="alert">
+      <div ref={ref} role="alert">
         <StyledCard
           sx={{
             border: `1px solid`,
@@ -101,7 +100,7 @@ export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
             </Paper>
           </Collapse>
         </StyledCard>
-      </SnackbarContent>
+      </div>
     );
   },
 );

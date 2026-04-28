@@ -6,7 +6,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Typography, IconButton, Theme } from "@mui/material";
-import { SnackbarKey, useSnackbar } from "notistack";
+import { toast } from "sonner";
 
 export type SnackbarVariant =
   | "success"
@@ -16,7 +16,7 @@ export type SnackbarVariant =
   | "default";
 
 interface NotificationContentProps {
-  id: SnackbarKey;
+  id: string | number;
   message: string;
   variant: SnackbarVariant;
   title?: string;
@@ -53,7 +53,7 @@ export const NotificationContent = forwardRef<
   HTMLDivElement,
   NotificationContentProps
 >(({ id, message, variant, title }, ref) => {
-  const { closeSnackbar } = useSnackbar();
+  const closeSnackbar = (key: string | number) => toast.dismiss(key);
   const DynamicIcon = variantIcons[variant];
   const iconColor = "#fff";
 
