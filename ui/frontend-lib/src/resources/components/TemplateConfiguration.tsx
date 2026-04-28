@@ -55,7 +55,7 @@ const getSourceCodeVariables = (
         </TableRow>
       </TableHead>
       <TableBody>
-        {variables
+        {[...variables]
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((variable) => (
             <TableRow key={variable.name}>
