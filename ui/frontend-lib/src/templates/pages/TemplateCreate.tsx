@@ -162,7 +162,7 @@ export const TemplateCreatePage = () => {
                 helperText={
                   errors.documentation
                     ? errors.documentation.message
-                    : "Markdown-formatted guidance for users of this template. Supports headings, lists, tables, and code blocks."
+                    : "Markdown-formatted guidance for users of this template."
                 }
               />
             )}

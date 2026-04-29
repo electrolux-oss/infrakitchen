@@ -53,6 +53,7 @@ export interface TemplateImportRequest {
   source_code_branch: string;
   name: string;
   description?: string;
+  documentation: string;
   labels: string[];
   parents: string[];
 }

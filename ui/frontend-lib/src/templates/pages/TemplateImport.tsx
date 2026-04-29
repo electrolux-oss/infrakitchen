@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -31,6 +32,7 @@ export const TemplateImportPage = () => {
     defaultValues: {
       name: "",
       description: "",
+      documentation: "",
       source_code_folder: "/",
       source_code_branch: "main",
       source_code_url: "",
@@ -327,6 +329,22 @@ export const TemplateImportPage = () => {
                     id: "description",
                   },
                 }}
+              />
+            )}
+          />
+          <Controller
+            name="documentation"
+            control={control}
+            render={({ field }) => (
+              <MarkdownEditor
+                {...field}
+                label="Documentation"
+                error={!!errors.documentation}
+                helperText={
+                  errors.documentation
+                    ? errors.documentation.message
+                    : "Markdown-formatted guidance for users of this template."
+                }
               />
             )}
           />
