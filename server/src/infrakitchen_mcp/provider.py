@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from contextvars import ContextVar
+import json
 from typing import Any
 
 from fastmcp.tools.base import Tool
@@ -63,3 +64,36 @@ class GroupedMCPProvider(Provider):
         if self._tool and self._tool.name == name:
             return self._tool
         return None
+
+
+async def list_entities_adapter(
+    client: httpx.AsyncClient,
+    endpoint: str,
+    auth_context: ContextVar[str | None] | None,
+    filter: dict[str, Any] | None,
+    range: tuple[int, int],
+) -> dict[str, Any]:
+    """Shared HTTP helper for listing entities."""
+    headers: dict[str, str] = {}
+    if auth_context is not None:
+        auth_value = auth_context.get(None)
+        if auth_value:
+            headers["Authorization"] = auth_value
+
+    query_params: dict[str, str] = {}
+    if filter is not None:
+        query_params["filter"] = json.dumps(filter)
+    query_params["range"] = json.dumps(list(range))
+
+    response = await client.request(
+        method="GET",
+        url=f"http://internal/api/{endpoint}",
+        params=query_params,
+        headers=headers if headers else None,
+    )
+    response.raise_for_status()
+
+    data = response.json()
+    if isinstance(data, list):
+        return {"data": data, "count": len(data)}
+    return data

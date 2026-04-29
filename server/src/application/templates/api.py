@@ -7,7 +7,7 @@ from fastapi import status as http_status
 
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.dispatch_framework import get_one_group
 from infrakitchen_mcp.registry import mcp_group
 from .schema import TemplateCreate, TemplateResponse, TemplateTreeResponse, TemplateUpdate
 from .dependencies import get_template_service
@@ -35,7 +35,6 @@ async def get_by_id(template_id: str, service: TemplateService = Depends(get_tem
     response_description="Get all templates",
     status_code=http_status.HTTP_200_OK,
 )
-@mcp_group(list_entities_group, "templates")
 async def get_all(
     response: Response,
     service: TemplateService = Depends(get_template_service),

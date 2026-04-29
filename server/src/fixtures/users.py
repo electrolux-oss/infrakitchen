@@ -2,6 +2,7 @@ from typing import Any, NotRequired, TypedDict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.models.encrypted_secret import EncryptedSecretStr
 from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
 from core.users.schema import UserCreateWithProvider
@@ -111,6 +112,8 @@ async def create_regular_user(session: AsyncSession, user: UserDTO):
     user_service = get_user_service(session=session)
     for user_data in user_fixtures:
         new_user = UserCreateWithProvider.model_validate(user_data)
+        if user_data.get("password"):
+            new_user.password = EncryptedSecretStr(user_data["password"])
         await user_service.create_user_if_not_exists(new_user)
     await session.commit()
     await assign_secondary_account(session, user)
