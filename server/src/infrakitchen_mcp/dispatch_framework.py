@@ -24,8 +24,8 @@ class ListParams(BaseModel):
     filter: dict[str, Any] | None = Field(
         default=None,
         description=(
-            """Filter criteria as key-value pairs to narrow results.
-            Example: {"status": "active", "region": "us-east-1"}"""
+            """Filter can be used for labels only.
+            Example: {"labels__contains_all": ["aws"]}"""
         ),
     )
     range: tuple[int, int] = Field(
