@@ -1,4 +1,4 @@
-import { Box, Card, CardContent } from "@mui/material";
+import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { Revision } from "../../common/components/activity/Revision";
@@ -24,7 +24,19 @@ export const TemplateContent = () => {
           {
             label: "Documentation",
             content: (
-              <Card>
+              <Card sx={{ position: "relative", overflow: "visible" }}>
+                <Chip
+                  label="Template Documentation"
+                  size="small"
+                  color="info"
+                  variant="filled"
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 16,
+                    zIndex: 1,
+                  }}
+                />
                 <CardContent>
                   <MarkdownViewer content={entity.documentation} />
                 </CardContent>
