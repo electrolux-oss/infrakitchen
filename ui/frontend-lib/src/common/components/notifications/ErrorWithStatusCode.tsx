@@ -8,7 +8,7 @@ import CardActions from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useSnackbar, SnackbarContent } from "notistack";
+import { toast } from "sonner";
 
 import { ExpandIconButton } from "../buttons/ExpandIconButton";
 
@@ -34,7 +34,6 @@ export const ErrorWithStatusCode = forwardRef<
   ErrorWithCodeProps
 >((props, ref) => {
   const { id, message, metadata } = props;
-  const { closeSnackbar } = useSnackbar();
   const [expanded, setExpanded] = useState(true);
 
   const handleExpandClick = useCallback(() => {
@@ -42,11 +41,11 @@ export const ErrorWithStatusCode = forwardRef<
   }, []);
 
   const handleDismiss = useCallback(() => {
-    closeSnackbar(id);
-  }, [id, closeSnackbar]);
+    toast.dismiss(id);
+  }, [id]);
 
   return (
-    <SnackbarContent ref={ref} role="alert">
+    <div ref={ref} role="alert">
       <StyledCard
         sx={{
           border: `1px solid`,
@@ -105,7 +104,7 @@ export const ErrorWithStatusCode = forwardRef<
           </Paper>
         </Collapse>
       </StyledCard>
-    </SnackbarContent>
+    </div>
   );
 });
 

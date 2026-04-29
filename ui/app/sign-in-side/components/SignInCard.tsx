@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useEffectOnce } from "react-use";
 
+import { notify } from "@electrolux-oss/infrakitchen";
 import { Icon } from "@iconify/react";
 import { CircularProgress, Menu, MenuItem } from "@mui/material";
 import Box from "@mui/material/Box";
@@ -10,7 +11,6 @@ import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import { useSnackbar } from "notistack";
 
 import { useAuth } from "../../base/auth/AuthContext";
 
@@ -52,16 +52,13 @@ export default function SignInCard() {
     setAnchorEl(null); // Explicit close
   };
 
-  const { enqueueSnackbar } = useSnackbar();
   const { login, user } = useAuth();
 
   const handleSubmit = (provider: string) => {
     setLoading(true);
     login(provider).catch((error: Error) => {
       setLoading(false);
-      enqueueSnackbar(error?.message || "Login failed. Please try again.", {
-        variant: "error",
-      });
+      notify(error?.message || "Login failed. Please try again.", "error");
     });
   };
 

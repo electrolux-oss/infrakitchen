@@ -255,7 +255,7 @@ export const CascadingFilter = ({
             newOptions[optionIdx] = { ...option, children };
             updated = true;
           } catch (error) {
-            notifyError(error, { preventDuplicate: true });
+            notifyError(error);
             break;
           }
         }
@@ -279,7 +279,7 @@ export const CascadingFilter = ({
         setLoadedOptions(result.options);
         setHasMore(result.hasMore);
       } catch (error) {
-        notifyError(error, { preventDuplicate: true });
+        notifyError(error);
       } finally {
         setLoadingTop(false);
       }
@@ -304,7 +304,7 @@ export const CascadingFilter = ({
       setHasMore(result.hasMore);
       setPage(nextPage);
     } catch (error) {
-      notifyError(error, { preventDuplicate: true });
+      notifyError(error);
     } finally {
       setLoadingMore(false);
     }

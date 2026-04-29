@@ -39,10 +39,7 @@ export const GlobalNotificationPopup = () => {
 
     const finalMessage = title && title !== body ? `${title}: ${body}` : body;
 
-    notify(finalMessage, severity, {
-      autoHideDuration: 8000,
-      preventDuplicate: false,
-    });
+    notify(finalMessage, severity, { duration: 8000 });
   }, [notification]);
 
   return null;

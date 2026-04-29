@@ -1,21 +1,11 @@
-import { enqueueSnackbar, SnackbarKey } from "notistack";
+import { toast } from "sonner";
 
 import { ApiClientError } from "../../errors";
-import {
-  SnackbarVariant,
-  NotificationContent,
-  DependencyError,
-} from "../components/notifications";
+import { SnackbarVariant, DependencyError } from "../components/notifications";
 import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
 
 interface NotifyOptions {
-  persist?: boolean;
-  autoHideDuration?: number | null;
-  anchorOrigin?: {
-    vertical: "top" | "bottom";
-    horizontal: "left" | "center" | "right";
-  };
-  preventDuplicate?: boolean;
+  duration?: number;
 }
 
 function getMessage(message: any) {
@@ -26,74 +16,80 @@ function getMessage(message: any) {
   }
 }
 
+const toastForVariant = (variant: SnackbarVariant) => {
+  switch (variant) {
+    case "success":
+      return toast.success;
+    case "error":
+      return toast.error;
+    case "warning":
+      return toast.warning;
+    case "info":
+      return toast.info;
+    default:
+      return toast;
+  }
+};
+
 export const notify = (
   message: any,
   variant: SnackbarVariant,
   options?: NotifyOptions,
 ) => {
-  enqueueSnackbar(message, {
-    variant: variant,
-    autoHideDuration: 5000,
-    anchorOrigin: { vertical: "top", horizontal: "right" },
-    ...options,
-
-    content: (snackbarKey: SnackbarKey) => (
-      <NotificationContent
-        id={snackbarKey}
-        message={message}
-        variant={variant}
-      />
-    ),
+  const messageStr =
+    typeof message === "string" ? message : getMessage(message);
+  toastForVariant(variant)(messageStr, {
+    duration: options?.duration ?? 5000,
+    toasterId: "global",
   });
 };
 
 export const notifyError = (error: unknown, options?: NotifyOptions) => {
-  let displayMessage: string;
-
   if (error instanceof ApiClientError) {
-    displayMessage = `${error.status} ${getMessage(error.message)}`;
+    const displayMessage = `${error.status} ${getMessage(error.message)}`;
+
     if (error.error_code === "DEPENDENCY_ERROR") {
-      enqueueSnackbar(displayMessage, {
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        persist: true,
-        ...options,
-        content: (key) => (
+      toast.custom(
+        (id) => (
           <DependencyError
-            id={key}
+            id={id}
             message={displayMessage}
             metadata={error.metadata}
           />
         ),
-      });
-    } else if (
+        { duration: Infinity, toasterId: "errors" },
+      );
+      return;
+    }
+
+    if (
       error.error_code &&
       error.error_code.toUpperCase() !== "UNKNOWN_ERROR"
     ) {
-      enqueueSnackbar(displayMessage, {
-        anchorOrigin: {
-          vertical: "bottom",
-          horizontal: "right",
-        },
-        persist: true,
-        ...options,
-        content: (key) => (
+      toast.custom(
+        (id) => (
           <ErrorWithStatusCode
-            id={key}
+            id={id}
             message={displayMessage}
             metadata={error.metadata}
           />
         ),
-      });
-    } else {
-      notify(displayMessage, "error", options);
+        { duration: Infinity, toasterId: "errors" },
+      );
+      return;
     }
-  } else if (error instanceof Error) {
-    notify(`${error.message}`, "error", options);
-  } else {
-    displayMessage = `Request failed due to an unknown error.`;
-    notify(displayMessage, "error", options);
+
+    toast.error(displayMessage, { toasterId: "errors", ...options });
+    return;
   }
+
+  if (error instanceof Error) {
+    toast.error(error.message, { toasterId: "errors", ...options });
+    return;
+  }
+
+  toast.error("Request failed due to an unknown error.", {
+    toasterId: "errors",
+    ...options,
+  });
 };
