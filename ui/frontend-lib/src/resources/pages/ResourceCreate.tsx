@@ -33,7 +33,6 @@ import {
   IconButton,
   InputAdornment,
   Card,
-  CardHeader,
   CardContent,
   Chip,
 } from "@mui/material";
@@ -383,42 +382,18 @@ const ResourceCreatePageInner = () => {
         sx={{
           display: "flex",
           alignItems: "flex-start",
-          flexDirection: { xs: "column", md: hasDocs ? "row" : "column" },
+          flexDirection: "column",
           gap: 2,
           width: "100%",
           minWidth: 320,
         }}
       >
-        {hasDocs && (
-          <Card
-            sx={{
-              width: { xs: "100%", md: "32%" },
-              flexShrink: 0,
-              alignSelf: { md: "flex-start" },
-            }}
-          >
-            <CardHeader
-              title={watchedTemplate?.name}
-              action={
-                <Chip
-                  label="DOCS"
-                  size="small"
-                  variant="outlined"
-                  color="info"
-                />
-              }
-            />
-            <CardContent sx={{ pt: 0 }}>
-              <MarkdownViewer content={watchedTemplate?.documentation || ""} />
-            </CardContent>
-          </Card>
-        )}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             flexDirection: "column",
-            width: hasDocs ? { xs: "100%", md: "68%" } : "100%",
+            width: "100%",
             flexGrow: 1,
             minWidth: 0,
           }}
@@ -445,6 +420,33 @@ const ResourceCreatePageInner = () => {
                     />
                   )}
                 />
+                {hasDocs && (
+                  <Card
+                    sx={{
+                      mt: 2,
+                      position: "relative",
+                      overflow: "visible",
+                    }}
+                  >
+                    <Chip
+                      label="Template Documentation"
+                      size="small"
+                      color="info"
+                      variant="filled"
+                      sx={{
+                        position: "absolute",
+                        top: -10,
+                        left: 16,
+                        zIndex: 1,
+                      }}
+                    />
+                    <CardContent sx={{ pt: 0 }}>
+                      <MarkdownViewer
+                        content={watchedTemplate?.documentation || ""}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
                 <Controller
                   name="name"
                   control={control}
