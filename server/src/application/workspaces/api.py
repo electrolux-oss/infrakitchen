@@ -9,7 +9,7 @@ from core.permissions.service import PermissionService
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.dispatch_framework import get_one_group
 from infrakitchen_mcp.registry import mcp_group
 from .schema import (
     RoleWorkspacesResponse,
@@ -44,7 +44,6 @@ async def get_by_id(workspace_id: str, service: WorkspaceService = Depends(get_w
     response_description="Get all workspaces",
     status_code=http_status.HTTP_200_OK,
 )
-@mcp_group(list_entities_group, "workspaces")
 async def get_all(
     response: Response,
     service: WorkspaceService = Depends(get_workspace_service),

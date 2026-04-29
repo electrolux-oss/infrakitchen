@@ -9,7 +9,7 @@ from fastapi import status as http_status
 
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from infrakitchen_mcp.dispatch_framework import get_one_group
 from infrakitchen_mcp.registry import mcp_group
 from .schema import (
     BatchTemplatePortsRequest,
@@ -51,7 +51,6 @@ async def get_by_id(
     response_description="Get all source_code_versions",
     status_code=http_status.HTTP_200_OK,
 )
-@mcp_group(list_entities_group, "source_code_versions")
 async def get_all(
     response: Response,
     service: SourceCodeVersionService = Depends(get_source_code_version_service),

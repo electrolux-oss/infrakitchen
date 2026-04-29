@@ -10,6 +10,8 @@ from fastapi.routing import APIRoute
 
 from fastmcp.server.providers.base import Provider
 
+from infrakitchen_mcp.utils import compress_dict
+
 from .dispatch_framework import (
     DispatchTool,
     GroupDefinition,
@@ -95,5 +97,5 @@ async def list_entities_adapter(
 
     data = response.json()
     if isinstance(data, list):
-        return {"data": data, "count": len(data)}
+        return {"data": [compress_dict(item) for item in data], "count": len(data)}
     return data

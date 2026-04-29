@@ -6,7 +6,7 @@ import httpx
 import pytest
 from fastmcp import FastMCP
 
-from infrakitchen_mcp.template_tools import register_template_tools
+from infrakitchen_mcp.tools.template_tools import register_template_tools
 
 
 def _make_mcp_with_templates(

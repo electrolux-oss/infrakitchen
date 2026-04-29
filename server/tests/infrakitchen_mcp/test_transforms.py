@@ -7,11 +7,11 @@ from mcp.types import TextContent
 
 from infrakitchen_mcp.transforms import (
     CompressResultsTransform,
-    _compress_value,
-    _compress_dict,
-    _compress_results_fn,
 )
+from infrakitchen_mcp.utils import _compress_value, compress_dict
 from fastmcp.tools.base import Tool, ToolResult
+
+from infrakitchen_mcp.utils import compress_results_fn
 
 
 class TestCompression:
@@ -42,7 +42,7 @@ class TestCompression:
             "children": [{"id": "c1"}, {"id": "c2"}],
             "metadata": {"key": "value"},
         }
-        result = _compress_dict(entity)
+        result = compress_dict(entity)
 
         assert set(result.keys()) == set(entity.keys())
         assert result["id"] == "123"
@@ -59,8 +59,8 @@ class TestCompressResultsTransform:
             content=[TextContent(type="text", text="plain")],
         )
 
-        with patch("infrakitchen_mcp.transforms.forward_raw", return_value=original):
-            result = await _compress_results_fn()
+        with patch("infrakitchen_mcp.utils.forward_raw", return_value=original):
+            result = await compress_results_fn()
 
         assert result is original
 
@@ -72,8 +72,8 @@ class TestCompressResultsTransform:
             structured_content={"data": [{"id": "1", "children": [{}, {}, {}]}]},
         )
 
-        with patch("infrakitchen_mcp.transforms.forward_raw", return_value=original):
-            result = await _compress_results_fn()
+        with patch("infrakitchen_mcp.utils.forward_raw", return_value=original):
+            result = await compress_results_fn()
 
         # Should be a valid ToolResult with both content and structured_content
         assert isinstance(result, ToolResult)

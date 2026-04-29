@@ -6,7 +6,7 @@ import httpx
 import pytest
 from fastmcp import FastMCP
 
-from infrakitchen_mcp.template_tools import register_resource_tools
+from infrakitchen_mcp.tools.resource_tools import register_resource_tools
 
 
 def _make_mcp_with_resources(

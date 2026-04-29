@@ -4,8 +4,20 @@ import httpx
 from fastapi import FastAPI, Request
 from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
 from infrakitchen_mcp.docs_tools import register_docs
+from infrakitchen_mcp.tools.audit_log_tools import register_audit_log_tools
+from infrakitchen_mcp.tools.auth_provider_tools import register_auth_provider_tools
+from infrakitchen_mcp.tools.integration_tools import register_integration_tools
+from infrakitchen_mcp.tools.log_tools import register_log_tools
 from infrakitchen_mcp.tools.resource_tools import register_resource_tools
+from infrakitchen_mcp.tools.role_tools import register_role_tools
+from infrakitchen_mcp.tools.source_code_tools import register_source_code_tools
+from infrakitchen_mcp.tools.source_code_version_tools import register_source_code_version_tools
+from infrakitchen_mcp.tools.storage_tools import register_storage_tools
+from infrakitchen_mcp.tools.task_tools import register_task_tools
 from infrakitchen_mcp.tools.template_tools import register_template_tools
+from infrakitchen_mcp.tools.user_tools import register_user_tools
+from infrakitchen_mcp.tools.worker_tools import register_worker_tools
+from infrakitchen_mcp.tools.workspace_tools import register_workspace_tools
 from infrakitchen_mcp.transforms import CompressResultsTransform
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -63,8 +75,20 @@ def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Star
     )
 
     register_docs(mcp_server, DEFAULT_DOCS_DIR)
-    register_template_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_audit_log_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_auth_provider_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_integration_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_log_tools(mcp_server, internal_client, auth_context=request_auth_token)
     register_resource_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_role_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_source_code_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_source_code_version_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_storage_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_task_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_template_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_user_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_worker_tools(mcp_server, internal_client, auth_context=request_auth_token)
+    register_workspace_tools(mcp_server, internal_client, auth_context=request_auth_token)
 
     mcp_http_app = mcp_server.http_app(path="/", stateless_http=True)
     mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_dispatch)
