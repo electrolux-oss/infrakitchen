@@ -12,6 +12,7 @@ class TemplateType:
     id: uuid.UUID
     name: str
     description: str | None = None
+    documentation: str | None = None
     template: str = ""
     cloud_resource_types: list[str] | None = None
     abstract: bool = False
