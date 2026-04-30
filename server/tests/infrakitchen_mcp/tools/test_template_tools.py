@@ -39,14 +39,16 @@ class TestRegisterTemplateTools:
     async def test_tool_description_mentions_labels(self):
         mcp, _ = _make_mcp_with_templates()
         tool = await mcp.get_tool("list_templates")
-        assert "labels__contains_all" in tool.description
+        assert tool is not None
+        assert tool.description and "labels__contains_all" in tool.description
         assert "labels" in tool.description
 
     @pytest.mark.asyncio
     async def test_tool_description_warns_against_unsupported_operators(self):
         mcp, _ = _make_mcp_with_templates()
         tool = await mcp.get_tool("list_templates")
-        assert "DO NOT use unsupported operators" in tool.description
+        assert tool is not None
+        assert tool.description and "DO NOT use unsupported operators" in tool.description
 
 
 class TestListTemplatesExecution:

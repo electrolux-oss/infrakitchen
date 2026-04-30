@@ -39,20 +39,23 @@ class TestRegisterResourceTools:
     async def test_tool_description_mentions_state(self):
         mcp, _ = _make_mcp_with_resources()
         tool = await mcp.get_tool("list_resources")
-        assert "state" in tool.description
+        assert tool is not None
+        assert tool.description and "state" in tool.description
         assert "provisioned" in tool.description
 
     @pytest.mark.asyncio
     async def test_tool_description_mentions_template_relationship(self):
         mcp, _ = _make_mcp_with_resources()
         tool = await mcp.get_tool("list_resources")
-        assert "template__name__like" in tool.description
+        assert tool is not None
+        assert tool.description and "template__name__like" in tool.description
 
     @pytest.mark.asyncio
     async def test_tool_description_warns_against_unsupported_operators(self):
         mcp, _ = _make_mcp_with_resources()
         tool = await mcp.get_tool("list_resources")
-        assert "DO NOT use unsupported operators" in tool.description
+        assert tool is not None
+        assert tool.description and "DO NOT use unsupported operators" in tool.description
 
 
 class TestListResourcesExecution:

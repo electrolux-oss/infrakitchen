@@ -82,7 +82,8 @@ def register_template_tools(
             "  - template (string): Unique slug identifier. Must match [a-zA-Z0-9_]+. "
             "Will be lowercased automatically. This field is immutable after creation.\n\n"
             "OPTIONAL FIELDS:\n"
-            "  - description (string): Human-readable description. Default: ''.\n"
+            "  - description (string): Human-readable short description. Default: ''.\n"
+            "  - documentation (string): Human-readable documentation in markdown format. Default: ''.\n"
             "  - parents (list[UUID]): List of parent template UUIDs for inheritance. Default: [].\n"
             "  - children (list[UUID]): List of child template UUIDs. Default: [].\n"
             "  - cloud_resource_types (list[string]): Cloud resource types this template manages "
@@ -111,6 +112,7 @@ def register_template_tools(
         name: str,
         template: str,
         description: str = "",
+        documentation: str = "",
         parents: list[str] | None = None,
         children: list[str] | None = None,
         cloud_resource_types: list[str] | None = None,
@@ -123,6 +125,7 @@ def register_template_tools(
             "name": name,
             "template": template,
             "description": description,
+            "documentation": documentation,
             "abstract": abstract,
         }
         if parents is not None:
@@ -144,7 +147,8 @@ def register_template_tools(
             "  - template_id (string): UUID of the template to update.\n"
             "  - name (string): Updated display name for the template.\n\n"
             "OPTIONAL FIELDS:\n"
-            "  - description (string): Updated description. Default: ''.\n"
+            "  - description (string): Updated short description. Default: ''.\n"
+            "  - documentation (string): Updated documentation in markdown format. Default: ''.\n"
             "  - parents (list[UUID]): Updated list of parent template UUIDs. Default: [].\n"
             "  - children (list[UUID]): Updated list of child template UUIDs. Default: [].\n"
             "  - cloud_resource_types (list[string]): Updated cloud resource types. Default: [].\n"
@@ -165,6 +169,7 @@ def register_template_tools(
         template_id: str,
         name: str,
         description: str = "",
+        documentation: str = "",
         parents: list[str] | None = None,
         children: list[str] | None = None,
         cloud_resource_types: list[str] | None = None,
@@ -175,6 +180,7 @@ def register_template_tools(
         body: dict[str, Any] = {
             "name": name,
             "description": description,
+            "documentation": documentation,
         }
         if parents is not None:
             body["parents"] = parents
@@ -186,6 +192,4 @@ def register_template_tools(
             body["labels"] = labels
         if configuration is not None:
             body["configuration"] = configuration
-        return await mutate_entity_adapter(
-            client, "PATCH", f"templates/{template_id}", auth_context, body
-        )
+        return await mutate_entity_adapter(client, "PATCH", f"templates/{template_id}", auth_context, body)

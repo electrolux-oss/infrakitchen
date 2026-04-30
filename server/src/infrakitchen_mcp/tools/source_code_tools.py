@@ -153,9 +153,7 @@ def register_source_code_tools(
             body["integration_id"] = integration_id
         if labels is not None:
             body["labels"] = labels
-        return await mutate_entity_adapter(
-            client, "PATCH", f"source_codes/{source_code_id}", auth_context, body
-        )
+        return await mutate_entity_adapter(client, "PATCH", f"source_codes/{source_code_id}", auth_context, body)
 
     @mcp.tool(
         description=(
