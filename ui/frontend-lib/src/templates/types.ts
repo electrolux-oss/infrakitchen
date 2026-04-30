@@ -35,6 +35,7 @@ export interface TemplateResponse {
   creator: UserShort | null;
   name: string;
   description: string;
+  documentation?: string;
   template: string;
   parents: TemplateShort[];
   children: TemplateShort[];
@@ -52,6 +53,7 @@ export interface TemplateImportRequest {
   source_code_branch: string;
   name: string;
   description?: string;
+  documentation: string;
   labels: string[];
   parents: string[];
 }
@@ -59,6 +61,7 @@ export interface TemplateImportRequest {
 export interface TemplateCreateRequest {
   name: string;
   description: string;
+  documentation: string;
   template: string;
   parents: string[];
   children: string[];
@@ -70,6 +73,7 @@ export interface TemplateCreateRequest {
 
 export interface TemplateUpdate extends TemplateShort {
   description: string;
+  documentation: string;
   parents: string[];
   children: string[];
   labels: string[];

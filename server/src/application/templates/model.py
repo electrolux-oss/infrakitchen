@@ -27,6 +27,7 @@ class Template(BaseRevision):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(unique=True, index=True)
     description: Mapped[str | None] = mapped_column()
+    documentation: Mapped[str | None] = mapped_column()
     template: Mapped[str] = mapped_column(unique=True, index=True)
     # Self-referential many-to-many relationship
     children: Mapped[list["Template"]] = relationship(
@@ -82,6 +83,7 @@ class TemplateDTO(BaseModel):
         ...,
     )
     description: str = Field(default="")
+    documentation: str = Field(default="")
     template: str = Field(
         ...,
         frozen=True,

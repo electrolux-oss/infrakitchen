@@ -16,6 +16,7 @@ import {
 
 import { LabelInput } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -40,6 +41,7 @@ export const TemplateCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
+      documentation: "",
       template: "",
       parents: [],
       children: [],
@@ -137,7 +139,7 @@ export const TemplateCreatePage = () => {
                 helperText={
                   errors.description
                     ? errors.description.message
-                    : "Description of the template"
+                    : "Short summary of the template"
                 }
                 fullWidth
                 margin="normal"
@@ -146,6 +148,22 @@ export const TemplateCreatePage = () => {
                     "aria-label": "Template description",
                   },
                 }}
+              />
+            )}
+          />
+          <Controller
+            name="documentation"
+            control={control}
+            render={({ field }) => (
+              <MarkdownEditor
+                {...field}
+                label="Documentation"
+                error={!!errors.documentation}
+                helperText={
+                  errors.documentation
+                    ? errors.documentation.message
+                    : "Markdown-formatted guidance for users of this template."
+                }
               />
             )}
           />

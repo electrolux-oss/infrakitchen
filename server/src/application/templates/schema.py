@@ -44,6 +44,7 @@ class TemplateCreate(BaseModel):
         ...,
     )
     description: str = Field(default="")
+    documentation: str = Field(default="")
     template: str = Field(
         ...,
         frozen=True,
@@ -79,6 +80,7 @@ class TemplateUpdate(BaseModel):
         ...,
     )
     description: str = Field(default="")
+    documentation: str = Field(default="")
     parents: list[uuid.UUID] = Field(
         default_factory=list,
     )
@@ -117,6 +119,7 @@ class TemplateResponse(BaseModel):
         ...,
     )
     description: str = Field(default="")
+    documentation: str = Field(default="")
     template: str = Field(
         ...,
         frozen=True,

@@ -1,8 +1,9 @@
-import { Box } from "@mui/material";
+import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { MarkdownViewer } from "../../common/components/MarkdownViewer";
 import {
   TabbedContent,
   TabDefinition,
@@ -18,6 +19,32 @@ export const TemplateContent = () => {
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
+    ...(entity.documentation
+      ? [
+          {
+            label: "Documentation",
+            content: (
+              <Card sx={{ position: "relative", overflow: "visible" }}>
+                <Chip
+                  label="Template Documentation"
+                  size="small"
+                  color="info"
+                  variant="filled"
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    left: 16,
+                    zIndex: 1,
+                  }}
+                />
+                <CardContent>
+                  <MarkdownViewer content={entity.documentation} />
+                </CardContent>
+              </Card>
+            ),
+          },
+        ]
+      : []),
     {
       label: "Resources",
       content: <TemplateResources template_id={entity.id} />,

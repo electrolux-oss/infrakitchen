@@ -15,6 +15,7 @@ import {
 
 import { LabelInput, useConfig } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -44,6 +45,7 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
     defaultValues: {
       name: entity.name,
       description: entity.description,
+      documentation: entity.documentation || "",
       parents: entity.parents.map((parent: TemplateShort) => parent.id),
       children: entity.children.map((child: TemplateShort) => child.id),
       labels: entity.labels,
@@ -158,7 +160,7 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                     helperText={
                       errors.description
                         ? errors.description.message
-                        : "Provide a short description"
+                        : "Provide a short summary"
                     }
                     fullWidth
                     margin="normal"
@@ -167,6 +169,22 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
                         "aria-label": "Template description",
                       },
                     }}
+                  />
+                )}
+              />
+              <Controller
+                name="documentation"
+                control={control}
+                render={({ field }) => (
+                  <MarkdownEditor
+                    {...field}
+                    label="Documentation"
+                    error={!!errors.documentation}
+                    helperText={
+                      errors.documentation
+                        ? errors.documentation.message
+                        : "Markdown-formatted guidance for users of this template."
+                    }
                   />
                 )}
               />

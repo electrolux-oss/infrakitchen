@@ -8,5 +8,6 @@ export * from "./HorizontalTimeline";
 export * from "./InlineCode";
 export * from "./inputs";
 export * from "./Labels";
+export * from "./MarkdownViewer";
 export * from "./notifications";
 export * from "./UserAvatar";

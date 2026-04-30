@@ -48,6 +48,8 @@ def template_response(mocked_user_response):
     return TemplateResponse(
         id=uuid4(),
         name="Test Template",
+        description="A test template",
+        documentation="# Test documentation",
         template="template1",
         configuration=TemplateConfig(),
         creator=mocked_user_response,
@@ -75,6 +77,7 @@ def mocked_template(mocked_user):
         configuration={},
         labels=["test_label"],
         description="A test template",
+        documentation="Test documentation",
     )
 
 
