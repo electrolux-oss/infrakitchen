@@ -20,6 +20,19 @@ from .dispatch_framework import (
 from .registry import EndpointRegistry, registry as default_registry
 
 
+def _error_response(response: httpx.Response) -> dict[str, Any]:
+    """Extract a structured error from an HTTP response for LLM consumption."""
+    try:
+        detail = response.json()
+    except Exception:
+        detail = response.text
+    return {
+        "error": True,
+        "status_code": response.status_code,
+        "detail": detail,
+    }
+
+
 class GroupedMCPProvider(Provider):
     """Builds a unified MCP tool from a single GroupDefinition."""
 
@@ -93,7 +106,8 @@ async def list_entities_adapter(
         params=query_params,
         headers=headers if headers else None,
     )
-    response.raise_for_status()
+    if not response.is_success:
+        return _error_response(response)
 
     data = response.json()
     if isinstance(data, list):
@@ -121,5 +135,6 @@ async def mutate_entity_adapter(
         content=json.dumps(body),
         headers=headers,
     )
-    response.raise_for_status()
+    if not response.is_success:
+        return _error_response(response)
     return response.json()
