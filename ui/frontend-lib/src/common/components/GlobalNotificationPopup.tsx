@@ -67,7 +67,6 @@ export const GlobalNotificationPopup = () => {
 
     const entityName: string | undefined = notificationData.entity_name;
     const entityId: string | undefined = notificationData.entity_id;
-    const action: string | undefined = notificationData.action;
     const segment = entityName ? ENTITY_PATHS[entityName] : undefined;
     const isFailure = severity === "error" || severity === "warning";
     const link =
@@ -79,9 +78,7 @@ export const GlobalNotificationPopup = () => {
             }
           : {
               to: `${linkPrefix}${segment}/${entityId}`,
-              label: action
-                ? `View ${action} ${(entityName ?? "").replace(/_/g, " ")}`.trim()
-                : (ENTITY_LABELS[entityName!] ?? "View"),
+              label: ENTITY_LABELS[entityName!] ?? "View",
             }
         : undefined;
 

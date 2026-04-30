@@ -208,7 +208,6 @@ class TaskWorker(BaseMessagesWorker):
                 task_controller,
                 f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
                 title=f"{entity_label} {action or 'task'} timed out".strip(),
-                action=action,
             )
             raise TaskFailure from e
         await task_controller.make_retry(message.retries, message.max_retries)
@@ -228,7 +227,6 @@ class TaskWorker(BaseMessagesWorker):
                 task_controller,
                 f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
                 title=f"{entity_label} {action or 'task'} timed out".strip(),
-                action=action,
             )
             raise TaskFailure from e
         await task_controller.logger.save_log()
@@ -244,7 +242,6 @@ class TaskWorker(BaseMessagesWorker):
             task_controller,
             f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_type}".strip(),
             title=f"{entity_label} {action or 'task'} failed".strip(),
-            action=action,
         )
         raise TaskFailure from e
 
@@ -258,7 +255,6 @@ class TaskWorker(BaseMessagesWorker):
             task_controller,
             f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
             title=f"{entity_label} {action or 'task'} failed".strip(),
-            action=action,
         )
         raise TaskFailure from e
 
@@ -275,7 +271,6 @@ class TaskWorker(BaseMessagesWorker):
             task_controller,
             f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
             title=f"{entity_label} {action or 'task'} failed".strip(),
-            action=action,
         )
         raise TaskFailure from e
 
@@ -284,7 +279,6 @@ class TaskWorker(BaseMessagesWorker):
         task_controller,
         message: str,
         title: str | None = None,
-        action: str | None = None,
     ):
         entity_id = task_controller.logger.entity_id
         entity_name = task_controller.logger.entity_name
@@ -296,7 +290,6 @@ class TaskWorker(BaseMessagesWorker):
             body={
                 "msg": message,
                 "title": title,
-                "action": action,
                 "entity_id": str(entity_id) if entity_id is not None else None,
                 "entity_name": entity_name,
             },
@@ -310,7 +303,7 @@ class TaskWorker(BaseMessagesWorker):
         entity_name = task_controller.logger.entity_name
         title = f"{entity_name.replace('_', ' ').capitalize()} {action} succeeded"
         notification_message = f"Task {action} for {entity_name} completed successfully."
-        await self.send_task_notification(task_controller, notification_message, title=title, action=action)
+        await self.send_task_notification(task_controller, notification_message, title=title)
 
     async def handle_exception(self, e, message, task_controller, action=None):
         if isinstance(e, ParentIsNotReady) or isinstance(e, ChildrenIsNotReady):
