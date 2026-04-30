@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from fastmcp import FastMCP
 
-from infrakitchen_mcp.provider import list_entities_adapter
+from infrakitchen_mcp.provider import list_entities_adapter, mutate_entity_adapter
 
 
 def register_source_code_version_tools(
@@ -77,3 +77,117 @@ def register_source_code_version_tools(
     ) -> dict[str, Any]:
         """List source code versions with optional filtering and pagination."""
         return await list_entities_adapter(client, "source_code_versions", auth_context, filter, range)
+
+    @mcp.tool(
+        description=(
+            "Create a new source code version linking a Git ref to a template.\n\n"
+            "A source code version pins a specific Git tag or branch (and optional subfolder) "
+            "from a source code repository to a template. After creation the system parses "
+            "the infrastructure code to extract variables and outputs.\n\n"
+            "REQUIRED FIELDS:\n"
+            "  - template_id (string): UUID of the template this version belongs to. "
+            "Immutable after creation.\n"
+            "  - source_code_id (string): UUID of the source code repository. "
+            "Immutable after creation.\n\n"
+            "OPTIONAL FIELDS:\n"
+            "  - source_code_version (string|null): Git tag to pin "
+            "(e.g., 'v1.0.0'). Immutable. Provide either this or source_code_branch.\n"
+            "  - source_code_branch (string|null): Git branch to track "
+            "(e.g., 'main'). Immutable. Provide either this or source_code_version.\n"
+            "  - source_code_folder (string): Subfolder within the repository "
+            "(e.g., 'modules/vpc'). Default: '' (root). Immutable.\n"
+            "  - description (string): Human-readable description. Default: ''.\n"
+            "  - labels (list[string]): Freeform labels. Default: [].\n\n"
+            "EXAMPLE:\n"
+            '  {"template_id": "<uuid>", "source_code_id": "<uuid>", '
+            '"source_code_branch": "main", "source_code_folder": "modules/vpc", '
+            '"labels": ["aws", "networking"]}\n\n'
+            "RESPONSE:\n"
+            "  Returns the created source code version with all fields including "
+            "parsed variables and outputs."
+        ),
+    )
+    async def create_source_code_version(
+        template_id: str,
+        source_code_id: str,
+        source_code_version: str | None = None,
+        source_code_branch: str | None = None,
+        source_code_folder: str = "",
+        description: str = "",
+        labels: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Create a new source code version."""
+        body: dict[str, Any] = {
+            "template_id": template_id,
+            "source_code_id": source_code_id,
+            "source_code_folder": source_code_folder,
+            "description": description,
+        }
+        if source_code_version is not None:
+            body["source_code_version"] = source_code_version
+        if source_code_branch is not None:
+            body["source_code_branch"] = source_code_branch
+        if labels is not None:
+            body["labels"] = labels
+        return await mutate_entity_adapter(client, "POST", "source_code_versions", auth_context, body)
+
+    @mcp.tool(
+        description=(
+            "Update an existing source code version.\n\n"
+            "REQUIRED FIELDS:\n"
+            "  - source_code_version_id (string): UUID of the source code version to update.\n\n"
+            "OPTIONAL FIELDS:\n"
+            "  - description (string): Updated description. Default: ''.\n"
+            "  - labels (list[string]): Updated labels. Default: [].\n\n"
+            "NOTE: template_id, source_code_id, source_code_version, source_code_branch, "
+            "and source_code_folder are all immutable and cannot be changed after creation.\n\n"
+            "EXAMPLE:\n"
+            '  {"source_code_version_id": "<uuid>", "description": "VPC module v2", '
+            '"labels": ["aws", "networking", "v2"]}\n\n'
+            "RESPONSE:\n"
+            "  Returns the updated source code version with all fields."
+        ),
+    )
+    async def update_source_code_version(
+        source_code_version_id: str,
+        description: str = "",
+        labels: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Update an existing source code version."""
+        body: dict[str, Any] = {"description": description}
+        if labels is not None:
+            body["labels"] = labels
+        return await mutate_entity_adapter(
+            client, "PATCH", f"source_code_versions/{source_code_version_id}", auth_context, body
+        )
+
+    @mcp.tool(
+        description=(
+            "Execute an action on a source code version (e.g., sync, enable, disable).\n\n"
+            "REQUIRED FIELDS:\n"
+            "  - source_code_version_id (string): UUID of the source code version.\n"
+            "  - action (string): The action to perform.\n\n"
+            "AVAILABLE ACTIONS:\n"
+            "  - 'sync': Re-parse variables and outputs from the Git ref.\n"
+            "  - 'enable': Re-enable a disabled source code version.\n"
+            "  - 'disable': Disable the source code version.\n\n"
+            "NOTE: Available actions depend on the current state and user permissions. "
+            "If an action is not permitted, the API returns a 403 error with details.\n\n"
+            "EXAMPLE:\n"
+            '  {"source_code_version_id": "<uuid>", "action": "sync"}\n\n'
+            "RESPONSE:\n"
+            "  Returns the updated source code version after the action is applied."
+        ),
+    )
+    async def action_source_code_version(
+        source_code_version_id: str,
+        action: str,
+    ) -> dict[str, Any]:
+        """Execute an action on a source code version."""
+        return await mutate_entity_adapter(
+            client,
+            "PATCH",
+            f"source_code_versions/{source_code_version_id}/actions",
+            auth_context,
+            {"action": action},
+        )
