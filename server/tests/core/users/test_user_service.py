@@ -5,6 +5,7 @@ from unittest.mock import Mock
 from pydantic import PydanticUserError
 from uuid import uuid4
 
+from core.constants.model import ModelActions
 from core.errors import EntityNotFound
 from core.users.model import User
 from core.users.schema import UserResponse, UserCreate, UserUpdate
@@ -229,16 +230,15 @@ class TestUpdate:
     ):
         user_update = Mock(spec=UserUpdate)
         user_update_body = {"identifier": "test_user", "description": "User description Updated"}
-        user_id = uuid4()
         existing_user = mocked_user
 
         updated_user = User(
-            id=user_id,
+            id=existing_user.id,
             identifier="test_user",
             description="User description Updated",
         )
         user_response_with_update = mocked_user_response
-        user_response_with_update.id = user_id
+        user_response_with_update.id = existing_user.id
         user_response_with_update.description = "User description Updated"
 
         user_update.model_dump = Mock(return_value=user_update_body)
@@ -251,11 +251,11 @@ class TestUpdate:
 
         result = await mock_user_service.update(user_id=USER_ID, user=user_update, requester=requester)
 
-        user_update.model_dump.assert_called_once_with(exclude_unset=True)
+        user_update.model_dump.assert_called_once_with(by_alias=True, exclude={"password"})
         mock_user_crud.get_by_id.assert_awaited_once_with(USER_ID)
         mock_user_crud.update.assert_awaited_once_with(existing_user, user_update_body)
 
-        mock_audit_log_handler.create_log.assert_awaited_once_with(updated_user.id, requester.id, "update")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(updated_user.id, requester.id, ModelActions.UPDATE)
 
         assert result.id == updated_user.id
         assert result.description == updated_user.description
