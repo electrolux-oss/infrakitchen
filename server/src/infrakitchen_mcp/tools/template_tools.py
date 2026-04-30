@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 from fastmcp import FastMCP
 
-from infrakitchen_mcp.provider import list_entities_adapter
+from infrakitchen_mcp.provider import list_entities_adapter, mutate_entity_adapter
 
 
 def register_template_tools(
@@ -73,3 +73,119 @@ def register_template_tools(
     ) -> dict[str, Any]:
         """List infrastructure templates with optional filtering and pagination."""
         return await list_entities_adapter(client, "templates", auth_context, filter, range)
+
+    @mcp.tool(
+        description=(
+            "Create a new infrastructure template.\n\n"
+            "REQUIRED FIELDS:\n"
+            "  - name (string): Display name for the template.\n"
+            "  - template (string): Unique slug identifier. Must match [a-zA-Z0-9_]+. "
+            "Will be lowercased automatically. This field is immutable after creation.\n\n"
+            "OPTIONAL FIELDS:\n"
+            "  - description (string): Human-readable description. Default: ''.\n"
+            "  - parents (list[UUID]): List of parent template UUIDs for inheritance. Default: [].\n"
+            "  - children (list[UUID]): List of child template UUIDs. Default: [].\n"
+            "  - cloud_resource_types (list[string]): Cloud resource types this template manages "
+            "(e.g., 'aws_instance', 'azurerm_resource_group'). Default: [].\n"
+            "  - labels (list[string]): Freeform labels for categorization "
+            "(e.g., ['aws', 'production']). Default: [].\n"
+            "  - abstract (bool): If true, this template cannot be used directly to create "
+            "resources — it serves as a base for other templates. Default: false.\n"
+            "  - configuration (object): Template configuration with optional keys:\n"
+            "      - one_resource_per_integration (list[string]): Integration provider types "
+            "that allow only one resource per integration. "
+            "Values: 'aws', 'azurerm', 'gcp', 'github', 'gitlab', etc.\n"
+            "      - allowed_provider_integration_types (list[string]): Restrict which "
+            "integration provider types can be used. Empty list means all allowed.\n"
+            "      - naming_convention (string|null): Naming pattern for resources, "
+            "e.g., 'my-resource-{variable}'. Default: null.\n\n"
+            "EXAMPLE:\n"
+            '  {"name": "AWS EC2 Instance", "template": "aws_ec2", '
+            '"cloud_resource_types": ["aws_instance"], "labels": ["aws", "compute"]}\n\n'
+            "RESPONSE:\n"
+            "  Returns the created template object with all fields including generated "
+            "id, created_at, updated_at, status, and revision_number."
+        ),
+    )
+    async def create_template(
+        name: str,
+        template: str,
+        description: str = "",
+        parents: list[str] | None = None,
+        children: list[str] | None = None,
+        cloud_resource_types: list[str] | None = None,
+        labels: list[str] | None = None,
+        abstract: bool = False,
+        configuration: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Create a new infrastructure template."""
+        body: dict[str, Any] = {
+            "name": name,
+            "template": template,
+            "description": description,
+            "abstract": abstract,
+        }
+        if parents is not None:
+            body["parents"] = parents
+        if children is not None:
+            body["children"] = children
+        if cloud_resource_types is not None:
+            body["cloud_resource_types"] = cloud_resource_types
+        if labels is not None:
+            body["labels"] = labels
+        if configuration is not None:
+            body["configuration"] = configuration
+        return await mutate_entity_adapter(client, "POST", "templates", auth_context, body)
+
+    @mcp.tool(
+        description=(
+            "Update an existing infrastructure template.\n\n"
+            "REQUIRED FIELDS:\n"
+            "  - template_id (string): UUID of the template to update.\n"
+            "  - name (string): Updated display name for the template.\n\n"
+            "OPTIONAL FIELDS:\n"
+            "  - description (string): Updated description. Default: ''.\n"
+            "  - parents (list[UUID]): Updated list of parent template UUIDs. Default: [].\n"
+            "  - children (list[UUID]): Updated list of child template UUIDs. Default: [].\n"
+            "  - cloud_resource_types (list[string]): Updated cloud resource types. Default: [].\n"
+            "  - labels (list[string]): Updated labels. Default: [].\n"
+            "  - configuration (object): Updated template configuration. See create_template "
+            "for configuration structure.\n\n"
+            "NOTE: The 'template' slug and 'abstract' flag cannot be changed after creation.\n"
+            "NOTE: This is a full update — all optional list fields default to empty. "
+            "To preserve existing values, include them in the request.\n\n"
+            "EXAMPLE:\n"
+            '  {"template_id": "550e8400-...", "name": "AWS EC2 v2", '
+            '"labels": ["aws", "compute", "v2"]}\n\n'
+            "RESPONSE:\n"
+            "  Returns the updated template object with all fields."
+        ),
+    )
+    async def update_template(
+        template_id: str,
+        name: str,
+        description: str = "",
+        parents: list[str] | None = None,
+        children: list[str] | None = None,
+        cloud_resource_types: list[str] | None = None,
+        labels: list[str] | None = None,
+        configuration: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Update an existing infrastructure template."""
+        body: dict[str, Any] = {
+            "name": name,
+            "description": description,
+        }
+        if parents is not None:
+            body["parents"] = parents
+        if children is not None:
+            body["children"] = children
+        if cloud_resource_types is not None:
+            body["cloud_resource_types"] = cloud_resource_types
+        if labels is not None:
+            body["labels"] = labels
+        if configuration is not None:
+            body["configuration"] = configuration
+        return await mutate_entity_adapter(
+            client, "PATCH", f"templates/{template_id}", auth_context, body
+        )
