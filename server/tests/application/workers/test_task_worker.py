@@ -263,7 +263,15 @@ class TestTaskWorker:
         await task_worker.send_task_notification(mock_task_controller, test_message)
 
         mock_create_message.assert_called_once_with(
-            body={"msg": test_message}, entity_name="test_source_code", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": test_message,
+                "title": None,
+                "action": None,
+                "entity_id": "test_entity_123",
+                "entity_name": "test_source_code",
+            },
+            entity_name="test_source_code",
+            user_id=str(mock_task_controller.user.id),
         )
 
         mock_send_message.assert_awaited_once_with("created_notification_message")
@@ -285,7 +293,15 @@ class TestTaskWorker:
 
         expected_message = "Task deploy for my_deployment completed successfully."
         mock_create_message.assert_called_once_with(
-            body={"msg": expected_message}, entity_name="my_deployment", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": expected_message,
+                "title": "My deployment deploy succeeded",
+                "action": "deploy",
+                "entity_id": "entity_789",
+                "entity_name": "my_deployment",
+            },
+            entity_name="my_deployment",
+            user_id=str(mock_task_controller.user.id),
         )
 
     @pytest.mark.asyncio
@@ -305,9 +321,17 @@ class TestTaskWorker:
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_generic_exception(test_exception, mock_task_controller, "CannotProceed")
 
-        expected_message = "Task failed for failed_entity_123: CannotProceed"
+        expected_message = "Task  failed for failed_entity_123: CannotProceed"
         mock_create_message.assert_called_once_with(
-            body={"msg": expected_message}, entity_name="failed_resource", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": expected_message,
+                "title": "Failed resource task failed",
+                "action": None,
+                "entity_id": "failed_entity_123",
+                "entity_name": "failed_resource",
+            },
+            entity_name="failed_resource",
+            user_id=str(mock_task_controller.user.id),
         )
 
         mock_task_controller.make_failed.assert_awaited_once()
@@ -336,9 +360,17 @@ class TestTaskWorker:
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_is_not_ready_exception(test_exception, mock_message, mock_task_controller)
 
-        expected_message = "Task failed for timeout_entity_456: Task is timed out"
+        expected_message = "Task  failed for timeout_entity_456: Task is timed out"
         mock_create_message.assert_called_once_with(
-            body={"msg": expected_message}, entity_name="timeout_storage", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": expected_message,
+                "title": "Timeout storage task timed out",
+                "action": None,
+                "entity_id": "timeout_entity_456",
+                "entity_name": "timeout_storage",
+            },
+            entity_name="timeout_storage",
+            user_id=str(mock_task_controller.user.id),
         )
 
     @pytest.mark.asyncio
@@ -360,9 +392,17 @@ class TestTaskWorker:
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_exit_without_state_exception(test_exception, mock_task_controller)
 
-        expected_message = "Task failed for exit_entity_789: ExitWithoutSave: Exit without saving changes"
+        expected_message = "Task  failed for exit_entity_789: ExitWithoutSave: Exit without saving changes"
         mock_create_message.assert_called_once_with(
-            body={"msg": expected_message}, entity_name="exit_workspace", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": expected_message,
+                "title": "Exit workspace task failed",
+                "action": None,
+                "entity_id": "exit_entity_789",
+                "entity_name": "exit_workspace",
+            },
+            entity_name="exit_workspace",
+            user_id=str(mock_task_controller.user.id),
         )
 
     @pytest.mark.asyncio
@@ -383,9 +423,17 @@ class TestTaskWorker:
         with pytest.raises(tw_mod.TaskFailure):
             await task_worker.handle_unexpected_exception(test_exception, mock_task_controller)
 
-        expected_message = "Task failed for unexpected_entity_000: UnhandledException: Unexpected runtime error"
+        expected_message = "Task  failed for unexpected_entity_000: UnhandledException: Unexpected runtime error"
         mock_create_message.assert_called_once_with(
-            body={"msg": expected_message}, entity_name="unexpected_resource", user_id=str(mock_task_controller.user.id)
+            body={
+                "msg": expected_message,
+                "title": "Unexpected resource task failed",
+                "action": None,
+                "entity_id": "unexpected_entity_000",
+                "entity_name": "unexpected_resource",
+            },
+            entity_name="unexpected_resource",
+            user_id=str(mock_task_controller.user.id),
         )
 
     @pytest.mark.asyncio
@@ -416,11 +464,35 @@ class TestTaskWorker:
 
         user_id_str = str(mocked_user.id)
         mock_create_message.assert_any_call(
-            body={"msg": "Test message for my_storage"}, entity_name="my_storage", user_id=user_id_str
+            body={
+                "msg": "Test message for my_storage",
+                "title": None,
+                "action": None,
+                "entity_id": "storage_entity_123",
+                "entity_name": "my_storage",
+            },
+            entity_name="my_storage",
+            user_id=user_id_str,
         )
         mock_create_message.assert_any_call(
-            body={"msg": "Test message for dev_workspace"}, entity_name="dev_workspace", user_id=user_id_str
+            body={
+                "msg": "Test message for dev_workspace",
+                "title": None,
+                "action": None,
+                "entity_id": "workspace_entity_456",
+                "entity_name": "dev_workspace",
+            },
+            entity_name="dev_workspace",
+            user_id=user_id_str,
         )
         mock_create_message.assert_any_call(
-            body={"msg": "Test message for api_resource"}, entity_name="api_resource", user_id=user_id_str
+            body={
+                "msg": "Test message for api_resource",
+                "title": None,
+                "action": None,
+                "entity_id": "resource_entity_789",
+                "entity_name": "api_resource",
+            },
+            entity_name="api_resource",
+            user_id=user_id_str,
         )

@@ -108,7 +108,7 @@ class TaskWorker(BaseMessagesWorker):
             prometheus_counter.labels(entity_controller, "success").inc()
         except Exception as e:
             prometheus_counter.labels(entity_controller, "error").inc()
-            await self.handle_exception(e, message, task_controller)
+            await self.handle_exception(e, message, task_controller, action)
 
     async def process_scheduler_job(self, msg: MessageModel):
         job_id = msg.body.get("job_id")
@@ -194,7 +194,7 @@ class TaskWorker(BaseMessagesWorker):
             case _:
                 raise CannotProceed(f"Unknown entity controller: {entity_controller}")
 
-    async def handle_is_not_ready_exception(self, e, message, task_controller):
+    async def handle_is_not_ready_exception(self, e, message, task_controller, action=None):
         message.max_retries = 3
         message.delay = 1000 * 1
         task_controller.logger.warning(f"{message.retries}/{message.max_retries} {e}")
@@ -202,83 +202,126 @@ class TaskWorker(BaseMessagesWorker):
             task_controller.logger.error("Task is timed out")
             await task_controller.make_failed()
             await task_controller.logger.save_log()
+            entity_name = task_controller.logger.entity_name
+            entity_label = entity_name.replace("_", " ").capitalize()
             await self.send_task_notification(
-                task_controller, f"Task failed for {task_controller.logger.entity_id}: Task is timed out"
+                task_controller,
+                f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
+                title=f"{entity_label} {action or 'task'} timed out".strip(),
+                action=action,
             )
             raise TaskFailure from e
         await task_controller.make_retry(message.retries, message.max_retries)
         await task_controller.logger.save_log()
         await self.on_failure(message)
 
-    async def handle_is_not_right_state_exception(self, e, message, task_controller):
+    async def handle_is_not_right_state_exception(self, e, message, task_controller, action=None):
         message.max_retries = 3
         message.delay = 1000 * 1
         if message.retries >= message.max_retries:
             task_controller.logger.error("Task is timed out")
             await task_controller.make_failed()
             await task_controller.logger.save_log()
+            entity_name = task_controller.logger.entity_name
+            entity_label = entity_name.replace("_", " ").capitalize()
             await self.send_task_notification(
-                task_controller, f"Task failed for {task_controller.logger.entity_id}: Task is timed out"
+                task_controller,
+                f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
+                title=f"{entity_label} {action or 'task'} timed out".strip(),
+                action=action,
             )
             raise TaskFailure from e
         await task_controller.logger.save_log()
         await self.on_failure(message)
 
-    async def handle_generic_exception(self, e, task_controller, error_type):
+    async def handle_generic_exception(self, e, task_controller, error_type, action=None):
         task_controller.logger.error(f"{error_type}: {e}")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
+        entity_name = task_controller.logger.entity_name
+        entity_label = entity_name.replace("_", " ").capitalize()
         await self.send_task_notification(
-            task_controller, f"Task failed for {task_controller.logger.entity_id}: {error_type}"
+            task_controller,
+            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_type}".strip(),
+            title=f"{entity_label} {action or 'task'} failed".strip(),
+            action=action,
         )
         raise TaskFailure from e
 
-    async def handle_exit_without_state_exception(self, e, task_controller):
+    async def handle_exit_without_state_exception(self, e, task_controller, action=None):
         error_message = f"ExitWithoutSave: {e}"
         task_controller.logger.error(error_message)
         await task_controller.logger.save_log()
+        entity_name = task_controller.logger.entity_name
+        entity_label = entity_name.replace("_", " ").capitalize()
         await self.send_task_notification(
-            task_controller, f"Task failed for {task_controller.logger.entity_id}: {error_message}"
+            task_controller,
+            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
+            title=f"{entity_label} {action or 'task'} failed".strip(),
+            action=action,
         )
         raise TaskFailure from e
 
-    async def handle_unexpected_exception(self, e, task_controller):
+    async def handle_unexpected_exception(self, e, task_controller, action=None):
         task_controller.logger.error("Unhandled exception occurred")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
 
         error_message = f"UnhandledException: {e}"
         logger.error(f"Unhandled exception: {e}", exc_info=True)
+        entity_name = task_controller.logger.entity_name
+        entity_label = entity_name.replace("_", " ").capitalize()
         await self.send_task_notification(
-            task_controller, f"Task failed for {task_controller.logger.entity_id}: {error_message}"
+            task_controller,
+            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
+            title=f"{entity_label} {action or 'task'} failed".strip(),
+            action=action,
         )
         raise TaskFailure from e
 
-    async def send_task_notification(self, task_controller, message: str):
+    async def send_task_notification(
+        self,
+        task_controller,
+        message: str,
+        title: str | None = None,
+        action: str | None = None,
+    ):
         entity_id = task_controller.logger.entity_id
         entity_name = task_controller.logger.entity_name
         user_id = str(task_controller.user.id)
 
         logger.debug(f"Sending notification - entity_id: {entity_id}, entity_name: {entity_name}, user_id: {user_id}")
 
-        notification_message = create_message(body={"msg": message}, entity_name=entity_name, user_id=user_id)
+        notification_message = create_message(
+            body={
+                "msg": message,
+                "title": title,
+                "action": action,
+                "entity_id": str(entity_id) if entity_id is not None else None,
+                "entity_name": entity_name,
+            },
+            entity_name=entity_name,
+            user_id=user_id,
+        )
         await send_message(notification_message)
         logger.debug(f"Notification sent: {notification_message}")
 
     async def _send_success_notification(self, task_controller, action):
-        notification_message = f"Task {action} for {task_controller.logger.entity_name} completed successfully."
-        await self.send_task_notification(task_controller, notification_message)
+        entity_name = task_controller.logger.entity_name
+        title = f"{entity_name.replace('_', ' ').capitalize()} {action} succeeded"
+        notification_message = f"Task {action} for {entity_name} completed successfully."
+        await self.send_task_notification(task_controller, notification_message, title=title, action=action)
 
-    async def handle_exception(self, e, message, task_controller):
+    async def handle_exception(self, e, message, task_controller, action=None):
         if isinstance(e, ParentIsNotReady) or isinstance(e, ChildrenIsNotReady):
-            await self.handle_is_not_ready_exception(e, message, task_controller)
+            await self.handle_is_not_ready_exception(e, message, task_controller, action=action)
         elif isinstance(e, EntityWrongState):
-            await self.handle_is_not_right_state_exception(e, message, task_controller)
+            await self.handle_is_not_right_state_exception(e, message, task_controller, action=action)
         elif isinstance(e, CannotProceed):
-            await self.handle_generic_exception(e, task_controller, "CannotProceed")
+            await self.handle_generic_exception(e, task_controller, "CannotProceed", action=action)
         elif isinstance(e, ExitWithoutSave):
-            await self.handle_exit_without_state_exception(e, task_controller)
+            await self.handle_exit_without_state_exception(e, task_controller, action=action)
         elif isinstance(e, AssertionError):
-            await self.handle_generic_exception(e, task_controller, "AssertionError")
+            await self.handle_generic_exception(e, task_controller, "AssertionError", action=action)
         else:
-            await self.handle_unexpected_exception(e, task_controller)
+            await self.handle_unexpected_exception(e, task_controller, action=action)
