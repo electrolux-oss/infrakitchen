@@ -99,3 +99,27 @@ async def list_entities_adapter(
     if isinstance(data, list):
         return {"data": [compress_dict(item) for item in data], "count": len(data)}
     return data
+
+
+async def mutate_entity_adapter(
+    client: httpx.AsyncClient,
+    method: str,
+    endpoint: str,
+    auth_context: ContextVar[str | None] | None,
+    body: dict[str, Any],
+) -> dict[str, Any]:
+    """Shared HTTP helper for creating or updating entities."""
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if auth_context is not None:
+        auth_value = auth_context.get(None)
+        if auth_value:
+            headers["Authorization"] = auth_value
+
+    response = await client.request(
+        method=method,
+        url=f"http://internal/api/{endpoint}",
+        content=json.dumps(body),
+        headers=headers,
+    )
+    response.raise_for_status()
+    return response.json()
