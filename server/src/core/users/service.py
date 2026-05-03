@@ -105,17 +105,26 @@ class UserService:
         :param requester: User who updates the user
         :return: Updated user
         """
-        body = user.model_dump(exclude_unset=True)
         existing_user = await self.crud.get_by_id(user_id)
 
         if not existing_user:
             raise EntityNotFound("User not found")
 
-        updated_user = await self.crud.update(existing_user, body)
+        # Only allow password update for ik_service_account provider and if password is provided in the request
+        if existing_user.provider == "ik_service_account" and user.password and user.password.get_decrypted_value():
+            salt, password = hash_new_password(user.password.get_decrypted_value())
+            user.password = EncryptedSecretStr(f"{salt}${password}")
+            body = model_db_dump(user)
+        else:
+            body = model_db_dump(user, exclude_fields={"password"})
+
+        await self.crud.update(existing_user, body)
 
         if self.audit_log_handler:
-            await self.audit_log_handler.create_log(updated_user.id, requester.id, ModelActions.UPDATE)
-        return UserResponse.model_validate(updated_user)
+            await self.audit_log_handler.create_log(existing_user.id, requester.id, ModelActions.UPDATE)
+
+        await self.crud.refresh(existing_user)
+        return UserResponse.model_validate(existing_user)
 
     async def get_actions(self, user_id: str, requester: UserDTO) -> list[str]:
         """
