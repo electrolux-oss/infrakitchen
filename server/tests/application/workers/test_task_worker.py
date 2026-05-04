@@ -266,6 +266,7 @@ class TestTaskWorker:
             body={
                 "msg": test_message,
                 "title": None,
+                "status": "info",
                 "entity_id": "test_entity_123",
                 "entity_name": "test_source_code",
             },
@@ -295,6 +296,7 @@ class TestTaskWorker:
             body={
                 "msg": expected_message,
                 "title": "My deployment deploy succeeded",
+                "status": "success",
                 "entity_id": "entity_789",
                 "entity_name": "my_deployment",
             },
@@ -324,6 +326,7 @@ class TestTaskWorker:
             body={
                 "msg": expected_message,
                 "title": "Failed resource task failed",
+                "status": "error",
                 "entity_id": "failed_entity_123",
                 "entity_name": "failed_resource",
             },
@@ -362,6 +365,7 @@ class TestTaskWorker:
             body={
                 "msg": expected_message,
                 "title": "Timeout storage task timed out",
+                "status": "error",
                 "entity_id": "timeout_entity_456",
                 "entity_name": "timeout_storage",
             },
@@ -393,6 +397,7 @@ class TestTaskWorker:
             body={
                 "msg": expected_message,
                 "title": "Exit workspace task failed",
+                "status": "error",
                 "entity_id": "exit_entity_789",
                 "entity_name": "exit_workspace",
             },
@@ -423,6 +428,7 @@ class TestTaskWorker:
             body={
                 "msg": expected_message,
                 "title": "Unexpected resource task failed",
+                "status": "error",
                 "entity_id": "unexpected_entity_000",
                 "entity_name": "unexpected_resource",
             },
@@ -461,6 +467,7 @@ class TestTaskWorker:
             body={
                 "msg": "Test message for my_storage",
                 "title": None,
+                "status": "info",
                 "entity_id": "storage_entity_123",
                 "entity_name": "my_storage",
             },
@@ -471,6 +478,7 @@ class TestTaskWorker:
             body={
                 "msg": "Test message for dev_workspace",
                 "title": None,
+                "status": "info",
                 "entity_id": "workspace_entity_456",
                 "entity_name": "dev_workspace",
             },
@@ -481,6 +489,7 @@ class TestTaskWorker:
             body={
                 "msg": "Test message for api_resource",
                 "title": None,
+                "status": "info",
                 "entity_id": "resource_entity_789",
                 "entity_name": "api_resource",
             },

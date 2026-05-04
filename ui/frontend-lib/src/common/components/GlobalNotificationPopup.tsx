@@ -36,50 +36,29 @@ export const GlobalNotificationPopup = () => {
   useEffect(() => {
     if (!notification) return;
 
-    let notificationData: any = notification;
-    if (notification.msg && typeof notification.msg === "string") {
-      notificationData = {
-        id: notification.id || Date.now().toString(),
-        message: notification.msg,
-        type: notification.type || "info",
-        title: notification.title,
-        entity_id: notification.entity_id,
-        entity_name: notification.entity_name,
-      };
-    }
-
-    const sourceId = notificationData.id || Date.now().toString();
+    const sourceId = notification.id || Date.now().toString();
     if (sourceId === lastSourceId.current) return; // simple dedupe
     lastSourceId.current = sourceId;
 
-    const severity = (notificationData.type || "info") as
+    const severity = (notification.status || "info") as
       | "default"
       | "error"
       | "success"
       | "warning"
       | "info";
 
-    const title: string | undefined = notificationData.title;
-    const body: string =
-      notificationData.message ||
-      notificationData.msg ||
-      "Notification received";
+    const title: string | undefined = notification.title;
+    const body: string = notification.msg || "Notification received";
 
-    const entityName: string | undefined = notificationData.entity_name;
-    const entityId: string | undefined = notificationData.entity_id;
+    const entityName: string | undefined = notification.entity_name;
+    const entityId: string | undefined = notification.entity_id;
     const segment = entityName ? ENTITY_PATHS[entityName] : undefined;
-    const isFailure = severity === "error" || severity === "warning";
     const link =
       segment && entityId
-        ? isFailure
-          ? {
-              to: `${linkPrefix}${segment}/${entityId}/logs`,
-              label: "View logs",
-            }
-          : {
-              to: `${linkPrefix}${segment}/${entityId}`,
-              label: ENTITY_LABELS[entityName!] ?? "View",
-            }
+        ? {
+            to: `${linkPrefix}${segment}/${entityId}`,
+            label: ENTITY_LABELS[entityName!] ?? "View",
+          }
         : undefined;
 
     const headline = title && title.trim() ? title : body;
