@@ -10,6 +10,7 @@ from application.favorites.model import Favorite
 from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
 from application.storages.model import Storage
+from application.templates.model import Template
 from core.permissions.model import Permission
 from core.users.model import User
 
@@ -55,9 +56,13 @@ class ResourceCRUD:
             .join(User, Resource.created_by == User.id)
             .outerjoin(Storage, Resource.storage_id == Storage.id)
             .outerjoin(SourceCodeVersion, Resource.source_code_version_id == SourceCodeVersion.id)
+            .outerjoin(Template, Resource.template_id == Template.id)
         )
 
-        if sort and sort[0].lower() == "favorite" and requester_id:
+        sort_field = sort[0].lower() if sort else None
+        sort_dir = sort[1].lower() if sort else "asc"
+
+        if sort_field == "favorite" and requester_id:
             favorite_join_condition = and_(
                 Favorite.user_id == requester_id,
                 Favorite.component_type == "resource",
@@ -65,10 +70,16 @@ class ResourceCRUD:
             )
             statement = statement.outerjoin(Favorite, favorite_join_condition)
             favorite_sort_value = case((Favorite.component_id.is_not(None), 1), else_=0)
-            if sort[1].lower() == "asc":
+            if sort_dir == "asc":
                 statement = statement.order_by(favorite_sort_value.asc())
             else:
                 statement = statement.order_by(favorite_sort_value.desc())
+        elif sort_field == "template":
+            column = Template.name
+            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
+        elif sort_field == "source_code_version":
+            column = func.coalesce(SourceCodeVersion.source_code_version, SourceCodeVersion.source_code_branch)
+            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
         else:
             statement = evaluate_sqlalchemy_sorting(Resource, statement, sort)
 
