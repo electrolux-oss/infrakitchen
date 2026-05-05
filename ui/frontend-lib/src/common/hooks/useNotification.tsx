@@ -1,10 +1,41 @@
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 
+import Button from "@mui/material/Button";
 import { toast } from "sonner";
 
 import { ApiClientError } from "../../errors";
 import { SnackbarVariant, DependencyError } from "../components/notifications";
 import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
+
+const NotifyLinkButton = ({ to, label }: { to: string; label: string }) => {
+  const navigate = useNavigate();
+  return (
+    <Button
+      size="small"
+      variant="text"
+      sx={{
+        fontWeight: 600,
+        fontSize: "0.85rem",
+        textDecoration: "underline",
+        color: "inherit",
+        whiteSpace: "nowrap",
+        marginLeft: "auto",
+        minWidth: 80,
+        px: 2,
+        "&:hover": {
+          backgroundColor: "transparent",
+          textDecoration: "underline",
+        },
+      }}
+      onClick={() => {
+        toast.dismiss();
+        navigate(to);
+      }}
+    >
+      {label}
+    </Button>
+  );
+};
 
 interface NotifyLink {
   to: string;
@@ -49,23 +80,10 @@ export const notify = (
   const messageStr =
     typeof message === "string" ? message : getMessage(message);
   const action = options?.link ? (
-    <Link
+    <NotifyLinkButton
       to={options.link.to}
-      style={{
-        padding: "4px 8px",
-        borderRadius: 4,
-        fontWeight: 600,
-        fontSize: "0.85rem",
-        textDecoration: "underline",
-        color: "inherit",
-        backgroundColor: "transparent",
-        whiteSpace: "nowrap",
-        marginLeft: "auto",
-      }}
-      onClick={() => toast.dismiss()}
-    >
-      {options.link.label ?? "View"}
-    </Link>
+      label={options.link.label ?? "View"}
+    />
   ) : undefined;
   toastForVariant(variant)(messageStr, {
     duration: options?.duration ?? 5000,
