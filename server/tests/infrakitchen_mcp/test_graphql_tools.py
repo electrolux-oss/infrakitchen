@@ -1,9 +1,24 @@
+import logging
+
 import httpx
 import strawberry
 import pytest
 from fastmcp import FastMCP
 
 from infrakitchen_mcp.graphql_tools import register_graphql_tools
+
+
+@pytest.fixture(autouse=True)
+def _silence_fastmcp_tool_errors():
+    """Tests intentionally trigger tool errors; FastMCP logs them as rich panels.
+    Raise the threshold so pytest output stays readable."""
+    logger = logging.getLogger("fastmcp")
+    previous = logger.level
+    logger.setLevel(logging.CRITICAL)
+    try:
+        yield
+    finally:
+        logger.setLevel(previous)
 
 
 @strawberry.type

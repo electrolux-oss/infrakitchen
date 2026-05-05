@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from infrakitchen_mcp.docs_tools import register_docs
 from infrakitchen_mcp.graphql_tools import register_graphql_tools
+from infrakitchen_mcp.rest_tools import register_rest_write_tools
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -21,6 +22,12 @@ MCP_INSTRUCTIONS = """
 InfraKitchen manages cloud infrastructure. Use `list_schema_types` and
 `get_schema` to discover the GraphQL API, then `graphql_query` to read data.
 Use `list_docs` and `read_doc` for narrative documentation.
+
+To stage infrastructure changes, use `create_resource` and `patch_resource`.
+Both are non-destructive: when the server has the approval flow enabled (the
+default), new resources land in `approval_pending` and wait for a human to
+approve before any cloud provisioning happens. Approve / reject / destroy /
+delete are intentionally not exposed — those stay with humans.
 """
 
 
@@ -64,6 +71,7 @@ def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Star
     mcp_server = FastMCP("InfraKitchen", instructions=MCP_INSTRUCTIONS)
 
     register_graphql_tools(mcp_server, internal_client, graphql_schema._schema)
+    register_rest_write_tools(mcp_server, internal_client)
     register_docs(mcp_server, DEFAULT_DOCS_DIR)
 
     mcp_http_app = mcp_server.http_app(path="/", stateless_http=True)

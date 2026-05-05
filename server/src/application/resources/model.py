@@ -62,10 +62,10 @@ class Resource(BaseEntity):
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("storages.id"), nullable=True)
     storage: Mapped[Storage] = relationship("Storage", lazy="joined")
     storage_path: Mapped[str | None] = mapped_column(nullable=True)
-    variables: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    variables: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     outputs: Mapped[list[Any]] = mapped_column(JSON, default=list)
-    dependency_tags: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
-    dependency_config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    dependency_tags: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    dependency_config: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     parents: Mapped[list["Resource"]] = relationship(
         "Resource",
         secondary=resource_links,
