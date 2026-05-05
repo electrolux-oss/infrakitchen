@@ -62,7 +62,7 @@ def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Star
 
     register_docs(mcp_server, DEFAULT_DOCS_DIR)
 
-    mcp_http_app = mcp_server.http_app(path="/")
+    mcp_http_app = mcp_server.http_app(path="/", stateless_http=True)
     mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_dispatch)
     fastapi_app.mount(mount_path, mcp_http_app)
 
