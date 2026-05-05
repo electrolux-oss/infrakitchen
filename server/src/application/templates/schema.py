@@ -119,7 +119,7 @@ class TemplateResponse(BaseModel):
         ...,
     )
     description: str = Field(default="")
-    documentation: str = Field(default="")
+    documentation: str | None = Field(default="")
     template: str = Field(
         ...,
         frozen=True,
