@@ -2,32 +2,56 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, Request
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
+from fastapi.responses import JSONResponse
 from infrakitchen_mcp.docs_tools import register_docs
-from infrakitchen_mcp.transforms import CompressResultsTransform
+from infrakitchen_mcp.graphql_tools import register_graphql_tools
 from starlette.applications import Starlette
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from fastmcp import FastMCP
 
-from .provider import GroupedMCPProvider
-from .registry import registry
+from graphql_api.schema import schema as graphql_schema
+
 from .context import request_auth_token
 
 DEFAULT_DOCS_DIR = Path(__file__).parent.parent.parent.parent / "docs"
+AUTH_PROBE_PATH = "/api/auth/me"
 
 MCP_INSTRUCTIONS = """
-InfraKitchen manages cloud infrastructure.
+InfraKitchen manages cloud infrastructure. Use `list_schema_types` and
+`get_schema` to discover the GraphQL API, then `graphql_query` to read data.
+Use `list_docs` and `read_doc` for narrative documentation.
 """
 
 
-async def _auth_middleware_dispatch(request: Request, call_next):
-    """Forward auth headers from MCP transport to internal API calls."""
-    token = request_auth_token.set(request.headers.get("Authorization"))
-    try:
-        return await call_next(request)
-    finally:
-        request_auth_token.reset(token)
+def _auth_middleware_factory(client: httpx.AsyncClient):
+    """Build a Starlette middleware that verifies the bearer token before any MCP work.
+
+    Validation happens by probing /api/auth/me through the in-process loopback client,
+    which reuses the same JWT verification path as the REST API. Verified tokens are
+    forwarded to MCP tools via the request_auth_token ContextVar.
+    """
+
+    async def _dispatch(request: Request, call_next):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return JSONResponse({"detail": "Missing Authorization header"}, status_code=401)
+
+        try:
+            probe = await client.get(AUTH_PROBE_PATH, headers={"Authorization": auth_header})
+        except httpx.HTTPError:
+            return JSONResponse({"detail": "Authentication backend unavailable"}, status_code=503)
+
+        if probe.status_code != 200:
+            return JSONResponse({"detail": "Invalid authentication credentials"}, status_code=401)
+
+        token = request_auth_token.set(auth_header)
+        try:
+            return await call_next(request)
+        finally:
+            request_auth_token.reset(token)
+
+    return _dispatch
 
 
 def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Starlette:
@@ -37,33 +61,13 @@ def setup_mcp_server(fastapi_app: FastAPI, mount_path: str = "/api/mcp") -> Star
         base_url="http://internal",
     )
 
-    get_one_provider = GroupedMCPProvider(
-        group=get_one_group,
-        app=fastapi_app,
-        client=internal_client,
-        registry=registry,
-        auth_context=request_auth_token,
-    )
+    mcp_server = FastMCP("InfraKitchen", instructions=MCP_INSTRUCTIONS)
 
-    list_provider = GroupedMCPProvider(
-        group=list_entities_group,
-        app=fastapi_app,
-        client=internal_client,
-        registry=registry,
-        auth_context=request_auth_token,
-    )
-    list_provider.add_transform(CompressResultsTransform())
-
-    mcp_server = FastMCP(
-        "InfraKitchen",
-        instructions=MCP_INSTRUCTIONS,
-        providers=[get_one_provider, list_provider],
-    )
-
+    register_graphql_tools(mcp_server, internal_client, graphql_schema._schema)
     register_docs(mcp_server, DEFAULT_DOCS_DIR)
 
     mcp_http_app = mcp_server.http_app(path="/", stateless_http=True)
-    mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_dispatch)
+    mcp_http_app.add_middleware(BaseHTTPMiddleware, dispatch=_auth_middleware_factory(internal_client))
     fastapi_app.mount(mount_path, mcp_http_app)
 
     return mcp_http_app
