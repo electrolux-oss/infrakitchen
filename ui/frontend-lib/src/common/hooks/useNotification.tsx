@@ -1,11 +1,21 @@
+import { Link } from "react-router";
+
 import { toast } from "sonner";
 
 import { ApiClientError } from "../../errors";
 import { SnackbarVariant, DependencyError } from "../components/notifications";
 import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
 
+interface NotifyLink {
+  to: string;
+  label?: string;
+}
+
 interface NotifyOptions {
   duration?: number;
+  link?: NotifyLink;
+  description?: string;
+  id?: string | number;
 }
 
 function getMessage(message: any) {
@@ -38,9 +48,31 @@ export const notify = (
 ) => {
   const messageStr =
     typeof message === "string" ? message : getMessage(message);
+  const action = options?.link ? (
+    <Link
+      to={options.link.to}
+      style={{
+        padding: "4px 8px",
+        borderRadius: 4,
+        fontWeight: 600,
+        fontSize: "0.85rem",
+        textDecoration: "underline",
+        color: "inherit",
+        backgroundColor: "transparent",
+        whiteSpace: "nowrap",
+        marginLeft: "auto",
+      }}
+      onClick={() => toast.dismiss()}
+    >
+      {options.link.label ?? "View"}
+    </Link>
+  ) : undefined;
   toastForVariant(variant)(messageStr, {
     duration: options?.duration ?? 5000,
     toasterId: "global",
+    action,
+    description: options?.description,
+    id: options?.id,
   });
 };
 
