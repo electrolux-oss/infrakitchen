@@ -1,8 +1,8 @@
 """add blueprint and workflows
 
-Revision ID: 6fa729b28583
-Revises: 6f73b5194d89
-Create Date: 2026-04-21 15:05:47.154699
+Revision ID: 0282793ee951
+Revises: 35c9875e3ce3
+Create Date: 2026-05-06 10:50:32.909724
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "6fa729b28583"
-down_revision: str | None = "6f73b5194d89"
+revision: str = "0282793ee951"
+down_revision: str | None = "35c9875e3ce3"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
