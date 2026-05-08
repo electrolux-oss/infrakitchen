@@ -63,7 +63,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       if (Array.isArray(value)) {
         onChange(value.map((entity) => String(entity.id)));
       } else if (value && typeof value === "object") {
-        onChange([value.id]);
+        onChange([String(value.id)]);
       } else {
         onChange([]);
       }

@@ -10,7 +10,7 @@ from core.base_models import PatchBodyModel
 from core.constants import ModelStatus
 from core.constants.model import ModelActions
 from core.database import to_dict
-from core.errors import CloudWrongCredentials, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
+from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
@@ -68,11 +68,8 @@ class IntegrationService:
             return None
         return IntegrationResponse.model_validate(integration)
 
-    async def get_all(self, workspace_id: str | UUID | None = None, **kwargs) -> list[IntegrationResponse]:
-        if workspace_id is not None:
-            integrations = await self.crud.get_by_workspace_id(workspace_id)
-        else:
-            integrations = await self.crud.get_all(**kwargs)
+    async def get_all(self, **kwargs) -> list[IntegrationResponse]:
+        integrations = await self.crud.get_all(**kwargs)
         return [IntegrationResponse.model_validate(integration) for integration in integrations]
 
     async def get_all_dto(self, **kwargs) -> list[IntegrationDTO]:
@@ -315,12 +312,9 @@ class IntegrationService:
             raise EntityNotFound(f"Integration {integration_policy.entity_id} not found")
 
         policies: list[PermissionResponse] = []
-        try:
-            policy = await self.permission_service.create_entity_policy(
-                integration_policy, requester, reload_permission=False
-            )
-            policies.append(PermissionResponse.model_validate(policy))
-        except EntityExistsError:
-            pass
+        policy = await self.permission_service.create_entity_policy(
+            integration_policy, requester, reload_permission=False
+        )
+        policies.append(PermissionResponse.model_validate(policy))
         await self.permission_service.casbin_enforcer.send_reload_event()
         return policies

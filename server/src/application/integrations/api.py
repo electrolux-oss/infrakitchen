@@ -49,20 +49,16 @@ async def get_by_id(integration_id: str, service: IntegrationService = Depends(g
 @mcp_group(list_entities_group, "integrations")
 async def get_all(
     response: Response,
-    workspace_id: str | None = None,
     service: IntegrationService = Depends(get_integration_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
     filter, range_, sort, _ = query_parts
-    if workspace_id is not None:
-        result = list(await service.get_all(workspace_id=workspace_id))
-        total = len(result)
+    total = await service.count(filter=filter)
+
+    if total == 0:
+        result = []
     else:
-        total = await service.count(filter=filter)
-        if total == 0:
-            result = []
-        else:
-            result = list(await service.get_all(filter=filter, range=range_, sort=sort))
+        result = list(await service.get_all(filter=filter, range=range_, sort=sort))
     headers = {"Content-Range": f"integrations 0-{len(result)}/{total}"}
     response.headers.update(headers)
     return result

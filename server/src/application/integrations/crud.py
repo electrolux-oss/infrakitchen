@@ -9,7 +9,6 @@ from application.executors.model import Executor
 from application.resources.model import Resource
 from application.source_codes.model import SourceCode
 from application.storages.model import Storage
-from application.workspaces.model import Workspace
 from core.permissions.model import Permission
 from core.users.model import User
 
@@ -95,15 +94,6 @@ class IntegrationCRUD:
 
     async def refresh(self, integration: Integration) -> None:
         await self.session.refresh(integration)
-
-    async def get_by_workspace_id(self, workspace_id: str | UUID) -> list[Integration]:
-        statement = (
-            select(Integration)
-            .join(Workspace, Workspace.integration_id == Integration.id)
-            .where(Workspace.id == workspace_id)
-        )
-        result = await self.session.execute(statement)
-        return list(result.scalars().all())
 
     async def get_integration_policies_by_role(
         self,
