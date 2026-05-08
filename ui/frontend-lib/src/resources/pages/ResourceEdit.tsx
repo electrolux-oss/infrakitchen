@@ -39,6 +39,7 @@ import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceIn
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import TagInput from "../../common/components/inputs/TagInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import {
@@ -65,7 +66,21 @@ export const ResourceEditPageInner = (props: {
   resourceTempState?: ResourceTempStateResponse;
 }) => {
   const { linkPrefix, ikApi } = useConfig();
+  const { permissions } = usePermissionProvider();
   const { entity, resourceTempState } = props;
+  const existingIntegrationIds = useMemo(
+    () => new Set(entity.integration_ids.map((i) => String(i.id))),
+    [entity.integration_ids],
+  );
+  const integrationOptionFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (existingIntegrationIds.has(String(option.id))) return true;
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`integration:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [existingIntegrationIds, permissions],
+  );
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}resources/${entity.id}`);
   const [variablesOpen, setVariablesOpen] = useState(true);
@@ -465,10 +480,11 @@ export const ResourceEditPageInner = (props: {
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.integration_ids}
+                        optionFilter={integrationOptionFilter}
                         helpertext={
                           errors.integration_ids
                             ? errors.integration_ids.message
-                            : "Select Credentials for the resource"
+                            : "Existing integrations are kept; new options are limited to those you have write access to."
                         }
                         value={field.value}
                         label="Cloud Integrations"

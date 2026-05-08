@@ -375,6 +375,8 @@ class TestCreate:
         mocked_resource,
         source_code_version_response,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         mocked_integration.status = ModelStatus.DISABLED
         resource_create = ResourceCreate(
@@ -388,6 +390,7 @@ class TestCreate:
         mock_template_crud.get_by_id.return_value = mocked_template
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             EntityWrongState,
@@ -438,6 +441,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
@@ -457,6 +462,7 @@ class TestCreate:
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
         mock_resource_service.get_variable_schema = AsyncMock(return_value=[])
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         await mock_resource_service.create(resource_create, requester)
         mock_integration_crud.get_all.assert_awaited_once()
@@ -474,6 +480,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["gcp"]
@@ -492,6 +500,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             ValueError,
@@ -513,6 +522,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["one_resource_per_integration"] = ["aws"]
@@ -530,6 +541,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_resource_by_template_and_integrations.return_value = [mocked_resource]
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             DependencyError,

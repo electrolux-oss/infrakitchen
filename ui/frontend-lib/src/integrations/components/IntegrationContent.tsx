@@ -11,6 +11,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
 import { IntegrationOverview } from "./IntegrationOverview";
+import { IntegrationPermissions } from "./IntegrationPermissions";
 import { IntegrationResources } from "./IntegrationResources";
 import { IntegrationSourceCodeDependencies } from "./IntegrationSourceCodeDependencies";
 import { IntegrationWorkspaceDependencies } from "./IntegrationWorkspaceDependencies";
@@ -56,15 +57,19 @@ export const IntegrationContent = () => {
       content: <Audit entityId={entity.id} showRevisionColumn />,
     },
     {
+      label: "Policies",
+      content: <IntegrationPermissions integration={entity} />,
+    },
+    {
       label: "Revisions",
       content: <Revision resourceId={entity.id} resourceRevision={0} />,
-      requiredPermission: "api:integration",
+      requiredPermission: `integration:${entity.id}`,
       permissionAction: "write" as const,
     },
     {
       label: "Settings",
       content: <DangerZoneCard />,
-      requiredPermission: "api:integration",
+      requiredPermission: `integration:${entity.id}`,
       permissionAction: "write" as const,
     },
   ];

@@ -200,7 +200,7 @@ export const EntityRolePolicyCreateCard = (
             </FormControl>
           )}
         />
-        {entity_id && !role_name && (
+        {entity_id && !role_name && entity_name !== "integration" && (
           <Controller
             name="inherits_children"
             control={control}

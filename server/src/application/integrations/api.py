@@ -4,7 +4,10 @@ from fastapi import status as http_status
 from application.integrations.service import IntegrationService
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
-from core.users.functions import user_has_access_to_api
+from core.permissions.dependencies import get_permission_service
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.service import PermissionService
+from core.users.functions import user_entity_permissions, user_has_access_to_api, user_has_access_to_entity
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
@@ -16,6 +19,8 @@ from .schema import (
     IntegrationUpdate,
     IntegrationValidationResponse,
     IntegrationValidationRequest,
+    RoleIntegrationsResponse,
+    UserIntegrationResponse,
 )
 
 router = APIRouter()
@@ -44,16 +49,20 @@ async def get_by_id(integration_id: str, service: IntegrationService = Depends(g
 @mcp_group(list_entities_group, "integrations")
 async def get_all(
     response: Response,
+    workspace_id: str | None = None,
     service: IntegrationService = Depends(get_integration_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
     filter, range_, sort, _ = query_parts
-    total = await service.count(filter=filter)
-
-    if total == 0:
-        result = []
+    if workspace_id is not None:
+        result = list(await service.get_all(workspace_id=workspace_id))
+        total = len(result)
     else:
-        result = list(await service.get_all(filter=filter, range=range_, sort=sort))
+        total = await service.count(filter=filter)
+        if total == 0:
+            result = []
+        else:
+            result = list(await service.get_all(filter=filter, range=range_, sort=sort))
     headers = {"Content-Range": f"integrations 0-{len(result)}/{total}"}
     response.headers.update(headers)
     return result
@@ -161,7 +170,7 @@ async def validate(
     request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)
 ):
     requester: UserDTO = request.state.user
-    if not await user_has_access_to_api(requester, "integration", action="write"):
+    if not await user_has_access_to_entity(requester, integration_id, action="write", entity_name="integration"):
         raise HTTPException(status_code=403, detail="Access denied")
 
     integration = await service.get_by_id(integration_id=integration_id)
@@ -170,3 +179,61 @@ async def validate(
     return await service.validate(
         integration_config=integration.configuration, integration_provider=integration.integration_provider
     )
+
+
+# Permissions
+@router.get(
+    "/integrations/permissions/user/{user_id}/policies",
+    response_model=list[UserIntegrationResponse],
+    response_description="Get user integration policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_user_integrations(user_id: str, service: IntegrationService = Depends(get_integration_service)):
+    return await service.get_user_integration_policies(user_id)
+
+
+@router.get(
+    "/integrations/permissions/role/{role_name}/policies",
+    response_model=list[RoleIntegrationsResponse],
+    response_description="Get role policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_integration_role_permissions(
+    response: Response,
+    role_name: str,
+    service: IntegrationService = Depends(get_integration_service),
+    permission_service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+
+    total = await permission_service.count(filter={"v0": role_name, "ptype": "p", "v1__like": "integration:"})
+
+    if total == 0:
+        result = []
+    else:
+        result = await service.get_role_permissions(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"policies 0-{len(result)}/{total}"}
+    response.headers.update(headers)
+
+    return result
+
+
+@router.post(
+    "/integrations/permissions",
+    response_model=list[PermissionResponse],
+    response_description="Create integration policy",
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_role_integration_permissions(
+    request: Request,
+    integration_policy: EntityPolicyCreate,
+    service: IntegrationService = Depends(get_integration_service),
+):
+    requester: UserDTO = request.state.user
+
+    requester_permissions = await user_entity_permissions(requester, integration_policy.entity_id, "integration")
+    if "admin" not in requester_permissions:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await service.create_integration_policy(integration_policy, requester=requester)
