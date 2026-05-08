@@ -53,7 +53,9 @@ export const RecentActivityWidget = ({
         avatar={<HistoryIcon sx={{ color: theme.palette.info.main }} />}
         title="Recent Activity"
         subheader={`Last ${displayedActivities.length} action${displayedActivities.length !== 1 ? "s" : ""} ${
-          hasFavorites ? "on your favorites" : "across all resources"
+          hasFavorites
+            ? "on your favorites"
+            : "across all resources and executors"
         }`}
       />
       <CardContent sx={{ maxHeight: 400, overflowY: "auto" }}>

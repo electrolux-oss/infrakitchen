@@ -88,8 +88,11 @@ export const useDashboardData = () => {
           sort: { field: "created_at", order: "DESC" },
           filter:
             favoriteEntityIds.length > 0
-              ? { entity_id: favoriteEntityIds }
-              : undefined,
+              ? {
+                  entity_id: favoriteEntityIds,
+                  model: ["resource", "executor"],
+                }
+              : { model: ["resource", "executor"] },
         });
 
         setActivities(
