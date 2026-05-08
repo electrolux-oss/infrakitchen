@@ -14,7 +14,7 @@ export * from "./workspaces";
 export * from "./workers";
 export * from "./tasks";
 export * from "./audit_logs";
-export * from "./getting_started";
+export * from "./dashboard";
 export * from "./integrations";
 export * from "./templates";
 export * from "./resources";

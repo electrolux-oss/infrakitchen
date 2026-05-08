@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Icon } from "@iconify/react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 
-import { useConfig } from "../common";
+import { useConfig } from "../../common";
 
 const steps = [
   {
@@ -38,20 +38,12 @@ const steps = [
   },
 ];
 
-const GettingStartedPage = () => {
+export const GettingStartedContent = () => {
   const { linkPrefix } = useConfig();
   const navivate = useNavigate();
 
   return (
-    <Box sx={{ p: 6, maxWidth: 1000, mx: "auto" }}>
-      <Typography variant="h4" component="h1" color="primary" gutterBottom>
-        Welcome to InfraKitchen
-      </Typography>
-      <Typography variant="body1" color="text.secondary" mb={6}>
-        Streamline your infrastructure management with our powerful platform for
-        composing, deploying, and managing infrastructure as code.
-      </Typography>
-
+    <Box>
       <Stack direction="row" alignItems="center" gap={2} mb={3}>
         <Icon icon="emojione:shopping-cart" width="24" height="24" />
         <Typography variant="h5" component="h2" color="primary">
@@ -90,7 +82,3 @@ const GettingStartedPage = () => {
     </Box>
   );
 };
-
-GettingStartedPage.path = "/getting-started";
-
-export { GettingStartedPage };
