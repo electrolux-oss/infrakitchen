@@ -688,6 +688,56 @@ class TestPatch:
             await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
 
     @pytest.mark.asyncio
+    async def test_patch_parent_inherited_integration_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_integration,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        # existing resource has no integrations of its own, but its parent has one;
+        # patching the resource to add the parent's integration must not be denied.
+        parent_integration = Mock(id=mocked_integration.id)
+        parent = Mock(integration_ids=[parent_integration])
+        existing_resource = Mock(
+            id=uuid4(),
+            state=ModelState.PROVISION,
+            status=ModelStatus.READY,
+            template_id=uuid4(),
+            integration_ids=[],
+            parents=[parent],
+        )
+        mock_resource_crud.get_by_id.return_value = existing_resource
+        monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[],
+            template=Mock(id=existing_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        resource_patch = ResourcePatch(integration_ids=[mocked_integration.id])
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        try:
+            await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+        except AccessDenied:
+            pytest.fail("AccessDenied raised for an integration inherited from a parent")
+        except Exception:
+            pass
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != mocked_integration.id, (
+                "user_entity_permissions should not be called for parent-inherited integrations"
+            )
+
+    @pytest.mark.asyncio
     async def test_patch_existing_integration_is_exempt(
         self,
         mock_resource_service,

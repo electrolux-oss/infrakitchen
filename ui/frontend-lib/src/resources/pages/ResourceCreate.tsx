@@ -281,8 +281,10 @@ const ResourceCreatePageInner = () => {
     return {
       integration: integrationIds.length > 0,
       storage: Boolean((resolvedLastParent as any)?.storage?.id),
+      workspace: Boolean((resolvedLastParent as any)?.workspace?.id),
       integrationIds,
       storageId: (resolvedLastParent as any)?.storage?.id || null,
+      workspaceId: (resolvedLastParent as any)?.workspace?.id || null,
     };
   }, [resolvedLastParent]);
 
@@ -293,6 +295,9 @@ const ResourceCreatePageInner = () => {
     }
     if (inherited.storage) {
       setValue("storage_id", inherited.storageId);
+    }
+    if (inherited.workspace) {
+      setValue("workspace_id", inherited.workspaceId);
     }
   }, [resolvedLastParent, inherited, setValue]);
 

@@ -400,12 +400,16 @@ class ResourceService:
 
             # validate that integrations are allowed for the template and are enabled
             if resource.integration_ids is not None:
-                # require write access for any integration newly added by this patch
-                existing_integration_ids: set[str] = {
+                # require write access for any integration newly added by this patch;
+                # exempt integrations already on the resource and integrations inherited from parents
+                exempt_integration_ids: set[str] = {
                     str(i.id) for i in (existing_resource_pydantic.integration_ids or [])
                 }
+                for parent in existing_resource.parents or []:
+                    for parent_integration in parent.integration_ids or []:
+                        exempt_integration_ids.add(str(parent_integration.id))
                 for integration_id in resource.integration_ids:
-                    if str(integration_id) in existing_integration_ids:
+                    if str(integration_id) in exempt_integration_ids:
                         continue
                     integration_permissions = await user_entity_permissions(requester, integration_id, "integration")
                     if "write" not in integration_permissions and "admin" not in integration_permissions:
