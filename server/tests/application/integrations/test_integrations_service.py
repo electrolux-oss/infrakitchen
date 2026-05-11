@@ -513,6 +513,7 @@ class TestDelete:
         mocked_integration.status = ModelStatus.DISABLED
         mock_integration_crud.get_by_id.return_value = mocked_integration
         mock_integration_crud.get_dependencies.return_value = []
+        mock_integration_service.permission_service.delete_entity_permissions = AsyncMock()
 
         await mock_integration_service.delete(integration_id=mocked_integration.id, requester=mock_user_dto)
 
@@ -523,6 +524,9 @@ class TestDelete:
             mocked_integration.id, mock_user_dto.id, ModelActions.DELETE
         )
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(mocked_integration.id)
+        mock_integration_service.permission_service.delete_entity_permissions.assert_awaited_once_with(
+            "integration", mocked_integration.id
+        )
 
     @pytest.mark.asyncio
     async def test_delete_error_enabled(

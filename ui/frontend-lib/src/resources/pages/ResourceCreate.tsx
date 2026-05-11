@@ -274,22 +274,27 @@ const ResourceCreatePageInner = () => {
   }, [watchedParentIds, watchedTemplate, buffer]);
 
   const inherited = useMemo(() => {
-    const integrationIds =
-      (resolvedLastParent as ResourceResponse | null)?.integration_ids?.map(
-        (i: { id: string }) => i.id,
-      ) || [];
+    const parent = resolvedLastParent as ResourceResponse | null;
+    const integrationIds = parent?.integration_ids?.map((i) => i.id) || [];
     return {
       integration: integrationIds.length > 0,
-      storage: Boolean((resolvedLastParent as any)?.storage?.id),
-      workspace: Boolean((resolvedLastParent as any)?.workspace?.id),
+      storage: Boolean(parent?.storage?.id),
+      workspace: Boolean(parent?.workspace?.id),
       integrationIds,
-      storageId: (resolvedLastParent as any)?.storage?.id || null,
-      workspaceId: (resolvedLastParent as any)?.workspace?.id || null,
+      storageId: parent?.storage?.id || null,
+      workspaceId: parent?.workspace?.id || null,
     };
   }, [resolvedLastParent]);
 
+  const lastAppliedParentIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!resolvedLastParent) return;
+    if (!resolvedLastParent) {
+      lastAppliedParentIdRef.current = null;
+      return;
+    }
+    const parentId = String((resolvedLastParent as IkEntity).id);
+    if (lastAppliedParentIdRef.current === parentId) return;
+    lastAppliedParentIdRef.current = parentId;
     if (inherited.integration) {
       setValue("integration_ids", inherited.integrationIds);
     }
