@@ -643,7 +643,7 @@ class TestCreate:
         except AccessDenied:
             pytest.fail("AccessDenied raised for an integration inherited from a parent")
         except Exception:
-            pass
+            pass  # unrelated to the permission check we're asserting on
 
         # the integration permission check must be skipped for inherited integrations
         for call in permissions_mock.await_args_list:
@@ -725,12 +725,13 @@ class TestPatch:
             ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
 
+        # downstream may raise due to mocking limitations; only AccessDenied is under test here
         try:
             await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
         except AccessDenied:
             pytest.fail("AccessDenied raised for an integration inherited from a parent")
         except Exception:
-            pass
+            pass  # unrelated to the permission check we're asserting on
 
         for call in permissions_mock.await_args_list:
             assert call.args[1] != mocked_integration.id, (
@@ -771,7 +772,7 @@ class TestPatch:
         except AccessDenied:
             pytest.fail("AccessDenied raised for an integration already on the resource")
         except Exception:
-            pass
+            pass  # unrelated to the permission check we're asserting on
 
         # the integration permission check must be skipped for already-attached integrations
         for call in permissions_mock.await_args_list:
