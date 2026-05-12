@@ -26,7 +26,7 @@ const PageHeaderToolbar = styled("div")(({ theme }) => ({
 
 export interface PageContainerProps extends ContainerProps {
   children?: React.ReactNode;
-  title?: string;
+  title?: React.ReactNode;
   description?: React.ReactNode;
   /** Actions/buttons to render at the right side of the page header */
   actions?: React.ReactNode;

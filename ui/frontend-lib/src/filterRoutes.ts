@@ -3,7 +3,7 @@ import React, { lazy } from "react";
 import { RouteObject } from "react-router";
 
 import { usePermissionProvider } from "./common";
-import { GettingStartedPage, NotFoundPage } from "./getting_started";
+import { NotFoundPage } from "./dashboard/pages/NotFound";
 
 type LazyRouteDefinition = RouteObject & {
   requiredPermission?: string;
@@ -511,8 +511,13 @@ export const useFilteredProtectedRoutes = (): RouteObject[] => {
   });
 
   accessibleRoutes.push(
-    { path: "/", Component: GettingStartedPage },
-    { path: GettingStartedPage.path, Component: GettingStartedPage },
+    {
+      path: "/",
+      Component: lz(
+        () => import("./dashboard/pages/Dashboard"),
+        "DashboardPage",
+      ),
+    },
     { path: "*", Component: NotFoundPage },
   );
 

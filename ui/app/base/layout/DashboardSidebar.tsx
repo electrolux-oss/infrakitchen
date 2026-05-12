@@ -135,13 +135,11 @@ export default function DashboardSidebar({
         >
           <DashboardSidebarHeaderItem></DashboardSidebarHeaderItem>
           <DashboardSidebarPageItem
-            id="getting-started"
-            title="Getting Started"
+            id="dashboard"
+            title="Dashboard"
             icon={<Icon icon="emojione:shopping-cart" width="20" height="20" />}
-            href="/getting-started"
-            selected={
-              !!matchPath("/getting-started/*", pathname) || pathname === "/"
-            }
+            href="/"
+            selected={pathname === "/"}
           />
           <DashboardSidebarPageItem
             id="integrations"

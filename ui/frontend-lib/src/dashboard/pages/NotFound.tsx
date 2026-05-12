@@ -3,10 +3,10 @@ import { useNavigate } from "react-router";
 import { Icon } from "@iconify/react";
 import { Box, Button, Typography, Container, Paper } from "@mui/material";
 
-import { useConfig } from "../common";
-import { InfrakitchenLogo } from "../icons";
+import { useConfig } from "../../common";
+import { InfrakitchenLogo } from "../../icons";
 
-const NotFoundPage = () => {
+export const NotFoundPage = () => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
@@ -74,10 +74,10 @@ const NotFoundPage = () => {
             size="large"
             disableElevation
             startIcon={<Icon icon="solar:home-2-bold" />}
-            onClick={() => navigate(`${linkPrefix}getting-started`)}
+            onClick={() => navigate(`${linkPrefix}`)}
             sx={{ px: 4, borderRadius: 2 }}
           >
-            Go to Getting Started
+            Go to Dashboard
           </Button>
         </Paper>
       </Box>
@@ -86,5 +86,3 @@ const NotFoundPage = () => {
 };
 
 NotFoundPage.path = "/not-found";
-
-export { NotFoundPage };
