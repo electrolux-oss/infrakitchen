@@ -21,6 +21,7 @@ export interface TemplateConfig {
 export interface TemplateShort {
   id: string;
   name: string;
+  abstract: boolean;
   cloud_resource_types?: string[];
   _entity_name: string;
 }

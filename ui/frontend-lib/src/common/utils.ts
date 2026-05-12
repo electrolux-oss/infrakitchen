@@ -83,6 +83,23 @@ export const getStateColor = (
   };
 };
 
+export const STATUS_CHIP_COLOR: Record<
+  ENTITY_STATUS,
+  "success" | "error" | "info" | "warning" | "default"
+> = {
+  done: "success",
+  error: "error",
+  in_progress: "info",
+  pending: "default",
+  approval_pending: "warning",
+  ready: "warning",
+  disabled: "default",
+  unknown: "default",
+  queued: "default",
+  enabled: "success",
+  rejected: "error",
+};
+
 export const formatTimeAgo = (dateInput: string | Date) => {
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
 

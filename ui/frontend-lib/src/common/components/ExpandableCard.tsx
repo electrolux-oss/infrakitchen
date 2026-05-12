@@ -181,7 +181,7 @@ const ExpandableCard = ({
                 <Typography variant="body1" gutterBottom>
                   Description
                 </Typography>
-                <Typography variant="body2">{description || "—"}</Typography>
+                <Typography variant="body2">{description || "-"}</Typography>
               </Grid>
             )}
           </Grid>

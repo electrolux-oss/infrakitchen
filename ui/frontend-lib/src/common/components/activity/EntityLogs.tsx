@@ -16,12 +16,14 @@ import { LogsDialog } from "../../LogsComponent/LogsDialog";
 import { RelativeTime } from "../RelativeTime";
 
 export interface EntityLogsProps {
-  entityId: string;
+  entityId?: string;
+  traceId?: string;
   sourceCodeLanguage?: string;
 }
 
 export const EntityLogs = ({
   entityId,
+  traceId,
   sourceCodeLanguage,
 }: EntityLogsProps) => {
   const { ikApi } = useConfig();
@@ -33,6 +35,7 @@ export const EntityLogs = ({
     executionStart: number;
     action: string;
     view: "summary" | "logs";
+    entityId: string;
   } | null>(null);
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
@@ -44,11 +47,24 @@ export const EntityLogs = ({
     pageSize: 10,
   });
 
+  const filter = useMemo(() => {
+    const baseFilter: Record<string, any> = {
+      level: "header",
+    };
+    if (traceId) {
+      baseFilter.trace_id = traceId;
+    }
+    if (entityId) {
+      baseFilter.entity_id = entityId;
+    }
+    return baseFilter;
+  }, [entityId, traceId]);
+
   const fetchLogHeads = useCallback(() => {
     setLoading(true);
     ikApi
       .getList("logs", {
-        filter: { entity_id: entityId, level: "header" },
+        filter,
         pagination: { page: 1, perPage: 600 },
         sort: { field: "created_at", order: "DESC" },
       })
@@ -61,7 +77,7 @@ export const EntityLogs = ({
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, entityId]);
+  }, [ikApi, filter]);
 
   useEffect(() => {
     fetchLogHeads();
@@ -112,6 +128,7 @@ export const EntityLogs = ({
                 executionStart: params.row.execution_start,
                 action: params.row.data,
                 view: "summary",
+                entityId: params.row.entity_id,
               })
             }
             onOpenLogs={() =>
@@ -119,6 +136,7 @@ export const EntityLogs = ({
                 executionStart: params.row.execution_start,
                 action: params.row.data,
                 view: "logs",
+                entityId: params.row.entity_id,
               })
             }
           />
@@ -175,7 +193,7 @@ export const EntityLogs = ({
       </Card>
       {selectedLog && (
         <LogsDialog
-          entityId={entityId}
+          entityId={selectedLog.entityId}
           action={selectedLog.action}
           view={selectedLog.view}
           executionStart={selectedLog.executionStart}

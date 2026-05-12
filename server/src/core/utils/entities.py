@@ -1,5 +1,7 @@
 DEFAULT_ENTITIES = [
     "batch_operation",
+    "blueprint",
+    "workflow",
     "executor",
     "template",
     "resource",
