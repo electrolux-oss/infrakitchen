@@ -183,6 +183,38 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         }
         size={6}
       />
+      <CommonField
+        name={"Required Configuration Variables"}
+        value={
+          template.configuration?.required_configuration_variables.length >
+          0 ? (
+            <Box>
+              {template.configuration.required_configuration_variables.map(
+                (variable) => (
+                  <Box
+                    key={variable}
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      backgroundColor: "primary.dark",
+                      color: "primary.contrastText",
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                      mr: 0.5,
+                      mb: 0.5,
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    {variable}
+                  </Box>
+                ),
+              )}
+            </Box>
+          ) : null
+        }
+        size={6}
+      />
     </OverviewCard>
   );
 };

@@ -239,6 +239,17 @@ class ResourceService:
                                 ],
                             )
 
+            # Validate required_configuration_variables
+            if template.configuration.required_configuration_variables:
+                provided_config_names = {dc.name for dc in resource.dependency_config}
+                missing = [
+                    name
+                    for name in template.configuration.required_configuration_variables
+                    if name not in provided_config_names
+                ]
+                if missing:
+                    raise ValueError(f"Missing required dependency config variable(s): {', '.join(missing)}")
+
             # validate configuration variables
             if source_code_version_id := resource.source_code_version_id:
                 source_code_version = await self.service_source_code_version.get_by_id(source_code_version_id)

@@ -16,6 +16,7 @@ export interface TemplateConfig {
   one_resource_per_integration: IntegrationProviderType[];
   allowed_provider_integration_types: IntegrationProviderType[];
   naming_convention: string | null;
+  required_configuration_variables: string[];
 }
 
 export interface TemplateShort {

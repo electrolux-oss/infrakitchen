@@ -242,6 +242,28 @@ const ResourceCreatePageInner = () => {
   }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
+    const requiredVars =
+      watchedTemplate?.configuration?.required_configuration_variables || [];
+    if (requiredVars.length === 0) return;
+    const currentConfig = (watch("dependency_config") || []) as Array<{
+      name: string;
+      value: string;
+      inherited_by_children: boolean;
+    }>;
+    const existingNames = new Set(currentConfig.map((entry) => entry.name));
+    const newEntries = requiredVars
+      .filter((name: string) => !existingNames.has(name))
+      .map((name: string) => ({
+        name,
+        value: "",
+        inherited_by_children: true,
+      }));
+    if (newEntries.length > 0) {
+      setValue("dependency_config", [...currentConfig, ...newEntries]);
+    }
+  }, [watchedTemplate, setValue, watch]);
+
+  useEffect(() => {
     setParentSelections({});
     setValue("parents", [], { shouldValidate: true });
   }, [watchedTemplateId, setValue]);
@@ -555,6 +577,24 @@ const ResourceCreatePageInner = () => {
                     rules={{
                       validate: {
                         requiredFields: (value) => validateTagEntries(value),
+                        requiredConfigVars: (value) => {
+                          const required =
+                            watchedTemplate?.configuration
+                              ?.required_configuration_variables;
+                          if (!required || required.length === 0) return true;
+                          const provided = new Set(
+                            (value || []).map(
+                              (v) => (v as { name: string }).name,
+                            ),
+                          );
+                          const missing = required.filter(
+                            (name: string) => !provided.has(name),
+                          );
+                          if (missing.length > 0) {
+                            return `Missing required config variable(s): ${missing.join(", ")}`;
+                          }
+                          return true;
+                        },
                       },
                     }}
                     render={({ field, formState }) => (

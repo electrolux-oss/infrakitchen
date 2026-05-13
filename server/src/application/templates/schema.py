@@ -22,6 +22,8 @@ class TemplateConfig(BaseModel):
         default=None,
     )
 
+    required_configuration_variables: list[str] = Field(default_factory=list)
+
 
 class TemplateShort(BaseModel):
     id: uuid.UUID

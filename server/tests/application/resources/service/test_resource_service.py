@@ -6,6 +6,7 @@ from pydantic.errors import PydanticUserError
 
 from application.resources.model import Resource
 from application.resources.schema import (
+    DependencyConfig,
     ResourceResponse,
     ResourceWithConfigs,
     ResourceCreate,
@@ -553,6 +554,79 @@ class TestCreate:
         assert len(exc.value.metadata) == 1
 
     @pytest.mark.asyncio
+    async def test_create_missing_required_configuration_variables(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["required_configuration_variables"] = ["env", "region"]
+        mocked_template.abstract = False
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            dependency_config=[
+                DependencyConfig(name="env", value="prod"),
+            ],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        with pytest.raises(ValueError, match="Missing required dependency config variable\\(s\\): region"):
+            await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
+    async def test_create_all_required_configuration_variables_present(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+        resource_response,
+        source_code_version,
+        mock_source_code_version_crud,
+        monkeypatch,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["required_configuration_variables"] = ["env"]
+        mocked_template.abstract = False
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            dependency_config=[
+                DependencyConfig(name="env", value="prod"),
+            ],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        new_resource = Resource(
+            name=mocked_resource.name, template_id=mocked_template.id, created_by=requester.id, revision_number=1
+        )
+        mock_resource_crud.create.return_value = new_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
+
+        result = await mock_resource_service.create(resource_create, requester)
+
+        assert result is not None
+        mock_resource_crud.create.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_create_denies_integration_without_write_access(
         self,
         mock_resource_service,
@@ -595,6 +669,7 @@ class TestCreate:
         mock_integration_crud,
         mocked_integration,
         mocked_resource,
+        template_response,
         resource_response,
         source_code_version_response,
         mock_source_code_version_crud,
@@ -604,17 +679,10 @@ class TestCreate:
         # parent template + parent resource that already owns the integration
         template_id = source_code_version_response.template.id
         parent_template_id = uuid4()
-        template_response_with_parent = Mock(
-            id=template_id,
-            status=ModelStatus.ENABLED,
-            abstract=False,
-            parents=[Mock(id=parent_template_id)],
-            configuration=Mock(
-                allowed_provider_integration_types=None,
-                one_resource_per_integration=None,
-                naming_convention=None,
-            ),
-        )
+        template_response_with_parent = template_response
+        template_response_with_parent.id = template_id
+        template_response_with_parent.parents = [parent_template_id]
+
         parent_resource = Mock(
             id=uuid4(),
             template=Mock(id=parent_template_id),
