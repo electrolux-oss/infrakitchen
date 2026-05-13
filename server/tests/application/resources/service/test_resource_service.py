@@ -595,20 +595,25 @@ class TestCreate:
         mock_integration_crud,
         mocked_integration,
         mocked_resource,
+        resource_response,
         source_code_version_response,
         mock_source_code_version_crud,
         mock_user_permissions,
         monkeypatch,
     ):
         # parent template + parent resource that already owns the integration
-        template_id = uuid4()
+        template_id = source_code_version_response.template.id
         parent_template_id = uuid4()
         template_response_with_parent = Mock(
             id=template_id,
             status=ModelStatus.ENABLED,
             abstract=False,
             parents=[Mock(id=parent_template_id)],
-            configuration=Mock(allowed_provider_integration_types=None, one_resource_per_integration=None),
+            configuration=Mock(
+                allowed_provider_integration_types=None,
+                one_resource_per_integration=None,
+                naming_convention=None,
+            ),
         )
         parent_resource = Mock(
             id=uuid4(),
@@ -632,20 +637,14 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
-        mock_resource_service.get_variable_schema = AsyncMock(return_value=[])
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
         permissions_mock = mock_user_permissions(
             ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
 
-        # should not raise AccessDenied — downstream may fail, that's fine
-        try:
-            await mock_resource_service.create(resource_create, requester)
-        except AccessDenied:
-            pytest.fail("AccessDenied raised for an integration inherited from a parent")
-        except Exception:
-            pass  # unrelated to the permission check we're asserting on
+        await mock_resource_service.create(resource_create, requester)
 
-        # the integration permission check must be skipped for inherited integrations
         for call in permissions_mock.await_args_list:
             assert call.args[1] != mocked_integration.id, (
                 "user_entity_permissions should not be called for inherited integrations"
@@ -720,18 +719,19 @@ class TestPatch:
         )
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
 
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[Mock(id=mocked_integration.id, status=ModelStatus.ENABLED, integration_provider="aws")]
+        )
+
         resource_patch = ResourcePatch(integration_ids=[mocked_integration.id])
         permissions_mock = mock_user_permissions(
             ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
 
-        # downstream may raise due to mocking limitations; only AccessDenied is under test here
-        try:
-            await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
-        except AccessDenied:
-            pytest.fail("AccessDenied raised for an integration inherited from a parent")
-        except Exception:
-            pass  # unrelated to the permission check we're asserting on
+        await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
 
         for call in permissions_mock.await_args_list:
             assert call.args[1] != mocked_integration.id, (
@@ -761,20 +761,20 @@ class TestPatch:
         )
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
 
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[Mock(id=existing_integration_id, status=ModelStatus.ENABLED, integration_provider="aws")]
+        )
+
         resource_patch = ResourcePatch(integration_ids=[existing_integration_id])
         permissions_mock = mock_user_permissions(
             ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
 
-        # may raise downstream (template lookup etc.), but must NOT raise AccessDenied
-        try:
-            await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
-        except AccessDenied:
-            pytest.fail("AccessDenied raised for an integration already on the resource")
-        except Exception:
-            pass  # unrelated to the permission check we're asserting on
+        await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
 
-        # the integration permission check must be skipped for already-attached integrations
         for call in permissions_mock.await_args_list:
             assert call.args[1] != existing_integration_id, (
                 "user_entity_permissions should not be called for already-attached integrations"
