@@ -607,7 +607,7 @@ class TestGetIntegrationActions:
             (
                 ModelStatus.ENABLED,
                 ["read", "write"],
-                [ModelActions.DISABLE],
+                [],
             ),
             (
                 ModelStatus.ENABLED,
@@ -617,7 +617,7 @@ class TestGetIntegrationActions:
             (
                 ModelStatus.DISABLED,
                 ["read", "write"],
-                [ModelActions.ENABLE],
+                [],
             ),
             (
                 ModelStatus.DISABLED,

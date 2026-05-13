@@ -232,7 +232,7 @@ class IntegrationService:
         :return: List of actions
         """
         requester_permissions = await user_entity_permissions(requester, integration_id, "integration")
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
+        if "admin" not in requester_permissions:
             return []
 
         actions: list[str] = []
@@ -240,16 +240,12 @@ class IntegrationService:
         if not integration:
             raise EntityNotFound("Integration not found")
 
-        user_is_admin = "admin" in requester_permissions
-
         if integration.status == ModelStatus.ENABLED:
-            if user_is_admin:
-                actions.append(ModelActions.EDIT)
+            actions.append(ModelActions.EDIT)
             actions.append(ModelActions.DISABLE)
         if integration.status == ModelStatus.DISABLED:
             actions.append(ModelActions.ENABLE)
-            if user_is_admin:
-                actions.append(ModelActions.DELETE)
+            actions.append(ModelActions.DELETE)
 
         return actions
 

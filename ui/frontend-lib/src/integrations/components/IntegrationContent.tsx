@@ -70,7 +70,7 @@ export const IntegrationContent = () => {
       label: "Settings",
       content: <DangerZoneCard />,
       requiredPermission: `integration:${entity.id}`,
-      permissionAction: "write" as const,
+      permissionAction: "admin" as const,
     },
   ];
 
