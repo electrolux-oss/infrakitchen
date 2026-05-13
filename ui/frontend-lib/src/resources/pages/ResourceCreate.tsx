@@ -44,6 +44,7 @@ import TagInput from "../../common/components/inputs/TagInput";
 import { MarkdownViewer } from "../../common/components/MarkdownViewer";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { TemplateResponse } from "../../templates/types";
@@ -63,12 +64,12 @@ import { buildValidationRuleMaps } from "../utils/validationRules";
 
 const ResourceCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
+  const { permissions } = usePermissionProvider();
   const {
     control,
     formState: { errors },
     watch,
     setValue,
-    getValues,
     handleSubmit,
   } = useFormContext<ResourceCreate>();
 
@@ -80,7 +81,6 @@ const ResourceCreatePageInner = () => {
   const [variablesOpen, setVariablesOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [parentsSelected, setParentsSelected] = useState(false);
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
@@ -217,6 +217,15 @@ const ResourceCreatePageInner = () => {
 
   const watchedName = watch("name");
 
+  const integrationWriteFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`integration:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [permissions],
+  );
+
   useEffect(() => {
     if (watchedTemplate?.configuration?.naming_convention) {
       setNamingConvention(watchedTemplate.configuration.naming_convention);
@@ -249,53 +258,53 @@ const ResourceCreatePageInner = () => {
     }
   }, [watchedName, watchedTemplate, setValue]);
 
-  useEffect(() => {
-    if (watchedParentIds.length > 0) {
-      // override integration_ids, storage_id and workspace_id based on the last parent selection
-      const parentCandidates = watchedTemplate?.parents
-        ? watchedTemplate.parents.flatMap(
-            (parent: IkEntity) =>
-              (buffer[String(parent.id)] as IkEntity[]) || [],
-          )
-        : [];
-
-      const primaryParentId = watchedParentIds.at(-1);
-      const parentObjects = parentCandidates.find(
+  const resolvedLastParent = useMemo(() => {
+    if (watchedParentIds.length === 0) return null;
+    const parentCandidates = watchedTemplate?.parents
+      ? watchedTemplate.parents.flatMap(
+          (parent: IkEntity) => (buffer[String(parent.id)] as IkEntity[]) || [],
+        )
+      : [];
+    const primaryParentId = watchedParentIds.at(-1);
+    return (
+      parentCandidates.find(
         (e: ResourceResponse) => String(e.id) === String(primaryParentId),
-      );
+      ) || null
+    );
+  }, [watchedParentIds, watchedTemplate, buffer]);
 
-      if (!parentObjects) {
-        return;
-      }
+  const inherited = useMemo(() => {
+    const parent = resolvedLastParent as ResourceResponse | null;
+    const integrationIds = parent?.integration_ids?.map((i) => i.id) || [];
+    return {
+      integration: integrationIds.length > 0,
+      storage: Boolean(parent?.storage?.id),
+      workspace: Boolean(parent?.workspace?.id),
+      integrationIds,
+      storageId: parent?.storage?.id || null,
+      workspaceId: parent?.workspace?.id || null,
+    };
+  }, [resolvedLastParent]);
 
-      const parentIntegrations =
-        parentObjects.integration_ids.map(
-          (integration: { id: string }) => integration.id,
-        ) || [];
-
-      const parentStorage = parentObjects?.storage?.id || null;
-      const parentWorkspace = parentObjects?.workspace?.id || null;
-
-      if (
-        parentIntegrations.length > 0 &&
-        watchedTemplate.parents.length === watchedParentIds.length &&
-        !parentsSelected
-      ) {
-        setParentsSelected(true);
-        setValue("integration_ids", parentIntegrations);
-      }
-
-      setValue("storage_id", parentStorage);
-      setValue("workspace_id", parentWorkspace);
+  const lastAppliedParentIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!resolvedLastParent) {
+      lastAppliedParentIdRef.current = null;
+      return;
     }
-  }, [
-    watchedParentIds,
-    setValue,
-    getValues,
-    buffer,
-    watchedTemplate,
-    parentsSelected,
-  ]);
+    const parentId = String((resolvedLastParent as IkEntity).id);
+    if (lastAppliedParentIdRef.current === parentId) return;
+    lastAppliedParentIdRef.current = parentId;
+    if (inherited.integration) {
+      setValue("integration_ids", inherited.integrationIds);
+    }
+    if (inherited.storage) {
+      setValue("storage_id", inherited.storageId);
+    }
+    if (inherited.workspace) {
+      setValue("workspace_id", inherited.workspaceId);
+    }
+  }, [resolvedLastParent, inherited, setValue]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
@@ -730,10 +739,21 @@ const ResourceCreatePageInner = () => {
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.integration_ids}
+                        optionFilter={(option: IkEntity) => {
+                          if (
+                            inherited.integration &&
+                            inherited.integrationIds.includes(option.id)
+                          ) {
+                            return true;
+                          }
+                          return integrationWriteFilter(option);
+                        }}
                         helpertext={
                           errors.integration_ids
                             ? (errors.integration_ids as any).message
-                            : ""
+                            : inherited.integration
+                              ? "Pre-filled from parent. You can remove inherited integrations or add others you have write access to."
+                              : "Only integrations you have write access to are shown"
                         }
                         value={field.value}
                         label={`Cloud Integrations. ${

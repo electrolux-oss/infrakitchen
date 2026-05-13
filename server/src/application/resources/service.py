@@ -29,7 +29,7 @@ from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
 from core.database import to_dict
-from core.errors import DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
+from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
@@ -174,6 +174,19 @@ class ResourceService:
                 raise ValueError("Template requires integration. Integration ID is required")
 
             if resource.integration_ids:
+                # require write access to every integration the user explicitly chose;
+                # integrations inherited from a parent are exempt (read on the parent is enough)
+                inherited_integration_ids: set[str] = set()
+                for parent in parent_resources:
+                    for parent_integration in parent.integration_ids or []:
+                        inherited_integration_ids.add(str(parent_integration.id))
+                for integration_id in resource.integration_ids:
+                    if str(integration_id) in inherited_integration_ids:
+                        continue
+                    integration_permissions = await user_entity_permissions(requester, integration_id, "integration")
+                    if "write" not in integration_permissions and "admin" not in integration_permissions:
+                        raise AccessDenied(f"You don't have write access to integration {integration_id}")
+
                 # if template allows only specific integration types,
                 # check that number of integrations is equal to number of allowed types.
                 if template.configuration.allowed_provider_integration_types:
@@ -387,6 +400,21 @@ class ResourceService:
 
             # validate that integrations are allowed for the template and are enabled
             if resource.integration_ids is not None:
+                # require write access for any integration newly added by this patch;
+                # exempt integrations already on the resource and integrations inherited from parents
+                exempt_integration_ids: set[str] = {
+                    str(i.id) for i in (existing_resource_pydantic.integration_ids or [])
+                }
+                for parent in existing_resource.parents or []:
+                    for parent_integration in parent.integration_ids or []:
+                        exempt_integration_ids.add(str(parent_integration.id))
+                for integration_id in resource.integration_ids:
+                    if str(integration_id) in exempt_integration_ids:
+                        continue
+                    integration_permissions = await user_entity_permissions(requester, integration_id, "integration")
+                    if "write" not in integration_permissions and "admin" not in integration_permissions:
+                        raise AccessDenied(f"You don't have write access to integration {integration_id}")
+
                 if template := await self.template_service.get_by_id(existing_resource_pydantic.template.id):
                     if template.configuration.allowed_provider_integration_types:
                         if len(resource.integration_ids) != len(

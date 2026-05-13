@@ -60,7 +60,7 @@ async def check_api_permission(request: Request):
         if "kubernetes" in request.url.path:
             entity = "provider_kubernetes"
 
-    if entity in ("resource", "resource_temp_state", "executor", "favorite", "provider_kubernetes"):
+    if entity in ("resource", "resource_temp_state", "executor", "favorite", "provider_kubernetes", "integration"):
         # Some entities have their own permission control system using the `user_has_access_to_entity` function
         if await user_has_access_to_api(user, "resource", "read"):
             return
@@ -69,6 +69,9 @@ async def check_api_permission(request: Request):
             return
 
         if await user_has_access_to_api(user, "favorite", "read"):
+            return
+
+        if await user_has_access_to_api(user, "integration", "read"):
             return
 
     if request.method not in request_action_mapping:

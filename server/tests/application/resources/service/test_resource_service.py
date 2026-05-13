@@ -9,11 +9,12 @@ from application.resources.schema import (
     ResourceResponse,
     ResourceWithConfigs,
     ResourceCreate,
+    ResourcePatch,
 )
 from application.resources.service import ResourceService
 from core.config import InfrakitchenConfig
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.errors import DependencyError, EntityNotFound, EntityWrongState
+from core.errors import AccessDenied, DependencyError, EntityNotFound, EntityWrongState
 from core.users.model import UserDTO
 
 RESOURCE_ID = "abc123"
@@ -375,6 +376,8 @@ class TestCreate:
         mocked_resource,
         source_code_version_response,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         mocked_integration.status = ModelStatus.DISABLED
         resource_create = ResourceCreate(
@@ -388,6 +391,7 @@ class TestCreate:
         mock_template_crud.get_by_id.return_value = mocked_template
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             EntityWrongState,
@@ -438,6 +442,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
@@ -457,6 +463,7 @@ class TestCreate:
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
         mock_resource_service.get_variable_schema = AsyncMock(return_value=[])
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         await mock_resource_service.create(resource_create, requester)
         mock_integration_crud.get_all.assert_awaited_once()
@@ -474,6 +481,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["gcp"]
@@ -492,6 +501,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             ValueError,
@@ -513,6 +523,8 @@ class TestCreate:
         mocked_resource,
         source_code_version,
         mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["one_resource_per_integration"] = ["aws"]
@@ -530,6 +542,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_resource_by_template_and_integrations.return_value = [mocked_resource]
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
             DependencyError,
@@ -538,6 +551,234 @@ class TestCreate:
             await mock_resource_service.create(resource_create, requester)
 
         assert len(exc.value.metadata) == 1
+
+    @pytest.mark.asyncio
+    async def test_create_denies_integration_without_write_access(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version_response,
+        mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version_response.id,
+            integration_ids=[mocked_integration.id],
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with pytest.raises(
+            AccessDenied,
+            match=f"You don't have write access to integration {mocked_integration.id}",
+        ):
+            await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
+    async def test_create_inherited_integration_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mock_integration_crud,
+        mocked_integration,
+        mocked_resource,
+        resource_response,
+        source_code_version_response,
+        mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        # parent template + parent resource that already owns the integration
+        template_id = source_code_version_response.template.id
+        parent_template_id = uuid4()
+        template_response_with_parent = Mock(
+            id=template_id,
+            status=ModelStatus.ENABLED,
+            abstract=False,
+            parents=[Mock(id=parent_template_id)],
+            configuration=Mock(
+                allowed_provider_integration_types=None,
+                one_resource_per_integration=None,
+                naming_convention=None,
+            ),
+        )
+        parent_resource = Mock(
+            id=uuid4(),
+            template=Mock(id=parent_template_id),
+            state=ModelState.PROVISIONED,
+            integration_ids=[mocked_integration],
+        )
+
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=template_id,
+            source_code_version_id=source_code_version_response.id,
+            integration_ids=[mocked_integration.id],
+            parents=[parent_resource.id],
+        )
+
+        requester = mocked_user
+        mock_resource_service.template_service.get_by_id = AsyncMock(return_value=template_response_with_parent)
+        mock_resource_crud.get_all.return_value = [parent_resource]
+        mock_integration_crud.get_all.return_value = [mocked_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service.create(resource_create, requester)
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != mocked_integration.id, (
+                "user_entity_permissions should not be called for inherited integrations"
+            )
+
+
+class TestPatch:
+    @pytest.mark.asyncio
+    async def test_patch_denies_newly_added_integration_without_write_access(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_resource,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        new_integration_id = uuid4()
+        mocked_resource.state = ModelState.PROVISION
+        mocked_resource.status = ModelStatus.READY
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+
+        # Existing resource pydantic carries the original integration_ids only.
+        # patch tries to add a brand new integration the user has no write access to.
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[Mock(id=mocked_resource.integration_ids[0].id)],
+            template=Mock(id=mocked_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        resource_patch = ResourcePatch(integration_ids=[new_integration_id])
+        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with pytest.raises(
+            AccessDenied,
+            match=f"You don't have write access to integration {new_integration_id}",
+        ):
+            await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
+
+    @pytest.mark.asyncio
+    async def test_patch_parent_inherited_integration_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_integration,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        # existing resource has no integrations of its own, but its parent has one;
+        # patching the resource to add the parent's integration must not be denied.
+        parent_integration = Mock(id=mocked_integration.id)
+        parent = Mock(integration_ids=[parent_integration])
+        existing_resource = Mock(
+            id=uuid4(),
+            state=ModelState.PROVISION,
+            status=ModelStatus.READY,
+            template_id=uuid4(),
+            integration_ids=[],
+            parents=[parent],
+        )
+        mock_resource_crud.get_by_id.return_value = existing_resource
+        monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[],
+            template=Mock(id=existing_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[Mock(id=mocked_integration.id, status=ModelStatus.ENABLED, integration_provider="aws")]
+        )
+
+        resource_patch = ResourcePatch(integration_ids=[mocked_integration.id])
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != mocked_integration.id, (
+                "user_entity_permissions should not be called for parent-inherited integrations"
+            )
+
+    @pytest.mark.asyncio
+    async def test_patch_existing_integration_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_resource,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        existing_integration_id = mocked_resource.integration_ids[0].id
+        mocked_resource.state = ModelState.PROVISION
+        mocked_resource.status = ModelStatus.READY
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[Mock(id=existing_integration_id)],
+            template=Mock(id=mocked_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[Mock(id=existing_integration_id, status=ModelStatus.ENABLED, integration_provider="aws")]
+        )
+
+        resource_patch = ResourcePatch(integration_ids=[existing_integration_id])
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != existing_integration_id, (
+                "user_entity_permissions should not be called for already-attached integrations"
+            )
 
 
 class TestDelete:

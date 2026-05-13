@@ -6,6 +6,7 @@ import {
   TextField,
   Chip,
   FormHelperText,
+  Tooltip,
 } from "@mui/material";
 
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
@@ -29,6 +30,8 @@ interface ArrayReferenceInputProps {
   value: any;
   error?: boolean;
   setBuffer: (selectedEntity: any) => void;
+  optionFilter?: (option: IkEntity) => boolean;
+  tooltip?: string;
   [key: string]: any; // Allow additional props
 }
 
@@ -46,6 +49,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       filter = {},
       label,
       value,
+      optionFilter,
+      tooltip,
       ...otherProps
     } = props;
 
@@ -56,9 +61,9 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       _details?: any,
     ) => {
       if (Array.isArray(value)) {
-        onChange(value.map((entity) => entity.id) || []);
+        onChange(value.map((entity) => String(entity.id)));
       } else if (value && typeof value === "object") {
-        onChange([value.id]);
+        onChange([String(value.id)]);
       } else {
         onChange([]);
       }
@@ -67,6 +72,10 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
     const isOptionDisabled = (option: IkEntity) => option.status === "disabled";
 
     const resolvedBufferKey = bufferKey || entity_name;
+
+    const filteredOptions = optionFilter
+      ? (buffer[resolvedBufferKey] || []).filter(optionFilter)
+      : buffer[resolvedBufferKey] || [];
 
     useEffect(() => {
       ikApi
@@ -94,7 +103,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       setBuffer,
     ]);
 
-    return (
+    const control = (
       <FormControl fullWidth margin="normal">
         <Autocomplete
           sx={{
@@ -118,7 +127,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
           defaultValue={otherProps.defaultValue || undefined}
           disabled={otherProps.disabled || false}
           getOptionDisabled={isOptionDisabled}
-          options={buffer[resolvedBufferKey] || []}
+          options={filteredOptions}
           getOptionLabel={(option) => getOptionLabel(option, showFields)}
           isOptionEqualToValue={(option, value) =>
             option.id === (value?.id || value)
@@ -177,6 +186,16 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
         </FormHelperText>
       </FormControl>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip title={tooltip} placement="top" arrow>
+          <span style={{ display: "block", width: "100%" }}>{control}</span>
+        </Tooltip>
+      );
+    }
+
+    return control;
   },
 );
 

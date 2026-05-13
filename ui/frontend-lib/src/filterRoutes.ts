@@ -166,7 +166,7 @@ const allRoutes: LazyRouteDefinition[] = [
       "IntegrationEditPage",
     ),
     requiredPermission: "api:integration",
-    permissionAction: "write",
+    permissionAction: "read",
   },
   {
     path: "/integrations/:provider/:integration_id/:tab?",

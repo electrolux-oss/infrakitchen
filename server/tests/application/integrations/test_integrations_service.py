@@ -152,6 +152,8 @@ class TestCreate:
         mocked_integration_response,
         mock_user_dto,
     ):
+        mock_integration_service.permission_service.create_entity_policy = AsyncMock()
+        mock_integration_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
         cloud_integration_config = {
             "aws_account": "123456789012",
             "aws_access_key_id": "test_access_key",
@@ -177,7 +179,9 @@ class TestCreate:
         integration_create.integration_provider = "aws"
         integration_create.model_dump = Mock(return_value=integration_body)
 
-        new_integration = Integration(name="Test Integration", integration_type="cloud", integration_provider="aws")
+        new_integration = Integration(
+            id=uuid4(), name="Test Integration", integration_type="cloud", integration_provider="aws"
+        )
         mock_integration_crud.create.return_value = new_integration
         mock_integration_crud.get_by_id.return_value = mocked_integration
 
@@ -509,6 +513,7 @@ class TestDelete:
         mocked_integration.status = ModelStatus.DISABLED
         mock_integration_crud.get_by_id.return_value = mocked_integration
         mock_integration_crud.get_dependencies.return_value = []
+        mock_integration_service.permission_service.delete_entity_permissions = AsyncMock()
 
         await mock_integration_service.delete(integration_id=mocked_integration.id, requester=mock_user_dto)
 
@@ -519,6 +524,9 @@ class TestDelete:
             mocked_integration.id, mock_user_dto.id, ModelActions.DELETE
         )
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(mocked_integration.id)
+        mock_integration_service.permission_service.delete_entity_permissions.assert_awaited_once_with(
+            "integration", mocked_integration.id
+        )
 
     @pytest.mark.asyncio
     async def test_delete_error_enabled(
@@ -598,32 +606,32 @@ class TestGetIntegrationActions:
         [
             (
                 ModelStatus.ENABLED,
-                {"api:integration": "write"},
+                ["read", "write"],
                 [],
             ),
             (
                 ModelStatus.ENABLED,
-                {"api:integration": "admin"},
+                ["read", "write", "admin"],
                 [ModelActions.EDIT, ModelActions.DISABLE],
             ),
             (
                 ModelStatus.DISABLED,
-                {"api:integration": "write"},
+                ["read", "write"],
                 [],
             ),
             (
                 ModelStatus.DISABLED,
-                {"api:integration": "admin"},
-                [ModelActions.DELETE, ModelActions.ENABLE],
+                ["read", "write", "admin"],
+                [ModelActions.ENABLE, ModelActions.DELETE],
             ),
             (
                 ModelStatus.ENABLED,
-                {"api:integration": "read"},
+                ["read"],
                 [],
             ),
             (
                 ModelStatus.ENABLED,
-                {},
+                [],
                 [],
             ),
         ],
@@ -643,7 +651,7 @@ class TestGetIntegrationActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.integrations.service.user_api_permission",
+            "application.integrations.service.user_entity_permissions",
         )
 
         mocked_integration.status = status

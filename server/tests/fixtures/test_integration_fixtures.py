@@ -38,6 +38,7 @@ def mock_integration_service(
     mock_event_sender,
     mock_audit_log_handler,
     mock_task_entity_service,
+    mock_permission_service,
 ):
     return IntegrationService(
         crud=mock_integration_crud,
@@ -45,6 +46,7 @@ def mock_integration_service(
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
         task_service=mock_task_entity_service,
+        permission_service=mock_permission_service,
     )
 
 
