@@ -607,7 +607,7 @@ class TestGetIntegrationActions:
             (
                 ModelStatus.ENABLED,
                 ["read", "write"],
-                [ModelActions.EDIT, ModelActions.DISABLE],
+                [ModelActions.DISABLE],
             ),
             (
                 ModelStatus.ENABLED,

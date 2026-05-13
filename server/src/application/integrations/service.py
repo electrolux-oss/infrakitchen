@@ -243,7 +243,8 @@ class IntegrationService:
         user_is_admin = "admin" in requester_permissions
 
         if integration.status == ModelStatus.ENABLED:
-            actions.append(ModelActions.EDIT)
+            if user_is_admin:
+                actions.append(ModelActions.EDIT)
             actions.append(ModelActions.DISABLE)
         if integration.status == ModelStatus.DISABLED:
             actions.append(ModelActions.ENABLE)
