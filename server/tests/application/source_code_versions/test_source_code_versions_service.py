@@ -160,8 +160,8 @@ class TestCreate:
         mocked_source_code_response,
     ):
         source_code_version_to_create_body = {
-            "source_code_folder": "test_folder",
-            "source_code_version": "v0.1",
+            "source_code_folder": "redis/",
+            "source_code_version": "v1.0",
             "source_code_id": str(source_code_version.source_code_id),
             "template_id": str(source_code_version.template_id),
             "labels": ["label1", "label2"],
@@ -288,6 +288,180 @@ class TestCreate:
         mocked_source_code_version_create.labels = source_code_version_to_create_body["labels"]
 
         with pytest.raises(EntityWrongState, match="SourceCode is not enabled"):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_branch_not_found_in_source_code(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "redis/"
+        mocked_source_code_version_create.source_code_branch = "nonexistent-branch"
+        mocked_source_code_version_create.source_code_version = None
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="Source code branch not found in source code"):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_branch_folder_not_found(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "nonexistent-folder/"
+        mocked_source_code_version_create.source_code_branch = "main"
+        mocked_source_code_version_create.source_code_version = None
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="Source code folder not found in source code for the specified branch"):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_branch_not_in_folder_map(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        # Branch exists in git_branches but has no entry in git_folders_map
+        mocked_source_code.git_branches = ["main", "dev", "feature-x"]
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "redis/"
+        mocked_source_code_version_create.source_code_branch = "feature-x"
+        mocked_source_code_version_create.source_code_version = None
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="Source code branch not found in source code"):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_tag_not_found_in_source_code(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "redis/"
+        mocked_source_code_version_create.source_code_branch = None
+        mocked_source_code_version_create.source_code_version = "v999.0"
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="Source code version tag not found in source code"):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_tag_folder_not_found(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "nonexistent-folder/"
+        mocked_source_code_version_create.source_code_branch = None
+        mocked_source_code_version_create.source_code_version = "v1.0"
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(
+            ValueError, match="Source code folder not found in source code for the specified version tag"
+        ):
+            await mock_source_code_version_service.create(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
+    async def test_create_tag_not_in_folder_map(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        # Tag exists in git_tags but has no entry in git_folders_map
+        mocked_source_code.git_tags = ["v1.0", "v1.1", "v2.0"]
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "redis/"
+        mocked_source_code_version_create.source_code_branch = None
+        mocked_source_code_version_create.source_code_version = "v2.0"
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="Source code version tag not found in folder map of source code"):
             await mock_source_code_version_service.create(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )

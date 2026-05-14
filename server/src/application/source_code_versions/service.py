@@ -120,6 +120,9 @@ class SourceCodeVersionService:
         if source_code_version.source_code_version and source_code_version.source_code_branch:
             raise ValueError("Only one of source code tag or branch is allowed")
 
+        if not source_code_version.source_code_folder:
+            raise ValueError("Source code folder is required")
+
         template = await self.template_service.get_by_id(source_code_version.template_id)
         if not template:
             raise EntityNotFound("Template not found")
@@ -133,6 +136,40 @@ class SourceCodeVersionService:
 
         if source_code.status == ModelStatus.DISABLED:
             raise EntityWrongState("SourceCode is not enabled")
+
+        # Validate that branch or tag exists in source code
+        if source_code_version.source_code_branch:
+            if source_code_version.source_code_branch not in source_code.git_branches:
+                raise ValueError("Source code branch not found in source code")
+
+            if ref_folder := next(
+                (
+                    folder
+                    for folder in source_code.git_folders_map
+                    if folder.ref == source_code_version.source_code_branch
+                ),
+                None,
+            ):
+                if source_code_version.source_code_folder not in ref_folder.folders:
+                    raise ValueError("Source code folder not found in source code for the specified branch")
+            else:
+                raise ValueError("Source code branch not found in source code")
+        elif source_code_version.source_code_version:
+            if source_code_version.source_code_version not in source_code.git_tags:
+                raise ValueError("Source code version tag not found in source code")
+
+            if ref_folder := next(
+                (
+                    folder
+                    for folder in source_code.git_folders_map
+                    if folder.ref == source_code_version.source_code_version
+                ),
+                None,
+            ):
+                if source_code_version.source_code_folder not in ref_folder.folders:
+                    raise ValueError("Source code folder not found in source code for the specified version tag")
+            else:
+                raise ValueError("Source code version tag not found in folder map of source code")
 
         body = source_code_version.model_dump(exclude_unset=True)
         body["created_by"] = requester.id
