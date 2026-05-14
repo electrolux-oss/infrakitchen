@@ -226,6 +226,15 @@ const ResourceCreatePageInner = () => {
     [permissions],
   );
 
+  const workspaceWriteFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`workspace:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [permissions],
+  );
+
   useEffect(() => {
     if (watchedTemplate?.configuration?.naming_convention) {
       setNamingConvention(watchedTemplate.configuration.naming_convention);
@@ -900,10 +909,11 @@ const ResourceCreatePageInner = () => {
                         showFields={["name", "workspace_provider"]}
                         setBuffer={setBuffer}
                         error={!!errors.workspace_id}
+                        optionFilter={workspaceWriteFilter}
                         helpertext={
                           errors.workspace_id
                             ? errors.workspace_id.message
-                            : "Select Workspace"
+                            : "Only workspaces you have write access to are shown"
                         }
                         value={field.value}
                         label="Select Workspace"

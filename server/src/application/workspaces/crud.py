@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import String, cast, func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.resources.model import Resource
+from core.permissions.model import Permission
 from core.users.model import User
 
 from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
@@ -76,3 +77,66 @@ class WorkspaceCRUD:
 
     async def refresh(self, workspace: Workspace) -> None:
         await self.session.refresh(workspace)
+
+    async def get_workspace_policies_by_role(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Any]:
+        workspace_id_expr = func.split_part(Permission.v1, ":", 2)
+        statement = (
+            select(
+                Workspace.id.label("workspace_id"),
+                Workspace.name.label("workspace_name"),
+                Permission.v0.label("role"),
+                Permission.v2.label("action"),
+                Permission.id.label("id"),
+                Permission.created_at.label("created_at"),
+                Permission.updated_at.label("updated_at"),
+            )
+            .join(
+                Permission,
+                cast(Workspace.id, String) == workspace_id_expr,
+            )
+            .where(
+                Permission.ptype == "p",
+                Permission.v1.like("workspace:%"),
+                Permission.v0 == role_name,
+            )
+        )
+        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+        result = await self.session.execute(statement)
+        return list(result.fetchall())
+
+    async def get_user_workspace_policies(
+        self,
+        user_id: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[Any]:
+        workspace_id_expr = func.split_part(Permission.v1, ":", 2)
+        statement = (
+            select(
+                Workspace.id.label("workspace_id"),
+                Workspace.name.label("workspace_name"),
+                Permission.v2.label("action"),
+                Permission.id.label("id"),
+                Permission.created_at.label("created_at"),
+                Permission.updated_at.label("updated_at"),
+            )
+            .join(
+                Permission,
+                cast(Workspace.id, String) == workspace_id_expr,
+            )
+            .where(
+                Permission.ptype == "p",
+                Permission.v1.like("workspace:%"),
+                Permission.v0 == f"user:{user_id}",
+            )
+        )
+        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
+        statement = evaluate_sqlalchemy_pagination(statement, range)
+        result = await self.session.execute(statement)
+        return list(result.fetchall())

@@ -3,11 +3,21 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
 from core.constants.model import ModelActions
+from core.permissions.dependencies import get_permission_service
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.service import PermissionService
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
 from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
 from infrakitchen_mcp.registry import mcp_group
-from .schema import WorkspaceCreate, WorkspaceResponse, WorkspaceUpdate
+from .schema import (
+    RoleWorkspacesResponse,
+    UserWorkspaceResponse,
+    WorkspaceCreate,
+    WorkspaceResponse,
+    WorkspaceUpdate,
+)
 from .dependencies import get_workspace_service
 from .service import WorkspaceService
 
@@ -72,7 +82,7 @@ async def post(request: Request, body: WorkspaceCreate, service: WorkspaceServic
     return entity
 
 
-@router.put(
+@router.patch(
     "/workspaces/{workspace_id}",
     response_model=WorkspaceResponse,
     status_code=http_status.HTTP_200_OK,
@@ -108,3 +118,61 @@ async def delete(request: Request, workspace_id: str, service: WorkspaceService 
 async def get_actions(request: Request, workspace_id: str, service: WorkspaceService = Depends(get_workspace_service)):
     requester = request.state.user
     return await service.get_actions(workspace_id=workspace_id, requester=requester)
+
+
+# Permissions
+@router.get(
+    "/workspaces/permissions/user/{user_id}/policies",
+    response_model=list[UserWorkspaceResponse],
+    response_description="Get user workspace policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_user_workspaces(user_id: str, service: WorkspaceService = Depends(get_workspace_service)):
+    return await service.get_user_workspace_policies(user_id)
+
+
+@router.get(
+    "/workspaces/permissions/role/{role_name}/policies",
+    response_model=list[RoleWorkspacesResponse],
+    response_description="Get role policies",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_workspace_role_permissions(
+    response: Response,
+    role_name: str,
+    service: WorkspaceService = Depends(get_workspace_service),
+    permission_service: PermissionService = Depends(get_permission_service),
+    query_parts: QueryParamsType = Depends(parse_query_params),
+):
+    _, range_, sort, _ = query_parts
+
+    total = await permission_service.count(filter={"v0": role_name, "ptype": "p", "v1__like": "workspace:"})
+
+    if total == 0:
+        result = []
+    else:
+        result = await service.get_role_permissions(role_name, range=range_, sort=sort)
+    headers = {"Content-Range": f"policies 0-{len(result)}/{total}"}
+    response.headers.update(headers)
+
+    return result
+
+
+@router.post(
+    "/workspaces/permissions",
+    response_model=list[PermissionResponse],
+    response_description="Create workspace policy",
+    status_code=http_status.HTTP_201_CREATED,
+)
+async def create_role_workspace_permissions(
+    request: Request,
+    workspace_policy: EntityPolicyCreate,
+    service: WorkspaceService = Depends(get_workspace_service),
+):
+    requester: UserDTO = request.state.user
+
+    requester_permissions = await user_entity_permissions(requester, workspace_policy.entity_id, "workspace")
+    if "admin" not in requester_permissions:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return await service.create_workspace_policy(workspace_policy, requester=requester)

@@ -1,12 +1,15 @@
 import logging
+from uuid import UUID
 from typing import Any
 
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.errors import DependencyError, EntityNotFound
 from core.logs.service import LogService
+from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.service import PermissionService
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_api_permission
+from core.users.functions import user_entity_permissions
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import WorkspaceCRUD
@@ -14,6 +17,8 @@ from .schema import (
     AzureDevOpsWorkspaceMeta,
     BitbucketWorkspaceMeta,
     GithubWorkspaceMeta,
+    RoleWorkspacesResponse,
+    UserWorkspaceResponse,
     WorkspaceCreate,
     WorkspaceMeta,
     WorkspaceResponse,
@@ -38,14 +43,16 @@ class WorkspaceService:
         audit_log_handler: AuditLogHandler,
         log_service: LogService,
         task_service: TaskEntityService,
+        permission_service: PermissionService,
     ):
         self.crud: WorkspaceCRUD = crud
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
+        self.permission_service: PermissionService = permission_service
 
-    async def get_by_id(self, workspace_id: str) -> WorkspaceResponse | None:
+    async def get_by_id(self, workspace_id: str | UUID) -> WorkspaceResponse | None:
         workspace = await self.crud.get_by_id(workspace_id)
         if workspace is None:
             return None
@@ -93,6 +100,17 @@ class WorkspaceService:
         await self.audit_log_handler.create_log(new_workspace.id, requester.id, ModelActions.CREATE)
         response = WorkspaceResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
+        await self.permission_service.create_entity_policy(
+            EntityPolicyCreate(
+                user_id=requester.id,
+                entity_id=new_workspace.id,
+                entity_name="workspace",
+                action="admin",
+            ),
+            requester=requester,
+            reload_permission=False,
+        )
+        await self.permission_service.casbin_enforcer.send_reload_event()
         return response
 
     async def update(self, workspace_id: str, workspace: WorkspaceUpdate, requester: UserDTO) -> WorkspaceResponse:
@@ -112,6 +130,7 @@ class WorkspaceService:
         await self.crud.update(existing_workspace, body)
 
         await self.audit_log_handler.create_log(existing_workspace.id, requester.id, ModelActions.UPDATE)
+        await self.crud.refresh(existing_workspace)
         response = WorkspaceResponse.model_validate(existing_workspace)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return response
@@ -141,6 +160,7 @@ class WorkspaceService:
         )
         await self.log_service.delete_by_entity_id(workspace_id)
         await self.task_service.delete_by_entity_id(workspace_id)
+        await self.permission_service.delete_entity_permissions("workspace", workspace_id)
         await self.crud.delete(existing_workspace)
 
     async def get_actions(self, workspace_id: str, requester: UserDTO) -> list[str]:
@@ -150,20 +170,43 @@ class WorkspaceService:
         :param workspace_id: ID of the workspace
         :return: List of actions
         """
-        apis = await user_api_permission(requester, "workspace")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:workspace"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
+        requester_permissions = await user_entity_permissions(requester, workspace_id, "workspace")
+        if "admin" not in requester_permissions:
             return []
 
-        actions: list[str] = []
         workspace = await self.crud.get_by_id(workspace_id)
         if not workspace:
-            raise EntityNotFound("Source Code not found")
+            raise EntityNotFound("Workspace not found")
 
-        if "admin" in requester_permissions:
-            actions.append(ModelActions.DELETE)
+        return [ModelActions.EDIT, ModelActions.DELETE]
 
-        return actions
+    # Permissions
+    async def get_user_workspace_policies(self, user_id: str) -> list[UserWorkspaceResponse]:
+        policies = await self.crud.get_user_workspace_policies(user_id)
+        return [UserWorkspaceResponse.model_validate(policy) for policy in policies]
+
+    async def get_role_permissions(
+        self,
+        role_name: str,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[RoleWorkspacesResponse]:
+        policies = await self.crud.get_workspace_policies_by_role(role_name, range=range, sort=sort)
+        return [RoleWorkspacesResponse.model_validate(policy) for policy in policies]
+
+    async def create_workspace_policy(
+        self,
+        workspace_policy: EntityPolicyCreate,
+        requester: UserDTO,
+    ) -> list[PermissionResponse]:
+        workspace = await self.get_by_id(workspace_policy.entity_id)
+        if not workspace:
+            raise EntityNotFound(f"Workspace {workspace_policy.entity_id} not found")
+
+        policies: list[PermissionResponse] = []
+        policy = await self.permission_service.create_entity_policy(
+            workspace_policy, requester, reload_permission=False
+        )
+        policies.append(PermissionResponse.model_validate(policy))
+        await self.permission_service.casbin_enforcer.send_reload_event()
+        return policies

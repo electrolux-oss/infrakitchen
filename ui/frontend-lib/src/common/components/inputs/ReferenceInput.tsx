@@ -26,6 +26,7 @@ interface ReferenceInputProps {
   buffer: Record<string, IkEntity>;
   bufferKey?: string;
   setBuffer: (selectedEntity: any) => void;
+  optionFilter?: (option: IkEntity) => boolean;
   [key: string]: any; // Allow additional props
 }
 
@@ -40,14 +41,19 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     filter = {},
     showFields = ["name"],
     value,
+    optionFilter,
     ...otherProps
   } = props;
 
   const resolvedBufferKey = bufferKey || entity_name;
-  const options: IkEntity[] = buffer[resolvedBufferKey] || [];
+  const allOptions: IkEntity[] = buffer[resolvedBufferKey] || [];
+  const options: IkEntity[] = optionFilter
+    ? allOptions.filter(optionFilter)
+    : allOptions;
   const [warning, setWarning] = useState<string | null>(null);
 
-  const selectedOption = options.find((option) => option.id === value) || null;
+  const selectedOption =
+    allOptions.find((option) => option.id === value) || null;
 
   const handleAutocompleteChange = (
     event: React.SyntheticEvent,
