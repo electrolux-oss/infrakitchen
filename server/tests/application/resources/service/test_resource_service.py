@@ -650,6 +650,48 @@ class TestCreate:
                 "user_entity_permissions should not be called for inherited integrations"
             )
 
+    @pytest.mark.asyncio
+    async def test_create_denies_workspace_without_write_access(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_template_crud,
+        mock_storage_crud,
+        mock_source_code_version_crud,
+        monkeypatch,
+        template_response,
+        mocked_resource,
+        resource_response,
+        source_code_version_response,
+        storage_response,
+        mocked_user_response,
+        mock_user_permissions,
+    ):
+        workspace_id = uuid4()
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=template_response.id,
+            source_code_version_id=source_code_version_response.id,
+            storage_id=storage_response.id,
+            storage_path="path/to/storage",
+            workspace_id=workspace_id,
+        )
+
+        mock_template_crud.get_by_id.return_value = template_response
+        mock_storage_crud.get_by_id.return_value = storage_response
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
+        mock_resource_crud.create.return_value = mocked_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
+        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with pytest.raises(
+            AccessDenied,
+            match=f"You don't have write access to workspace {workspace_id}",
+        ):
+            await mock_resource_service.create(resource_create, mocked_user_response)
+
 
 class TestPatch:
     @pytest.mark.asyncio
@@ -778,6 +820,98 @@ class TestPatch:
         for call in permissions_mock.await_args_list:
             assert call.args[1] != existing_integration_id, (
                 "user_entity_permissions should not be called for already-attached integrations"
+            )
+
+    @pytest.mark.asyncio
+    async def test_patch_denies_changing_workspace_without_write_access(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        existing_workspace_id = uuid4()
+        new_workspace_id = uuid4()
+        existing_resource = Mock(
+            id=uuid4(),
+            state=ModelState.PROVISION,
+            status=ModelStatus.READY,
+            template_id=uuid4(),
+            integration_ids=[],
+            parents=[],
+            workspace_id=existing_workspace_id,
+        )
+        mock_resource_crud.get_by_id.return_value = existing_resource
+        monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[],
+            template=Mock(id=existing_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(return_value=[])
+
+        resource_patch = ResourcePatch(workspace_id=new_workspace_id)
+        mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with pytest.raises(
+            AccessDenied,
+            match=f"You don't have write access to workspace {new_workspace_id}",
+        ):
+            await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+
+    @pytest.mark.asyncio
+    async def test_patch_same_workspace_is_exempt(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mock_user_permissions,
+        monkeypatch,
+    ):
+        existing_workspace_id = uuid4()
+        existing_resource = Mock(
+            id=uuid4(),
+            state=ModelState.PROVISION,
+            status=ModelStatus.READY,
+            template_id=uuid4(),
+            integration_ids=[],
+            parents=[],
+            workspace_id=existing_workspace_id,
+        )
+        mock_resource_crud.get_by_id.return_value = existing_resource
+        monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[],
+            template=Mock(id=existing_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(return_value=[])
+
+        resource_patch = ResourcePatch(workspace_id=existing_workspace_id)
+        permissions_mock = mock_user_permissions(
+            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+        )
+
+        await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+
+        for call in permissions_mock.await_args_list:
+            assert call.args[1] != existing_workspace_id, (
+                "user_entity_permissions should not be called when workspace is unchanged"
             )
 
 
