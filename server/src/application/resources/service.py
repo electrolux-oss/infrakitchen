@@ -239,11 +239,6 @@ class ResourceService:
                                 ],
                             )
 
-            if resource.workspace_id is not None:
-                workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
-                if "write" not in workspace_permissions and "admin" not in workspace_permissions:
-                    raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
-
             # validate configuration variables
             if source_code_version_id := resource.source_code_version_id:
                 source_code_version = await self.service_source_code_version.get_by_id(source_code_version_id)
@@ -453,13 +448,6 @@ class ResourceService:
 
                 else:
                     raise EntityNotFound("Template not found")
-
-            if resource.workspace_id is not None and str(resource.workspace_id) != str(
-                existing_resource.workspace_id or ""
-            ):
-                workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
-                if "write" not in workspace_permissions and "admin" not in workspace_permissions:
-                    raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
 
         body = resource.model_dump(exclude_unset=True)
 

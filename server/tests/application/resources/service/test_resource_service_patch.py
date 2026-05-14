@@ -142,8 +142,6 @@ class TestPatch:
         mocked_resource,
         mocked_resource_temp_state_handler,
         mock_revision_handler,
-        mock_user_permissions,
-        monkeypatch,
     ):
         resource_patch = ResourcePatch(
             name="name",
@@ -171,9 +169,6 @@ class TestPatch:
         mock_resource_service.resource_temp_state_handler = mocked_resource_temp_state_handler
         mock_resource_service.revision_handler = mock_revision_handler
         mock_template_crud.get_by_id.return_value = mocked_template
-        mock_user_permissions(
-            ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
-        )
 
         result = await mock_resource_service.patch(
             resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
