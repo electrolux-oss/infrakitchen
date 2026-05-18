@@ -20,19 +20,31 @@ export default defineConfig({
     }
   },
   build: {
+    minify: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@mui/') || id.includes('@emotion/') || id.includes('@mui/x-')) {
-              return 'vendor-mui';
+            if (
+              id.includes('date-fns') ||
+              id.includes('jwt-decode') ||
+              id.includes('query-string')
+            ) {
+              return 'vendor-utils';
             }
-            if (id.includes('react-router') || id.includes('@remix-run')) {
+            if (id.includes('react-router') || id.includes('@remix-run') || id.includes('@react-router')) {
               return 'vendor-router';
             }
-            if (id.includes('react-dom') || id.includes('react/')) {
-              return 'vendor-react';
+            if (id.includes('@xyflow/') || id.includes('elkjs') || id.includes('d3-')) {
+              return 'vendor-xyflow';
             }
+            if (id.includes('codemirror') || id.includes('@codemirror/') || id.includes('@uiw/react-codemirror') || id.includes('@lezer/')) {
+              return 'vendor-codemirror';
+            }
+            if (id.includes('@mui/icons-material')) {
+              return 'vendor-mui-icons';
+            }
+            return 'vendor';
           }
         },
       },
