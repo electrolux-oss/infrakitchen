@@ -1,7 +1,9 @@
 import asyncio
 from contextlib import asynccontextmanager
+from unittest.mock import AsyncMock, MagicMock
 
 
+from core.casbin.enforcer import CasbinEnforcer
 from core.config import setup_service_environment
 from core.dependencies import get_async_session
 from core.rabbitmq import RabbitMQConnection
@@ -30,6 +32,16 @@ async def send_message(message: MessageModel, confirm: bool = False):
 
 # Monkey patching the send_task method
 RabbitMQConnection.send_message = send_message  # type: ignore[method-assign]
+
+# Mock the CasbinEnforcer to bypass validation during fixture creation
+_mock_enforcer = MagicMock()
+_mock_enforcer.enforce = MagicMock(return_value=True)
+_mock_enforcer.load_policy = AsyncMock()
+_mock_enforcer.get_implicit_permissions_for_user = AsyncMock(return_value=[])
+_mock_enforcer.get_filtered_named_grouping_policy = MagicMock(return_value=[])
+_casbin_instance = CasbinEnforcer()
+_casbin_instance.enforcer = _mock_enforcer  # type: ignore[assignment]
+CasbinEnforcer.get_enforcer = AsyncMock(return_value=_mock_enforcer)  # type: ignore[method-assign]
 
 
 async def drop_all_tables(engine):
