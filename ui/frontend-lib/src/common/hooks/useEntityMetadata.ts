@@ -48,7 +48,7 @@ interface UseEntityMetadataReturn {
  * const name = data.get(someId)?.name;
  * ```
  *
- * Results are cached — re-fetches only when the set of requested IDs changes.
+ * Results are cached - re-fetches only when the set of requested IDs changes.
  */
 export function useEntityMetadata(
   requests: EntityMetaRequest,

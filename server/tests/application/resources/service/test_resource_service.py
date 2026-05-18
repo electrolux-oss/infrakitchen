@@ -444,6 +444,8 @@ class TestCreate:
         mock_source_code_version_crud,
         mock_user_permissions,
         monkeypatch,
+        mock_storage_crud,
+        mocked_storage,
     ):
         source_code_version.template_id = mocked_template.id
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
@@ -454,10 +456,13 @@ class TestCreate:
             template_id=mocked_template.id,
             source_code_version_id=source_code_version.id,
             integration_ids=[mocked_integration.id],
+            storage_id=mocked_storage.id,
+            storage_path="path/to/storage",
         )
 
         requester = mocked_user
         mock_template_crud.get_by_id.return_value = mocked_template
+        mock_storage_crud.get_by_id.return_value = mocked_storage
         mock_integration_crud.get_all.return_value = [mocked_integration]
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.create.return_value = mocked_resource
@@ -599,6 +604,8 @@ class TestCreate:
         source_code_version_response,
         mock_source_code_version_crud,
         mock_user_permissions,
+        mock_storage_crud,
+        mocked_storage,
         monkeypatch,
     ):
         # parent template + parent resource that already owns the integration
@@ -627,6 +634,8 @@ class TestCreate:
             template_id=template_id,
             source_code_version_id=source_code_version_response.id,
             integration_ids=[mocked_integration.id],
+            storage_id=mocked_storage.id,
+            storage_path="path/to/storage",
             parents=[parent_resource.id],
         )
 
@@ -637,6 +646,7 @@ class TestCreate:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version_response
         mock_resource_crud.create.return_value = mocked_resource
         mock_resource_crud.get_by_id.return_value = mocked_resource
+        mock_storage_crud.get_by_id.return_value = mocked_storage
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
         monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
         permissions_mock = mock_user_permissions(

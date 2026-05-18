@@ -27,6 +27,7 @@ class TemplateShort(BaseModel):
     id: uuid.UUID
     name: str
     cloud_resource_types: list[str] = Field(default_factory=list)
+    abstract: bool = Field(default=False)
 
     model_config = ConfigDict(from_attributes=True)
 

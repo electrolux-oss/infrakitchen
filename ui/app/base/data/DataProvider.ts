@@ -11,6 +11,10 @@ import inMemoryToken from "../auth/inMemoryToken";
 
 export interface IKDataProvider extends InfraKitchenApi {
   getToken: () => Promise<string | null>;
+  graphqlRequest: <T>(
+    query: string,
+    variables?: Record<string, any>,
+  ) => Promise<T>;
   getVariableSchema: (
     id: string,
     parent_resources?: string[],
@@ -110,6 +114,28 @@ export const ikDataProvider = (apiUrl: string): IKDataProvider => {
     getToken: async () => {
       const token = inMemoryToken.getToken();
       return token;
+    },
+
+    graphqlRequest: async <T>(
+      query: string,
+      variables?: Record<string, any>,
+    ) => {
+      const url = `${apiUrl}/graphql`;
+      const response = await fetchWithAuth(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query, variables }),
+      });
+      if (!response.ok) {
+        await parseErrorBody(response);
+      }
+      const json = await response.json();
+      if (Array.isArray(json?.errors) && json.errors.length > 0) {
+        throw new Error(json.errors[0]?.message || "GraphQL request failed");
+      }
+      return json.data as T;
     },
 
     get: async (entity, params) => {

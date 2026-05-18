@@ -85,6 +85,7 @@ class BaseMessagesWorker:
                     await self.process_message(message)
                 except Exception as e:
                     logger.error(f"Task failed: {e}")
+                    await self.session.rollback()
                 finally:
                     if self.commit_worker_status:
                         await self.worker_service.change_worker_status(self.worker.id, "free")

@@ -21,7 +21,7 @@ def resource_options(fields: set[str]) -> list[Any]:
     if "secretIds" in fields:
         opts.append(selectinload(Resource.secret_ids))
     if "parents" in fields:
-        opts.append(selectinload(Resource.parents).noload("*"))
+        opts.append(selectinload(Resource.parents))
     if "children" in fields:
         opts.append(selectinload(Resource.children).noload("*"))
     if "template" in fields:
@@ -42,7 +42,7 @@ def _convert_resource_shallow(obj: Any) -> ResourceType:
         name=obj.name,
         description=obj.description,
         template_id=obj.template_id,
-        template=None,
+        template=obj.template,
         source_code_version_id=obj.source_code_version_id,
         source_code_version=None,
         integration_ids=[],

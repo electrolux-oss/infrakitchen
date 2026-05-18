@@ -54,6 +54,7 @@ function flattenTemplates(
     templates.push({
       id: tree.id,
       name: tree.name,
+      abstract: false, // Not provided in the tree response, assuming false as default
       _entity_name: "template",
     });
   }

@@ -24,6 +24,7 @@ interface ReferenceInputProps {
   showFields?: Array<string>;
   helpertext?: string;
   buffer: Record<string, IkEntity>;
+  bufferKey?: string;
   setBuffer: (selectedEntity: any) => void;
   [key: string]: any; // Allow additional props
 }
@@ -34,6 +35,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     onChange,
     setBuffer,
     buffer,
+    bufferKey,
     entity_name,
     filter = {},
     showFields = ["name"],
@@ -41,7 +43,8 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ...otherProps
   } = props;
 
-  const options: IkEntity[] = buffer[entity_name] || [];
+  const resolvedBufferKey = bufferKey || entity_name;
+  const options: IkEntity[] = buffer[resolvedBufferKey] || [];
   const [warning, setWarning] = useState<string | null>(null);
 
   const selectedOption = options.find((option) => option.id === value) || null;
@@ -62,7 +65,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     if (!filter) {
       setBuffer((prev: Record<string, IkEntity[]>) => ({
         ...prev,
-        [entity_name]: [],
+        [resolvedBufferKey]: [],
       }));
       return;
     }
@@ -81,14 +84,21 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
 
         setBuffer((prev: Record<string, IkEntity[]>) => ({
           ...prev,
-          [entity_name]: response.data,
+          [resolvedBufferKey]: response.data,
         }));
       })
       .catch((error: { message: string }) => {
         notifyError(error);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(filter), entity_name, ikApi, setBuffer]);
+  }, [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filter),
+    entity_name,
+    ikApi,
+    setBuffer,
+    resolvedBufferKey,
+  ]);
 
   return (
     <FormControl fullWidth margin="normal">
