@@ -209,3 +209,26 @@ class WorkspaceShort(BaseModel):
     @computed_field
     def _entity_name(self) -> str:
         return "workspace"
+
+
+class RoleWorkspacesResponse(BaseModel):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    workspace_name: str
+    role: str
+    action: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserWorkspaceResponse(BaseModel):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    workspace_name: str
+    action: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

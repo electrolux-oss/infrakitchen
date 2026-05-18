@@ -81,6 +81,19 @@ export const ResourceEditPageInner = (props: {
     },
     [existingIntegrationIds, permissions],
   );
+  const existingWorkspaceId = entity.workspace?.id
+    ? String(entity.workspace.id)
+    : null;
+  const workspaceOptionFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (existingWorkspaceId && String(option.id) === existingWorkspaceId)
+        return true;
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`workspace:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [existingWorkspaceId, permissions],
+  );
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}resources/${entity.id}`);
   const [variablesOpen, setVariablesOpen] = useState(true);
@@ -673,10 +686,11 @@ export const ResourceEditPageInner = (props: {
                           buffer={buffer}
                           setBuffer={setBuffer}
                           error={!!errors.workspace_id}
+                          optionFilter={workspaceOptionFilter}
                           helpertext={
                             errors.workspace_id
                               ? errors.workspace_id.message
-                              : "Select Workspace"
+                              : "Only workspaces you have write access to are shown"
                           }
                           value={field.value}
                           label="Workspace"

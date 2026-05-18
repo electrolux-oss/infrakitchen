@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -193,20 +193,24 @@ class TestCreate:
             "organization": "test_owner",
         }
 
+        requester_id = uuid4()
         expected_workspace_body = model_db_dump(workspace_create)
-        expected_workspace_body["created_by"] = "user1"
+        expected_workspace_body["created_by"] = requester_id
         expected_workspace_body["name"] = workspace_create.configuration.name
         expected_workspace_body["configuration"] = expected_workspace_configuration
         requester = Mock(spec=UserDTO)
-        requester.id = "user1"
+        requester.id = requester_id
 
         new_workspace = Workspace(
+            id=uuid4(),
             name="Test Workspace",
             workspace_provider="github",
             configuration=expected_workspace_configuration,
         )
         mock_workspace_crud.create.return_value = new_workspace
         mock_workspace_crud.get_by_id.return_value = workspace
+        mock_workspace_service.permission_service.create_entity_policy = AsyncMock()
+        mock_workspace_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
 
         monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
 
@@ -281,20 +285,24 @@ class TestCreate:
             "organization": "org",
         }
 
+        requester_id = uuid4()
         expected_workspace_body = model_db_dump(workspace_create)
-        expected_workspace_body["created_by"] = "user1"
+        expected_workspace_body["created_by"] = requester_id
         expected_workspace_body["name"] = workspace_create.configuration.name
         expected_workspace_body["configuration"] = expected_workspace_configuration
         requester = Mock(spec=UserDTO)
-        requester.id = "user1"
+        requester.id = requester_id
 
         new_workspace = Workspace(
+            id=uuid4(),
             name="Test Workspace",
             workspace_provider="github",
             configuration=expected_workspace_configuration,
         )
         mock_workspace_crud.create.return_value = new_workspace
         mock_workspace_crud.get_by_id.return_value = workspace
+        mock_workspace_service.permission_service.create_entity_policy = AsyncMock()
+        mock_workspace_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
 
         monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
 
@@ -435,6 +443,7 @@ class TestDelete:
         )
         mock_workspace_crud.get_by_id.return_value = existing_workspace
         mock_workspace_crud.get_dependencies.return_value = []
+        mock_workspace_service.permission_service.delete_entity_permissions = AsyncMock()
 
         await mock_workspace_service.delete(workspace_id=workspace_id)
 
@@ -445,6 +454,9 @@ class TestDelete:
         )
         mock_log_crud.delete_by_entity_id.assert_awaited_once_with(workspace_id)
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(workspace_id)
+        mock_workspace_service.permission_service.delete_entity_permissions.assert_awaited_once_with(
+            "workspace", workspace_id
+        )
 
     @pytest.mark.asyncio
     async def test_delete_workspace_does_not_exist(
@@ -459,3 +471,37 @@ class TestDelete:
         mock_log_crud.delete_by_entity_id.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_not_awaited()
         mock_task_entity_crud.delete_by_entity_id.assert_not_awaited()
+
+
+class TestGetWorkspaceActions:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "user_permissions,expected_actions",
+        [
+            (["read"], []),
+            (["read", "write"], []),
+            (["read", "write", "admin"], [ModelActions.EDIT, ModelActions.DELETE]),
+            ([], []),
+        ],
+    )
+    async def test_get_workspace_actions(
+        self,
+        user_permissions,
+        expected_actions,
+        mock_workspace_service,
+        mock_workspace_crud,
+        workspace,
+        monkeypatch,
+        mock_user_dto,
+        mock_user_permissions,
+    ):
+        mock_user_permissions(
+            user_permissions,
+            monkeypatch,
+            "application.workspaces.service.user_entity_permissions",
+        )
+        mock_workspace_crud.get_by_id.return_value = workspace
+
+        result = await mock_workspace_service.get_actions(workspace_id=workspace.id, requester=mock_user_dto)
+
+        assert result == expected_actions

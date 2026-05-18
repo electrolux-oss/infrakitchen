@@ -528,7 +528,7 @@ const allRoutes: LazyRouteDefinition[] = [
       "WorkspaceEditPage",
     ),
     requiredPermission: "api:workspace",
-    permissionAction: "write",
+    permissionAction: "read",
   },
   {
     path: "/workspaces/:workspace_id/:tab?",

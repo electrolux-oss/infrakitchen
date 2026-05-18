@@ -229,7 +229,7 @@ class TestUpdate:
         service = MockWorkspaceService(actions=[])
         override_service(service)
 
-        response = client_with_user.put(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
+        response = client_with_user.patch(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
 
         assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {"detail": "Access denied for action edit"}
@@ -244,7 +244,7 @@ class TestUpdate:
         service = MockWorkspaceService(updated_workspace=workspace_response, actions=[ModelActions.EDIT])
         override_service(service)
 
-        response = client_with_user.put(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
+        response = client_with_user.patch(f"/workspaces/{WORKSPACE_ID}", json=workspace_update)
         json_response = response.json()
 
         assert response.status_code == HTTPStatus.OK

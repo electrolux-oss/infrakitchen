@@ -31,6 +31,7 @@ def mock_workspace_service(
     mock_audit_log_handler,
     mock_log_service,
     mock_task_entity_service,
+    mock_permission_service,
 ):
     return WorkspaceService(
         crud=mock_workspace_crud,
@@ -38,6 +39,7 @@ def mock_workspace_service(
         audit_log_handler=mock_audit_log_handler,
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
+        permission_service=mock_permission_service,
     )
 
 

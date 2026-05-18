@@ -3,6 +3,7 @@ from fastapi import Depends
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
+from core.permissions.dependencies import get_permission_service
 from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
@@ -23,4 +24,5 @@ def get_workspace_service(
         audit_log_handler=audit_log_handler,
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
+        permission_service=get_permission_service(session=session),
     )

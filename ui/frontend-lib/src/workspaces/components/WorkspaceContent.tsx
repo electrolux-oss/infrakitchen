@@ -10,6 +10,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { WorkspaceConfiguration } from "./WorkspaceConfiguration";
 import { WorkspaceOverview } from "./WorkspaceOverview";
+import { WorkspacePermissions } from "./WorkspacePermissions";
 import { WorkspacePullRequests } from "./WorkspacePullRequests";
 import { WorkspaceRepository } from "./WorkspaceRepository";
 import { WorkspaceResources } from "./WorkspaceResources";
@@ -48,10 +49,14 @@ export const WorkspaceContent = () => {
       content: <Audit entityId={entity.id} />,
     },
     {
+      label: "Policies",
+      content: <WorkspacePermissions workspace={entity} />,
+    },
+    {
       label: "Settings",
       content: <DangerZoneCard />,
       requiredPermission: `workspace:${entity.id}`,
-      permissionAction: "write" as const,
+      permissionAction: "admin" as const,
     },
   ];
 
