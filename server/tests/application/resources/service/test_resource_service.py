@@ -600,6 +600,9 @@ class TestCreate:
         resource_response,
         source_code_version,
         mock_source_code_version_crud,
+        mocked_storage,
+        mock_storage_crud,
+        storage_response,
         monkeypatch,
     ):
         source_code_version.template_id = mocked_template.id
@@ -609,6 +612,8 @@ class TestCreate:
             name=mocked_resource.name,
             template_id=mocked_template.id,
             source_code_version_id=source_code_version.id,
+            storage_id=storage_response.id,
+            storage_path="path/to/storage",
             dependency_config=[
                 DependencyConfig(name="env", value="prod"),
             ],
@@ -617,6 +622,7 @@ class TestCreate:
         requester = mocked_user
         mock_template_crud.get_by_id.return_value = mocked_template
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_storage_crud.get_by_id.return_value = mocked_storage
 
         new_resource = Resource(
             name=mocked_resource.name, template_id=mocked_template.id, created_by=requester.id, revision_number=1
