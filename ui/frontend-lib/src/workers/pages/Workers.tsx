@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
@@ -93,6 +94,49 @@ export default function WorkerList() {
 
       { field: "host", headerName: "Host", flex: 1 },
       {
+        field: "current_task",
+        headerName: "Last Task",
+        flex: 2,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams) => {
+          if (!params.value) {
+            return (
+              <Typography variant="body2" color="textSecondary">
+                N/A
+              </Typography>
+            );
+          }
+          const { entity, entity_id, action, user, started_at } = params.value;
+          const label = `${entity} / ${action}`;
+          return (
+            <Tooltip
+              title={
+                <Typography component="pre" variant="caption">
+                  {`Entity: ${entity}\nID: ${entity_id}\nAction: ${action}\nUser: ${user}\nStarted: ${started_at}`}
+                </Typography>
+              }
+              placement="top-start"
+            >
+              <Typography variant="body1">
+                <GetEntityLink
+                  _entity_name={entity}
+                  id={entity_id}
+                  identifier={label}
+                />
+              </Typography>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        field: "tasks_completed",
+        headerName: "Completed",
+        flex: 0.5,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2">{params.value ?? 0}</Typography>
+        ),
+      },
+      {
         field: "created_at",
         headerName: "Created",
         flex: 1,
@@ -136,6 +180,8 @@ export default function WorkerList() {
           "name",
           "status",
           "host",
+          "current_task",
+          "tasks_completed",
           "created_at",
           "updated_at",
           "host_metadata",
