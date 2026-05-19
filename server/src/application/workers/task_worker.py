@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, UTC
 from typing import override
 from uuid import UUID
 
@@ -108,6 +109,17 @@ class TaskWorker(BaseMessagesWorker):
             step_id=step_id,
             resource_id=resource_id,
         )
+
+        # Track current task on the worker
+        task_info = {
+            "entity": entity_controller,
+            "entity_id": str(obj_id),
+            "action": action,
+            "user": user.identifier,
+            "started_at": datetime.now(UTC).isoformat(),
+        }
+        await self.worker_service.set_current_task(self.worker.id, task_info)
+
         # Main task flow
         try:
             await task_controller.start_pipeline()
@@ -116,6 +128,8 @@ class TaskWorker(BaseMessagesWorker):
         except Exception as e:
             prometheus_counter.labels(entity_controller, "error").inc()
             await self.handle_exception(e, message, task_controller, action)
+        finally:
+            await self.worker_service.increment_tasks_completed(self.worker.id)
 
     async def process_scheduler_job(self, msg: MessageModel):
         job_id = msg.body.get("job_id")

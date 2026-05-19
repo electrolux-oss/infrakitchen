@@ -22,6 +22,8 @@ class Worker(Base):
     host: Mapped[str] = mapped_column()
     host_metadata: Mapped[dict[str, str]] = mapped_column(JSON, default={})
     status: Mapped[str] = mapped_column()
+    current_task: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True, default=None)
+    tasks_completed: Mapped[int | None] = mapped_column(default=0, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
@@ -32,6 +34,8 @@ class WorkerDTO(BaseModel):
     host: str = Field(..., title="Worker host")
     host_metadata: dict[str, str] = Field(default={}, title="Worker metadata")
     status: Literal["free", "busy"] = Field(default="free", title="Worker status")
+    current_task: dict[str, str] | None = Field(default=None, title="Currently running task")
+    tasks_completed: int | None = Field(default=0, title="Total tasks completed")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     model_config = ConfigDict(from_attributes=True)

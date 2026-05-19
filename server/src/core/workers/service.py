@@ -39,7 +39,8 @@ class WorkerService:
             worker.id = result[0].id
             worker.updated_at = datetime.now()
             response = await self.crud.update(
-                result[0], model_db_dump(worker, exclude_fields={"_entity_name", "created_at"})
+                result[0],
+                model_db_dump(worker, exclude_fields={"_entity_name", "created_at", "current_task", "tasks_completed"}),
             )
         else:
             response = await self.crud.create(model_db_dump(worker))
@@ -54,4 +55,24 @@ class WorkerService:
             logger.warning(f"Worker with id {worker_id} not found")
             return
         worker.status = status
+        await self.crud.commit()
+
+    async def set_current_task(self, worker_id: str | UUID | None, task_info: dict[str, str] | None) -> None:
+        if worker_id is None:
+            return
+        worker = await self.crud.get_by_id(worker_id)
+        if not worker:
+            logger.warning(f"Worker with id {worker_id} not found")
+            return
+        worker.current_task = task_info
+        await self.crud.commit()
+
+    async def increment_tasks_completed(self, worker_id: str | UUID | None) -> None:
+        if worker_id is None:
+            return
+        worker = await self.crud.get_by_id(worker_id)
+        if not worker:
+            logger.warning(f"Worker with id {worker_id} not found")
+            return
+        worker.tasks_completed = (worker.tasks_completed or 0) + 1
         await self.crud.commit()

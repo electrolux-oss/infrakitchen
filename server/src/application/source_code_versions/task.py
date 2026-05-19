@@ -1,5 +1,6 @@
 import logging
 
+import os
 import tempfile
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,6 +70,8 @@ class SourceCodeVersionTask:
         if hasattr(self.logger, "add_log_header"):
             if self.user:
                 self.logger.add_log_header(f"User: {self.user.identifier} Action: {self.action}")
+
+        self.logger.info(f"Running on worker: {os.uname().nodename}")
 
         match self.action:
             case ModelActions.SYNC:

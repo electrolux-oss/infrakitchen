@@ -94,6 +94,8 @@ class ResourceTask:
             if self.user:
                 self.logger.add_log_header(f"User: {self.user.identifier} Action: {self.action}")
 
+        self.logger.info(f"Running on worker: {os.uname().nodename}")
+
         match self.action:
             case ModelActions.EXECUTE:
                 self.logger.info(f"Starting pipeline with action {self.action}")
