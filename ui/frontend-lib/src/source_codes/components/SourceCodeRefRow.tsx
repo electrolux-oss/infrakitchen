@@ -64,7 +64,9 @@ type ConfigurationTabContentProps = {
   entity?: SourceCodeVersionResponse;
 };
 
-const ConfigurationTabContent = ({ entity }: ConfigurationTabContentProps) => {
+export const ConfigurationTabContent = ({
+  entity,
+}: ConfigurationTabContentProps) => {
   const methods = useForm();
   const { ikApi } = useConfig();
 

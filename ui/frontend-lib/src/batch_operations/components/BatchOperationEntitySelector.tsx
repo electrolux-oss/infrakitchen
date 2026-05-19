@@ -26,7 +26,6 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { IkEntity } from "../../types";
 import { BatchOperationCreate } from "../types";
 
@@ -121,9 +120,7 @@ export const BatchOperationEntitySelector = (
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code_version;
-          return (
-            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
-          );
+          return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
       {
@@ -172,9 +169,7 @@ export const BatchOperationEntitySelector = (
           row.source_code_version?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code;
-          return (
-            <SourceCodeVersionLink source_code_version={sourceCodeVersion} />
-          );
+          return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
       {

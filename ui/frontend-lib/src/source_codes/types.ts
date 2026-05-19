@@ -93,6 +93,11 @@ export interface SourceCodeVersionCreate {
   template_id: string;
 }
 
+export interface SourceCodeVersionUpdate {
+  description: string;
+  labels: string[];
+}
+
 export interface VariableInput {
   name: string;
   type: string;

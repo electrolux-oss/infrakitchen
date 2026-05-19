@@ -10,7 +10,6 @@ import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse } from "../types";
 
 export interface ResourceAboutProps {
@@ -42,13 +41,15 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <GetEntityLink {...resource.template} />
             {"/"}
-            <SourceCodeVersionLink
-              source_code_version={resource.source_code_version}
-              name={
-                resource.source_code_version?.source_code_version ||
-                resource.source_code_version?.source_code_branch
-              }
-            />
+            {resource.source_code_version ? (
+              <GetEntityLink
+                {...resource.source_code_version}
+                name={
+                  resource.source_code_version?.source_code_version ||
+                  resource.source_code_version?.source_code_branch
+                }
+              />
+            ) : null}
           </Box>
         }
         size={4}
