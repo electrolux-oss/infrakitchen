@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,6 +64,7 @@ class StorageTask:
             if self.user:
                 self.logger.add_log_header(f"User: {self.user.identifier} Action: {self.action}")
 
+        self.logger.info(f"Running on worker: {os.uname().nodename}")
         if self.storage_instance.status not in [
             ModelStatus.ERROR,
             ModelStatus.DONE,

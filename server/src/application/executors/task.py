@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import tempfile
 
@@ -83,6 +84,8 @@ class ExecutorTask:
         if hasattr(self.logger, "add_log_header"):
             if self.user:
                 self.logger.add_log_header(f"User: {self.user.identifier} Action: {self.action}")
+
+        self.logger.info(f"Running on worker: {os.uname().nodename}")
 
         match self.action:
             case ModelActions.EXECUTE:
