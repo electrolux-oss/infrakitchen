@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -9,16 +11,20 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
 import { InputTab } from "../../source_codes/components/InputTab";
 import { ConfigurationTabContent } from "../../source_codes/components/SourceCodeRefRow";
 import { SourceCodeVersionResponse } from "../../source_codes/types";
 
 import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
-import { SourceCodeVersionResources } from "./SourceCodeVersionResources";
 
 export const SourceCodeVersionContent = () => {
   const { entity } = useEntityProvider();
   const source_code_version = entity as SourceCodeVersionResponse;
+  const fixedFilters = useMemo(
+    () => ({ source_code_version_id: source_code_version?.id }),
+    [source_code_version?.id],
+  );
   if (!source_code_version) return null;
 
   const tabs: TabDefinition[] = [
@@ -41,8 +47,9 @@ export const SourceCodeVersionContent = () => {
     {
       label: "Resources",
       content: (
-        <SourceCodeVersionResources
-          source_code_version_id={source_code_version.id}
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_sourcecodeversion_resources"
         />
       ),
     },

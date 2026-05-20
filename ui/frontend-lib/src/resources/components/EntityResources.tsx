@@ -3,19 +3,23 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FilterConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
+
 import {
   buildResourceApiFilters,
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
   resourceFields,
-} from "../../resources/components/resourceTableConfig";
+} from "./resourceTableConfig";
 
-interface IntegrationResourcesProps {
-  integration_id: string;
+interface EntityResourcesProps {
+  fixedFilters: Record<string, any>;
+  filterStorageKey: string;
 }
 
-export const IntegrationResources = (props: IntegrationResourcesProps) => {
-  const { integration_id } = props;
+export const EntityResources = ({
+  fixedFilters,
+  filterStorageKey,
+}: EntityResourcesProps) => {
   const { ikApi } = useConfig();
   const [labels, setLabels] = useState<string[]>([]);
 
@@ -43,9 +47,9 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
   const buildApiFilters = useCallback(
     (filterValues: Record<string, any>) => ({
       ...buildResourceApiFilters(filterValues),
-      integration_ids__any: [integration_id],
+      ...fixedFilters,
     }),
-    [integration_id],
+    [fixedFilters],
   );
 
   return (
@@ -54,7 +58,7 @@ export const IntegrationResources = (props: IntegrationResourcesProps) => {
       entityName="resource"
       columns={resourceColumns}
       defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
-      filterStorageKey={`filter_integration_resources_${integration_id}`}
+      filterStorageKey={filterStorageKey}
       filterConfigs={filterConfigs}
       buildApiFilters={buildApiFilters}
       fields={resourceFields}
