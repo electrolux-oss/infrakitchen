@@ -10,10 +10,7 @@ import { LabelInput, useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import {
-  SourceCodeVersionResponse,
-  SourceCodeVersionUpdate,
-} from "../../source_codes/types";
+import { SourceCodeVersionResponse, SourceCodeVersionUpdate } from "../types";
 
 export const SourceCodeVersionEditPageInner = (props: {
   entity: SourceCodeVersionResponse;

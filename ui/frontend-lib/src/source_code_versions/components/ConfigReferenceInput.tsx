@@ -13,8 +13,8 @@ import {
 
 import { GradientCircularProgress, useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
 import { TemplateShort } from "../../templates/types";
-import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import {
   SourceConfigUpdateWithId,
   SourceOutputConfigTemplateResponse,

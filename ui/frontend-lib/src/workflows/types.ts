@@ -2,7 +2,7 @@ import { WiringRule } from "../common/components/viewers/Wiring/types";
 import { IntegrationShort } from "../integrations/types";
 import { ResourceShort } from "../resources/types";
 import { SecretShort } from "../secrets/types";
-import { SourceCodeVersionShort } from "../source_codes/types";
+import { SourceCodeVersionShort } from "../source_code_versions/types";
 import { TemplateShort } from "../templates/types";
 import { UserShort } from "../users";
 import { ENTITY_STATUS } from "../utils";

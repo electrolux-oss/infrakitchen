@@ -7,7 +7,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { SourceCodeVersionResponse } from "../../source_codes/types";
+import { SourceCodeVersionResponse } from "../types";
 
 export interface SourceCodeVersionAboutProps {
   source_code_version: SourceCodeVersionResponse;

@@ -208,6 +208,30 @@ export const MetadataTab = ({
               requiredPermission="api:source_code_version"
               permissionAction="write"
             >
+              <Tooltip title={"Configure template references"}>
+                <span>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) {
+                        window.open(
+                          `${linkPrefix}source_code_versions/${entity.id}/configuration`,
+                          "_blank",
+                        );
+                        return;
+                      }
+                      navigate(
+                        `${linkPrefix}source_code_versions/${entity.id}/configuration`,
+                      );
+                    }}
+                  >
+                    Configure
+                  </Button>
+                </span>
+              </Tooltip>
+
               <Tooltip
                 title={
                   entity.status !== ENTITY_STATUS.DISABLED

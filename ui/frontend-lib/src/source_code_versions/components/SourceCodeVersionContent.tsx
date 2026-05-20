@@ -12,10 +12,10 @@ import {
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
-import { InputTab } from "../../source_codes/components/InputTab";
-import { ConfigurationTabContent } from "../../source_codes/components/SourceCodeRefRow";
-import { SourceCodeVersionResponse } from "../../source_codes/types";
+import { SourceCodeVersionResponse } from "../types";
 
+import { InputTab } from "./InputTab";
+import { ConfigurationTabContent } from "./SourceCodeRefRow";
 import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
 
 export const SourceCodeVersionContent = () => {

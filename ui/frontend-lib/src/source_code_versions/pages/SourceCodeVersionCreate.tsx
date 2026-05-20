@@ -16,12 +16,9 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import {
-  RefFolders,
-  SourceCodeVersionCreate,
-  SourceCodeVersionResponse,
-} from "../../source_codes/types";
+import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
+import { SourceCodeVersionCreate, SourceCodeVersionResponse } from "../types";
 
 const SourceCodeVersionCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
