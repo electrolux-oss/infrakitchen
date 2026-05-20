@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -8,16 +10,20 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
 import { IntegrationOverview } from "./IntegrationOverview";
 import { IntegrationPermissions } from "./IntegrationPermissions";
-import { IntegrationResources } from "./IntegrationResources";
 import { IntegrationSourceCodeDependencies } from "./IntegrationSourceCodeDependencies";
 import { IntegrationWorkspaceDependencies } from "./IntegrationWorkspaceDependencies";
 
 export const IntegrationContent = () => {
   const { entity } = useEntityProvider();
+  const fixedFilters = useMemo(
+    () => ({ integration_ids__any: [entity?.id] }),
+    [entity?.id],
+  );
   if (!entity) return null;
 
   const isGit = entity.integration_type === "git";
@@ -48,7 +54,12 @@ export const IntegrationContent = () => {
       ? [
           {
             label: "Resources",
-            content: <IntegrationResources integration_id={entity.id} />,
+            content: (
+              <EntityResources
+                fixedFilters={fixedFilters}
+                filterStorageKey="filter_integration_resources"
+              />
+            ),
           },
         ]
       : []),

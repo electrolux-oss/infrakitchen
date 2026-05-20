@@ -17,12 +17,12 @@ import {
 import { PermissionWrapper, useConfig } from "../../common";
 import {
   CommonField,
+  GetEntityLink,
   GetReferenceUrlValue,
   getTextValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
 
 export interface TemplateConfigurationProps {
@@ -127,8 +127,8 @@ export const TemplateConfiguration = ({
             name="Template Version"
             value={
               resource.source_code_version?.source_code ? (
-                <SourceCodeVersionLink
-                  source_code_version={resource.source_code_version}
+                <GetEntityLink
+                  {...resource.source_code_version}
                   name={
                     resource.source_code_version.source_code_version ||
                     resource.source_code_version.source_code_branch

@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -8,13 +10,17 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
 
 import { StorageConfiguration } from "./StorageConfiguration";
 import { StorageOverview } from "./StorageOverview";
-import { StorageResources } from "./StorageResources";
 
 export const StorageContent = () => {
   const { entity } = useEntityProvider();
+  const fixedFilters = useMemo(
+    () => ({ storage_id: entity?.id }),
+    [entity?.id],
+  );
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
@@ -24,7 +30,12 @@ export const StorageContent = () => {
     },
     {
       label: "Resources",
-      content: <StorageResources storage_id={entity.id} />,
+      content: (
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_resources"
+        />
+      ),
     },
     {
       label: "Audit",

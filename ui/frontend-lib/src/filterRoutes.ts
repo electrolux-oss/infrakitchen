@@ -364,6 +364,43 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
 
+  // Source Code Versions
+  {
+    path: "/source_code_versions",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersions"),
+      "SourceCodeVersionsPage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "read",
+  },
+  {
+    path: "/source_code_versions/create",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersionCreate"),
+      "SourceCodeVersionCreatePage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "write",
+  },
+  {
+    path: "/source_code_versions/:source_code_version_id/edit",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersionEdit"),
+      "SourceCodeVersionEditPage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "write",
+  },
+  {
+    path: "/source_code_versions/:source_code_version_id/:tab?",
+    Component: lz(
+      () => import("./source_code_versions/pages/SourceCodeVersion"),
+      "SourceCodeVersionPage",
+    ),
+    requiredPermission: "api:source_code_version",
+    permissionAction: "read",
+  },
   // ── Storages ──────────────────────────────────────────────────────────────────
   {
     path: "/storages",

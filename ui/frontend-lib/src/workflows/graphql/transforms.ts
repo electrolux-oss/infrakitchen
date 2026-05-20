@@ -1,6 +1,6 @@
 import { IntegrationShort } from "../../integrations/types";
 import { SecretShort } from "../../secrets/types";
-import { SourceCodeVersionShort } from "../../source_codes/types";
+import { SourceCodeVersionShort } from "../../source_code_versions/types";
 import { TemplateShort } from "../../templates/types";
 import { UserShort } from "../../users/types";
 import {

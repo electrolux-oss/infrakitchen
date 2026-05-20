@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -7,18 +9,22 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
 
 import { WorkspaceConfiguration } from "./WorkspaceConfiguration";
 import { WorkspaceOverview } from "./WorkspaceOverview";
 import { WorkspacePermissions } from "./WorkspacePermissions";
 import { WorkspacePullRequests } from "./WorkspacePullRequests";
 import { WorkspaceRepository } from "./WorkspaceRepository";
-import { WorkspaceResources } from "./WorkspaceResources";
 
 const METADATA_PROVIDERS = ["github", "bitbucket", "azure_devops"];
 
 export const WorkspaceContent = () => {
   const { entity } = useEntityProvider();
+  const fixedFilters = useMemo(
+    () => ({ workspace_id: entity?.id }),
+    [entity?.id],
+  );
   if (!entity) return null;
 
   const hasMetadata = METADATA_PROVIDERS.includes(entity.workspace_provider);
@@ -30,7 +36,12 @@ export const WorkspaceContent = () => {
     },
     {
       label: "Resources",
-      content: <WorkspaceResources workspace_id={entity.id} />,
+      content: (
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_workspace_resources"
+        />
+      ),
     },
     ...(hasMetadata
       ? [

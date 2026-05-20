@@ -12,9 +12,9 @@ import {
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
-  SourceConfigResponse,
   SourceOutputConfigTemplateResponse,
-} from "../../source_codes/types";
+  SourceConfigResponse,
+} from "../../source_code_versions/types";
 import { TemplateShort } from "../types";
 
 interface NamingConventionInputProps {

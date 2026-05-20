@@ -64,7 +64,9 @@ type ConfigurationTabContentProps = {
   entity?: SourceCodeVersionResponse;
 };
 
-const ConfigurationTabContent = ({ entity }: ConfigurationTabContentProps) => {
+export const ConfigurationTabContent = ({
+  entity,
+}: ConfigurationTabContentProps) => {
   const methods = useForm();
   const { ikApi } = useConfig();
 
@@ -158,12 +160,6 @@ export const SourceCodeRefRow = ({
       });
     }
   };
-
-  // TODO
-  // const isRecentlyCreated =
-  //   hasVersion &&
-  //   entity?.created_at &&
-  //   isAfter(new Date(entity.created_at), subDays(new Date(), 3));
 
   return (
     <Paper
@@ -299,7 +295,6 @@ export const SourceCodeRefRow = ({
               value="outputs"
               disabled={!hasVersion}
             />
-            <Tab label="Configure" value="configuration" disabled={!isDone} />
             <Tab label="Audit" value="audit" />
             <Tab label="Revision" value="revision" />
           </Tabs>
@@ -328,10 +323,6 @@ export const SourceCodeRefRow = ({
                 <HclItemList items={entity?.outputs} type="outputs" />
               )}
             </Box>
-          )}
-
-          {activeTab === "configuration" && (
-            <ConfigurationTabContent entity={entity} />
           )}
 
           {activeTab === "audit" && entity && (

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import React from "react";
 
+import { useNavigate } from "react-router";
+
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Typography,
   Box,
@@ -8,6 +11,7 @@ import {
   TextField,
   Button,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 
 import {
@@ -55,8 +59,9 @@ export const MetadataTab = ({
   sourceCodeId,
   triggerSync,
 }: MetadataTabProps) => {
-  const { ikApi } = useConfig();
+  const { ikApi, linkPrefix } = useConfig();
   const { loading } = useEntityListProvider();
+  const navigate = useNavigate();
   const hasVersion = !!entity;
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
@@ -179,59 +184,104 @@ export const MetadataTab = ({
         )}
 
         {hasVersion && (
-          <PermissionWrapper
-            requiredPermission="api:source_code_version"
-            permissionAction="write"
-          >
-            <Tooltip
-              title={
-                entity.status !== ENTITY_STATUS.DISABLED
-                  ? "Version must be disabled before erasing data"
-                  : entity.resource_count > 0
-                    ? "Version has active resources and cannot be erased"
-                    : ""
-              }
-            >
-              <span>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={
-                    entity.status !== ENTITY_STATUS.DISABLED ||
-                    entity.resource_count > 0
+          <>
+            <Tooltip title="Open version detail page">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey) {
+                    window.open(
+                      `${linkPrefix}source_code_versions/${entity.id}`,
+                      "_blank",
+                    );
+                    return;
                   }
-                >
-                  Erase Data
-                </Button>
-              </span>
+                  navigate(`${linkPrefix}source_code_versions/${entity.id}`);
+                }}
+                sx={{ justifySelf: "start" }}
+              >
+                <OpenInNewIcon fontSize="small" />
+              </IconButton>
             </Tooltip>
-            <CommonDialog
-              open={deleteDialogOpen}
-              onClose={() => setDeleteDialogOpen(false)}
-              title="Erase Version Data"
-              content={
-                <Typography variant="body2">
-                  Are you sure you want to erase all data for this version? This
-                  action is irreversible.
-                </Typography>
-              }
-              actions={
-                <DeleteButton
-                  entity_id={entity.id}
-                  entity_name="source_code_version"
-                  ikApi={ikApi}
-                  onDelete={() => {
-                    onRefresh();
-                    setDeleteDialogOpen(false);
-                  }}
-                >
-                  Erase
-                </DeleteButton>
-              }
-            />
-          </PermissionWrapper>
+
+            <PermissionWrapper
+              requiredPermission="api:source_code_version"
+              permissionAction="write"
+            >
+              <Tooltip title={"Configure template references"}>
+                <span>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) {
+                        window.open(
+                          `${linkPrefix}source_code_versions/${entity.id}/configuration`,
+                          "_blank",
+                        );
+                        return;
+                      }
+                      navigate(
+                        `${linkPrefix}source_code_versions/${entity.id}/configuration`,
+                      );
+                    }}
+                  >
+                    Configure
+                  </Button>
+                </span>
+              </Tooltip>
+
+              <Tooltip
+                title={
+                  entity.status !== ENTITY_STATUS.DISABLED
+                    ? "Version must be disabled before erasing data"
+                    : entity.resource_count > 0
+                      ? "Version has active resources and cannot be erased"
+                      : ""
+                }
+              >
+                <span>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={
+                      entity.status !== ENTITY_STATUS.DISABLED ||
+                      entity.resource_count > 0
+                    }
+                  >
+                    Erase Data
+                  </Button>
+                </span>
+              </Tooltip>
+              <CommonDialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                title="Erase Version Data"
+                content={
+                  <Typography variant="body2">
+                    Are you sure you want to erase all data for this version?
+                    This action is irreversible.
+                  </Typography>
+                }
+                actions={
+                  <DeleteButton
+                    entity_id={entity.id}
+                    entity_name="source_code_version"
+                    ikApi={ikApi}
+                    onDelete={() => {
+                      onRefresh();
+                      setDeleteDialogOpen(false);
+                    }}
+                  >
+                    Erase
+                  </DeleteButton>
+                }
+              />
+            </PermissionWrapper>
+          </>
         )}
       </Box>
     </Box>

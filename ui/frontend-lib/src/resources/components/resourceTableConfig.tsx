@@ -12,7 +12,6 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { IntegrationShort } from "../../integrations/types";
 import { SecretShort } from "../../secrets/types";
-import { SourceCodeVersionLink } from "../../source_codes/components/SourceCodeVersionLink";
 import { ResourceShort } from "../types";
 
 export const resourceFields = [
@@ -109,7 +108,7 @@ export const resourceColumns: EntityTableColumn[] = [
       const scv = params.row.source_code_version;
       if (!scv) return null;
       const ref = scv.source_code_version ?? scv.source_code_branch;
-      return <SourceCodeVersionLink source_code_version={scv} name={ref} />;
+      return <GetEntityLink {...scv} name={ref} />;
     },
   },
   {

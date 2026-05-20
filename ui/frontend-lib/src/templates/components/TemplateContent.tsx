@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -10,12 +12,16 @@ import {
 } from "../../common/components/TabbedContent";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityResources } from "../../resources/components/EntityResources";
 
 import { TemplateOverview } from "./TemplateOverview";
-import { TemplateResources } from "./TemplateResources";
 
 export const TemplateContent = () => {
   const { entity } = useEntityProvider();
+  const fixedFilters = useMemo(
+    () => ({ template_id: [entity?.id] }),
+    [entity?.id],
+  );
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
@@ -47,7 +53,12 @@ export const TemplateContent = () => {
       : []),
     {
       label: "Resources",
-      content: <TemplateResources template_id={entity.id} />,
+      content: (
+        <EntityResources
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_resources"
+        />
+      ),
     },
     {
       label: "Tree View",

@@ -1,8 +1,8 @@
 import {
   formatNumericDisplayValue,
   parseNumericField,
-} from "../../source_codes/utils/numeric";
-import { getValidationSummary } from "../../source_codes/utils/validationSummary";
+} from "../../source_code_versions/utils/numeric";
+import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
 import { ValidationRule, ValidationRulesByVariable } from "../../types";
 import { ResourceVariableSchema } from "../types";
 

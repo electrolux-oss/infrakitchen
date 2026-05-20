@@ -57,7 +57,19 @@ class SourceCodeVersionCRUD:
         )
 
         statement = evaluate_sqlalchemy_filters(SourceCodeVersion, statement, filter)
-        statement = evaluate_sqlalchemy_sorting(SourceCodeVersion, statement, sort)
+
+        sort_field = sort[0].lower() if sort else None
+        sort_dir = sort[1].lower() if sort else "asc"
+
+        if sort_field == "template":
+            column = Template.name
+            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
+        elif sort_field == "source_code":
+            column = SourceCode.source_code_url
+            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
+        else:
+            statement = evaluate_sqlalchemy_sorting(SourceCodeVersion, statement, sort)
+
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)

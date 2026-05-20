@@ -8,10 +8,11 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { RefFolders, RefType } from "../types";
+import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
+import { RefType } from "../../source_code_versions/types";
+import { RefFolders } from "../types";
 
 import { SourceCodeOverview } from "./SourceCodeOverview";
-import { SourceCodeRefSection } from "./SourceCodeRefSection";
 
 export const SourceCodeContent = () => {
   const { entity } = useEntityProvider();
