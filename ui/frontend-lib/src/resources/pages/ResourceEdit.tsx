@@ -562,6 +562,9 @@ export const ResourceEditPageInner = (props: {
                           entity_name="source_code_versions"
                           buffer={buffer}
                           setBuffer={setBuffer}
+                          getOptionDisabled={(option: any) =>
+                            option.status !== "done"
+                          }
                           error={!!errors.source_code_version_id}
                           helpertext={
                             errors.source_code_version_id

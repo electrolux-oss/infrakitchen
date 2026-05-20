@@ -27,6 +27,7 @@ interface ReferenceInputProps {
   bufferKey?: string;
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
+  getOptionDisabled?: (option: IkEntity) => boolean;
   [key: string]: any; // Allow additional props
 }
 
@@ -42,6 +43,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     showFields = ["name"],
     value,
     optionFilter,
+    getOptionDisabled: getOptionDisabledProp,
     ...otherProps
   } = props;
 
@@ -62,7 +64,9 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     onChange(newValue ? newValue.id : null);
   };
 
-  const isOptionDisabled = (option: IkEntity) => option.status === "disabled";
+  const isOptionDisabled =
+    getOptionDisabledProp ??
+    ((option: IkEntity) => option.status === "disabled");
 
   useEffect(() => {
     if (otherProps.disabled) {
