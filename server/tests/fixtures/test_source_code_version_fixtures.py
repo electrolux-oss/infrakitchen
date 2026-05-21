@@ -121,6 +121,7 @@ def source_code_version_response(mocked_user_response, template_response, mocked
         creator=mocked_user_response,
         template=template_response,
         source_code=mocked_source_code_response,
+        status=ModelStatus.DONE,
     )
 
 

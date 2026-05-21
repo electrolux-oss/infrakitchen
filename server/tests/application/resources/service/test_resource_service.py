@@ -776,6 +776,36 @@ class TestCreate:
         ):
             await mock_resource_service.create(resource_create, mocked_user_response)
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("scv_status", [ModelStatus.IN_PROGRESS, ModelStatus.ERROR, ModelStatus.READY])
+    async def test_create_scv_not_done(
+        self,
+        scv_status,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+    ):
+        source_code_version.status = scv_status
+        source_code_version.template_id = mocked_template.id
+        mocked_template.abstract = False
+        mocked_template.status = ModelStatus.ENABLED
+
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+        )
+
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+
+        with pytest.raises(EntityWrongState, match="Source code version is not in DONE state"):
+            await mock_resource_service.create(resource_create, mocked_user)
+
 
 class TestPatch:
     @pytest.mark.asyncio
@@ -997,6 +1027,42 @@ class TestPatch:
             assert call.args[1] != existing_workspace_id, (
                 "user_entity_permissions should not be called when workspace is unchanged"
             )
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("scv_status", [ModelStatus.IN_PROGRESS, ModelStatus.ERROR, ModelStatus.READY])
+    async def test_patch_scv_not_done(
+        self,
+        scv_status,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_resource,
+        source_code_version,
+        monkeypatch,
+    ):
+        resource_id = uuid4()
+        mocked_resource.id = resource_id
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_resource.abstract = False
+
+        source_code_version.status = scv_status
+        source_code_version.template = Mock(id=mocked_resource.template_id)
+
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[],
+            template=Mock(id=mocked_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+        mock_resource_service.service_source_code_version.get_by_id = AsyncMock(return_value=source_code_version)
+
+        resource_patch = ResourcePatch(source_code_version_id=source_code_version.id)
+
+        with pytest.raises(EntityWrongState, match="Source code version is not in DONE state"):
+            await mock_resource_service.patch(str(resource_id), resource_patch, mocked_user)
 
 
 class TestDelete:

@@ -271,6 +271,11 @@ class ResourceService:
                 if source_code_version.status == ModelStatus.DISABLED:
                     raise EntityWrongState("Source code version is disabled")
 
+                if source_code_version.status != ModelStatus.DONE:
+                    raise EntityWrongState(
+                        "Source code version is not in DONE state. You should sync it before using in resource"
+                    )
+
                 resource_varibles_schema = await self.get_variable_schema(
                     source_code_version_id=source_code_version_id,
                     resource_ids=resource.parents,
@@ -404,6 +409,11 @@ class ResourceService:
                     raise ValueError(
                         "Source code version template ID does not match resource template ID. "
                         f"Expected {source_code_version.template.id}, got {existing_resource.template_id}"
+                    )
+
+                if source_code_version.status != ModelStatus.DONE:
+                    raise EntityWrongState(
+                        "Source code version is not in DONE state. You should sync it before using in resource"
                     )
 
                 resource_variables_schema = await self.get_variable_schema(
