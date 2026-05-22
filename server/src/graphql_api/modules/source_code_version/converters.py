@@ -75,6 +75,7 @@ def convert_source_code_version(obj: Any, fields: set[str] | None = None) -> Sou
         source_code_folder=obj.source_code_folder,
         variables=obj.variables,
         outputs=obj.outputs,
+        code_snapshot=obj.code_snapshot,
         description=obj.description,
         labels=obj.labels,
         status=enum_val(obj.status),

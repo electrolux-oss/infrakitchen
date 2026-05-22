@@ -49,6 +49,7 @@ class SourceCodeVersionType:
     source_code_folder: str = ""
     variables: JSON | None = None
     outputs: JSON | None = None
+    code_snapshot: str | None = None
     description: str = ""
     labels: list[str] | None = None
     status: str = ""

@@ -14,6 +14,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { SourceCodeVersionResponse } from "../types";
 
+import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
 import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
@@ -43,6 +44,12 @@ export const SourceCodeVersionContent = () => {
     {
       label: "Configuration",
       content: <ConfigurationTabContent entity={source_code_version} />,
+    },
+    {
+      label: "Code",
+      content: (
+        <CodeSnapshotTab codeSnapshot={source_code_version.code_snapshot} />
+      ),
     },
     {
       label: "Resources",
