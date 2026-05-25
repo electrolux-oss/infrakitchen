@@ -40,6 +40,7 @@ class SourceCodeVersion(BaseRevision):
         "SourceOutputConfig",
         # lazy="joined",
     )
+    code_snapshot: Mapped[str | None] = mapped_column()
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
 
@@ -164,6 +165,7 @@ class SourceCodeVersionDTO(BaseModel):
     variables_config: list[VariableConfigModel] = Field(default_factory=list)
     variables: list[VariableModel] = Field(default_factory=list)
     outputs: list[OutputVariableModel] = Field(default_factory=list)
+    code_snapshot: str | None = Field(default="")
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
     resource_count: int = Field(default=0)

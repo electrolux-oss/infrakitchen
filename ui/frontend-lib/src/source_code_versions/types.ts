@@ -35,6 +35,7 @@ export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
   outputs: VariableOutput[];
   description: string;
   resource_count: number;
+  code_snapshot: string | null;
 }
 
 export interface SourceCodeVersionCreate {

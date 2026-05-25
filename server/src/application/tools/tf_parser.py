@@ -104,6 +104,7 @@ class OtfProvider:
         self.workspace: str = workspace
         self.depth: int = 1  # Depth of the directory tree when adding files
         self.directory: str | None = None
+        self.tf_string_data: str = ""
 
     def parse_tf_to_json(self, tf_data: str) -> dict[str, Any]:
         dict_data: dict[str, Any] = hcl2.loads(
@@ -177,16 +178,24 @@ class OtfProvider:
             data = await file.read()
         return data
 
-    async def parse_tf_directory_to_json(self):
+    async def read_files_to_string(self) -> None:
+        """Read multiple files and concatenate their contents into a single string."""
+
         """Parse all Terraform files in a given folder to JSON."""
         files: list[str] = []
         await self.traverse_directories(files, self.workspace)
-        tf_data = ""
+        divider_string = f"\n# {'-' * 30} FILE: {{}} {'-' * 30} \n"
         for f in files:
             if not f.endswith(".tf"):
                 continue
-            tf_data += await self.read_file_to_string(f)
-        return self.parse_tf_to_json(tf_data)
+            self.tf_string_data += divider_string.format(os.path.relpath(f, self.workspace))
+            self.tf_string_data += await self.read_file_to_string(f)
+            self.tf_string_data += "\n"
+
+    async def parse_tf_directory_to_json(self):
+        """Parse all Terraform files in a given folder to JSON."""
+        await self.read_files_to_string()
+        return self.parse_tf_to_json(self.tf_string_data)
 
     async def setup_tf_backend(self, tf_data: dict[str, Any], integration_provider: str) -> None:
         terraform_config = self.list_to_dict(tf_data.get("terraform", []))

@@ -158,6 +158,7 @@ class SourceCodeVersionResponse(BaseModel):
     source_code_folder: str = Field(default="", frozen=True)
     variables: list[VariableModel] = Field(default_factory=list)
     outputs: list[OutputVariableModel] = Field(default_factory=list)
+    code_snapshot: str | None = Field(default="")
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
     resource_count: int | None = Field(default=0)

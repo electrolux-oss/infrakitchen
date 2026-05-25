@@ -2937,6 +2937,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"codemirror-lang-hcl@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "codemirror-lang-hcl@npm:0.1.0"
+  dependencies:
+    "@codemirror/language": "npm:^6.0.0"
+    "@lezer/highlight": "npm:^1.0.0"
+    "@lezer/lr": "npm:^1.0.0"
+  checksum: 10/4368d77f9c967239645e681eab124800a08a3e9f6da95f92231ab71f95048feabba8e34b5500e51e0a54a006d624ad2223a4fc285b6e7ab111cba351cf75b98d
+  languageName: node
+  linkType: hard
+
 "codemirror@npm:^6.0.0":
   version: 6.0.2
   resolution: "codemirror@npm:6.0.2"
@@ -4599,6 +4610,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^5.2.0"
     "@xyflow/react": "npm:^12.10.2"
     ansi-to-react: "npm:^6.2.6"
+    codemirror-lang-hcl: "npm:^0.1.0"
     date-fns: "npm:^4.2.1"
     eslint: "npm:^9.39.4"
     eslint-config-prettier: "npm:^10.1.8"

@@ -1,7 +1,9 @@
+import difflib
 import logging
 
 import os
 import tempfile
+import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +31,30 @@ from ..source_code_versions import VariableModel, OutputVariableModel
 from ..tools import OtfProvider
 
 logger = logging.getLogger(__name__)
+
+_FILE_DIVIDER_PATTERN = re.compile(r"^#\s*-{2,}\s*FILE:\s*(.+?)\s*-{2,}\s*$")
+
+
+def _parse_snapshot_files(snapshot: str) -> dict[str, str]:
+    """Parse a code snapshot string into a dict of {filename: content}."""
+    files: dict[str, str] = {}
+    current_name: str | None = None
+    current_lines: list[str] = []
+
+    for line in snapshot.split("\n"):
+        match = _FILE_DIVIDER_PATTERN.match(line)
+        if match:
+            if current_name is not None:
+                files[current_name] = "\n".join(current_lines).strip()
+            current_name = match.group(1).strip()
+            current_lines = []
+        elif current_name is not None:
+            current_lines.append(line)
+
+    if current_name is not None:
+        files[current_name] = "\n".join(current_lines).strip()
+
+    return files
 
 
 class SourceCodeVersionTask:
@@ -76,7 +102,7 @@ class SourceCodeVersionTask:
         match self.action:
             case ModelActions.SYNC:
                 self.logger.info(f"Starting pipeline with action {self.action}")
-                await self.sync_entity()
+                await self.sync_source_code_version()
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
@@ -157,7 +183,9 @@ class SourceCodeVersionTask:
             self.source_code_version_instance.source_code_version
             or self.source_code_version_instance.source_code_branch
         )
-        assert branch, "Source code version or branch must be specified"
+
+        if not branch:
+            raise CannotProceed("Branch is not specified for the source code version")
 
         await self.git_client.clone_branch(branch=branch)
         code_language = self.source_code_instance.source_code_language
@@ -180,6 +208,11 @@ class SourceCodeVersionTask:
             outputs = otf.list_to_dict(tf_data.get("output", []))
             outpts = [OutputVariableModel.get_from_named_dict(outputs, o) for o in outputs]
             self.source_code_version_instance.outputs = [o.model_dump() for o in outpts]
+            if not self.source_code_version_instance.code_snapshot:
+                self.source_code_version_instance.code_snapshot = otf.tf_string_data
+            else:
+                self._log_code_snapshot_drift(self.source_code_version_instance.code_snapshot, otf.tf_string_data)
+                self.source_code_version_instance.code_snapshot = otf.tf_string_data
             self.logger.info(f"Variables found: {len(self.source_code_version_instance.variables)}")
             self.logger.info(f"Outputs found: {len(self.source_code_version_instance.outputs)}")
 
@@ -188,6 +221,28 @@ class SourceCodeVersionTask:
                 await self.generate_configs_and_outputs(vars, outpts)
             await self.session.commit()
         await self.git_client.delete_workspace()
+
+    def _log_code_snapshot_drift(self, old_snapshot: str, new_snapshot: str) -> None:
+        old_files = _parse_snapshot_files(old_snapshot)
+        new_files = _parse_snapshot_files(new_snapshot)
+        all_filenames = sorted(set(old_files) | set(new_files))
+
+        for filename in all_filenames:
+            if filename not in old_files:
+                self.logger.warning(f"[DRIFT] New file added: {filename}")
+            elif filename not in new_files:
+                self.logger.warning(f"[DRIFT] File removed: {filename}")
+            elif old_files[filename] != new_files[filename]:
+                self.logger.warning(f"[DRIFT] File changed: {filename}")
+                diff_lines = difflib.unified_diff(
+                    old_files[filename].splitlines(),
+                    new_files[filename].splitlines(),
+                    fromfile=f"a/{filename}",
+                    tofile=f"b/{filename}",
+                    lineterm="",
+                )
+                for line in diff_lines:
+                    self.logger.warning(line)
 
     # change entity state depends on task state
     async def change_entity_status(self, new_state: ModelStatus) -> None:
@@ -209,7 +264,7 @@ class SourceCodeVersionTask:
         if self.source_code_version_instance.status == ModelStatus.IN_PROGRESS:
             await self.change_entity_status(ModelStatus.ERROR)
 
-    async def sync_entity(self):
+    async def sync_source_code_version(self):
         self.logger.debug(
             f"Syncing SourceCodeVersion ID: {self.source_code_version_instance.id} {self.source_code_version_instance.status}"  # noqa
         )
@@ -224,6 +279,5 @@ class SourceCodeVersionTask:
     async def sync_state(self):
         await self.change_entity_status(ModelStatus.IN_PROGRESS)
         await self.get_source_code_version_data()
-        self.source_code_version_instance.status = ModelStatus.DONE
         self.logger.info("Sync task is done")
         await self.change_entity_status(ModelStatus.DONE)
