@@ -51,6 +51,10 @@ export const OpenTofuIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-opentofu" {...props} />
 );
 
+export const SlackIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="logos:slack-icon" {...props} />
+);
+
 const resourceIcons = new Map<string, React.ElementType>([
   ["aws", AwsIcon],
   ["azure", AzureIcon],
@@ -68,6 +72,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["mongodb_atlas", MongoDBIcon],
   ["datadog", DatadogIcon],
   ["opentofu", OpenTofuIcon],
+  ["slack", SlackIcon],
 ]);
 
 export const getResourceIcon = (type: string | undefined) => {

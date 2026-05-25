@@ -54,6 +54,7 @@ export interface IntegrationUpdate extends IntegrationShort {
 export enum IntegrationType {
   GIT = "git",
   CLOUD = "cloud",
+  NOTIFICATION = "notification",
 }
 
 export enum ConnectionType {

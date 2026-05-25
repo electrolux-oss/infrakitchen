@@ -112,12 +112,16 @@ class IntegrationService:
             "bitbucket_ssh",
             "git_public",
         ]
+        notification_providers = ["slack"]
         if integration.integration_type == "cloud":
             if integration.integration_provider not in cloud_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(cloud_providers)}")
         elif integration.integration_type == "git":
             if integration.integration_provider not in source_code_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(source_code_providers)}")
+        elif integration.integration_type == "notification":
+            if integration.integration_provider not in notification_providers:
+                raise ValueError(f"Invalid integration provider, must be one of {', '.join(notification_providers)}")
 
         body = model_db_dump(integration)
         body["created_by"] = requester.id

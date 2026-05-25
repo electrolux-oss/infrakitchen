@@ -854,10 +854,38 @@ export const renderFieldsForProvider = (
                 label="Vault Token"
                 fullWidth
                 margin="normal"
+                type="password"
                 error={!!(errors.configuration as FieldErrors)?.vault_token}
                 helperText={
                   (errors.configuration as any)?.vault_token?.message ||
                   "Vault authentication token"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+        </>
+      );
+    case "slack":
+      return (
+        <>
+          <Controller
+            name="configuration.slack_bot_token"
+            control={control}
+            defaultValue=""
+            rules={{ required: "Slack token is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Slack Bot Token"
+                fullWidth
+                margin="normal"
+                type="password"
+                error={!!(errors.configuration as FieldErrors)?.slack_token}
+                helperText={
+                  (errors.configuration as any)?.slack_token?.message ||
+                  "Bot User OAuth Token for Slack API authentication"
                 }
                 required
                 slotProps={{ input: { readOnly: readonly } }}
