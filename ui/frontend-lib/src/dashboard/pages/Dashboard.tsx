@@ -3,7 +3,6 @@ import { useState } from "react";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
 
-import { useConfig } from "../..";
 import PageContainer from "../../common/PageContainer";
 import { GettingStartedContent } from "../components/GettingStarted";
 import { MyFavoritesWidget } from "../components/MyFavoritesWidget";
@@ -13,8 +12,6 @@ import { useDashboardData } from "../useDashboardData";
 export const DashboardPage = () => {
   const { favorites, activities, hasResources, loading, refetch } =
     useDashboardData();
-  const { user } = useConfig();
-  const userName = user?.display_name || user?.identifier || "User";
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -64,7 +61,7 @@ export const DashboardPage = () => {
             color="primary"
             fontWeight={600}
           >
-            Welcome back, {userName}
+            Welcome to InfraKitchen
           </Typography>
         </>
       }
