@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useState,
+  useRef,
   ReactNode,
   useEffect,
   useCallback,
@@ -47,11 +48,16 @@ export const EntityProvider = ({
 
   const { event } = useEventProvider();
 
+  const actionsSeqRef = useRef<number>(0);
+
   const userActionsHandler = useCallback(async (): Promise<any> => {
+    const seq = ++actionsSeqRef.current;
     ikApi
       .get(`${entity_name}s/${entity_id}/actions`)
       .then((response: any) => {
-        setActions(response);
+        if (seq === actionsSeqRef.current) {
+          setActions(response);
+        }
       })
       .catch((error: any) => {
         notifyError(error);
@@ -79,6 +85,7 @@ export const EntityProvider = ({
           : await ikApi.get(`${entity_name}s/${entity_id}`);
         setEntity(response);
         setError(null);
+        userActionsHandler();
       } catch (e: any) {
         notifyError(e);
         setError(e.message);
@@ -88,7 +95,16 @@ export const EntityProvider = ({
     };
 
     getEntity();
-  }, [ikApi, entity_name, entity_id, refresh, fetchFn, setLoading, setError]);
+  }, [
+    ikApi,
+    entity_name,
+    entity_id,
+    refresh,
+    fetchFn,
+    setLoading,
+    setError,
+    userActionsHandler,
+  ]);
 
   const refreshEntity = useCallback(
     (updatedEntity?: IkEntity) => {
