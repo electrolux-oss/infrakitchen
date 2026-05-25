@@ -88,7 +88,7 @@ export const ResourceStateReviewDialog: React.FC<
   return (
     <CommonDialog
       title={title}
-      maxWidth="xl"
+      maxWidth={entity?.status === ENTITY_STATUS.APPROVAL_PENDING ? "sm" : "xl"}
       open={open}
       onClose={onClose}
       content={
@@ -128,6 +128,13 @@ export const ResourceStateReviewDialog: React.FC<
                             } else {
                               filteredEntity[key] = (entity as any)[key];
                             }
+                          } else if (key === "storage_id") {
+                            // entity exposes "storage" as an expanded object; map it back to a UUID for comparison
+                            const storage = (entity as any)["storage"];
+                            filteredEntity[key] =
+                              storage && typeof storage === "object"
+                                ? storage.id
+                                : (storage ?? null);
                           }
                         },
                       );
