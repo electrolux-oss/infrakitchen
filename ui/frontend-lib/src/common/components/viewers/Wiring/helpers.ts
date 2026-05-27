@@ -3,12 +3,18 @@ import React from "react";
 import { Node } from "@xyflow/react";
 
 import { ENTITY_STATUS } from "../../../../utils";
+import { type WiringColorKey } from "./WiringColors";
 
 export interface DiagramNodeData {
   label: string;
+  secondaryLabel?: string;
+  tertiaryLabel?: string;
+  colorKey?: WiringColorKey;
   templateId: string;
   outputs: string[];
   inputs: string[];
+  compactPorts?: boolean;
+  hideOrder?: boolean;
   kind: "template" | "external" | "constant";
   order?: number;
   onRemove?: (templateId: string) => void;

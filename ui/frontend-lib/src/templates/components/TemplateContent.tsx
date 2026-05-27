@@ -13,7 +13,7 @@ import {
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
-
+import { TemplateGraph } from "./TemplateGraph";
 import { TemplateOverview } from "./TemplateOverview";
 
 export const TemplateContent = () => {
@@ -68,6 +68,10 @@ export const TemplateContent = () => {
           entity_name={entity._entity_name}
         />
       ),
+    },
+    {
+      label: "Graph",
+      content: <TemplateGraph />,
     },
     {
       label: "Audit",

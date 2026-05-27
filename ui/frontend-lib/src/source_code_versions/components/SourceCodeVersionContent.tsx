@@ -17,6 +17,7 @@ import { SourceCodeVersionResponse } from "../types";
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
+import { SourceCodeVersionGraph } from "./SourceCodeVersionGraph";
 import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
 
 export const SourceCodeVersionContent = () => {
@@ -50,6 +51,10 @@ export const SourceCodeVersionContent = () => {
       content: (
         <CodeSnapshotTab codeSnapshot={source_code_version.code_snapshot} />
       ),
+    },
+    {
+      label: "Graph",
+      content: <SourceCodeVersionGraph />,
     },
     {
       label: "Resources",

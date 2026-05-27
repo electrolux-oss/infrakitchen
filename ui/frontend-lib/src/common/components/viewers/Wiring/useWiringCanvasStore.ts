@@ -13,6 +13,7 @@ import { ENTITY_STATUS } from "../../../../utils";
 
 import { DiagramNode } from "./helpers";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
+import { type WiringColorKey } from "./WiringColors";
 import { TemplatePorts } from "./WiringCanvas.types";
 
 export type WiringCanvasState = {
@@ -54,6 +55,9 @@ export function buildNodes(params: {
   externalTemplates: Array<{
     id: string;
     name: string;
+    secondaryLabel?: string;
+    tertiaryLabel?: string;
+    colorKey?: WiringColorKey;
     abstract?: boolean;
     resource?: { id: string; name: string; status: ENTITY_STATUS };
   }>;
@@ -98,6 +102,9 @@ export function buildNodes(params: {
       position: pos,
       data: {
         label: t.name,
+        secondaryLabel: t.secondaryLabel,
+        tertiaryLabel: t.tertiaryLabel,
+        colorKey: t.colorKey,
         templateId: t.id,
         order: i + 1,
         inputs: ports.inputs,
@@ -122,6 +129,9 @@ export function buildNodes(params: {
       position: pos,
       data: {
         label: t.name,
+        secondaryLabel: t.secondaryLabel,
+        tertiaryLabel: t.tertiaryLabel,
+        colorKey: t.colorKey,
         templateId: t.id,
         inputs: [],
         outputs: ports.outputs,

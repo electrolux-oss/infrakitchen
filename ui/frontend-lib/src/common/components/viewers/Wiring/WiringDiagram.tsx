@@ -35,7 +35,7 @@ const EMPTY_CONSTANTS: Array<{ id: string; name: string }> = [];
  */
 function derivePorts(
   templates: GenericTemplate[],
-  externalTemplates: Array<{ id: string; name: string }>,
+  externalTemplates: Array<{ id: string; name: string; secondaryLabel?: string }>,
   constants: Array<{ id: string; name: string }>,
   wiring: WiringRule[],
 ): Record<string, TemplatePorts> {
@@ -77,11 +77,82 @@ function derivePorts(
  */
 function computeDiagramLayout(
   templates: GenericTemplate[],
-  externalTemplates: Array<{ id: string; name: string }>,
+  externalTemplates: Array<{ id: string; name: string; secondaryLabel?: string }>,
   constants: Array<{ id: string; name: string }>,
+  wiring: WiringRule[],
+  layoutDirection: "left-to-right" | "top-to-bottom",
   stepByTemplate?: Map<string, GenericStep>,
 ): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
+
+  if (layoutDirection === "top-to-bottom") {
+    const templateIds = new Set(templates.map((t) => t.id));
+    const depth = new Map<string, number>();
+
+    for (const t of templates) {
+      depth.set(t.id, 0);
+    }
+
+    // Relax edges to compute level(depth): parent is always above child.
+    for (let i = 0; i < templates.length; i++) {
+      let changed = false;
+      for (const w of wiring) {
+        if (!templateIds.has(w.target_template_id)) continue;
+        const sourceDepth = templateIds.has(w.source_template_id)
+          ? (depth.get(w.source_template_id) ?? 0)
+          : 0;
+        const targetDepth = depth.get(w.target_template_id) ?? 0;
+        if (targetDepth < sourceDepth + 1) {
+          depth.set(w.target_template_id, sourceDepth + 1);
+          changed = true;
+        }
+      }
+      if (!changed) break;
+    }
+
+    const byDepth = new Map<number, GenericTemplate[]>();
+    for (const t of templates) {
+      const d = depth.get(t.id) ?? 0;
+      if (!byDepth.has(d)) byDepth.set(d, []);
+      byDepth.get(d)!.push(t);
+    }
+
+    const maxDepth = Math.max(0, ...byDepth.keys());
+    const maxWidth = Math.max(...Array.from(byDepth.values(), (g) => g.length), 1);
+    const startX = 40;
+    const startY = 40;
+    const verticalGap = 220;
+    const horizontalGap = 320;
+
+    for (let d = 0; d <= maxDepth; d++) {
+      const row = (byDepth.get(d) ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+      const rowOffset = ((maxWidth - row.length) * horizontalGap) / 2;
+      for (let i = 0; i < row.length; i++) {
+        positions[row[i].id] = {
+          x: startX + rowOffset + i * horizontalGap,
+          y: startY + d * verticalGap,
+        };
+      }
+    }
+
+    const externalY = startY;
+    externalTemplates.forEach((e, i) => {
+      positions[`ext-${e.id}`] = {
+        x: startX + i * horizontalGap,
+        y: externalY,
+      };
+    });
+
+    constants.forEach((c, i) => {
+      positions[`const-${c.id}`] = {
+        x: startX + (externalTemplates.length + i) * horizontalGap,
+        y: externalY,
+      };
+    });
+
+    return positions;
+  }
+
   const hasLeft = externalTemplates.length > 0 || constants.length > 0;
   const xOffset = hasLeft ? COL_WIDTH : 0;
 
@@ -136,7 +207,7 @@ const NODE_TYPES = {
 export interface WiringDiagramProps {
   templates: GenericTemplate[];
   wiring: WiringRule[];
-  externalTemplates: Array<{ id: string; name: string }>;
+  externalTemplates: Array<{ id: string; name: string; secondaryLabel?: string }>;
   constants?: Array<{ id: string; name: string }>;
   height?: number;
   /**
@@ -147,6 +218,10 @@ export interface WiringDiagramProps {
   steps?: GenericStep[];
   /** Show a fullscreen toggle button (useful in workflow mode). */
   allowFullscreen?: boolean;
+  /** Compact node rendering for read-only dependency views. */
+  compactNodes?: boolean;
+  /** Diagram orientation for auto-layout. */
+  layoutDirection?: "left-to-right" | "top-to-bottom";
 }
 
 export const WiringDiagram = ({
@@ -157,6 +232,8 @@ export const WiringDiagram = ({
   height = 600,
   steps,
   allowFullscreen = false,
+  compactNodes = false,
+  layoutDirection = "left-to-right",
 }: WiringDiagramProps) => {
   const theme = useTheme();
   const { mode } = useColorScheme();
@@ -183,21 +260,44 @@ export const WiringDiagram = ({
         templates,
         externalTemplates,
         constants,
+        wiring,
+        layoutDirection,
         stepByTemplate,
       ),
-    [templates, externalTemplates, constants, stepByTemplate],
+    [
+      templates,
+      externalTemplates,
+      constants,
+      wiring,
+      layoutDirection,
+      stepByTemplate,
+    ],
   );
 
   const computedNodes = useMemo(
-    () =>
-      buildNodes({
+    () => {
+      const nodes = buildNodes({
         selectedTemplates: templates,
         templatePorts,
         externalTemplates,
         constants,
         positions,
         stepByTemplate,
-      }),
+      });
+
+      if (!compactNodes) {
+        return nodes;
+      }
+
+      return nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          compactPorts: true,
+          hideOrder: true,
+        },
+      }));
+    },
     [
       templates,
       templatePorts,
@@ -205,20 +305,39 @@ export const WiringDiagram = ({
       constants,
       positions,
       stepByTemplate,
+      compactNodes,
     ],
   );
 
   const computedEdges = useMemo(
-    () =>
-      buildEdges({
+    () => {
+      const edges = buildEdges({
         wiring,
         selectedTemplates: templates,
         externalTemplates,
         constants,
         theme,
         stepByTemplate,
-      }),
-    [wiring, templates, externalTemplates, constants, theme, stepByTemplate],
+      });
+
+      if (!compactNodes) {
+        return edges;
+      }
+
+      return edges.map((edge) => ({
+        ...edge,
+        label: undefined,
+      }));
+    },
+    [
+      wiring,
+      templates,
+      externalTemplates,
+      constants,
+      theme,
+      stepByTemplate,
+      compactNodes,
+    ],
   );
 
   const useStore = useMemo(() => createWiringCanvasStore(), []);
@@ -252,6 +371,7 @@ export const WiringDiagram = ({
         edges={edges}
         nodeTypes={NODE_TYPES}
         fitView
+        fitViewOptions={compactNodes ? { padding: 0.25 } : undefined}
         nodesDraggable={isWorkflowMode}
         nodesConnectable={false}
         elementsSelectable={isWorkflowMode}

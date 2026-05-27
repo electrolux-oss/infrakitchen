@@ -14,6 +14,7 @@ from infrakitchen_mcp.registry import mcp_group
 from .schema import (
     BatchTemplatePortsRequest,
     BatchTemplatePortsResponse,
+    ProvisionedResourceResponse,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -25,8 +26,25 @@ from .schema import (
     SourceOutputConfigTemplateResponse,
 )
 from .dependencies import get_source_code_version_service
+from .functions import fetch_provisioned_resources_from_snapshot
 
 router = APIRouter()
+
+
+@router.get(
+    "/source_code_versions/{source_code_version_id}/resources",
+    response_model=list[ProvisionedResourceResponse],
+    response_description="Resources parsed from the code snapshot of a specific source code version",
+    status_code=http_status.HTTP_200_OK,
+)
+async def get_resources(
+    source_code_version_id: str,
+    service: SourceCodeVersionService = Depends(get_source_code_version_service),
+) -> list[ProvisionedResourceResponse]:
+    entity = await service.get_by_id(source_code_version_id=source_code_version_id)
+    if not entity:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="SourceCodeVersion not found")
+    return fetch_provisioned_resources_from_snapshot(entity)
 
 
 @router.get(

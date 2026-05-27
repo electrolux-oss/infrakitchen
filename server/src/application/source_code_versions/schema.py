@@ -174,6 +174,17 @@ class SourceCodeVersionResponse(BaseModel):
         return "source_code_version"
 
 
+class ProvisionedResourceResponse(BaseModel):
+    type: str
+    name: str
+    provider: str
+    depends_on: list[str] = Field(default_factory=list)
+    module_source: str | None = Field(default=None)
+    conditional: bool = Field(default=False)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SourceCodeVersionCreate(BaseModel):
     """
     Request model for creating a new source code version.

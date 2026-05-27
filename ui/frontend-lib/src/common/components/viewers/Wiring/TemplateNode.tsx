@@ -14,14 +14,17 @@ import { STATUS_CHIP_COLOR } from "../../../utils";
 import { GetReferenceUrlValue } from "../../CommonField";
 
 import { DiagramNode, makeHandleStyle } from "./helpers";
+import { WIRING_CUSTOM_HEADER_COLORS } from "./WiringColors";
 
 export function TemplateNode({ data }: NodeProps<DiagramNode>) {
   const theme = useTheme();
   const bg = theme.palette.background.paper;
   const isExternal = data.kind === "external";
-  const displayOrder =
-    data.order ??
-    (data.stepPosition != null ? data.stepPosition + 1 : undefined);
+  const isModuleNode = data.colorKey === "module";
+  const displayOrder = data.hideOrder
+    ? undefined
+    : data.order ??
+      (data.stepPosition != null ? data.stepPosition + 1 : undefined);
   const canRemove = typeof data.onRemove === "function";
 
   // External nodes always use warning palette; template nodes derive from status or fall back to primary.
@@ -35,6 +38,16 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
   let borderColor = isExternal
     ? theme.palette.warning.main
     : theme.palette.divider;
+
+  if (data.colorKey) {
+    const custom =
+      data.colorKey === "default"
+        ? theme.palette.primary.main
+        : WIRING_CUSTOM_HEADER_COLORS[data.colorKey];
+    headerBg = custom;
+    headerText = theme.palette.getContrastText(custom);
+    borderColor = custom;
+  }
 
   if (!isExternal && data.status && data.status !== "pending") {
     const p =
@@ -56,8 +69,8 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         background: bg,
         border: `2px ${borderStyle} ${borderColor}`,
         borderRadius: 2,
-        minWidth: 220,
-        maxWidth: 300,
+        minWidth: isModuleNode ? 280 : 220,
+        maxWidth: isModuleNode ? 380 : 300,
         boxShadow: theme.shadows[2],
       }}
     >
@@ -194,17 +207,39 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         </Tooltip>
       )}
 
+      {data.secondaryLabel && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ px: 1.5, pt: 1, display: "block", fontFamily: "monospace" }}
+        >
+          {data.secondaryLabel}
+        </Typography>
+      )}
+
+      {data.tertiaryLabel && (
+        <Typography
+          variant="body2"
+          color="text.primary"
+          sx={{ px: 1.5, pt: 0.5, fontWeight: 600, display: "block" }}
+        >
+          {data.tertiaryLabel}
+        </Typography>
+      )}
+
       {/* Ports */}
-      <Box sx={{ display: "flex", gap: 2, p: 1.5 }}>
+      <Box sx={{ display: "flex", gap: 2, p: data.compactPorts ? 1 : 1.5 }}>
         {data.inputs.length > 0 && (
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
-            >
-              Inputs
-            </Typography>
+            {!data.compactPorts && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
+              >
+                Inputs
+              </Typography>
+            )}
             {data.inputs.map((input) => (
               <Box
                 key={`in-${input}`}
@@ -219,20 +254,23 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                     marginRight: 4,
                   }}
                 />
-                <Chip
-                  label={input}
-                  size="small"
-                  variant="outlined"
-                  color="info"
-                  sx={{ fontSize: 11 }}
-                />
+                {!data.compactPorts && (
+                  <Chip
+                    label={input}
+                    size="small"
+                    variant="outlined"
+                    color="info"
+                    sx={{ fontSize: 11 }}
+                  />
+                )}
                 <Handle
                   type="source"
                   position={Position.Right}
                   id={`input-source-${input}`}
                   style={{
                     ...makeHandleStyle(theme.palette.info.light, bg, 7),
-                    marginLeft: 4,
+                    marginLeft: data.compactPorts ? 0 : 4,
+                    opacity: data.compactPorts ? 0 : 1,
                   }}
                 />
               </Box>
@@ -242,18 +280,20 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
 
         {data.outputs.length > 0 && (
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                fontWeight: 600,
-                display: "block",
-                mb: 0.5,
-                textAlign: "right",
-              }}
-            >
-              Outputs
-            </Typography>
+            {!data.compactPorts && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  fontWeight: 600,
+                  display: "block",
+                  mb: 0.5,
+                  textAlign: "right",
+                }}
+              >
+                Outputs
+              </Typography>
+            )}
             {data.outputs.map((output) => (
               <Box
                 key={`out-${output}`}
@@ -264,20 +304,22 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   my: 0.4,
                 }}
               >
-                <Chip
-                  label={output}
-                  size="small"
-                  variant="outlined"
-                  color="success"
-                  sx={{ fontSize: 11 }}
-                />
+                {!data.compactPorts && (
+                  <Chip
+                    label={output}
+                    size="small"
+                    variant="outlined"
+                    color="success"
+                    sx={{ fontSize: 11 }}
+                  />
+                )}
                 <Handle
                   type="source"
                   position={Position.Right}
                   id={`output-${output}`}
                   style={{
                     ...makeHandleStyle(theme.palette.success.main, bg),
-                    marginLeft: 4,
+                    marginLeft: data.compactPorts ? 0 : 4,
                   }}
                 />
               </Box>

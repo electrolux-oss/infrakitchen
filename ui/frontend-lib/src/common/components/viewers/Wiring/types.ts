@@ -1,4 +1,5 @@
 import { ENTITY_STATUS } from "../../../../utils";
+import { type WiringColorKey } from "./WiringColors";
 
 export interface WiringRule {
   source_template_id: string;
@@ -10,6 +11,9 @@ export interface WiringRule {
 export interface GenericTemplate {
   id: string;
   name: string;
+  secondaryLabel?: string;
+  tertiaryLabel?: string;
+  colorKey?: WiringColorKey;
   abstract: boolean;
   cloud_resource_types?: string[];
   _entity_name: string;
