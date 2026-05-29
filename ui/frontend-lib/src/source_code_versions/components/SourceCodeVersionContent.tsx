@@ -48,7 +48,13 @@ export const SourceCodeVersionContent = () => {
     {
       label: "Code",
       content: (
-        <CodeSnapshotTab codeSnapshot={source_code_version.code_snapshot} />
+        <CodeSnapshotTab
+          codeSnapshot={source_code_version.code_snapshot}
+          defaultRef={
+            source_code_version.source_code_version ||
+            source_code_version.source_code_branch
+          }
+        />
       ),
     },
     {

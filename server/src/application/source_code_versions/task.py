@@ -197,7 +197,14 @@ class SourceCodeVersionTask:
                 else self.git_client.destination_dir
             )
             self.logger.info(f"Starting file parsing in directory: {destination_dir}")
-            otf = OtfProvider(destination_dir)
+            otf = OtfProvider(
+                destination_dir,
+                repo_root=self.git_client.destination_dir,
+                repo_url=self.source_code_instance.source_code_url,
+                source_code_ref=branch,
+                git_client=self.git_client,
+                follow_modules=True,
+            )
 
             tf_data = await otf.parse_tf_directory_to_json()
 
