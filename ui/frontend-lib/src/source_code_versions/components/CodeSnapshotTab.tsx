@@ -51,6 +51,8 @@ function refColor(ref: string): { bg: string; fg: string; border: string } {
 }
 const REF_PATTERN = /@([^/]+)$/;
 
+const displayRef = (ref: string) => (ref === "HEAD" ? "Latest" : ref);
+
 function parseCodeSnapshot(
   snapshot: string | null | undefined,
   defaultRef?: string,
@@ -166,7 +168,7 @@ function renderTreeItems(nodes: TreeNode[]) {
                 const c = refColor(node.file.ref);
                 return (
                   <Chip
-                    label={node.file.ref}
+                    label={displayRef(node.file.ref)}
                     size="small"
                     variant="outlined"
                     sx={{
@@ -306,7 +308,7 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
                   const c = refColor(selectedFile.ref);
                   return (
                     <Chip
-                      label={selectedFile.ref}
+                      label={displayRef(selectedFile.ref)}
                       size="small"
                       variant="outlined"
                       sx={{

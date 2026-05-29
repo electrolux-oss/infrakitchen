@@ -291,7 +291,8 @@ class OtfProvider:
                 if git_match is None:
                     continue
                 subpath, ref = git_match
-                results.append(ModuleRef(source, ref or parent_ref, subpath))
+                # No `?ref=` → Terraform pulls the default branch tip; mirror that.
+                results.append(ModuleRef(source, ref or "HEAD", subpath))
         return results
 
     @staticmethod
