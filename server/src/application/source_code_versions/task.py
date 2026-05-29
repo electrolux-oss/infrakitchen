@@ -197,7 +197,19 @@ class SourceCodeVersionTask:
                 else self.git_client.destination_dir
             )
             self.logger.info(f"Starting file parsing in directory: {destination_dir}")
-            otf = OtfProvider(
+
+            main_otf = OtfProvider(destination_dir)
+            tf_data = await main_otf.parse_tf_directory_to_json()
+
+            variables = main_otf.remap_variable_types(main_otf.list_to_dict(tf_data.get("variable", [])))
+            vars = [VariableModel.get_from_named_dict(variables, v) for v in variables]
+            self.source_code_version_instance.variables = [v.model_dump() for v in vars]
+
+            outputs = main_otf.list_to_dict(tf_data.get("output", []))
+            outpts = [OutputVariableModel.get_from_named_dict(outputs, o) for o in outputs]
+            self.source_code_version_instance.outputs = [o.model_dump() for o in outpts]
+
+            snapshot_otf = OtfProvider(
                 destination_dir,
                 repo_root=self.git_client.destination_dir,
                 repo_url=self.source_code_instance.source_code_url,
@@ -205,21 +217,15 @@ class SourceCodeVersionTask:
                 git_client=self.git_client,
                 follow_modules=True,
             )
+            await snapshot_otf.read_files_to_string()
 
-            tf_data = await otf.parse_tf_directory_to_json()
-
-            variables = otf.remap_variable_types(otf.list_to_dict(tf_data.get("variable", [])))
-            vars = [VariableModel.get_from_named_dict(variables, v) for v in variables]
-
-            self.source_code_version_instance.variables = [v.model_dump() for v in vars]
-            outputs = otf.list_to_dict(tf_data.get("output", []))
-            outpts = [OutputVariableModel.get_from_named_dict(outputs, o) for o in outputs]
-            self.source_code_version_instance.outputs = [o.model_dump() for o in outpts]
             if not self.source_code_version_instance.code_snapshot:
-                self.source_code_version_instance.code_snapshot = otf.tf_string_data
+                self.source_code_version_instance.code_snapshot = snapshot_otf.tf_string_data
             else:
-                self._log_code_snapshot_drift(self.source_code_version_instance.code_snapshot, otf.tf_string_data)
-                self.source_code_version_instance.code_snapshot = otf.tf_string_data
+                self._log_code_snapshot_drift(
+                    self.source_code_version_instance.code_snapshot, snapshot_otf.tf_string_data
+                )
+                self.source_code_version_instance.code_snapshot = snapshot_otf.tf_string_data
             self.logger.info(f"Variables found: {len(self.source_code_version_instance.variables)}")
             self.logger.info(f"Outputs found: {len(self.source_code_version_instance.outputs)}")
 

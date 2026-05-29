@@ -28,27 +28,6 @@ interface TreeNode {
 }
 
 const FILE_DIVIDER_PATTERN = /^#\s*-{2,}\s*FILE:\s*(.+?)\s*-{2,}\s*$/;
-
-/** Deterministic hue per ref string so each tag is visually distinct but
- * stable across renders. */
-function refColor(ref: string): { bg: string; fg: string; border: string } {
-  // FNV-1a 32-bit — good avalanche so eks-3.0.2 and eks-3.1.2 hash very
-  // differently despite sharing most characters.
-  let h = 0x811c9dc5;
-  for (let i = 0; i < ref.length; i++) {
-    h ^= ref.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  const u = h >>> 0;
-  const hue = u % 360;
-  const sat = 55 + ((u >>> 9) % 40); // 55–94
-  const light = 25 + ((u >>> 17) % 25); // 25–49
-  return {
-    bg: `hsl(${hue}, ${sat}%, ${light}%)`,
-    fg: `hsl(${hue}, ${Math.min(95, sat + 20)}%, 92%)`,
-    border: `hsl(${hue}, ${sat}%, ${Math.min(60, light + 15)}%)`,
-  };
-}
 const REF_PATTERN = /@([^/]+)$/;
 
 const displayRef = (ref: string) => (ref === "HEAD" ? "Latest" : ref);
@@ -162,28 +141,20 @@ function renderTreeItems(nodes: TreeNode[]) {
             >
               {isFolder ? node.name : node.name.replace(/@[^/]+$/, "")}
             </Typography>
-            {!isFolder &&
-              node.file?.ref &&
-              (() => {
-                const c = refColor(node.file.ref);
-                return (
-                  <Chip
-                    label={displayRef(node.file.ref)}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      ml: "auto",
-                      height: 18,
-                      fontSize: 11,
-                      fontFamily: "'Roboto Mono', monospace",
-                      bgcolor: c.bg,
-                      color: c.fg,
-                      borderColor: c.border,
-                      "& .MuiChip-label": { px: 0.75 },
-                    }}
-                  />
-                );
-              })()}
+            {!isFolder && node.file?.ref && (
+              <Chip
+                label={displayRef(node.file.ref)}
+                size="small"
+                variant="outlined"
+                sx={{
+                  ml: "auto",
+                  height: 18,
+                  fontSize: 11,
+                  fontFamily: "'Roboto Mono', monospace",
+                  "& .MuiChip-label": { px: 0.75 },
+                }}
+              />
+            )}
           </Box>
         }
       >
@@ -303,23 +274,14 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
               >
                 {selectedFile.filename.replace(/@[^/]+$/, "")}
               </Typography>
-              {selectedFile.ref &&
-                (() => {
-                  const c = refColor(selectedFile.ref);
-                  return (
-                    <Chip
-                      label={displayRef(selectedFile.ref)}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        fontFamily: "'Roboto Mono', monospace",
-                        bgcolor: c.bg,
-                        color: c.fg,
-                        borderColor: c.border,
-                      }}
-                    />
-                  );
-                })()}
+              {selectedFile.ref && (
+                <Chip
+                  label={displayRef(selectedFile.ref)}
+                  size="small"
+                  variant="outlined"
+                  sx={{ fontFamily: "'Roboto Mono', monospace" }}
+                />
+              )}
             </Box>
             <Box sx={{ flex: 1, overflow: "auto" }}>
               {renderFileViewer(selectedFile, colorMode)}
