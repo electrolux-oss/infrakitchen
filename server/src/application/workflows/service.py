@@ -6,12 +6,14 @@ from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelStatus
 from core.errors import EntityNotFound, EntityWrongState
+from core.database import FieldSpec
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_api_permission
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
+from application.workflows.functions import get_workflow_actions
 
 from .crud import WorkflowCRUD
+from .model import Workflow
 from .schema import (
     WorkflowResponse,
     WorkflowStepResponse,
@@ -55,6 +57,26 @@ class WorkflowService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, workflow_id: str | UUID, fields: FieldSpec | None = None) -> Workflow | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(workflow_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Workflow]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, workflow_id: str | UUID, requester: UserDTO) -> list[str]:
+        workflow = await self.crud.get_by_id(workflow_id, fields={"status": None})
+        if not workflow:
+            raise EntityNotFound("Workflow not found")
+        return await get_workflow_actions(requester, workflow.status)
 
     async def delete(self, workflow_id: str | UUID, requester: UserDTO) -> None:
         await self.crud.delete(workflow_id)
@@ -117,26 +139,3 @@ class WorkflowService:
         if step is None:
             raise EntityNotFound("Execution step not found")
         return WorkflowStepResponse.model_validate(step)
-
-    async def get_workflow_actions(self, workflow_id: str, requester: UserDTO) -> list[str]:
-        apis = await user_api_permission(requester, "workflow")
-        if not apis:
-            return []
-        requester_permissions = [apis.get("api:workflow", "")]
-
-        actions: list[str] = []
-        workflow = await self.crud.get_by_id(workflow_id)
-        if not workflow:
-            raise EntityNotFound("Workflow not found")
-
-        if "write" in requester_permissions or "admin" in requester_permissions:
-            actions.append(ModelActions.EXECUTE)
-
-        if workflow.status in (ModelStatus.PENDING, ModelStatus.ERROR):
-            if "write" in requester_permissions or "admin" in requester_permissions:
-                actions.append(ModelActions.EDIT)
-
-        if "admin" in requester_permissions:
-            actions.append(ModelActions.DELETE)
-
-        return actions

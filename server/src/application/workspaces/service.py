@@ -5,14 +5,16 @@ from typing import Any
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.errors import DependencyError, EntityNotFound
+from core.database import FieldSpec
 from core.logs.service import LogService
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import WorkspaceCRUD
+from .functions import get_workspace_actions
+from .model import Workspace
 from .schema import (
     AzureDevOpsWorkspaceMeta,
     BitbucketWorkspaceMeta,
@@ -64,6 +66,26 @@ class WorkspaceService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, workspace_id: str | UUID, fields: FieldSpec | None = None) -> Workspace | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(workspace_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Workspace]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, workspace_id: str | UUID, requester: UserDTO) -> list[str]:
+        workspace = await self.crud.get_by_id(workspace_id)
+        if not workspace:
+            raise EntityNotFound("Workspace not found")
+        return await get_workspace_actions(requester, workspace.id)
 
     async def create(self, workspace: WorkspaceCreate, requester: UserDTO) -> WorkspaceResponse:
         """
@@ -162,23 +184,6 @@ class WorkspaceService:
         await self.task_service.delete_by_entity_id(workspace_id)
         await self.permission_service.delete_entity_permissions("workspace", workspace_id)
         await self.crud.delete(existing_workspace)
-
-    async def get_actions(self, workspace_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the workspace.
-        :param requester: Requesting user
-        :param workspace_id: ID of the workspace
-        :return: List of actions
-        """
-        requester_permissions = await user_entity_permissions(requester, workspace_id, "workspace")
-        if "admin" not in requester_permissions:
-            return []
-
-        workspace = await self.crud.get_by_id(workspace_id)
-        if not workspace:
-            raise EntityNotFound("Workspace not found")
-
-        return [ModelActions.EDIT, ModelActions.DELETE]
 
     # Permissions
     async def get_user_workspace_policies(self, user_id: str) -> list[UserWorkspaceResponse]:

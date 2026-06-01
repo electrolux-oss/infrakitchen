@@ -20,6 +20,11 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { renderFieldsForProvider } from "../components/AuthProviderForms";
+import {
+  AUTH_PROVIDER_QUERY,
+  GqlAuthProvider,
+  transformAuthProvider,
+} from "../graphql";
 import { AuthProviderResponse, AuthProviderUpdate } from "../types";
 
 export const AuthProviderEditPageInner = (props: {
@@ -227,9 +232,15 @@ export const AuthProviderEditPage = () => {
 
   const getAuthProvider = useCallback(async (): Promise<void> => {
     await ikApi
-      .get(`auth_providers/${auth_provider_id}`)
-      .then((response: AuthProviderResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ authProvider: GqlAuthProvider | null }>(
+        AUTH_PROVIDER_QUERY,
+        { id: auth_provider_id },
+      )
+      .then((response) => {
+        if (!response.authProvider) {
+          throw new Error("AuthProvider not found");
+        }
+        setEntity(transformAuthProvider(response.authProvider));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

@@ -12,6 +12,8 @@ import { WorkspaceShort } from "../workspaces/types";
 export interface ResourceShort {
   id: string;
   name: string;
+  status: string;
+  state: string;
   template: TemplateShort;
   _entity_name: string;
 }
@@ -64,6 +66,8 @@ export interface ResourceResponse {
   workspace: WorkspaceShort | null;
   _entity_name: string;
 }
+
+export type ResourceResponseOptional = Partial<ResourceResponse>;
 
 export interface ResourceCreate {
   name: string;

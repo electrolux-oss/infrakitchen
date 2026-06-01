@@ -16,6 +16,7 @@ router = APIRouter()
     response_model=list[str],
     response_description="Get unique actions",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(service: AuditLogService = Depends(get_audit_log_service)):
     return await service.get_actions()
@@ -26,6 +27,7 @@ async def get_actions(service: AuditLogService = Depends(get_audit_log_service))
     response_model=AuditLogResponse,
     response_description="Get one audit log by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "audit_logs", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: AuditLogService = Depends(get_audit_log_service)):
@@ -38,6 +40,7 @@ async def get_by_id(entity_id: str, service: AuditLogService = Depends(get_audit
     response_model=list[AuditLogResponse],
     response_description="Get all audit logs",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "audit_logs")
 async def get_all(

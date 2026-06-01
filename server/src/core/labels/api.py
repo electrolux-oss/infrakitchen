@@ -14,6 +14,7 @@ router = APIRouter()
     response_model=list[str],
     response_description="Get all unique labels",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "labels")
 async def get_all_labels(
@@ -28,6 +29,7 @@ async def get_all_labels(
     response_model=list[str],
     response_description="Get labels by entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_labels_by_entity(
     entity: str,

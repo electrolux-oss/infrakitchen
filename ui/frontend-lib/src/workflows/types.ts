@@ -7,10 +7,6 @@ import { TemplateShort } from "../templates/types";
 import { UserShort } from "../users";
 import { ENTITY_STATUS } from "../utils";
 
-export interface ResourceShortWithStatus extends ResourceShort {
-  status: string;
-}
-
 export interface WorkflowStepResponse {
   id: string;
   template_id: string;
@@ -21,7 +17,7 @@ export interface WorkflowStepResponse {
   status: ENTITY_STATUS;
   error_message: string | null;
   resolved_variables: Record<string, any>;
-  parent_resource_ids: ResourceShortWithStatus[] & {
+  parent_resource_ids: ResourceShort[] & {
     template?: TemplateShort;
   };
   integration_ids: IntegrationShort[];
@@ -46,3 +42,5 @@ export interface WorkflowResponse {
   created_at: string;
   _entity_name: string;
 }
+
+export type WorkflowResponseOptional = Partial<WorkflowResponse>;

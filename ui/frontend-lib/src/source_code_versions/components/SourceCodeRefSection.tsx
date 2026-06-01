@@ -21,6 +21,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { useHashParams } from "../../common/hooks/useHashParams";
 import { ENTITY_STATUS } from "../../utils";
+import { SCV_FIELD_MAP, transformSourceCodeVersion } from "../graphql";
 import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
@@ -197,6 +198,16 @@ export const SourceCodeRefSection = ({
           page: paginationModel.page + 1,
           perPage: paginationModel.pageSize,
         },
+        fields: [
+          "source_code_branch",
+          "source_code_version",
+          "source_code_folder",
+          "template",
+          "source_code",
+          "id",
+          "status",
+          "resources_count",
+        ],
       };
     } else {
       baseFilter[refField] = queryRefs;
@@ -204,6 +215,16 @@ export const SourceCodeRefSection = ({
         sort: { field: "created_at", order: "DESC" as const },
         filter: baseFilter,
         pagination: { page: 1, perPage: paginationModel.pageSize },
+        fields: [
+          "source_code_branch",
+          "source_code_version",
+          "source_code_folder",
+          "template",
+          "source_code",
+          "id",
+          "status",
+          "resources_count",
+        ],
       };
     }
   }, [sourceCodeId, type, queryRefs, paginationModel, filterValues]);
@@ -230,7 +251,12 @@ export const SourceCodeRefSection = ({
   if (refs.length === 0) return null;
 
   return (
-    <EntityListProvider entity_name="source_code_version" params={params}>
+    <EntityListProvider
+      entity_name="sourceCodeVersion"
+      params={params}
+      transformFn={transformSourceCodeVersion}
+      entityFieldMap={SCV_FIELD_MAP}
+    >
       <OverviewCard>
         <Box
           sx={{

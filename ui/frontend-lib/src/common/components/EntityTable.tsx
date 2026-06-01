@@ -26,6 +26,7 @@ import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommun
 export type EntityTableColumn = GridColDef<any> & {
   field?: string;
   fetchFields?: string[];
+  sortField?: string;
 };
 
 export interface ResourceTableProps {
@@ -35,7 +36,6 @@ export interface ResourceTableProps {
   entities: any[];
   loading: boolean;
   totalRows: number;
-  availableFields?: string[];
   paginationModel?: GridPaginationModel;
   sortModel?: GridSortModel;
   filterModel?: GridFilterModel;
@@ -60,7 +60,6 @@ export const EntityTable = ({
   columns,
   loading,
   totalRows,
-  availableFields,
   paginationModel,
   sortModel,
   filterModel,
@@ -73,65 +72,6 @@ export const EntityTable = ({
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
 
-  const allColumns = useMemo(() => {
-    const existingFields = new Set(columns.map((column) => column.field));
-    const inferredColumns: EntityTableColumn[] = [];
-    const inferredFields = new Set<string>();
-
-    const addInferredField = (field: string) => {
-      if (field === "_entity_name") {
-        return;
-      }
-
-      if (existingFields.has(field) || inferredFields.has(field)) {
-        return;
-      }
-
-      inferredFields.add(field);
-      inferredColumns.push({
-        field,
-        headerName: field
-          .split("_")
-          .map((segment) =>
-            segment.length > 0
-              ? segment.charAt(0).toUpperCase() + segment.slice(1)
-              : segment,
-          )
-          .join(" "),
-        flex: 1,
-        valueGetter: (_value: any, row: any) => {
-          const value = row?.[field];
-
-          if (value === null || value === undefined) {
-            return "";
-          }
-
-          if (typeof value === "object") {
-            try {
-              return JSON.stringify(value);
-            } catch {
-              return String(value);
-            }
-          }
-
-          return String(value);
-        },
-      });
-    };
-
-    availableFields?.forEach((field) => {
-      addInferredField(field);
-    });
-
-    entities.forEach((entity) => {
-      Object.keys(entity ?? {}).forEach((field) => {
-        addInferredField(field);
-      });
-    });
-
-    return [...columns, ...inferredColumns];
-  }, [availableFields, columns, entities]);
-
   const effectiveColumnVisibilityModel = useMemo(() => {
     if (!columnVisibilityModel) {
       return columnVisibilityModel;
@@ -139,7 +79,7 @@ export const EntityTable = ({
 
     const model: GridColumnVisibilityModel = { ...columnVisibilityModel };
 
-    allColumns.forEach((column) => {
+    columns.forEach((column) => {
       if (columns.some((baseColumn) => baseColumn.field === column.field)) {
         return;
       }
@@ -150,7 +90,7 @@ export const EntityTable = ({
     });
 
     return model;
-  }, [allColumns, columnVisibilityModel, columns]);
+  }, [columnVisibilityModel, columns]);
 
   const handleColumnVisibilityClick = () => {
     apiRef.current?.showPreferences?.("columns" as GridPreferencePanelValue);
@@ -228,7 +168,7 @@ export const EntityTable = ({
               rowCount={totalRows}
               paginationMode="server"
               loading={loading}
-              columns={allColumns}
+              columns={columns}
               pagination
               disableColumnFilter
               disableColumnMenu

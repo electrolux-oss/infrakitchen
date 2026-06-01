@@ -1,8 +1,6 @@
-import uuid
-from datetime import datetime
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-import strawberry
-from strawberry.scalars import JSON
+from application.workflows.model import Workflow, WorkflowStep
 
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.resource.types import ResourceType
@@ -12,38 +10,41 @@ from graphql_api.modules.template.types import TemplateType
 from graphql_api.modules.user.types import UserType
 
 
-@strawberry.type
+workflow_mapper = StrawberrySQLAlchemyMapper()
+
+
+@workflow_mapper.type(WorkflowStep)
 class WorkflowStepType:
-    id: uuid.UUID
-    workflow_id: uuid.UUID
-    template_id: uuid.UUID
-    template: TemplateType | None = None
-    resource_id: uuid.UUID | None = None
-    resource: ResourceType | None = None
-    source_code_version_id: uuid.UUID | None = None
-    source_code_version: SourceCodeVersionType | None = None
+    __exclude__ = [
+        "parent_resource_ids",
+        "integration_ids",
+        "secret_ids",
+        "template_id",
+        "source_code_version_id",
+        "workflow_id",
+        "resource",
+        "resource_id",
+        "template",
+        "source_code_version",
+        "workflow",
+    ]
+
     parent_resource_ids: list[ResourceType] | None = None
     integration_ids: list[IntegrationType] | None = None
     secret_ids: list[SecretType] | None = None
-    storage_id: uuid.UUID | None = None
-    position: int = 0
-    status: str = ""
-    error_message: str | None = None
-    resolved_variables: JSON | None = None
-    started_at: datetime | None = None
-    completed_at: datetime | None = None
+    workflow: "WorkflowType | None" = None
+    template: TemplateType | None = None
+    source_code_version: SourceCodeVersionType | None = None
+    resource: ResourceType | None = None
 
 
-@strawberry.type
+@workflow_mapper.type(Workflow)
 class WorkflowType:
-    id: uuid.UUID
-    action: str = "create"
-    wiring_snapshot: JSON | None = None
-    status: str = ""
-    error_message: str | None = None
-    created_by: uuid.UUID | None = None
+    __exclude__ = ["steps", "created_by"]
+
     creator: UserType | None = None
+
     steps: list[WorkflowStepType] | None = None
-    started_at: datetime | None = None
-    completed_at: datetime | None = None
-    created_at: datetime | None = None
+
+
+workflow_mapper.finalize()

@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useRef,
   ReactNode,
   useEffect,
   useCallback,
@@ -32,12 +31,14 @@ export const EntityProvider = ({
   children,
   entity_name,
   entity_id,
-  fetchFn,
+  entityFields,
+  transformFn,
 }: {
   children: ReactNode;
   entity_name: string;
   entity_id: string;
-  fetchFn?: (entityName: string, entityId: string) => Promise<any>;
+  entityFields?: string;
+  transformFn?: (data: any) => any;
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
@@ -48,44 +49,43 @@ export const EntityProvider = ({
 
   const { event } = useEventProvider();
 
-  const actionsSeqRef = useRef<number>(0);
-
-  const userActionsHandler = useCallback(async (): Promise<any> => {
-    const seq = ++actionsSeqRef.current;
-    ikApi
-      .get(`${entity_name}s/${entity_id}/actions`)
-      .then((response: any) => {
-        if (seq === actionsSeqRef.current) {
-          setActions(response);
-        }
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
-  }, [ikApi, entity_name, entity_id, setActions]);
-
-  useEffect(() => {
-    userActionsHandler();
-  }, [userActionsHandler]);
-
   useEffect(() => {
     if (event && event.id === entity_id) {
       setEntity(event);
-      userActionsHandler();
     }
-  }, [event, entity_id, userActionsHandler]);
+  }, [event, entity_id]);
 
   useEffect(() => {
     const getEntity = async () => {
       if (!entity_id) return;
       setLoading(true);
       try {
-        const response = fetchFn
-          ? await fetchFn(entity_name, entity_id)
-          : await ikApi.get(`${entity_name}s/${entity_id}`);
-        setEntity(response);
-        setError(null);
-        userActionsHandler();
+        await ikApi
+          .graphqlRequest(
+            `
+              query Entity($id: UUID!) {
+                ${entity_name}(id: $id) {
+                  ${entityFields}
+                }
+                ${entity_name}Actions: ${entity_name}Actions(id: $id)
+              }
+            `,
+            { id: entity_id },
+          )
+          .then((response: any) => {
+            const data = response?.[entity_name];
+            if (!data) {
+              throw new Error(`${entity_name} not found`);
+            }
+            const actionsData = response?.[`${entity_name}Actions`] || [];
+            setActions(actionsData);
+            return transformFn ? transformFn(data) : data;
+          })
+          .then((response: any) => {
+            setEntity(response);
+            setError(null);
+            // userActionsHandler();
+          });
       } catch (e: any) {
         notifyError(e);
         setError(e.message);
@@ -100,23 +100,19 @@ export const EntityProvider = ({
     entity_name,
     entity_id,
     refresh,
-    fetchFn,
+    entityFields,
+    transformFn,
     setLoading,
     setError,
-    userActionsHandler,
   ]);
 
-  const refreshEntity = useCallback(
-    (updatedEntity?: IkEntity) => {
-      if (updatedEntity) {
-        setEntity(updatedEntity);
-        userActionsHandler();
-      } else {
-        refreshNumber((prev) => prev + 1);
-      }
-    },
-    [userActionsHandler],
-  );
+  const refreshEntity = useCallback((updatedEntity?: IkEntity) => {
+    if (updatedEntity) {
+      setEntity(updatedEntity);
+    } else {
+      refreshNumber((prev) => prev + 1);
+    }
+  }, []);
 
   const contextValue: EntityContextType = {
     actions,

@@ -9,26 +9,32 @@ from application.integrations.model import Integration
 from application.source_code_versions.model import SourceCodeVersion
 from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import SourceCode
+from .query_options import build_source_code_query_options
 
 
 class SourceCodeCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, source_code_id: str | UUID) -> SourceCode | None:
+    async def get_by_id(
+        self,
+        source_code_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> SourceCode | None:
         if not is_valid_uuid(source_code_id):
             raise ValueError(f"Invalid UUID: {source_code_id}")
 
-        statement = (
-            select(SourceCode)
-            .where(SourceCode.id == source_code_id)
-            .join(User, SourceCode.created_by == User.id)
-            .outerjoin(Integration, SourceCode.integration_id == Integration.id)
-        )
+        statement = select(SourceCode).where(SourceCode.id == source_code_id)
+        statement = statement.options(*build_source_code_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -53,16 +59,14 @@ class SourceCodeCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[SourceCode]:
-        statement = (
-            select(SourceCode)
-            .join(User, SourceCode.created_by == User.id)
-            .outerjoin(Integration, SourceCode.integration_id == Integration.id)
-        )
+        statement = select(SourceCode)
         statement = evaluate_sqlalchemy_filters(SourceCode, statement, filter)
         statement = evaluate_sqlalchemy_sorting(SourceCode, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_source_code_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

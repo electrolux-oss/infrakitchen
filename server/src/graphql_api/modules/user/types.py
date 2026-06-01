@@ -1,19 +1,27 @@
 import uuid
-from datetime import datetime
 
 import strawberry
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
+
+from core.users.model import User
+
+
+user_mapper = StrawberrySQLAlchemyMapper()
 
 
 @strawberry.type
-class UserType:
+class UserShortType:
     id: uuid.UUID
-    email: str | None = None
     identifier: str | None = None
-    first_name: str | None = None
-    last_name: str | None = None
-    display_name: str | None = None
     provider: str | None = None
-    deactivated: bool = False
-    description: str = ""
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+
+@user_mapper.type(User)
+class UserType:
+    __exclude__ = ["password", "secondary_accounts", "primary_account"]
+
+    secondary_accounts: list[UserShortType] = strawberry.field(default_factory=list)
+    primary_account: list[UserShortType] = strawberry.field(default_factory=list)
+
+
+user_mapper.finalize()

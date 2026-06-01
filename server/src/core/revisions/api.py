@@ -15,6 +15,7 @@ router = APIRouter()
     response_model=list[RevisionShort],
     response_description="Get revisions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all_entity_revisions(
     request: Request,
@@ -34,6 +35,7 @@ async def get_all_entity_revisions(
     response_model=RevisionResponse,
     response_description="Get revisions for a revision",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_entity_revision_by_number(
     request: Request,

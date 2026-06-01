@@ -1,4 +1,4 @@
-import { UserResponse } from "../users/types";
+import { UserShort } from "../users/types";
 
 export interface AuthProviderShort {
   id: string;
@@ -8,7 +8,7 @@ export interface AuthProviderShort {
 export interface AuthProviderResponse extends AuthProviderShort {
   created_at: Date;
   updated_at: Date;
-  creator: UserResponse | null;
+  creator: UserShort | null;
   description: string;
   enabled: boolean;
   auth_provider:
@@ -20,7 +20,10 @@ export interface AuthProviderResponse extends AuthProviderShort {
     | "ik_service_account";
   configuration: object;
   filter_by_domain: string[];
+  _entity_name: string;
 }
+
+export type AuthProviderResponseOptional = Partial<AuthProviderResponse>;
 
 export interface AuthProviderCreate {
   name: string;

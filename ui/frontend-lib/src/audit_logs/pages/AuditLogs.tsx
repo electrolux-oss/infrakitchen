@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -6,32 +6,24 @@ import { FilterConfig, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import {
-  useEntityMetadataFromRows,
-  EntityMeta,
-} from "../../common/hooks/useEntityMetadata";
 import PageContainer from "../../common/PageContainer";
-import { IkEntity } from "../../types";
+import {
+  AUDIT_LOG_ACTIONS_QUERY,
+  AUDIT_LOG_FIELD_MAP,
+  transformAuditLog,
+} from "../graphql";
 
 export const AuditLogsPage = () => {
   const { ikApi } = useConfig();
   const [actions, setActions] = useState<string[]>([]);
-  const [rows, setRows] = useState<IkEntity[]>([]);
-
-  const { data: entityMeta } = useEntityMetadataFromRows(rows);
-
-  const entityMetaRef = useRef<Map<string, EntityMeta>>(entityMeta);
-  entityMetaRef.current = entityMeta;
 
   useEffect(() => {
-    ikApi.get("audit_logs/actions").then((response) => {
-      setActions(response);
-    });
+    ikApi
+      .graphqlRequest<{ auditLogActions: string[] }>(AUDIT_LOG_ACTIONS_QUERY)
+      .then((response) => {
+        setActions(response.auditLogActions || []);
+      });
   }, [ikApi]);
-
-  const onDataLoaded = useCallback((data: IkEntity[]) => {
-    setRows(data);
-  }, []);
 
   // Configure filters
   const filterConfigs: FilterConfig[] = useMemo(
@@ -62,9 +54,28 @@ export const AuditLogsPage = () => {
   const columns = useMemo(
     () => [
       {
+        field: "entity_id",
+        fetchFields: ["model", "entity_id", "entity_data"],
+        headerName: "Entity",
+        flex: 1,
+        sortable: true,
+        hideable: false,
+        valueGetter: (value: string) => value,
+        renderCell: (params: GridRenderCellParams) => {
+          return (
+            <GetEntityLink
+              id={params.row.entity_id}
+              _entity_name={params.row.model}
+              name={params.row.entity_data?.name ?? params.row.model}
+            />
+          );
+        },
+      },
+      {
         field: "creator",
         headerName: "User",
         flex: 1,
+        sortField: "creator.identifier",
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
@@ -88,22 +99,9 @@ export const AuditLogsPage = () => {
       },
       {
         field: "model",
-        fetchFields: ["model", "entity_id"],
-        headerName: "Entity",
+        headerName: "Model",
         flex: 1,
-        sortable: true,
-        hideable: false,
-        valueGetter: (value: string) => value,
-        renderCell: (params: GridRenderCellParams) => {
-          const meta = entityMetaRef.current.get(params.row.entity_id);
-          return (
-            <GetEntityLink
-              id={params.row.entity_id}
-              _entity_name={params.row.model}
-              name={meta?.name ?? params.row.model}
-            />
-          );
-        },
+        renderCell: (params: GridRenderCellParams) => params.value,
       },
       {
         field: "created_at",
@@ -124,18 +122,10 @@ export const AuditLogsPage = () => {
     <PageContainer title="Audit Logs">
       <EntityFetchTable
         title="Audit Log"
-        entityName="audit_log"
+        entityName="auditLog"
         columns={columns}
-        onDataLoaded={onDataLoaded}
-        fields={[
-          "id",
-          "user_id",
-          "action",
-          "model",
-          "entity_id",
-          "created_at",
-          "creator",
-        ]}
+        entityFieldMap={AUDIT_LOG_FIELD_MAP}
+        transformFn={transformAuditLog}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

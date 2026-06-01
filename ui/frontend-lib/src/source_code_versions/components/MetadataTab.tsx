@@ -236,7 +236,7 @@ export const MetadataTab = ({
                 title={
                   entity.status !== ENTITY_STATUS.DISABLED
                     ? "Version must be disabled before erasing data"
-                    : entity.resource_count > 0
+                    : entity.resources_count > 0
                       ? "Version has active resources and cannot be erased"
                       : ""
                 }
@@ -249,7 +249,7 @@ export const MetadataTab = ({
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={
                       entity.status !== ENTITY_STATUS.DISABLED ||
-                      entity.resource_count > 0
+                      entity.resources_count > 0
                     }
                   >
                     Erase Data

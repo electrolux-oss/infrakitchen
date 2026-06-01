@@ -11,6 +11,7 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { renderFieldsForProvider } from "../components/SecretProviderForms";
+import { GqlSecret, SECRET_QUERY, transformSecret } from "../graphql";
 import { SecretResponse, SecretUpdate } from "../types";
 
 export const SecretEditPageInner = (props: { entity: SecretResponse }) => {
@@ -165,9 +166,14 @@ export const SecretEditPage = () => {
 
   const getSecret = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`secrets/${secret_id}`)
-      .then((response: SecretResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ secret: GqlSecret | null }>(SECRET_QUERY, {
+        id: secret_id,
+      })
+      .then((response) => {
+        if (!response.secret) {
+          throw new Error("Secret not found");
+        }
+        setEntity(transformSecret(response.secret));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

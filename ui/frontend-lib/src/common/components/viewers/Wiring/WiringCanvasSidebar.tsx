@@ -21,6 +21,11 @@ import {
   useTheme,
 } from "@mui/material";
 
+import {
+  TEMPLATE_SHORT_FIELDS,
+  GqlTemplateShort,
+  transformTemplateShort,
+} from "../../../../templates/graphql";
 import { useConfig } from "../../../context";
 
 import { GenericTemplate } from "./types";
@@ -57,11 +62,20 @@ export function WiringCanvasSidebar({
 
   useEffect(() => {
     ikApi
-      .getList("templates", {
-        pagination: { page: 1, perPage: 500 },
-        sort: { field: "name", order: "ASC" },
-      })
-      .then((res) => setTemplates(res.data || []))
+      .graphqlRequest<{ templates: GqlTemplateShort[] }>(
+        `query Templates($sort: [String!], $range: [Int!]) {
+          templates(sort: $sort, range: $range) {
+            ${TEMPLATE_SHORT_FIELDS}
+          }
+        }`,
+        {
+          sort: ["name", "ASC"],
+          range: [0, 500],
+        },
+      )
+      .then((res) =>
+        setTemplates((res.templates || []).map(transformTemplateShort)),
+      )
       .catch(() => {});
   }, [ikApi]);
 

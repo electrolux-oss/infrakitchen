@@ -5,12 +5,23 @@ import { useEffectOnce } from "react-use";
 
 import { Box, Typography } from "@mui/material";
 
+import { GqlLog, transformLog, LOG_DETAIL_FIELDS } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import { getTimeOnlyValue } from "../components/CommonField";
 import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
 
 import { LogLine } from "./LogLine";
+
+const LOGS_PAGE_SIZE = 600;
+
+const LOGS_VIEW_QUERY = `
+  query Logs($filter: JSON, $sort: [String!], $range: [Int!]) {
+    logs(filter: $filter, sort: $sort, range: $range) {
+      ${LOG_DETAIL_FIELDS}
+    }
+  }
+`;
 
 function createLog(log: LogEntity[]) {
   const result: { id: string; data: string }[] = [];
@@ -63,14 +74,18 @@ export const LogsView = (props: {
     }
 
     ikApi
-      .getList("logs", {
+      .graphqlRequest<{ logs: GqlLog[] }>(LOGS_VIEW_QUERY, {
         filter,
-        pagination: { page: indexRef.current, perPage: 600 },
-        sort: { field: "created_at", order: "DESC" },
+        sort: ["created_at", "DESC"],
+        range: [
+          (indexRef.current - 1) * LOGS_PAGE_SIZE,
+          indexRef.current * LOGS_PAGE_SIZE,
+        ],
       })
       .then((response) => {
-        if (response.data.length > 0) {
-          setLogs((prevItems) => [...response.data.reverse(), ...prevItems]);
+        if (response.logs.length > 0) {
+          const transformed = response.logs.map(transformLog) as LogEntity[];
+          setLogs((prevItems) => [...transformed.reverse(), ...prevItems]);
           indexRef.current += 1;
         } else {
           setHasMore(false);

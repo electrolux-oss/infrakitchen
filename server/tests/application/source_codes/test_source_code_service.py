@@ -555,7 +555,7 @@ class TestGetIntegrationActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.source_codes.service.user_api_permission",
+            "application.source_codes.functions.user_api_permission",
         )
         existing_source_code = mocked_source_code
         existing_source_code.status = status

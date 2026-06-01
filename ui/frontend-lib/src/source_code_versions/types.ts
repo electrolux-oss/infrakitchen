@@ -22,7 +22,6 @@ export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
   created_at: Date;
   updated_at: Date;
   status: string;
-  state: string;
   revision_number: number;
   labels: string[];
   creator: UserShort;
@@ -34,9 +33,12 @@ export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
   variables: VariableInput[];
   outputs: VariableOutput[];
   description: string;
-  resource_count: number;
+  resources_count: number;
   code_snapshot: string | null;
 }
+
+export type SourceCodeVersionResponseOptional =
+  Partial<SourceCodeVersionResponse>;
 
 export interface SourceCodeVersionCreate {
   description: string;

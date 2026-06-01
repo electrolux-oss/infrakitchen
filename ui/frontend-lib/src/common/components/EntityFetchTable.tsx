@@ -13,6 +13,10 @@ import { GridSortItem } from "@mui/x-data-grid/models/gridSortModel";
 
 import { useConfig, useLocalStorage } from "..";
 import { IkEntity } from "../../types";
+import {
+  buildGraphqlFields,
+  GraphqlFieldMap,
+} from "../graphql/buildGraphqlFields";
 import { useMultiFilterState } from "../hooks/useFilterState";
 import { notifyError } from "../hooks/useNotification";
 
@@ -25,21 +29,15 @@ interface EntityFetchTableProps {
   subtitle?: string;
   columns: EntityTableColumn[];
   entityName?: string;
-  fields?: string[];
   defaultColumnVisibilityModel?: GridColumnVisibilityModel;
   filterConfigs?: FilterConfig[];
   onFilterChange?: (filterValues: Record<string, any>) => void;
-  onDataLoaded?: (data: IkEntity[]) => void;
   defaultFilter?: Record<string, any>;
   initialFilters?: Record<string, any>;
   buildApiFilters?: (filterValues: Record<string, any>) => Record<string, any>;
   filterStorageKey?: string;
-  fetchListFn?: (params: {
-    filter: Record<string, any>;
-    sort: { field: string; order: "ASC" | "DESC" };
-    pagination: { page: number; perPage: number };
-    fields: string[];
-  }) => Promise<{ data: IkEntity[] | any[]; total: number }>;
+  entityFieldMap?: GraphqlFieldMap;
+  transformFn?: (data: any) => any;
 }
 
 interface DataGridState {
@@ -86,16 +84,15 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     subtitle,
     columns,
     entityName,
-    fields = [],
     defaultColumnVisibilityModel,
     filterConfigs,
     onFilterChange,
-    onDataLoaded,
     defaultFilter,
     initialFilters,
     buildApiFilters,
     filterStorageKey,
-    fetchListFn,
+    entityFieldMap,
+    transformFn,
   } = props;
 
   const { ikApi } = useConfig();
@@ -117,12 +114,6 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
   defaultFilterRef.current = defaultFilter;
   const columnsRef = useRef(columns);
   columnsRef.current = columns;
-  const fieldsRef = useRef(fields);
-  fieldsRef.current = fields;
-  const onDataLoadedRef = useRef(onDataLoaded);
-  onDataLoadedRef.current = onDataLoaded;
-  const fetchListFnRef = useRef(fetchListFn);
-  fetchListFnRef.current = fetchListFn;
 
   const multiFilterState = useMultiFilterState({
     storageKey: resolvedFilterStorageKey,
@@ -184,12 +175,13 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
 
   const requestedFields = useMemo(() => {
     const cols = columnsRef.current;
-    const flds = fieldsRef.current;
     const requested = new Set<string>(["id"]);
-    const baseColumnFields = new Set(cols.map((column) => column.field));
 
     cols.forEach((column) => {
       if (columnVisibilityModel[column.field] === false) {
+        return;
+      }
+      if (column.filterable === false) {
         return;
       }
 
@@ -199,15 +191,6 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           requested.add(field);
         }
       });
-    });
-
-    flds.forEach((field) => {
-      if (
-        !baseColumnFields.has(field) &&
-        columnVisibilityModel[field] === true
-      ) {
-        requested.add(field);
-      }
     });
 
     return Array.from(requested);
@@ -240,9 +223,14 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
         sort = sortModel[0] as GridSortItem;
       }
 
+      const sortFieldMap = new Map(
+        columnsRef.current
+          .filter((c) => c.sortField)
+          .map((c) => [c.field!, c.sortField!]),
+      );
       const apiSort = sort
         ? {
-            field: sort.field,
+            field: sortFieldMap.get(sort.field) ?? sort.field,
             order: sort.sort?.toUpperCase() as "ASC" | "DESC",
           }
         : { field: "created_at", order: "DESC" as "ASC" | "DESC" };
@@ -255,12 +243,37 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           sort: apiSort,
           fields: requestedFields,
         };
-        const response = fetchListFnRef.current
-          ? await fetchListFnRef.current(fetchParams)
-          : await ikApi.getList(`${entityName}s`, fetchParams);
-        setData(response.data);
-        setTotalRows(response.total ? response.total : 0);
-        onDataLoadedRef.current?.(response.data);
+
+        await ikApi
+          .graphqlRequest(
+            `query Query($filter: JSON, $sort: [String!], $range: [Int!]) {
+                      ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+                      ${buildGraphqlFields(
+                        fetchParams.fields,
+                        entityFieldMap || {},
+                      )}
+                      }
+                      ${entityName}sCount(filter: $filter)
+              }`,
+            {
+              filter: fetchParams.filter,
+              sort: [fetchParams.sort.field, fetchParams.sort.order],
+              range: [
+                (fetchParams.pagination.page - 1) *
+                  fetchParams.pagination.perPage,
+                fetchParams.pagination.page * fetchParams.pagination.perPage,
+              ],
+            },
+          )
+          .then((response: any) => {
+            const listData = response?.[`${entityName}s`] || [];
+            const total = response?.[`${entityName}sCount`] || 0;
+            const transformedData = transformFn
+              ? listData.map(transformFn)
+              : listData;
+            setData(transformedData);
+            setTotalRows(total);
+          });
       } catch (e) {
         notifyError(e);
       } finally {
@@ -275,6 +288,8 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     paginationPageSize,
     sortModel,
     currentFilterValues,
+    transformFn,
+    entityFieldMap,
   ]);
 
   useEffect(() => {
@@ -305,7 +320,6 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
           entityName={title}
           subtitle={subtitle}
           columns={columns}
-          availableFields={fields}
           totalRows={totalRows}
           entities={data}
           loading={loading}

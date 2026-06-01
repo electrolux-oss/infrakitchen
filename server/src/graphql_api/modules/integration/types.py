@@ -1,24 +1,37 @@
 import uuid
-from datetime import datetime
-
 import strawberry
-from strawberry.scalars import JSON
+from strawberry.types import Info
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
+from application.integrations.model import Integration
 from graphql_api.modules.user.types import UserType
 
 
-@strawberry.type
+integration_mapper = StrawberrySQLAlchemyMapper()
+
+
+@integration_mapper.type(Integration)
 class IntegrationType:
-    id: uuid.UUID
-    name: str
-    description: str = ""
-    integration_type: str = ""
-    integration_provider: str = ""
-    configuration: JSON | None = None
-    labels: list[str] | None = None
-    status: str = ""
-    revision_number: int = 1
-    created_by: uuid.UUID | None = None
+    __exclude__ = ["created_by"]
+
+    id: uuid.UUID = strawberry.UNSET
     creator: UserType | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+    @strawberry.field
+    async def resource_count(self, info: Info) -> int:
+        return await info.context["loaders"]["integration_resource_count"].load(str(self.id))
+
+    @strawberry.field
+    async def source_code_count(self, info: Info) -> int:
+        return await info.context["loaders"]["integration_source_code_count"].load(str(self.id))
+
+    @strawberry.field
+    async def workspace_count(self, info: Info) -> int:
+        return await info.context["loaders"]["integration_workspace_count"].load(str(self.id))
+
+    @strawberry.field
+    async def executor_count(self, info: Info) -> int:
+        return await info.context["loaders"]["integration_executor_count"].load(str(self.id))
+
+
+integration_mapper.finalize()

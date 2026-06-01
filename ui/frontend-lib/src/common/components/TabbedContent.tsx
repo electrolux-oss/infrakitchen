@@ -8,6 +8,7 @@ import { usePermissionProvider } from "../context";
 
 export interface TabDefinition {
   label: string;
+  tabLabel?: ReactNode;
   content: ReactNode;
   requiredPermission?: string;
   permissionAction?: "read" | "write" | "admin";
@@ -89,8 +90,8 @@ export const TabbedContent = ({
           "& .MuiTab-root": { textTransform: "none" },
         }}
       >
-        {visibleTabs.map(({ label }) => (
-          <Tab key={label} label={label} value={label} />
+        {visibleTabs.map(({ label, tabLabel }) => (
+          <Tab key={label} label={tabLabel ?? label} value={label} />
         ))}
       </Tabs>
       {activeTab.content}

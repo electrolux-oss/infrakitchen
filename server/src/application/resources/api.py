@@ -31,6 +31,7 @@ router = APIRouter()
     response_model=ResourceResponse,
     response_description="Get one resource by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "resources", param_renames={"id": "resource_id"})
 async def get_by_id(resource_id: str, service: ResourceService = Depends(get_resource_service)):
@@ -45,6 +46,7 @@ async def get_by_id(resource_id: str, service: ResourceService = Depends(get_res
     response_model=list[dict[str, Any]],
     response_description="Get all resources",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "resources")
 async def get_all(
@@ -143,6 +145,7 @@ async def delete(request: Request, resource_id: str, service: ResourceService = 
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, resource_id: str, service: ResourceService = Depends(get_resource_service)):
     requester = request.state.user
@@ -154,6 +157,7 @@ async def get_actions(request: Request, resource_id: str, service: ResourceServi
     response_model=ResourceTreeResponse,
     response_description="Get tree for a resource",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_tree(
     resource_id: str,
@@ -168,6 +172,7 @@ async def get_tree(
     "/resources/{resource_id}/metadata",
     response_description="Get metadata from cloud provider for a single resource",
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def get_metadata(
     resource_id: str,
@@ -202,6 +207,7 @@ async def sync_workspace(
     response_model=list[UserResourceResponse],
     response_description="Get user resource policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_resources(user_id: str, service: ResourceService = Depends(get_resource_service)):
     resources = await service.get_user_resource_policies(user_id)
@@ -213,6 +219,7 @@ async def get_user_resources(user_id: str, service: ResourceService = Depends(ge
     response_model=list[RoleResourcesResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_resource_role_permissions(
     response: Response,

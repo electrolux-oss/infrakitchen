@@ -161,7 +161,6 @@ class SourceCodeVersionResponse(BaseModel):
     code_snapshot: str | None = Field(default="")
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
-    resource_count: int | None = Field(default=0)
 
     model_config = ConfigDict(from_attributes=True)
 

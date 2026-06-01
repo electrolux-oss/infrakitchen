@@ -35,6 +35,8 @@ export interface ExecutorResponse {
   _entity_name: string;
 }
 
+export type ExecutorResponseOptional = Partial<ExecutorResponse>;
+
 export interface ExecutorCreate {
   name: string;
   description: string;

@@ -4,22 +4,32 @@ from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from core.users.model import User
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import BatchOperation
+from .query_options import build_batch_operation_query_options
 
 
 class BatchOperationCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, batch_operation_id: str | UUID) -> BatchOperation | None:
+    async def get_by_id(
+        self,
+        batch_operation_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> BatchOperation | None:
         if not is_valid_uuid(batch_operation_id):
             raise ValueError(f"Invalid UUID: {batch_operation_id}")
 
         statement = select(BatchOperation).where(BatchOperation.id == batch_operation_id)
+        statement = statement.options(*build_batch_operation_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
@@ -28,12 +38,14 @@ class BatchOperationCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[BatchOperation]:
-        statement = select(BatchOperation).join(User, BatchOperation.created_by == User.id)
+        statement = select(BatchOperation)
         statement = evaluate_sqlalchemy_sorting(BatchOperation, statement, sort)
         statement = evaluate_sqlalchemy_filters(BatchOperation, statement, filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_batch_operation_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())
 

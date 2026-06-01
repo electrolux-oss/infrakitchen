@@ -1,28 +1,36 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select, cast, String
+from sqlalchemy import ColumnElement, func, select, cast, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.users.model import User
-
 from core.utils.model_tools import is_valid_uuid
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 
 from .model import Permission
+from .query_options import build_permission_query_options
 
 
 class PermissionCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, permission_id: str | UUID) -> Permission | None:
+    async def get_by_id(
+        self,
+        permission_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Permission | None:
         if not is_valid_uuid(permission_id):
             raise ValueError(f"Invalid UUID: {permission_id}")
 
-        statement = (
-            select(Permission).where(Permission.id == permission_id).outerjoin(User, Permission.created_by == User.id)
-        )
+        statement = select(Permission).where(Permission.id == permission_id)
+        statement = statement.options(*build_permission_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -31,11 +39,13 @@ class PermissionCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Permission]:
-        statement = select(Permission).outerjoin(User, Permission.created_by == User.id)
+        statement = select(Permission)
         statement = evaluate_sqlalchemy_filters(Permission, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
+        statement = statement.options(*build_permission_query_options(fields))
 
         result = await self.session.execute(statement)
         return list(result.scalars().all())
@@ -67,12 +77,8 @@ class PermissionCRUD:
         if not is_valid_uuid(entity_id):
             raise ValueError(f"Invalid UUID: {entity_id}")
 
-        statement = (
-            select(Permission)
-            .where(
-                Permission.v1 == f"{entity_name}:{entity_id}",
-            )
-            .outerjoin(User, Permission.created_by == User.id)
+        statement = select(Permission).where(
+            Permission.v1 == f"{entity_name}:{entity_id}",
         )
         result = await self.session.execute(statement)
         permissions = result.scalars().all()
@@ -86,15 +92,21 @@ class PermissionCRUD:
     async def get_all_roles(
         self,
         filter: dict[str, Any] | None = None,
+        sort: tuple[str, str] | None = None,
         range: tuple[int, int] | None = None,
     ) -> list[Permission]:
-        if not filter:
-            filter = {"ptype": "g"}
-        else:
-            filter["ptype"] = "g"
+        base_filter: dict[str, Any] = {"ptype": "g"}
+        sorting: list[ColumnElement[Any]] = []
 
-        statement = select(Permission).outerjoin(User, Permission.created_by == User.id).distinct(Permission.v1)
-        statement = evaluate_sqlalchemy_filters(Permission, statement, filter)
+        column = Permission.v1
+        sorting.append(column.asc() if sort is None else column.desc() if sort[1].lower() == "desc" else column.asc())
+
+        if filter:
+            base_filter.update(filter)
+
+        statement = select(Permission).distinct(Permission.v1)
+        statement = statement.order_by(*sorting)
+        statement = evaluate_sqlalchemy_filters(Permission, statement, base_filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
         result = await self.session.execute(statement)
@@ -139,15 +151,12 @@ class PermissionCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
     ) -> list[Permission]:
-        statement = (
-            select(Permission)
-            .where(
-                Permission.ptype == "p",
-                Permission.v1.like("api:%"),
-                Permission.v0 == role_name,
-            )
-            .outerjoin(User, Permission.created_by == User.id)
+        statement = select(Permission).where(
+            Permission.ptype == "p",
+            Permission.v1.like("api:%"),
+            Permission.v0 == role_name,
         )
+        statement = statement.options(*build_permission_query_options())
 
         statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)

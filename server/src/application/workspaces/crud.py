@@ -4,28 +4,35 @@ from uuid import UUID
 from sqlalchemy import String, cast, func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.integrations.model import Integration
 from application.resources.model import Resource
 from core.permissions.model import Permission
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Workspace
+from .query_options import build_workspace_query_options
 
 
 class WorkspaceCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, workspace_id: str | UUID) -> Workspace | None:
+    async def get_by_id(
+        self,
+        workspace_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Workspace | None:
         if not is_valid_uuid(workspace_id):
             raise ValueError(f"Invalid UUID: {workspace_id}")
 
-        statement = (
-            select(Workspace).where(Workspace.id == workspace_id).join(User, Workspace.created_by == User.id)
-        ).join(Integration, Workspace.integration_id == Integration.id)
+        statement = select(Workspace).where(Workspace.id == workspace_id)
+        statement = statement.options(*build_workspace_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -34,16 +41,14 @@ class WorkspaceCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Workspace]:
-        statement = (
-            select(Workspace)
-            .join(User, Workspace.created_by == User.id)
-            .join(Integration, Workspace.integration_id == Integration.id)
-        )
+        statement = select(Workspace)
         statement = evaluate_sqlalchemy_filters(Workspace, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Workspace, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_workspace_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

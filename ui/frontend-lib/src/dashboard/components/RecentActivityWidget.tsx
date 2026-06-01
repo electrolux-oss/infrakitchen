@@ -12,8 +12,6 @@ import {
   useTheme,
 } from "@mui/material";
 
-import { useEntityMetadataFromRows } from "../../common/hooks/useEntityMetadata";
-import { IkEntity } from "../../types";
 import { ActivityLogEntry } from "../types";
 
 import { ActivityFeedItem } from "./ActivityFeedItem";
@@ -34,18 +32,6 @@ export const RecentActivityWidget = ({
   const displayedActivities = useMemo(() => {
     return activities.slice(0, 10);
   }, [activities]);
-
-  const activityEntities: IkEntity[] = useMemo(() => {
-    return displayedActivities.map(
-      (activity) =>
-        ({
-          ...activity,
-          _entity_name: "audit_log",
-        }) as unknown as IkEntity,
-    );
-  }, [displayedActivities]);
-
-  const { data: entityMeta } = useEntityMetadataFromRows(activityEntities);
 
   return (
     <Card sx={{ height: "100%" }}>
@@ -85,13 +71,12 @@ export const RecentActivityWidget = ({
         ) : (
           <Stack spacing={0}>
             {displayedActivities.map((activity) => {
-              const meta = entityMeta.get(activity.entity_id);
               return (
                 <ActivityFeedItem
                   key={activity.id}
                   activity={activity}
-                  entityName={meta?.name}
-                  entityStatus={meta?.status}
+                  entityName={activity.entity_data?.name}
+                  entityStatus={activity.entity_data?.status}
                 />
               );
             })}

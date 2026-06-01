@@ -36,6 +36,7 @@ export const WorkspaceContent = () => {
     },
     {
       label: "Resources",
+      tabLabel: `Resources (${entity.resources_count ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}

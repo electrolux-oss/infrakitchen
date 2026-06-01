@@ -11,7 +11,7 @@ import Ansi from "ansi-to-react";
 import { useLocalStorage } from "../context";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
-import WebSocketManager from "../WebSocketManager";
+import { useLogStreamSubscription } from "../hooks/useLogStreamSubscription";
 
 const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
@@ -35,7 +35,6 @@ export const LogLiveTail = () => {
   const [dimensions, setDimensions] = useState({ width: 500, height: 400 });
   const isResizing = useRef(false);
 
-  const socketManagerRef = useRef<WebSocketManager | null>(null);
   const pendingMessagesRef = useRef<string[]>([]);
   const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const logActivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -97,52 +96,7 @@ export const LogLiveTail = () => {
   );
 
   useEffect(() => {
-    if (
-      socketManagerRef.current === null &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current = new WebSocketManager(
-        ikApi,
-        `/api/ws/logs/${entity._entity_name}/${entity.id}`,
-      );
-    }
-  }, [ikApi, entity, webSocketEnabled, globalConfig]);
-
-  useEffect(() => {
-    if (
-      socketManagerRef.current &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current.setEventHandler((messageEvent) => {
-        const data = JSON.parse(messageEvent.data);
-        pendingMessagesRef.current.push(data.data);
-
-        // Show spinner when logs are coming
-        setIsReceivingLogs(true);
-        if (logActivityTimerRef.current) {
-          clearTimeout(logActivityTimerRef.current);
-        }
-        logActivityTimerRef.current = setTimeout(() => {
-          setIsReceivingLogs(false);
-        }, 10000);
-
-        if (batchTimerRef.current === null) {
-          batchTimerRef.current = setTimeout(
-            flushPendingMessages,
-            BATCH_INTERVAL,
-          );
-        }
-      });
-      socketManagerRef.current.startVisibilityTracking();
-      socketManagerRef.current.connect();
-    }
     return () => {
-      if (socketManagerRef.current) {
-        socketManagerRef.current.stopVisibilityTracking();
-        socketManagerRef.current.disconnect();
-      }
       if (batchTimerRef.current) {
         clearTimeout(batchTimerRef.current);
         flushPendingMessages();
@@ -151,7 +105,39 @@ export const LogLiveTail = () => {
         clearTimeout(logActivityTimerRef.current);
       }
     };
-  }, [flushPendingMessages, webSocketEnabled, globalConfig]);
+  }, [flushPendingMessages]);
+
+  const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
+
+  const handleLogMessage = useCallback(
+    (data: string) => {
+      pendingMessagesRef.current.push(data);
+
+      setIsReceivingLogs(true);
+      if (logActivityTimerRef.current) {
+        clearTimeout(logActivityTimerRef.current);
+      }
+      logActivityTimerRef.current = setTimeout(() => {
+        setIsReceivingLogs(false);
+      }, 10000);
+
+      if (batchTimerRef.current === null) {
+        batchTimerRef.current = setTimeout(
+          flushPendingMessages,
+          BATCH_INTERVAL,
+        );
+      }
+    },
+    [flushPendingMessages],
+  );
+
+  useLogStreamSubscription({
+    ikApi,
+    entityName: entity._entity_name,
+    entityId: entity.id,
+    enabled: subscriptionEnabled,
+    onMessage: handleLogMessage,
+  });
 
   if (webSocketEnabled === false || !globalConfig?.websocket) {
     return null;

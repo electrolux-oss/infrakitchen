@@ -6,22 +6,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import User
+from .query_options import build_user_query_options
 
 
 class UserCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, user_id: str | UUID) -> User | None:
+    async def get_by_id(
+        self,
+        user_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> User | None:
         if not is_valid_uuid(user_id):
             raise ValueError(f"Invalid UUID: {user_id}")
 
         statement = select(User).where(User.id == user_id)
-        statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
+        statement = statement.options(*build_user_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -43,13 +53,14 @@ class UserCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[User]:
         statement = select(User)
         statement = evaluate_sqlalchemy_filters(User, statement, filter)
         statement = evaluate_sqlalchemy_sorting(User, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
-        statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
+        statement = statement.options(*build_user_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

@@ -8,6 +8,7 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { transformWorkspaceOptional } from "../../workspaces/graphql";
 
 interface IntegrationWorkspaceDependenciesProps {
   integration_id: string;
@@ -74,11 +75,6 @@ export const IntegrationWorkspaceDependencies = (
         flex: 2,
       },
       {
-        field: "link",
-        headerName: "Link",
-        flex: 2,
-      },
-      {
         field: "labels",
         headerName: "Labels",
         flex: 1,
@@ -96,7 +92,6 @@ export const IntegrationWorkspaceDependencies = (
 
   const defaultColumnVisibilityModel = {
     description: false,
-    link: false,
   };
 
   const filterConfigs: FilterConfig[] = useMemo(
@@ -137,18 +132,9 @@ export const IntegrationWorkspaceDependencies = (
       columns={columns}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
       filterConfigs={filterConfigs}
-      filterStorageKey={`filter_integration_workspaces_${integration_id}`}
+      filterStorageKey={`filter_integration_workspaces`}
+      transformFn={transformWorkspaceOptional}
       buildApiFilters={buildApiFilters}
-      fields={[
-        "id",
-        "name",
-        "status",
-        "updated_at",
-        "created_at",
-        "labels",
-        "description",
-        "link",
-      ]}
     />
   );
 };

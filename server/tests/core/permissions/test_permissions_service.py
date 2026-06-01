@@ -70,7 +70,7 @@ class TestGetMethods:
 
         assert len(result) == 1
         assert result[0].ptype == "g"
-        mock_permission_crud.get_all_roles.assert_awaited_once_with(filter=None, range=(0, 5))
+        mock_permission_crud.get_all_roles.assert_awaited_once_with(filter=None, sort=None, range=(0, 5))
 
 
 class TestRoleCreation:

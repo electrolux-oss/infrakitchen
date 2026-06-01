@@ -25,6 +25,11 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { providers } from "../constants";
+import {
+  GqlIntegration,
+  INTEGRATIONS_QUERY,
+  transformIntegration,
+} from "../graphql";
 import { ConnectionType, IntegrationResponse, IntegrationType } from "../types";
 
 const IntegrationsPage = () => {
@@ -42,13 +47,13 @@ const IntegrationsPage = () => {
     setLoading(true);
     setError(null);
     ikApi
-      .getList("integrations", {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "name", order: "ASC" },
-        filter: {},
+      .graphqlRequest<{ integrations: GqlIntegration[] }>(INTEGRATIONS_QUERY, {
+        filter: null,
+        sort: ["name", "ASC"],
+        range: [0, 1000],
       })
-      .then(({ data }) => {
-        setIntegrations(data);
+      .then((response) => {
+        setIntegrations(response.integrations.map(transformIntegration));
         setLoading(false);
       })
       .catch((err: any) => {

@@ -44,7 +44,7 @@ class MockWorkflowService:
     async def delete(self, workflow_id: str, requester: UserDTO):
         pass
 
-    async def get_workflow_actions(self, workflow_id: str, requester: str | UUID):
+    async def get_actions(self, workflow_id: str, requester: str | UUID):
         return self._actions
 
 

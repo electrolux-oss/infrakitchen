@@ -1,14 +1,13 @@
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
+import {
+  GqlTemplateShort,
+  transformTemplateShort,
+} from "../../templates/graphql";
 import { TemplateShort } from "../../templates/types";
+import { UserShort } from "../../users";
+import { GqlUserShort, transformUserShort } from "../../users/graphql";
 import { GqlWorkflow, transformWorkflow } from "../../workflows/graphql";
-import { BlueprintResponse } from "../types";
-
-interface GqlTemplateShort {
-  id: string;
-  name: string;
-  abstract: boolean;
-  cloudResourceTypes?: string[];
-}
+import { BlueprintResponse, BlueprintResponseOptional } from "../types";
 
 interface GqlTemplateWithParents extends GqlTemplateShort {
   parents?: GqlTemplateShort[] | null;
@@ -26,44 +25,33 @@ export interface GqlBlueprint {
   labels: string[] | null;
   status: string;
   revisionNumber: number;
-  createdBy: string | null;
-  creator: { id: string; identifier: string } | null;
+  creator: GqlUserShort | null;
   workflows: GqlWorkflow[] | null;
   createdAt: string;
   updatedAt: string;
 }
 
-function toTemplateShort(t: GqlTemplateShort) {
-  return {
-    id: t.id,
-    name: t.name,
-    abstract: t.abstract,
-    cloud_resource_types: t.cloudResourceTypes ?? [],
-    _entity_name: "template" as const,
-  };
-}
+export type GqlBlueprintOptional = Partial<GqlBlueprint> & {
+  id: string;
+  name: string;
+};
 
 export function transformBlueprint(gql: GqlBlueprint): BlueprintResponse {
   return {
     id: gql.id,
     name: gql.name,
     description: gql.description ?? "",
-    templates: (gql.templates ?? []).map(toTemplateShort),
-    external_templates: (gql.externalTemplates ?? []).map(toTemplateShort),
+    templates: (gql.templates ?? []).map(transformTemplateShort),
+    external_templates: (gql.externalTemplates ?? []).map(
+      transformTemplateShort,
+    ),
     wiring: gql.wiring ?? [],
     default_variables: gql.defaultVariables ?? {},
     configuration: gql.configuration ?? {},
     labels: gql.labels ?? [],
     status: gql.status as BlueprintResponse["status"],
     revision_number: gql.revisionNumber,
-    created_by: gql.creator
-      ? {
-          id: gql.creator.id,
-          identifier: gql.creator.identifier,
-          provider: "",
-          _entity_name: "user" as const,
-        }
-      : (gql.createdBy ?? ""),
+    creator: transformUserShort(gql.creator) as UserShort,
     workflows: (gql.workflows ?? []).map(transformWorkflow),
     created_at: gql.createdAt,
     updated_at: gql.updatedAt,
@@ -71,31 +59,32 @@ export function transformBlueprint(gql: GqlBlueprint): BlueprintResponse {
   };
 }
 
-export interface GqlBlueprintListItem {
-  id: string;
-  name: string;
-  description: string | null;
-  templates: { id: string; name: string }[] | null;
-  labels: string[] | null;
-  status: string;
-  updatedAt: string;
-}
-
-export function transformBlueprintListItem(
-  g: GqlBlueprintListItem,
-): Record<string, any> {
+export function transformBlueprintOptional(
+  gql: GqlBlueprintOptional,
+): BlueprintResponseOptional {
   return {
-    id: g.id,
-    name: g.name,
-    description: g.description ?? "",
-    templates: (g.templates ?? []).map((t) => ({
-      id: t.id,
-      name: t.name,
-      _entity_name: "template",
-    })),
-    labels: g.labels ?? [],
-    status: g.status,
-    updated_at: g.updatedAt,
+    id: gql.id,
+    name: gql.name,
+    description: gql.description ?? undefined,
+    templates: gql.templates
+      ? gql.templates.map(transformTemplateShort)
+      : undefined,
+    external_templates: gql.externalTemplates
+      ? gql.externalTemplates.map(transformTemplateShort)
+      : undefined,
+    wiring: gql.wiring ?? undefined,
+    default_variables: gql.defaultVariables ?? undefined,
+    configuration: gql.configuration ?? undefined,
+    labels: gql.labels ?? undefined,
+    status: gql.status as BlueprintResponse["status"] | undefined,
+    revision_number: gql.revisionNumber,
+    creator:
+      gql.creator !== undefined
+        ? (transformUserShort(gql.creator) as UserShort)
+        : undefined,
+    workflows: gql.workflows ? gql.workflows.map(transformWorkflow) : undefined,
+    created_at: gql.createdAt,
+    updated_at: gql.updatedAt,
     _entity_name: "blueprint",
   };
 }
@@ -123,10 +112,12 @@ export function transformBlueprintUse(gql: GqlBlueprintUse): BlueprintUseData {
     id: gql.id,
     name: gql.name,
     templates: (gql.templates ?? []).map((t) => ({
-      ...toTemplateShort(t),
-      parents: (t.parents ?? []).map(toTemplateShort),
+      ...transformTemplateShort(t),
+      parents: (t.parents ?? []).map(transformTemplateShort),
     })),
-    external_templates: (gql.externalTemplates ?? []).map(toTemplateShort),
+    external_templates: (gql.externalTemplates ?? []).map(
+      transformTemplateShort,
+    ),
     wiring: gql.wiring ?? [],
     configuration: gql.configuration ?? {},
   };

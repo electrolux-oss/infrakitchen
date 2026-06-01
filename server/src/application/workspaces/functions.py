@@ -1,6 +1,11 @@
 import logging
 import shutil
 from typing import Any
+from uuid import UUID
+
+from core.constants.model import ModelActions
+from core.users.functions import user_entity_permissions
+from core.users.model import UserDTO
 
 log = logging.getLogger(__name__)
 
@@ -31,3 +36,12 @@ async def delete_resource_code(path: str, logger: logging.Logger | Any = log) ->
     except Exception as e:
         logger.error(f"Failed to delete resource code: {e}")
         raise e
+
+
+async def get_workspace_actions(requester: UserDTO, workspace_id: str | UUID) -> list[str]:
+    """Get all actions available for a workspace based on user permissions."""
+    requester_permissions = await user_entity_permissions(requester, workspace_id, "workspace")
+    if "admin" not in requester_permissions:
+        return []
+
+    return [ModelActions.EDIT, ModelActions.DELETE]

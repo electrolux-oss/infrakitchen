@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -8,57 +8,12 @@ import {
   GetEntityLink,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { WORKFLOWS_QUERY, WORKFLOWS_COUNT_QUERY } from "../graphql/queries";
-import {
-  GqlWorkflowListItem,
-  transformWorkflowListItem,
-} from "../graphql/transforms";
+import { WORKFLOW_FIELD_MAP } from "../graphql";
+import { transformWorkflowOptional } from "../graphql/transforms";
 
 export const WorkflowsPage = () => {
-  const { ikApi } = useConfig();
-
-  const fetchWorkflows = useCallback(
-    async (params: {
-      filter: Record<string, any>;
-      sort: { field: string; order: "ASC" | "DESC" };
-      pagination: { page: number; perPage: number };
-      fields: string[];
-    }) => {
-      const gqlFilter =
-        Object.keys(params.filter).length > 0 ? params.filter : null;
-      const gqlSort = [params.sort.field, params.sort.order];
-      const skip = (params.pagination.page - 1) * params.pagination.perPage;
-      const end = skip + params.pagination.perPage;
-      const gqlRange = [skip, end];
-
-      const [listResult, countResult] = await Promise.all([
-        ikApi.graphqlRequest<{ workflows: GqlWorkflowListItem[] }>(
-          WORKFLOWS_QUERY,
-          {
-            filter: gqlFilter,
-            sort: gqlSort,
-            range: gqlRange,
-          },
-        ),
-        ikApi.graphqlRequest<{ workflowsCount: number }>(
-          WORKFLOWS_COUNT_QUERY,
-          {
-            filter: gqlFilter,
-          },
-        ),
-      ]);
-
-      return {
-        data: listResult.workflows.map(transformWorkflowListItem),
-        total: countResult.workflowsCount,
-      };
-    },
-    [ikApi],
-  );
-
   const columns = useMemo(
     () => [
       {
@@ -91,18 +46,14 @@ export const WorkflowsPage = () => {
       },
       {
         field: "creator",
-        headerName: "Created By",
-        flex: 0.8,
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
           if (!creator) return null;
-          return (
-            <GetEntityLink
-              {...creator}
-              name={creator.identifier}
-              _entity_name="user"
-            />
-          );
+          return <GetEntityLink {...creator} name={creator.identifier} />;
         },
       },
       {
@@ -155,15 +106,8 @@ export const WorkflowsPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fetchListFn={fetchWorkflows}
-        fields={[
-          "id",
-          "status",
-          "steps",
-          "creator",
-          "created_at",
-          "completed_at",
-        ]}
+        entityFieldMap={WORKFLOW_FIELD_MAP}
+        transformFn={transformWorkflowOptional}
       />
     </PageContainer>
   );

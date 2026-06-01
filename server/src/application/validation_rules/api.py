@@ -20,6 +20,7 @@ router = APIRouter()
     response_model=list[ValidationRuleResponse],
     response_description="List of validation rules with descriptions",
     status_code=status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_predefined_rules(
     service: ValidationRuleService = Depends(get_validation_rule_service),
@@ -33,6 +34,7 @@ async def get_predefined_rules(
     response_model=list[ValidationRulesByVariableResponse],
     response_description="Validation rules grouped by variable for the specified template",
     status_code=status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_template_rules(
     template_id: str,

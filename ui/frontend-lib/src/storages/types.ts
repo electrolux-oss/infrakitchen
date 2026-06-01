@@ -20,7 +20,11 @@ export interface StorageResponse extends StorageShort {
   storage_type: string;
   storage_provider: string;
   configuration: object;
+  resources_count: number;
+  executors_count: number;
 }
+
+export type StorageResponseOptional = Partial<StorageResponse>;
 
 export interface StorageCreate {
   name: string;

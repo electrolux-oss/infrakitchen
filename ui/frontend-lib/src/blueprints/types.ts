@@ -62,12 +62,14 @@ export interface BlueprintResponse {
   labels: string[];
   status: "enabled" | "disabled";
   revision_number: number;
-  created_by: UserShort | string;
   workflows: WorkflowResponse[];
   created_at: string;
   updated_at: string;
+  creator: UserShort;
   _entity_name: string;
 }
+
+export type BlueprintResponseOptional = Partial<BlueprintResponse>;
 
 // Re-export for convenience; blueprint pages use the full workflow shape.
 export type {

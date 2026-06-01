@@ -3,42 +3,36 @@ from uuid import UUID
 
 from sqlalchemy import func, literal, select, case
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload, with_expression
+from sqlalchemy.orm import joinedload, selectinload
 
-from application.templates.model import Template
 from application.resources.model import Resource
-from application.source_codes.model import SourceCode
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import SourceCodeVersion, SourceConfig, SourceConfigTemplateReference, SourceOutputConfig
+from .query_options import build_source_code_version_query_options
 
 
 class SourceCodeVersionCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    def _get_resource_count_subquery(self):
-        return (
-            select(func.count(Resource.id))
-            .where(Resource.source_code_version_id == SourceCodeVersion.id)
-            .scalar_subquery()
-        )
-
-    async def get_by_id(self, source_code_version_id: str | UUID) -> SourceCodeVersion | None:
+    async def get_by_id(
+        self,
+        source_code_version_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> SourceCodeVersion | None:
         if not is_valid_uuid(source_code_version_id):
             raise ValueError(f"Invalid UUID: {source_code_version_id}")
 
-        statement = (
-            select(SourceCodeVersion)
-            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
-            .where(SourceCodeVersion.id == source_code_version_id)
-            .join(User, SourceCodeVersion.created_by == User.id)
-            .join(Template, SourceCodeVersion.template_id == Template.id)
-            .join(SourceCode, SourceCodeVersion.source_code_id == SourceCode.id)
-        )
+        statement = select(SourceCodeVersion).where(SourceCodeVersion.id == source_code_version_id)
+        statement = statement.options(*build_source_code_version_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
@@ -47,31 +41,15 @@ class SourceCodeVersionCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[SourceCodeVersion]:
-        statement = (
-            select(SourceCodeVersion)
-            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
-            .join(User, SourceCodeVersion.created_by == User.id)
-            .join(Template, SourceCodeVersion.template_id == Template.id)
-            .join(SourceCode, SourceCodeVersion.source_code_id == SourceCode.id)
-        )
+        statement = select(SourceCodeVersion)
 
         statement = evaluate_sqlalchemy_filters(SourceCodeVersion, statement, filter)
-
-        sort_field = sort[0].lower() if sort else None
-        sort_dir = sort[1].lower() if sort else "asc"
-
-        if sort_field == "template":
-            column = Template.name
-            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
-        elif sort_field == "source_code":
-            column = SourceCode.source_code_url
-            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
-        else:
-            statement = evaluate_sqlalchemy_sorting(SourceCodeVersion, statement, sort)
-
+        statement = evaluate_sqlalchemy_sorting(SourceCodeVersion, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_source_code_version_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())
 
@@ -221,7 +199,6 @@ class SourceCodeVersionCRUD:
 
         statement = (
             select(SourceCodeVersion)
-            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
             .outerjoin(SourceConfig, SourceConfig.source_code_version_id == SourceCodeVersion.id)
             .outerjoin(SourceOutputConfig, SourceOutputConfig.source_code_version_id == SourceCodeVersion.id)
             .where(SourceCodeVersion.id.in_(source_code_version_ids))
@@ -239,7 +216,6 @@ class SourceCodeVersionCRUD:
 
         statement = (
             select(SourceCodeVersion, SourceConfigTemplateReference)
-            .options(with_expression(SourceCodeVersion.resource_count, self._get_resource_count_subquery()))
             .outerjoin(
                 SourceConfigTemplateReference,
                 SourceConfigTemplateReference.template_id == SourceCodeVersion.template_id,

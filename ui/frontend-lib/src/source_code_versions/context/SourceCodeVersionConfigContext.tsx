@@ -12,8 +12,28 @@ import { useEffectOnce } from "react-use";
 import { InfraKitchenApi } from "../../api";
 import { TreeResponse } from "../../common/components/tree/types";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import {
+  GqlTemplateTreeNode,
+  transformTemplateTreeNode,
+} from "../../templates/graphql";
 import { TemplateShort } from "../../templates/types";
-import { ValidationRule, ValidationRulesByVariable } from "../../types";
+import { ValidationRule } from "../../types";
+import {
+  GqlValidationRulesByVariable,
+  GqlValidationRule,
+  transformValidationRulesByVariable,
+} from "../../validation_rules/graphql";
+import {
+  SOURCE_CODE_VERSION_CONFIGS_QUERY,
+  SOURCE_CODE_VERSION_CONFIGS_WITH_VALIDATION_QUERY,
+  SOURCE_CODE_VERSION_CONFIG_PAGE_QUERY,
+  GqlSourceConfig,
+  GqlSourceCodeVersion,
+  GqlSourceConfigTemplateReference,
+  transformSourceConfig,
+  transformSourceConfigTemplateReference,
+  transformSourceCodeVersion,
+} from "../graphql";
 import {
   SourceConfigResponse,
   SourceCodeVersionResponse,
@@ -86,117 +106,182 @@ export const SourceCodeVersionConfigProvider = ({
     ValidationRule[]
   >([]);
 
+  const applyValidationRules = useCallback(
+    (
+      configs: SourceConfigResponse[],
+      validationRulesResponse: {
+        variable_name: string;
+        rules: ValidationRule[];
+      }[],
+    ): SourceConfigResponse[] => {
+      const validationRulesMap = new Map<
+        string,
+        {
+          id?: string;
+          regex_pattern?: string | null;
+          min_value?: string | number | null;
+          max_value?: string | number | null;
+        }
+      >();
+
+      validationRulesResponse.forEach(({ variable_name, rules }) => {
+        if (!rules || rules.length === 0) {
+          return;
+        }
+
+        const preferredRule =
+          rules.find((rule) => {
+            const hasRegex = Boolean(rule.regex_pattern?.trim().length);
+            const hasMin =
+              rule.min_value !== undefined && rule.min_value !== null;
+            const hasMax =
+              rule.max_value !== undefined && rule.max_value !== null;
+            return hasRegex || hasMin || hasMax;
+          }) || rules[0];
+
+        const hasMin =
+          preferredRule.min_value !== undefined &&
+          preferredRule.min_value !== null;
+        const hasMax =
+          preferredRule.max_value !== undefined &&
+          preferredRule.max_value !== null;
+
+        validationRulesMap.set(variable_name, {
+          id: preferredRule.id,
+          regex_pattern: preferredRule.regex_pattern,
+          min_value: hasMin ? preferredRule.min_value : null,
+          max_value: hasMax ? preferredRule.max_value : null,
+        });
+      });
+
+      return configs.map((config) => {
+        const validationRule = validationRulesMap.get(config.name);
+        return {
+          ...config,
+          validation_rule_id: validationRule?.id ?? null,
+          validation_regex: validationRule?.regex_pattern || "",
+          validation_min_value: validationRule?.min_value ?? null,
+          validation_max_value: validationRule?.max_value ?? null,
+        };
+      });
+    },
+    [],
+  );
+
+  const fetchAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const gqlResponse = await ikApi.graphqlRequest<{
+        sourceCodeVersionConfigs: GqlSourceConfig[];
+        validationRulesByTemplate: GqlValidationRulesByVariable[];
+        predefinedValidationRules: GqlValidationRule[];
+        templateTree: GqlTemplateTreeNode | null;
+        sourceCodeVersionTemplateReferences: GqlSourceConfigTemplateReference[];
+        sourceCodeVersions: GqlSourceCodeVersion[];
+      }>(SOURCE_CODE_VERSION_CONFIG_PAGE_QUERY, {
+        sourceCodeVersionId: sourceCodeVersion.id,
+        templateId: sourceCodeVersion.template.id,
+        refsFilter: { template_id: sourceCodeVersion.template.id },
+        refsSort: ["source_code_folder", "ASC"],
+        refsRange: [0, 999],
+      });
+
+      // Configs + validation rules
+      const configsResponse = gqlResponse.sourceCodeVersionConfigs.map(
+        transformSourceConfig,
+      );
+      if (configsResponse.length > 0) {
+        const validationRulesResponse =
+          gqlResponse.validationRulesByTemplate.map(
+            transformValidationRulesByVariable,
+          );
+        setSourceConfigs(
+          applyValidationRules(configsResponse, validationRulesResponse),
+        );
+      } else {
+        notify("No source code configs found", "info");
+      }
+
+      // Validation rules catalog
+      const rules: ValidationRule[] = gqlResponse.predefinedValidationRules.map(
+        (r) => ({
+          id: r.id ?? undefined,
+          target_type: r.targetType as ValidationRule["target_type"],
+          description: r.description,
+          min_value: r.minValue,
+          max_value: r.maxValue,
+          regex_pattern: r.regexPattern,
+          max_length: r.maxLength,
+        }),
+      );
+      setValidationRulesCatalog(rules);
+
+      // Template tree
+      if (gqlResponse.templateTree) {
+        setTree(transformTemplateTreeNode(gqlResponse.templateTree));
+      }
+
+      // Template references
+      const refs = gqlResponse.sourceCodeVersionTemplateReferences.map(
+        transformSourceConfigTemplateReference,
+      );
+      if (refs.length > 0) {
+        setTemplateReferences(refs);
+      }
+
+      // SCV references
+      const scvRefs = gqlResponse.sourceCodeVersions.map(
+        transformSourceCodeVersion,
+      );
+      setReferences(scvRefs.filter((ref) => ref.id !== sourceCodeVersion.id));
+    } catch (error: any) {
+      notifyError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    ikApi,
+    sourceCodeVersion.id,
+    sourceCodeVersion.template.id,
+    applyValidationRules,
+  ]);
+
   const fetchSourceConfigs = useCallback(async () => {
     setIsLoading(true);
     try {
-      const configsResponse: SourceConfigResponse[] = await ikApi.get(
-        `source_code_versions/${sourceCodeVersion.id}/configs`,
+      const configsGqlResponse = await ikApi.graphqlRequest<{
+        sourceCodeVersionConfigs: GqlSourceConfig[];
+        validationRulesByTemplate: GqlValidationRulesByVariable[];
+      }>(SOURCE_CODE_VERSION_CONFIGS_WITH_VALIDATION_QUERY, {
+        sourceCodeVersionId: sourceCodeVersion.id,
+        templateId: sourceCodeVersion.template.id,
+      });
+
+      const configsResponse = configsGqlResponse.sourceCodeVersionConfigs.map(
+        transformSourceConfig,
       );
-
       if (configsResponse.length > 0) {
-        const validationRulesResponse: ValidationRulesByVariable[] =
-          await ikApi.get(
-            `validation_rules/template/${sourceCodeVersion.template.id}`,
+        const validationRulesResponse =
+          configsGqlResponse.validationRulesByTemplate.map(
+            transformValidationRulesByVariable,
           );
-
-        const validationRulesMap = new Map<
-          string,
-          {
-            id?: string;
-            regex_pattern?: string | null;
-            min_value?: string | number | null;
-            max_value?: string | number | null;
-          }
-        >();
-
-        validationRulesResponse.forEach(({ variable_name, rules }) => {
-          if (!rules || rules.length === 0) {
-            return;
-          }
-
-          const preferredRule =
-            rules.find((rule) => {
-              const hasRegex = Boolean(rule.regex_pattern?.trim().length);
-              const hasMin =
-                rule.min_value !== undefined && rule.min_value !== null;
-              const hasMax =
-                rule.max_value !== undefined && rule.max_value !== null;
-              return hasRegex || hasMin || hasMax;
-            }) || rules[0];
-
-          const hasMin =
-            preferredRule.min_value !== undefined &&
-            preferredRule.min_value !== null;
-          const hasMax =
-            preferredRule.max_value !== undefined &&
-            preferredRule.max_value !== null;
-
-          validationRulesMap.set(variable_name, {
-            id: preferredRule.id,
-            regex_pattern: preferredRule.regex_pattern,
-            min_value: hasMin ? preferredRule.min_value : null,
-            max_value: hasMax ? preferredRule.max_value : null,
-          });
-        });
-
-        const configsWithValidation = configsResponse.map((config) => {
-          const validationRule = validationRulesMap.get(config.name);
-          return {
-            ...config,
-            validation_rule_id: validationRule?.id ?? null,
-            validation_regex: validationRule?.regex_pattern || "",
-            validation_min_value: validationRule?.min_value ?? null,
-            validation_max_value: validationRule?.max_value ?? null,
-          };
-        });
-
-        setSourceConfigs(configsWithValidation);
+        setSourceConfigs(
+          applyValidationRules(configsResponse, validationRulesResponse),
+        );
       } else {
         notify("No source code configs found", "info");
       }
     } catch (error: any) {
       notifyError(error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [ikApi, sourceCodeVersion.id, sourceCodeVersion.template.id]);
-
-  const fetchParentTemplates = useCallback(async () => {
-    try {
-      const response = await ikApi.get(
-        `templates/${sourceCodeVersion.template.id}/tree/parents`,
-      );
-      if (response.id) {
-        setTree(response);
-      } else {
-        notify("No templates found", "info");
-      }
-    } catch (e) {
-      notifyError(e);
-    }
-  }, [ikApi, sourceCodeVersion.template.id]);
-
-  const fetchTemplateReferences = useCallback(async () => {
-    try {
-      const response = await ikApi.get(
-        `source_code_versions/template/${sourceCodeVersion.template.id}/references`,
-      );
-      if (response.length > 0) {
-        setTemplateReferences(response);
-      }
-    } catch (e) {
-      notifyError(e);
-    }
-  }, [ikApi, sourceCodeVersion.template.id]);
-
-  const fetchValidationRulesCatalog = useCallback(async () => {
-    try {
-      const rules: ValidationRule[] = await ikApi.get(
-        `validation_rules/predefined`,
-      );
-      setValidationRulesCatalog(rules);
-    } catch (e) {
-      notifyError(e);
-    }
-  }, [ikApi]);
+  }, [
+    ikApi,
+    sourceCodeVersion.id,
+    sourceCodeVersion.template.id,
+    applyValidationRules,
+  ]);
 
   const updateConfigsValuesWithReference = useCallback(
     (
@@ -231,8 +316,15 @@ export const SourceCodeVersionConfigProvider = ({
   const fetchReferenceSourceConfigs = useCallback(
     (scv_id: string) => {
       ikApi
-        .get(`source_code_versions/${scv_id}/configs`)
-        .then((response: SourceConfigResponse[]) => {
+        .graphqlRequest<{
+          sourceCodeVersionConfigs: GqlSourceConfig[];
+        }>(SOURCE_CODE_VERSION_CONFIGS_QUERY, {
+          sourceCodeVersionId: scv_id,
+        })
+        .then((gqlResponse) => {
+          const response = gqlResponse.sourceCodeVersionConfigs.map(
+            transformSourceConfig,
+          );
           if (response.length > 0) {
             setSourceConfigs((currentSourceConfigs) => {
               return updateConfigsValuesWithReference(
@@ -253,33 +345,6 @@ export const SourceCodeVersionConfigProvider = ({
     },
     [ikApi, updateConfigsValuesWithReference],
   );
-
-  const fetchReferences = useCallback(() => {
-    ikApi
-      .getList("source_code_versions", {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "source_code_folder", order: "ASC" },
-        filter: { template_id: sourceCodeVersion.template.id },
-        fields: [
-          "id",
-          "identifier",
-          "template",
-          "source_code",
-          "status",
-          "created_at",
-          "source_code_version",
-          "source_code_branch",
-        ],
-      })
-      .then((response: { data: SourceCodeVersionResponse[] }) => {
-        setReferences(
-          response.data.filter((ref) => ref.id !== sourceCodeVersion.id),
-        );
-      })
-      .catch((error: Error) => {
-        notifyError(error);
-      });
-  }, [ikApi, sourceCodeVersion.id, sourceCodeVersion.template.id]);
 
   useEffect(() => {
     if (selectedReferenceId) {
@@ -303,13 +368,7 @@ export const SourceCodeVersionConfigProvider = ({
   }, [tree, sourceCodeVersion.template.id]);
 
   useEffectOnce(() => {
-    Promise.all([
-      fetchSourceConfigs(),
-      fetchParentTemplates(),
-      fetchTemplateReferences(),
-      fetchReferences(),
-      fetchValidationRulesCatalog(),
-    ]).finally(() => setIsLoading(false));
+    fetchAllData();
   });
 
   const handleReferenceChange = useCallback((newReferenceId: string) => {

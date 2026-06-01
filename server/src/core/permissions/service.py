@@ -7,11 +7,13 @@ from uuid import UUID
 from core.audit_logs.handler import AuditLogHandler
 from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
+from core.database import FieldSpec
 from core.errors import EntityExistsError, EntityNotFound
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_api_permission
+from core.permissions.functions import get_permission_actions
 from core.utils.model_tools import is_valid_uuid
 from .crud import PermissionCRUD
+from .model import Permission
 from core.users.service import UserService
 from .schema import (
     ApiPolicyCreate,
@@ -54,8 +56,7 @@ class PermissionService:
         if permission is None:
             return None
 
-        result = PermissionResponse.model_validate(permission)
-        return result
+        return PermissionResponse.model_validate(permission)
 
     async def get_all(self, **kwargs) -> list[PermissionResponse]:
         permissions = await self.crud.get_all(**kwargs)
@@ -63,6 +64,29 @@ class PermissionService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, permission_id: str | UUID, fields: FieldSpec | None = None) -> Permission | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(permission_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Permission]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def query_all_roles(
+        self,
+        filter: dict[str, Any] | None = None,
+        sort: tuple[str, str] | None = None,
+        range: tuple[int, int] | None = None,
+    ) -> list[Permission]:
+        """Return role ORM models directly."""
+        return await self.crud.get_all_roles(filter=filter, sort=sort, range=range)
 
     # Role methods
     async def count_roles(self, filter: dict[str, Any] | None = None) -> int:
@@ -149,8 +173,9 @@ class PermissionService:
         self,
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
     ) -> list[PermissionResponse]:
-        roles = await self.crud.get_all_roles(filter=filter, range=range)
+        roles = await self.crud.get_all_roles(filter=filter, sort=sort, range=range)
         return [PermissionResponse.model_validate(role) for role in roles]
 
     async def get_role_api_permissions(
@@ -182,27 +207,10 @@ class PermissionService:
         await self.crud.delete_entity_permissions(entity_name, entity_id)
 
     async def get_actions(self, permission_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the permission.
-        :param role_id: ID of the role
-        :return: List of actions
-        """
-        apis = await user_api_permission(requester, "permission")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:permission"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
         role = await self.crud.get_by_id(permission_id)
         if not role:
             raise EntityNotFound("Role not found")
-        actions.append(ModelActions.EDIT)
-        actions.append(ModelActions.DELETE)
-
-        return actions
+        return await get_permission_actions(requester)
 
     # Entity permissions
     async def get_entity_permissions(self, entity_name: str, entity_id: str, **kwargs) -> list[PermissionResponse]:

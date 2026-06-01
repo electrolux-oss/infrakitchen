@@ -7,12 +7,14 @@ from application.resources.service import ResourceService
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.errors import EntityNotFound
+from core.database import FieldSpec
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_api_permission
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
 from .crud import BatchOperationCRUD
+from .functions import get_batch_operation_actions
+from .model import BatchOperation
 from .schema import (
     BatchOperationCreate,
     BatchOperationResponse,
@@ -60,6 +62,28 @@ class BatchOperationService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(
+        self, batch_operation_id: str | UUID, fields: FieldSpec | None = None
+    ) -> BatchOperation | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(batch_operation_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[BatchOperation]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, batch_operation_id: str | UUID, requester: UserDTO) -> list[str]:
+        entity = await self.crud.get_by_id(batch_operation_id)
+        if not entity:
+            raise EntityNotFound("Batch operation not found")
+        return await get_batch_operation_actions(requester)
 
     async def create(
         self,
@@ -113,33 +137,3 @@ class BatchOperationService:
             raise EntityNotFound(f"Batch operation {batch_operation_id} not found")
 
         await self.crud.delete(batch_operation_id=batch_operation_id)
-
-    async def get_actions(self, batch_operation_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the source_code_version.
-        :param source_code_version_id: ID of the source code version
-        :return: List of actions
-        """
-        apis = await user_api_permission(requester, "batch_operation")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:batch_operation"]]
-
-        batch_operation = await self.crud.get_by_id(batch_operation_id=batch_operation_id)
-        if not batch_operation:
-            raise EntityNotFound(f"Batch operation {batch_operation_id} not found")
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        if "admin" not in requester_permissions:
-            return []
-
-        actions.append(ModelActions.DELETE)
-        # For simplicity, we allow both "add" and "remove" actions for entity_ids patching
-        # if the user has admin permissions.
-        actions.append("remove")
-        actions.append("add")
-
-        return actions

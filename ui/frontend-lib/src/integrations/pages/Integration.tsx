@@ -10,6 +10,7 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IntegrationContent } from "../components/IntegrationContent";
+import { INTEGRATION_DETAILS_FIELDS, transformIntegration } from "../graphql";
 import { IntegrationValidateResponse } from "../types";
 
 export const IntegrationPage = () => {
@@ -44,7 +45,12 @@ export const IntegrationPage = () => {
   }, [ikApi, integration_id]);
 
   return (
-    <EntityProvider entity_name="integration" entity_id={integration_id || ""}>
+    <EntityProvider
+      entity_name="integration"
+      entity_id={integration_id || ""}
+      transformFn={transformIntegration}
+      entityFields={INTEGRATION_DETAILS_FIELDS}
+    >
       <EntityContainer
         title={"Integration Overview"}
         actions={

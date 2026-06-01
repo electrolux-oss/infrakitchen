@@ -18,6 +18,7 @@ router = APIRouter()
     response_model=AuthProviderResponse,
     response_description="Get one auth_provider by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "auth_providers", param_renames={"id": "auth_provider_id"})
 async def get_by_id(auth_provider_id: str, service: AuthProviderService = Depends(get_auth_provider_service)):
@@ -32,6 +33,7 @@ async def get_by_id(auth_provider_id: str, service: AuthProviderService = Depend
     response_model=list[AuthProviderResponse],
     response_description="Get all auth_providers",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "auth_providers")
 async def get_all(
@@ -106,6 +108,7 @@ async def delete(
     response_model=list[str],
     response_description="Get user actions for a entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(
     request: Request, auth_provider_id: str, service: AuthProviderService = Depends(get_auth_provider_service)

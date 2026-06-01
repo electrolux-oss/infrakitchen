@@ -4,8 +4,6 @@ from fastapi import status as http_status
 from core.users.functions import user_is_super_admin
 from core.users.service import UserService
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
-from infrakitchen_mcp.registry import mcp_group
 from .schema import UserCreate, UserResponse, UserUpdate
 from .dependencies import get_user_service
 
@@ -17,8 +15,8 @@ router = APIRouter()
     response_model=UserResponse,
     response_description="Get one user by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
-@mcp_group(get_one_group, "users", param_renames={"id": "user_id"})
 async def get_by_id(user_id: str, service: UserService = Depends(get_user_service)):
     entity = await service.get_by_id(user_id=user_id)
     if not entity:
@@ -31,8 +29,8 @@ async def get_by_id(user_id: str, service: UserService = Depends(get_user_servic
     response_model=list[UserResponse],
     response_description="Get all users",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
-@mcp_group(list_entities_group, "users")
 async def get_all(
     response: Response,
     service: UserService = Depends(get_user_service),
@@ -90,6 +88,7 @@ async def update(
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, user_id: str, service: UserService = Depends(get_user_service)):
     requester = request.state.user

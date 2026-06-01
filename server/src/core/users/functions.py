@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from core.casbin.enforcer import CasbinEnforcer
+from core.constants.model import ModelActions
 from core.errors import AccessDenied
 
 
@@ -188,3 +189,9 @@ async def user_is_super_admin(user: UserDTO | None) -> bool:
     if "super" not in requester_roles:
         return False
     return True
+
+
+async def get_user_actions(requester: UserDTO | None) -> list[str]:
+    if await user_is_super_admin(requester) is False:
+        return []
+    return [ModelActions.EDIT, ModelActions.DELETE]

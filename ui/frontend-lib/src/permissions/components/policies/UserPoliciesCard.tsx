@@ -12,6 +12,7 @@ import {
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { EntityPolicyUserCreateDialog } from "./EntityPoliciesDialogs";
@@ -33,7 +34,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
     () => [
       {
         field: "resource_name",
-        fetchFields: ["resource_name", "resource_id"],
+        fetchFields: ["entity_data"],
         headerName: "Resource Name",
         flex: 1,
         sortable: false,
@@ -41,16 +42,16 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.resource_id}
-              _entity_name={"resource"}
-              name={params.row.resource_name}
+              id={params.row.entity_data?.id}
+              _entity_name={params.row.entity_data?._entity_name}
+              name={params.row.entity_data?.name || "Unknown Entity"}
             />
           );
         },
       },
       {
         field: "action",
-        fetchFields: ["action", "v2"],
+        fetchFields: ["v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
@@ -121,10 +122,11 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
       </PermissionWrapper>
       <EntityFetchTable
         title="User Policies"
-        entityName={`resources/permissions/user/${user_id}/policie`}
+        entityName="permission"
+        defaultFilter={{ ptype: "p", v0: `user:${user_id}` }}
         columns={columns}
-        defaultFilter={{ policy_type: "resource" }}
-        fields={["id"]}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </OverviewCard>
   );

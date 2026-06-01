@@ -19,6 +19,7 @@ router = APIRouter()
     response_model=SecretResponse,
     response_description="Get one secret by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_id(secret_id: str, service: SecretService = Depends(get_secret_service)):
     entity = await service.get_by_id(secret_id=secret_id)
@@ -32,6 +33,7 @@ async def get_by_id(secret_id: str, service: SecretService = Depends(get_secret_
     response_model=list[dict[str, Any]],
     response_description="Get all secrets",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(
     response: Response,
@@ -123,6 +125,7 @@ async def delete(request: Request, secret_id: str, service: SecretService = Depe
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, secret_id: str, service: SecretService = Depends(get_secret_service)):
     requester = request.state.user
@@ -147,6 +150,7 @@ async def validate_on_create(
     "/secrets/{secret_id}/validate",
     response_model=SecretValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate(request: Request, secret_id: str, service: SecretService = Depends(get_secret_service)):
     requester: UserDTO = request.state.user

@@ -3,8 +3,9 @@ import logging
 from typing import Any, Literal
 from uuid import UUID
 
+from core.database import FieldSpec
 from core.utils.model_tools import model_db_dump
-from core.workers.model import WorkerDTO
+from core.workers.model import Worker, WorkerDTO
 
 from .crud import WorkerCRUD
 from .schema import WorkerResponse
@@ -31,6 +32,20 @@ class WorkerService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, entity_id: str | UUID, fields: FieldSpec | None = None) -> Worker | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(entity_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Worker]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def save_worker(self, worker: WorkerDTO) -> WorkerDTO:
         result = await self.crud.get_all(filter={"name": worker.name, "host": worker.host})

@@ -9,38 +9,34 @@ from application.integrations.model import Integration
 from application.favorites.model import Favorite
 from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
-from application.storages.model import Storage
-from application.templates.model import Template
 from core.permissions.model import Permission
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Resource
+from .query_options import build_resource_query_options
 
 
 class ResourceCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, resource_id: str | UUID) -> Resource | None:
+    async def get_by_id(
+        self,
+        resource_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Resource | None:
         if not is_valid_uuid(resource_id):
             raise ValueError(f"Invalid UUID: {resource_id}")
 
-        statement = (
-            select(Resource)
-            .where(Resource.id == resource_id)
-            .join(User, Resource.created_by == User.id)
-            .outerjoin(Storage, Resource.storage_id == Storage.id)
-            .outerjoin(SourceCodeVersion, Resource.source_code_version_id == SourceCodeVersion.id)
-        )
-        statement = statement.options(
-            selectinload(Resource.integration_ids),
-            selectinload(Resource.children),
-            selectinload(Resource.parents),
-            selectinload(Resource.secret_ids),
-        )
+        statement = select(Resource).where(Resource.id == resource_id)
+        statement = statement.options(*build_resource_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
@@ -50,14 +46,9 @@ class ResourceCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         requester_id: str | UUID | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Resource]:
-        statement = (
-            select(Resource)
-            .join(User, Resource.created_by == User.id)
-            .outerjoin(Storage, Resource.storage_id == Storage.id)
-            .outerjoin(SourceCodeVersion, Resource.source_code_version_id == SourceCodeVersion.id)
-            .outerjoin(Template, Resource.template_id == Template.id)
-        )
+        statement = select(Resource)
 
         sort_field = sort[0].lower() if sort else None
         sort_dir = sort[1].lower() if sort else "asc"
@@ -74,24 +65,13 @@ class ResourceCRUD:
                 statement = statement.order_by(favorite_sort_value.asc())
             else:
                 statement = statement.order_by(favorite_sort_value.desc())
-        elif sort_field == "template":
-            column = Template.name
-            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
-        elif sort_field == "source_code_version":
-            column = func.coalesce(SourceCodeVersion.source_code_version, SourceCodeVersion.source_code_branch)
-            statement = statement.order_by(column.asc() if sort_dir == "asc" else column.desc())
         else:
             statement = evaluate_sqlalchemy_sorting(Resource, statement, sort)
 
         statement = evaluate_sqlalchemy_filters(Resource, statement, filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
-        statement = statement.options(
-            selectinload(Resource.integration_ids),
-            selectinload(Resource.children),
-            selectinload(Resource.parents),
-            selectinload(Resource.secret_ids),
-        )
+        statement = statement.options(*build_resource_query_options(fields))
 
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())

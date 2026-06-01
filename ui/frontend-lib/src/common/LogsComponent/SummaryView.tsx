@@ -26,6 +26,7 @@ import {
 } from "@mui/material";
 import Ansi from "ansi-to-react";
 
+import { GqlLog, transformLog, buildLogsQuery } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { RelativeTime } from "../components/RelativeTime";
@@ -432,13 +433,16 @@ export const SummaryView = (props: {
     }
 
     while (true) {
-      const pageResult = await ikApi.getList("logs", {
-        filter,
-        pagination: { page, perPage },
-        sort: { field: "created_at", order: "ASC" },
-      });
+      const response = await ikApi.graphqlRequest<{ logs: GqlLog[] }>(
+        buildLogsQuery(["id", "level", "data", "created_at"]),
+        {
+          filter,
+          sort: ["created_at", "ASC"],
+          range: [(page - 1) * perPage, page * perPage],
+        },
+      );
 
-      const chunk = pageResult.data || [];
+      const chunk = (response.logs || []).map(transformLog);
       if (chunk.length === 0) {
         break;
       }

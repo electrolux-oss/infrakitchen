@@ -1,25 +1,27 @@
-import uuid
-from datetime import datetime
-
 import strawberry
-from strawberry.scalars import JSON
+from strawberry.types import Info
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
+
+from application.workspaces.model import Workspace
 
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.user.types import UserType
 
 
-@strawberry.type
+workspace_mapper = StrawberrySQLAlchemyMapper()
+
+
+@workspace_mapper.type(Workspace)
 class WorkspaceType:
-    id: uuid.UUID
-    name: str
-    workspace_provider: str = ""
-    integration_id: uuid.UUID | None = None
-    integration: IntegrationType | None = None
-    configuration: JSON | None = None
-    status: str = ""
-    description: str = ""
-    labels: list[str] | None = None
-    created_by: uuid.UUID | None = None
+    __exclude__ = ["created_by", "integration_id"]
+
+    id: str = strawberry.UNSET
     creator: UserType | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    integration: IntegrationType | None = None
+
+    @strawberry.field
+    async def resources_count(self, info: Info) -> int:
+        return await info.context["loaders"]["workspace_resource_count"].load(str(self.id))
+
+
+workspace_mapper.finalize()

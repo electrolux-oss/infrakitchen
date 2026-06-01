@@ -3,29 +3,33 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from core.users.model import User
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Blueprint, blueprint_templates
+from .query_options import build_blueprint_query_options
 
 
 class BlueprintCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, blueprint_id: str | UUID) -> Blueprint | None:
+    async def get_by_id(
+        self,
+        blueprint_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Blueprint | None:
         if not is_valid_uuid(blueprint_id):
             raise ValueError(f"Invalid UUID: {blueprint_id}")
 
-        statement = (
-            select(Blueprint)
-            .where(Blueprint.id == blueprint_id)
-            .join(User, Blueprint.created_by == User.id)
-            .options(selectinload(Blueprint.templates))
-        )
+        statement = select(Blueprint).where(Blueprint.id == blueprint_id)
+        statement = statement.options(*build_blueprint_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -34,12 +38,13 @@ class BlueprintCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Blueprint]:
         statement = select(Blueprint)
         statement = evaluate_sqlalchemy_filters(Blueprint, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Blueprint, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
-        statement = statement.options(selectinload(Blueprint.templates)).join(User, Blueprint.created_by == User.id)
+        statement = statement.options(*build_blueprint_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().unique().all())
 

@@ -10,6 +10,7 @@ import { LabelInput, useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { GqlWorkspace, WORKSPACE_QUERY, transformWorkspace } from "../graphql";
 import { WorkspaceResponse, WorkspaceUpdate } from "../types";
 
 export const WorkspaceEditPageInner = (props: {
@@ -152,9 +153,14 @@ export const WorkspaceEditPage = () => {
 
   const getWorkspace = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`workspaces/${workspace_id}`)
-      .then((response: WorkspaceResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ workspace: GqlWorkspace | null }>(WORKSPACE_QUERY, {
+        id: workspace_id,
+      })
+      .then((response) => {
+        if (!response.workspace) {
+          throw new Error("Workspace not found");
+        }
+        setEntity(transformWorkspace(response.workspace));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

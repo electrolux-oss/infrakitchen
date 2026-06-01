@@ -23,7 +23,7 @@ export interface ActivityLogEntry extends Omit<IkEntity, "creator" | "status"> {
   };
   model: string;
   entity_id: string;
-  created_at: string;
+  created_at: string | Date;
   status: "success" | "failure" | "pending";
   [key: string]: any;
 }

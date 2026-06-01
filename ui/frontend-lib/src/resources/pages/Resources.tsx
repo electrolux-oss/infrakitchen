@@ -14,8 +14,9 @@ import {
   createResourceFilterConfigs,
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
-  resourceFields,
 } from "../components/resourceTableConfig";
+import { transformResourceOptional } from "../graphql";
+import { RESOURCE_FIELD_MAP } from "../graphql/fragments";
 
 export const ResourcesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -25,9 +26,15 @@ export const ResourcesPage = () => {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/resource").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query ResourceLabels {
+        labels: labels(entity: "resource")
+      }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   const makeTemplateOption = useCallback(
@@ -37,14 +44,29 @@ export const ResourcesPage = () => {
       loadChildren: async (parentValue: string) => {
         const templateId = parentValue.replace("template:", "");
         try {
-          const scvResponse = await ikApi.getList("source_code_versions", {
-            filter: { template_id: templateId },
-            pagination: { page: 1, perPage: 1000 },
-            fields: ["id", "source_code_version", "source_code_branch"],
-          });
-          return scvResponse.data
+          const scvResponse = await ikApi.graphqlRequest<{
+            sourceCodeVersions: Array<{
+              id: string;
+              sourceCodeVersion: string | null;
+              sourceCodeBranch: string | null;
+            }>;
+          }>(
+            `query ResourceTemplateVersions($filter: JSON, $sort: [String!], $range: [Int!]) {
+              sourceCodeVersions(filter: $filter, sort: $sort, range: $range) {
+                id
+                sourceCodeVersion
+                sourceCodeBranch
+              }
+            }`,
+            {
+              filter: { template_id: templateId },
+              sort: ["sourceCodeVersion", "ASC"],
+              range: [0, 1000],
+            },
+          );
+          return (scvResponse.sourceCodeVersions || [])
             .map((version: any) => ({
-              label: version.source_code_version ?? version.source_code_branch,
+              label: version.sourceCodeVersion ?? version.sourceCodeBranch,
               value: `scv:${version.id}:${templateId}`,
             }))
             .sort((a: any, b: any) => a.label.localeCompare(b.label));
@@ -60,15 +82,28 @@ export const ResourcesPage = () => {
   const loadTemplateOptions = useCallback(
     async (search: string, page: number) => {
       const perPage = 10;
-      const response = await ikApi.getList("templates", {
-        pagination: { page, perPage },
-        fields: ["id", "name"],
-        sort: { field: "name", order: "ASC" },
-        filter: search ? { name__like: search } : {},
-      });
+      const skip = (page - 1) * perPage;
+      const end = skip + perPage;
+      const response = await ikApi.graphqlRequest<{
+        templates: Array<{ id: string; name: string }>;
+      }>(
+        `query ResourceTemplates($filter: JSON, $sort: [String!], $range: [Int!]) {
+          templates(filter: $filter, sort: $sort, range: $range) {
+            id
+            name
+          }
+        }`,
+        {
+          filter: search ? { name__like: search } : null,
+          sort: ["name", "ASC"],
+          range: [skip, end],
+        },
+      );
+
+      const templates = response.templates || [];
       return {
-        options: response.data.map(makeTemplateOption),
-        hasMore: response.data.length === perPage,
+        options: templates.map(makeTemplateOption),
+        hasMore: templates.length === perPage,
       };
     },
     [ikApi, makeTemplateOption],
@@ -78,7 +113,19 @@ export const ResourcesPage = () => {
     async (value: string) => {
       const id = value.replace("template:", "");
       try {
-        const template = await ikApi.get(`templates/${id}`);
+        const response = await ikApi.graphqlRequest<{
+          template: { id: string; name: string } | null;
+        }>(
+          `query ResourceTemplate($id: UUID!) {
+            template(id: $id) {
+              id
+              name
+              template
+            }
+          }`,
+          { id },
+        );
+        const template = response.template;
         return template ? makeTemplateOption(template) : null;
       } catch {
         return null;
@@ -126,11 +173,12 @@ export const ResourcesPage = () => {
         title="Resources"
         entityName="resource"
         columns={resourceColumns}
+        entityFieldMap={RESOURCE_FIELD_MAP}
+        transformFn={transformResourceOptional}
         defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
         filterConfigs={filterConfigs}
         initialFilters={initialFilter}
         buildApiFilters={buildApiFilters}
-        fields={resourceFields}
       />
     </PageContainer>
   );

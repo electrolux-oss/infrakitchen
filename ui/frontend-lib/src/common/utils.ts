@@ -4,8 +4,10 @@ export const getStateColor = (
   statusValue: string,
   stateValue: string | undefined,
 ): { backgroundColor: string; color: string; borderColor: string } => {
-  const status = statusValue as ENTITY_STATUS | WORKER_STATUS;
-  const state = stateValue as ENTITY_STATE;
+  const status = statusValue.toLocaleLowerCase() as
+    | ENTITY_STATUS
+    | WORKER_STATUS;
+  const state = stateValue?.toLocaleLowerCase() as ENTITY_STATE;
 
   if (status === ENTITY_STATUS.DONE && state === ENTITY_STATE.PROVISIONED)
     return {

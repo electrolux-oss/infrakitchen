@@ -52,7 +52,7 @@ def to_json_serializable(obj: Any) -> Any:
 
 
 def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
-    model: TPydanticBaseModel, exclude_fields=None, **kwargs
+    model: TPydanticBaseModel, exclude_fields=None, exclude_defaults=False, exclude_none=False, **kwargs
 ) -> dict[str, Any]:
     """
     Dump the model's data into a dictionary suitable for database storage.
@@ -69,5 +69,7 @@ def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
     if exclude_fields is None:
         exclude_fields = {"_entity_name"}
 
-    self_dict = model.model_dump(by_alias=True, exclude=exclude_fields, **kwargs)
+    self_dict = model.model_dump(
+        by_alias=True, exclude=exclude_fields, exclude_defaults=exclude_defaults, exclude_none=exclude_none, **kwargs
+    )
     return to_json_serializable(self_dict)

@@ -13,7 +13,7 @@ class AuditLog(Base):
     model: Mapped[str] = mapped_column()
     user_id: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     action: Mapped[str] = mapped_column()
-    entity_id: Mapped[uuid.UUID] = mapped_column()
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     revision_number: Mapped[int | None] = mapped_column(default=1, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     creator: Mapped[User] = relationship("User", lazy="joined")

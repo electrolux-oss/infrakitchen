@@ -11,6 +11,7 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
+import { BATCH_OPERATION_FIELD_MAP, transformBatchOperation } from "../graphql";
 
 export const BatchOperationsPage = () => {
   const { linkPrefix } = useConfig();
@@ -60,6 +61,18 @@ export const BatchOperationsPage = () => {
           />
         ),
       },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
+      },
     ],
     [],
   );
@@ -107,11 +120,12 @@ export const BatchOperationsPage = () => {
     >
       <EntityFetchTable
         title="Batch Operations"
-        entityName="batch_operation"
+        entityName="batchOperation"
         columns={columns}
+        entityFieldMap={BATCH_OPERATION_FIELD_MAP}
+        transformFn={transformBatchOperation}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={["id", "name", "entity_type", "entity_ids", "created_at"]}
       />
     </PageContainer>
   );

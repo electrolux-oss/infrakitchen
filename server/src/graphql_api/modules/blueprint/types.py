@@ -1,29 +1,22 @@
-import uuid
-from datetime import datetime
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-import strawberry
-from strawberry.scalars import JSON
+from application.blueprints.model import Blueprint
 
 from graphql_api.modules.template.types import TemplateType
-from graphql_api.modules.user.types import UserType
 from graphql_api.modules.workflow.types import WorkflowType
 
 
-@strawberry.type
+blueprint_mapper = StrawberrySQLAlchemyMapper()
+
+
+@blueprint_mapper.type(Blueprint)
 class BlueprintType:
-    id: uuid.UUID
-    name: str
-    description: str | None = None
+    __exclude__ = ["templates", "external_templates", "workflows", "created_by"]
+
+    # Keep list relationships explicit as plain lists (not relay connections).
     templates: list[TemplateType] | None = None
     external_templates: list[TemplateType] | None = None
-    wiring: JSON | None = None
-    default_variables: JSON | None = None
-    configuration: JSON | None = None
-    labels: list[str] | None = None
-    status: str = ""
-    revision_number: int = 1
-    created_by: uuid.UUID | None = None
-    creator: UserType | None = None
     workflows: list[WorkflowType] | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+
+blueprint_mapper.finalize()

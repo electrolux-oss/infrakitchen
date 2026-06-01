@@ -1,62 +1,68 @@
 import uuid
-from datetime import datetime
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-import strawberry
-from strawberry.scalars import JSON
-
+from application.source_code_versions.model import (
+    SourceCodeVersion,
+    SourceConfig,
+    SourceConfigTemplateReference,
+    SourceOutputConfig,
+)
 from graphql_api.modules.source_code.types import SourceCodeType
 from graphql_api.modules.template.types import TemplateType
 from graphql_api.modules.user.types import UserType
 
+import strawberry
+from datetime import datetime
+from strawberry.types import Info
 
-@strawberry.type
+source_code_version_mapper = StrawberrySQLAlchemyMapper()
+
+
+@source_code_version_mapper.type(SourceConfig)
 class SourceConfigType:
-    id: uuid.UUID
-    index: int = 0
-    required: bool = False
-    default: JSON | None = None
-    frozen: bool = False
-    unique: bool = False
-    sensitive: bool = False
-    restricted: bool = False
-    name: str = ""
-    description: str = ""
-    type: str = ""
-    options: list[str] | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    __exclude__ = ["source_code_version"]
 
 
-@strawberry.type
+@source_code_version_mapper.type(SourceOutputConfig)
 class SourceOutputConfigType:
-    id: uuid.UUID
-    index: int = 0
-    name: str = ""
-    description: str = ""
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    pass
 
 
-@strawberry.type
+@source_code_version_mapper.type(SourceConfigTemplateReference)
+class SourceConfigTemplateReferenceType:
+    pass
+
+
+@source_code_version_mapper.type(SourceCodeVersion)
 class SourceCodeVersionType:
-    id: uuid.UUID
-    template_id: uuid.UUID | None = None
-    template: TemplateType | None = None
-    source_code_id: uuid.UUID | None = None
-    source_code: SourceCodeType | None = None
+    __exclude__ = ["variable_configs", "output_configs", "created_by", "template_id", "source_code_id"]
+
+    id: uuid.UUID = strawberry.UNSET  # type: ignore[assignment]
+    source_code_folder: str | None = None
     source_code_version: str | None = None
     source_code_branch: str | None = None
-    source_code_folder: str = ""
-    variables: JSON | None = None
-    outputs: JSON | None = None
-    code_snapshot: str | None = None
-    description: str = ""
-    labels: list[str] | None = None
-    status: str = ""
-    revision_number: int = 1
+    template: TemplateType | None = None
+    source_code: SourceCodeType | None = None
     variable_configs: list[SourceConfigType] | None = None
     output_configs: list[SourceOutputConfigType] | None = None
-    created_by: uuid.UUID | None = None
     creator: UserType | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+    @strawberry.field
+    def identifier(self) -> str:
+        return f"{self.source_code_folder}:{self.source_code_version or self.source_code_branch}"
+
+    @strawberry.field
+    async def resources_count(self, info: Info) -> int:
+        return await info.context["loaders"]["source_code_version_resource_count"].load(str(self.id))
+
+
+source_code_version_mapper.finalize()
+
+
+@strawberry.type
+class SourceOutputConfigTemplateType:
+    name: str
+    description: str
+    created_at: datetime
+    updated_at: datetime
+    status: str

@@ -9,7 +9,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 
 export const RolesPage = () => {
@@ -44,12 +43,12 @@ export const RolesPage = () => {
   const columns = useMemo(
     () => [
       {
-        field: "id",
-        fetchFields: ["id", "v1"],
+        field: "v1",
+        fetchFields: ["v1"],
         headerName: "Role Name",
-        sortable: false,
         flex: 1,
         hideable: false,
+        sortField: "v1",
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
@@ -59,36 +58,6 @@ export const RolesPage = () => {
             />
           );
         },
-      },
-      {
-        field: "created_at",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "updated_at",
-        headerName: "Last Updated",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) =>
-          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
       },
     ],
     [],
@@ -115,16 +84,10 @@ export const RolesPage = () => {
     >
       <EntityFetchTable
         title="Roles"
-        entityName="permissions/role"
+        entityName="role"
         columns={columns}
-        fields={["id", "v1", "created_at", "updated_at", "creator"]}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        defaultColumnVisibilityModel={{
-          created_at: false,
-          updated_at: false,
-          creator: false,
-        }}
       />
     </PageContainer>
   );

@@ -10,12 +10,14 @@ from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelStatus
 from core.errors import EntityNotFound, EntityWrongState
+from core.database import FieldSpec
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_api_permission
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
 from .crud import BlueprintCRUD
+from .functions import get_blueprint_actions
+from .model import Blueprint
 from .schema import (
     BlueprintCreate,
     BlueprintResponse,
@@ -66,6 +68,26 @@ class BlueprintService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, blueprint_id: str | UUID, fields: FieldSpec | None = None) -> Blueprint | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(blueprint_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Blueprint]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, blueprint_id: str | UUID, requester: UserDTO) -> list[str]:
+        blueprint = await self.crud.get_by_id(blueprint_id, fields={"status": None})
+        if not blueprint:
+            raise EntityNotFound("Blueprint not found")
+        return await get_blueprint_actions(requester, blueprint.status)
 
     async def create(self, blueprint: BlueprintCreate, requester: UserDTO) -> BlueprintResponse:
         body = blueprint.model_dump(exclude_unset=True)
@@ -132,31 +154,6 @@ class BlueprintService:
     async def delete(self, blueprint_id: str | UUID, requester: UserDTO) -> None:
         await self.crud.delete(blueprint_id)
         await self.audit_log_handler.create_log(blueprint_id, requester.id, ModelActions.DELETE)
-
-    async def get_actions(self, blueprint_id: str, requester: UserDTO) -> list[str]:
-        apis = await user_api_permission(requester, "blueprint")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:blueprint"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        blueprint = await self.crud.get_by_id(blueprint_id)
-        if not blueprint:
-            raise EntityNotFound("Blueprint not found")
-
-        if blueprint.status == ModelStatus.ENABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.EDIT)
-                actions.append(ModelActions.DISABLE)
-        if blueprint.status == ModelStatus.DISABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.DELETE)
-                actions.append(ModelActions.ENABLE)
-
-        return actions
 
     async def create_workflow(
         self,

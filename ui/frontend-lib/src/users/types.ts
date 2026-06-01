@@ -15,11 +15,13 @@ export interface UserResponse extends UserShort {
   display_name: string;
   deactivated: boolean;
   is_primary: boolean;
-  secondary_accounts: UserShort[] | null;
-  primary_account: UserShort[] | null;
+  secondary_accounts?: UserShort[] | null;
+  primary_account?: UserShort[] | null;
   provider: string;
-  password: string;
+  password?: string;
 }
+
+export type UserResponseOptional = Partial<UserResponse>;
 
 export interface UserCreate {
   identifier: string;
@@ -28,7 +30,7 @@ export interface UserCreate {
 }
 
 export interface UserUpdate {
-  description: string;
-  deactivated: boolean;
-  password: string;
+  description?: string;
+  deactivated?: boolean;
+  password?: string;
 }

@@ -24,6 +24,7 @@ router = APIRouter()
     response_model=list[dict[str, Any]],
     response_description="Get all workflows",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "workflows")
 async def get_all(
@@ -56,6 +57,7 @@ async def get_all(
     "/workflows/{workflow_id}",
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
     response_description="Get a single workflow with its steps",
 )
 @mcp_group(get_one_group, "workflows")
@@ -121,6 +123,7 @@ async def perform_execution_action(
     response_model=list[str],
     status_code=http_status.HTTP_200_OK,
     response_description="Get user actions for workflow entity",
+    deprecated=True,
 )
 async def get_actions(
     request: Request,
@@ -131,7 +134,7 @@ async def get_actions(
     if not requester:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    return await service.get_workflow_actions(workflow_id=workflow_id, requester=requester)
+    return await service.get_actions(workflow_id=workflow_id, requester=requester)
 
 
 @router.delete(

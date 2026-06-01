@@ -3,9 +3,9 @@ from typing import Annotated, Any, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.users.model import UserDTO
+from core.users.model import User, UserDTO
 from ..base_models import Base
 from .schema import (
     BackstageProviderConfig,
@@ -31,6 +31,7 @@ class AuthProvider(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
     created_by: Mapped[str | uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    creator: Mapped[User | None] = relationship("User", lazy="joined")
 
 
 class AuthProviderDTO(BaseModel):

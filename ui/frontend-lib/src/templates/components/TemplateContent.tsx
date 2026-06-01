@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import { MarkdownViewer } from "../../common/components/MarkdownViewer";
 import {
@@ -13,15 +12,19 @@ import {
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
+import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
 
 import { TemplateOverview } from "./TemplateOverview";
 
 export const TemplateContent = () => {
   const { entity } = useEntityProvider();
+
   const fixedFilters = useMemo(
     () => ({ template_id: [entity?.id] }),
     [entity?.id],
   );
+
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
@@ -53,10 +56,21 @@ export const TemplateContent = () => {
       : []),
     {
       label: "Resources",
+      tabLabel: `Resources (${entity.resources_count ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
           filterStorageKey="filter_storage_resources"
+        />
+      ),
+    },
+    {
+      label: "Template Versions",
+      tabLabel: `Template Versions (${entity.source_code_versions_count ?? 0})`,
+      content: (
+        <EntitySourceCodeVersions
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_source_code_versions"
         />
       ),
     },

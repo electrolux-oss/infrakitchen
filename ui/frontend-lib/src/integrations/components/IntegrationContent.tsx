@@ -3,14 +3,15 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
 import { IntegrationOverview } from "./IntegrationOverview";
@@ -37,13 +38,13 @@ export const IntegrationContent = () => {
     ...(isGit
       ? [
           {
-            label: "Code Repositories",
+            label: `Code Repositories (${entity.source_code_count ?? 0})`,
             content: (
               <IntegrationSourceCodeDependencies integration_id={entity.id} />
             ),
           },
           {
-            label: "Workspaces",
+            label: `Workspaces (${entity.workspace_count ?? 0})`,
             content: (
               <IntegrationWorkspaceDependencies integration_id={entity.id} />
             ),
@@ -53,7 +54,8 @@ export const IntegrationContent = () => {
     ...(isCloud
       ? [
           {
-            label: "Resources",
+            label: `Resources`,
+            tabLabel: `Resources (${entity.resource_count ?? 0})`,
             content: (
               <EntityResources
                 fixedFilters={fixedFilters}
@@ -63,6 +65,16 @@ export const IntegrationContent = () => {
           },
         ]
       : []),
+    {
+      label: "Executors",
+      tabLabel: `Executors (${entity.executor_count ?? 0})`,
+      content: (
+        <EntityExecutors
+          fixedFilters={{ integration_ids__any: [entity.id] }}
+          filterStorageKey="filter_integration_executors"
+        />
+      ),
+    },
     {
       label: "Audit",
       content: <Audit entityId={entity.id} showRevisionColumn />,

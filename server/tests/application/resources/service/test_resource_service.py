@@ -724,7 +724,7 @@ class TestCreate:
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
         monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
         permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
         await mock_resource_service.create(resource_create, requester)
@@ -884,7 +884,7 @@ class TestPatch:
 
         resource_patch = ResourcePatch(integration_ids=[mocked_integration.id])
         permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
         await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
@@ -926,7 +926,7 @@ class TestPatch:
 
         resource_patch = ResourcePatch(integration_ids=[existing_integration_id])
         permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
         await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
@@ -1018,7 +1018,7 @@ class TestPatch:
 
         resource_patch = ResourcePatch(workspace_id=existing_workspace_id)
         permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.service.user_entity_permissions"
+            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
         await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
@@ -1443,7 +1443,7 @@ class TestGetResourceActions:
         existing_resource.state = state
 
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = None
-        mock_user_permissions(user_permissions, monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(user_permissions, monkeypatch, "application.resources.functions.user_entity_permissions")
         mock_resource_crud.get_by_id.return_value = mocked_resource
 
         result = await mock_resource_service.get_actions(resource_id=mocked_resource.id, requester=mock_user_dto)
@@ -1540,7 +1540,7 @@ class TestGetResourceActions:
         existing_resource.state = state
 
         mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
-        mock_user_permissions(user_permissions, monkeypatch, "application.resources.service.user_entity_permissions")
+        mock_user_permissions(user_permissions, monkeypatch, "application.resources.functions.user_entity_permissions")
         mock_resource_crud.get_by_id.return_value = mocked_resource
 
         result = await mock_resource_service.get_actions(resource_id=mocked_resource.id, requester=mock_user_dto)

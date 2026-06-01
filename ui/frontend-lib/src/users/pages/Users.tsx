@@ -14,6 +14,8 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
+import { USER_FIELD_MAP } from "../graphql/fragments";
+import { transformUserOptional } from "../graphql/transforms";
 
 export const UsersPage = () => {
   const { linkPrefix } = useConfig();
@@ -139,6 +141,7 @@ export const UsersPage = () => {
         field: "secondary_accounts",
         headerName: "Secondary Accounts",
         flex: 1,
+        sortField: "primary_account.identifier",
         valueGetter: (_value: any, row: any) =>
           (row.secondary_accounts || [])
             .map((u: any) => u.identifier)
@@ -161,6 +164,7 @@ export const UsersPage = () => {
         field: "primary_account",
         headerName: "Primary Account (Link)",
         flex: 1,
+        sortField: "primary_account.identifier",
         valueGetter: (_value: any, row: any) =>
           (row.primary_account || []).map((u: any) => u.identifier).join(", "),
         renderCell: (params: GridRenderCellParams) => (
@@ -195,7 +199,7 @@ export const UsersPage = () => {
             onClick={() => navigate(`${linkPrefix}users/create`)}
             startIcon={<AddIcon />}
           >
-            Create
+            Create Service Account User
           </Button>
         </PermissionWrapper>
       }
@@ -204,22 +208,8 @@ export const UsersPage = () => {
         title="Users"
         entityName="user"
         columns={columns}
-        fields={[
-          "id",
-          "identifier",
-          "display_name",
-          "email",
-          "provider",
-          "created_at",
-          "updated_at",
-          "description",
-          "first_name",
-          "last_name",
-          "deactivated",
-          "is_primary",
-          "secondary_accounts",
-          "primary_account",
-        ]}
+        entityFieldMap={USER_FIELD_MAP}
+        transformFn={transformUserOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

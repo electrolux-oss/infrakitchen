@@ -1,11 +1,13 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from core.audit_logs.handler import AuditLogHandler
-from core.auth_providers.model import AuthProviderDTO
+from core.database import FieldSpec
+from core.auth_providers.model import AuthProvider, AuthProviderDTO
 from core.constants.model import ModelActions
 from core.errors import EntityNotFound
-from core.users.functions import user_is_super_admin
+from core.auth_providers.functions import get_auth_provider_actions
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import AuthProviderCRUD
@@ -61,6 +63,20 @@ class AuthProviderService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, auth_provider_id: str | UUID, fields: FieldSpec | None = None) -> AuthProvider | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(auth_provider_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[AuthProvider]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def create(self, auth_provider: AuthProviderCreate, requester: UserDTO) -> AuthProviderResponse:
         """
@@ -122,17 +138,8 @@ class AuthProviderService:
 
         await self.crud.delete(existing_auth_provider)
 
-    async def get_actions(self, auth_provider_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the auth_provider.
-        :param auth_provider_id: ID of the auth_provider
-        :return: List of actions
-        """
-        if await user_is_super_admin(requester) is False:
-            return []
-
+    async def get_actions(self, auth_provider_id: str | UUID, requester: UserDTO) -> list[str]:
         auth_provider = await self.crud.get_by_id(auth_provider_id)
         if not auth_provider:
             raise EntityNotFound("AuthProvider not found")
-        actions: list[str] = [ModelActions.EDIT, ModelActions.DELETE]
-        return actions
+        return await get_auth_provider_actions(requester)

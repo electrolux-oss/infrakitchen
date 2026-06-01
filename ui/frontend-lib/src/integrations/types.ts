@@ -23,10 +23,13 @@ export interface IntegrationResponse extends IntegrationShort {
   description: string;
   configuration: object;
   creator: UserShort;
-  url: string;
-  repos: number;
-  last_sync_at: Date;
+  resource_count?: number;
+  source_code_count?: number;
+  workspace_count?: number;
+  executor_count?: number;
 }
+
+export type IntegrationResponseOptional = Partial<IntegrationResponse>;
 
 export interface IntegrationCreate extends IntegrationShort {
   name: string;

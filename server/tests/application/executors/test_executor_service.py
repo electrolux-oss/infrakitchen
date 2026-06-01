@@ -693,7 +693,7 @@ class TestGetExecutorActions:
         existing_executor.status = status
         existing_executor.state = state
 
-        mock_user_permissions(user_permissions, monkeypatch, "application.executors.service.user_entity_permissions")
+        mock_user_permissions(user_permissions, monkeypatch, "application.executors.functions.user_entity_permissions")
         mock_executor_crud.get_by_id.return_value = mocked_executor
 
         result = await mock_executor_service.get_actions(executor_id=mocked_executor.id, requester=mock_user_dto)

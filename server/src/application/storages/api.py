@@ -20,6 +20,7 @@ router = APIRouter()
     response_model=StorageResponse,
     response_description="Get one storage by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "storages", param_renames={"id": "storage_id"})
 async def get_by_id(storage_id: str, service: StorageService = Depends(get_storage_service)):
@@ -34,6 +35,7 @@ async def get_by_id(storage_id: str, service: StorageService = Depends(get_stora
     response_model=list[dict[str, Any]],
     response_description="Get all storages",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "storages")
 async def get_all(
@@ -126,6 +128,7 @@ async def delete(request: Request, storage_id: str, service: StorageService = De
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, storage_id: str, service: StorageService = Depends(get_storage_service)):
     requester = request.state.user

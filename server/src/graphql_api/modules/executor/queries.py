@@ -4,27 +4,27 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from sqlalchemy import select
 
-from application.executors.model import Executor
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
-from graphql_api.modules.executor.converters import convert_executor, executor_options
+from application.executors.dependencies import get_executor_service
+from application.executors.service import ExecutorService
+from application.favorites.dependencies import get_favorite_service
+from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
 from graphql_api.modules.executor.types import ExecutorType
+
+
+def _build_service(info: Info) -> ExecutorService:
+    session = info.context["session"]
+    return get_executor_service(session=session, favorite_service=get_favorite_service(session=session))
 
 
 @strawberry.type
 class ExecutorQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def executor(self, info: Info, id: uuid.UUID) -> ExecutorType | None:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Executor).where(Executor.id == id).options(*executor_options(fields))
-        result = await session.execute(stmt)
-        obj = result.scalars().unique().first()
-        if obj is None:
-            return None
-        return convert_executor(obj, fields)
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "executor")
+        fields = build_field_spec(entity_fields)
+        return await service.query_by_id(id, fields=fields)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def executors(
@@ -34,13 +34,29 @@ class ExecutorQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[ExecutorType]:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Executor).options(*executor_options(fields))
-        stmt = evaluate_sqlalchemy_filters(
-            Executor, stmt, cast(dict[str, Any], cast(object, filter)) if filter else None
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "executors")
+        fields = build_field_spec(entity_fields)
+        return await service.query_all(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+            sort=parse_sort(sort),
+            range=parse_range(range),
+            fields=fields,
         )
-        stmt = evaluate_sqlalchemy_sorting(Executor, stmt, parse_sort(sort))
-        stmt = evaluate_sqlalchemy_pagination(stmt, parse_range(range))
-        result = await session.execute(stmt)
-        return [convert_executor(e, fields) for e in result.scalars().unique().all()]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def executors_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        service = _build_service(info)
+        return await service.count(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def executor_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        return await service.get_actions(executor_id=id, requester=requester)

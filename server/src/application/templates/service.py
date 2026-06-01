@@ -6,12 +6,13 @@ from uuid import UUID, uuid4
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityWrongState, EntityNotFound
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
+from .functions import get_template_actions
 from .crud import TemplateCRUD
+from .model import Template
 from .schema import TemplateCreate, TemplateResponse, TemplateShort, TemplateTreeResponse, TemplateUpdate
 from core.users.model import UserDTO
 
@@ -50,6 +51,20 @@ class TemplateService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, template_id: str | UUID, fields: FieldSpec | None = None) -> Template | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(template_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Template]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def create(self, template: TemplateCreate, requester: UserDTO) -> TemplateResponse:
         """
@@ -238,32 +253,14 @@ class TemplateService:
             return None
         return root
 
-    async def get_actions(self, template_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, template_id: str | UUID, requester: UserDTO) -> list[str]:
         """
         Get all actions available for the template.
         :param template_id: ID of the template
         :return: List of actions
         """
-        apis = await user_api_permission(requester, "template")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:template"]]
-
-        if "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        template = await self.crud.get_by_id(template_id)
+        template = await self.crud.get_by_id(template_id, fields={"status": None})
         if not template:
             raise EntityNotFound("Template not found")
 
-        if template.status == ModelStatus.ENABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.EDIT)
-                actions.append(ModelActions.DISABLE)
-        if template.status == ModelStatus.DISABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.DELETE)
-                actions.append(ModelActions.ENABLE)
-
-        return actions
+        return await get_template_actions(requester, template.status)

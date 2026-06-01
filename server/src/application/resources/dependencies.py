@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 def get_resource_service(
     session: AsyncSession = Depends(get_db_session),
-    favorite_service=Depends(get_favorite_service),
 ) -> ResourceService:
     revision_handler = RevisionHandler(session=session, entity_name="resource")
     event_sender = EventSender(entity_name="resource")
@@ -45,5 +44,5 @@ def get_resource_service(
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
         validation_rule_service=get_validation_rule_service(session=session),
-        favorite_service=favorite_service,
+        favorite_service=get_favorite_service(session=session),
     )

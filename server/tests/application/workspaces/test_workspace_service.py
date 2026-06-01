@@ -498,7 +498,7 @@ class TestGetWorkspaceActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.workspaces.service.user_entity_permissions",
+            "application.workspaces.functions.user_entity_permissions",
         )
         mock_workspace_crud.get_by_id.return_value = workspace
 

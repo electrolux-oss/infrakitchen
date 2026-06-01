@@ -5,27 +5,34 @@ from sqlalchemy import func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.executors.model import Executor
-from application.integrations.model import Integration
 from application.resources.model import Resource
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Secret
+from .query_options import build_secret_query_options
 
 
 class SecretCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, secret_id: str | UUID) -> Secret | None:
+    async def get_by_id(
+        self,
+        secret_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Secret | None:
         if not is_valid_uuid(secret_id):
             raise ValueError(f"Invalid UUID: {secret_id}")
 
-        statement = (select(Secret).where(Secret.id == secret_id).join(User, Secret.created_by == User.id)).outerjoin(
-            Integration, Secret.integration_id == Integration.id
-        )
+        statement = select(Secret).where(Secret.id == secret_id)
+        statement = statement.options(*build_secret_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -34,16 +41,14 @@ class SecretCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Secret]:
-        statement = (
-            select(Secret)
-            .join(User, Secret.created_by == User.id)
-            .outerjoin(Integration, Secret.integration_id == Integration.id)
-        )
+        statement = select(Secret)
         statement = evaluate_sqlalchemy_filters(Secret, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Secret, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_secret_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

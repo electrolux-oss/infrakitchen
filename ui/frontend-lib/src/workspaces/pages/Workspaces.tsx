@@ -6,7 +6,12 @@ import AddIcon from "@mui/icons-material/Add";
 import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
+import {
+  FilterConfig,
+  Labels,
+  PermissionWrapper,
+  useConfig,
+} from "../../common";
 import {
   GetEntityLink,
   getProviderValue,
@@ -15,6 +20,8 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformWorkspaceOptional } from "../graphql";
+import { WORKSPACE_FIELD_MAP } from "../graphql/fragments";
 
 export const WorkspacesPage = () => {
   const { linkPrefix, ikApi } = useConfig();
@@ -117,6 +124,38 @@ export const WorkspacesPage = () => {
           />
         ),
       },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
+      },
+      {
+        field: "integration",
+        headerName: "Integration",
+        flex: 1,
+        sortField: "integration.name",
+        valueGetter: (_value: any, row: any) => row.integration?.name || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.integration ? (
+            <GetEntityLink {...params.row.integration} />
+          ) : null,
+      },
+      {
+        field: "labels",
+        headerName: "Labels",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
+        renderCell: (params: GridRenderCellParams) => (
+          <Labels labels={params.row.labels || []} />
+        ),
+      },
     ],
     [],
   );
@@ -144,17 +183,10 @@ export const WorkspacesPage = () => {
         title="Workspaces"
         entityName="workspace"
         columns={columns}
+        entityFieldMap={WORKSPACE_FIELD_MAP}
+        transformFn={transformWorkspaceOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "name",
-          "workspace_provider",
-          "status",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
       />
     </PageContainer>
   );

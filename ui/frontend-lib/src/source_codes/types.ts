@@ -19,7 +19,6 @@ export interface SourceCodeResponse extends SourceCodeShort {
   created_at: string;
   updated_at: string;
   status: string;
-  state: string;
   revision_number: number;
   labels: string[];
   integration: IntegrationShort | null;
@@ -31,6 +30,8 @@ export interface SourceCodeResponse extends SourceCodeShort {
   creator: UserShort | null;
   description: string;
 }
+
+export type SourceCodeResponseOptional = Partial<SourceCodeResponse>;
 
 export interface SourceCodeCreate {
   description: string;

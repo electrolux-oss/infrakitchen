@@ -1,10 +1,11 @@
 import json
+import re
 from typing import Any, TypeVar
 
 from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import RelationshipProperty
+from sqlalchemy.orm import RelationshipProperty, aliased, load_only
 from sqlalchemy.orm.query import inspect
 from sqlalchemy.sql.selectable import Select
 
@@ -70,6 +71,7 @@ def evaluate_sqlalchemy_sorting(
 ) -> Select[Any]:
     """
     Converts a generic API sorting tuple into SQLAlchemy sorting.
+    Supports dot-notation for relationship fields (e.g. "template.name").
     """
     sorting: list[ColumnElement[Any]] = []
 
@@ -77,15 +79,38 @@ def evaluate_sqlalchemy_sorting(
         return statement
 
     field_name, direction = sort
-    column = getattr(model, field_name, None)
 
-    if column is None:
-        return statement
-        # TODO: need to check UI and fix query there
-        # raise ValueError(f"Invalid field name: {field_name} in sorting")
+    # Handle dot-notation for relationship sorting (e.g. "template.name")
+    if "." in field_name:
+        rel_name, rel_field = field_name.split(".", 1)
+        if not is_column_relationship(model, rel_name):
+            return statement
+        rel_prop = model.__mapper__.get_property(rel_name)
+        related_model = rel_prop.mapper.class_
+        if related_model is model:
+            # Self-referential relationships need an explicit alias,
+            # otherwise SQLAlchemy cannot construct model -> same model joins.
+            related_alias = aliased(related_model)
+            relationship_attr = getattr(model, rel_name).of_type(related_alias)
+            related_column = getattr(related_alias, rel_field, None)
+            if related_column is None:
+                return statement
+            statement = statement.outerjoin(relationship_attr)
+            column = related_column
+        else:
+            related_column = getattr(related_model, rel_field, None)
+            if related_column is None:
+                return statement
+            statement = statement.outerjoin(getattr(model, rel_name))
+            column = related_column
+    else:
+        column = getattr(model, field_name, None)
 
-    if is_column_relationship(model, field_name) is True:
-        raise ValueError(f"Cannot sort by relationship field: {field_name}")
+        if column is None:
+            return statement
+
+        if is_column_relationship(model, field_name) is True:
+            raise ValueError(f"Cannot sort by relationship field: {field_name}")
 
     match direction.lower():
         case "asc" | "ASC":
@@ -134,7 +159,7 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
             parts = key.split("__")
             potential_operator = parts[-1]
 
-            if potential_operator in ["contains_all", "any", "eq", "like", "in"]:
+            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like"]:
                 operator = potential_operator
                 field_path = parts[:-1]
             else:
@@ -160,6 +185,8 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                     relation_filter = related_column == value
                 elif operator == "like":
                     relation_filter = related_column.ilike(f"%{value}%")
+                elif operator == "not_like":
+                    relation_filter = ~related_column.ilike(f"%{value}%")
                 else:
                     raise ValueError(f"Operator {operator} not supported for nested relationships")
 
@@ -226,6 +253,8 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                 filters.append(column == value)
             case "like":
                 filters.append(column.ilike(f"%{value}%"))
+            case "not_like":
+                filters.append(~column.ilike(f"%{value}%"))
             case "in":
                 if isinstance(value, list) and value:
                     filters.append(column.in_(value))
@@ -237,3 +266,32 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
     if filters:
         statement = statement.where(*filters)
     return statement
+
+
+_CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+
+# Recursive field specification: keys are field names, values are nested specs or None for leaf fields.
+# None as the whole spec means "load everything".
+# Example: {"name": None, "children": {"id": None, "name": None}, "creator": {"email": None}}
+type FieldSpec = dict[str, "FieldSpec | None"]
+
+
+def _camel_to_snake(name: str) -> str:
+    return _CAMEL_RE.sub("_", name).lower()
+
+
+def build_load_only(model: type, fields: set[str]) -> list[Any]:
+    """Build load_only() option to SELECT only the SQL columns matching requested fields.
+
+    Accepts both camelCase (GraphQL) and snake_case (Python) field names.
+    """
+    mapper = inspect(model)
+    column_keys = {c.key for c in mapper.column_attrs}
+    requested = set()
+    for field in fields:
+        snake = _camel_to_snake(field)
+        if snake in column_keys:
+            requested.add(snake)
+    if not requested or len(requested) >= len(column_keys) - 1:
+        return []
+    return [load_only(*[getattr(model, c) for c in requested])]

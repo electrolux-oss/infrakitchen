@@ -1,27 +1,35 @@
 import uuid
-from datetime import datetime
-
+from sqlalchemy import func, select
 import strawberry
+from strawberry.types import Info
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-from graphql_api.modules.integration.types import IntegrationType
+from application.source_code_versions.model import SourceCodeVersion
+from application.source_codes.model import SourceCode
 from graphql_api.modules.user.types import UserType
 
 
-@strawberry.type
+source_code_mapper = StrawberrySQLAlchemyMapper()
+
+
+@source_code_mapper.type(SourceCode)
 class SourceCodeType:
-    id: uuid.UUID
-    description: str | None = None
-    source_code_url: str = ""
-    source_code_provider: str = ""
-    source_code_language: str = ""
-    integration_id: uuid.UUID | None = None
-    integration: IntegrationType | None = None
-    git_tags: list[str] | None = None
-    git_branches: list[str] | None = None
-    labels: list[str] | None = None
-    status: str = ""
-    revision_number: int = 1
-    created_by: uuid.UUID | None = None
+    __exclude__ = ["created_by"]
+    id: uuid.UUID = strawberry.UNSET  # type: ignore[assignment]
+    source_code_url: str | None = None
+
     creator: UserType | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+    @strawberry.field
+    def identifier(self) -> str:
+        return f"{self.source_code_url}"
+
+    @strawberry.field
+    async def source_code_version_count(self, info: Info) -> int:
+        session = info.context["session"]
+        stmt = select(func.count()).select_from(SourceCodeVersion).where(SourceCodeVersion.source_code_id == self.id)
+        result = await session.execute(stmt)
+        return result.scalar_one()
+
+
+source_code_mapper.finalize()

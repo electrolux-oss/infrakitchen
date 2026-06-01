@@ -20,6 +20,11 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
+import {
+  GqlSourceCode,
+  SOURCE_CODES_QUERY,
+  transformSourceCode,
+} from "../graphql";
 import { SourceCodeResponse } from "../types";
 
 export const SourceCodesPage = () => {
@@ -52,23 +57,17 @@ export const SourceCodesPage = () => {
     }
     setError(null);
     ikApi
-      .getList("source_codes", {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "updated_at", order: "DESC" },
-        filter: apiFilters,
-        fields: [
-          "id",
-          "identifier",
-          "description",
-          "source_code_url",
-          "source_code_provider",
-          "status",
-          "labels",
-          "updated_at",
-        ],
+      .graphqlRequest<{
+        sourceCodes: GqlSourceCode[];
+        labels: string[];
+      }>(SOURCE_CODES_QUERY, {
+        filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
+        sort: ["updated_at", "DESC"],
+        range: [0, 1000],
       })
       .then((response) => {
-        setRepositories(response.data || []);
+        setRepositories((response.sourceCodes || []).map(transformSourceCode));
+        setLabels(response.labels || []);
         setIsInitialLoad(false);
       })
       .catch((e: any) => {
@@ -79,12 +78,6 @@ export const SourceCodesPage = () => {
         setLoading(false);
       });
   }, [ikApi, filterValues.labels, isInitialLoad]);
-
-  useEffect(() => {
-    ikApi.get("labels/source_code").then((response: string[]) => {
-      setLabels(response);
-    });
-  }, [ikApi]);
 
   // Fetch data when component mounts or when label filter changes
   useEffect(() => {

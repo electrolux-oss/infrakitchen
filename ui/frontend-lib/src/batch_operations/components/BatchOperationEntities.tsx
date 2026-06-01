@@ -25,15 +25,19 @@ import {
   GridRowSelectionModel,
 } from "@mui/x-data-grid";
 
+import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
+import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
 import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
+import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
+import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { BatchOperation, BatchOperationCreate } from "../types";
 
 import { BatchOperationEntitySelector } from "./BatchOperationEntitySelector";
@@ -95,29 +99,50 @@ export const BatchOperationEntities = ({
 
     setEntitiesLoading(true);
     try {
-      const entityName =
-        batchOperation.entity_type === "resource" ? "resources" : "executors";
+      const isResource = batchOperation.entity_type === "resource";
+      const entityName = isResource ? "resource" : "executor";
+      const fields = isResource
+        ? [
+            "id",
+            "name",
+            "state",
+            "status",
+            "created_at",
+            "updated_at",
+            "template",
+          ]
+        : ["id", "name", "state", "status", "created_at", "updated_at"];
+      const fieldMap = isResource ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
 
-      // Fetch entities by IDs
-      const response = await ikApi.getList(entityName, {
-        pagination: { page: 1, perPage: 1000 },
+      const query = `
+        query BatchEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
+          ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+            ${buildGraphqlFields(fields, fieldMap)}
+          }
+        }
+      `;
+
+      const response = await ikApi.graphqlRequest<Record<string, any>>(query, {
         filter: { id__in: entityIds },
-        sort: { field: "name", order: "ASC" },
-        fields:
-          batchOperation.entity_type === "resource"
-            ? [
-                "id",
-                "name",
-                "state",
-                "status",
-                "created_at",
-                "updated_at",
-                "template",
-              ]
-            : ["id", "name", "state", "status", "created_at", "updated_at"],
+        sort: ["name", "ASC"],
+        range: [0, 1000],
       });
 
-      setEntities(response.data || []);
+      const rawList: any[] = response[`${entityName}s`] || [];
+      const mapped = rawList.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        state: item.state,
+        status: item.status,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt,
+        _entity_name: entityName,
+        ...(isResource && item.template
+          ? { template: { ...item.template, _entity_name: "template" } }
+          : {}),
+      }));
+
+      setEntities(mapped);
     } catch (_) {
       setEntities([]);
     } finally {
@@ -144,13 +169,16 @@ export const BatchOperationEntities = ({
   const fetchLastAuditLog = useCallback(
     async (entity_id: string) => {
       await ikApi
-        .getList("audit_logs", {
-          filter: { entity_id, model: batchOperation.entity_type },
-          pagination: { page: 1, perPage: 1 },
-          sort: { field: "created_at", order: "DESC" },
-        })
+        .graphqlRequest<{ auditLogs: GqlAuditLog[] }>(
+          buildAuditLogsQuery(["id"]),
+          {
+            filter: { entity_id, model: batchOperation.entity_type },
+            sort: ["created_at", "DESC"],
+            range: [0, 1],
+          },
+        )
         .then((response) => {
-          const lastLog = response.data?.[0];
+          const lastLog = response.auditLogs?.[0];
           setAuditId(lastLog?.id || null);
           setLogsEntityId(entity_id);
         })

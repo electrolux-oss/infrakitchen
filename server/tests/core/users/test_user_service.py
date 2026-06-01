@@ -229,6 +229,7 @@ class TestUpdate:
         mocked_user_response,
     ):
         user_update = Mock(spec=UserUpdate)
+        user_update.password = None
         user_update_body = {"identifier": "test_user", "description": "User description Updated"}
         existing_user = mocked_user
 
@@ -251,7 +252,9 @@ class TestUpdate:
 
         result = await mock_user_service.update(user_id=USER_ID, user=user_update, requester=requester)
 
-        user_update.model_dump.assert_called_once_with(by_alias=True, exclude={"password"})
+        user_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"password"}, exclude_defaults=True, exclude_none=True
+        )
         mock_user_crud.get_by_id.assert_awaited_once_with(USER_ID)
         mock_user_crud.update.assert_awaited_once_with(existing_user, user_update_body)
 
@@ -275,6 +278,7 @@ class TestUpdate:
     @pytest.mark.asyncio
     async def test_update_error(self, mock_user_service, mock_user_crud):
         user_update = Mock(spec=UserUpdate)
+        user_update.password = None
         requester = Mock(spec=UserDTO)
         existing_user = User(id=uuid4(), identifier="Test User")
         mock_user_crud.get_by_id.return_value = existing_user

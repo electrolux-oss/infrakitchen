@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import { HclItemList } from "../../common/components/HclItemList";
 import {
@@ -12,6 +11,7 @@ import {
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
 import { SourceCodeVersionResponse } from "../types";
 
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
@@ -58,7 +58,8 @@ export const SourceCodeVersionContent = () => {
       ),
     },
     {
-      label: "Resources",
+      label: `Resources`,
+      tabLabel: `Resources (${source_code_version.resources_count ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}

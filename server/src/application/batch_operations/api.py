@@ -20,6 +20,7 @@ router = APIRouter()
     response_model=BatchOperationResponse,
     response_description="Get one batch operation by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_id(
     batch_operation_id: str,
@@ -36,6 +37,7 @@ async def get_by_id(
     response_model=list[dict[str, Any]],
     response_description="Get all batch operations",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(
     response: Response,
@@ -119,6 +121,7 @@ async def delete(
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(
     request: Request, batch_operation_id: str, service: BatchOperationService = Depends(get_batch_operation_service)

@@ -4,27 +4,34 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import AuthProvider
+from .query_options import build_auth_provider_query_options
 
 
 class AuthProviderCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, auth_provider_id: str | UUID) -> AuthProvider | None:
+    async def get_by_id(
+        self,
+        auth_provider_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> AuthProvider | None:
         if not is_valid_uuid(auth_provider_id):
             raise ValueError(f"Invalid UUID: {auth_provider_id}")
 
-        statement = (
-            select(AuthProvider)
-            .where(AuthProvider.id == auth_provider_id)
-            .outerjoin(User, AuthProvider.created_by == User.id)
-        )
+        statement = select(AuthProvider).where(AuthProvider.id == auth_provider_id)
+
+        statement = statement.options(*build_auth_provider_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -33,12 +40,14 @@ class AuthProviderCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[AuthProvider]:
-        statement = select(AuthProvider).outerjoin(User, AuthProvider.created_by == User.id)
+        statement = select(AuthProvider)
         statement = evaluate_sqlalchemy_filters(AuthProvider, statement, filter)
         statement = evaluate_sqlalchemy_sorting(AuthProvider, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_auth_provider_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

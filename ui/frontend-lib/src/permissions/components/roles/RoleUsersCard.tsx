@@ -1,17 +1,15 @@
 import { useMemo, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Box, Button } from "@mui/material";
+import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../../common/components/CommonField";
+import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -31,40 +29,20 @@ export const RoleUsersCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "identifier",
-        fetchFields: ["identifier", "user_id"],
+        field: "user_data",
+        fetchFields: ["user_data"],
         headerName: "Identifier",
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              {...params.row}
-              id={params.row.user_id}
+              {...params.row.user_data}
+              id={params.row.user_data?.id}
               _entity_name={"user"}
             />
           );
         },
-      },
-      {
-        field: "display_name",
-        headerName: "Display Name",
-        flex: 1,
-      },
-      {
-        field: "email",
-        headerName: "Email",
-        flex: 1,
-      },
-      {
-        field: "provider",
-        headerName: "Provider",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <Box display="flex" alignItems="center" height="100%">
-            {getProviderValue(params.value)}
-          </Box>
-        ),
       },
       {
         field: "created_at",
@@ -76,6 +54,23 @@ export const RoleUsersCard = (props: { role: string }) => {
             sx={{ fontSize: "0.75rem", display: "flex" }}
           />
         ),
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return (
+            <GetEntityLink
+              {...creator}
+              name={creator.identifier}
+              _entity_name="user"
+            />
+          );
+        },
       },
       {
         field: "id",
@@ -118,9 +113,11 @@ export const RoleUsersCard = (props: { role: string }) => {
 
       <EntityFetchTable
         title="Role Users"
-        entityName={`permissions/role/${role}/user`}
+        entityName="permission"
+        defaultFilter={{ ptype: "g", v1: role, v0__like: "user:%" }}
         columns={columns}
-        fields={["id"]}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

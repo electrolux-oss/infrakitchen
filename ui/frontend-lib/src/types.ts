@@ -13,15 +13,6 @@ export interface IkEntity extends Record<string, any> {
   _entity_name: string;
 }
 
-export interface IkResourceTempState extends Record<string, any> {
-  id: string;
-  entity_id: string;
-  value: string;
-  created_by: string;
-  created_at: Date;
-  updated_at: Date;
-}
-
 export interface SortPayload {
   field: string;
   order: "ASC" | "DESC";
@@ -52,14 +43,19 @@ export interface GetListResult<RecordType extends IkEntity = any> {
   };
 }
 
-export interface LogEntity extends Record<string, any> {
+export interface LogEntity {
   id: string;
   data: string;
+  entity_id: string;
+  entity: string;
+  revision: number;
+  audit_log_id?: string;
+  trace_id?: string;
   level: string;
   created_at: Date;
-  resource: string;
   execution_start: number;
-  expired_at?: Date;
+  expire_at?: Date;
+  _entity_name: "log";
 }
 
 export interface AuditLogEntity extends IkEntity {

@@ -59,7 +59,7 @@ const UserCreatePageInner = () => {
 
   return (
     <PageContainer
-      title="Create User"
+      title="Create Service Account User"
       onBack={handleBack}
       backAriaLabel="Back to users"
       bottomActions={

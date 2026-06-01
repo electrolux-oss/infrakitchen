@@ -4,27 +4,26 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from sqlalchemy import select
 
-from application.storages.model import Storage
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
-from graphql_api.modules.storage.converters import convert_storage, storage_options
+from application.storages.service import StorageService
+from application.storages.dependencies import get_storage_service
+from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
 from graphql_api.modules.storage.types import StorageType
+
+
+def _build_service(info: Info) -> StorageService:
+    session = info.context["session"]
+    return get_storage_service(session)
 
 
 @strawberry.type
 class StorageQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def storage(self, info: Info, id: uuid.UUID) -> StorageType | None:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Storage).where(Storage.id == id).options(*storage_options(fields))
-        result = await session.execute(stmt)
-        obj = result.scalars().first()
-        if obj is None:
-            return None
-        return convert_storage(obj, fields)
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "storage")
+        fields = build_field_spec(entity_fields)
+        return await service.query_by_id(id, fields=fields)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def storages(
@@ -34,13 +33,29 @@ class StorageQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[StorageType]:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Storage).options(*storage_options(fields))
-        stmt = evaluate_sqlalchemy_filters(
-            Storage, stmt, cast(dict[str, Any], cast(object, filter)) if filter else None
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "storages")
+        fields = build_field_spec(entity_fields)
+        return await service.query_all(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+            sort=parse_sort(sort),
+            range=parse_range(range),
+            fields=fields,
         )
-        stmt = evaluate_sqlalchemy_sorting(Storage, stmt, parse_sort(sort))
-        stmt = evaluate_sqlalchemy_pagination(stmt, parse_range(range))
-        result = await session.execute(stmt)
-        return [x for x in (convert_storage(s, fields) for s in result.scalars().all()) if x is not None]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def storages_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        service = _build_service(info)
+        return await service.count(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def storage_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        return await service.get_actions(id, requester)

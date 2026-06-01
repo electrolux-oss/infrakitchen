@@ -4,27 +4,26 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from sqlalchemy import select
 
-from application.secrets.model import Secret
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
-from graphql_api.modules.secret.converters import convert_secret, secret_options
+from application.secrets.dependencies import get_secret_service
+from application.secrets.service import SecretService
+from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
 from graphql_api.modules.secret.types import SecretType
+
+
+def _build_service(info: Info) -> SecretService:
+    session = info.context["session"]
+    return get_secret_service(session=session)
 
 
 @strawberry.type
 class SecretQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def secret(self, info: Info, id: uuid.UUID) -> SecretType | None:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Secret).where(Secret.id == id).options(*secret_options(fields))
-        result = await session.execute(stmt)
-        obj = result.scalars().first()
-        if obj is None:
-            return None
-        return convert_secret(obj, fields)
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "secret")
+        fields = build_field_spec(entity_fields)
+        return await service.query_by_id(id, fields=fields)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def secrets(
@@ -34,11 +33,29 @@ class SecretQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[SecretType]:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Secret).options(*secret_options(fields))
-        stmt = evaluate_sqlalchemy_filters(Secret, stmt, cast(dict[str, Any], cast(object, filter)) if filter else None)
-        stmt = evaluate_sqlalchemy_sorting(Secret, stmt, parse_sort(sort))
-        stmt = evaluate_sqlalchemy_pagination(stmt, parse_range(range))
-        result = await session.execute(stmt)
-        return [x for x in (convert_secret(s, fields) for s in result.scalars().all()) if x is not None]
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "secrets")
+        fields = build_field_spec(entity_fields)
+        return await service.query_all(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+            sort=parse_sort(sort),
+            range=parse_range(range),
+            fields=fields,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def secrets_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        service = _build_service(info)
+        return await service.count(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def secret_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        return await service.get_actions(secret_id=id, requester=requester)

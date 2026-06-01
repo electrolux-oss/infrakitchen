@@ -329,11 +329,11 @@ class TestGetWorkflowActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.workflows.service.user_api_permission",
+            "application.workflows.functions.user_api_permission",
         )
         mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
-        result = await mock_workflow_service.get_workflow_actions(str(mocked_workflow.id), mock_user_dto)
+        result = await mock_workflow_service.get_actions(str(mocked_workflow.id), mock_user_dto)
 
         assert sorted(result) == sorted(expected_actions)
 
@@ -349,12 +349,12 @@ class TestGetWorkflowActions:
         mock_user_permissions(
             {"api:workflow": "admin"},
             monkeypatch,
-            "application.workflows.service.user_api_permission",
+            "application.workflows.functions.user_api_permission",
         )
         mock_workflow_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Workflow not found"):
-            await mock_workflow_service.get_workflow_actions(WORKFLOW_ID, mock_user_dto)
+            await mock_workflow_service.get_actions(WORKFLOW_ID, mock_user_dto)
 
 
 class TestUpdateWithSteps:
