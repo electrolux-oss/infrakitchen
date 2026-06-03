@@ -1,10 +1,28 @@
 import logging
+import re
 import shutil
 from typing import Any
 
 from core.tools.shell_client import ShellScriptClient
 
 logger = logging.getLogger(__name__)
+
+# Refs and paths are taken from Terraform module sources, which come from
+# user-controlled .tf files. Validating them defensively avoids argument
+# injection against `git fetch`/`git show` (e.g. a ref like
+# "--upload-pack=evil").
+_GIT_REF_RE = re.compile(r"^[A-Za-z0-9_./\-]+$")
+_GIT_PATH_RE = re.compile(r"^[A-Za-z0-9_./\-]+$")
+
+
+def _validate_git_ref(ref: str) -> None:
+    if not ref or ref.startswith("-") or ".." in ref.split("/") or not _GIT_REF_RE.match(ref):
+        raise ValueError(f"invalid git ref: {ref!r}")
+
+
+def _validate_git_path(path: str) -> None:
+    if not path or path.startswith("-") or ".." in path.split("/") or not _GIT_PATH_RE.match(path):
+        raise ValueError(f"invalid git path: {path!r}")
 
 
 class GitClient:
@@ -51,6 +69,32 @@ class GitClient:
 
         command_args = f"clone -q --depth 1 --single-branch --branch {branch} {self.git_url} {self.destination_dir}"
         _ = await self._run_git_command(command_args, self.workspace_path)
+
+    async def fetch_ref(self, ref: str) -> str:
+        """Fetch a specific ref into the existing (shallow) clone and return
+        its resolved commit SHA. The clone's working tree is not modified —
+        the commit is reachable via the returned SHA (and via FETCH_HEAD).
+
+        Raises if the ref can't be fetched (missing, no auth, etc.).
+        """
+        _validate_git_ref(ref)
+        self.logger.info(f"Fetching ref {ref} into {self.destination_dir}")
+        _ = await self._run_git_command(["fetch", "--depth", "1", "origin", ref], self.destination_dir)
+        sha = await self._run_git_command(["rev-parse", "FETCH_HEAD"], self.destination_dir)
+        return sha.strip()
+
+    async def list_files_at_ref(self, ref: str, subpath: str) -> list[str]:
+        """List file paths at <ref>:<subpath>, returned as paths from repo root."""
+        _validate_git_ref(ref)
+        _validate_git_path(subpath)
+        out = await self._run_git_command(["ls-tree", "-r", "--name-only", ref, "--", subpath], self.destination_dir)
+        return [line for line in out.splitlines() if line.strip()]
+
+    async def read_file_at_ref(self, ref: str, path: str) -> str:
+        """Return the content of a single file at <ref>:<path>."""
+        _validate_git_ref(ref)
+        _validate_git_path(path)
+        return await self._run_git_command(["show", f"{ref}:{path}"], self.destination_dir)
 
     async def delete_workspace(self):
         shutil.rmtree(self.destination_dir, ignore_errors=True)
