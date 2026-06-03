@@ -121,6 +121,54 @@ class TestTraverseDirectories:
         assert len(files) == 7
 
 
+class TestLocalModuleResolution:
+    REPO_ROOT = "tests/application/tools/fixtures/tf_local_modules"
+    WORKSPACE = f"{REPO_ROOT}/stacks/prod"
+
+    @pytest.mark.asyncio
+    async def test_local_modules_included_in_snapshot(self):
+        tf = OtfProvider(self.WORKSPACE, repo_root=self.REPO_ROOT, follow_modules=True)
+        await tf.read_files_to_string()
+        snapshot = tf.tf_string_data
+
+        # The configured folder's own file is present.
+        assert "prod-user" in snapshot
+        # Sibling local module ("../../modules/network") is pulled in.
+        assert "var.cidr" in snapshot
+        # Nested local module reached transitively ("../subnet" from network).
+        assert "availability_zone" in snapshot
+        # Local module relative to the folder ("./naming") is pulled in.
+        assert "${var.prefix}-resource" in snapshot
+
+    @pytest.mark.asyncio
+    async def test_external_module_not_fetched(self):
+        tf = OtfProvider(self.WORKSPACE, repo_root=self.REPO_ROOT, follow_modules=True)
+        await tf.read_files_to_string()
+        # The registry module "terraform-aws-modules/eks/aws" must not be resolved
+        # as a local path; only its reference inside main.tf appears.
+        assert tf.tf_string_data.count("terraform-aws-modules/eks/aws") == 1
+
+    @pytest.mark.asyncio
+    async def test_files_are_not_duplicated(self):
+        tf = OtfProvider(self.WORKSPACE, repo_root=self.REPO_ROOT, follow_modules=True)
+        await tf.read_files_to_string()
+        # Each discovered file contributes exactly one FILE divider.
+        assert tf.tf_string_data.count("FILE: ") == 4
+
+    def test_extract_module_refs(self):
+        tf = OtfProvider(self.WORKSPACE, repo_root=self.REPO_ROOT)
+        tf_data = """
+        module "local" { source = "../modules/network" }
+        module "dot"   { source = "./naming" }
+        module "registry" { source = "terraform-aws-modules/eks/aws" }
+        module "git" { source = "git::https://example.com/vpc.git" }
+        """
+        refs = tf._extract_module_refs(tf_data, "stacks/prod", None)
+        # Only the two local-path references resolve inside this repo; the
+        # registry and the external git source are dropped.
+        assert sorted(ref.source for ref in refs) == ["../modules/network", "./naming"]
+
+
 class AsyncMockFile:
     def __init__(self):
         self.write = AsyncMock()
