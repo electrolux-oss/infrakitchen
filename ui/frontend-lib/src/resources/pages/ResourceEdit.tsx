@@ -286,6 +286,23 @@ export const ResourceEditPageInner = (props: {
   const watchedStorage = watch("storage_id");
   const allowFrozenVariableChanges = entity.state === ENTITY_STATE.PROVISION;
   const [isStorageEditable, setIsStorageEditable] = useState(false);
+
+  const initialIntegrationIdsRef = useRef(
+    entity.integration_ids.map((i) => i.id),
+  );
+  const integrationsChanged = useMemo(() => {
+    const initial = initialIntegrationIdsRef.current;
+    return (
+      JSON.stringify([...watchedIntegrationIds].sort()) !==
+      JSON.stringify([...initial].sort())
+    );
+  }, [watchedIntegrationIds]);
+
+  const storageOptions = useMemo(
+    () => (integrationsChanged ? undefined : referenceOptions.storages),
+    [integrationsChanged, referenceOptions.storages],
+  );
+
   const filter_storage = useMemo(
     () => ({
       integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
@@ -674,7 +691,7 @@ export const ResourceEditPageInner = (props: {
                                 label="Select Storage for storing TF state"
                                 required
                                 readOnly={!isStorageEditable}
-                                options={referenceOptions.storages}
+                                options={storageOptions}
                               />
                             )}
                           />

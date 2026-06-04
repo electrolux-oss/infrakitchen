@@ -19,6 +19,7 @@ from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
     delete_entity,
@@ -177,6 +178,14 @@ class ExecutorService:
         :param requester: User who updates the executor
         :return: Updated executor
         """
+
+        def check_critical_fields_changed(existing: Executor, patched: ExecutorUpdate) -> bool:
+            critical_fields = ["storage_id", "storage_path"]
+            for field in critical_fields:
+                if getattr(patched, field) is not None and getattr(patched, field) != getattr(existing, field):
+                    return True
+            return False
+
         existing_executor = await self.crud.get_by_id(executor_id)
 
         if not existing_executor:
@@ -205,6 +214,11 @@ class ExecutorService:
         body = executor.model_dump(exclude_unset=True)
         if not body:
             raise ValueError("No fields to update")
+
+        if check_critical_fields_changed(existing_executor, executor):
+            requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
+            if "admin" not in requester_permissions:
+                raise ValueError("Only admin can change storage or storage path of the executor")
 
         await self.crud.update(existing_executor, body)
         await self.revision_handler.handle_revision(existing_executor)

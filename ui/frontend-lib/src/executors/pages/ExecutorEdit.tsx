@@ -1,9 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { useEffectOnce } from "react-use";
 
+import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Button,
   Box,
@@ -12,22 +14,61 @@ import {
   Typography,
   MenuItem,
   Autocomplete,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 
-import { LabelInput, useConfig } from "../../common";
+import { LabelInput, PermissionWrapper, useConfig } from "../../common";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { RefFolders } from "../../source_codes/types";
+import {
+  GqlIntegration,
+  transformIntegration,
+  INTEGRATION_SHORT_FIELDS,
+} from "../../integrations/graphql";
+import { IntegrationShort } from "../../integrations/types";
+import {
+  GqlSecret,
+  transformSecret,
+  SECRET_SHORT_FIELDS,
+} from "../../secrets/graphql";
+import { SecretShort } from "../../secrets/types";
+import {
+  GqlSourceCode,
+  transformSourceCode,
+  SOURCE_CODE_DETAIL_FIELDS,
+} from "../../source_codes/graphql";
+import { RefFolders, SourceCodeResponse } from "../../source_codes/types";
+import {
+  GqlStorage,
+  STORAGE_DETAIL_FIELDS,
+  transformStorage,
+} from "../../storages/graphql";
+import { StorageShort } from "../../storages/types";
 import { IkEntity } from "../../types";
-import { EXECUTOR_QUERY, GqlExecutor, transformExecutor } from "../graphql";
+import {
+  EXECUTOR_DETAIL_FIELDS,
+  GqlExecutor,
+  transformExecutor,
+} from "../graphql";
 import { ExecutorResponse, ExecutorUpdate } from "../types";
 
-export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
+interface ReferenceOptions {
+  integrations: IntegrationShort[];
+  secrets: SecretShort[];
+  sourceCodes: SourceCodeResponse[];
+  storages: StorageShort[];
+}
+
+export const ExecutorEditPageInner = (props: {
+  entity: ExecutorResponse;
+  referenceOptions: ReferenceOptions;
+}) => {
   const { linkPrefix, ikApi } = useConfig();
-  const { entity } = props;
+  const { entity, referenceOptions } = props;
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}executors/${entity.id}`);
 
@@ -43,6 +84,8 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
         source_code_branch: entity.source_code_branch || "",
         source_code_version: entity.source_code_version || "",
         labels: entity.labels,
+        storage_id: entity.storage?.id || null,
+        storage_path: entity.storage_path,
       };
     },
     [],
@@ -88,10 +131,36 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
     Record<string, string>
   >({});
   const [gitFolders, setGitFolders] = useState<string[]>([]);
+  const [isStorageEditable, setIsStorageEditable] = useState(false);
 
   const watchedVersion = watch("source_code_version");
   const watchedBranch = watch("source_code_branch");
   const watchedSourceCode = watch("source_code_id");
+  const watchedIntegrationIds = watch("integration_ids");
+  const watchedStorage = watch("storage_id");
+
+  const initialIntegrationIdsRef = useRef(
+    entity.integration_ids.map((i) => i.id),
+  );
+  const integrationsChanged = useMemo(() => {
+    const initial = initialIntegrationIdsRef.current;
+    return (
+      JSON.stringify([...watchedIntegrationIds].sort()) !==
+      JSON.stringify([...initial].sort())
+    );
+  }, [watchedIntegrationIds]);
+
+  const storageOptions = useMemo(
+    () => (integrationsChanged ? undefined : referenceOptions.storages),
+    [integrationsChanged, referenceOptions.storages],
+  );
+
+  const filter_storage = useMemo(
+    () => ({
+      integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
+    }),
+    [watchedIntegrationIds],
+  );
 
   useEffect(() => {
     if (watchedSourceCode) {
@@ -290,6 +359,7 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
                   value={field.value}
                   label="Credentials"
                   multiple
+                  options={referenceOptions.integrations}
                 />
               )}
             />
@@ -312,9 +382,110 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
                   value={field.value}
                   label="Secrets"
                   multiple
+                  options={referenceOptions.secrets}
                 />
               )}
             />
+            <PermissionWrapper
+              requiredPermission="api:storage"
+              permissionAction="admin"
+            >
+              {watchedIntegrationIds.length > 0 && (
+                <>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mt: 1,
+                    }}
+                  >
+                    <Tooltip
+                      title={
+                        isStorageEditable
+                          ? "Lock storage field"
+                          : "Unlock storage field"
+                      }
+                    >
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        onClick={() =>
+                          setIsStorageEditable((editable) => !editable)
+                        }
+                      >
+                        {isStorageEditable ? (
+                          <LockOpenOutlinedIcon fontSize="small" />
+                        ) : (
+                          <LockOutlinedIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                    <Typography variant="body2" color="warning.main">
+                      {isStorageEditable
+                        ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
+                        : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
+                    </Typography>
+                  </Box>
+                  <Controller
+                    name="storage_id"
+                    control={control}
+                    rules={{ required: "*Required" }}
+                    render={({ field }) => (
+                      <ReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="storages"
+                        buffer={buffer}
+                        showFields={["name", "storage_provider"]}
+                        setBuffer={setBuffer}
+                        error={!!errors.storage_id}
+                        helpertext={
+                          errors.storage_id
+                            ? errors.storage_id.message
+                            : "Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                        }
+                        filter={filter_storage}
+                        value={field.value}
+                        label="Select Storage for storing TF state"
+                        required
+                        readOnly={!isStorageEditable}
+                        options={storageOptions}
+                      />
+                    )}
+                  />
+                </>
+              )}
+
+              {watchedStorage && (
+                <Controller
+                  name="storage_path"
+                  control={control}
+                  rules={{
+                    validate: {
+                      required: (value) => {
+                        if (!value) return "*Required";
+                      },
+                    },
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      error={!!errors.storage_path}
+                      fullWidth
+                      margin="normal"
+                      label="Storage Path"
+                      disabled={!isStorageEditable}
+                      helperText={
+                        errors.storage_path
+                          ? errors.storage_path.message
+                          : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
+                      }
+                    />
+                  )}
+                />
+              )}
+            </PermissionWrapper>
 
             <>
               <Typography variant="h5" component="h3">
@@ -344,6 +515,7 @@ export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
                       value={field.value}
                       label="Code Repository (Read Only)"
                       required
+                      options={referenceOptions.sourceCodes}
                     />
                   )}
                 />
@@ -484,22 +656,71 @@ export const ExecutorEditPage = () => {
   const { executor_id } = useParams();
 
   const [entity, setEntity] = useState<ExecutorResponse>();
+  const [referenceOptions, setReferenceOptions] = useState<ReferenceOptions>();
   const [error, setError] = useState<Error>();
   const { ikApi } = useConfig();
 
   const getExecutor = useCallback(async (): Promise<any> => {
-    await ikApi
-      .graphqlRequest<{ executor: GqlExecutor | null }>(EXECUTOR_QUERY, {
-        id: executor_id,
-      })
-      .then((response) => {
-        if (!response.executor) {
-          throw new Error("Executor not found");
+    try {
+      const response = await ikApi.graphqlRequest<{
+        executor: GqlExecutor | null;
+      }>(
+        `
+        query Executor($id: UUID!) {
+          executor(id: $id) {
+            ${EXECUTOR_DETAIL_FIELDS}
+          }
         }
-        setEntity(transformExecutor(response.executor));
-        setError(undefined);
-      })
-      .catch((e: any) => setError(e));
+      `,
+        { id: executor_id },
+      );
+
+      if (!response.executor) {
+        throw new Error("Executor not found");
+      }
+
+      const executor = transformExecutor(response.executor);
+      setEntity(executor);
+      setError(undefined);
+
+      const sourceCodeId = executor.source_code?.id;
+      const refResponse = await ikApi.graphqlRequest<{
+        integrations: GqlIntegration[];
+        secrets: GqlSecret[];
+        sourceCodes: GqlSourceCode[];
+        storages: GqlStorage[];
+      }>(
+        `
+        query ExecutorEditReferenceData($scFilter: JSON, $integrationIds: [UUID!]) {
+          integrations(sort: ["name", "ASC"], range: [0, 999]) {
+            ${INTEGRATION_SHORT_FIELDS}
+          }
+          secrets(sort: ["name", "ASC"], range: [0, 999]) {
+            ${SECRET_SHORT_FIELDS}
+          }
+          sourceCodes(filter: $scFilter, sort: ["identifier", "ASC"], range: [0, 999]) {
+            ${SOURCE_CODE_DETAIL_FIELDS}
+          }
+          storages(filter: { integration_id: $integrationIds }, sort: ["name", "ASC"], range: [0, 999]) {
+            ${STORAGE_DETAIL_FIELDS}
+          }
+        }
+      `,
+        {
+          scFilter: sourceCodeId ? { id: sourceCodeId } : {},
+          integrationIds: executor.integration_ids.map((i) => i.id),
+        },
+      );
+
+      setReferenceOptions({
+        integrations: refResponse.integrations.map(transformIntegration),
+        secrets: refResponse.secrets.map(transformSecret),
+        sourceCodes: refResponse.sourceCodes.map(transformSourceCode),
+        storages: refResponse.storages.map(transformStorage),
+      });
+    } catch (e: any) {
+      setError(e);
+    }
   }, [ikApi, executor_id]);
 
   useEffectOnce(() => {
@@ -509,7 +730,12 @@ export const ExecutorEditPage = () => {
   return (
     <>
       {error && <Alert severity="error">{error.message}</Alert>}
-      {entity && <ExecutorEditPageInner entity={entity} />}
+      {entity && referenceOptions && (
+        <ExecutorEditPageInner
+          entity={entity}
+          referenceOptions={referenceOptions}
+        />
+      )}
     </>
   );
 };

@@ -63,4 +63,6 @@ export interface ExecutorUpdate {
   integration_ids: string[];
   secret_ids: string[];
   labels: string[];
+  storage_path: string | null;
+  storage_id: string | null;
 }
