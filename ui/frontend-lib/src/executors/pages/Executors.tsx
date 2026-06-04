@@ -6,7 +6,12 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
+import {
+  FilterConfig,
+  getRepoNameFromUrl,
+  PermissionWrapper,
+  useConfig,
+} from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
@@ -14,6 +19,8 @@ import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformExecutorOptional } from "../graphql";
+import { EXECUTOR_FIELD_MAP } from "../graphql/fragments";
 
 export const ExecutorsPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -61,11 +68,17 @@ export const ExecutorsPage = () => {
         field: "source_code",
         headerName: "Code Repository",
         flex: 1,
+        sortField: "source_code.source_code_url",
         valueGetter: (_value: any, row: any) =>
           row.source_code?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.source_code;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return (
+            <GetEntityLink
+              {...sourceCodeVersion}
+              name={getRepoNameFromUrl(params.row.source_code?.source_code_url)}
+            />
+          );
         },
       },
       {
@@ -111,6 +124,14 @@ export const ExecutorsPage = () => {
         renderCell: (params: GridRenderCellParams) => (
           <Labels labels={params.row.labels} />
         ),
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
       },
     ],
     [],
@@ -177,18 +198,10 @@ export const ExecutorsPage = () => {
         title="Executors"
         entityName="executor"
         columns={columns}
+        entityFieldMap={EXECUTOR_FIELD_MAP}
+        transformFn={transformExecutorOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "name",
-          "source_code",
-          "state",
-          "status",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
       />
     </PageContainer>
   );

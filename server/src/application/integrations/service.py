@@ -8,6 +8,7 @@ from core.adapters.functions import get_integration_adapter
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants import ModelStatus
+from core.database import FieldSpec
 from core.constants.model import ModelActions
 from core.database import to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
@@ -15,11 +16,11 @@ from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import IntegrationCRUD
+from .functions import get_integration_actions
 from .model import Integration, IntegrationDTO
 from .schema import (
     IntegrationCreate,
@@ -75,6 +76,20 @@ class IntegrationService:
     async def get_all_dto(self, **kwargs) -> list[IntegrationDTO]:
         integrations = await self.crud.get_all(**kwargs)
         return [IntegrationDTO.model_validate(integration) for integration in integrations]
+
+    async def query_by_id(self, integration_id: str | UUID, fields: FieldSpec | None = None) -> Integration | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(integration_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Integration]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
@@ -231,23 +246,10 @@ class IntegrationService:
         :param integration_id: ID of the integration
         :return: List of actions
         """
-        requester_permissions = await user_entity_permissions(requester, integration_id, "integration")
-        if "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        integration = await self.crud.get_by_id(integration_id)
+        integration = await self.crud.get_by_id(integration_id, fields={"status": None})
         if not integration:
             raise EntityNotFound("Integration not found")
-
-        if integration.status == ModelStatus.ENABLED:
-            actions.append(ModelActions.EDIT)
-            actions.append(ModelActions.DISABLE)
-        if integration.status == ModelStatus.DISABLED:
-            actions.append(ModelActions.ENABLE)
-            actions.append(ModelActions.DELETE)
-
-        return actions
+        return await get_integration_actions(requester, integration_id, integration.status)
 
     def validate_configuration(self, integration_update: IntegrationUpdate, existing_integration: Integration) -> None:
         if not integration_update.configuration:

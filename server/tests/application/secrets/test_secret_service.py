@@ -373,7 +373,9 @@ class TestUpdate:
             secret_id=mocked_secret.id, secret=secret_update, requester=mock_user_dto
         )
 
-        secret_update.model_dump.assert_called_once_with(by_alias=True, exclude={"_entity_name"}, exclude_unset=True)
+        secret_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False, exclude_unset=True
+        )
         mock_secret_crud.update.assert_called_once_with(mocked_secret, update_secret_body)
         mock_secret_crud.refresh.assert_called_once_with(mocked_secret)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -546,7 +548,7 @@ class TestGetSecretActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.secrets.service.user_api_permission",
+            "application.secrets.functions.user_api_permission",
         )
 
         mocked_secret.status = status

@@ -5,13 +5,11 @@ import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../../common/components/CommonField";
+import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { RolePolicyEntityCreateDialog } from "./EntityPoliciesDialogs";
@@ -32,8 +30,8 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "resource_name",
-        fetchFields: ["resource_name", "resource_id"],
+        field: "entity_data",
+        fetchFields: ["entity_data", "v1"],
         headerName: "Resource Name",
         flex: 1,
         sortable: false,
@@ -41,16 +39,16 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.resource_id}
-              _entity_name={"resource"}
-              name={params.row.resource_name}
+              id={params.row.entity_data?.id}
+              _entity_name={params.row.entity_data?._entity_name}
+              name={params.row.entity_data?.name || params.row.v1}
             />
           );
         },
       },
       {
         field: "action",
-        fetchFields: ["action", "v2"],
+        fetchFields: ["v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
@@ -75,11 +73,18 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       {
         field: "creator",
         headerName: "Creator",
-        sortable: false,
         flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
-          return creator ? <GetReferenceUrlValue {...creator} /> : "No User";
+          if (!creator) return null;
+          return (
+            <GetEntityLink
+              {...creator}
+              name={creator.identifier}
+              _entity_name="user"
+            />
+          );
         },
       },
       {
@@ -125,9 +130,11 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       </PermissionWrapper>
       <EntityFetchTable
         title="Role Policies"
-        entityName={`resources/permissions/role/${role}/policie`}
+        entityName="permission"
+        defaultFilter={{ v0: role, ptype: "p", v1__not_like: "api:%" }}
         columns={columns}
-        fields={["id"]}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

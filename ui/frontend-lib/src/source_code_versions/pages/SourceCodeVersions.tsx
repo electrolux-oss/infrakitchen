@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -13,6 +13,8 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformSourceCodeVersionOptional } from "../graphql";
+import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 export const SourceCodeVersionsPage = () => {
   const { linkPrefix, ikApi } = useConfig();
@@ -23,20 +25,28 @@ export const SourceCodeVersionsPage = () => {
   const [templates, setTemplates] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/source_code_version").then((response: string[]) => {
-      setLabels(response);
-    });
-    // Load templates
     ikApi
-      .getList("templates", {
-        pagination: { page: 1, perPage: 1000 },
-        fields: ["id", "name"],
-        sort: { field: "name", order: "ASC" },
-        filter: { abstract: false },
-      })
+      .graphqlRequest<{ templates: { name: string }[]; labels: string[] }>(
+        `
+  query Filters($filter: JSON, $sort: [String!], $range: [Int!]) {
+    templates(filter: $filter, sort: $sort, range: $range) {
+      name
+    }
+    labels: labels(entity: "template")
+  }
+`,
+        {
+          filter: { abstract: false },
+          sort: ["name", "ASC"],
+          range: [0, 1000],
+        },
+      )
       .then((response: any) => {
-        const templateNames = response.data.map((t: any) => t.name);
+        const templateNames = (response.templates || []).map(
+          (t: any) => t.name,
+        );
         setTemplates(templateNames);
+        setLabels(response.labels || []);
       })
       .catch((_) => {
         setTemplates([]);
@@ -58,6 +68,7 @@ export const SourceCodeVersionsPage = () => {
         field: "template",
         headerName: "Template",
         flex: 1,
+        sortField: "template.name",
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
@@ -68,10 +79,16 @@ export const SourceCodeVersionsPage = () => {
         field: "source_code",
         headerName: "Code Repository",
         flex: 1,
+        sortField: "source_code.source_code_url",
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCode = params.row.source_code;
-          return <GetEntityLink {...sourceCode} />;
+          return (
+            <GetEntityLink
+              {...sourceCode}
+              identifier={sourceCode.source_code_url}
+            />
+          );
         },
       },
       {
@@ -88,6 +105,18 @@ export const SourceCodeVersionsPage = () => {
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
       },
     ],
     [],
@@ -181,18 +210,12 @@ export const SourceCodeVersionsPage = () => {
     >
       <EntityFetchTable
         title="Code Versions"
-        entityName="source_code_version"
+        entityName="sourceCodeVersion"
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fields={[
-          "id",
-          "identifier",
-          "template",
-          "source_code",
-          "status",
-          "created_at",
-        ]}
+        entityFieldMap={SCV_FIELD_MAP}
+        transformFn={transformSourceCodeVersionOptional}
       />
     </PageContainer>
   );

@@ -4,21 +4,32 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Worker
+from .query_options import build_worker_query_options
 
 
 class WorkerCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, entity_id: str | UUID) -> Worker | None:
+    async def get_by_id(
+        self,
+        entity_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Worker | None:
         if not is_valid_uuid(entity_id):
             raise ValueError(f"Invalid UUID: {entity_id}")
 
         statement = select(Worker).where(Worker.id == entity_id)
+        statement = statement.options(*build_worker_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -27,12 +38,14 @@ class WorkerCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Worker]:
         statement = select(Worker)
         statement = evaluate_sqlalchemy_filters(Worker, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Worker, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_worker_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

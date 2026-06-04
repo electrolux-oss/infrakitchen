@@ -10,6 +10,7 @@ import { LabelInput, useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { GqlStorage, STORAGE_QUERY, transformStorage } from "../graphql";
 import { StorageResponse, StorageUpdate } from "../types";
 
 export const StorageEditPageInner = (props: { entity: StorageResponse }) => {
@@ -150,9 +151,14 @@ export const StorageEditPage = () => {
 
   const getStorage = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`storages/${storage_id}`)
-      .then((response: StorageResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ storage: GqlStorage | null }>(STORAGE_QUERY, {
+        id: storage_id,
+      })
+      .then((response) => {
+        if (!response.storage) {
+          throw new Error("Storage not found");
+        }
+        setEntity(transformStorage(response.storage));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

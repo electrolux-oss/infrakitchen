@@ -16,6 +16,11 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
 import { TemplateShort } from "../../templates/types";
 import {
+  SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
+  GqlSourceOutputConfigTemplate,
+  transformSourceOutputConfigTemplate,
+} from "../graphql";
+import {
   SourceConfigUpdateWithId,
   SourceOutputConfigTemplateResponse,
 } from "../types";
@@ -68,15 +73,19 @@ export const ConfigReferenceInput = ({
       if (template) {
         try {
           setLoadingOutputs(true);
-          await ikApi
-            .get(`source_code_versions/template/${template.id}/outputs`)
-            .then((response: SourceOutputConfigTemplateResponse[]) => {
-              if (response.length > 0) {
-                setSourceOutputs(response);
-              } else {
-                notify("No source code configs found", "info");
-              }
-            });
+          const gqlResponse = await ikApi.graphqlRequest<{
+            sourceCodeVersionTemplateOutputs: GqlSourceOutputConfigTemplate[];
+          }>(SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY, {
+            templateId: template.id,
+          });
+          const response = gqlResponse.sourceCodeVersionTemplateOutputs.map(
+            transformSourceOutputConfigTemplate,
+          );
+          if (response.length > 0) {
+            setSourceOutputs(response);
+          } else {
+            notify("No source code configs found", "info");
+          }
         } catch (e) {
           notifyError(e);
         } finally {

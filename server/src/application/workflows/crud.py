@@ -8,11 +8,16 @@ from sqlalchemy.orm import selectinload
 from application.integrations.model import Integration
 from application.resources.model import Resource
 from application.secrets.model import Secret
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from core.users.model import User
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Workflow, WorkflowStep
+from .query_options import build_workflow_query_options
 
 
 def _workflow_load_options() -> list[Any]:
@@ -32,11 +37,15 @@ class WorkflowCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, workflow_id: str | UUID) -> Workflow | None:
+    async def get_by_id(
+        self,
+        workflow_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Workflow | None:
         if not is_valid_uuid(workflow_id):
             raise ValueError(f"Invalid UUID: {workflow_id}")
 
-        statement = select(Workflow).where(Workflow.id == workflow_id).options(*_workflow_load_options())
+        statement = select(Workflow).where(Workflow.id == workflow_id).options(*build_workflow_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
@@ -45,13 +54,9 @@ class WorkflowCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Workflow]:
-        statement = (
-            select(Workflow)
-            .join(User, Workflow.created_by == User.id)
-            .options(*_workflow_load_options())
-            .order_by(Workflow.created_at.desc())
-        )
+        statement = select(Workflow).options(*build_workflow_query_options(fields))
 
         statement = evaluate_sqlalchemy_sorting(Workflow, statement, sort)
 

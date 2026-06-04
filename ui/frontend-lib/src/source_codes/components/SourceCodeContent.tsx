@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
 import { RefType } from "../../source_code_versions/types";
 import { RefFolders } from "../types";
@@ -23,28 +23,38 @@ export const SourceCodeContent = () => {
     [];
 
   const tabs: TabDefinition[] = [
-    {
-      label: "Tags",
-      content: (
-        <SourceCodeRefSection
-          refs={entity.git_tags ?? []}
-          type={RefType.TAG}
-          sourceCodeId={entity.id}
-          getFolders={getFolders}
-        />
-      ),
-    },
-    {
-      label: "Branches",
-      content: (
-        <SourceCodeRefSection
-          refs={entity.git_branches ?? []}
-          type={RefType.BRANCH}
-          sourceCodeId={entity.id}
-          getFolders={getFolders}
-        />
-      ),
-    },
+    ...(entity.git_tags?.length
+      ? [
+          {
+            label: `Tags`,
+            tabLabel: `Tags (${entity.git_tags.length})`,
+            content: (
+              <SourceCodeRefSection
+                refs={entity.git_tags}
+                type={RefType.TAG}
+                sourceCodeId={entity.id}
+                getFolders={getFolders}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...(entity.git_branches?.length
+      ? [
+          {
+            label: `Branches`,
+            tabLabel: `Branches (${entity.git_branches.length})`,
+            content: (
+              <SourceCodeRefSection
+                refs={entity.git_branches}
+                type={RefType.BRANCH}
+                sourceCodeId={entity.id}
+                getFolders={getFolders}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       label: "Audit",
       content: (

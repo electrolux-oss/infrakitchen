@@ -43,12 +43,51 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import {
-  IkEntity,
-  ValidationRule,
-  ValidationRulesByVariable,
-} from "../../types";
+  GqlIntegration,
+  transformIntegration,
+  INTEGRATION_SHORT_FIELDS,
+} from "../../integrations/graphql";
+import { IntegrationShort } from "../../integrations/types";
+import {
+  GqlSecret,
+  transformSecret,
+  SECRET_SHORT_FIELDS,
+} from "../../secrets/graphql";
+import { SecretShort } from "../../secrets/types";
+import {
+  GqlSourceCodeVersion,
+  transformSourceCodeVersion,
+  SCV_SHORT_FIELDS,
+} from "../../source_code_versions/graphql";
+import { SourceCodeVersionShort } from "../../source_code_versions/types";
+import {
+  GqlStorage,
+  STORAGE_DETAIL_FIELDS,
+  transformStorage,
+} from "../../storages/graphql";
+import { StorageShort } from "../../storages/types";
+import { IkEntity, ValidationRule } from "../../types";
 import { ENTITY_STATE } from "../../utils/constants";
+import {
+  GqlValidationRulesByVariable,
+  transformValidationRulesByVariable,
+  VALIDATION_RULES_BY_VARIABLE_FIELDS,
+} from "../../validation_rules/graphql";
+import {
+  GqlWorkspace,
+  transformWorkspace,
+  WORKSPACE_SHORT_FIELDS,
+} from "../../workspaces/graphql";
+import { WorkspaceShort } from "../../workspaces/types";
 import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
+import {
+  GqlResource,
+  GqlResourceTempState,
+  RESOURCE_DETAIL_FIELDS,
+  RESOURCE_TEMP_STATE_FIELDS,
+  transformResource,
+  transformResourceTempState,
+} from "../graphql";
 import {
   ResourceResponse,
   ResourceTempStateResponse,
@@ -61,13 +100,30 @@ import {
 } from "../utils/formValidation";
 import { buildValidationRuleMaps } from "../utils/validationRules";
 
+interface ReferenceOptions {
+  integrations: IntegrationShort[];
+  secrets: SecretShort[];
+  sourceCodeVersions: SourceCodeVersionShort[];
+  workspaces: WorkspaceShort[];
+  storages: StorageShort[];
+}
+
 export const ResourceEditPageInner = (props: {
   entity: ResourceResponse;
   resourceTempState?: ResourceTempStateResponse;
+  referenceOptions: ReferenceOptions;
+  validationRuleSummaryByVariable: Record<string, string>;
+  validationRuleByVariable: Record<string, ValidationRule | null>;
 }) => {
   const { linkPrefix, ikApi } = useConfig();
   const { permissions } = usePermissionProvider();
-  const { entity, resourceTempState } = props;
+  const {
+    entity,
+    resourceTempState,
+    referenceOptions,
+    validationRuleSummaryByVariable,
+    validationRuleByVariable,
+  } = props;
   const existingIntegrationIds = useMemo(
     () => new Set(entity.integration_ids.map((i) => String(i.id))),
     [entity.integration_ids],
@@ -252,11 +308,6 @@ export const ResourceEditPageInner = (props: {
   );
 
   const [schema, setSchema] = useState<ResourceVariableSchema[]>();
-  const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
-    useState<Record<string, string>>({});
-  const [validationRuleByVariable, setValidationRuleByVariable] = useState<
-    Record<string, ValidationRule | null>
-  >({});
 
   function getSchemaObject(schema: ResourceVariableSchema[]) {
     return schema.reduce((acc: Record<string, any>, variable) => {
@@ -368,27 +419,6 @@ export const ResourceEditPageInner = (props: {
     remove,
   ]);
 
-  useEffect(() => {
-    if (!entity.template.id) {
-      setValidationRuleSummaryByVariable({});
-      setValidationRuleByVariable({});
-      return;
-    }
-
-    ikApi
-      .get(`validation_rules/template/${entity.template.id}`)
-      .then((response: ValidationRulesByVariable[]) => {
-        const { summaryByVariable, ruleByVariable } =
-          buildValidationRuleMaps(response);
-
-        setValidationRuleSummaryByVariable(summaryByVariable);
-        setValidationRuleByVariable(ruleByVariable);
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
-  }, [ikApi, entity.template.id]);
-
   return (
     <FormProvider {...methods}>
       <PageContainer
@@ -494,6 +524,7 @@ export const ResourceEditPageInner = (props: {
                         setBuffer={setBuffer}
                         error={!!errors.integration_ids}
                         optionFilter={integrationOptionFilter}
+                        options={referenceOptions.integrations}
                         helpertext={
                           errors.integration_ids
                             ? errors.integration_ids.message
@@ -516,6 +547,7 @@ export const ResourceEditPageInner = (props: {
                         buffer={buffer}
                         setBuffer={setBuffer}
                         error={!!errors.secret_ids}
+                        options={referenceOptions.secrets}
                         helpertext={
                           errors.secret_ids
                             ? errors.secret_ids.message
@@ -574,6 +606,7 @@ export const ResourceEditPageInner = (props: {
                           filter={{ template_id: entity.template.id }}
                           value={field.value}
                           label="Source Code Version"
+                          options={referenceOptions.sourceCodeVersions}
                         />
                       )}
                     />
@@ -641,6 +674,7 @@ export const ResourceEditPageInner = (props: {
                                 label="Select Storage for storing TF state"
                                 required
                                 readOnly={!isStorageEditable}
+                                options={referenceOptions.storages}
                               />
                             )}
                           />
@@ -697,6 +731,7 @@ export const ResourceEditPageInner = (props: {
                           }
                           value={field.value}
                           label="Workspace"
+                          options={referenceOptions.workspaces}
                         />
                       )}
                     />
@@ -804,45 +839,121 @@ export const ResourceEditPage = () => {
   const [entity, setEntity] = useState<ResourceResponse>();
   const [resourceTempState, setResourceTempState] =
     useState<ResourceTempStateResponse>();
+  const [referenceOptions, setReferenceOptions] = useState<ReferenceOptions>();
+  const [validationRuleSummaryByVariable, setValidationRuleSummaryByVariable] =
+    useState<Record<string, string>>({});
+  const [validationRuleByVariable, setValidationRuleByVariable] = useState<
+    Record<string, ValidationRule | null>
+  >({});
   const [error, setError] = useState<Error>();
   const { ikApi } = useConfig();
 
   const getResource = useCallback(async (): Promise<any> => {
-    await ikApi
-      .get(`resources/${resource_id}`)
-      .then((response) => {
-        setEntity(response);
-        setError(undefined);
-      })
-      .catch((e: any) => setError(e));
+    try {
+      const response = await ikApi.graphqlRequest<{
+        resource: GqlResource | null;
+        resourceTempStateByResource: GqlResourceTempState | null;
+      }>(
+        `
+        query Resource($id: UUID!) {
+          resource(id: $id) {
+            ${RESOURCE_DETAIL_FIELDS}
+          }
+          resourceTempStateByResource(resourceId: $id) {
+            ${RESOURCE_TEMP_STATE_FIELDS}
+          }
+        }
+      `,
+        { id: resource_id },
+      );
+
+      if (!response.resource) {
+        throw new Error("Resource not found");
+      }
+
+      const resource = transformResource(response.resource);
+      setEntity(resource);
+      if (response.resourceTempStateByResource) {
+        setResourceTempState(
+          transformResourceTempState(response.resourceTempStateByResource),
+        );
+      }
+      setError(undefined);
+
+      const templateId = resource.template?.id;
+      const refResponse = await ikApi.graphqlRequest<{
+        integrations: GqlIntegration[];
+        secrets: GqlSecret[];
+        sourceCodeVersions: GqlSourceCodeVersion[];
+        workspaces: GqlWorkspace[];
+        validationRulesByTemplate: GqlValidationRulesByVariable[];
+        storages: GqlStorage[];
+      }>(
+        `
+        query ResourceEditReferenceData($templateId: UUID!, $scvFilter: JSON, $integrationIds: [UUID!]) {
+          integrations(filter: { integration_type: "cloud" }, sort: ["name", "ASC"], range: [0, 999]) {
+            ${INTEGRATION_SHORT_FIELDS}
+          }
+          secrets(sort: ["name", "ASC"], range: [0, 999]) {
+            ${SECRET_SHORT_FIELDS}
+          }
+          sourceCodeVersions(filter: $scvFilter, sort: ["name", "ASC"], range: [0, 999]) {
+            ${SCV_SHORT_FIELDS}
+          }
+          workspaces(sort: ["name", "ASC"], range: [0, 999]) {
+            ${WORKSPACE_SHORT_FIELDS}
+          }
+          validationRulesByTemplate(templateId: $templateId) {
+            ${VALIDATION_RULES_BY_VARIABLE_FIELDS}
+          }
+          storages(filter: { integration_id: $integrationIds }, sort: ["name", "ASC"], range: [0, 999]) {
+            ${STORAGE_DETAIL_FIELDS}
+          }
+        }
+      `,
+        {
+          templateId,
+          scvFilter: templateId ? { template_id: templateId } : {},
+          integrationIds: resource.integration_ids.map((i) => i.id),
+        },
+      );
+
+      setReferenceOptions({
+        integrations: refResponse.integrations.map(transformIntegration),
+        secrets: refResponse.secrets.map(transformSecret),
+        sourceCodeVersions: refResponse.sourceCodeVersions.map(
+          transformSourceCodeVersion,
+        ),
+        workspaces: refResponse.workspaces.map(transformWorkspace),
+        storages: refResponse.storages.map(transformStorage),
+      });
+
+      const validationData = refResponse.validationRulesByTemplate.map((vr) =>
+        transformValidationRulesByVariable(vr),
+      );
+      const { summaryByVariable, ruleByVariable } =
+        buildValidationRuleMaps(validationData);
+      setValidationRuleSummaryByVariable(summaryByVariable);
+      setValidationRuleByVariable(ruleByVariable);
+    } catch (e: any) {
+      setError(e);
+    }
   }, [ikApi, resource_id]);
 
   useEffectOnce(() => {
     getResource();
   });
 
-  const getResourceTempState = useCallback(async (): Promise<any> => {
-    if (!resource_id) return;
-    await ikApi
-      .get(`resource_temp_states/resource/${resource_id}`)
-      .then((response) => {
-        setResourceTempState(response);
-        setError(undefined);
-      })
-      .catch((e: any) => setError(e));
-  }, [ikApi, resource_id]);
-
-  useEffectOnce(() => {
-    getResourceTempState();
-  });
-
   return (
     <>
       {error && <Alert severity="error">{error.message}</Alert>}
-      {entity && (
+      {entity && referenceOptions && (
         <ResourceEditPageInner
           entity={entity}
           resourceTempState={resourceTempState}
+          referenceOptions={referenceOptions}
+          validationRuleSummaryByVariable={validationRuleSummaryByVariable}
+          validationRuleByVariable={validationRuleByVariable}
         />
       )}
     </>

@@ -8,6 +8,7 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformWorker, WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
 // same as the one in the original code.
@@ -175,17 +176,8 @@ export default function WorkerList() {
         title="Workers"
         entityName="worker"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "host",
-          "current_task",
-          "tasks_completed",
-          "created_at",
-          "updated_at",
-          "host_metadata",
-        ]}
+        entityFieldMap={WORKER_FIELD_MAP}
+        transformFn={transformWorker}
       />
     </PageContainer>
   );

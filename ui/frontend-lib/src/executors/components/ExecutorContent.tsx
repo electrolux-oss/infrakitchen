@@ -2,13 +2,13 @@ import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { Revision } from "../../revision/Revision";
 
 import { AdvancedSettings } from "./AdvancedSettings";
 import { ExecutorOverview } from "./ExecutorOverview";

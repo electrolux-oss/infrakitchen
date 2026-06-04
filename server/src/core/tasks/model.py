@@ -2,11 +2,11 @@ from datetime import datetime, UTC
 from typing import Literal
 import uuid
 from pydantic import ConfigDict, Field, computed_field
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sqlalchemy import UUID, Enum as SQLAlchemyEnum, ForeignKey, func
 from core.constants.model import ModelState, ModelStatus
-from core.users.model import UserDTO
+from core.users.model import User, UserDTO
 
 from ..base_models import BaseModel, Base
 
@@ -26,6 +26,7 @@ class TaskEntity(Base):
     status: Mapped[ModelStatus] = mapped_column(
         SQLAlchemyEnum(ModelStatus, name="model_status", native_enum=False), nullable=False
     )
+    creator: Mapped[User] = relationship("User", lazy="joined")
 
 
 class TaskEntityModel(BaseModel):

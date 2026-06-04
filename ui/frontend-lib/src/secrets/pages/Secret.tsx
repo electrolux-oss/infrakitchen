@@ -10,6 +10,7 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SecretContent } from "../components/SecretContent";
+import { SECRET_DETAIL_FIELDS, transformSecret } from "../graphql";
 import { SecretValidateResponse } from "../types";
 
 export const SecretPage = () => {
@@ -45,7 +46,12 @@ export const SecretPage = () => {
   }, [ikApi, secret_id]);
 
   return (
-    <EntityProvider entity_name="secret" entity_id={secret_id || ""}>
+    <EntityProvider
+      entity_name="secret"
+      entity_id={secret_id || ""}
+      transformFn={transformSecret}
+      entityFields={SECRET_DETAIL_FIELDS}
+    >
       <EntityContainer
         title={"Secret Overview"}
         actions={

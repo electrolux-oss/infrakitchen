@@ -32,6 +32,7 @@ interface ArrayReferenceInputProps {
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
   tooltip?: string;
+  options?: IkEntity[];
   [key: string]: any; // Allow additional props
 }
 
@@ -51,6 +52,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       value,
       optionFilter,
       tooltip,
+      options: externalOptions,
       ...otherProps
     } = props;
 
@@ -78,6 +80,13 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       : buffer[resolvedBufferKey] || [];
 
     useEffect(() => {
+      if (externalOptions) {
+        setBuffer((prev: Record<string, IkEntity[]>) => ({
+          ...prev,
+          [resolvedBufferKey]: externalOptions,
+        }));
+        return;
+      }
       ikApi
         .getList(entity_name, {
           pagination: { page: 1, perPage: 1000 },
@@ -101,6 +110,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       ikApi,
       entity_name,
       setBuffer,
+      externalOptions,
     ]);
 
     const control = (

@@ -20,6 +20,7 @@ router = APIRouter()
     response_model=TemplateResponse,
     response_description="Get one template by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "templates", param_renames={"id": "template_id"})
 async def get_by_id(template_id: str, service: TemplateService = Depends(get_template_service)):
@@ -34,6 +35,7 @@ async def get_by_id(template_id: str, service: TemplateService = Depends(get_tem
     response_model=list[dict[str, Any]],
     response_description="Get all templates",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "templates")
 async def get_all(
@@ -127,6 +129,7 @@ async def delete(request: Request, template_id: str, service: TemplateService = 
     response_model=list[str],
     response_description="Get user allowed actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, template_id: str, service: TemplateService = Depends(get_template_service)):
     requester = request.state.user
@@ -138,6 +141,7 @@ async def get_actions(request: Request, template_id: str, service: TemplateServi
     response_model=TemplateTreeResponse,
     response_description="Get tree for a template",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_tree(
     template_id: str,

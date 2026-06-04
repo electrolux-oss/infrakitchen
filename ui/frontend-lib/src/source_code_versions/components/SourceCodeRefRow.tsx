@@ -29,9 +29,9 @@ import {
   usePermissionProvider,
 } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { HclItemList } from "../../common/components/HclItemList";
 import { notify } from "../../common/hooks/useNotification";
+import { Revision } from "../../revision/Revision";
 import { ENTITY_STATUS } from "../../utils";
 import { SourceCodeVersionConfigProvider } from "../context/SourceCodeVersionConfigContext";
 import { useVersionActions } from "../hooks/useVersionActions";
@@ -109,7 +109,7 @@ export const SourceCodeRefRow = ({
   );
 
   const hasVersion = !!entity;
-  const isDone = entity?.status === ENTITY_STATUS.DONE;
+  const isDone = entity?.status.toLocaleLowerCase() === ENTITY_STATUS.DONE;
   const isEntityInProgress =
     entity?.status === ENTITY_STATUS.IN_PROGRESS ||
     entity?.status === ENTITY_STATUS.READY;
@@ -197,9 +197,9 @@ export const SourceCodeRefRow = ({
             {entry}
           </Typography>
           {hasVersion &&
-            !!entity.resource_count && ( // Render only when the SCV has resources
+            !!entity.resources_count && ( // Render only when the SCV has resources
               <Chip
-                label={`${entity.resource_count}`}
+                label={`${entity.resources_count}`}
                 size="small"
                 variant="outlined"
                 onClick={handleResourcesClick}

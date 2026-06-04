@@ -4,14 +4,15 @@ from uuid import UUID
 
 from core.audit_logs.handler import AuditLogHandler
 from core.constants import ModelActions
+from core.database import FieldSpec
 from core.errors import EntityNotFound
 from core.models.encrypted_secret import EncryptedSecretStr
-from core.users.functions import user_is_super_admin
+from core.users.functions import get_user_actions
 from core.utils.model_tools import model_db_dump
 from core.utils.password_manager import hash_new_password
 from .crud import UserCRUD
 from .schema import UserCreate, UserCreateWithProvider, UserResponse, UserUpdate
-from core.users.model import UserDTO
+from core.users.model import User, UserDTO
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,20 @@ class UserService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, user_id: str | UUID, fields: FieldSpec | None = None) -> User | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(user_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[User]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def get_user_by_identifier(self, identifier: str) -> UserDTO | None:
         result = await self.crud.get_one(filter={"identifier": identifier})
@@ -97,13 +112,13 @@ class UserService:
             await self.audit_log_handler.create_log(new_user.id, requester.id, ModelActions.CREATE)
         return UserResponse.model_validate(result)
 
-    async def update(self, user_id: str, user: UserUpdate, requester: UserDTO) -> UserResponse:
+    async def update_entity(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> User:
         """
         Update an existing user.
         :param user_id: ID of the user to update
         :param user: User to update
         :param requester: User who updates the user
-        :return: Updated user
+        :return: Updated ORM user entity
         """
         existing_user = await self.crud.get_by_id(user_id)
 
@@ -111,12 +126,15 @@ class UserService:
             raise EntityNotFound("User not found")
 
         # Only allow password update for ik_service_account provider and if password is provided in the request
+        if existing_user.provider != "ik_service_account" and user.password is not None:
+            raise ValueError("Password can only be updated for 'ik_service_account' users")
+
         if existing_user.provider == "ik_service_account" and user.password and user.password.get_decrypted_value():
             salt, password = hash_new_password(user.password.get_decrypted_value())
             user.password = EncryptedSecretStr(f"{salt}${password}")
-            body = model_db_dump(user)
+            body = model_db_dump(user, exclude_defaults=True, exclude_none=True)
         else:
-            body = model_db_dump(user, exclude_fields={"password"})
+            body = model_db_dump(user, exclude_fields={"password"}, exclude_defaults=True, exclude_none=True)
 
         await self.crud.update(existing_user, body)
 
@@ -124,25 +142,17 @@ class UserService:
             await self.audit_log_handler.create_log(existing_user.id, requester.id, ModelActions.UPDATE)
 
         await self.crud.refresh(existing_user)
+        return existing_user
+
+    async def update(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> UserResponse:
+        existing_user = await self.update_entity(user_id=user_id, user=user, requester=requester)
         return UserResponse.model_validate(existing_user)
 
-    async def get_actions(self, user_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the user.
-        :param user_id: ID of the user
-        :return: List of actions
-        """
-        if await user_is_super_admin(requester) is False:
-            return []
-
-        actions: list[str] = []
+    async def get_actions(self, user_id: str | UUID, requester: UserDTO) -> list[str]:
         user = await self.crud.get_by_id(user_id)
         if not user:
             raise EntityNotFound("User not found")
-        actions.append(ModelActions.EDIT)
-        actions.append(ModelActions.DELETE)
-
-        return actions
+        return await get_user_actions(requester)
 
     async def link_accounts(
         self, primary_user_id: str | UUID, secondary_user_id: str | UUID, requester: UserDTO

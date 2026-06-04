@@ -35,6 +35,7 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
         name={"Last Updated"}
         value={<RelativeTime date={integration.updated_at} />}
       />
+      <CommonField name={"Executors"} value={integration.executor_count ?? 0} />
       <CommonField
         name={"Labels"}
         value={<Labels labels={integration.labels} />}

@@ -3,10 +3,10 @@ from typing import Any, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy.orm import Mapped, mapped_column, relationship, query_expression
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum, Index, String
 
-from sqlalchemy import UUID, DateTime, ForeignKey, func, literal
+from sqlalchemy import UUID, DateTime, ForeignKey, func
 from application.templates.model import Template
 from application.source_code_versions.schema import OutputVariableModel, VariableConfigModel, VariableModel
 from application.source_codes.model import SourceCode, SourceCodeDTO
@@ -54,8 +54,6 @@ class SourceCodeVersion(BaseRevision):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    resource_count: Mapped[int] = query_expression(literal(0))
-
     __table_args__ = (
         Index(
             "ix_source_code_version_branch_unique",
@@ -77,7 +75,7 @@ class SourceCodeVersion(BaseRevision):
 class SourceConfig(Base):
     __tablename__: str = "source_codes_configs"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
@@ -102,7 +100,7 @@ class SourceConfig(Base):
 class SourceOutputConfig(Base):
     __tablename__: str = "source_codes_output_configs"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
@@ -168,7 +166,6 @@ class SourceCodeVersionDTO(BaseModel):
     code_snapshot: str | None = Field(default="")
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
-    resource_count: int = Field(default=0)
 
     model_config = ConfigDict(from_attributes=True)
 

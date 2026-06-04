@@ -17,6 +17,7 @@ import { useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { GqlUser, transformUser, USER_QUERY } from "../graphql";
 import { UserResponse, UserUpdate } from "../types";
 
 export const UserEditPageInner = (props: { entity: UserResponse }) => {
@@ -176,15 +177,27 @@ export const UserEditPage = () => {
   const [error, setError] = useState<Error>();
   const { ikApi } = useConfig();
 
+  const fetchUser = useCallback(
+    async (id: string) => {
+      await ikApi
+        .graphqlRequest<{ user: GqlUser | null }>(USER_QUERY, { id })
+        .then(({ user }) => {
+          if (!user) {
+            throw new Error("User not found");
+          }
+          setEntity(transformUser(user));
+          setError(undefined);
+        })
+        .catch((e: any) => setError(e));
+    },
+    [ikApi],
+  );
+
   const getUser = useCallback(async (): Promise<any> => {
-    await ikApi
-      .get(`users/${user_id}`)
-      .then((response: UserResponse) => {
-        setEntity(response);
-        setError(undefined);
-      })
-      .catch((e: any) => setError(e));
-  }, [ikApi, user_id]);
+    if (user_id) {
+      return fetchUser(user_id);
+    }
+  }, [user_id, fetchUser]);
 
   useEffectOnce(() => {
     getUser();

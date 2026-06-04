@@ -3,14 +3,15 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { Revision } from "../../common/components/activity/Revision";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
 import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
+import { Revision } from "../../revision/Revision";
 
 import { StorageConfiguration } from "./StorageConfiguration";
 import { StorageOverview } from "./StorageOverview";
@@ -30,10 +31,21 @@ export const StorageContent = () => {
     },
     {
       label: "Resources",
+      tabLabel: `Resources (${entity.resources_count ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
           filterStorageKey="filter_storage_resources"
+        />
+      ),
+    },
+    {
+      label: "Executors",
+      tabLabel: `Executors (${entity.executors_count ?? 0})`,
+      content: (
+        <EntityExecutors
+          fixedFilters={fixedFilters}
+          filterStorageKey="filter_storage_executors"
         />
       ),
     },

@@ -10,6 +10,11 @@ import { LabelInput, useConfig } from "../../common";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import {
+  GqlSourceCodeVersion,
+  SOURCE_CODE_VERSION_QUERY,
+  transformSourceCodeVersion,
+} from "../graphql";
 import { SourceCodeVersionResponse, SourceCodeVersionUpdate } from "../types";
 
 export const SourceCodeVersionEditPageInner = (props: {
@@ -153,9 +158,15 @@ export const SourceCodeVersionEditPage = () => {
 
   const getSourceCodeVersion = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`source_code_versions/${source_code_version_id}`)
-      .then((response: SourceCodeVersionResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ sourceCodeVersion: GqlSourceCodeVersion | null }>(
+        SOURCE_CODE_VERSION_QUERY,
+        { id: source_code_version_id },
+      )
+      .then((response) => {
+        if (!response.sourceCodeVersion) {
+          throw new Error("Source code version not found");
+        }
+        setEntity(transformSourceCodeVersion(response.sourceCodeVersion));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

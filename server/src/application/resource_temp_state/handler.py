@@ -32,7 +32,7 @@ class ResourceTempStateHandler:
         new_value_dict.update(updated_value)
         updated_resource_temp_state.value = new_value_dict
 
-    async def get_by_resource_id(self, resource_id: UUID) -> ResourceTempState | None:
+    async def get_by_resource_id(self, resource_id: str | UUID) -> ResourceTempState | None:
         statement = select(ResourceTempState).where(ResourceTempState.resource_id == str(resource_id))
         result = await self.session.execute(statement)
         temp_entity_state = result.scalar_one_or_none()

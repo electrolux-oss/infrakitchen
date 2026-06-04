@@ -13,6 +13,11 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { getRepoNameFromUrl } from "../../common/utils";
 import { IkEntity } from "../../types";
+import {
+  GqlSourceCode,
+  SOURCE_CODE_QUERY,
+  transformSourceCode,
+} from "../graphql";
 import { SourceCodeResponse, SourceCodeUpdate } from "../types";
 
 export const SourceCodeEditPageInner = (props: {
@@ -163,9 +168,14 @@ export const SourceCodeEditPage = () => {
 
   const getSourceCode = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`source_codes/${source_code_id}`)
+      .graphqlRequest<{ sourceCode: GqlSourceCode | null }>(SOURCE_CODE_QUERY, {
+        id: source_code_id,
+      })
       .then((response) => {
-        setEntity(response);
+        if (!response.sourceCode) {
+          throw new Error("Source code not found");
+        }
+        setEntity(transformSourceCode(response.sourceCode));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

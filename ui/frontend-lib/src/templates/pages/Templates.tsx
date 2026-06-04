@@ -21,6 +21,11 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import {
+  GqlTemplate,
+  TEMPLATE_LIST_FIELDS,
+  transformTemplate,
+} from "../graphql";
 import { TemplateResponse } from "../types";
 
 export const TemplatesPage = () => {
@@ -46,12 +51,25 @@ export const TemplatesPage = () => {
     }
     setError(null);
     try {
-      const response = await ikApi.getList("templates", {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "name", order: "ASC" },
-        filter: apiFilters,
-      });
-      setTemplates(response.data || []);
+      const response = await ikApi.graphqlRequest<{
+        templates: GqlTemplate[];
+        labels: string[];
+      }>(
+        `  query Templates($filter: JSON, $sort: [String!], $range: [Int!]) {
+                    templates(filter: $filter, sort: $sort, range: $range) {
+                      ${TEMPLATE_LIST_FIELDS}
+                    }
+                    labels: labels(entity: "template")
+                  }
+        `,
+        {
+          filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
+          sort: ["name", "ASC"],
+          range: [0, 1000],
+        },
+      );
+      setTemplates((response.templates || []).map(transformTemplate));
+      setLabels(response.labels || []);
       setIsInitialLoad(false);
     } catch (error: any) {
       setError(error.message || "Failed to fetch templates");
@@ -67,12 +85,6 @@ export const TemplatesPage = () => {
     },
     [],
   );
-
-  useEffect(() => {
-    ikApi.get("labels/template").then((response: string[]) => {
-      setLabels(response);
-    });
-  }, [ikApi]);
 
   useEffect(() => {
     fetchTemplates();

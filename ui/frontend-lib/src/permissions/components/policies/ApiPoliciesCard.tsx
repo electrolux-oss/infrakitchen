@@ -5,13 +5,11 @@ import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../../common/components/CommonField";
+import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { PolicyApiCreateDialog } from "./PolicyApiCreateDialog";
@@ -32,29 +30,29 @@ export const ApiPoliciesCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "resource_name",
-        fetchFields: ["resource_name", "resource_id", "v1"],
+        field: "entity_data",
+        fetchFields: ["entity_data", "v1"],
         headerName: "Entity Name",
         flex: 1,
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          if (!params.row.resource_id) {
+          if (!params.row.entity_data) {
             // API type policy
             return params.row.v1;
           }
           return (
             <GetEntityLink
-              id={params.row.resource_id}
-              _entity_name={"resource"}
-              name={params.row.resource_name}
+              id={params.row.entity_data?.id}
+              _entity_name={params.row.entity_data?._entity_name}
+              name={params.row.entity_data?.name}
             />
           );
         },
       },
       {
         field: "action",
-        fetchFields: ["action", "v2"],
+        fetchFields: ["v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
@@ -79,11 +77,18 @@ export const ApiPoliciesCard = (props: { role: string }) => {
       {
         field: "creator",
         headerName: "Creator",
-        sortable: false,
         flex: 1,
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
-          return creator ? <GetReferenceUrlValue {...creator} /> : "No User";
+          if (!creator) return null;
+          return (
+            <GetEntityLink
+              {...creator}
+              name={creator.identifier}
+              _entity_name="user"
+            />
+          );
         },
       },
       {
@@ -129,10 +134,11 @@ export const ApiPoliciesCard = (props: { role: string }) => {
       </PermissionWrapper>
       <EntityFetchTable
         title="Api Policies"
-        entityName={`permissions/role/${role}/api/policie`}
-        defaultFilter={{ policy_type: "api" }}
+        entityName="permission"
+        defaultFilter={{ v0: role, ptype: "p", v1__like: "api:%" }}
         columns={columns}
-        fields={["id"]}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

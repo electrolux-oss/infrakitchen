@@ -44,8 +44,12 @@ export interface TemplateResponse {
   cloud_resource_types: string[];
   configuration: TemplateConfig;
   labels: string[];
+  resources_count?: number;
+  source_code_versions_count?: number;
   _entity_name: string;
 }
+
+export type TemplateResponseOptional = Partial<TemplateResponse>;
 
 export interface TemplateImportRequest {
   source_code_language: string;

@@ -69,5 +69,9 @@
     "library"
   ],
   "license": "Apache-2.0",
-  "description": "Infrakitchen frontend library"
+  "description": "Infrakitchen frontend library",
+  "dependencies": {
+    "graphql": "^16.14.1",
+    "graphql-ws": "^6.0.8"
+  }
 }

@@ -2,18 +2,18 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from application.source_codes.model import SourceCodeDTO
+from application.source_codes.model import SourceCode, SourceCodeDTO
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from .crud import SourceCodeCRUD
+from .functions import get_source_code_actions
 from .schema import SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
 from core.users.model import UserDTO
 
@@ -68,6 +68,26 @@ class SourceCodeService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, source_code_id: str | UUID, fields: FieldSpec | None = None) -> SourceCode | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(source_code_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[SourceCode]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, source_code_id: str | UUID, requester: UserDTO) -> list[str]:
+        source_code = await self.crud.get_by_id(source_code_id, fields={"status": None})
+        if not source_code:
+            raise EntityNotFound("Source code not found")
+        return await get_source_code_actions(requester, source_code.status)
 
     async def create(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCodeResponse:
         """
@@ -200,41 +220,3 @@ class SourceCodeService:
         await self.task_service.delete_by_entity_id(source_code_id)
 
         await self.crud.delete(existing_source_code)
-
-    async def get_actions(self, source_code_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the source_code.
-        :param source_code_id: ID of the source_code
-        :return: List of actions
-        """
-        apis = await user_api_permission(requester, "source_code")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:source_code"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        source_code = await self.crud.get_by_id(source_code_id)
-        if not source_code:
-            raise EntityNotFound("SourceCode not found")
-
-        if "admin" not in requester_permissions:
-            return []
-
-        if source_code.status == ModelStatus.IN_PROGRESS:
-            return []
-
-        if source_code.status in [ModelStatus.READY, ModelStatus.ERROR, ModelStatus.DONE]:
-            actions.append(ModelActions.SYNC)
-            actions.append(ModelActions.EDIT)
-            actions.append(ModelActions.DISABLE)
-            return actions
-
-        if source_code.status == ModelStatus.DISABLED:
-            actions.append(ModelActions.ENABLE)
-            actions.append(ModelActions.DELETE)
-            return actions
-
-        return actions

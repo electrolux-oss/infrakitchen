@@ -3,41 +3,38 @@ from uuid import UUID
 
 from sqlalchemy import String, and_, case, func, select, cast
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from application.integrations.model import Integration
 from application.favorites.model import Favorite
 from application.secrets.model import Secret
-from application.source_codes.model import SourceCode
-from application.storages.model import Storage
 from core.permissions.model import Permission
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Executor
+from .query_options import build_executor_query_options
 
 
 class ExecutorCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, executor_id: str | UUID) -> Executor | None:
+    async def get_by_id(
+        self,
+        executor_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Executor | None:
         if not is_valid_uuid(executor_id):
             raise ValueError(f"Invalid UUID: {executor_id}")
 
-        statement = (
-            select(Executor)
-            .where(Executor.id == executor_id)
-            .join(User, Executor.created_by == User.id)
-            .outerjoin(Storage, Executor.storage_id == Storage.id)
-            .outerjoin(SourceCode, Executor.source_code_id == SourceCode.id)
-        )
-        statement = statement.options(
-            selectinload(Executor.integration_ids),
-            selectinload(Executor.secret_ids),
-        )
+        statement = select(Executor).where(Executor.id == executor_id)
+        statement = statement.options(*build_executor_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
 
@@ -47,13 +44,10 @@ class ExecutorCRUD:
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
         requester_id: str | UUID | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Executor]:
-        statement = (
-            select(Executor)
-            .join(User, Executor.created_by == User.id)
-            .outerjoin(Storage, Executor.storage_id == Storage.id)
-            .outerjoin(SourceCode, Executor.source_code_id == SourceCode.id)
-        )
+        statement = select(Executor)
+        statement = evaluate_sqlalchemy_filters(Executor, statement, filter)
 
         if sort and sort[0].lower() == "favorite" and requester_id:
             favorite_join_condition = and_(
@@ -70,13 +64,9 @@ class ExecutorCRUD:
         else:
             statement = evaluate_sqlalchemy_sorting(Executor, statement, sort)
 
-        statement = evaluate_sqlalchemy_filters(Executor, statement, filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
-        statement = statement.options(
-            selectinload(Executor.integration_ids),
-            selectinload(Executor.secret_ids),
-        )
+        statement = statement.options(*build_executor_query_options(fields))
 
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())

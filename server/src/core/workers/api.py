@@ -16,6 +16,7 @@ router = APIRouter()
     response_model=WorkerResponse,
     response_description="Get one worker by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "workers", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: WorkerService = Depends(get_worker_service)):
@@ -28,6 +29,7 @@ async def get_by_id(entity_id: str, service: WorkerService = Depends(get_worker_
     response_model=list[WorkerResponse],
     response_description="Get all workers",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "workers")
 async def get_all(

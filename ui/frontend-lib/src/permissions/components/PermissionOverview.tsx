@@ -28,10 +28,7 @@ export const getPermissionReference = (text: any) => {
 
 export const PermissionOverview = ({ permission }: PermissionAboutProps) => {
   return (
-    <OverviewCard
-      name={permission.ptype === "p" ? "Policy" : "Role"}
-      description={permission.description}
-    >
+    <OverviewCard name={permission.ptype === "p" ? "Policy" : "Role"}>
       <CommonField name={"PType"} value={permission.ptype} />
       <CommonField name={"V0"} value={getPermissionReference(permission.v0)} />
       <CommonField name={"V1"} value={getPermissionReference(permission.v1)} />

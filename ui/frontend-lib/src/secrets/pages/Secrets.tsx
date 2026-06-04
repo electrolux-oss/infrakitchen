@@ -15,6 +15,8 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformSecretOptional } from "../graphql";
+import { SECRET_FIELD_MAP } from "../graphql/fragments";
 
 export const SecretsPage = () => {
   const { linkPrefix, ikApi } = useConfig();
@@ -93,13 +95,18 @@ export const SecretsPage = () => {
       },
       {
         field: "state",
-        fetchFields: ["status"],
+        fetchFields: ["state", "status"],
         headerName: "State",
         flex: 1,
+        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
         renderCell: (params: GridRenderCellParams) => (
-          <StatusChip status={String(params.row.status).toLowerCase()} />
+          <StatusChip
+            status={String(params.row.status).toLowerCase()}
+            state={String(params.row.state).toLowerCase()}
+          />
         ),
       },
+
       {
         field: "created_at",
         headerName: "Created",
@@ -110,6 +117,18 @@ export const SecretsPage = () => {
             sx={{ fontSize: "0.75rem", display: "flex" }}
           />
         ),
+      },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
       },
     ],
     [],
@@ -138,17 +157,8 @@ export const SecretsPage = () => {
         title="Secrets"
         entityName="secret"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "state",
-          "secret_provider",
-          "secret_type",
-          "created_at",
-          "updated_at",
-          "labels",
-        ]}
+        entityFieldMap={SECRET_FIELD_MAP}
+        transformFn={transformSecretOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

@@ -8,6 +8,10 @@ import {
 } from "react";
 
 import { GetListParams } from "../../types";
+import {
+  buildGraphqlFields,
+  GraphqlFieldMap,
+} from "../graphql/buildGraphqlFields";
 import { notifyError } from "../hooks/useNotification";
 
 import { useConfig } from "./ConfigContext";
@@ -30,10 +34,14 @@ export const EntityListProvider = ({
   children,
   entity_name,
   params,
+  entityFieldMap,
+  transformFn,
 }: {
   children: ReactNode;
   entity_name: string;
   params: GetListParams;
+  entityFieldMap?: GraphqlFieldMap;
+  transformFn?: (data: any) => any;
 }) => {
   const [entities, setEntities] = useState<Record<string, any>[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -61,11 +69,34 @@ export const EntityListProvider = ({
   useEffect(() => {
     const getEntities = async () => {
       setLoading(true);
+      const gqlParams = {
+        filter: params.filter,
+        sort: params.sort ? [params.sort.field, params.sort.order] : undefined,
+        range: params.pagination
+          ? [
+              (params.pagination.page - 1) * params.pagination.perPage,
+              params.pagination.page * params.pagination.perPage,
+            ]
+          : undefined,
+      };
       try {
-        const response = await ikApi.getList(`${entity_name}s`, params);
-        setEntities(response.data);
-        setTotal(response.total ?? 0);
-        setError(null);
+        await ikApi
+          .graphqlRequest(
+            `query Query($filter: JSON, $sort: [String!], $range: [Int!]) {
+          ${entity_name}s(filter: $filter, sort: $sort, range: $range) {
+            ${buildGraphqlFields(params.fields ?? [], entityFieldMap || {})}
+          }
+          ${entity_name}sCount(filter: $filter)
+        }`,
+            gqlParams,
+          )
+          .then((response: any) => {
+            const data = response?.[`${entity_name}s`] || [];
+            const total = response?.[`${entity_name}sCount`] || 0;
+            setTotal(total);
+            setEntities(transformFn ? data.map(transformFn) : data);
+            setError(null);
+          });
       } catch (e: any) {
         notifyError(e);
         setError(e.message);
@@ -75,7 +106,7 @@ export const EntityListProvider = ({
     };
 
     getEntities();
-  }, [ikApi, refresh, entity_name, params]);
+  }, [ikApi, refresh, entity_name, params, entityFieldMap, transformFn]);
 
   const refreshList = useCallback(() => {
     refreshNumber((prev) => prev + 1);

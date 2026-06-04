@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -14,54 +14,12 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { BLUEPRINTS_QUERY, BLUEPRINTS_COUNT_QUERY } from "../graphql/queries";
-import {
-  GqlBlueprintListItem,
-  transformBlueprintListItem,
-} from "../graphql/transforms";
+import { BLUEPRINT_FIELD_MAP } from "../graphql";
+import { transformBlueprintOptional } from "../graphql/transforms";
 
 export const BlueprintsPage = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { linkPrefix } = useConfig();
   const navigate = useNavigate();
-
-  const fetchBlueprints = useCallback(
-    async (params: {
-      filter: Record<string, any>;
-      sort: { field: string; order: "ASC" | "DESC" };
-      pagination: { page: number; perPage: number };
-      fields: string[];
-    }) => {
-      const gqlFilter =
-        Object.keys(params.filter).length > 0 ? params.filter : null;
-      const gqlSort = [params.sort.field, params.sort.order];
-      const skip = (params.pagination.page - 1) * params.pagination.perPage;
-      const end = skip + params.pagination.perPage;
-      const gqlRange = [skip, end];
-
-      const [listResult, countResult] = await Promise.all([
-        ikApi.graphqlRequest<{ blueprints: GqlBlueprintListItem[] }>(
-          BLUEPRINTS_QUERY,
-          {
-            filter: gqlFilter,
-            sort: gqlSort,
-            range: gqlRange,
-          },
-        ),
-        ikApi.graphqlRequest<{ blueprintsCount: number }>(
-          BLUEPRINTS_COUNT_QUERY,
-          {
-            filter: gqlFilter,
-          },
-        ),
-      ]);
-
-      return {
-        data: listResult.blueprints.map(transformBlueprintListItem),
-        total: countResult.blueprintsCount,
-      };
-    },
-    [ikApi],
-  );
 
   const columns = useMemo(
     () => [
@@ -126,6 +84,18 @@ export const BlueprintsPage = () => {
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
+      },
     ],
     [],
   );
@@ -187,16 +157,8 @@ export const BlueprintsPage = () => {
         columns={columns}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        fetchListFn={fetchBlueprints}
-        fields={[
-          "id",
-          "name",
-          "description",
-          "templates",
-          "labels",
-          "status",
-          "updated_at",
-        ]}
+        entityFieldMap={BLUEPRINT_FIELD_MAP}
+        transformFn={transformBlueprintOptional}
       />
     </PageContainer>
   );

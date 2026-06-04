@@ -18,6 +18,7 @@ import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
 } from "../components/TemplateConfigurationFields";
+import { GqlTemplate, TEMPLATE_QUERY, transformTemplate } from "../graphql";
 import { TemplateResponse, TemplateShort, TemplateUpdate } from "../types";
 
 export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
@@ -300,9 +301,14 @@ export const TemplateEditPage = () => {
 
   const getTemplate = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`templates/${template_id}`)
-      .then((response: TemplateResponse) => {
-        setEntity(response);
+      .graphqlRequest<{ template: GqlTemplate | null }>(TEMPLATE_QUERY, {
+        id: template_id,
+      })
+      .then((response) => {
+        if (!response.template) {
+          throw new Error("Template not found");
+        }
+        setEntity(transformTemplate(response.template));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

@@ -10,6 +10,7 @@ import {
 } from "@mui/x-data-grid";
 
 import { useConfig } from "../../../common";
+import { buildLogsQuery, GqlLog, transformLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
@@ -63,13 +64,24 @@ export const EntityLogs = ({
   const fetchLogHeads = useCallback(() => {
     setLoading(true);
     ikApi
-      .getList("logs", {
-        filter,
-        pagination: { page: 1, perPage: 600 },
-        sort: { field: "created_at", order: "DESC" },
-      })
+      .graphqlRequest<{ logs: GqlLog[] }>(
+        buildLogsQuery([
+          "id",
+          "entity_id",
+          "data",
+          "level",
+          "revision",
+          "created_at",
+          "execution_start",
+        ]),
+        {
+          filter,
+          sort: ["created_at", "DESC"],
+          range: [0, 600],
+        },
+      )
       .then((response) => {
-        setLogHeads(response.data);
+        setLogHeads((response.logs || []).map(transformLog) as LogEntity[]);
       })
       .catch(() => {
         setLogHeads([]);

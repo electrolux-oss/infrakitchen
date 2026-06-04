@@ -19,15 +19,96 @@ from application.source_code_versions.schema import (
     SourceCodeVersionWithConfigs,
     SourceConfigTemplateReferenceResponse,
 )
+from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.errors import EntityExistsError
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import ValidationRuleResponse
 from application.validation_rules.validators import validate_number_rule, validate_string_rule
 
 logger = logging.getLogger(__name__)
+
+
+async def get_resource_actions(
+    requester: UserDTO, resource_id: str | UUID, status: ModelStatus, state: ModelState, temp_state_exists: bool
+) -> list[str]:
+    """
+    Get all actions available for the resource.
+    :param resource_id: ID of the resource
+    :return: List of actions
+    """
+    requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+    if "write" not in requester_permissions and "admin" not in requester_permissions:
+        return []
+
+    actions: list[str] = []
+
+    if status in [ModelStatus.IN_PROGRESS]:
+        return []
+
+    user_is_admin = "admin" in requester_permissions
+
+    if status == ModelStatus.QUEUED:
+        if user_is_admin:
+            actions.append(ModelActions.RETRY)
+        return actions
+
+    if temp_state_exists:
+        actions.append("has_temporary_state")
+        actions.append("dryrun_with_temp_state")
+
+    if status == ModelStatus.APPROVAL_PENDING:
+        if user_is_admin:
+            actions.append(ModelActions.APPROVE)
+            actions.append(ModelActions.REJECT)
+        actions.append(ModelActions.DRYRUN)
+        actions.append(ModelActions.DOWNLOAD)
+        actions.append(ModelActions.EDIT)
+        if state == ModelState.PROVISION:
+            actions.append(ModelActions.DELETE)
+    elif status == ModelStatus.REJECTED:
+        actions.append(ModelActions.RECREATE)
+        if user_is_admin:
+            actions.append(ModelActions.DELETE)
+    elif state == ModelState.PROVISIONED:
+        actions.append(ModelActions.DESTROY)
+        actions.append(ModelActions.EXECUTE)
+        actions.append(ModelActions.DOWNLOAD)
+        actions.append(ModelActions.EDIT)
+        actions.append(ModelActions.DRYRUN)
+
+        if temp_state_exists and user_is_admin:
+            actions.append(ModelActions.APPROVE)
+            actions.append(ModelActions.REJECT)
+    elif state == ModelState.PROVISION:
+        actions.append(ModelActions.EXECUTE)
+        actions.append(ModelActions.DOWNLOAD)
+        actions.append(ModelActions.EDIT)
+        if status == ModelStatus.READY:
+            actions.append(ModelActions.DRYRUN)
+            actions.append(ModelActions.DELETE)
+        elif status == ModelStatus.ERROR:
+            actions.append(ModelActions.DESTROY)
+            actions.append(ModelActions.DRYRUN)
+        if temp_state_exists and user_is_admin:
+            actions.append(ModelActions.APPROVE)
+            actions.append(ModelActions.REJECT)
+    elif state == ModelState.DESTROYED:
+        if status == ModelStatus.DONE:
+            actions.append(ModelActions.RECREATE)
+            if user_is_admin:
+                actions.append(ModelActions.DELETE)
+    elif state == ModelState.DESTROY:
+        if status == ModelStatus.ERROR or status == ModelStatus.READY:
+            actions.append(ModelActions.RECREATE)
+            actions.append(ModelActions.DOWNLOAD)
+            actions.append(ModelActions.EXECUTE)
+            actions.append(ModelActions.DRYRUN)
+
+    return actions
 
 
 def merge_tags_or_configs(tags: Sequence[DependencyType], *args: Sequence[DependencyType]) -> Sequence[DependencyType]:

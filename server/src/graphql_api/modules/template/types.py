@@ -1,28 +1,41 @@
 import uuid
-from datetime import datetime
 
 import strawberry
-from strawberry.scalars import JSON
+from strawberry.types import Info
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
+
+from application.templates.model import Template
 
 from graphql_api.modules.user.types import UserType
 
 
+template_mapper = StrawberrySQLAlchemyMapper()
+
+
 @strawberry.type
-class TemplateType:
+class TemplateShortType:
     id: uuid.UUID
     name: str
-    description: str | None = None
-    documentation: str | None = None
-    template: str = ""
-    cloud_resource_types: list[str] | None = None
-    abstract: bool = False
-    configuration: JSON | None = None
-    labels: list[str] | None = None
-    status: str = ""
-    revision_number: int = 1
-    created_by: uuid.UUID | None = None
+    abstract: bool
+    cloud_resource_types: list[str]
+
+
+@template_mapper.type(Template)
+class TemplateType:
+    __exclude__ = ["children", "parents", "created_by"]
+
+    id: uuid.UUID = strawberry.UNSET
+    children: list[TemplateShortType] | None = None
+    parents: list[TemplateShortType] | None = None
     creator: UserType | None = None
-    children: list["TemplateType"] | None = None
-    parents: list["TemplateType"] | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+
+    @strawberry.field
+    async def resources_count(self, info: Info) -> int:
+        return await info.context["loaders"]["template_resource_count"].load(str(self.id))
+
+    @strawberry.field
+    async def source_code_versions_count(self, info: Info) -> int:
+        return await info.context["loaders"]["template_source_code_version_count"].load(str(self.id))
+
+
+template_mapper.finalize()

@@ -4,27 +4,34 @@ from uuid import UUID
 from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.integrations.model import Integration
 from application.resources.model import Resource
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Storage
+from .query_options import build_storage_query_options
 
 
 class StorageCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, storage_id: str | UUID) -> Storage | None:
+    async def get_by_id(
+        self,
+        storage_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Storage | None:
         if not is_valid_uuid(storage_id):
             raise ValueError(f"Invalid UUID: {storage_id}")
 
-        statement = (select(Storage).where(Storage.id == storage_id).join(User, Storage.created_by == User.id)).join(
-            Integration, Storage.integration_id == Integration.id
-        )
+        statement = select(Storage).where(Storage.id == storage_id)
+        statement = statement.options(*build_storage_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -33,16 +40,14 @@ class StorageCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Storage]:
-        statement = (
-            select(Storage)
-            .join(User, Storage.created_by == User.id)
-            .join(Integration, Storage.integration_id == Integration.id)
-        )
+        statement = select(Storage)
         statement = evaluate_sqlalchemy_filters(Storage, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Storage, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_storage_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

@@ -1,60 +1,13 @@
+import {
+  BLUEPRINT_FIELDS,
+  BLUEPRINT_LIST_FIELDS,
+  BLUEPRINT_USE_FIELDS,
+} from "./fragments";
+
 export const BLUEPRINT_QUERY = `
   query Blueprint($id: UUID!) {
     blueprint(id: $id) {
-      id
-      name
-      description
-      templates {
-        id
-        name
-        cloudResourceTypes
-        abstract
-      }
-      externalTemplates {
-        id
-        name
-        cloudResourceTypes
-        abstract
-      }
-      wiring
-      defaultVariables
-      configuration
-      labels
-      status
-      revisionNumber
-      createdBy
-      creator {
-        id
-        identifier
-      }
-      workflows {
-        id
-        action
-        status
-        errorMessage
-        steps {
-          id
-          templateId
-          template {
-            id
-            name
-          }
-          resource {
-            id
-            name
-          }
-          position
-          status
-          errorMessage
-          startedAt
-          completedAt
-        }
-        startedAt
-        completedAt
-        createdAt
-      }
-      createdAt
-      updatedAt
+      ${BLUEPRINT_FIELDS}
     }
   }
 `;
@@ -62,23 +15,8 @@ export const BLUEPRINT_QUERY = `
 export const BLUEPRINTS_QUERY = `
   query Blueprints($filter: JSON, $sort: [String!], $range: [Int!]) {
     blueprints(filter: $filter, sort: $sort, range: $range) {
-      id
-      name
-      description
-      templates {
-        id
-        name
-        abstract
-      }
-      labels
-      status
-      updatedAt
+      ${BLUEPRINT_LIST_FIELDS}
     }
-  }
-`;
-
-export const BLUEPRINTS_COUNT_QUERY = `
-  query BlueprintsCount($filter: JSON) {
     blueprintsCount(filter: $filter)
   }
 `;
@@ -86,25 +24,7 @@ export const BLUEPRINTS_COUNT_QUERY = `
 export const BLUEPRINT_USE_QUERY = `
   query BlueprintUse($id: UUID!) {
     blueprint(id: $id) {
-      id
-      name
-      templates {
-        id
-        name
-        abstract
-        parents {
-          id
-          name
-          abstract
-        }
-      }
-      externalTemplates {
-        id
-        name
-        abstract
-      }
-      wiring
-      configuration
+      ${BLUEPRINT_USE_FIELDS}
     }
   }
 `;

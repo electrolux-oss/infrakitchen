@@ -6,15 +6,16 @@ from application.integrations.service import IntegrationService
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_api_permission
 from core.utils.entity_state_handler import delete_entity, execute_entity, recreate_entity
 from core.utils.event_sender import EventSender
 from .crud import StorageCRUD
+from .functions import get_storage_actions
+from .model import Storage
 from .schema import StorageCreate, StorageResponse, StorageUpdate
 from core.users.model import UserDTO
 
@@ -56,6 +57,20 @@ class StorageService:
     async def get_all(self, **kwargs) -> list[StorageResponse]:
         storages = await self.crud.get_all(**kwargs)
         return [StorageResponse.model_validate(storage) for storage in storages]
+
+    async def query_by_id(self, storage_id: str | UUID, fields: FieldSpec | None = None) -> Storage | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(storage_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Storage]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
@@ -224,54 +239,13 @@ class StorageService:
         await self.task_service.delete_by_entity_id(storage_id)
         await self.crud.delete(existing_storage)
 
-    async def get_actions(self, storage_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, storage_id: str | UUID, requester: UserDTO) -> list[str]:
         """
         Get all actions available for the storage.
         :param storage_id: ID of the storage
         :return: List of actions
         """
-        apis = await user_api_permission(requester, "storage")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:storage"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        storage = await self.crud.get_by_id(storage_id)
+        storage = await self.crud.get_by_id(storage_id, fields={"status": None, "state": None})
         if not storage:
             raise EntityNotFound("Storage not found")
-
-        if storage.status in [ModelStatus.IN_PROGRESS]:
-            return []
-
-        user_is_admin = "admin" in requester_permissions
-
-        if storage.status == ModelStatus.QUEUED:
-            if user_is_admin:
-                actions.append(ModelActions.RETRY)
-            return actions
-
-        if storage.state == ModelState.PROVISIONED:
-            actions.append(ModelActions.DESTROY)
-            actions.append(ModelActions.EXECUTE)
-            actions.append(ModelActions.EDIT)
-
-        elif storage.state == ModelState.PROVISION:
-            actions.append(ModelActions.EXECUTE)
-            actions.append(ModelActions.EDIT)
-            if storage.status == ModelStatus.READY:
-                actions.append(ModelActions.DELETE)
-        elif storage.state == ModelState.DESTROYED:
-            if storage.status == ModelStatus.DONE:
-                actions.append(ModelActions.RECREATE)
-                if user_is_admin:
-                    actions.append(ModelActions.DELETE)
-
-        elif storage.state == ModelState.DESTROY:
-            if storage.status == ModelStatus.ERROR or storage.status == ModelStatus.READY:
-                actions.append(ModelActions.RECREATE)
-                actions.append(ModelActions.EXECUTE)
-
-        return actions
+        return await get_storage_actions(requester, storage.status, storage.state)

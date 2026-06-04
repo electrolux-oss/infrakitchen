@@ -13,13 +13,15 @@ export interface WorkspaceResponse extends WorkspaceShort {
   updated_at: Date;
   description: string;
   labels: string[];
-  link: string;
   integration: IntegrationShort;
   creator: UserShort;
   status: string;
   workspace_provider: string;
   configuration: Record<string, any>;
+  resources_count: number;
 }
+
+export type WorkspaceResponseOptional = Partial<WorkspaceResponse>;
 
 export interface WorkspaceCreate {
   name: string;

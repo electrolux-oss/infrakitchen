@@ -28,6 +28,7 @@ router = APIRouter()
     response_model=ExecutorResponse,
     response_description="Get one executor by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_id(executor_id: str, service: ExecutorService = Depends(get_executor_service)):
     entity = await service.get_by_id(executor_id=executor_id)
@@ -41,6 +42,7 @@ async def get_by_id(executor_id: str, service: ExecutorService = Depends(get_exe
     response_model=list[dict[str, Any]],
     response_description="Get all executors",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(
     request: Request,
@@ -138,6 +140,7 @@ async def delete(request: Request, executor_id: str, service: ExecutorService = 
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, executor_id: str, service: ExecutorService = Depends(get_executor_service)):
     requester = request.state.user
@@ -150,6 +153,7 @@ async def get_actions(request: Request, executor_id: str, service: ExecutorServi
     response_model=list[UserExecutorResponse],
     response_description="Get user executor policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_executors(user_id: str, service: ExecutorService = Depends(get_executor_service)):
     executors = await service.get_user_executor_policies(user_id)
@@ -161,6 +165,7 @@ async def get_user_executors(user_id: str, service: ExecutorService = Depends(ge
     response_model=list[RoleExecutorsResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_executor_role_permissions(
     response: Response,

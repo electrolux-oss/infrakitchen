@@ -10,25 +10,33 @@ from application.resources.model import Resource
 from application.source_codes.model import SourceCode
 from application.storages.model import Storage
 from core.permissions.model import Permission
-from core.users.model import User
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import Integration
+from .query_options import build_integration_query_options
 
 
 class IntegrationCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, integration_id: str | UUID) -> Integration | None:
+    async def get_by_id(
+        self,
+        integration_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> Integration | None:
         if not is_valid_uuid(integration_id):
             raise ValueError(f"Invalid UUID: {integration_id}")
 
-        statement = (
-            select(Integration).where(Integration.id == integration_id).join(User, Integration.created_by == User.id)
-        )
+        statement = select(Integration).where(Integration.id == integration_id)
+        statement = statement.options(*build_integration_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -37,12 +45,14 @@ class IntegrationCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[Integration]:
-        statement = select(Integration).join(User, Integration.created_by == User.id)
+        statement = select(Integration)
         statement = evaluate_sqlalchemy_filters(Integration, statement, filter)
         statement = evaluate_sqlalchemy_sorting(Integration, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 
+        statement = statement.options(*build_integration_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

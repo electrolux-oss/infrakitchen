@@ -29,6 +29,7 @@ router = APIRouter()
     response_model=WorkspaceResponse,
     response_description="Get one workspace by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "workspaces", param_renames={"id": "workspace_id"})
 async def get_by_id(workspace_id: str, service: WorkspaceService = Depends(get_workspace_service)):
@@ -43,6 +44,7 @@ async def get_by_id(workspace_id: str, service: WorkspaceService = Depends(get_w
     response_model=list[dict[str, Any]],
     response_description="Get all workspaces",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "workspaces")
 async def get_all(
@@ -114,6 +116,7 @@ async def delete(request: Request, workspace_id: str, service: WorkspaceService 
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, workspace_id: str, service: WorkspaceService = Depends(get_workspace_service)):
     requester = request.state.user
@@ -126,6 +129,7 @@ async def get_actions(request: Request, workspace_id: str, service: WorkspaceSer
     response_model=list[UserWorkspaceResponse],
     response_description="Get user workspace policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_workspaces(user_id: str, service: WorkspaceService = Depends(get_workspace_service)):
     return await service.get_user_workspace_policies(user_id)
@@ -136,6 +140,7 @@ async def get_user_workspaces(user_id: str, service: WorkspaceService = Depends(
     response_model=list[RoleWorkspacesResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_workspace_role_permissions(
     response: Response,

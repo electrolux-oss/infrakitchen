@@ -24,9 +24,19 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
+import {
+  buildAuditLogsQuery,
+  GqlAuditLog,
+  transformAuditLogs,
+} from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
+import {
+  REVISION_FIELDS,
+  GqlRevision,
+  transformRevision,
+} from "../../../revision/graphql";
 import { RevisionResponse } from "../../../revision/types";
 import { AuditLogEntity } from "../../../types";
 import {
@@ -130,17 +140,31 @@ export const Audit = ({
       setRevisionDialogLeft(null);
       setRevisionDialogRight(null);
       setRevisionDialogLoading(true);
-      const fetches =
+      const query =
         rev === 1
-          ? [Promise.resolve(null), ikApi.get(`revisions/${resourceId}/${rev}`)]
-          : [
-              ikApi.get(`revisions/${resourceId}/${rev - 1}`),
-              ikApi.get(`revisions/${resourceId}/${rev}`),
-            ];
-      Promise.all(fetches)
-        .then(([leftRes, rightRes]) => {
-          setRevisionDialogLeft(leftRes);
-          setRevisionDialogRight(rightRes);
+          ? `query RevisionDiff($entityId: UUID!, $rightNum: Int!) {
+              right: revision(entityId: $entityId, revisionNumber: $rightNum) {
+                ${REVISION_FIELDS}
+              }
+            }`
+          : `query RevisionDiff($entityId: UUID!, $leftNum: Int!, $rightNum: Int!) {
+              left: revision(entityId: $entityId, revisionNumber: $leftNum) {
+                ${REVISION_FIELDS}
+              }
+              right: revision(entityId: $entityId, revisionNumber: $rightNum) {
+                ${REVISION_FIELDS}
+              }
+            }`;
+      ikApi
+        .graphqlRequest<{ left?: GqlRevision | null; right: GqlRevision }>(
+          query,
+          rev === 1
+            ? { entityId: resourceId, rightNum: rev }
+            : { entityId: resourceId, leftNum: rev - 1, rightNum: rev },
+        )
+        .then((res) => {
+          setRevisionDialogLeft(res.left ? transformRevision(res.left) : null);
+          setRevisionDialogRight(transformRevision(res.right));
           setRevisionDialogLoading(false);
         })
         .catch(() => {
@@ -195,13 +219,22 @@ export const Audit = ({
 
   useEffect(() => {
     ikApi
-      .getList("audit_logs", {
-        filter: { entity_id: entityId },
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "created_at", order: "DESC" },
-      })
-      .then(({ data }) => {
-        setAuditLogs(data);
+      .graphqlRequest<{ auditLogs: GqlAuditLog[] }>(
+        buildAuditLogsQuery([
+          "id",
+          "action",
+          "creator",
+          "created_at",
+          "revision_number",
+        ]),
+        {
+          filter: { entity_id: entityId },
+          sort: ["created_at", "DESC"],
+          range: [0, 1000],
+        },
+      )
+      .then((response) => {
+        setAuditLogs(transformAuditLogs(response.auditLogs || []));
       });
   }, [ikApi, entityId]);
 

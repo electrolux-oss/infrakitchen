@@ -22,6 +22,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
+import { EXECUTOR_QUERY, GqlExecutor, transformExecutor } from "../graphql";
 import { ExecutorResponse, ExecutorUpdate } from "../types";
 
 export const ExecutorEditPageInner = (props: { entity: ExecutorResponse }) => {
@@ -488,9 +489,14 @@ export const ExecutorEditPage = () => {
 
   const getExecutor = useCallback(async (): Promise<any> => {
     await ikApi
-      .get(`executors/${executor_id}`)
+      .graphqlRequest<{ executor: GqlExecutor | null }>(EXECUTOR_QUERY, {
+        id: executor_id,
+      })
       .then((response) => {
-        setEntity(response);
+        if (!response.executor) {
+          throw new Error("Executor not found");
+        }
+        setEntity(transformExecutor(response.executor));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

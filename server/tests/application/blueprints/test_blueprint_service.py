@@ -385,7 +385,7 @@ class TestGetActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.blueprints.service.user_api_permission",
+            "application.blueprints.functions.user_api_permission",
         )
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
@@ -405,7 +405,7 @@ class TestGetActions:
         mock_user_permissions(
             {"api:blueprint": "admin"},
             monkeypatch,
-            "application.blueprints.service.user_api_permission",
+            "application.blueprints.functions.user_api_permission",
         )
         mock_blueprint_crud.get_by_id.return_value = None
 

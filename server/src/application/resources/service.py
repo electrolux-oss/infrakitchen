@@ -10,6 +10,7 @@ from application.resources.functions import (
     add_resource_parent_policy,
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
+    get_resource_actions,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
@@ -28,7 +29,7 @@ from core.caches.functions import cache_decorator
 from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
@@ -129,6 +130,29 @@ class ResourceService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, resource_id: str | UUID, fields: FieldSpec | None = None) -> Resource | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(resource_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Resource]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, resource_id: str | UUID, requester: UserDTO) -> list[str]:
+        resource = await self.crud.get_by_id(resource_id, fields={"status": None, "state": None})
+        if not resource:
+            raise EntityNotFound("Resource not found")
+        resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(resource_id)
+        return await get_resource_actions(
+            requester, resource.id, resource.status, resource.state, resource_temp_state is not None
+        )
 
     async def create(
         self,
@@ -920,87 +944,6 @@ class ResourceService:
 
         schema = get_resource_variable_schema(resource_scv, parents, parent_scvs, validation_rules_map)
         return sorted(schema, key=lambda item: item.index)
-
-    async def get_actions(self, resource_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the resource.
-        :param resource_id: ID of the resource
-        :return: List of actions
-        """
-        requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        resource = await self.crud.get_by_id(resource_id)
-        if not resource:
-            raise EntityNotFound("Resource not found")
-
-        if resource.status in [ModelStatus.IN_PROGRESS]:
-            return []
-
-        user_is_admin = "admin" in requester_permissions
-
-        if resource.status == ModelStatus.QUEUED:
-            if user_is_admin:
-                actions.append(ModelActions.RETRY)
-            return actions
-
-        resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(resource.id)
-
-        if resource_temp_state:
-            actions.append("has_temporary_state")
-            actions.append("dryrun_with_temp_state")
-
-        if resource.status == ModelStatus.APPROVAL_PENDING:
-            if user_is_admin:
-                actions.append(ModelActions.APPROVE)
-                actions.append(ModelActions.REJECT)
-            actions.append(ModelActions.DRYRUN)
-            actions.append(ModelActions.DOWNLOAD)
-            actions.append(ModelActions.EDIT)
-            if resource.state == ModelState.PROVISION:
-                actions.append(ModelActions.DELETE)
-        elif resource.status == ModelStatus.REJECTED:
-            actions.append(ModelActions.RECREATE)
-            if user_is_admin:
-                actions.append(ModelActions.DELETE)
-        elif resource.state == ModelState.PROVISIONED:
-            actions.append(ModelActions.DESTROY)
-            actions.append(ModelActions.EXECUTE)
-            actions.append(ModelActions.DOWNLOAD)
-            actions.append(ModelActions.EDIT)
-            actions.append(ModelActions.DRYRUN)
-
-            if resource_temp_state is not None and user_is_admin:
-                actions.append(ModelActions.APPROVE)
-                actions.append(ModelActions.REJECT)
-        elif resource.state == ModelState.PROVISION:
-            actions.append(ModelActions.EXECUTE)
-            actions.append(ModelActions.DOWNLOAD)
-            actions.append(ModelActions.EDIT)
-            if resource.status == ModelStatus.READY:
-                actions.append(ModelActions.DRYRUN)
-                actions.append(ModelActions.DELETE)
-            elif resource.status == ModelStatus.ERROR:
-                actions.append(ModelActions.DESTROY)
-                actions.append(ModelActions.DRYRUN)
-            if resource_temp_state is not None and user_is_admin:
-                actions.append(ModelActions.APPROVE)
-                actions.append(ModelActions.REJECT)
-        elif resource.state == ModelState.DESTROYED:
-            if resource.status == ModelStatus.DONE:
-                actions.append(ModelActions.RECREATE)
-                if user_is_admin:
-                    actions.append(ModelActions.DELETE)
-        elif resource.state == ModelState.DESTROY:
-            if resource.status == ModelStatus.ERROR or resource.status == ModelStatus.READY:
-                actions.append(ModelActions.RECREATE)
-                actions.append(ModelActions.DOWNLOAD)
-                actions.append(ModelActions.EXECUTE)
-                actions.append(ModelActions.DRYRUN)
-
-        return actions
 
     @cache_decorator(avoid_args=True, ttl=300)  # Cache for 5 minutes
     async def metadata(self, resource_id: str) -> dict[str, Any]:

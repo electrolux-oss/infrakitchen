@@ -4,27 +4,26 @@ from typing import Any, cast
 import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from sqlalchemy import select
 
-from application.workspaces.model import Workspace
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
-from graphql_api.helpers import IsAuthenticated, get_requested_fields, parse_range, parse_sort
-from graphql_api.modules.workspace.converters import convert_workspace, workspace_options
+from application.workspaces.dependencies import get_workspace_service
+from application.workspaces.service import WorkspaceService
+from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
 from graphql_api.modules.workspace.types import WorkspaceType
+
+
+def _build_service(info: Info) -> WorkspaceService:
+    session = info.context["session"]
+    return get_workspace_service(session=session)
 
 
 @strawberry.type
 class WorkspaceQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def workspace(self, info: Info, id: uuid.UUID) -> WorkspaceType | None:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Workspace).where(Workspace.id == id).options(*workspace_options(fields))
-        result = await session.execute(stmt)
-        obj = result.scalars().first()
-        if obj is None:
-            return None
-        return convert_workspace(obj, fields)
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "workspace")
+        fields = build_field_spec(entity_fields)
+        return await service.query_by_id(id, fields=fields)
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def workspaces(
@@ -34,13 +33,29 @@ class WorkspaceQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[WorkspaceType]:
-        session = info.context["session"]
-        fields = get_requested_fields(info)
-        stmt = select(Workspace).options(*workspace_options(fields))
-        stmt = evaluate_sqlalchemy_filters(
-            Workspace, stmt, cast(dict[str, Any], cast(object, filter)) if filter else None
+        service = _build_service(info)
+        entity_fields = get_entity_selection(info.selected_fields, "workspaces")
+        fields = build_field_spec(entity_fields)
+        return await service.query_all(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+            sort=parse_sort(sort),
+            range=parse_range(range),
+            fields=fields,
         )
-        stmt = evaluate_sqlalchemy_sorting(Workspace, stmt, parse_sort(sort))
-        stmt = evaluate_sqlalchemy_pagination(stmt, parse_range(range))
-        result = await session.execute(stmt)
-        return [x for x in (convert_workspace(w, fields) for w in result.scalars().all()) if x is not None]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def workspaces_count(
+        self,
+        info: Info,
+        filter: JSON | None = None,
+    ) -> int:
+        service = _build_service(info)
+        return await service.count(
+            filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
+        )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def workspace_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        return await service.get_actions(workspace_id=id, requester=requester)

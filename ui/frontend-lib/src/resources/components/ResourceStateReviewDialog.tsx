@@ -7,8 +7,15 @@ import { Typography, Paper, Box } from "@mui/material";
 import { useConfig, useEntityProvider } from "../../common";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
 import { CommonDialog } from "../../common/components/CommonDialog";
-import { IkEntity, IkResourceTempState } from "../../types";
+import { IkEntity } from "../../types";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
+import {
+  GqlResource,
+  GqlResourceTempState,
+  RESOURCE_TEMP_STATE_FIELDS,
+  transformResourceTempState,
+} from "../graphql";
+import { ResourceTempStateResponse } from "../types";
 
 interface JsonDiffViewerProps {
   originalText: string;
@@ -55,10 +62,9 @@ export const ResourceStateReviewDialog: React.FC<
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
   const [resourceTempState, setResourceTempState] = useState<
-    IkResourceTempState | undefined
+    ResourceTempStateResponse | undefined
   >();
   const [error, setError] = useState<any>();
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!open || !entity_id) return;
@@ -68,18 +74,31 @@ export const ResourceStateReviewDialog: React.FC<
       return;
     }
     const fetchResourceTempState = async () => {
-      setIsLoading(true);
-      try {
-        const response = await ikApi.get(
-          `resource_temp_states/resource/${entity_id}`,
-        );
-        setResourceTempState(response);
-        setError(undefined);
-      } catch (e: any) {
-        setError(e);
-      } finally {
-        setIsLoading(false);
-      }
+      await ikApi
+        .graphqlRequest<{
+          resource: GqlResource | null;
+          resourceTempStateByResource: GqlResourceTempState | null;
+        }>(
+          `
+          query ResourceTempState($id: UUID!) {
+            resourceTempStateByResource(resourceId: $id) {
+              ${RESOURCE_TEMP_STATE_FIELDS}
+            }
+          }
+        `,
+          {
+            id: entity_id,
+          },
+        )
+        .then((response) => {
+          if (response.resourceTempStateByResource) {
+            setResourceTempState(
+              transformResourceTempState(response.resourceTempStateByResource),
+            );
+          }
+          setError(undefined);
+        })
+        .catch((e: any) => setError(e));
     };
 
     fetchResourceTempState();
@@ -93,7 +112,6 @@ export const ResourceStateReviewDialog: React.FC<
       onClose={onClose}
       content={
         <>
-          {isLoading && <Typography>Loading resource state...</Typography>}
           {error && (
             <Typography color="error">
               Error loading resource state: {error.message || error.toString()}

@@ -31,6 +31,7 @@ router = APIRouter()
     response_model=IntegrationResponse,
     response_description="Get one integration by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "integrations", param_renames={"id": "integration_id"})
 async def get_by_id(integration_id: str, service: IntegrationService = Depends(get_integration_service)):
@@ -45,6 +46,7 @@ async def get_by_id(integration_id: str, service: IntegrationService = Depends(g
     response_model=list[IntegrationResponse],
     response_description="Get all integrations",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "integrations")
 async def get_all(
@@ -134,6 +136,7 @@ async def delete(request: Request, integration_id: str, service: IntegrationServ
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(
     request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)
@@ -161,6 +164,7 @@ async def validate_on_create(
     "/integrations/{integration_id}/validate",
     response_model=IntegrationValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate(
     request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)
@@ -183,6 +187,7 @@ async def validate(
     response_model=list[UserIntegrationResponse],
     response_description="Get user integration policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_integrations(user_id: str, service: IntegrationService = Depends(get_integration_service)):
     return await service.get_user_integration_policies(user_id)
@@ -193,6 +198,7 @@ async def get_user_integrations(user_id: str, service: IntegrationService = Depe
     response_model=list[RoleIntegrationsResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_integration_role_permissions(
     response: Response,

@@ -4,21 +4,32 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_pagination, evaluate_sqlalchemy_sorting
+from core.database import (
+    FieldSpec,
+    evaluate_sqlalchemy_filters,
+    evaluate_sqlalchemy_pagination,
+    evaluate_sqlalchemy_sorting,
+)
 from core.utils.model_tools import is_valid_uuid
 
 from .model import TaskEntity
+from .query_options import build_task_query_options
 
 
 class TaskEntityCRUD:
     def __init__(self, session: AsyncSession):
         self.session: AsyncSession = session
 
-    async def get_by_id(self, entity_id: str | UUID) -> TaskEntity | None:
+    async def get_by_id(
+        self,
+        entity_id: str | UUID,
+        fields: FieldSpec | None = None,
+    ) -> TaskEntity | None:
         if not is_valid_uuid(entity_id):
             raise ValueError(f"Invalid UUID: {entity_id}")
 
         statement = select(TaskEntity).where(TaskEntity.id == entity_id)
+        statement = statement.options(*build_task_query_options(fields))
         result = await self.session.execute(statement)
         return result.scalar_one_or_none()
 
@@ -39,11 +50,13 @@ class TaskEntityCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
     ) -> list[TaskEntity]:
         statement = select(TaskEntity)
         statement = evaluate_sqlalchemy_filters(TaskEntity, statement, filter)
         statement = evaluate_sqlalchemy_sorting(TaskEntity, statement, sort)
         statement = evaluate_sqlalchemy_pagination(statement, range)
+        statement = statement.options(*build_task_query_options(fields))
         result = await self.session.execute(statement)
         return list(result.scalars().all())
 

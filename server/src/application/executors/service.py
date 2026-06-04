@@ -2,7 +2,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from application.executors.functions import delete_executor_policies
+from application.executors.functions import delete_executor_policies, get_executor_actions
 from application.favorites.service import FavoriteService
 from application.integrations.service import IntegrationService
 from application.executors.model import Executor, ExecutorDTO
@@ -12,14 +12,13 @@ from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
     delete_entity,
@@ -97,6 +96,26 @@ class ExecutorService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, executor_id: str | UUID, fields: FieldSpec | None = None) -> Executor | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(executor_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Executor]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, executor_id: str | UUID, requester: UserDTO) -> list[str]:
+        executor = await self.crud.get_by_id(executor_id, fields={"status": None, "state": None})
+        if not executor:
+            raise EntityNotFound("Executor not found")
+        return await get_executor_actions(requester, executor.id, executor.status, executor.state)
 
     async def create(
         self,
@@ -298,61 +317,6 @@ class ExecutorService:
         await self.task_service.delete_by_entity_id(executor_id)
         await delete_executor_policies(executor_id, self.permission_service)
         await self.crud.delete(existing_executor)
-
-    async def get_actions(self, executor_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the executor.
-        :param executor_id: ID of the executor
-        :return: List of actions
-        """
-        requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        executor = await self.crud.get_by_id(executor_id)
-        if not executor:
-            raise EntityNotFound("Executor not found")
-
-        if executor.status in [ModelStatus.IN_PROGRESS]:
-            return []
-
-        user_is_admin = "admin" in requester_permissions
-
-        if executor.status == ModelStatus.QUEUED:
-            if user_is_admin:
-                actions.append(ModelActions.RETRY)
-            return actions
-
-        if executor.state == ModelState.PROVISIONED:
-            actions.append(ModelActions.DESTROY)
-            actions.append(ModelActions.EXECUTE)
-            if user_is_admin:
-                actions.append(ModelActions.EDIT)
-            actions.append(ModelActions.DRYRUN)
-
-        elif executor.state == ModelState.PROVISION:
-            actions.append(ModelActions.EXECUTE)
-            if user_is_admin:
-                actions.append(ModelActions.EDIT)
-            if executor.status == ModelStatus.READY:
-                actions.append(ModelActions.DRYRUN)
-                actions.append(ModelActions.DELETE)
-            elif executor.status == ModelStatus.ERROR:
-                actions.append(ModelActions.DESTROY)
-                actions.append(ModelActions.DRYRUN)
-        elif executor.state == ModelState.DESTROYED:
-            if executor.status == ModelStatus.DONE:
-                actions.append(ModelActions.RECREATE)
-                if user_is_admin:
-                    actions.append(ModelActions.DELETE)
-        elif executor.state == ModelState.DESTROY:
-            if executor.status == ModelStatus.ERROR or executor.status == ModelStatus.READY:
-                actions.append(ModelActions.RECREATE)
-                actions.append(ModelActions.EXECUTE)
-                actions.append(ModelActions.DRYRUN)
-
-        return actions
 
     # Permissions
     async def get_user_executor_policies(

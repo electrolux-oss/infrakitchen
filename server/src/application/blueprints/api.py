@@ -19,14 +19,12 @@ from .dependencies import get_blueprint_service
 router = APIRouter()
 
 
-# ── Blueprint CRUD ──────────────────────────────────────────────────────────
-
-
 @router.get(
     "/blueprints/{blueprint_id}",
     response_model=BlueprintResponse,
     response_description="Get one blueprint by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_id(blueprint_id: str, service: BlueprintService = Depends(get_blueprint_service)):
     entity = await service.get_by_id(blueprint_id=blueprint_id)
@@ -40,6 +38,7 @@ async def get_by_id(blueprint_id: str, service: BlueprintService = Depends(get_b
     response_model=list[dict[str, Any]],
     response_description="Get all blueprints",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(
     response: Response,
@@ -135,6 +134,7 @@ async def delete(request: Request, blueprint_id: str, service: BlueprintService 
     response_model=list[str],
     status_code=http_status.HTTP_200_OK,
     response_description="Get user actions for blueprint entity",
+    deprecated=True,
 )
 async def get_actions(request: Request, blueprint_id: str, service: BlueprintService = Depends(get_blueprint_service)):
     requester: UserDTO | None = request.state.user

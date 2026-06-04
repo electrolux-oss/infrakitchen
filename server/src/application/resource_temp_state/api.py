@@ -13,6 +13,7 @@ router = APIRouter()
     response_model=ResourceTempStateResponse,
     response_description="Get one entity state intermediate by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_id(id: str, service: ResourceTempStateService = Depends(get_resource_temp_state_service)):
     resource_temp_state = await service.get_by_id(id=id)
@@ -26,6 +27,7 @@ async def get_by_id(id: str, service: ResourceTempStateService = Depends(get_res
     response_model=ResourceTempStateResponse,
     response_description="Get one entity state intermediate by entity id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_by_resource_id(
     resource_id: str, service: ResourceTempStateService = Depends(get_resource_temp_state_service)

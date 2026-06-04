@@ -11,6 +11,7 @@ import {
 } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import {
@@ -61,7 +62,7 @@ export const EntityPoliciesBase = ({
       },
       {
         field: "action",
-        fetchFields: ["action", "v2"],
+        fetchFields: ["v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
@@ -147,9 +148,11 @@ export const EntityPoliciesBase = ({
       </PermissionWrapper>
       <EntityFetchTable
         title={`${capitalizeFirstLetter(entity_name)} Policies`}
-        entityName={`permissions/${entity_name}/${entity_id}/policie`}
+        entityName="permission"
+        defaultFilter={{ ptype: "p", v1: `${entity_name}:${entity_id}` }}
         columns={columns}
-        fields={["id"]}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </>
   );

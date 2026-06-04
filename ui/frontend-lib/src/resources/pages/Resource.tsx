@@ -7,6 +7,7 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ResourceContent } from "../components/ResourceContent";
 import { ResourceReviewView } from "../components/ResourceReviewView";
+import { RESOURCE_DETAIL_FIELDS, transformResource } from "../graphql";
 
 export const ResourcePage = () => {
   const { resource_id } = useParams();
@@ -20,7 +21,12 @@ export const ResourcePage = () => {
     }
   };
   return (
-    <EntityProvider entity_name="resource" entity_id={resource_id || ""}>
+    <EntityProvider
+      entity_name="resource"
+      entity_id={resource_id || ""}
+      transformFn={transformResource}
+      entityFields={RESOURCE_DETAIL_FIELDS}
+    >
       <EntityContainer
         title={"Resource Overview"}
         actions={

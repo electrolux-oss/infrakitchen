@@ -1,5 +1,6 @@
 import logging
 from typing import Any
+from uuid import UUID
 
 from application.integrations.schema import IntegrationResponse
 from application.integrations.service import IntegrationService
@@ -9,13 +10,13 @@ from core.adapters.functions import get_integration_adapter, get_secret_adapter
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
-from core.database import to_dict
+from core.database import FieldSpec, to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
-from core.users.functions import user_api_permission
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import model_db_dump
 from .crud import SecretCRUD
+from .functions import get_secret_actions
 from .schema import CustomSecretConfig, SecretCreate, SecretResponse, SecretUpdate, SecretValidationResponse
 from core.users.model import UserDTO
 
@@ -56,6 +57,26 @@ class SecretService:
 
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
+
+    async def query_by_id(self, secret_id: str | UUID, fields: FieldSpec | None = None) -> Secret | None:
+        """Return the ORM model directly, with optimized loading based on requested fields."""
+        return await self.crud.get_by_id(secret_id, fields=fields)
+
+    async def query_all(
+        self,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+        fields: FieldSpec | None = None,
+    ) -> list[Secret]:
+        """Return ORM models directly, with optimized loading based on requested fields."""
+        return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
+
+    async def get_actions(self, secret_id: str | UUID, requester: UserDTO) -> list[str]:
+        secret = await self.crud.get_by_id(secret_id, fields={"status": None})
+        if not secret:
+            raise EntityNotFound("Secret not found")
+        return await get_secret_actions(requester, secret.status)
 
     async def create(self, secret: SecretCreate, requester: UserDTO) -> SecretResponse:
         """
@@ -186,36 +207,6 @@ class SecretService:
         await self.audit_log_handler.create_log(secret_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(secret_id)
         await self.crud.delete(existing_secret)
-
-    async def get_actions(self, secret_id: str, requester: UserDTO) -> list[str]:
-        """
-        Get all actions available for the secret.
-        :param secret_id: ID of the secret
-        :return: List of actions
-        """
-        apis = await user_api_permission(requester, "secret")
-        if not apis:
-            return []
-        requester_permissions = [apis["api:secret"]]
-
-        if "write" not in requester_permissions and "admin" not in requester_permissions:
-            return []
-
-        actions: list[str] = []
-        secret = await self.crud.get_by_id(secret_id)
-        if not secret:
-            raise EntityNotFound("Secret not found")
-
-        if secret.status == ModelStatus.ENABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.EDIT)
-                actions.append(ModelActions.DISABLE)
-        if secret.status == ModelStatus.DISABLED:
-            if "admin" in requester_permissions:
-                actions.append(ModelActions.DELETE)
-                actions.append(ModelActions.ENABLE)
-
-        return actions
 
     def validate_configuration(self, secret_update: SecretUpdate, existing_secret: Secret) -> None:
         existing_secret_config = SecretDTO.model_validate(existing_secret)

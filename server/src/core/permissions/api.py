@@ -28,6 +28,7 @@ router = APIRouter()
     response_model=list[PermissionResponse],
     response_description="Get all roles",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "roles")
 async def get_all_roles(
@@ -54,6 +55,7 @@ async def get_all_roles(
     response_model=PermissionResponse,
     response_description="Get one role by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "roles", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: PermissionService = Depends(get_permission_service)):
@@ -71,6 +73,7 @@ async def get_by_id(entity_id: str, service: PermissionService = Depends(get_per
     response_model=list[PermissionResponse],
     response_description="Get user permissions",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_roles(
     response: Response,
@@ -100,6 +103,7 @@ async def get_user_roles(
     response_model=list[PermissionResponse],
     response_description="Get role policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_role_api_permissions(
     response: Response,
@@ -127,6 +131,7 @@ async def get_role_api_permissions(
     response_model=list[RoleUsersResponse],
     response_description="Get users by role",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_users_by_role(
     response: Response,
@@ -151,6 +156,7 @@ async def get_users_by_role(
     response_model=list[PermissionResponse],
     response_description="Get entity policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_entity_permissions(
     entity_name: str,
@@ -278,6 +284,7 @@ async def delete(request: Request, permission_id: str, service: PermissionServic
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(request: Request, entity_id: str, service: PermissionService = Depends(get_permission_service)):
     requester: UserDTO = request.state.user

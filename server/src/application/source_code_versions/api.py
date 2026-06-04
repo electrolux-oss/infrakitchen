@@ -34,6 +34,7 @@ router = APIRouter()
     response_model=SourceCodeVersionResponse,
     response_description="Get one source_code_version by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "source_code_versions", param_renames={"id": "source_code_version_id"})
 async def get_by_id(
@@ -50,6 +51,7 @@ async def get_by_id(
     response_model=list[dict[str, Any]],
     response_description="Get all source_code_versions",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "source_code_versions")
 async def get_all(
@@ -162,6 +164,7 @@ async def delete(
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(
     request: Request,
@@ -181,6 +184,7 @@ async def get_actions(
     response_model=list[SourceConfigResponse],
     response_description="Get configs for a source code version",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_configs(
     source_code_version_id: str,
@@ -195,6 +199,7 @@ async def get_configs(
     response_model=SourceConfigResponse,
     response_description="Get a config by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_config_by_id(
     config_id: str,
@@ -257,6 +262,7 @@ async def update_configs(
     response_model=list[SourceOutputConfigResponse],
     response_description="Get output configs for a source code version",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_outputs(
     source_code_version_id: str,
@@ -271,6 +277,7 @@ async def get_outputs(
     response_model=list[SourceConfigResponse],
     response_description="Get unique variable configs for a template across all source code versions",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_configs_by_template(
     template_id: UUID,
@@ -284,6 +291,7 @@ async def get_configs_by_template(
     response_model=list[SourceOutputConfigTemplateResponse],
     response_description="Get output configs for a template",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_outputs_by_template(
     template_id: UUID,
@@ -298,6 +306,7 @@ async def get_outputs_by_template(
     response_model=list[SourceConfigTemplateReferenceResponse],
     response_description="Get reference output configs for a template",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_reference_outputs_by_template(
     template_id: UUID,

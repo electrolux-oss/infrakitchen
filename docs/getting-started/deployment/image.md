@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y git nginx && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY ./docs/examples/docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./docs/examples/docker/websocket-map.conf /etc/nginx/conf.d/websocket-map.conf
 COPY --from=node_builder /app/dist /usr/share/nginx/html
 
 WORKDIR /app

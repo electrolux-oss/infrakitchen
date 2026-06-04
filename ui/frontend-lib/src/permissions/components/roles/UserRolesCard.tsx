@@ -9,6 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -55,11 +56,15 @@ export const UserRolesCard = (props: { user_id: string }) => {
       },
       {
         field: "creator",
-        headerName: "Created By",
+        headerName: "Creator",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <GetEntityLink {...params.row.creator} />
-        ),
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
       },
       {
         field: "id",
@@ -101,9 +106,11 @@ export const UserRolesCard = (props: { user_id: string }) => {
 
       <EntityFetchTable
         title="User Roles"
-        entityName={`permissions/user/${user_id}/role`}
+        entityName="permission"
         columns={columns}
-        fields={["id"]}
+        defaultFilter={{ ptype: "g", v0: `user:${user_id}` }}
+        entityFieldMap={PERMISSION_FIELD_MAP}
+        transformFn={transformPermission}
       />
     </OverviewCard>
   );

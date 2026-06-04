@@ -16,6 +16,7 @@ router = APIRouter()
     response_model=TaskEntityResponse,
     response_description="Get task by entity id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "tasks", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: TaskEntityService = Depends(get_task_service)):
@@ -28,6 +29,7 @@ async def get_by_id(entity_id: str, service: TaskEntityService = Depends(get_tas
     response_model=list[TaskEntityResponse],
     response_description="Get all tasks",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "tasks")
 async def get_all(

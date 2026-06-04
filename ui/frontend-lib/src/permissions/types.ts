@@ -1,11 +1,10 @@
-import { UserResponse } from "../users";
+import { UserResponseOptional, UserShort } from "../users";
 
 export interface PermissionResponse {
   id: string;
   created_at: Date;
   updated_at: Date;
-  description: string;
-  creator: UserResponse;
+  creator?: UserShort;
   ptype: string;
   v0: string | null;
   v1: string | null;
@@ -13,6 +12,13 @@ export interface PermissionResponse {
   v3: string | null;
   v4: string | null;
   v5: string | null;
+  // custom fields
+  entity_data?: {
+    name?: string;
+    id?: string;
+    _entity_name?: string;
+  };
+  user_data?: UserResponseOptional;
 }
 
 export interface EntityPolicyCreate {

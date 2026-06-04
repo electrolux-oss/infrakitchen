@@ -18,6 +18,7 @@ router = APIRouter()
     response_model=list[FavoriteDTO],
     response_description="Get all favorites for the current user",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(request: Request, service: FavoriteService = Depends(get_favorite_service)):
     requester: UserDTO | None = getattr(request.state, "user", None)

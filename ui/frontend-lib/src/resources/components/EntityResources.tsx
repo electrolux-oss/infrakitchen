@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { FilterConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { useConfig } from "../../common/context/ConfigContext";
+import { RESOURCE_FIELD_MAP, transformResource } from "../graphql";
 
 import {
   buildResourceApiFilters,
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
-  resourceFields,
 } from "./resourceTableConfig";
 
 interface EntityResourcesProps {
@@ -20,28 +19,9 @@ export const EntityResources = ({
   fixedFilters,
   filterStorageKey,
 }: EntityResourcesProps) => {
-  const { ikApi } = useConfig();
-  const [labels, setLabels] = useState<string[]>([]);
-
-  useEffect(() => {
-    ikApi.get("labels/resource").then((response: string[]) => {
-      setLabels(response);
-    });
-  }, [ikApi]);
-
   const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      { id: "name", type: "search", label: "Search", width: 420 },
-      {
-        id: "labels",
-        type: "autocomplete",
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
+    () => [{ id: "name", type: "search", label: "Search", width: 420 }],
+    [],
   );
 
   const buildApiFilters = useCallback(
@@ -56,12 +36,13 @@ export const EntityResources = ({
     <EntityFetchTable
       title="Resources"
       entityName="resource"
+      transformFn={transformResource}
+      entityFieldMap={RESOURCE_FIELD_MAP}
       columns={resourceColumns}
       defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
       filterStorageKey={filterStorageKey}
       filterConfigs={filterConfigs}
       buildApiFilters={buildApiFilters}
-      fields={resourceFields}
     />
   );
 };

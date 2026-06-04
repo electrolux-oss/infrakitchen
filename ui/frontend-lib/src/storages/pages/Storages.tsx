@@ -16,6 +16,8 @@ import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { transformStorageOptional } from "../graphql";
+import { STORAGE_FIELD_MAP } from "../graphql/fragments";
 
 export const StoragesPage = () => {
   const { linkPrefix, ikApi } = useConfig();
@@ -25,9 +27,15 @@ export const StoragesPage = () => {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/storage").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query StorageLabels {
+          labels: labels(entity: "storage")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   // Configure filters
@@ -127,19 +135,10 @@ export const StoragesPage = () => {
         ),
       },
       {
-        field: "description",
-        headerName: "Description",
-        flex: 1,
-      },
-      {
-        field: "revision_number",
-        headerName: "Revision",
-        flex: 1,
-      },
-      {
         field: "creator",
         headerName: "Creator",
         flex: 1,
+        sortField: "creator.identifier",
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
         renderCell: (params: GridRenderCellParams) =>
           params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
@@ -148,6 +147,7 @@ export const StoragesPage = () => {
         field: "integration",
         headerName: "Integration",
         flex: 1,
+        sortField: "integration.name",
         valueGetter: (_value: any, row: any) => row.integration?.name || "",
         renderCell: (params: GridRenderCellParams) =>
           params.row.integration ? (
@@ -190,21 +190,8 @@ export const StoragesPage = () => {
         title="Storages"
         entityName="storage"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "status",
-          "state",
-          "storage_provider",
-          "storage_type",
-          "created_at",
-          "updated_at",
-          "labels",
-          "creator",
-          "integration",
-          "description",
-          "revision_number",
-        ]}
+        entityFieldMap={STORAGE_FIELD_MAP}
+        transformFn={transformStorageOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

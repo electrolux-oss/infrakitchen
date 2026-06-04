@@ -608,7 +608,7 @@ class TestGetStorageActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.storages.service.user_api_permission",
+            "application.storages.functions.user_api_permission",
         )
         mock_storage_crud.get_by_id.return_value = mocked_storage
 

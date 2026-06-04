@@ -14,33 +14,6 @@ import { IntegrationShort } from "../../integrations/types";
 import { SecretShort } from "../../secrets/types";
 import { ResourceShort } from "../types";
 
-export const resourceFields = [
-  "id",
-  "name",
-  "description",
-  "abstract",
-  "revision_number",
-  "creator",
-  "template",
-  "source_code_version",
-  "integration_ids",
-  "secret_ids",
-  "storage",
-  "storage_path",
-  "variables",
-  "outputs",
-  "dependency_tags",
-  "dependency_config",
-  "parents",
-  "children",
-  "state",
-  "status",
-  "created_at",
-  "updated_at",
-  "labels",
-  "workspace",
-];
-
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   creator: false,
   storage: false,
@@ -58,7 +31,7 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
 
 export const resourceColumns: EntityTableColumn[] = [
   {
-    field: "Favorite",
+    field: "favorite",
     fetchFields: [],
     headerName: "",
     width: 60,
@@ -89,6 +62,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "template",
     headerName: "Template",
     flex: 1,
+    sortField: "template.name",
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
@@ -99,6 +73,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "source_code_version",
     headerName: "Template Version",
     flex: 1,
+    sortField: "source_code_version.tag",
     valueGetter: (_value: any, row: any) => {
       const scv = row.source_code_version;
       if (!scv) return "";
@@ -150,6 +125,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "creator",
     headerName: "Creator",
     flex: 1,
+    sortField: "creator.identifier",
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
     renderCell: (params: GridRenderCellParams) => {
       const creator = params.row.creator;

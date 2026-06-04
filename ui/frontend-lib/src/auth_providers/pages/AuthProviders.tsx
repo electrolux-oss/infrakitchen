@@ -15,6 +15,10 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
+import {
+  AUTH_PROVIDER_FIELD_MAP,
+  transformAuthProviderOptional,
+} from "../graphql";
 
 export const AuthProvidersPage = () => {
   const { linkPrefix } = useConfig();
@@ -65,6 +69,18 @@ export const AuthProvidersPage = () => {
           />
         ),
       },
+      {
+        field: "creator",
+        headerName: "Creator",
+        flex: 1,
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) => {
+          const creator = params.row.creator;
+          if (!creator) return null;
+          return <GetEntityLink {...creator} name={creator.identifier} />;
+        },
+      },
     ],
     [],
   );
@@ -90,16 +106,10 @@ export const AuthProvidersPage = () => {
     >
       <EntityFetchTable
         title="Auth Providers"
-        entityName="auth_provider"
+        entityName="authProvider"
         columns={columns}
-        fields={[
-          "id",
-          "name",
-          "description",
-          "auth_provider",
-          "enabled",
-          "created_at",
-        ]}
+        entityFieldMap={AUTH_PROVIDER_FIELD_MAP}
+        transformFn={transformAuthProviderOptional}
       />
     </PageContainer>
   );

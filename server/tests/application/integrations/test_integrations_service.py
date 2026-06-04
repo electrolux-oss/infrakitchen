@@ -191,7 +191,9 @@ class TestCreate:
             integration=integration_create, requester=mock_user_dto
         )
 
-        integration_create.model_dump.assert_called_once_with(by_alias=True, exclude={"_entity_name"})
+        integration_create.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False
+        )
         mock_integration_crud.create.assert_awaited_once_with(expected_integration_body)
 
         assert created_integration.status == ModelStatus.ENABLED
@@ -346,7 +348,9 @@ class TestUpdate:
             integration_id=mocked_integration.id, integration=integration_update, requester=mock_user_dto
         )
 
-        integration_update.model_dump.assert_called_once_with(by_alias=True, exclude={"_entity_name"})
+        integration_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False
+        )
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
 
         mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
@@ -420,7 +424,9 @@ class TestUpdate:
             integration_id=mocked_integration.id, integration=integration_update, requester=mock_user_dto
         )
 
-        integration_update.model_dump.assert_called_once_with(by_alias=True, exclude={"_entity_name"})
+        integration_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False
+        )
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
         mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -651,7 +657,7 @@ class TestGetIntegrationActions:
         mock_user_permissions(
             user_permissions,
             monkeypatch,
-            "application.integrations.service.user_entity_permissions",
+            "application.integrations.functions.user_entity_permissions",
         )
 
         mocked_integration.status = status

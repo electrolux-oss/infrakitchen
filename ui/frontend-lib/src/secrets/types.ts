@@ -31,7 +31,11 @@ export interface SecretResponse extends SecretShort {
   secret_type: string;
   secret_provider: string;
   configuration: CustomSecretConfig;
+  resources_count: number;
+  executors_count: number;
 }
+
+export type SecretResponseOptional = Partial<SecretResponse>;
 
 export interface SecretCreate {
   name: string;

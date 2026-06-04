@@ -11,6 +11,7 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { transformSourceCodeOptional } from "../../source_codes/graphql";
 
 interface IntegrationSourceCodeDependenciesProps {
   integration_id: string;
@@ -143,23 +144,13 @@ export const IntegrationSourceCodeDependencies = (
   return (
     <EntityFetchTable
       title="Code Repositories"
-      entityName="source_code"
+      entityName="sourceCode"
       columns={columns}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
       filterConfigs={filterConfigs}
-      filterStorageKey={`filter_integration_code_repos_${integration_id}`}
+      filterStorageKey={`filter_integration_code_repos`}
       buildApiFilters={buildApiFilters}
-      fields={[
-        "id",
-        "source_code_url",
-        "status",
-        "updated_at",
-        "created_at",
-        "labels",
-        "description",
-        "source_code_provider",
-        "source_code_language",
-      ]}
+      transformFn={transformSourceCodeOptional}
     />
   );
 };

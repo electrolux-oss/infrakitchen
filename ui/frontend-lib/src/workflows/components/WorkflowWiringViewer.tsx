@@ -35,7 +35,7 @@ export const WorkflowWiringViewer = ({
     >();
 
     for (const resource of steps.flatMap((s) => s.parent_resource_ids ?? [])) {
-      const template = resource.template;
+      const template = resource.template!;
       if (!byTemplateId.has(template.id)) {
         byTemplateId.set(template.id, {
           id: template.id,

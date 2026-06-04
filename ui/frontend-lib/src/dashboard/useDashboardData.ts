@@ -1,9 +1,56 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { GqlAuditLog, transformAuditLogs } from "../audit_logs/graphql";
 import { useConfig } from "../common";
 import { notifyError } from "../common/hooks/useNotification";
+import { GqlFavorite } from "../favorites/graphql";
+import { USER_SHORT_FIELDS } from "../users/graphql";
 
 import { ActivityLogEntry, FavoriteResource } from "./types";
+
+const DASHBOARD_QUERY = `
+  query Dashboard($auditFilter: JSON, $auditSort: [String!], $auditRange: [Int!]) {
+    resourcesCount
+    favorites {
+      componentType
+      componentId
+      componentData
+    }
+    auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
+      id
+      action
+      model
+      entityId
+      entityData
+      createdAt
+      creator {
+        ${USER_SHORT_FIELDS}
+      }
+    }
+  }
+`;
+
+interface DashboardResponse {
+  resourcesCount: number;
+  favorites: GqlFavorite[];
+  auditLogs: GqlAuditLog[];
+}
+
+function transformFavoriteToResource(
+  gql: GqlFavorite,
+): FavoriteResource | null {
+  if (!gql.componentData) return null;
+  return {
+    id: gql.componentData.id,
+    name: gql.componentData.name ?? "",
+    status: gql.componentData.status ?? "",
+    state: gql.componentData.state ?? "",
+    updated_at: gql.componentData.updated_at,
+    _component_type: gql.componentType as "resource" | "executor",
+    _component_id: gql.componentId,
+    _entity_name: gql.componentData._entity_name,
+  };
+}
 
 export const useDashboardData = () => {
   const { ikApi } = useConfig();
@@ -14,19 +61,21 @@ export const useDashboardData = () => {
   const initializedRef = useRef(false);
 
   const fetchData = useCallback(async () => {
-    // Only show full loading state on first load; subsequent refreshes update silently
     if (!initializedRef.current) {
       setLoading(true);
     }
 
     try {
-      const resourcesResponse = await ikApi.getList("resources", {
-        pagination: { page: 1, perPage: 1 },
-        fields: ["id"],
-      });
-      const resourcesExist =
-        (resourcesResponse.total ?? 0) > 0 || resourcesResponse.data.length > 0;
+      const response = await ikApi.graphqlRequest<DashboardResponse>(
+        DASHBOARD_QUERY,
+        {
+          auditFilter: { model: ["resource", "executor"] },
+          auditSort: ["created_at", "DESC"],
+          auditRange: [0, 10],
+        },
+      );
 
+      const resourcesExist = (response?.resourcesCount ?? 0) > 0;
       setHasResources(resourcesExist);
 
       if (!resourcesExist) {
@@ -35,73 +84,16 @@ export const useDashboardData = () => {
         return;
       }
 
-      const favoritesResponse = await ikApi.get("favorites");
-      const favoritesList = Array.isArray(favoritesResponse)
-        ? favoritesResponse
-        : [];
-
-      const favoriteDetails: FavoriteResource[] = [];
-      for (const favorite of favoritesList) {
-        if (favorite.component_type === "resource") {
-          try {
-            const resourceDetail = await ikApi.get(
-              `resources/${favorite.component_id}`,
-            );
-            favoriteDetails.push({
-              ...resourceDetail,
-              _component_type: "resource" as const,
-              _component_id: favorite.component_id,
-            });
-          } catch (err) {
-            notifyError(err);
-          }
-        } else if (favorite.component_type === "executor") {
-          try {
-            const executorDetail = await ikApi.get(
-              `executors/${favorite.component_id}`,
-            );
-            favoriteDetails.push({
-              ...executorDetail,
-              _component_type: "executor" as const,
-              _component_id: favorite.component_id,
-            });
-          } catch (err) {
-            notifyError(err);
-          }
-        }
-      }
-
+      const favoriteDetails = (response?.favorites ?? [])
+        .map(transformFavoriteToResource)
+        .filter((f): f is FavoriteResource => f !== null);
       setFavorites(favoriteDetails);
 
-      try {
-        const favoriteEntityIds = favoriteDetails.map((f) => f.id);
-        const activityResponse = await ikApi.getList("audit_logs", {
-          pagination: { page: 1, perPage: 10 },
-          fields: [
-            "id",
-            "action",
-            "creator",
-            "model",
-            "entity_id",
-            "created_at",
-          ],
-          sort: { field: "created_at", order: "DESC" },
-          filter:
-            favoriteEntityIds.length > 0
-              ? {
-                  entity_id: favoriteEntityIds,
-                  model: ["resource", "executor"],
-                }
-              : { model: ["resource", "executor"] },
-        });
-
-        setActivities(
-          Array.isArray(activityResponse?.data) ? activityResponse.data : [],
-        );
-      } catch (err) {
-        notifyError(err);
-        setActivities([]);
-      }
+      setActivities(
+        Array.isArray(response?.auditLogs)
+          ? transformAuditLogs(response.auditLogs)
+          : [],
+      );
     } catch (err) {
       notifyError(err);
     } finally {

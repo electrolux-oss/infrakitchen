@@ -27,6 +27,8 @@ import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { IkEntity } from "../../types";
 import { WorkflowStep } from "../components/WorkflowStep";
+import { WORKFLOW_QUERY } from "../graphql/queries";
+import { GqlWorkflow, transformWorkflow } from "../graphql/transforms";
 import { WorkflowResponse, WorkflowStepResponse } from "../types";
 
 interface JsonFieldProps {
@@ -400,10 +402,20 @@ export const WorkflowEditPage = () => {
   const [error, setError] = useState<Error>();
 
   const getWorkflow = useCallback(async () => {
+    if (!workflow_id) {
+      setError(new Error("Workflow id is required"));
+      return;
+    }
+
     await ikApi
-      .get(`workflows/${workflow_id}`)
-      .then((response: WorkflowResponse) => {
-        setWorkflow(response);
+      .graphqlRequest<{
+        workflow: GqlWorkflow | null;
+      }>(WORKFLOW_QUERY, { id: workflow_id })
+      .then((response) => {
+        if (!response.workflow) {
+          throw new Error("Workflow not found");
+        }
+        setWorkflow(transformWorkflow(response.workflow));
         setError(undefined);
       })
       .catch((e: any) => setError(e));

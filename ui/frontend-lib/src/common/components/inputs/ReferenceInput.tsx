@@ -28,6 +28,7 @@ interface ReferenceInputProps {
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
   getOptionDisabled?: (option: IkEntity) => boolean;
+  options?: IkEntity[];
   [key: string]: any; // Allow additional props
 }
 
@@ -44,6 +45,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     value,
     optionFilter,
     getOptionDisabled: getOptionDisabledProp,
+    options: externalOptions,
     ...otherProps
   } = props;
 
@@ -69,6 +71,13 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ((option: IkEntity) => option.status === "disabled");
 
   useEffect(() => {
+    if (externalOptions) {
+      setBuffer((prev: Record<string, IkEntity[]>) => ({
+        ...prev,
+        [resolvedBufferKey]: externalOptions,
+      }));
+      return;
+    }
     if (otherProps.disabled) {
       return;
     }
@@ -108,6 +117,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ikApi,
     setBuffer,
     resolvedBufferKey,
+    externalOptions,
   ]);
 
   return (

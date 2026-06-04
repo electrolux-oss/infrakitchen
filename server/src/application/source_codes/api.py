@@ -20,6 +20,7 @@ router = APIRouter()
     response_model=SourceCodeResponse,
     response_description="Get one source_code by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(get_one_group, "source_codes", param_renames={"id": "source_code_id"})
 async def get_by_id(source_code_id: str, service: SourceCodeService = Depends(get_source_code_service)):
@@ -34,6 +35,7 @@ async def get_by_id(source_code_id: str, service: SourceCodeService = Depends(ge
     response_model=list[dict[str, Any]],
     response_description="Get all source_codes",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 @mcp_group(list_entities_group, "source_codes")
 async def get_all(
@@ -128,6 +130,7 @@ async def delete(request: Request, source_code_id: str, service: SourceCodeServi
     response_model=list[str],
     response_description="Get user actions for an entity",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_actions(
     request: Request, source_code_id: str, service: SourceCodeService = Depends(get_source_code_service)

@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager, nullcontext
 from fastapi.exceptions import RequestValidationError
 from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, StreamingResponse
 
 from core.utils.json_encoder import JsonEncoder
 
@@ -24,6 +24,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import Settings, setup_service_environment
 from core.utils.websocket_manager import WebSocketConnectionManager
 from application.views import main_router
+from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
 from core.errors import (
     AccessDenied,
@@ -100,6 +101,36 @@ async def add_process_time_header(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
     return response
+
+
+@app.middleware("http")
+async def mask_graphql_secrets(request: Request, call_next):
+    """Mask sensitive secrets in GraphQL responses."""
+    if not request.url.path.startswith("/api/graphql"):
+        return await call_next(request)
+
+    response = await call_next(request)
+
+    # Only process JSON responses
+    if response.headers.get("content-type") != "application/json":
+        return response
+
+    # Read and parse response body
+    body = b""
+    async for chunk in response.body_iterator:
+        body += chunk
+
+    try:
+        data = json.loads(body)
+        # Apply masking to response data
+        if isinstance(data, dict) and "data" in data:
+            data["data"] = mask_sensitive_values(data["data"])
+        # Return modified response, exclude Content-Length so it's recalculated
+        headers = {k: v for k, v in response.headers.items() if k.lower() != "content-length"}
+        return JSONResponse(data, status_code=response.status_code, headers=headers)
+    except (json.JSONDecodeError, ValueError):
+        # If not valid JSON, return original response
+        return StreamingResponse(iter([body]), status_code=response.status_code, headers=dict(response.headers))
 
 
 app.include_router(main_router)

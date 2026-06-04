@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -9,32 +9,15 @@ import { FilterConfig, useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import {
-  useEntityMetadataFromRows,
-  EntityMeta,
-} from "../../common/hooks/useEntityMetadata";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { IkEntity } from "../../types";
+import { TASK_FIELD_MAP, transformTask } from "../graphql";
 
 export const TasksPage = () => {
   const { linkPrefix, ikApi } = useConfig();
 
   const [entities, setEntities] = useState<string[]>([]);
-  const [rows, setRows] = useState<IkEntity[]>([]);
   const navigate = useNavigate();
-
-  const { data: entityMeta } = useEntityMetadataFromRows(rows, {
-    modelField: "entity",
-    idField: "entity_id",
-  });
-
-  const entityMetaRef = useRef<Map<string, EntityMeta>>(entityMeta);
-  entityMetaRef.current = entityMeta;
-
-  const onDataLoaded = useCallback((data: IkEntity[]) => {
-    setRows(data);
-  }, []);
 
   useEffect(() => {
     ikApi.get("entities", {}).then((response) => {
@@ -72,12 +55,11 @@ export const TasksPage = () => {
     () => [
       {
         field: "entity",
-        fetchFields: ["entity", "entity_id"],
+        fetchFields: ["entity", "entity_id", "entity_data"],
         headerName: "Entity",
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          const meta = entityMetaRef.current.get(params.row.entity_id);
           return (
             <Link
               onClick={() => {
@@ -88,7 +70,7 @@ export const TasksPage = () => {
               rel="noopener"
               style={{ cursor: "pointer" }}
             >
-              {meta?.name ?? params.row.entity}
+              {params.row.entity_data?.name ?? params.row.entity}
             </Link>
           );
         },
@@ -125,20 +107,13 @@ export const TasksPage = () => {
         ),
       },
       {
-        field: "created_by",
-        headerName: "Created By",
+        field: "creator",
+        headerName: "Creator",
         flex: 1,
-        valueGetter: (_value: any, row: any) => {
-          const cb = row.created_by;
-          return typeof cb === "object" && cb !== null ? cb.identifier : cb;
-        },
-        renderCell: (params: GridRenderCellParams) => {
-          const cb = params.row.created_by;
-          if (typeof cb === "object" && cb !== null) {
-            return <GetEntityLink {...cb} />;
-          }
-          return cb ?? null;
-        },
+        sortField: "creator.identifier",
+        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
       },
     ],
     [navigate, linkPrefix],
@@ -150,19 +125,10 @@ export const TasksPage = () => {
         title="Tasks"
         entityName="task"
         columns={columns}
-        fields={[
-          "id",
-          "entity",
-          "entity_id",
-          "status",
-          "state",
-          "created_at",
-          "updated_at",
-          "created_by",
-        ]}
+        entityFieldMap={TASK_FIELD_MAP}
+        transformFn={transformTask}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
-        onDataLoaded={onDataLoaded}
         defaultColumnVisibilityModel={{
           created_by: false,
         }}
