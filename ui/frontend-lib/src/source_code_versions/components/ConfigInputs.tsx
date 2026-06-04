@@ -129,6 +129,8 @@ export const DefaultValueInput = (props: {
       return <JsonInput field={field} />;
     case "array[string]":
       return <JsonInput field={field} />;
+    case "array[object]":
+      return <JsonInput field={field} />;
     default:
       return (
         <TextField
