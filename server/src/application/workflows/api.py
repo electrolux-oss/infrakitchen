@@ -3,8 +3,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi import status as http_status
 
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
-from infrakitchen_mcp.registry import mcp_group
 from application.workflows.service import WorkflowService
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
@@ -26,7 +24,6 @@ router = APIRouter()
     status_code=http_status.HTTP_200_OK,
     deprecated=True,
 )
-@mcp_group(list_entities_group, "workflows")
 async def get_all(
     response: Response,
     service: WorkflowService = Depends(get_workflow_service),
@@ -60,7 +57,6 @@ async def get_all(
     deprecated=True,
     response_description="Get a single workflow with its steps",
 )
-@mcp_group(get_one_group, "workflows")
 async def get_workflow(
     workflow_id: str,
     service: WorkflowService = Depends(get_workflow_service),
