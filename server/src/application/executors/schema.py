@@ -137,6 +137,14 @@ class ExecutorUpdate(BaseModel):
     source_code_folder: str = Field(...)
     labels: list[str] = Field(default_factory=list)
 
+    # critical change, as changing storage may cause issues with existing resources
+    storage_id: uuid.UUID | StorageShort | None = Field(
+        default=None,
+    )
+    storage_path: str | None = Field(
+        default=None,
+    )
+
 
 class RoleExecutorsResponse(BaseModel):
     id: uuid.UUID
