@@ -50,7 +50,6 @@ export const ConfigProvider = ({
   const getGlobalConfig = useCallback(async (): Promise<any> => {
     config.ikApi
       .graphqlRequest<{ globalConfig: GlobalConfigType; entities: string[] }>(
-
         `{
           globalConfig {
             approvalFlow

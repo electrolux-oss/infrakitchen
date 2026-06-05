@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import { useNavigate } from "react-router";
 import { useEffectOnce } from "react-use";
 
 import { notify } from "@electrolux-oss/infrakitchen";
@@ -38,7 +37,6 @@ export default function SignInCard() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const navigate = useNavigate();
   const handleGuestClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -52,7 +50,7 @@ export default function SignInCard() {
     setAnchorEl(null); // Explicit close
   };
 
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   const handleSubmit = (provider: string) => {
     setLoading(true);
@@ -78,17 +76,6 @@ export default function SignInCard() {
         setEnabledProviders([]);
       });
   });
-  useEffect(() => {
-    if (!loading && user) {
-      const redirectPath = localStorage.getItem("redirectPath");
-      if (redirectPath) {
-        localStorage.removeItem("redirectPath");
-        navigate(redirectPath);
-      } else {
-        navigate("/");
-      }
-    }
-  }, [loading, user, navigate]);
 
   return (
     <Card variant="outlined">
