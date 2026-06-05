@@ -63,10 +63,16 @@ export default function SignInCard() {
   };
 
   useEffectOnce(() => {
-    fetch("/api/configs/auth_providers")
+    fetch("/api/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: "{ enabledAuthProviders }",
+      }),
+    })
       .then((res) => res.json())
-      .then((data) => {
-        setEnabledProviders(data || []);
+      .then((json) => {
+        setEnabledProviders(json?.data?.enabledAuthProviders || []);
       })
       .catch(() => {
         setEnabledProviders([]);

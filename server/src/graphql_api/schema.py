@@ -1,6 +1,7 @@
 import strawberry
 from graphql_api.extensions import GraphQLFailureFlagExtension
 
+from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.audit_log.queries import AuditLogQuery
 from graphql_api.modules.log.subscriptions import LogSubscription
@@ -31,6 +32,7 @@ from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 
 @strawberry.type
 class Query(
+    ConfigQuery,
     AuthProviderQuery,
     AuditLogQuery,
     BatchOperationQuery,
