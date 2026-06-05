@@ -26,6 +26,12 @@ class PermissionType:
     async def entity_data(self, info: Info) -> JSON | None:
         entity = self.v1.split(":")[0] if self.v1 else None
         entity_id = self.v1.split(":")[1] if self.v1 and ":" in self.v1 else None
+        if entity == "api":
+            return None
+
+        if entity_id == "*":
+            return None
+
         loader = info.context["loaders"].get(entity)
         if loader is None:
             return None

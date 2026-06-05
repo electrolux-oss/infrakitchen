@@ -13,6 +13,7 @@ router = APIRouter()
     response_description="Get Infrakitchen auth providers",
     response_model=list[str],
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def get(service: AuthProviderService = Depends(get_auth_provider_service)):
     enabled_providers = await service.get_all(filter={"enabled": True})
@@ -24,6 +25,7 @@ async def get(service: AuthProviderService = Depends(get_auth_provider_service))
     response_description="Get Infrakitchen global config",
     response_model=dict,
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def get_global_ui_config():
     global_config = InfrakitchenConfig().to_dict()

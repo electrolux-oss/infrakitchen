@@ -14,6 +14,7 @@ router = APIRouter(dependencies=[Depends(get_logged_user)])
     response_model=dict[str, str],
     response_description="Get user policies",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_user_policies(
     request: Request,

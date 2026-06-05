@@ -55,7 +55,7 @@ export const IntegrationPage = () => {
         title={"Integration Overview"}
         actions={
           <PermissionWrapper
-            requiredPermission={`integration:${integration_id || ""}`}
+            requiredPermission={"api:integration"}
             permissionAction="write"
           >
             <Button
