@@ -69,9 +69,9 @@ export const AppWrapper = () => {
     refreshAuth,
   );
   return (
-    <LocalStorageProvider>
-      <ConfigProvider initialIkApi={dataProvider}>
-        <AuthProvider>
+    <AuthProvider>
+      <LocalStorageProvider>
+        <ConfigProvider initialIkApi={dataProvider}>
           <PermissionProvider>
             <FavoritesProvider>
               <EventProvider>
@@ -81,8 +81,8 @@ export const AppWrapper = () => {
               </EventProvider>
             </FavoritesProvider>
           </PermissionProvider>
-        </AuthProvider>
-      </ConfigProvider>
-    </LocalStorageProvider>
+        </ConfigProvider>
+      </LocalStorageProvider>
+    </AuthProvider>
   );
 };
