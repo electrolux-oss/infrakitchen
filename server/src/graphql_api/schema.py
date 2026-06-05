@@ -24,6 +24,8 @@ from graphql_api.modules.task.queries import TaskQuery
 from graphql_api.modules.workflow.queries import WorkflowQuery
 from graphql_api.modules.workspace.queries import WorkspaceQuery
 from graphql_api.modules.worker.queries import WorkerQuery
+from graphql_api.modules.providers.slack.queries import SlackQuery
+from graphql_api.modules.providers.slack.mutations import SlackMutation
 from graphql_api.modules.user.queries import UserQuery
 from graphql_api.modules.user.mutations import UserMutation
 from graphql_api.modules.log.queries import LogQuery
@@ -54,6 +56,7 @@ class Query(
     WorkflowQuery,
     WorkspaceQuery,
     WorkerQuery,
+    SlackQuery,
     UserQuery,
     LogQuery,
     ValidationRuleQuery,
@@ -63,6 +66,7 @@ class Query(
 
 @strawberry.type
 class Mutation(
+    SlackMutation,
     UserMutation,
 ):
     pass

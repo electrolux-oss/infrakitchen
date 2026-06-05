@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import override
 
 from application.integrations.schema import SlackIntegrationConfig
@@ -6,6 +7,7 @@ from core.adapters.provider_adapters import IntegrationProvider, NotificationPro
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, CloudWrongCredentials
 from core.models.encrypted_secret import EncryptedSecretStr
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .slack_api import SlackApi
 
@@ -89,3 +91,24 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
             raise
         except Exception as e:
             raise CannotProceed(f"Failed to send Slack notification: {e}") from e
+
+
+async def get_slack_client(integration_id: uuid.UUID | None, session: AsyncSession) -> SlackApi:
+    from application.integrations.dependencies import get_integration_service
+
+    service = get_integration_service(session=session)
+    if not integration_id:
+        integrations = await service.get_all(filter={"integration_provider": "slack"})
+        if not integrations:
+            raise ValueError("No Slack integrations found")
+        elif len(integrations) > 1:
+            raise ValueError("Multiple Slack integrations found, please specify integration_id")
+        integration = integrations[0]
+    else:
+        integration = await service.get_by_id(integration_id)
+    if not integration or integration.integration_provider != "slack":
+        raise ValueError("Integration for Slack not found")
+
+    provider = SlackProvider(configuration=integration.configuration)
+    await provider.authenticate()
+    return await provider.get_api_client()

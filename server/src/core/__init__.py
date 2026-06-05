@@ -2,6 +2,7 @@ from .adapters.cloud_resource_adapter import CloudResourceAdapter
 from .adapters.provider_adapters import (
     StorageProviderAdapter,
     SecretProviderAdapter,
+    NotificationProviderAdapter,
 )
 from .base_worker import BaseMessagesWorker
 from .feature_flags.model import FeatureFlag
@@ -61,6 +62,7 @@ __all__ = [
     "WorkerDTO",
     "StorageProviderAdapter",
     "SecretProviderAdapter",
+    "NotificationProviderAdapter",
     "UserDTO",
     "get_logged_user",
     "get_user_from_token",
