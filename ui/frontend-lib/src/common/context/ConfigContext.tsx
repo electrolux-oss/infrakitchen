@@ -16,6 +16,7 @@ interface ConfigContextType {
   linkPrefix: string;
   ikApi: InfraKitchenApi;
   webSocketEnabled?: boolean;
+  entities?: string[];
 }
 
 interface GlobalConfigType {
@@ -48,7 +49,8 @@ export const ConfigProvider = ({
 
   const getGlobalConfig = useCallback(async (): Promise<any> => {
     config.ikApi
-      .graphqlRequest<{ globalConfig: GlobalConfigType }>(
+      .graphqlRequest<{ globalConfig: GlobalConfigType; entities: string[] }>(
+
         `{
           globalConfig {
             approvalFlow
@@ -60,6 +62,7 @@ export const ConfigProvider = ({
             storageProviderRegistry
             secretProviderRegistry
           }
+          entities
         }`,
       )
       .then((response) => {
@@ -72,6 +75,7 @@ export const ConfigProvider = ({
           git_provider_registry: gql.gitProviderRegistry,
           storage_provider_registry: gql.storageProviderRegistry,
           secret_provider_registry: gql.secretProviderRegistry,
+          entities: response.entities,
         });
       })
       .catch((error: any) => {

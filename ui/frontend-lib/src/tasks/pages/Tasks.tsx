@@ -14,16 +14,9 @@ import StatusChip from "../../common/StatusChip";
 import { TASK_FIELD_MAP, transformTask } from "../graphql";
 
 export const TasksPage = () => {
-  const { linkPrefix, ikApi } = useConfig();
+  const { linkPrefix, globalConfig } = useConfig();
 
-  const [entities, setEntities] = useState<string[]>([]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    ikApi.get("entities", {}).then((response) => {
-      setEntities(response);
-    });
-  }, [ikApi]);
 
   // Configure filters
   const filterConfigs: FilterConfig[] = useMemo(
@@ -32,12 +25,12 @@ export const TasksPage = () => {
         id: "entity",
         type: "autocomplete" as const,
         label: "Entity Type",
-        options: entities,
+        options: globalConfig.entities,
         multiple: true,
         width: 420,
       },
     ],
-    [entities],
+    [globalConfig.entities],
   );
 
   // Build API filters

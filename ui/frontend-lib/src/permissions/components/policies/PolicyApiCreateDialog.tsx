@@ -32,7 +32,7 @@ const actions = [
 
 export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
   const { role_name, onClose } = props;
-  const { ikApi } = useConfig();
+  const { ikApi, globalConfig } = useConfig();
   const { control, handleSubmit } = useForm<ApiPolicyCreate>({
     mode: "onChange",
     defaultValues: {
@@ -41,19 +41,6 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
       selectedApiPermissions: [],
     },
   });
-
-  const [entities, setEntities] = useState<string[]>([]);
-
-  useEffect(() => {
-    ikApi
-      .get("entities")
-      .then((data: string[]) => {
-        setEntities(data);
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
-  }, [ikApi]);
 
   const onSubmit = useCallback(
     async (data: ApiPolicyCreate) => {
@@ -143,12 +130,12 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                   Select APIs and Actions:
                 </Typography>
                 <FormGroup>
-                  {entities.length === 0 && (
+                  {globalConfig.entities.length === 0 && (
                     <Typography variant="body2" color="textSecondary">
                       No APIs available.
                     </Typography>
                   )}
-                  {entities.map((apiName) => {
+                  {globalConfig.entities.map((apiName: string) => {
                     const isApiSelected = currentSelectedApiPermissions?.some(
                       (p) => p.api === apiName,
                     );

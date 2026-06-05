@@ -4,6 +4,7 @@ from strawberry.types import Info
 from core.adapters.provider_adapters import IntegrationProvider, SecretProviderAdapter, StorageProviderAdapter
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.config import InfrakitchenConfig
+from core.utils.entities import get_all_entities
 from graphql_api.helpers import IsAuthenticated
 
 
@@ -55,3 +56,7 @@ class ConfigQuery:
             storage_provider_registry=list(StorageProviderAdapter.adapters.keys()),
             secret_provider_registry=list(SecretProviderAdapter.adapters.keys()),
         )
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def entities(self, info: Info) -> list[str]:
+        return get_all_entities()
