@@ -1,11 +1,15 @@
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.favorites.dependencies import get_favorite_service
 from application.integrations.dependencies import get_integration_service
+from application.resource_temp_state.handler import ResourceTempStateHandler
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
-from application.resource_temp_state.handler import ResourceTempStateHandler
+from application.validation_rules.dependencies import get_validation_rule_service
+from application.workflows.crud import WorkflowCRUD
+from application.workflows.service import WorkflowService
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
@@ -13,12 +17,10 @@ from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
 from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
-from application.validation_rules.dependencies import get_validation_rule_service
 
+from .cascade_destroy_service import CascadeDestroyService
 from .crud import ResourceCRUD
 from .service import ResourceService
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def get_resource_service(
@@ -45,4 +47,22 @@ def get_resource_service(
         task_service=get_task_service(session=session),
         validation_rule_service=get_validation_rule_service(session=session),
         favorite_service=get_favorite_service(session=session),
+    )
+
+
+def get_cascade_destroy_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> CascadeDestroyService:
+    workflow_service = WorkflowService(
+        crud=WorkflowCRUD(session=session),
+        revision_handler=RevisionHandler(session=session, entity_name="workflow"),
+        event_sender=EventSender(entity_name="workflow"),
+        audit_log_handler=AuditLogHandler(session=session, entity_name="workflow"),
+    )
+    return CascadeDestroyService(
+        resource_crud=ResourceCRUD(session=session),
+        workflow_service=workflow_service,
+        resource_temp_state_handler=ResourceTempStateHandler(session=session),
+        event_sender=EventSender(entity_name="workflow"),
+        audit_log_handler=AuditLogHandler(session=session, entity_name="cascade_destroy"),
     )

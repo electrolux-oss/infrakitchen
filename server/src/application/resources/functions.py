@@ -75,6 +75,7 @@ async def get_resource_actions(
             actions.append(ModelActions.DELETE)
     elif state == ModelState.PROVISIONED:
         actions.append(ModelActions.DESTROY)
+        actions.append(ModelActions.CASCADE_DESTROY)
         actions.append(ModelActions.EXECUTE)
         actions.append(ModelActions.DOWNLOAD)
         actions.append(ModelActions.EDIT)
@@ -92,6 +93,7 @@ async def get_resource_actions(
             actions.append(ModelActions.DELETE)
         elif status == ModelStatus.ERROR:
             actions.append(ModelActions.DESTROY)
+            actions.append(ModelActions.CASCADE_DESTROY)
             actions.append(ModelActions.DRYRUN)
         if temp_state_exists and user_is_admin:
             actions.append(ModelActions.APPROVE)

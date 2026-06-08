@@ -11,13 +11,16 @@ import {
   Card,
   CardActions,
   CardHeader,
+  CircularProgress,
   TextField,
   Typography,
 } from "@mui/material";
 
 import { ENTITY_ACTION } from "../../utils";
+import { WorkflowResponse } from "../../workflows/types";
 import { useConfig } from "../context";
 import { useEntityProvider } from "../context/EntityContext";
+import { notify, notifyError } from "../hooks/useNotification";
 
 import { ActionButton } from "./buttons/ActionButton";
 import { DeleteButton } from "./buttons/DeleteEntityButton";
@@ -33,7 +36,10 @@ export const DangerZoneCard = () => {
     destroy: false,
     delete: false,
     disable: false,
+    cascade_destroy: false,
   });
+  const [cascadeDestroyLoading, setCascadeDestroyLoading] =
+    useState<boolean>(false);
 
   const navigate = useNavigate();
 
@@ -113,6 +119,15 @@ export const DangerZoneCard = () => {
             onClick={() => changeDialog("disable")}
           >
             Disable
+          </Button>
+        )}
+        {actions.includes(ENTITY_ACTION.CASCADE_DESTROY) && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => changeDialog("cascade_destroy")}
+          >
+            Cascade Destroy
           </Button>
         )}
       </CardActions>
@@ -232,6 +247,85 @@ export const DangerZoneCard = () => {
           >
             Disable
           </ActionButton>
+        }
+      />
+      <CommonDialog
+        maxWidth="xs"
+        title={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <WarningIcon color="error" />
+            <Typography variant="h6" component="span">
+              Confirmation
+            </Typography>
+          </Box>
+        }
+        open={dialogValues.cascade_destroy}
+        onClose={() => changeDialog("cascade_destroy")}
+        content={
+          <>
+            <Alert severity="warning">
+              This will destroy this resource and all its dependent children.
+            </Alert>
+            <Typography>
+              <br />
+              Are you sure you want to cascade destroy{" "}
+              <mark>
+                <code>{entity.name || entity.identifier}</code>
+              </mark>
+              ? All associated infrastructure and data will be permanently
+              destroyed, including every child resource.
+              <br />
+              <br />
+            </Typography>
+            <Typography>
+              To confirm, enter{" "}
+              <mark>
+                <code>{entity.name || entity.identifier}</code>
+              </mark>{" "}
+              in the text field.
+            </Typography>
+            <TextField
+              variant="outlined"
+              value={entityName}
+              onChange={handleEntityDestroy}
+              fullWidth
+            />
+          </>
+        }
+        actions={
+          <Button
+            variant="contained"
+            color="error"
+            disabled={
+              cascadeDestroyLoading ||
+              entityName !== (entity.name || entity.identifier)
+            }
+            startIcon={
+              cascadeDestroyLoading ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : undefined
+            }
+            onClick={() => {
+              setCascadeDestroyLoading(true);
+              ikApi
+                .patchRaw(`resources/${entity.id}/cascade_destroy`, {})
+                .then((response: WorkflowResponse) => {
+                  notify("Cascade destroy workflow created", "success");
+                  changeDialog("cascade_destroy");
+                  navigate(`${linkPrefix}workflows/${response.id}`);
+                })
+                .catch((error: unknown) => {
+                  notifyError(error);
+                  changeDialog("cascade_destroy");
+                })
+                .finally(() => {
+                  setCascadeDestroyLoading(false);
+                  setDestroyEntityName("");
+                });
+            }}
+          >
+            Cascade Destroy
+          </Button>
         }
       />
     </Card>
