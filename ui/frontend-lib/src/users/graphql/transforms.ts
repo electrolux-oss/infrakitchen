@@ -30,7 +30,12 @@ type GqlUserBaseFieldTypes = {
   isPrimary: boolean | null;
 };
 
+type GqlUserMetadata = {
+  slackId: string | null;
+};
+
 type GqlUserRelationFieldTypes = {
+  meta: GqlUserMetadata | null;
   secondaryAccounts: (GqlUserShort | null)[] | null;
   primaryAccount: (GqlUserShort | null)[] | null;
 };
@@ -39,7 +44,7 @@ type GqlUserFieldTypes = GqlUserBaseFieldTypes & GqlUserRelationFieldTypes;
 
 export type GqlUser = Pick<
   GqlUserFieldTypes,
-  UserGraphqlBaseField | UserGraphqlRelationField
+  UserGraphqlBaseField | UserGraphqlRelationField | "meta"
 >;
 
 export type GqlUserOptional = Partial<GqlUser> &
@@ -82,6 +87,7 @@ export function transformUser(gql: GqlUser): UserResponse {
     last_name: gql.lastName ?? "",
     deactivated: gql.deactivated,
     is_primary: gql.isPrimary ?? false,
+    meta: gql.meta ? { slack_id: gql.meta.slackId } : null,
     secondary_accounts: secondaryAccounts,
     primary_account: primaryAccount,
     _entity_name: "user",
@@ -113,6 +119,7 @@ export function transformUserOptional(
     last_name: gql.lastName ?? undefined,
     deactivated: gql.deactivated,
     is_primary: gql.isPrimary ?? undefined,
+    meta: gql.meta ? { slack_id: gql.meta.slackId } : null,
     secondary_accounts: secondaryAccounts,
     primary_account: primaryAccount,
     _entity_name: "user",

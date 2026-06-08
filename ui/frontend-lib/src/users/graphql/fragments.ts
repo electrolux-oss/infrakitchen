@@ -20,6 +20,9 @@ export const USER_GRAPHQL_FIELDS = {
     "deactivated",
     "isPrimary",
   ] as const,
+  nested: {
+    meta: "meta { slackId }",
+  } as const,
   relations: {
     secondaryAccounts: "secondaryAccounts",
     primaryAccount: "primaryAccount",
@@ -38,6 +41,7 @@ export const USER_SHORT_FIELDS = `
 
 export const USER_FIELDS = `
   ${buildSelection(USER_GRAPHQL_FIELDS.base)}
+  ${USER_GRAPHQL_FIELDS.nested.meta}
   ${buildNestedSelection(USER_GRAPHQL_FIELDS.relations.secondaryAccounts, USER_SHORT_FIELDS)}
   ${buildNestedSelection(USER_GRAPHQL_FIELDS.relations.primaryAccount, USER_SHORT_FIELDS)}
 `;

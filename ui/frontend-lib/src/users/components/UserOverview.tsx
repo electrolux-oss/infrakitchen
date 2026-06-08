@@ -5,6 +5,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { UserAvatar } from "../../common/components/UserAvatar";
+import { SlackSync } from "../../common/providers/slack/SlackSync";
 import { UserResponse } from "../types";
 
 export interface UserAboutProps {
@@ -34,6 +35,10 @@ export const UserOverview = ({ user }: UserAboutProps) => {
       <CommonField
         name={"Last Updated"}
         value={<RelativeTime date={user.updated_at} />}
+      />
+      <CommonField
+        name={"Slack"}
+        value={<SlackSync userId={user.id} slackId={user.meta?.slack_id} />}
       />
     </OverviewCard>
   );

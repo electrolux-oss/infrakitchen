@@ -5,6 +5,10 @@ export interface UserShort {
   provider: string;
 }
 
+export interface UserMetadata {
+  slack_id?: string | null;
+}
+
 export interface UserResponse extends UserShort {
   created_at: Date;
   updated_at: Date;
@@ -19,6 +23,7 @@ export interface UserResponse extends UserShort {
   primary_account?: UserShort[] | null;
   provider: string;
   password?: string;
+  meta?: UserMetadata | null;
 }
 
 export type UserResponseOptional = Partial<UserResponse>;
