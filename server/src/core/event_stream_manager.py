@@ -66,6 +66,14 @@ async def rabbitmq_consumer():
         )
         _ = await events_exchange.bind(raw_messages_exchange, routing_key="events.*.*")
 
+        # Declare notification exchange
+        await channel.declare_exchange(
+            "ik_notification_messages",
+            aio_pika.ExchangeType.TOPIC,
+            auto_delete=False,
+            durable=True,
+        )
+
         # Declaring a queue
         queue = await channel.declare_queue(name="event_messages_consumer", auto_delete=False)
 
@@ -93,50 +101,6 @@ async def start_rabbitmq_consumer():
         logger.error(f"RabbitMQ consumer stopped unexpectedly: {e}, restrating in 5 seconds")
         await asyncio.sleep(5)  # Wait before restarting
         await start_rabbitmq_consumer()
-
-
-async def rabbitmq_log_consumer(entity_name: str, entity_id: str, connection_id: str):
-    async with RabbitMQConnection() as connection:
-        channel = await connection.get_channel()
-        cm = ConnectionManager()
-        if channel is None:
-            raise RuntimeError("Failed to create a channel. Connection might not be established.")
-        try:
-            raw_messages_exchange = await channel.declare_exchange(
-                "ik_raw_messages",
-                aio_pika.ExchangeType.TOPIC,
-                auto_delete=False,
-                durable=True,
-            )
-
-            log_exchange = await channel.declare_exchange(
-                f"ik_log_messages_{entity_id}",
-                aio_pika.ExchangeType.FANOUT,
-                auto_delete=True,
-                durable=True,
-            )
-
-            routing_key = f"logs.{entity_name}.{entity_id}"
-            _ = await log_exchange.bind(raw_messages_exchange, routing_key=routing_key)
-
-            # Declaring a temp queue
-            queue = await channel.declare_queue(exclusive=True, auto_delete=True)
-
-            # Binding the queue to the exchange
-            _ = await queue.bind(log_exchange)
-
-            logger.info(f"Subscribed to RabbitMQ ik_log_messages for {entity_id}")
-
-            entity_queue = await cm.get_queue(f"{str(entity_id)}_{connection_id}")
-
-            async with queue.iterator(no_ack=True) as q:
-                async for message in q:
-                    msg = json.loads(message.body.decode())
-                    msg.pop("_metadata", None)  # Decrease message size before sending to client
-                    await entity_queue.put(json.dumps(msg))
-        finally:
-            logger.debug("Closing RabbitMQ logs connection")
-            entity_queue = cm.remove_queue(str(entity_id))
 
 
 async def rabbitmq_events_consumer(user_id: str, connection_id: str):
@@ -175,36 +139,3 @@ async def rabbitmq_events_consumer(user_id: str, connection_id: str):
                     await entity_queue.put(msg)
         finally:
             logger.debug("Closing RabbitMQ logs connection")
-
-
-async def rabbitmq_notifications_consumer(user_id: str, connection_id: str):
-    async with RabbitMQConnection() as connection:
-        cm = ConnectionManager()
-        channel = await connection.get_channel()
-        if channel is None:
-            raise RuntimeError("Failed to create a channel. Connection might not be established.")
-        try:
-            raw_messages_exchange = await channel.declare_exchange(
-                "ik_raw_messages",
-                aio_pika.ExchangeType.TOPIC,
-                auto_delete=False,
-                durable=True,
-            )
-
-            queue = await channel.declare_queue(exclusive=True, auto_delete=True)
-
-            await queue.bind(raw_messages_exchange, routing_key=f"notifications.*.{user_id}")
-            user_queue = await cm.get_queue(f"{str(user_id)}_{connection_id}")
-
-            logger.debug(
-                f"Subscribed to RabbitMQ notifications for User {user_id} with pattern notifications.*.{user_id}"
-            )
-
-            async with queue.iterator(no_ack=True) as q:
-                async for message in q:
-                    msg = message.body.decode()
-                    logger.debug(f"Consuming notification message for user {user_id}:", msg)
-                    await user_queue.put(msg)
-        finally:
-            logger.debug("Closing RabbitMQ notifications connection")
-            cm.remove_queue(f"{str(user_id)}_{connection_id}")

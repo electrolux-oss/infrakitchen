@@ -11,6 +11,8 @@ import { UserPoliciesCard } from "../../permissions/components/policies/UserPoli
 import { UserRolesCard } from "../../permissions/components/roles/UserRolesCard";
 
 import { UserConfiguration } from "./UserConfiguration";
+import { UserNotificationPreferencesCard } from "./UserNotificationPreferencesCard";
+import { UserNotificationSubscriptionsCard } from "./UserNotificationSubscriptionsCard";
 import { UserOverview } from "./UserOverview";
 
 export const UserContent = () => {
@@ -29,6 +31,15 @@ export const UserContent = () => {
     {
       label: "Policies",
       content: <UserPoliciesCard user_id={entity.id} />,
+    },
+    {
+      label: "Notifications",
+      content: (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <UserNotificationSubscriptionsCard user_id={entity.id} />
+          <UserNotificationPreferencesCard user_id={entity.id} />
+        </Box>
+      ),
     },
     {
       label: "Audit",

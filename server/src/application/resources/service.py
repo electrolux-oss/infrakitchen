@@ -6,6 +6,8 @@ from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
+from core.notifications.model import Subscription
+from core.notifications.service import SubscriptionService
 from application.resources.functions import (
     add_resource_parent_policy,
     convert_field_by_naming_convention_pattern,
@@ -89,6 +91,7 @@ class ResourceService:
         task_service: TaskEntityService,
         validation_rule_service: ValidationRuleService,
         favorite_service: FavoriteService,
+        subscription_service: SubscriptionService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -105,6 +108,7 @@ class ResourceService:
         self.task_service: TaskEntityService = task_service
         self.validation_rule_service: ValidationRuleService = validation_rule_service
         self.favorite_service: FavoriteService = favorite_service
+        self.subscription_service: SubscriptionService = subscription_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -823,6 +827,7 @@ class ResourceService:
         await self.log_service.delete_by_entity_id(resource_id)
         await self.task_service.delete_by_entity_id(resource_id)
         await delete_resource_policies(resource_id, self.permission_service)
+        await self.subscription_service.delete_many_by_entity_id("resource", resource_id)
         await self.crud.delete(existing_resource)
 
     async def get_tree(
@@ -1080,6 +1085,88 @@ class ResourceService:
         policies.append(PermissionResponse.model_validate(policy))
         await self.permission_service.casbin_enforcer.send_reload_event()
         return policies
+
+    async def create_resource_subscription(
+        self,
+        resource_id: str,
+        requester: UserDTO,
+        inherit_children: bool = False,
+        user_id: str | None = None,
+    ) -> list[Subscription]:
+        resource = await self.get_by_id(resource_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {resource_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+
+        if not inherit_children:
+            resource_ids_to_subscribe = [resource_id]
+        else:
+            resource_tree = await self.crud.get_tree_to_children(resource_id)
+            seen: set[str] = set()
+            resource_ids_to_subscribe = []
+            for node in resource_tree:
+                node_id = str(node["id"])
+                if node_id not in seen:
+                    seen.add(node_id)
+                    resource_ids_to_subscribe.append(node_id)
+
+        # Fetch all existing subscriptions for this user + entity_type in one query
+        existing_subscriptions = await self.subscription_service.query_all(
+            filter={"user_id": target_user_id, "entity_type": "resource", "entity_id": resource_ids_to_subscribe}
+        )
+        already_subscribed = {str(s.entity_id) for s in existing_subscriptions}
+
+        # Only create subscriptions for resources not already subscribed
+        ids_to_create = [rid for rid in resource_ids_to_subscribe if rid not in already_subscribed]
+
+        subscriptions: list[Subscription] = list(existing_subscriptions)
+        for res_id in ids_to_create:
+            subscription = await self.subscription_service.create(
+                requester=requester,
+                entity_type="resource",
+                entity_id=res_id,
+                user_id=user_id,
+            )
+            subscriptions.append(subscription)
+        return subscriptions
+
+    async def delete_resource_subscription(
+        self,
+        resource_id: str,
+        requester: UserDTO,
+        inherit_children: bool = False,
+        user_id: str | None = None,
+    ) -> bool:
+        resource = await self.get_by_id(resource_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {resource_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+
+        if not inherit_children:
+            resource_ids_to_unsubscribe = [resource_id]
+        else:
+            resource_tree = await self.crud.get_tree_to_children(resource_id)
+            seen: set[str] = set()
+            resource_ids_to_unsubscribe = []
+            for node in resource_tree:
+                node_id = str(node["id"])
+                if node_id not in seen:
+                    seen.add(node_id)
+                    resource_ids_to_unsubscribe.append(node_id)
+
+        subscriptions = await self.subscription_service.query_all(
+            filter={
+                "user_id": target_user_id,
+                "entity_type": "resource",
+                "entity_id": resource_ids_to_unsubscribe,
+            }
+        )
+
+        for subscription in subscriptions:
+            await self.subscription_service.delete(subscription_id=subscription.id)
+        return True
 
     async def sync_workspace(self, resource_id: str, requester: UserDTO) -> ResourceResponse:
         """

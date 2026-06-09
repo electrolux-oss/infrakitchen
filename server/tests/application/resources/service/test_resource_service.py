@@ -1088,6 +1088,7 @@ class TestDelete:
         mock_audit_log_handler,
         mock_task_entity_crud,
         mock_permission_crud,
+        mock_subscription_crud,
         mock_user_dto,
     ):
         existing_resource = mocked_resource
@@ -1106,6 +1107,7 @@ class TestDelete:
         )
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
         mock_permission_crud.delete_entity_permissions.assert_awaited_once_with("resource", existing_resource.id)
+        mock_subscription_crud.delete_many_by_entity_id.assert_awaited_once_with("resource", existing_resource.id)
 
     @pytest.mark.asyncio
     async def test_delete_resource_does_not_exist(
@@ -1116,6 +1118,7 @@ class TestDelete:
         mock_revision_handler,
         mock_audit_log_handler,
         mock_permission_crud,
+        mock_subscription_crud,
     ):
         requester = Mock(spec=UserDTO)
 
@@ -1127,6 +1130,7 @@ class TestDelete:
         mock_revision_handler.delete_revisions.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_not_awaited()
         mock_permission_crud.delete_entity_permissions.assert_not_awaited()
+        mock_subscription_crud.delete_many_by_entity_id.assert_not_awaited()
 
 
 class TestGetTree:

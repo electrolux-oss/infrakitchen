@@ -1,6 +1,7 @@
 import logging
 import uuid
 from typing import override
+from jinja2 import Template
 
 from application.integrations.schema import SlackIntegrationConfig
 from core.adapters.provider_adapters import IntegrationProvider, NotificationProviderAdapter
@@ -12,6 +13,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .slack_api import SlackApi
 
 log = logging.getLogger("slack_provider")
+
+
+DEFAULT_SLACK_NOTIFICATION_TEMPLATE = """*{{ title or 'InfraKitchen Alert' }}* \
+{% set status_normalized = (status or 'info') | lower %}\
+{% if status_normalized in ['error', 'failed', 'failure'] %}❌\
+{% elif status_normalized in ['success', 'ok', 'done'] %}✅\
+{% elif status_normalized in ['warning', 'warn'] %}⚠️\
+{% else %}ℹ️{% endif %}
+
+> {{ (msg or '') | replace('\n', '\n> ') }}
+
+*Details*
+• *Entity:* `{{ entity_name or 'unknown' }}`
+• *ID:* `{% if entity_id %}{{ entity_id }}{% else %}-{% endif %}`
+"""
 
 
 class SlackAuthentication:
@@ -74,15 +90,26 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
     @override
     async def send_notification(self, **kwargs) -> None:
         channel = kwargs.get("channel")
-        message = kwargs.get("message")
-        title = kwargs.get("title")
+        msg = kwargs.get("msg")
+
+        payload = {
+            "msg": msg,
+            "title": kwargs.get("title"),
+            "status": kwargs.get("status"),
+            "entity_id": kwargs.get("entity_id"),
+            "entity_name": kwargs.get("entity_name"),
+        }
 
         if not channel:
             raise CannotProceed("Slack channel is required")
-        if not message:
+        if not msg:
             raise CannotProceed("Notification message is required")
 
-        text = f"*{title}*\n{message}" if title else str(message)
+        template_str = kwargs.get("template") or DEFAULT_SLACK_NOTIFICATION_TEMPLATE
+        text = Template(template_str).render(**payload).strip()
+
+        if not text:
+            raise CannotProceed("Rendered Slack notification text is empty")
 
         try:
             api_client = await self.get_api_client()

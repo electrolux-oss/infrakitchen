@@ -5,6 +5,7 @@ from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.audit_log.queries import AuditLogQuery
 from graphql_api.modules.log.subscriptions import LogSubscription
+from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
 from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.resource.queries import ResourceQuery
@@ -28,6 +29,9 @@ from graphql_api.modules.providers.slack.queries import SlackQuery
 from graphql_api.modules.providers.slack.mutations import SlackMutation
 from graphql_api.modules.user.queries import UserQuery
 from graphql_api.modules.user.mutations import UserMutation
+from graphql_api.modules.notification.queries import NotificationQuery
+from graphql_api.modules.notification.mutations import NotificationMutation
+from graphql_api.modules.resource.mutations import ResourceMutation
 from graphql_api.modules.log.queries import LogQuery
 from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 
@@ -60,6 +64,7 @@ class Query(
     UserQuery,
     LogQuery,
     ValidationRuleQuery,
+    NotificationQuery,
 ):
     pass
 
@@ -68,6 +73,8 @@ class Query(
 class Mutation(
     SlackMutation,
     UserMutation,
+    NotificationMutation,
+    ResourceMutation,
 ):
     pass
 
@@ -75,6 +82,7 @@ class Mutation(
 @strawberry.type
 class Subscription(
     LogSubscription,
+    NotificationSubscription,
 ):
     pass
 

@@ -82,7 +82,7 @@ class NotificationProviderAdapter:
 
     __notification_provider_adapter_name__: str = ""
 
-    adapters: dict[str, Any] = {}
+    notification_adapters: dict[str, Any] = {}
     environment_variables: dict[str, str] = {}
     workspace_root: str | None = None
 
@@ -90,7 +90,7 @@ class NotificationProviderAdapter:
     def __init_subclass__(cls, **kwargs):
         """Register adapter subclass in adapters registry."""
         super().__init_subclass__(**kwargs)
-        cls.adapters[cls.__notification_provider_adapter_name__] = cls
+        cls.notification_adapters[cls.__notification_provider_adapter_name__] = cls
 
     async def authenticate(self) -> None:
         """Authenticate with the notification provider.

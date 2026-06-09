@@ -36,6 +36,7 @@ from .utils.json_encoder import JsonEncoder
 from .utils.message_handler import MessageHandler
 from .base_models import MessageModel
 from .models.encrypted_secret import EncryptedSecretStr
+from .notifications import SubscriptionDTO, NotificationPreferenceDTO
 
 
 __all__ = [
@@ -71,4 +72,6 @@ __all__ = [
     "PermissionDTO",
     "EncryptedSecretStr",
     "FeatureFlag",
+    "NotificationPreferenceDTO",
+    "SubscriptionDTO",
 ]

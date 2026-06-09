@@ -9,6 +9,7 @@ from application.resource_temp_state.handler import ResourceTempStateHandler
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
+from core.notifications.dependencies import get_subscription_service
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
 from core.tasks.dependencies import get_task_service
@@ -45,4 +46,5 @@ def get_resource_service(
         task_service=get_task_service(session=session),
         validation_rule_service=get_validation_rule_service(session=session),
         favorite_service=get_favorite_service(session=session),
+        subscription_service=get_subscription_service(session=session),
     )

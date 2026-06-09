@@ -93,6 +93,14 @@ from .fixtures.test_secret_fixtures import (
     mocked_secret_response,
     mocked_secret,
 )
+from .fixtures.test_notification_fixtures import (
+    mock_subscription_crud,
+    mock_subscription_service,
+    mock_notification_preference_crud,
+    mock_notification_preference_service,
+    mocked_subscription,
+    mocked_notification_preference,
+)
 from .fixtures.test_task_worker_fixutres import (
     mock_task_controller,
     mock_task_controller_factory,
@@ -177,6 +185,12 @@ __all__ = [
     "mock_secret_service",
     "mocked_secret_response",
     "mocked_secret",
+    "mock_subscription_crud",
+    "mock_subscription_service",
+    "mock_notification_preference_crud",
+    "mock_notification_preference_service",
+    "mocked_subscription",
+    "mocked_notification_preference",
     "mock_resource_crud",
     "mock_resource_service",
     "resource_response",

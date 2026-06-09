@@ -26,7 +26,7 @@ from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core import BaseMessagesWorker, MessageHandler, MessageModel
 from core.constants.model import ModelActions
-from core.custom_notification_controller import create_message, send_message
+from core.notifications.controller import NotificationEvent, NotificationController
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
@@ -65,6 +65,7 @@ class TaskWorker(BaseMessagesWorker):
             auto_delete=False,
             commit_worker_status=True,
         )
+        self.notification_controller = NotificationController(session=session)
 
     @override
     async def process_message(self, message: MessageHandler) -> None:
@@ -327,25 +328,16 @@ class TaskWorker(BaseMessagesWorker):
         title: str | None = None,
         status: str = "info",
     ):
-        entity_id = task_controller.logger.entity_id
-        entity_name = task_controller.logger.entity_name
-        user_id = str(task_controller.user.id)
-
-        logger.debug(f"Sending notification - entity_id: {entity_id}, entity_name: {entity_name}, user_id: {user_id}")
-
-        notification_message = create_message(
-            body={
-                "msg": message,
-                "title": title,
-                "status": status,
-                "entity_id": str(entity_id) if entity_id is not None else None,
-                "entity_name": entity_name,
-            },
-            entity_name=entity_name,
-            user_id=user_id,
+        logger.debug(f"Preparing to send notification - entity_id: {task_controller.logger.entity_id}")
+        event_message = NotificationEvent(
+            message=message,
+            title=title or "Task Update",
+            status=status,
+            entity_id=task_controller.logger.entity_id,
+            entity_type=task_controller.logger.entity_name,
+            event_type="update",
         )
-        await send_message(notification_message)
-        logger.debug(f"Notification sent: {notification_message}")
+        await self.notification_controller.route_notification(event_message)
 
     async def _send_success_notification(self, task_controller, action):
         entity_name = task_controller.logger.entity_name
