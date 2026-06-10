@@ -36,6 +36,7 @@ class Template(BaseRevision):
         primaryjoin=id == template_links.c.parent_id,
         secondaryjoin=id == template_links.c.child_id,
         back_populates="parents",
+        lazy="selectin",
     )
     parents: Mapped[list["Template"]] = relationship(
         "Template",
@@ -43,6 +44,7 @@ class Template(BaseRevision):
         primaryjoin=id == template_links.c.child_id,
         secondaryjoin=id == template_links.c.parent_id,
         back_populates="children",
+        lazy="selectin",
     )
     cloud_resource_types: Mapped[list[str]] = mapped_column(JSON, default=list)
     abstract: Mapped[bool] = mapped_column(default=False)

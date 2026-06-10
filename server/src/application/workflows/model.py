@@ -57,6 +57,7 @@ class Workflow(Base):
     steps: Mapped[list["WorkflowStep"]] = relationship(
         "WorkflowStep",
         back_populates="workflow",
+        lazy="selectin",
         order_by="WorkflowStep.position",
         cascade="all, delete-orphan",
         passive_deletes=True,
