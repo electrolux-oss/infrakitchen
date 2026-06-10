@@ -64,24 +64,6 @@ The built-in GraphiQL UI is accessible at `/api/graphql` in the browser. To auth
 
 ---
 
-## Available Entities
-
-The GraphQL API exposes the following query types:
-
-| Entity                  | Single query                    | List query              |
-| :---------------------- | :------------------------------ | :---------------------- |
-| **Executor**            | `executor(id: UUID)`            | `executors`             |
-| **Integration**         | `integration(id: UUID)`         | `integrations`          |
-| **Resource**            | `resource(id: UUID)`            | `resources`             |
-| **Secret**              | `secret(id: UUID)`              | `secrets`               |
-| **Source Code**         | `sourceCode(id: UUID)`          | `sourceCodes`           |
-| **Source Code Version** | `sourceCodeVersion(id: UUID)`   | `sourceCodeVersions`    |
-| **Storage**             | `storage(id: UUID)`             | `storages`              |
-| **Template**            | `template(id: UUID)`            | `templates`             |
-| **Workspace**           | `workspace(id: UUID)`           | `workspaces`            |
-
----
-
 ## Query Examples
 
 ### Fetch a single resource

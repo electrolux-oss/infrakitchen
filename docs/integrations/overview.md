@@ -87,3 +87,7 @@ Before deletion:
 - [Backstage Integration](./auth/backstage.md) - Plugin configuration
 - [Service Accounts](./auth/service-account.md) - API token management
 - [Guest Access](./auth/guest.md) - Development mode
+
+### Notification Providers
+
+- [Slack Setup Guide](./notifications/slack.md) - Bot token, scopes, and channel setup
