@@ -85,9 +85,11 @@ class WorkflowStep(Base):
         UUID(as_uuid=True), ForeignKey("source_code_versions.id"), nullable=True
     )
     source_code_version: Mapped[SourceCodeVersion | None] = relationship("SourceCodeVersion", lazy="joined")
-    parent_resource_ids: Mapped[list[Resource]] = relationship(secondary=workflow_step_parent_resources)
-    integration_ids: Mapped[list[Integration]] = relationship(secondary=workflow_step_integrations)
-    secret_ids: Mapped[list[Secret]] = relationship(secondary=workflow_step_secrets)
+    parent_resource_ids: Mapped[list[Resource]] = relationship(
+        secondary=workflow_step_parent_resources, lazy="selectin"
+    )
+    integration_ids: Mapped[list[Integration]] = relationship(secondary=workflow_step_integrations, lazy="selectin")
+    secret_ids: Mapped[list[Secret]] = relationship(secondary=workflow_step_secrets, lazy="selectin")
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     position: Mapped[int] = mapped_column(Integer, default=0)

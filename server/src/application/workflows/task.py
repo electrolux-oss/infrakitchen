@@ -497,7 +497,9 @@ class WorkflowTask:
         manage_resource for the create path.
 
         State machine:
-          PENDING          → call DESTROY action on resource → IN_PROGRESS
+          PENDING + resource DESTROYED+DONE   → step DONE immediately (already finished)
+          PENDING + resource in DESTROY state → skip re-issuing DESTROY, enter callback loop
+          PENDING + resource not yet in destroy flow → call DESTROY action on resource
           APPROVAL_PENDING → call APPROVE, then EXECUTE with trace_id
           READY            → call EXECUTE with trace_id → IN_PROGRESS
           IN_PROGRESS      → wait for callback
@@ -508,6 +510,42 @@ class WorkflowTask:
             raise CannotProceed(f"Destroy step {step.id} has no resource_id")
 
         if step.status == ModelStatus.PENDING:
+            resource = await self.resource_service.get_by_id(step.resource_id)
+            if not resource:
+                raise CannotProceed(f"Resource {step.resource_id} not found for destroy step {step.id}")
+
+            # Resource already fully destroyed — mark step done immediately
+            if resource.state == ModelState.DESTROYED and resource.status == ModelStatus.DONE:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            # Resource already in DESTROY flow — skip re-issuing DESTROY action,
+            # enter the callback loop with the resource's current status
+            if resource.state == ModelState.DESTROY:
+                if resource.status == ModelStatus.ERROR:
+                    # Previous attempt failed — retry by calling EXECUTE
+                    await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+                    resource = await self.resource_service.patch_action(
+                        step.resource_id,
+                        PatchBodyModel(action=ModelActions.EXECUTE),
+                        requester=self.user,
+                        trace_id=str(self.workflow_pydantic.id),
+                    )
+                    await self.change_step_status(
+                        step,
+                        new_status=resource.status,
+                        send_task=resource.status == ModelStatus.APPROVAL_PENDING,
+                    )
+                else:
+                    await self.change_step_status(
+                        step,
+                        new_status=resource.status,
+                        send_task=resource.status in (ModelStatus.APPROVAL_PENDING, ModelStatus.READY),
+                    )
+                return
+
+            # Normal path: resource not yet in destroy flow — issue DESTROY
             await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
             resource = await self.resource_service.patch_action(
                 step.resource_id,

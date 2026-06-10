@@ -62,7 +62,6 @@ def get_cascade_destroy_service(
     return CascadeDestroyService(
         resource_crud=ResourceCRUD(session=session),
         workflow_service=workflow_service,
-        resource_temp_state_handler=ResourceTempStateHandler(session=session),
         event_sender=EventSender(entity_name="workflow"),
         audit_log_handler=AuditLogHandler(session=session, entity_name="cascade_destroy"),
     )

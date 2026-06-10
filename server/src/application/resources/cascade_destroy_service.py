@@ -2,12 +2,12 @@ import logging
 from collections import deque
 from uuid import UUID
 
-from application.resource_temp_state.handler import ResourceTempStateHandler
 from application.workflows.schema import WorkflowCreate, WorkflowResponse, WorkflowStepCreate
 from application.workflows.service import WorkflowService
 from core.audit_logs.handler import AuditLogHandler
-from core.constants.model import ModelActions, ModelState, WorkflowAction
-from core.errors import EntityNotFound, EntityWrongState
+from core.constants.model import ModelActions, WorkflowAction
+from core.errors import AccessDenied, EntityNotFound
+from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
@@ -32,13 +32,11 @@ class CascadeDestroyService:
         self,
         resource_crud: ResourceCRUD,
         workflow_service: WorkflowService,
-        resource_temp_state_handler: ResourceTempStateHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
     ):
         self.resource_crud = resource_crud
         self.workflow_service = workflow_service
-        self.resource_temp_state_handler = resource_temp_state_handler
         self.event_sender = event_sender
         self.audit_log_handler = audit_log_handler
 
@@ -67,7 +65,7 @@ class CascadeDestroyService:
 
         ordered_resources = await self._collect_descendants_post_order(root)
 
-        await self._validate_resources(ordered_resources)
+        await self._validate_admin_permissions(ordered_resources, requester)
 
         steps = self._build_steps(ordered_resources)
 
@@ -99,9 +97,13 @@ class CascadeDestroyService:
         root: Resource,
     ) -> list[tuple[Resource, int]]:
         """
-        BFS over resource.children, tracking the maximum depth at which each
-        resource is reached.  Returns a list of (resource, position) tuples
-        sorted so that leaves (highest depth) come first (lowest position).
+        BFS via resource_crud.get_dependents(), tracking the maximum depth at
+        which each resource is reached.  Returns a list of (resource, position)
+        tuples sorted so that leaves (highest depth) come first (lowest position).
+
+        get_dependents() is used instead of resource.children to avoid triggering
+        SQLAlchemy lazy-loading on the children relationship, which has no configured
+        eager-load strategy and raises MissingGreenlet in async contexts.
 
         Position assignment:  position = max_depth_in_tree - node_depth
         This guarantees every child has a strictly lower position than its
@@ -122,10 +124,9 @@ class CascadeDestroyService:
             max_depth[rid] = depth
             resource_map[rid] = resource
 
-            for child in resource.children:
-                loaded_child = await self.resource_crud.get_by_id(child.id)
-                if loaded_child is not None:
-                    queue.append((loaded_child, depth + 1))
+            dependents = await self.resource_crud.get_dependents(rid)
+            for dependent in dependents:
+                queue.append((dependent, depth + 1))
 
         if not max_depth:
             return []
@@ -137,32 +138,26 @@ class CascadeDestroyService:
         result.sort(key=lambda t: t[1])
         return result
 
-    async def _validate_resources(self, ordered_resources: list[tuple[Resource, int]]) -> None:
+    async def _validate_admin_permissions(
+        self,
+        ordered_resources: list[tuple[Resource, int]],
+        requester: UserDTO,
+    ) -> None:
         """
-        Raise EntityWrongState if any resource in the tree:
-          - is already in a DESTROY / DESTROYED state, or
-          - has pending uncommitted changes (resource_temp_state).
+        Raise AccessDenied if the requester does not hold admin permission on
+        every resource in the cascade tree (root and all descendants).
         """
-        blocking_states = {ModelState.DESTROY, ModelState.DESTROYED}
-        invalid_ids: list[str] = []
-        temp_state_ids: list[str] = []
+        denied_ids: list[str] = []
 
         for resource, _ in ordered_resources:
-            if resource.state in blocking_states:
-                invalid_ids.append(str(resource.id))
+            permissions = await user_entity_permissions(requester, resource.id, "resource")
+            if "admin" not in permissions:
+                denied_ids.append(str(resource.id))
 
-            temp_state = await self.resource_temp_state_handler.get_by_resource_id(resource_id=resource.id)
-            if temp_state is not None:
-                temp_state_ids.append(str(resource.id))
-
-        if invalid_ids:
-            raise EntityWrongState(
-                f"Cannot cascade-destroy: resource(s) already in DESTROY/DESTROYED state: {', '.join(invalid_ids)}"
-            )
-        if temp_state_ids:
-            raise EntityWrongState(
-                f"Cannot cascade-destroy: resource(s) have pending uncommitted changes "
-                f"(approve or reject first): {', '.join(temp_state_ids)}"
+        if denied_ids:
+            raise AccessDenied(
+                f"Cannot cascade-destroy: admin permission required on all resources in the tree. "
+                f"Access denied for resource(s): {', '.join(denied_ids)}"
             )
 
     @staticmethod

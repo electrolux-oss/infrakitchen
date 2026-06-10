@@ -61,14 +61,20 @@ const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
       }
     >
       {view === "list" ? (
-        <WorkflowSteps steps={workflow.steps} />
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
       ) : hasWiring ? (
         <WorkflowWiringViewer
           wiring={workflow.wiring_snapshot}
           steps={workflow.steps}
         />
       ) : (
-        <WorkflowSteps steps={workflow.steps} />
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
       )}
     </PropertyCard>
   );

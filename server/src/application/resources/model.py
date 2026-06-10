@@ -72,6 +72,7 @@ class Resource(BaseEntity):
         primaryjoin=id == resource_links.c.parent_id,
         secondaryjoin=id == resource_links.c.child_id,
         back_populates="children",
+        lazy="selectin",
     )
     children: Mapped[list["Resource"]] = relationship(
         "Resource",
@@ -79,6 +80,7 @@ class Resource(BaseEntity):
         primaryjoin=id == resource_links.c.child_id,
         secondaryjoin=id == resource_links.c.parent_id,
         back_populates="parents",
+        lazy="selectin",
     )
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     abstract: Mapped[bool] = mapped_column(default=False)
