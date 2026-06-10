@@ -53,7 +53,6 @@ class Blueprint(BaseRevision):
             Blueprint.id == blueprint_templates.c.blueprint_id,
             blueprint_templates.c.is_external.is_(False),
         ),
-        lazy="selectin",
         order_by=blueprint_templates.c.position,
         viewonly=True,
         overlaps="external_templates",
@@ -67,7 +66,6 @@ class Blueprint(BaseRevision):
             Blueprint.id == blueprint_templates.c.blueprint_id,
             blueprint_templates.c.is_external.is_(True),
         ),
-        lazy="selectin",
         viewonly=True,
         overlaps="templates",
     )

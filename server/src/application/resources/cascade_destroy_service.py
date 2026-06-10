@@ -90,7 +90,7 @@ class CascadeDestroyService:
             f"covering {len(ordered_resources)} resource(s)"
         )
 
-        return WorkflowResponse.model_validate(workflow)
+        return workflow
 
     async def _collect_descendants_post_order(
         self,

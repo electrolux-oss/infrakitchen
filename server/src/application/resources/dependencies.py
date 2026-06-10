@@ -53,15 +53,16 @@ def get_resource_service(
 def get_cascade_destroy_service(
     session: AsyncSession = Depends(get_db_session),
 ) -> CascadeDestroyService:
+    event_sender = EventSender(entity_name="workflow")
     workflow_service = WorkflowService(
         crud=WorkflowCRUD(session=session),
         revision_handler=RevisionHandler(session=session, entity_name="workflow"),
-        event_sender=EventSender(entity_name="workflow"),
+        event_sender=event_sender,
         audit_log_handler=AuditLogHandler(session=session, entity_name="workflow"),
     )
     return CascadeDestroyService(
         resource_crud=ResourceCRUD(session=session),
         workflow_service=workflow_service,
-        event_sender=EventSender(entity_name="workflow"),
+        event_sender=event_sender,
         audit_log_handler=AuditLogHandler(session=session, entity_name="cascade_destroy"),
     )
