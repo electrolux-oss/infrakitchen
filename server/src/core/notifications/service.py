@@ -51,8 +51,8 @@ class SubscriptionService:
         self,
         requester: UserDTO,
         entity_type: str,
-        entity_id: str | None = None,
-        user_id: str | None = None,
+        entity_id: UUID | str | None = None,
+        user_id: UUID | str | None = None,
     ) -> Subscription:
         target_user_id = user_id or str(requester.id)
 

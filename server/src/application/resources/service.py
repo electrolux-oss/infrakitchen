@@ -10,6 +10,7 @@ from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
 from application.resources.functions import (
     add_resource_parent_policy,
+    add_resource_parent_subscriptions,
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_actions,
@@ -375,6 +376,12 @@ class ResourceService:
             resource_id=new_resource.id,
             parent_ids=[p.id for p in new_resource.parents],
             permission_service=self.permission_service,
+            requester=requester,
+        )
+        await add_resource_parent_subscriptions(
+            resource_id=new_resource.id,
+            parent_ids=[p.id for p in new_resource.parents],
+            subscription_service=self.subscription_service,
             requester=requester,
         )
 

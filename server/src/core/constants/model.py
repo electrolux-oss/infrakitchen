@@ -63,3 +63,12 @@ class ModelState(StrEnum):
 class WorkflowAction(StrEnum):
     CREATE = "create"
     DESTROY = "destroy"
+
+
+@unique
+class EventType(StrEnum):
+    UPDATE = "update"
+    CREATE = "create"
+    DESTROY = "destroy"
+    EXECUTE = "execute"
+    ACTION_REQUIRED = "action_required"

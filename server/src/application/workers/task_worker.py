@@ -25,8 +25,8 @@ from application.workers.utils import (
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core import BaseMessagesWorker, MessageHandler, MessageModel
-from core.constants.model import ModelActions
-from core.notifications.controller import NotificationEvent, NotificationController
+from core.constants.model import EventType, ModelActions
+from core.notifications.controller import NotificationEvent, publish_notification_event
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
@@ -65,7 +65,6 @@ class TaskWorker(BaseMessagesWorker):
             auto_delete=False,
             commit_worker_status=True,
         )
-        self.notification_controller = NotificationController(session=session)
 
     @override
     async def process_message(self, message: MessageHandler) -> None:
@@ -335,9 +334,9 @@ class TaskWorker(BaseMessagesWorker):
             status=status,
             entity_id=task_controller.logger.entity_id,
             entity_type=task_controller.logger.entity_name,
-            event_type="update",
+            event_type=EventType.EXECUTE,
         )
-        await self.notification_controller.route_notification(event_message)
+        await publish_notification_event(event_message)
 
     async def _send_success_notification(self, task_controller, action):
         entity_name = task_controller.logger.entity_name

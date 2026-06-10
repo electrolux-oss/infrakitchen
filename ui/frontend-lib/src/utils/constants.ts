@@ -48,3 +48,11 @@ export enum WORKER_STATUS {
   FREE = "free",
   BUSY = "busy",
 }
+
+export enum EVENT_TYPE {
+  UPDATE = "update",
+  CREATE = "create",
+  DESTROY = "destroy",
+  EXECUTE = "execute",
+  ACTION_REQUIRED = "action_required",
+}

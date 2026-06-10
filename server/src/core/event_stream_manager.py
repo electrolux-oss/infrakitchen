@@ -66,14 +66,6 @@ async def rabbitmq_consumer():
         )
         _ = await events_exchange.bind(raw_messages_exchange, routing_key="events.*.*")
 
-        # Declare notification exchange
-        await channel.declare_exchange(
-            "ik_notification_messages",
-            aio_pika.ExchangeType.TOPIC,
-            auto_delete=False,
-            durable=True,
-        )
-
         # Declaring a queue
         queue = await channel.declare_queue(name="event_messages_consumer", auto_delete=False)
 

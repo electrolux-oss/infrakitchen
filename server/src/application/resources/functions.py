@@ -21,6 +21,7 @@ from application.source_code_versions.schema import (
 )
 from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.errors import EntityExistsError
+from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.users.functions import user_entity_permissions
@@ -170,6 +171,24 @@ async def delete_resource_policies(
     permission_service: PermissionService,
 ) -> None:
     await permission_service.delete_entity_permissions("resource", resource_id)
+
+
+async def add_resource_parent_subscriptions(
+    resource_id: UUID, parent_ids: list[str | UUID], subscription_service: SubscriptionService, requester: UserDTO
+) -> None:
+    if not parent_ids:
+        return
+
+    subscription_filter = {"entity_id__in": [f"{parent_id}" for parent_id in parent_ids], "entity_type": "resource"}
+    parent_subscriptions = await subscription_service.get_all(filter=subscription_filter)
+    for parent_subscription in parent_subscriptions:
+        await subscription_service.create(
+            entity_id=resource_id,
+            entity_type="resource",
+            user_id=parent_subscription.user_id,
+            requester=requester,
+        )
+        logger.info(f"Added subscription for user {parent_subscription.user_id} to resource {resource_id}")
 
 
 def get_resource_variable_schema(

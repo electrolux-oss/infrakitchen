@@ -6,7 +6,7 @@ import time
 import json
 from contextlib import asynccontextmanager, nullcontext
 from fastapi.exceptions import RequestValidationError
-from application.tools.notification_manager import start_notification_provider_consumer
+from application.tools.notification_manager import start_notification_event_router
 from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import JSONResponse, StreamingResponse
@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):
     websocket_manager = WebSocketConnectionManager()
     loop = asyncio.get_running_loop()
     rabbitmq_task = loop.create_task(start_rabbitmq_consumer())
-    notification_watcher_task = loop.create_task(start_notification_provider_consumer())
+    notification_event_router_task = loop.create_task(start_notification_event_router())
 
     await init_app()
     await CasbinEnforcer().init_enforcer()
@@ -75,13 +75,13 @@ async def lifespan(app: FastAPI):
         yield
 
     rabbitmq_task.cancel()
-    notification_watcher_task.cancel()
+    notification_event_router_task.cancel()
     try:
         await rabbitmq_task
     except (asyncio.CancelledError, Exception):
         pass
     try:
-        await notification_watcher_task
+        await notification_event_router_task
     except (asyncio.CancelledError, Exception):
         pass
 

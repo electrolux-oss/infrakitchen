@@ -36,8 +36,8 @@ import {
   NotificationChannel,
   NotificationPreferenceRow,
 } from "../../notifications/types";
+import { EVENT_TYPE } from "../../utils";
 
-const EVENT_TYPE_OPTIONS = ["update", "create", "destroy", "execute", "sync"];
 const CHANNEL_OPTIONS: NotificationChannel[] = ["IN_APP", "SLACK"];
 
 interface NotificationPreferenceDialogProps {
@@ -58,7 +58,7 @@ const NotificationPreferenceDialog = ({
   const { ikApi } = useConfig();
   const [isLoading, setIsLoading] = useState(false);
   const [eventType, setEventType] = useState(
-    initialPreference?.event_type ?? "update",
+    initialPreference?.event_type ?? "execute",
   );
   const [channels, setChannels] = useState<NotificationChannel[]>(
     initialPreference?.channels ?? ["IN_APP"],
@@ -69,7 +69,7 @@ const NotificationPreferenceDialog = ({
       return;
     }
 
-    setEventType(initialPreference?.event_type ?? "update");
+    setEventType(initialPreference?.event_type ?? "execute");
     setChannels(initialPreference?.channels ?? ["IN_APP"]);
   }, [initialPreference, open]);
 
@@ -140,7 +140,7 @@ const NotificationPreferenceDialog = ({
               value={eventType}
               onChange={(event) => setEventType(event.target.value)}
             >
-              {EVENT_TYPE_OPTIONS.map((eventOption) => (
+              {Object.values(EVENT_TYPE).map((eventOption) => (
                 <MenuItem key={eventOption} value={eventOption}>
                   {eventOption}
                 </MenuItem>

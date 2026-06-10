@@ -54,7 +54,7 @@ class SubscriptionDTO(BaseModel):
     id: uuid.UUID = Field(...)
     user_id: uuid.UUID | None = Field(...)
     entity_type: str = Field(...)
-    entity_id: str | None = Field(default=None)
+    entity_id: uuid.UUID | str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
