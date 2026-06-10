@@ -5,6 +5,7 @@ from jinja2 import Template
 
 from application.integrations.schema import SlackIntegrationConfig
 from core.adapters.provider_adapters import IntegrationProvider, NotificationProviderAdapter
+from core.config import Settings
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, CloudWrongCredentials
 from core.models.encrypted_secret import EncryptedSecretStr
@@ -27,6 +28,7 @@ DEFAULT_SLACK_NOTIFICATION_TEMPLATE = """*{{ title or 'InfraKitchen Alert' }}* \
 *Details*
 • *Entity:* `{{ entity_name or 'unknown' }}`
 • *ID:* `{% if entity_id %}{{ entity_id }}{% else %}-{% endif %}`
+{% if infrakitchen_url %}• *Link:* <{{ infrakitchen_url }}|Open in InfraKitchen>{% endif %}
 """
 
 
@@ -92,12 +94,21 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
         channel = kwargs.get("channel")
         msg = kwargs.get("msg")
 
+        url: str | None = None
+        if Settings().INFRAKITCHEN_URL:
+            url = (
+                f"{Settings().INFRAKITCHEN_URL}/{kwargs.get('entity_name')}s/{kwargs.get('entity_id')}"
+                if kwargs.get("entity_id")
+                else Settings().INFRAKITCHEN_URL
+            )
+
         payload = {
             "msg": msg,
             "title": kwargs.get("title"),
             "status": kwargs.get("status"),
             "entity_id": kwargs.get("entity_id"),
             "entity_name": kwargs.get("entity_name"),
+            "infrakitchen_url": url,
         }
 
         if not channel:

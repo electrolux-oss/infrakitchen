@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from core.constants.model import EventType
 from core.notifications.crud import NotificationPreferenceCRUD, SubscriptionCRUD
 from core.notifications.model import NotificationPreference, Subscription
 from core.notifications.service import NotificationPreferenceService, SubscriptionService
@@ -67,7 +68,7 @@ def mocked_notification_preference(mocked_user):
         id=uuid4(),
         user_id=mocked_user.id,
         user=mocked_user,
-        event_type="update",
+        event_type=EventType.UPDATE,
         channels=["IN_APP", "SLACK"],
         created_at=datetime.now(),
         updated_at=datetime.now(),

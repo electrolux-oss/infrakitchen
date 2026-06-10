@@ -3,6 +3,7 @@ import logging
 from typing import Any
 from aio_pika import ExchangeType
 from core.base_models import MessageModel
+from core.constants.model import EventType
 from core.rabbitmq import RabbitMQConnection
 
 logger = logging.getLogger(__name__)
@@ -10,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class NotificationEvent:
-    event_type: str
+    event_type: EventType
     entity_type: str
     title: str
-    status: str
+    status: str  # "info", "warning", "error", "success"
     message: str
     entity_id: str | None = None
     metadata: dict[str, Any] | None = None

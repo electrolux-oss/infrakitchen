@@ -6,6 +6,7 @@ from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
+from core.notifications.controller import NotificationEvent, publish_notification_event
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
 from application.resources.functions import (
@@ -31,7 +32,7 @@ from core.base_models import PatchBodyModel
 from core.caches.functions import cache_decorator
 from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
-from core.constants.model import ModelActions
+from core.constants.model import EventType, ModelActions
 from core.database import FieldSpec, to_dict
 from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
@@ -540,6 +541,7 @@ class ResourceService:
 
         response = ResourceResponse.model_validate(existing_resource)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
+        await self.publish_notification_event(existing_resource, ModelActions.UPDATE, status="info")
 
         if existing_resource.workspace_id is not None:
             await self.workspace_event_sender.send_task(
@@ -738,6 +740,7 @@ class ResourceService:
         match body.action:
             case ModelActions.REJECT:
                 await self.action_reject(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "rejected")
 
             case ModelActions.RETRY:
                 if existing_resource.status == ModelStatus.QUEUED:
@@ -754,8 +757,10 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 await self.action_approve(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "approve")
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "destroy")
             case ModelActions.EXECUTE:
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
@@ -807,6 +812,7 @@ class ResourceService:
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)
+                await self.publish_notification_event(existing_resource, "recreate")
 
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
@@ -1196,3 +1202,26 @@ class ResourceService:
         await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
 
         return ResourceResponse.model_validate(existing_resource)
+
+    async def publish_notification_event(
+        self,
+        resource: Resource,
+        title: str,
+        event_type: EventType = EventType.UPDATE,
+        status: Literal[
+            "info",
+            "warning",
+            "error",
+            "success",
+        ] = "warning",
+    ) -> None:
+        event = NotificationEvent(
+            event_type=event_type,
+            entity_type="resource",
+            entity_id=str(resource.id),
+            title=f"Resource {resource.name}",
+            status=status,
+            message=f"Resource {resource.name} status has been changed ({title.upper()})\n"
+            f"New status: {resource.status}, new state: {resource.state}",
+        )
+        await publish_notification_event(event)

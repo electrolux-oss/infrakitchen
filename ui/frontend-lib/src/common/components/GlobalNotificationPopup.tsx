@@ -36,7 +36,15 @@ export const GlobalNotificationPopup = () => {
   useEffect(() => {
     if (!notification) return;
 
-    const sourceId = notification.id || Date.now().toString();
+    const sourceId = [
+      notification.status,
+      notification.title,
+      notification.msg,
+      notification.entityName,
+      notification.entityId,
+    ]
+      .filter(Boolean)
+      .join("|");
     if (sourceId === lastSourceId.current) return; // simple dedupe
     lastSourceId.current = sourceId;
 
@@ -47,11 +55,11 @@ export const GlobalNotificationPopup = () => {
       | "warning"
       | "info";
 
-    const title: string | undefined = notification.title;
+    const title: string | undefined = notification.title ?? undefined;
     const body: string = notification.msg || "Notification received";
 
-    const entityName: string | undefined = notification.entity_name;
-    const entityId: string | undefined = notification.entity_id;
+    const entityName: string | undefined = notification.entityName ?? undefined;
+    const entityId: string | undefined = notification.entityId ?? undefined;
     const segment = entityName ? ENTITY_PATHS[entityName] : undefined;
     const link =
       segment && entityId

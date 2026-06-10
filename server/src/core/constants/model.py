@@ -68,7 +68,4 @@ class WorkflowAction(StrEnum):
 @unique
 class EventType(StrEnum):
     UPDATE = "update"
-    CREATE = "create"
-    DESTROY = "destroy"
     EXECUTE = "execute"
-    ACTION_REQUIRED = "action_required"

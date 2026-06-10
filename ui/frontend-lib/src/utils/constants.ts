@@ -51,8 +51,5 @@ export enum WORKER_STATUS {
 
 export enum EVENT_TYPE {
   UPDATE = "update",
-  CREATE = "create",
-  DESTROY = "destroy",
   EXECUTE = "execute",
-  ACTION_REQUIRED = "action_required",
 }

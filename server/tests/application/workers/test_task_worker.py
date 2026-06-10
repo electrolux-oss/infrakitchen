@@ -6,6 +6,7 @@ from unittest.mock import Mock, AsyncMock
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from application.workers import TaskWorker
+from core.constants.model import EventType
 from core.notifications.controller import NotificationEvent
 from core.errors import CannotProceed
 from core.scheduler.executor import SchedulerExecutor
@@ -202,7 +203,7 @@ class TestTaskWorker:
                 status="info",
                 entity_id="test_entity_123",
                 entity_type="test_source_code",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -227,7 +228,7 @@ class TestTaskWorker:
                 status="success",
                 entity_id="entity_789",
                 entity_type="my_deployment",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -254,7 +255,7 @@ class TestTaskWorker:
                 status="error",
                 entity_id="failed_entity_123",
                 entity_type="failed_resource",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -290,7 +291,7 @@ class TestTaskWorker:
                 status="error",
                 entity_id="timeout_entity_456",
                 entity_type="timeout_storage",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -319,7 +320,7 @@ class TestTaskWorker:
                 status="error",
                 entity_id="exit_entity_789",
                 entity_type="exit_workspace",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -346,7 +347,7 @@ class TestTaskWorker:
                 status="error",
                 entity_id="unexpected_entity_000",
                 entity_type="unexpected_resource",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
 
@@ -380,7 +381,7 @@ class TestTaskWorker:
                 status="info",
                 entity_id="storage_entity_123",
                 entity_type="my_storage",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
         mock_publish.assert_any_await(
@@ -390,7 +391,7 @@ class TestTaskWorker:
                 status="info",
                 entity_id="workspace_entity_456",
                 entity_type="dev_workspace",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )
         mock_publish.assert_any_await(
@@ -400,6 +401,6 @@ class TestTaskWorker:
                 status="info",
                 entity_id="resource_entity_789",
                 entity_type="api_resource",
-                event_type="execute",
+                event_type=EventType.EXECUTE,
             )
         )

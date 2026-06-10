@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 
+from core.constants.model import EventType
 from core.notifications.model import NotificationChannel, NotificationPreference, Subscription
 from graphql_api.schema import schema
 
@@ -267,7 +268,7 @@ class TestNotificationPreferenceMutations:
     ):
         created_preference = build_notification_preference(
             user_id=str(mocked_user.id),
-            event_type="update",
+            event_type=EventType.UPDATE,
             channels=[NotificationChannel.SLACK, NotificationChannel.IN_APP],
         )
         mock_notification_preference_crud.create.return_value = created_preference
@@ -343,7 +344,7 @@ class TestNotificationPreferenceMutations:
     ):
         preference = build_notification_preference(
             user_id=str(mocked_user.id),
-            event_type="update",
+            event_type=EventType.UPDATE,
             channels=[NotificationChannel.SLACK],
         )
         mock_notification_preference_crud.get_by_id.return_value = preference
@@ -400,7 +401,7 @@ class TestNotificationPreferenceMutations:
     ):
         preference = build_notification_preference(
             user_id=uuid4(),
-            event_type="update",
+            event_type=EventType.UPDATE,
             channels=[NotificationChannel.SLACK],
         )
         mock_notification_preference_crud.get_by_id.return_value = preference

@@ -7,6 +7,7 @@ import pytest
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.constants.model import EventType
 from core.notifications.controller import NotificationEvent
 import application.tools.notification_manager as notification_manager_module
 from application.tools.notification_manager import _route_notification_event
@@ -59,7 +60,7 @@ class TestRouteNotificationEvent:
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
-            event_type="update",
+            event_type=EventType.UPDATE,
             entity_type="resource",
             title="Resource updated",
             status="info",
@@ -140,7 +141,7 @@ class TestRouteNotificationEvent:
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
-            event_type="update",
+            event_type=EventType.UPDATE,
             entity_type="resource",
             title="No one is watching",
             status="info",
@@ -185,7 +186,7 @@ class TestRouteNotificationEvent:
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
-            event_type="update",
+            event_type=EventType.UPDATE,
             entity_type="resource",
             title="Skipped",
             status="info",
@@ -233,7 +234,7 @@ class TestRouteNotificationEvent:
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
-            event_type="update",
+            event_type=EventType.UPDATE,
             entity_type="resource",
             title="No slack",
             status="info",

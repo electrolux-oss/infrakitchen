@@ -21,6 +21,7 @@ def setup_service_environment():
 
 
 class Settings(BaseSettings):
+    INFRAKITCHEN_URL: str = ""  # e.g. https://infrakitchen.io
     # Database settings
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"

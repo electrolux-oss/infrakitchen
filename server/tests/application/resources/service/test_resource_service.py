@@ -13,12 +13,22 @@ from application.resources.schema import (
     ResourcePatch,
 )
 from application.resources.service import ResourceService
+from core.base_models import MessageModel
 from core.config import InfrakitchenConfig
 from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.errors import AccessDenied, DependencyError, EntityNotFound, EntityWrongState
+from core.rabbitmq import RabbitMQConnection
 from core.users.model import UserDTO
 
 RESOURCE_ID = "abc123"
+
+
+async def send_message(message: MessageModel, confirm: bool = False):
+    pass
+
+
+# Monkey patching the send_task method
+RabbitMQConnection.send_message = send_message  # type: ignore[method-assign]
 
 
 class TestGetById:
