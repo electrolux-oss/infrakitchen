@@ -34,7 +34,7 @@ Developers are the main beneficiaries, gaining **autonomy and speed** for their 
 * **Self-Service Provisioning:** Provision any cloud resources instantly in the UI or via Pull Request—no more infrastructure tickets. Adopt new golden path versions as the platform team releases improvements.
 * **Simplified Complexity:** Predefined templates abstract infrastructure details, enabling teams to provision and operate infrastructure without deep infrastructure expertise.
 
-## Why InfraKitchen
+## 🦄 Why InfraKitchen
 
 - **Eliminate infrastructure bottlenecks:** Reduce weeks-long provisioning to minutes with self-service infrastructure, while platform teams retain control.
 - **Write once, apply everywhere:** Create infrastructure templates once and apply them consistently everywhere.
@@ -42,8 +42,13 @@ Developers are the main beneficiaries, gaining **autonomy and speed** for their 
 - **Continuous improvement cycle:** Platform teams maintain and evolve templates; developers automatically benefit from improvements.
 - **Complete visibility:** Full audit trails show who provisioned what infrastructure, when changes were made, and why—essential for compliance and incident response.
 
-## Getting started
+## 🚀 Getting started
 
 The best way to start with InfraKitchen is to check the [Documentation](https://opensource.electrolux.one/infrakitchen/).
 
 Try InfraKitchen right away with the [example templates repository](https://github.com/electrolux-oss/infrakitchen-example-templates). It includes ready-to-use templates that help you get a proof of concept running quickly.
+
+## ⭐️ Stay Updated
+Give our repository a star to stay informed about the latest features and updates!
+
+
