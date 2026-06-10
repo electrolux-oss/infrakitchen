@@ -178,19 +178,21 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     const requested = new Set<string>(["id"]);
 
     cols.forEach((column) => {
-      if (columnVisibilityModel[column.field] === false) {
-        return;
-      }
-      if (column.filterable === false) {
-        return;
-      }
+      const isHidden = columnVisibilityModel[column.field] === false;
+      const isNonFilterable = column.filterable === false;
 
-      const fetchFields = column.fetchFields ?? [column.field];
-      fetchFields.forEach((field) => {
-        if (field) {
-          requested.add(field);
-        }
-      });
+      // If the column has explicit fetchFields, always include them — they are
+      // required by the transform regardless of whether the column is visible.
+      if (column.fetchFields !== undefined) {
+        column.fetchFields.forEach((field) => {
+          if (field) requested.add(field);
+        });
+        // Still skip adding column.field itself when column is hidden/non-filterable
+        if (isHidden || isNonFilterable) return;
+      } else {
+        if (isHidden || isNonFilterable) return;
+        requested.add(column.field);
+      }
     });
 
     return Array.from(requested);

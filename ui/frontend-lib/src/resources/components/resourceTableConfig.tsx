@@ -62,6 +62,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "template",
     headerName: "Template",
     flex: 1,
+    fetchFields: ["template"],
     sortField: "template.name",
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
