@@ -36,6 +36,12 @@ export const WorkflowOverview = () => {
       />
 
       <CommonField
+        name="Action"
+        value={workflow.action.toUpperCase()}
+        size={4}
+      />
+
+      <CommonField
         name="Created"
         value={
           <RelativeTime date={workflow.created_at} user={workflow.creator} />

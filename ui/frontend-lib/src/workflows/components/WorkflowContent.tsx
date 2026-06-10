@@ -92,14 +92,18 @@ export const WorkflowContent = () => {
       label: "Steps",
       content: <WorkflowStepsTab workflow={workflow} />,
     },
-    {
-      label: "Variables",
-      content: (
-        <PropertyCard title="Resolved Variables">
-          <WorkflowResolvedVariables steps={workflow.steps} />
-        </PropertyCard>
-      ),
-    },
+    ...(workflow.action !== "destroy"
+      ? [
+          {
+            label: "Variables",
+            content: (
+              <PropertyCard title="Resolved Variables">
+                <WorkflowResolvedVariables steps={workflow.steps} />
+              </PropertyCard>
+            ),
+          },
+        ]
+      : []),
     {
       label: "Logs",
       content: (
