@@ -8,7 +8,6 @@ import {
 import {
   ConfigProvider,
   EventProvider,
-  FavoritesProvider,
   GradientCircularProgress,
   NotificationProvider,
   GlobalNotificationPopup,
@@ -115,13 +114,11 @@ const AuthGate = ({ dataProvider }: { dataProvider: any }) => {
     <LocalStorageProvider>
       <ConfigProvider initialIkApi={dataProvider}>
         <PermissionProvider>
-          <FavoritesProvider>
-            <EventProvider>
-              <NotificationProvider>
-                <InfrakitchenApp />
-              </NotificationProvider>
-            </EventProvider>
-          </FavoritesProvider>
+          <EventProvider>
+            <NotificationProvider>
+              <InfrakitchenApp />
+            </NotificationProvider>
+          </EventProvider>
         </PermissionProvider>
       </ConfigProvider>
     </LocalStorageProvider>

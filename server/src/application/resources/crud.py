@@ -1,12 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, and_, case, func, select, text, cast
+from sqlalchemy import String, case, func, select, text, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from application.integrations.model import Integration
-from application.favorites.model import Favorite
 from application.secrets.model import Secret
 from application.source_code_versions.model import SourceCodeVersion
 from core.permissions.model import Permission
@@ -45,29 +44,11 @@ class ResourceCRUD:
         filter: dict[str, Any] | None = None,
         range: tuple[int, int] | None = None,
         sort: tuple[str, str] | None = None,
-        requester_id: str | UUID | None = None,
         fields: FieldSpec | None = None,
     ) -> list[Resource]:
         statement = select(Resource)
 
-        sort_field = sort[0].lower() if sort else None
-        sort_dir = sort[1].lower() if sort else "asc"
-
-        if sort_field == "favorite" and requester_id:
-            favorite_join_condition = and_(
-                Favorite.user_id == requester_id,
-                Favorite.component_type == "resource",
-                Favorite.component_id == Resource.id,
-            )
-            statement = statement.outerjoin(Favorite, favorite_join_condition)
-            favorite_sort_value = case((Favorite.component_id.is_not(None), 1), else_=0)
-            if sort_dir == "asc":
-                statement = statement.order_by(favorite_sort_value.asc())
-            else:
-                statement = statement.order_by(favorite_sort_value.desc())
-        else:
-            statement = evaluate_sqlalchemy_sorting(Resource, statement, sort)
-
+        statement = evaluate_sqlalchemy_sorting(Resource, statement, sort)
         statement = evaluate_sqlalchemy_filters(Resource, statement, filter)
         statement = evaluate_sqlalchemy_pagination(statement, range)
 

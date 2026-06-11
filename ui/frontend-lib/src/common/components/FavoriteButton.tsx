@@ -1,18 +1,24 @@
+import { useEffect, useState } from "react";
+
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import { IconButton } from "@mui/material";
 
 import {
-  FavoriteComponentType,
-  useFavorites,
-} from "../context/FavoritesContext";
+  CREATE_FAVORITE_MUTATION,
+  DELETE_FAVORITE_MUTATION,
+} from "../../favorites/graphql";
+import { useConfig } from "../context/ConfigContext";
 import { notifyError } from "../hooks/useNotification";
+
+export type FavoriteComponentType = "resource" | "executor";
 
 interface FavoriteButtonProps {
   componentId: string;
   componentType: FavoriteComponentType;
   ariaLabel: string;
   format?: "overview" | "table";
+  isFavorite?: boolean;
 }
 
 export const FavoriteButton = ({
@@ -20,17 +26,46 @@ export const FavoriteButton = ({
   componentType,
   ariaLabel,
   format = "overview",
+  isFavorite: isFavoriteProp,
 }: FavoriteButtonProps) => {
-  const { isFavorite, toggleFavorite, isSubmitting } = useFavorites();
+  const { ikApi } = useConfig();
+  const [favoriteState, setFavoriteState] = useState(Boolean(isFavoriteProp));
+  const [submittingState, setSubmittingState] = useState(false);
 
-  const favoriteState = isFavorite(componentType, componentId);
-  const submittingState = isSubmitting(componentType, componentId);
+  useEffect(() => {
+    if (isFavoriteProp !== undefined) {
+      setFavoriteState(isFavoriteProp);
+    }
+  }, [isFavoriteProp, componentId, componentType]);
 
   const handleAddFavorite = async () => {
+    if (submittingState) {
+      return;
+    }
+
+    setSubmittingState(true);
     try {
-      await toggleFavorite(componentType, componentId);
+      if (favoriteState) {
+        await ikApi.graphqlRequest(DELETE_FAVORITE_MUTATION, {
+          input: {
+            componentType: componentType,
+            componentId: componentId,
+          },
+        });
+        setFavoriteState(false);
+      } else {
+        await ikApi.graphqlRequest(CREATE_FAVORITE_MUTATION, {
+          input: {
+            componentType: componentType,
+            componentId: componentId,
+          },
+        });
+        setFavoriteState(true);
+      }
     } catch (error: any) {
       notifyError(error);
+    } finally {
+      setSubmittingState(false);
     }
   };
 

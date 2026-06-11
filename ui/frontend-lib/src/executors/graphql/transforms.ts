@@ -32,6 +32,7 @@ export interface GqlExecutor {
   creator: GqlUserShort | null;
   createdAt: string;
   updatedAt: string;
+  isFavorite: boolean;
 }
 
 export type GqlExecutorOptional = Partial<GqlExecutor> & {
@@ -65,6 +66,7 @@ export function transformExecutor(gql: GqlExecutor): ExecutorResponse {
     source_code_folder: gql.sourceCodeFolder ?? "",
     storage_path: gql.storagePath,
     labels: gql.labels ?? [],
+    isFavorite: gql.isFavorite,
     _entity_name: "executor",
   };
 }
@@ -110,6 +112,7 @@ export function transformExecutorOptional(
     source_code_folder: gql.sourceCodeFolder ?? undefined,
     storage_path: gql.storagePath,
     labels: gql.labels ?? undefined,
+    isFavorite: gql.isFavorite,
     _entity_name: "executor",
   };
 }

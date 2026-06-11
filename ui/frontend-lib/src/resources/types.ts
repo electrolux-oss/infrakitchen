@@ -15,6 +15,7 @@ export interface ResourceShort {
   status: string;
   state: string;
   template: TemplateShort;
+  isFavorite?: boolean;
   _entity_name: string;
 }
 
@@ -64,6 +65,7 @@ export interface ResourceResponse {
   children: ResourceShort[];
   labels: string[];
   workspace: WorkspaceShort | null;
+  isFavorite?: boolean;
   _entity_name: string;
 }
 

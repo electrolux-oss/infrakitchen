@@ -4,7 +4,7 @@ from uuid import UUID
 from core.errors import EntityNotFound
 
 from .crud import FavoriteCRUD
-from .model import FavoriteComponentType, FavoriteDTO
+from .model import Favorite, FavoriteComponentType, FavoriteDTO
 from .schema import FavoriteCreate
 
 
@@ -51,6 +51,23 @@ class FavoriteService:
         db_favorite = await self.crud.create(body)
         await self.crud.refresh(db_favorite)
         return FavoriteDTO.model_validate(db_favorite)
+
+    async def create_entity(self, favorite: FavoriteCreate, user_id: UUID | str) -> Favorite:
+        """Create a new favorite and return the ORM object (for GraphQL)."""
+        existing = await self.crud.get_by_id(
+            user_id=user_id,
+            component_type=favorite.component_type,
+            component_id=favorite.component_id,
+        )
+
+        if existing:
+            return existing
+
+        body = favorite.model_dump()
+        body["user_id"] = user_id
+        db_favorite = await self.crud.create(body)
+        await self.crud.refresh(db_favorite)
+        return db_favorite
 
     async def delete(
         self, user_id: UUID | str, component_type: FavoriteComponentType, component_id: UUID | str

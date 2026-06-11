@@ -19,6 +19,7 @@ from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.storage.queries import StorageQuery
 from graphql_api.modules.executor.queries import ExecutorQuery
 from graphql_api.modules.favorite.queries import FavoriteQuery
+from graphql_api.modules.favorite.mutations import FavoriteMutation
 from graphql_api.modules.permission.queries import PermissionQuery
 from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQuery
 from graphql_api.modules.revision.queries import RevisionQuery
@@ -78,6 +79,7 @@ class Mutation(
     UserMutation,
     NotificationMutation,
     ResourceMutation,
+    FavoriteMutation,
 ):
     pass
 

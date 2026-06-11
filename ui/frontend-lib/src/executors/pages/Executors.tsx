@@ -38,7 +38,7 @@ export const ExecutorsPage = () => {
     () => [
       {
         field: "Favorite",
-        fetchFields: [],
+        fetchFields: ["isFavorite"],
         headerName: "",
         width: 60,
         resizable: false,
@@ -52,6 +52,7 @@ export const ExecutorsPage = () => {
             componentType="executor"
             ariaLabel="Toggle executor favorite"
             format="table"
+            isFavorite={params.row.isFavorite}
           />
         ),
       },
