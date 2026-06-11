@@ -9,8 +9,6 @@ import {
   Button,
   CircularProgress,
   IconButton,
-  InputAdornment,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -20,6 +18,7 @@ import StatusChip from "../StatusChip";
 import { getStateColor } from "../utils";
 
 import { CommonDialog } from "./CommonDialog";
+import { ConfirmNameField } from "./ConfirmNameField";
 import { TreeResponse } from "./tree/types";
 
 interface CascadeDestroyDialogProps {
@@ -220,46 +219,11 @@ export const CascadeDestroyDialog = ({
             </Box>
           </Box>
 
-          <Box>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              To confirm, type{" "}
-              <Box
-                component="code"
-                sx={{
-                  px: 0.5,
-                  py: 0.25,
-                  bgcolor: "action.selected",
-                  borderRadius: 0.5,
-                  fontFamily: "monospace",
-                  fontSize: "0.85em",
-                }}
-              >
-                {entityName}
-              </Box>{" "}
-              below.
-            </Typography>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder={entityName}
-              value={confirmValue}
-              onChange={(e) => setConfirmValue(e.target.value)}
-              error={confirmValue.length > 0 && !confirmed}
-              InputProps={{
-                endAdornment: confirmValue.length > 0 && (
-                  <InputAdornment position="end">
-                    <Typography
-                      variant="caption"
-                      color={confirmed ? "success.main" : "error.main"}
-                    >
-                      {confirmed ? "✓" : "✗"}
-                    </Typography>
-                  </InputAdornment>
-                ),
-              }}
-              autoComplete="off"
-            />
-          </Box>
+          <ConfirmNameField
+            name={entityName}
+            value={confirmValue}
+            onChange={setConfirmValue}
+          />
         </Box>
       }
       actions={

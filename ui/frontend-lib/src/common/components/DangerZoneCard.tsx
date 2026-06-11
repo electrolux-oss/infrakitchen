@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -12,8 +12,6 @@ import {
   Card,
   CardActions,
   CardHeader,
-  InputAdornment,
-  TextField,
   Typography,
 } from "@mui/material";
 
@@ -27,11 +25,12 @@ import { ActionButton } from "./buttons/ActionButton";
 import { DeleteButton } from "./buttons/DeleteEntityButton";
 import { CascadeDestroyDialog } from "./CascadeDestroyDialog";
 import { CommonDialog } from "./CommonDialog";
+import { ConfirmNameField } from "./ConfirmNameField";
 
 export const DangerZoneCard = () => {
   const { ikApi, linkPrefix } = useConfig();
   const { actions, entity } = useEntityProvider();
-  const [entityName, setDestroyEntityName] = useState<string>("");
+  const [destroyConfirm, setDestroyConfirm] = useState("");
   const [dialogValues, setDialogValues] = useState<{
     [key: string]: boolean;
   }>({
@@ -49,12 +48,6 @@ export const DangerZoneCard = () => {
     setDialogValues((dialogValues) => {
       return { ...dialogValues, [dialog]: !dialogValues[dialog] as boolean };
     });
-  };
-
-  const handleEntityDestroy = (
-    event: React.ChangeEvent<{ value: unknown }>,
-  ) => {
-    setDestroyEntityName(event.target.value as string);
   };
 
   if (actions.length === 0) {
@@ -152,62 +145,18 @@ export const DangerZoneCard = () => {
               <strong>{entity.name || entity.identifier}</strong> and all
               associated infrastructure and data. This cannot be undone.
             </Alert>
-            <Box>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                To confirm, type{" "}
-                <Box
-                  component="code"
-                  sx={{
-                    px: 0.5,
-                    py: 0.25,
-                    bgcolor: "action.selected",
-                    borderRadius: 0.5,
-                    fontFamily: "monospace",
-                    fontSize: "0.85em",
-                  }}
-                >
-                  {entity.name || entity.identifier}
-                </Box>{" "}
-                below.
-              </Typography>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder={entity.name || entity.identifier}
-                value={entityName}
-                onChange={handleEntityDestroy}
-                error={
-                  entityName.length > 0 &&
-                  entityName !== (entity.name || entity.identifier)
-                }
-                InputProps={{
-                  endAdornment: entityName.length > 0 && (
-                    <InputAdornment position="end">
-                      <Typography
-                        variant="caption"
-                        color={
-                          entityName === (entity.name || entity.identifier)
-                            ? "success.main"
-                            : "error.main"
-                        }
-                      >
-                        {entityName === (entity.name || entity.identifier)
-                          ? "✓"
-                          : "✗"}
-                      </Typography>
-                    </InputAdornment>
-                  ),
-                }}
-                autoComplete="off"
-              />
-            </Box>
+            <ConfirmNameField
+              name={entity.name || entity.identifier}
+              value={destroyConfirm}
+              onChange={setDestroyConfirm}
+            />
           </Box>
         }
         actions={
           <ActionButton
             action={ENTITY_ACTION.DESTROY}
             onSubmit={() => changeDialog("destroy")}
-            disabled={entityName !== (entity.name || entity.identifier)}
+            disabled={destroyConfirm !== (entity.name || entity.identifier)}
             color="error"
             variant="contained"
           >
