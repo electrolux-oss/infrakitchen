@@ -65,6 +65,9 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
     def __init__(self, logger: EntityLogger | None = None, **kwargs) -> None:
         super().__init__(logger=logger, **kwargs)
 
+        if not hasattr(self, "environment_variables") or not hasattr(self, "slack_bot_token"):
+            SlackAuthentication.__init__(self, logger=logger, **kwargs)
+
     @override
     async def authenticate(self, **kwargs) -> None:
         await self.authenticate_slack()
