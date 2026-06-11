@@ -24,13 +24,26 @@ export const PermissionContext = createContext<
 >(undefined);
 
 export const PermissionProvider = ({ children }: { children: ReactNode }) => {
-  const [permissions, setPermission] = useState<Record<string, string>>();
-  const [refresh, refreshPermission] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const { ikApi } = useConfig();
+  const { ikApi, bootstrapPermissions, bootstrapLoading, bootstrapError } =
+    useConfig();
+  const [permissions, setPermission] = useState<Record<string, string>>(
+    bootstrapPermissions || {},
+  );
+  const [refresh, refreshPermission] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(!!bootstrapLoading);
+  const [error, setError] = useState<string | null>(bootstrapError || null);
 
   useEffect(() => {
+    setPermission(bootstrapPermissions || {});
+    setLoading(!!bootstrapLoading);
+    setError(bootstrapError || null);
+  }, [bootstrapPermissions, bootstrapLoading, bootstrapError]);
+
+  useEffect(() => {
+    if (refresh === 0) {
+      return;
+    }
+
     const getPermission = async () => {
       setLoading(true);
       try {
@@ -48,7 +61,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     getPermission();
-  }, [ikApi, refresh, setLoading, setError]);
+  }, [ikApi, refresh]);
 
   const checkActionPermission = useCallback(
     (resource: string, action: string): boolean => {

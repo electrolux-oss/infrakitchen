@@ -4,7 +4,6 @@ import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_RESOURCE_SUBSCRIPTION_MUTATION,
-  CURRENT_USER_NOTIFICATION_QUERY,
   DELETE_RESOURCE_SUBSCRIPTION_MUTATION,
 } from "../../notifications";
 import { GqlNotificationSubscription } from "../../notifications/graphql";
@@ -18,9 +17,8 @@ export const useResourceNotificationDialog = ({
   resourceId,
   onSubscriptionChange,
 }: UseResourceNotificationDialogProps) => {
-  const { ikApi } = useConfig();
+  const { ikApi, currentUser } = useConfig();
   const [loading, setLoading] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [subscriptions, setSubscriptions] = useState<string[]>([]);
 
   const isSubscribed = subscriptions.length > 0;
@@ -32,14 +30,7 @@ export const useResourceNotificationDialog = ({
 
     setLoading(true);
     try {
-      const userResponse = await ikApi.graphqlRequest<{
-        currentUser: { id: string; identifier: string } | null;
-      }>(CURRENT_USER_NOTIFICATION_QUERY);
-
-      const resolvedUserId = userResponse.currentUser?.id || null;
-      setCurrentUserId(resolvedUserId);
-
-      if (!resolvedUserId) {
+      if (!currentUser?.id) {
         setSubscriptions([]);
         return;
       }
@@ -54,7 +45,7 @@ export const useResourceNotificationDialog = ({
         }`,
         {
           subscriptionFilter: {
-            user_id: resolvedUserId,
+            user_id: currentUser.id,
             entity_type: "resource",
             entity_id: resourceId,
           },
@@ -69,14 +60,14 @@ export const useResourceNotificationDialog = ({
     } finally {
       setLoading(false);
     }
-  }, [ikApi, resourceId]);
+  }, [ikApi, resourceId, currentUser?.id]);
 
   useEffect(() => {
     loadState();
   }, [loadState]);
 
   const handleSubscribe = async (inheritChildren: boolean = false) => {
-    if (!resourceId || !currentUserId) {
+    if (!resourceId || !currentUser?.id) {
       return;
     }
 
@@ -99,7 +90,7 @@ export const useResourceNotificationDialog = ({
   };
 
   const handleUnsubscribe = async (inheritChildren: boolean = false) => {
-    if (!currentUserId || subscriptions.length === 0) {
+    if (!currentUser?.id || subscriptions.length === 0) {
       return;
     }
 
