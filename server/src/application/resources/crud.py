@@ -19,7 +19,7 @@ from core.database import (
 )
 from core.utils.model_tools import is_valid_uuid
 
-from .model import Resource, resource_links
+from .model import Resource
 from .query_options import build_resource_query_options
 
 
@@ -39,26 +39,6 @@ class ResourceCRUD:
         statement = statement.options(*build_resource_query_options(fields))
         result = await self.session.execute(statement)
         return result.unique().scalar_one_or_none()
-
-    async def get_dependents(self, resource_id: UUID) -> list[Resource]:
-        """Return all direct dependents (children) of the given resource.
-
-        Queries resource_links directly instead of traversing the Resource.children
-        ORM relationship, which has no eager-load strategy and raises MissingGreenlet
-        when accessed in async SQLAlchemy contexts.
-
-        resource_links convention: parent_id = dependent resource, child_id = dependency.
-        So dependents of resource_id are rows WHERE child_id = resource_id → parent_id.
-        """
-        child_ids_stmt = select(resource_links.c.parent_id).where(resource_links.c.child_id == resource_id)
-        result = await self.session.execute(child_ids_stmt)
-        dependent_ids = [row[0] for row in result.fetchall()]
-        if not dependent_ids:
-            return []
-
-        resources_stmt = select(Resource).where(Resource.id.in_(dependent_ids)).options(*build_resource_query_options())
-        resources_result = await self.session.execute(resources_stmt)
-        return list(resources_result.unique().scalars().all())
 
     async def get_all(
         self,
@@ -245,6 +225,7 @@ class ResourceCRUD:
             WITH RECURSIVE tree_view AS (
                 SELECT
                     c.id,
+                    c.template_id,
                     NULL::uuid AS child_id,
                     c.name,
                     c.status,
@@ -260,6 +241,7 @@ class ResourceCRUD:
 
                 SELECT
                     parent.id,
+                    parent.template_id,
                     cl.child_id,
                     parent.name,
                     parent.status,
@@ -276,6 +258,7 @@ class ResourceCRUD:
 
             SELECT
                 id,
+                template_id,
                 child_id,
                 name,
                 status,

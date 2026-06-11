@@ -84,6 +84,11 @@ def _make_service(resource_crud, workflow_service, event_sender=None, audit_log_
     )
 
 
+def _make_row(resource: Resource, level: int) -> dict[str, object]:
+    """Build a CTE row dict as returned by ResourceCRUD.get_tree_to_children."""
+    return {"id": resource.id, "template_id": resource.template_id, "level": level}
+
+
 def _mock_workflow_service(workflow_response: WorkflowResponse):
     ws = Mock()
     ws.create = AsyncMock(return_value=workflow_response)
@@ -110,8 +115,7 @@ class TestCascadeDestroyIncludesAllDescendants:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -137,8 +141,7 @@ class TestCascadeDestroyIncludesAllDescendants:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -161,8 +164,7 @@ class TestCascadeDestroyIncludesAllDescendants:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -183,8 +185,7 @@ class TestCascadeDestroyIncludesAllDescendants:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -209,8 +210,7 @@ class TestCascadeDestroyAdminValidation:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -238,8 +238,7 @@ class TestCascadeDestroyAdminValidation:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(return_value=[])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -262,8 +261,9 @@ class TestCascadeDestroyAdminValidation:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child1, child2] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(
+            return_value=[_make_row(root, 0), _make_row(child1, 1), _make_row(child2, 1)]
+        )
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -288,8 +288,7 @@ class TestCascadeDestroyAdminValidation:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -313,8 +312,7 @@ class TestCascadeDestroyWorkflowStructure:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(return_value=[])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -336,8 +334,7 @@ class TestCascadeDestroyWorkflowStructure:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(side_effect=lambda rid: [child] if rid == root.id else [])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0), _make_row(child, 1)])
 
         workflow_resp = _make_workflow_response()
         service = _make_service(resource_crud, _mock_workflow_service(workflow_resp))
@@ -362,8 +359,7 @@ class TestCascadeDestroyWorkflowStructure:
         root = _make_resource()
 
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=root)
-        resource_crud.get_dependents = AsyncMock(return_value=[])
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0)])
 
         workflow_resp = _make_workflow_response()
         event_sender = Mock()
@@ -389,7 +385,7 @@ class TestCascadeDestroyWorkflowStructure:
     @pytest.mark.asyncio
     async def test_resource_not_found_raises(self, mock_user_dto, monkeypatch):
         resource_crud = Mock()
-        resource_crud.get_by_id = AsyncMock(return_value=None)
+        resource_crud.get_tree_to_children = AsyncMock(return_value=[])
 
         service = _make_service(resource_crud, Mock())
 

@@ -1,5 +1,4 @@
 import logging
-from collections import deque
 from uuid import UUID
 
 from application.workflows.schema import WorkflowCreate, WorkflowResponse, WorkflowStepCreate
@@ -12,7 +11,6 @@ from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
 from .crud import ResourceCRUD
-from .model import Resource
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +19,12 @@ class CascadeDestroyService:
     """
     Orchestrates cascade destruction of a resource and all its descendants.
 
-    The full descendant tree is collected via BFS over resource.children.
-    A destroy Workflow is created with one step per resource, ordered so that
-    leaves (deepest nodes) have the lowest position values and are therefore
-    destroyed first. Resources at the same BFS depth share the same position
-    and can be destroyed in parallel by WorkflowTask.
+    The full descendant tree is collected via a single recursive CTE
+    (resource_crud.get_tree_to_children). A destroy Workflow is created with
+    one step per resource, ordered so that leaves (deepest nodes) have the
+    lowest position values and are therefore destroyed first. Resources at
+    the same depth share the same position and can be destroyed in parallel
+    by WorkflowTask.
     """
 
     def __init__(
@@ -59,11 +58,9 @@ class CascadeDestroyService:
         :raises EntityWrongState: If any resource in the tree is already being
             destroyed or has pending uncommitted changes.
         """
-        root = await self.resource_crud.get_by_id(resource_id)
-        if root is None:
+        ordered_resources = await self._collect_descendants_post_order(resource_id)
+        if not ordered_resources:
             raise EntityNotFound("Resource not found")
-
-        ordered_resources = await self._collect_descendants_post_order(root)
 
         await self._validate_admin_permissions(ordered_resources, requester)
 
@@ -94,53 +91,41 @@ class CascadeDestroyService:
 
     async def _collect_descendants_post_order(
         self,
-        root: Resource,
-    ) -> list[tuple[Resource, int]]:
+        resource_id: UUID,
+    ) -> list[tuple[UUID, UUID, int]]:
         """
-        BFS via resource_crud.get_dependents(), tracking the maximum depth at
-        which each resource is reached.  Returns a list of (resource, position)
-        tuples sorted so that leaves (highest depth) come first (lowest position).
+        Single recursive CTE walk via resource_crud.get_tree_to_children().
+        Returns a list of (resource_id, template_id, position) tuples sorted
+        leaves-first (lowest position first).
 
-        get_dependents() is used instead of resource.children to avoid triggering
-        SQLAlchemy lazy-loading on the children relationship, which has no configured
-        eager-load strategy and raises MissingGreenlet in async contexts.
-
-        Position assignment:  position = max_depth_in_tree - node_depth
-        This guarantees every child has a strictly lower position than its
-        parent, satisfying action_destroy's children-must-be-gone guard.
+        Handles diamond-shaped graphs by keeping the maximum depth per node.
+        Position assignment: position = global_max_depth - node_depth
+        This guarantees every descendant has a strictly lower position than
+        its ancestors, satisfying action_destroy's children-must-be-gone guard.
         """
-        max_depth: dict[UUID, int] = {}
-        resource_map: dict[UUID, Resource] = {}
-        queue: deque[tuple[Resource, int]] = deque()
-        queue.append((root, 0))
-
-        while queue:
-            resource, depth = queue.popleft()
-            rid = resource.id
-
-            if rid in max_depth and max_depth[rid] >= depth:
-                continue
-
-            max_depth[rid] = depth
-            resource_map[rid] = resource
-
-            dependents = await self.resource_crud.get_dependents(rid)
-            for dependent in dependents:
-                queue.append((dependent, depth + 1))
-
-        if not max_depth:
+        rows = await self.resource_crud.get_tree_to_children(resource_id)
+        if not rows:
             return []
+
+        # Deduplicate: keep the maximum depth reached for each node.
+        max_depth: dict[UUID, int] = {}
+        template_ids: dict[UUID, UUID] = {}
+        for row in rows:
+            rid = row["id"]
+            depth = row["level"]
+            if rid not in max_depth or depth > max_depth[rid]:
+                max_depth[rid] = depth
+                template_ids[rid] = row["template_id"]
 
         global_max = max(max_depth.values())
         # position = global_max - node_depth  (leaves → 0, root → global_max)
-        result = [(resource_map[rid], global_max - depth) for rid, depth in max_depth.items()]
-        # Sort by position ascending so the list reads leaf→root
-        result.sort(key=lambda t: t[1])
+        result = [(rid, template_ids[rid], global_max - depth) for rid, depth in max_depth.items()]
+        result.sort(key=lambda t: t[2])
         return result
 
     async def _validate_admin_permissions(
         self,
-        ordered_resources: list[tuple[Resource, int]],
+        ordered_resources: list[tuple[UUID, UUID, int]],
         requester: UserDTO,
     ) -> None:
         """
@@ -149,10 +134,10 @@ class CascadeDestroyService:
         """
         denied_ids: list[str] = []
 
-        for resource, _ in ordered_resources:
-            permissions = await user_entity_permissions(requester, resource.id, "resource")
+        for resource_id, _, _ in ordered_resources:
+            permissions = await user_entity_permissions(requester, resource_id, "resource")
             if "admin" not in permissions:
-                denied_ids.append(str(resource.id))
+                denied_ids.append(str(resource_id))
 
         if denied_ids:
             raise AccessDenied(
@@ -161,12 +146,12 @@ class CascadeDestroyService:
             )
 
     @staticmethod
-    def _build_steps(ordered_resources: list[tuple[Resource, int]]) -> list[WorkflowStepCreate]:
+    def _build_steps(ordered_resources: list[tuple[UUID, UUID, int]]) -> list[WorkflowStepCreate]:
         return [
             WorkflowStepCreate(
-                template_id=resource.template_id,
-                resource_id=resource.id,
+                template_id=template_id,
+                resource_id=resource_id,
                 position=position,
             )
-            for resource, position in ordered_resources
+            for resource_id, template_id, position in ordered_resources
         ]
