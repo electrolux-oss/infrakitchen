@@ -6,6 +6,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from ..models.encrypted_secret import EncryptedSecretStr
 
 
+class UserMetadata(BaseModel):
+    """
+    ExtraUserInfo is a model for storing extra information about the user that is not included in the main User model.
+    It can be used to store any additional information related to the user that doesn't fit into the predefined columns.
+    """
+
+    slack_id: str | None = Field(default=None, title="Slack ID")
+
+
 class UserCreate(BaseModel):
     email: EmailStr | None = Field(default=None, title="Email")
     identifier: str = Field(..., title="Identifier", frozen=True)
@@ -44,6 +53,7 @@ class UserResponse(BaseModel):
     primary_account: list["UserShort"] = Field(default_factory=list, title="Primary account for secondary users")
     deactivated: bool = Field(default=False, title="Deactivated")
     description: str | None = Field(default="", title="Description")
+    meta: UserMetadata | None = Field(default=None, title="Extra user information")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

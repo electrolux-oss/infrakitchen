@@ -1,14 +1,15 @@
 from datetime import datetime, UTC
+from typing import Any
 import uuid
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from core.users.schema import UserShort
+from core.users.schema import UserMetadata, UserShort
 
 from ..models.encrypted_secret import EncryptedSecretStr
 
 from ..base_models import Base
-from sqlalchemy import UUID, Column, ForeignKey, Index, DateTime, Table, UniqueConstraint, func
+from sqlalchemy import JSON, UUID, Column, ForeignKey, Index, DateTime, Table, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 user_account_associations = Table(
@@ -34,6 +35,9 @@ class User(Base):
     deactivated: Mapped[bool] = mapped_column(default=False)
     description: Mapped[str] = mapped_column(default="")
     is_primary: Mapped[bool] = mapped_column(default=False, nullable=True)
+    # This field can be used to store any additional information related to the user
+    # that doesn't fit into the predefined columns.
+    meta: Mapped[dict[str, Any] | None] = mapped_column(JSON, default=None)
     secondary_accounts: Mapped[list["User"]] = relationship(
         "User",
         secondary=user_account_associations,
@@ -69,6 +73,7 @@ class UserDTO(BaseModel):
     is_primary: bool | None = Field(default=False, title="Is primary user")
     secondary_accounts: list[UserShort] = Field(default_factory=list, title="Secondary accounts")
     primary_account: list[UserShort] = Field(default_factory=list, title="Primary account for secondary users")
+    meta: UserMetadata | None = Field(default=None, title="Extra user information")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 

@@ -7,6 +7,7 @@ from strawberry.types import Info
 
 from core.permissions.service import PermissionService
 from core.permissions.dependencies import get_permission_service
+from core.users.functions import user_apis_permissions
 from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
 from graphql_api.modules.permission.types import PermissionType, RoleType
 
@@ -94,3 +95,11 @@ class PermissionQuery:
             base_filter.update(cast(dict[str, Any], cast(object, filter)))
 
         return await service.count_roles(filter=base_filter)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def user_api_policies(self, info: Info) -> JSON:
+        requester = info.context["request"].state.user
+        if not requester:
+            return JSON({})
+        policies = await user_apis_permissions(requester)
+        return JSON({k: v for k, v in policies.items() if k.startswith("api:") or k == "*"})

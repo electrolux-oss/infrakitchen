@@ -6,8 +6,12 @@ from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
+from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.model import Subscription
+from core.notifications.service import SubscriptionService
 from application.resources.functions import (
     add_resource_parent_policy,
+    add_resource_parent_subscriptions,
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_actions,
@@ -28,7 +32,7 @@ from core.base_models import PatchBodyModel
 from core.caches.functions import cache_decorator
 from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
-from core.constants.model import ModelActions
+from core.constants.model import EventType, ModelActions
 from core.database import FieldSpec, to_dict
 from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
@@ -89,6 +93,7 @@ class ResourceService:
         task_service: TaskEntityService,
         validation_rule_service: ValidationRuleService,
         favorite_service: FavoriteService,
+        subscription_service: SubscriptionService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -105,6 +110,7 @@ class ResourceService:
         self.task_service: TaskEntityService = task_service
         self.validation_rule_service: ValidationRuleService = validation_rule_service
         self.favorite_service: FavoriteService = favorite_service
+        self.subscription_service: SubscriptionService = subscription_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -373,6 +379,12 @@ class ResourceService:
             permission_service=self.permission_service,
             requester=requester,
         )
+        await add_resource_parent_subscriptions(
+            resource_id=new_resource.id,
+            parent_ids=[p.id for p in new_resource.parents],
+            subscription_service=self.subscription_service,
+            requester=requester,
+        )
 
         if response.workspace is not None:
             await self.workspace_event_sender.send_task(
@@ -529,6 +541,7 @@ class ResourceService:
 
         response = ResourceResponse.model_validate(existing_resource)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
+        await self.publish_notification_event(existing_resource, ModelActions.UPDATE, status="info")
 
         if existing_resource.workspace_id is not None:
             await self.workspace_event_sender.send_task(
@@ -727,6 +740,7 @@ class ResourceService:
         match body.action:
             case ModelActions.REJECT:
                 await self.action_reject(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "rejected")
 
             case ModelActions.RETRY:
                 if existing_resource.status == ModelStatus.QUEUED:
@@ -743,8 +757,10 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 await self.action_approve(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "approve")
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
+                await self.publish_notification_event(existing_resource, "destroy")
             case ModelActions.EXECUTE:
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
@@ -796,6 +812,7 @@ class ResourceService:
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)
+                await self.publish_notification_event(existing_resource, "recreate")
 
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
@@ -823,6 +840,7 @@ class ResourceService:
         await self.log_service.delete_by_entity_id(resource_id)
         await self.task_service.delete_by_entity_id(resource_id)
         await delete_resource_policies(resource_id, self.permission_service)
+        await self.subscription_service.delete_many_by_entity_id("resource", resource_id)
         await self.crud.delete(existing_resource)
 
     async def get_tree(
@@ -1081,6 +1099,88 @@ class ResourceService:
         await self.permission_service.casbin_enforcer.send_reload_event()
         return policies
 
+    async def create_resource_subscription(
+        self,
+        resource_id: str,
+        requester: UserDTO,
+        inherit_children: bool = False,
+        user_id: str | None = None,
+    ) -> list[Subscription]:
+        resource = await self.get_by_id(resource_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {resource_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+
+        if not inherit_children:
+            resource_ids_to_subscribe = [resource_id]
+        else:
+            resource_tree = await self.crud.get_tree_to_children(resource_id)
+            seen: set[str] = set()
+            resource_ids_to_subscribe = []
+            for node in resource_tree:
+                node_id = str(node["id"])
+                if node_id not in seen:
+                    seen.add(node_id)
+                    resource_ids_to_subscribe.append(node_id)
+
+        # Fetch all existing subscriptions for this user + entity_type in one query
+        existing_subscriptions = await self.subscription_service.query_all(
+            filter={"user_id": target_user_id, "entity_type": "resource", "entity_id": resource_ids_to_subscribe}
+        )
+        already_subscribed = {str(s.entity_id) for s in existing_subscriptions}
+
+        # Only create subscriptions for resources not already subscribed
+        ids_to_create = [rid for rid in resource_ids_to_subscribe if rid not in already_subscribed]
+
+        subscriptions: list[Subscription] = list(existing_subscriptions)
+        for res_id in ids_to_create:
+            subscription = await self.subscription_service.create(
+                requester=requester,
+                entity_type="resource",
+                entity_id=res_id,
+                user_id=user_id,
+            )
+            subscriptions.append(subscription)
+        return subscriptions
+
+    async def delete_resource_subscription(
+        self,
+        resource_id: str,
+        requester: UserDTO,
+        inherit_children: bool = False,
+        user_id: str | None = None,
+    ) -> bool:
+        resource = await self.get_by_id(resource_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {resource_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+
+        if not inherit_children:
+            resource_ids_to_unsubscribe = [resource_id]
+        else:
+            resource_tree = await self.crud.get_tree_to_children(resource_id)
+            seen: set[str] = set()
+            resource_ids_to_unsubscribe = []
+            for node in resource_tree:
+                node_id = str(node["id"])
+                if node_id not in seen:
+                    seen.add(node_id)
+                    resource_ids_to_unsubscribe.append(node_id)
+
+        subscriptions = await self.subscription_service.query_all(
+            filter={
+                "user_id": target_user_id,
+                "entity_type": "resource",
+                "entity_id": resource_ids_to_unsubscribe,
+            }
+        )
+
+        for subscription in subscriptions:
+            await self.subscription_service.delete(subscription_id=subscription.id)
+        return True
+
     async def sync_workspace(self, resource_id: str, requester: UserDTO) -> ResourceResponse:
         """
         Sync existing resource with a workspace.
@@ -1102,3 +1202,26 @@ class ResourceService:
         await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
 
         return ResourceResponse.model_validate(existing_resource)
+
+    async def publish_notification_event(
+        self,
+        resource: Resource,
+        title: str,
+        event_type: EventType = EventType.UPDATE,
+        status: Literal[
+            "info",
+            "warning",
+            "error",
+            "success",
+        ] = "warning",
+    ) -> None:
+        event = NotificationEvent(
+            event_type=event_type,
+            entity_type="resource",
+            entity_id=str(resource.id),
+            title=f"Resource {resource.name}",
+            status=status,
+            message=f"Resource {resource.name} status has been changed ({title.upper()})\n"
+            f"New status: {resource.status}, new state: {resource.state}",
+        )
+        await publish_notification_event(event)

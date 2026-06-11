@@ -5,7 +5,7 @@ type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops", 
 type CodeLanguageType = Literal["opentofu"]
 type StorageProviderType = Literal["aws", "azurerm", "gcp"]
 type IacToolType = Literal["tofu"]
-type IntegrationType = Literal["git", "cloud"]
+type IntegrationType = Literal["git", "cloud", "notification"]
 
 type IntegrationProviderType = Literal[
     "aws",
@@ -21,6 +21,7 @@ type IntegrationProviderType = Literal[
     "git_public",
     "mongodb_atlas",
     "datadog",
+    "slack",
 ]
 
 type SecretProviderType = Literal["aws", "gcp", "custom"]

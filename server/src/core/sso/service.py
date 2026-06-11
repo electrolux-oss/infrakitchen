@@ -7,11 +7,6 @@ from core.users.service import UserService
 
 
 class SSOService:
-    """
-    SourceCodeService implements all required business-logic. It uses additional services and utils as helpers
-    e.g. SourceCodeCRUD for crud operations, RevisionHandler for handling revisions, EventSender to send an event, etc
-    """
-
     def __init__(
         self,
         user_service: UserService,

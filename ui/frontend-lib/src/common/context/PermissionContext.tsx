@@ -34,8 +34,10 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
     const getPermission = async () => {
       setLoading(true);
       try {
-        const response = await ikApi.get("user/policies");
-        setPermission(response);
+        const response = await ikApi.graphqlRequest<{
+          userApiPolicies: Record<string, string>;
+        }>("{ userApiPolicies }");
+        setPermission(response.userApiPolicies);
         setError(null);
       } catch (e: any) {
         notifyError(e);

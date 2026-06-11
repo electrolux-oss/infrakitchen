@@ -19,6 +19,14 @@ def _build_service(info: Info) -> UserService:
 @strawberry.type
 class UserQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
+    async def current_user(self, info: Info) -> UserType | None:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        entity_fields = get_entity_selection(info.selected_fields, "currentUser")
+        fields = build_field_spec(entity_fields)
+        return await service.query_by_id(requester.id, fields=fields)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def user(self, info: Info, id: uuid.UUID) -> UserType | None:
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "user")

@@ -72,6 +72,48 @@ class StorageProviderAdapter:
         pass
 
 
+class NotificationProviderAdapter:
+    """Base adapter class for notification providers like Slack.
+
+    Attributes:
+        adapters (dict): Registry of adapter subclasses
+        environment_variables (dict): Environment variables for configuration
+    """
+
+    __notification_provider_adapter_name__: str = ""
+
+    notification_adapters: dict[str, Any] = {}
+    environment_variables: dict[str, str] = {}
+    workspace_root: str | None = None
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        """Register adapter subclass in adapters registry."""
+        super().__init_subclass__(**kwargs)
+        cls.notification_adapters[cls.__notification_provider_adapter_name__] = cls
+
+    async def authenticate(self) -> None:
+        """Authenticate with the notification provider.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement authenticate method.")
+
+    async def is_valid(self) -> bool:
+        """Validate the connection to the notification provider.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement is_valid method.")
+
+    async def send_notification(self, **kwargs) -> None:
+        """Send notification through provider.
+
+        Must be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement send_notification method.")
+
+
 class IntegrationProvider:
     """Base class for integration providers. Like GitHub, AWS, Atlas etc.
 

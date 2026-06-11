@@ -9,6 +9,7 @@ router = APIRouter()
     response_description="Get list of available entities",
     response_model=list[str],
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def get():
     return get_all_entities()

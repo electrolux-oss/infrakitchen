@@ -1,9 +1,15 @@
-import { createBrowserRouter, RouterProvider } from "react-router";
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+} from "react-router";
 
 import {
   ConfigProvider,
   EventProvider,
   FavoritesProvider,
+  GradientCircularProgress,
   NotificationProvider,
   GlobalNotificationPopup,
   LocalStorageProvider,
@@ -11,18 +17,23 @@ import {
   PermissionProvider,
   useFilteredProtectedRoutes,
 } from "@electrolux-oss/infrakitchen";
+import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 
-import { AuthProvider } from "./base/auth/AuthContext";
+import { AuthProvider, useAuth } from "./base/auth/AuthContext";
 import { refreshAuth } from "./base/auth/refreshToken";
 import {
   addRefreshAuthToDataProvider,
   ikDataProvider,
 } from "./base/data/DataProvider";
 import DashboardLayout from "./base/layout/DashboardLayout";
-import ProtectedRoute from "./routes";
 import SignInSide from "./sign-in-side/SignInSide";
 import AppTheme from "./theme/AppTheme";
+
+const unauthenticatedRouter = createBrowserRouter([
+  { path: "/login", Component: SignInSide },
+  { path: "*", element: <Navigate to="/login" replace /> },
+]);
 
 const PermissionFilteredRouter = () => {
   const accessibleRoutes = useFilteredProtectedRoutes();
@@ -33,7 +44,7 @@ const PermissionFilteredRouter = () => {
       Component: SignInSide,
     },
     {
-      element: <ProtectedRoute />,
+      element: <Outlet />,
       children: [
         {
           element: <RouterSnackbarWrapper />,
@@ -62,6 +73,61 @@ export function InfrakitchenApp(props: { disableCustomTheme?: boolean }) {
   );
 }
 
+const AuthGate = ({ dataProvider }: { dataProvider: any }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <GradientCircularProgress />
+      </Box>
+    );
+  }
+
+  if (!user) {
+    const currentPath = window.location.pathname + window.location.search;
+    if (currentPath && currentPath !== "/login") {
+      localStorage.setItem("redirectPath", currentPath);
+    }
+    return (
+      <AppTheme>
+        <CssBaseline enableColorScheme>
+          <RouterProvider router={unauthenticatedRouter} />
+        </CssBaseline>
+      </AppTheme>
+    );
+  }
+
+  const storedRedirectPath = localStorage.getItem("redirectPath");
+  if (storedRedirectPath) {
+    localStorage.removeItem("redirectPath");
+    window.history.replaceState(null, "", storedRedirectPath);
+  }
+
+  return (
+    <LocalStorageProvider>
+      <ConfigProvider initialIkApi={dataProvider}>
+        <PermissionProvider>
+          <FavoritesProvider>
+            <EventProvider>
+              <NotificationProvider>
+                <InfrakitchenApp />
+              </NotificationProvider>
+            </EventProvider>
+          </FavoritesProvider>
+        </PermissionProvider>
+      </ConfigProvider>
+    </LocalStorageProvider>
+  );
+};
+
 export const AppWrapper = () => {
   const baseDataProvider = ikDataProvider(`/api`);
   const dataProvider = addRefreshAuthToDataProvider(
@@ -69,20 +135,8 @@ export const AppWrapper = () => {
     refreshAuth,
   );
   return (
-    <LocalStorageProvider>
-      <ConfigProvider initialIkApi={dataProvider}>
-        <AuthProvider>
-          <PermissionProvider>
-            <FavoritesProvider>
-              <EventProvider>
-                <NotificationProvider>
-                  <InfrakitchenApp />
-                </NotificationProvider>
-              </EventProvider>
-            </FavoritesProvider>
-          </PermissionProvider>
-        </AuthProvider>
-      </ConfigProvider>
-    </LocalStorageProvider>
+    <AuthProvider>
+      <AuthGate dataProvider={dataProvider} />
+    </AuthProvider>
   );
 };

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry.dataloader import DataLoader
 
 from application.executors.model import Executor
+from application.integrations.model import Integration
 from application.resources.model import Resource
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
@@ -15,6 +16,15 @@ from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
 from core.users.model import User
+
+
+async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Integration.id, Integration.name).where(Integration.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "integration"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
 
 
 async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
@@ -156,6 +166,9 @@ async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, 
 
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
     return {
+        "integration": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_integrations(list(keys), session)
+        ),
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),

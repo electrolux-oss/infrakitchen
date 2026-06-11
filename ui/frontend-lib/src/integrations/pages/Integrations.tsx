@@ -98,6 +98,13 @@ const IntegrationsPage = () => {
           .filter((p) => p.type === IntegrationType.CLOUD)
           .map((p) => ({ label: p.name, value: p.slug })),
       },
+      {
+        label: "Notification",
+        value: IntegrationType.NOTIFICATION,
+        children: allProviders
+          .filter((p) => p.type === IntegrationType.NOTIFICATION)
+          .map((p) => ({ label: p.name, value: p.slug })),
+      },
     ],
     [allProviders],
   );
@@ -205,6 +212,16 @@ const IntegrationsPage = () => {
           }}
         >
           Connect Cloud
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<Icon icon="octicon:report" />}
+          onClick={(e) => {
+            setSubmenuAnchor(e.currentTarget);
+            setActiveCategory(String(IntegrationType.NOTIFICATION));
+          }}
+        >
+          Connect Notification
         </Button>
       </Box>
       <Menu
@@ -381,7 +398,10 @@ const IntegrationsPage = () => {
                   chipColor={
                     integration.integration_type === IntegrationType.CLOUD
                       ? "primary"
-                      : "secondary"
+                      : integration.integration_type ===
+                          IntegrationType.NOTIFICATION
+                        ? "warning"
+                        : "secondary"
                   }
                   entityFields={integrationEntityFields(integration)}
                 />

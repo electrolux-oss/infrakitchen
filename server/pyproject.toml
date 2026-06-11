@@ -120,6 +120,7 @@ dependencies = [
   "prometheus-async>=25.1.0",
   "strawberry-graphql[fastapi]>=0.262.0",
   "strawberry-sqlalchemy-mapper>=0.8.0",
+  "jinja2>=3.1.6",
 ]
 requires-python = "==3.14.*"
 readme = "README.md"

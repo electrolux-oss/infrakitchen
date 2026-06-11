@@ -2,6 +2,7 @@ from .adapters.cloud_resource_adapter import CloudResourceAdapter
 from .adapters.provider_adapters import (
     StorageProviderAdapter,
     SecretProviderAdapter,
+    NotificationProviderAdapter,
 )
 from .base_worker import BaseMessagesWorker
 from .feature_flags.model import FeatureFlag
@@ -35,6 +36,7 @@ from .utils.json_encoder import JsonEncoder
 from .utils.message_handler import MessageHandler
 from .base_models import MessageModel
 from .models.encrypted_secret import EncryptedSecretStr
+from .notifications import SubscriptionDTO, NotificationPreferenceDTO
 
 
 __all__ = [
@@ -61,6 +63,7 @@ __all__ = [
     "WorkerDTO",
     "StorageProviderAdapter",
     "SecretProviderAdapter",
+    "NotificationProviderAdapter",
     "UserDTO",
     "get_logged_user",
     "get_user_from_token",
@@ -69,4 +72,6 @@ __all__ = [
     "PermissionDTO",
     "EncryptedSecretStr",
     "FeatureFlag",
+    "NotificationPreferenceDTO",
+    "SubscriptionDTO",
 ]

@@ -16,6 +16,7 @@ export * from "./tasks";
 export * from "./audit_logs";
 export * from "./dashboard";
 export * from "./integrations";
+export * from "./notifications";
 export * from "./templates";
 export * from "./blueprints";
 export * from "./workflows";

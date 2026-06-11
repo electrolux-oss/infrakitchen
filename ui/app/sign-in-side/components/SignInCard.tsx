@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import { useNavigate } from "react-router";
 import { useEffectOnce } from "react-use";
 
 import { notify } from "@electrolux-oss/infrakitchen";
@@ -38,7 +37,6 @@ export default function SignInCard() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const navigate = useNavigate();
   const handleGuestClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -52,7 +50,7 @@ export default function SignInCard() {
     setAnchorEl(null); // Explicit close
   };
 
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   const handleSubmit = (provider: string) => {
     setLoading(true);
@@ -63,26 +61,21 @@ export default function SignInCard() {
   };
 
   useEffectOnce(() => {
-    fetch("/api/configs/auth_providers")
+    fetch("/api/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: "{ enabledAuthProviders }",
+      }),
+    })
       .then((res) => res.json())
-      .then((data) => {
-        setEnabledProviders(data || []);
+      .then((json) => {
+        setEnabledProviders(json?.data?.enabledAuthProviders || []);
       })
       .catch(() => {
         setEnabledProviders([]);
       });
   });
-  useEffect(() => {
-    if (!loading && user) {
-      const redirectPath = localStorage.getItem("redirectPath");
-      if (redirectPath) {
-        localStorage.removeItem("redirectPath");
-        navigate(redirectPath);
-      } else {
-        navigate("/");
-      }
-    }
-  }, [loading, user, navigate]);
 
   return (
     <Card variant="outlined">

@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,19 +16,7 @@ from core.users.model import User, UserDTO
 
 from core.constants.model import ModelStatus
 from .schema import (
-    AzureReposSshIntegrationConfig,
-    AWSIntegrationConfig,
-    GCPIntegrationConfig,
-    AzureRMIntegrationConfig,
-    AzureReposIntegrationConfig,
-    GitPublicIntegrationConfig,
-    MongoDBAtlasIntegrationConfig,
-    GithubIntegrationConfig,
-    GithubSshIntegrationConfig,
-    GitLabIntegrationConfig,
-    BitbucketIntegrationConfig,
-    BitbucketSshIntegrationConfig,
-    DatadogIntegrationConfig,
+    IntegrationConfigType,
 )
 
 
@@ -85,20 +73,5 @@ class IntegrationDTO(BaseModel):
     integration_type: IntegrationType = Field(..., frozen=True)
     integration_provider: IntegrationProviderType = Field(..., frozen=True)
     labels: list[str] = Field(default_factory=list)
-    configuration: Annotated[
-        AWSIntegrationConfig
-        | GCPIntegrationConfig
-        | AzureRMIntegrationConfig
-        | AzureReposIntegrationConfig
-        | AzureReposSshIntegrationConfig
-        | MongoDBAtlasIntegrationConfig
-        | GithubIntegrationConfig
-        | GithubSshIntegrationConfig
-        | GitLabIntegrationConfig
-        | BitbucketIntegrationConfig
-        | BitbucketSshIntegrationConfig
-        | DatadogIntegrationConfig
-        | GitPublicIntegrationConfig,
-        Field(discriminator="integration_provider"),
-    ] = Field(...)
+    configuration: IntegrationConfigType = Field(...)
     model_config = ConfigDict(from_attributes=True)

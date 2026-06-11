@@ -139,6 +139,14 @@ class GitPublicIntegrationConfig(BaseModel):
         return []
 
 
+class SlackIntegrationConfig(BaseModel):
+    slack_bot_token: EncryptedSecretStr = Field(...)
+    integration_provider: Literal["slack"] = Field(default="slack", frozen=True)
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("slack_bot_token", self.slack_bot_token)] if self.slack_bot_token else []
+
+
 type IntegrationConfigType = Annotated[
     AWSIntegrationConfig
     | GCPIntegrationConfig
@@ -152,7 +160,8 @@ type IntegrationConfigType = Annotated[
     | BitbucketIntegrationConfig
     | BitbucketSshIntegrationConfig
     | DatadogIntegrationConfig
-    | GitPublicIntegrationConfig,
+    | GitPublicIntegrationConfig
+    | SlackIntegrationConfig,
     Field(discriminator="integration_provider"),
 ]
 

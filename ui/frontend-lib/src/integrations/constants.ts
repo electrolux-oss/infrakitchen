@@ -8,6 +8,7 @@ import {
   GitLabIcon,
   GoogleCloudIcon,
   MongoDBIcon,
+  SlackIcon,
 } from "../icons/Icons";
 
 import { ConnectionType, IntegrationType, Provider } from "./types";
@@ -189,6 +190,24 @@ export const providers: Provider[] = [
     icon: DatadogIcon,
     slug: "datadog",
     instructions: [],
+    tokenLink: "",
+  },
+  {
+    type: IntegrationType.NOTIFICATION,
+    name: "Slack",
+    icon: SlackIcon,
+    slug: "slack",
+    instructions: [
+      "Go to <a href='https://api.slack.com/apps' target='_blank'><strong>Slack API Apps</strong></a> and click <strong>Create New App</strong>",
+      "Select 'From scratch'",
+      "Give your app a name (e.g., 'InfraKitchen Integration') and select your workspace",
+      "Click <strong>Create App</strong>",
+      "In the left sidebar, go to <strong>OAuth & Permissions</strong>",
+      "Under <strong>Scopes</strong>, add the following bot token scopes based on your needs: <pre>chat:write\nchannels:read\ngroups:read\nim:read\nmpim:read</pre>",
+      "Click <strong>Install to Workspace</strong> and authorize the permissions",
+      "Copy the generated <strong>Bot User OAuth Token</strong> and paste it below",
+    ],
+
     tokenLink: "",
   },
 ];

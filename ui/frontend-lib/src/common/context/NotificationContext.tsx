@@ -3,16 +3,18 @@ import {
   useContext,
   useState,
   ReactNode,
-  useEffect,
-  useRef,
+  useCallback,
 } from "react";
 
-import WebSocketManager from "../WebSocketManager";
+import {
+  NotificationMessage,
+  useNotificationSubscription,
+} from "../hooks/useNotificationSubscription";
 
 import { useConfig } from "./ConfigContext";
 
 interface NotificationContextType {
-  notification: any;
+  notification: NotificationMessage | undefined;
 }
 
 export const NotificationContext = createContext<
@@ -20,44 +22,22 @@ export const NotificationContext = createContext<
 >(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const [notification, setNotification] = useState<any>();
+  const [notification, setNotification] = useState<
+    NotificationMessage | undefined
+  >();
   const { ikApi, webSocketEnabled, globalConfig } = useConfig();
 
-  const socketManagerRef = useRef<WebSocketManager | null>(null);
+  const handleMessage = useCallback((data: NotificationMessage) => {
+    setNotification(data);
+  }, []);
 
-  useEffect(() => {
-    if (
-      socketManagerRef.current === null &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current = new WebSocketManager(
-        ikApi,
-        "/api/ws/notifications",
-      );
-    }
-  }, [ikApi, webSocketEnabled, globalConfig]);
+  const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
 
-  useEffect(() => {
-    if (
-      socketManagerRef.current &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current.setEventHandler((messageEvent) => {
-        const data = JSON.parse(messageEvent.data);
-        setNotification(data);
-      });
-      socketManagerRef.current.startVisibilityTracking();
-      socketManagerRef.current.connect();
-    }
-    return () => {
-      if (socketManagerRef.current) {
-        socketManagerRef.current.stopVisibilityTracking();
-        socketManagerRef.current.disconnect();
-      }
-    };
-  }, [setNotification, webSocketEnabled, globalConfig]);
+  useNotificationSubscription({
+    ikApi,
+    enabled: subscriptionEnabled,
+    onMessage: handleMessage,
+  });
 
   const contextValue: NotificationContextType = {
     notification,

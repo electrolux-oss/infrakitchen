@@ -12,11 +12,18 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
+import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
 import { ResourceOverview } from "./ResourceOverview";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { TemplateConfiguration } from "./TemplateConfiguration";
 
-export const ResourceContent = () => {
+interface ResourceContentProps {
+  subscribersRefreshKey?: number;
+}
+
+export const ResourceContent = ({
+  subscribersRefreshKey = 0,
+}: ResourceContentProps) => {
   const { entity } = useEntityProvider();
   if (!entity) return null;
 
@@ -41,6 +48,15 @@ export const ResourceContent = () => {
     {
       label: "Policies",
       content: <ResourcePermissions resource={entity} />,
+    },
+    {
+      label: "Notifications",
+      content: (
+        <ResourceNotificationSubscribersTable
+          resourceId={entity.id}
+          key={subscribersRefreshKey}
+        />
+      ),
     },
     {
       label: "Logs",

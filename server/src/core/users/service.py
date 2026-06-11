@@ -11,8 +11,8 @@ from core.users.functions import get_user_actions
 from core.utils.model_tools import model_db_dump
 from core.utils.password_manager import hash_new_password
 from .crud import UserCRUD
-from .schema import UserCreate, UserCreateWithProvider, UserResponse, UserUpdate
 from core.users.model import User, UserDTO
+from .schema import UserMetadata, UserCreate, UserCreateWithProvider, UserResponse, UserUpdate
 
 
 logger = logging.getLogger(__name__)
@@ -147,6 +147,27 @@ class UserService:
     async def update(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> UserResponse:
         existing_user = await self.update_entity(user_id=user_id, user=user, requester=requester)
         return UserResponse.model_validate(existing_user)
+
+    async def update_user_meta(self, user_id: UUID, meta: UserMetadata) -> User:
+        """
+        Update user meta information.
+        :param user_id: ID of the user to update
+        :param meta: Meta information to update
+        :return: Updated user
+        """
+        existing_user = await self.crud.get_by_id(user_id)
+
+        if not existing_user:
+            raise EntityNotFound("User not found")
+
+        existing_meta = existing_user.meta or {}
+        body = UserMetadata.model_dump(meta, exclude_none=True)
+
+        existing_meta.update(body)
+        UserMetadata.model_validate(existing_meta)  # validate the updated meta
+
+        await self.crud.update(existing_user, {"meta": existing_meta})
+        return existing_user
 
     async def get_actions(self, user_id: str | UUID, requester: UserDTO) -> list[str]:
         user = await self.crud.get_by_id(user_id)

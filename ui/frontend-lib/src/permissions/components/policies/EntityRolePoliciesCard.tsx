@@ -32,7 +32,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       {
         field: "entity_data",
         fetchFields: ["entity_data", "v1"],
-        headerName: "Resource Name",
+        headerName: "Entity Name",
         flex: 1,
         sortable: false,
         hideable: false,
