@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { matchPath, useLocation } from "react-router";
+import { Link, matchPath, useLocation } from "react-router";
 
 import { Icon } from "@iconify/react";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -303,11 +303,15 @@ export default function DashboardSidebar({
                   .join("")}
               </Avatar>
               <Box
+                component={Link}
+                to={`/users/${user.id}`}
                 sx={{
                   mr: "auto",
                   minWidth: 0,
                   flex: 1,
                   overflow: "hidden",
+                  textDecoration: "none",
+                  color: "inherit",
                 }}
               >
                 <Typography
