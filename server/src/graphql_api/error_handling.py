@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from core.errors import (
     AccessDenied,
+    AccessUnauthorized,
     CannotProceed,
     ChildrenIsNotReady,
     CloudWrongCredentials,
@@ -51,6 +52,9 @@ def classify_graphql_error(error: GraphQLError) -> tuple[str, str, dict[str, Any
 
         if isinstance(original, AccessDenied):
             return "ACCESS_DENIED", _sanitize_message(str(original)), None
+
+        if isinstance(original, AccessUnauthorized):
+            return "UNAUTHORIZED", _sanitize_message(str(original)), None
 
         if isinstance(original, EntityWrongState):
             return "WRONG_STATE", _sanitize_message(str(original)), None
