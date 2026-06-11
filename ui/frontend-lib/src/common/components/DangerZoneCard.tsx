@@ -1,9 +1,10 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 
 import { useNavigate } from "react-router";
 
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import WarningIcon from "@mui/icons-material/Warning";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
   Alert,
   Box,
@@ -11,7 +12,7 @@ import {
   Card,
   CardActions,
   CardHeader,
-  CircularProgress,
+  InputAdornment,
   TextField,
   Typography,
 } from "@mui/material";
@@ -24,6 +25,7 @@ import { notify, notifyError } from "../hooks/useNotification";
 
 import { ActionButton } from "./buttons/ActionButton";
 import { DeleteButton } from "./buttons/DeleteEntityButton";
+import { CascadeDestroyDialog } from "./CascadeDestroyDialog";
 import { CommonDialog } from "./CommonDialog";
 
 export const DangerZoneCard = () => {
@@ -132,45 +134,74 @@ export const DangerZoneCard = () => {
         )}
       </CardActions>
       <CommonDialog
-        maxWidth="xs"
+        maxWidth="sm"
         title={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <WarningIcon color="error" />
+            <DeleteForeverIcon />
             <Typography variant="h6" component="span">
-              Confirmation
+              Destroy
             </Typography>
           </Box>
         }
         open={dialogValues.destroy}
         onClose={() => changeDialog("destroy")}
         content={
-          <>
-            <Alert severity="warning">Proceed with extreme caution!</Alert>
-            <Typography>
-              <br />
-              Are you sure you want to destroy{" "}
-              <mark>
-                <code>{entity.name || entity.identifier}</code>
-              </mark>
-              ? All associated infrastructure and data will be permanently
-              destroyed.
-              <br />
-              <br />
-            </Typography>
-            <Typography>
-              To confirm, enter{" "}
-              <mark>
-                <code>{entity.name || entity.identifier}</code>
-              </mark>{" "}
-              in the text field.
-            </Typography>
-            <TextField
-              variant="outlined"
-              value={entityName}
-              onChange={handleEntityDestroy}
-              fullWidth
-            />
-          </>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Alert severity="warning" icon={<WarningAmberIcon />}>
+              This will permanently destroy{" "}
+              <strong>{entity.name || entity.identifier}</strong> and all
+              associated infrastructure and data. This cannot be undone.
+            </Alert>
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                To confirm, type{" "}
+                <Box
+                  component="code"
+                  sx={{
+                    px: 0.5,
+                    py: 0.25,
+                    bgcolor: "action.selected",
+                    borderRadius: 0.5,
+                    fontFamily: "monospace",
+                    fontSize: "0.85em",
+                  }}
+                >
+                  {entity.name || entity.identifier}
+                </Box>{" "}
+                below.
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder={entity.name || entity.identifier}
+                value={entityName}
+                onChange={handleEntityDestroy}
+                error={
+                  entityName.length > 0 &&
+                  entityName !== (entity.name || entity.identifier)
+                }
+                InputProps={{
+                  endAdornment: entityName.length > 0 && (
+                    <InputAdornment position="end">
+                      <Typography
+                        variant="caption"
+                        color={
+                          entityName === (entity.name || entity.identifier)
+                            ? "success.main"
+                            : "error.main"
+                        }
+                      >
+                        {entityName === (entity.name || entity.identifier)
+                          ? "✓"
+                          : "✗"}
+                      </Typography>
+                    </InputAdornment>
+                  ),
+                }}
+                autoComplete="off"
+              />
+            </Box>
+          </Box>
         }
         actions={
           <ActionButton
@@ -249,84 +280,29 @@ export const DangerZoneCard = () => {
           </ActionButton>
         }
       />
-      <CommonDialog
-        maxWidth="xs"
-        title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <WarningIcon color="error" />
-            <Typography variant="h6" component="span">
-              Confirmation
-            </Typography>
-          </Box>
-        }
+      <CascadeDestroyDialog
         open={dialogValues.cascade_destroy}
         onClose={() => changeDialog("cascade_destroy")}
-        content={
-          <>
-            <Alert severity="warning">
-              This will destroy this resource and all its dependent children.
-            </Alert>
-            <Typography>
-              <br />
-              Are you sure you want to cascade destroy{" "}
-              <mark>
-                <code>{entity.name || entity.identifier}</code>
-              </mark>
-              ? All associated infrastructure and data will be permanently
-              destroyed, including every child resource.
-              <br />
-              <br />
-            </Typography>
-            <Typography>
-              To confirm, enter{" "}
-              <mark>
-                <code>{entity.name || entity.identifier}</code>
-              </mark>{" "}
-              in the text field.
-            </Typography>
-            <TextField
-              variant="outlined"
-              value={entityName}
-              onChange={handleEntityDestroy}
-              fullWidth
-            />
-          </>
-        }
-        actions={
-          <Button
-            variant="contained"
-            color="error"
-            disabled={
-              cascadeDestroyLoading ||
-              entityName !== (entity.name || entity.identifier)
-            }
-            startIcon={
-              cascadeDestroyLoading ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : undefined
-            }
-            onClick={() => {
-              setCascadeDestroyLoading(true);
-              ikApi
-                .patchRaw(`resources/${entity.id}/cascade_destroy`, {})
-                .then((response: WorkflowResponse) => {
-                  notify("Cascade destroy workflow created", "success");
-                  changeDialog("cascade_destroy");
-                  navigate(`${linkPrefix}workflows/${response.id}`);
-                })
-                .catch((error: unknown) => {
-                  notifyError(error);
-                  changeDialog("cascade_destroy");
-                })
-                .finally(() => {
-                  setCascadeDestroyLoading(false);
-                  setDestroyEntityName("");
-                });
-            }}
-          >
-            Cascade Destroy
-          </Button>
-        }
+        entityId={entity.id}
+        entityName={entity.name || entity.identifier}
+        loading={cascadeDestroyLoading}
+        onConfirm={() => {
+          setCascadeDestroyLoading(true);
+          ikApi
+            .patchRaw(`resources/${entity.id}/cascade_destroy`, {})
+            .then((response: WorkflowResponse) => {
+              notify("Cascade destroy workflow created", "success");
+              changeDialog("cascade_destroy");
+              navigate(`${linkPrefix}workflows/${response.id}`);
+            })
+            .catch((error: unknown) => {
+              notifyError(error);
+              changeDialog("cascade_destroy");
+            })
+            .finally(() => {
+              setCascadeDestroyLoading(false);
+            });
+        }}
       />
     </Card>
   );
