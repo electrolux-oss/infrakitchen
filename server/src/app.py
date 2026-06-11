@@ -17,13 +17,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
 
-from core.event_stream_manager import start_rabbitmq_consumer
+from core.utils.event_stream_manager import start_rabbitmq_consumer
 
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import Settings, setup_service_environment
-from core.utils.websocket_manager import WebSocketConnectionManager
 from application.views import main_router
 from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
@@ -63,7 +62,6 @@ async def lifespan(app: FastAPI):
         mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
         mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
 
-    websocket_manager = WebSocketConnectionManager()
     loop = asyncio.get_running_loop()
     rabbitmq_task = loop.create_task(start_rabbitmq_consumer())
     notification_event_router_task = loop.create_task(start_notification_event_router())
@@ -84,8 +82,6 @@ async def lifespan(app: FastAPI):
         await notification_event_router_task
     except (asyncio.CancelledError, Exception):
         pass
-
-    await websocket_manager.close_all_connections()
 
 
 app = FastAPI(

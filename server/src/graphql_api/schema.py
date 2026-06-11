@@ -4,6 +4,7 @@ from graphql_api.extensions import GraphQLFailureFlagExtension
 from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.audit_log.queries import AuditLogQuery
+from graphql_api.modules.event.subscriptions import EventSubscription
 from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
@@ -83,6 +84,7 @@ class Mutation(
 
 @strawberry.type
 class Subscription(
+    EventSubscription,
     LogSubscription,
     NotificationSubscription,
 ):

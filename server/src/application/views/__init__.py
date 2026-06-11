@@ -40,7 +40,6 @@ from ..favorites import api as favorites_api
 from ..workspaces import api as workspaces_api
 from ..executors import api as executors_api
 from ..validation_rules import api as validation_rules_api
-from ..views.websocket_view import router as websocket
 from ..views import administration_views as administration
 from ..views import config_view as config
 from ..views import user_permission_view as user
@@ -243,5 +242,4 @@ main_router.include_router(api)
 main_router.include_router(auth_router)
 main_router.include_router(config.router)
 main_router.include_router(user.router)
-main_router.include_router(websocket)
 main_router.include_router(graphql_app, prefix="/graphql")
