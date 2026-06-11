@@ -5,8 +5,6 @@ from fastapi import status as http_status
 from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
 from core.utils.fastapi_tools import QueryParamsType, parse_query_params
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
-from infrakitchen_mcp.registry import mcp_group
 from .schema import AuthProviderCreate, AuthProviderResponse, AuthProviderUpdate
 from .dependencies import get_auth_provider_service
 
@@ -20,7 +18,6 @@ router = APIRouter()
     status_code=http_status.HTTP_200_OK,
     deprecated=True,
 )
-@mcp_group(get_one_group, "auth_providers", param_renames={"id": "auth_provider_id"})
 async def get_by_id(auth_provider_id: str, service: AuthProviderService = Depends(get_auth_provider_service)):
     entity = await service.get_by_id(auth_provider_id=auth_provider_id)
     if not entity:
@@ -35,7 +32,6 @@ async def get_by_id(auth_provider_id: str, service: AuthProviderService = Depend
     status_code=http_status.HTTP_200_OK,
     deprecated=True,
 )
-@mcp_group(list_entities_group, "auth_providers")
 async def get_all(
     response: Response,
     service: AuthProviderService = Depends(get_auth_provider_service),

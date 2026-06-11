@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends, Response
 from fastapi import status as http_status
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
-from infrakitchen_mcp.registry import mcp_group
 
 from .schema import TaskEntityResponse
 from .service import TaskEntityService
@@ -18,7 +16,6 @@ router = APIRouter()
     status_code=http_status.HTTP_200_OK,
     deprecated=True,
 )
-@mcp_group(get_one_group, "tasks", param_renames={"id": "entity_id"})
 async def get_by_id(entity_id: str, service: TaskEntityService = Depends(get_task_service)):
     entity = await service.get_by_id(entity_id=entity_id)
     return entity
@@ -31,7 +28,6 @@ async def get_by_id(entity_id: str, service: TaskEntityService = Depends(get_tas
     status_code=http_status.HTTP_200_OK,
     deprecated=True,
 )
-@mcp_group(list_entities_group, "tasks")
 async def get_all(
     response: Response,
     service: TaskEntityService = Depends(get_task_service),

@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends, Response
 from fastapi import status as http_status
-from infrakitchen_mcp.dispatch_framework import get_one_group, list_entities_group
-from infrakitchen_mcp.registry import mcp_group
 from .model import CloudResourceModel
 from .controller import CloudResourcesCRUD
 from .dependencies import get_entities_crud
@@ -16,7 +14,6 @@ router = APIRouter()
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
 )
-@mcp_group(get_one_group, "cloud_resources", param_renames={"id": "resource_name"})
 async def get_one(resource_name: str, entities: CloudResourcesCRUD = Depends(get_entities_crud)):
     entity = await entities.get_one(resource_name)
     return entity
@@ -29,7 +26,6 @@ async def get_one(resource_name: str, entities: CloudResourcesCRUD = Depends(get
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
 )
-@mcp_group(list_entities_group, "cloud_resources")
 async def get_all(
     response: Response,
     entities: CloudResourcesCRUD = Depends(get_entities_crud),
