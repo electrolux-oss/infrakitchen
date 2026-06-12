@@ -18,7 +18,13 @@ import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
 } from "../components/TemplateConfigurationFields";
-import { GqlTemplate, TEMPLATE_QUERY, transformTemplate } from "../graphql";
+import {
+  GqlTemplate,
+  TEMPLATE_QUERY,
+  UPDATE_TEMPLATE_MUTATION,
+  toTemplateUpdateMutationInput,
+  transformTemplate,
+} from "../graphql";
 import { TemplateResponse, TemplateShort, TemplateUpdate } from "../types";
 
 export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
@@ -71,10 +77,19 @@ export const TemplateEditPageInner = (props: { entity: TemplateResponse }) => {
       }
 
       try {
-        const response = await ikApi.patchRaw(`templates/${entity.id}`, data);
-        if (response.id) {
+        const input = toTemplateUpdateMutationInput(data);
+        const response = await ikApi.graphqlRequest<{
+          updateTemplate: {
+            id: string;
+          };
+        }>(UPDATE_TEMPLATE_MUTATION, {
+          id: entity.id,
+          input,
+        });
+
+        if (response.updateTemplate?.id) {
           notify("Template updated successfully", "success");
-          navigate(`${linkPrefix}templates/${response.id}`);
+          navigate(`${linkPrefix}templates/${response.updateTemplate.id}`);
         }
       } catch (error: any) {
         notifyError(error);

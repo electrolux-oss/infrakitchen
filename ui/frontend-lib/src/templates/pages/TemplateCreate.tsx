@@ -24,7 +24,11 @@ import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
 } from "../components/TemplateConfigurationFields";
-import { TemplateCreateRequest, TemplateResponse } from "../types";
+import {
+  CREATE_TEMPLATE_MUTATION,
+  toTemplateCreateMutationInput,
+} from "../graphql";
+import { TemplateCreateRequest } from "../types";
 
 export const TemplateCreatePage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -58,18 +62,24 @@ export const TemplateCreatePage = () => {
   );
 
   const onSubmit = useCallback(
-    (data: TemplateCreateRequest) => {
-      ikApi
-        .postRaw("templates", data)
-        .then((response: TemplateResponse) => {
-          if (response.id) {
-            notify("Template created successfully", "success");
-            navigate(`${linkPrefix}templates/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        });
+    async (data: TemplateCreateRequest) => {
+      const input = toTemplateCreateMutationInput(data);
+
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createTemplate: {
+            id: string;
+          };
+        }>(CREATE_TEMPLATE_MUTATION, { input });
+
+        const createdTemplate = response.createTemplate;
+        if (createdTemplate?.id) {
+          notify("Template created successfully", "success");
+          navigate(`${linkPrefix}templates/${createdTemplate.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      }
     },
     [ikApi, navigate, linkPrefix],
   );
