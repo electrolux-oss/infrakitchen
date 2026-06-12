@@ -4537,6 +4537,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"hcl2-parser@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "hcl2-parser@npm:1.0.3"
+  checksum: 10/440a22629382c264e0d6ad9f3867120a3c577a10454bf8abeded8a498fe8cb7a768330ffa84b1905f1e3b00f448ccdaef0f80abb860360c78712a871f4b8b84a
+  languageName: node
+  linkType: hard
+
 "he@npm:^1.2.0":
   version: 1.2.0
   resolution: "he@npm:1.2.0"
@@ -4648,6 +4655,7 @@ __metadata:
     eslint-plugin-unused-imports: "npm:^4.4.1"
     graphql: "npm:^16.14.2"
     graphql-ws: "npm:^6.0.8"
+    hcl2-parser: "npm:^1.0.3"
     jwt-decode: "npm:^4.0.0"
     material-ui-popup-state: "npm:5.3.7"
     prettier: "npm:~3.6.2"

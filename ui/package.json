@@ -37,6 +37,7 @@
     "date-fns": "^4.4.0",
     "graphql": "^16.14.2",
     "graphql-ws": "^6.0.8",
+    "hcl2-parser": "^1.0.3",
     "jwt-decode": "^4.0.0",
     "material-ui-popup-state": "5.3.7",
     "query-string": "^9.4.0",
