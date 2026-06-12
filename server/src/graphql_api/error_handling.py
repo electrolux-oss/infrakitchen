@@ -104,7 +104,7 @@ def classify_graphql_error(error: GraphQLError) -> tuple[str, str, dict[str, Any
     if error.message.startswith("Not authenticated"):
         return "ACCESS_DENIED", _sanitize_message(error.message), None
 
-    return "INTERNAL", "Internal server error", None
+    return "INTERNAL", _sanitize_message(error.message), None
 
 
 def format_graphql_error(error: GraphQLError) -> dict[str, Any]:

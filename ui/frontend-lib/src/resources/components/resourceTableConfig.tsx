@@ -37,7 +37,6 @@ export const resourceColumns: EntityTableColumn[] = [
     width: 60,
     resizable: false,
     sortable: false,
-    filterable: false,
     align: "center",
     headerAlign: "center",
     renderCell: (params: GridRenderCellParams) => (
