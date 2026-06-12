@@ -3,8 +3,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry.dataloader import DataLoader
+from strawberry.types import Info
 
 from application.executors.model import Executor
+from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.resources.model import Resource
 from application.secrets.model import Secret
@@ -162,6 +164,32 @@ async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, 
         str(row.id): {"id": str(row.id), "name": row.identifier, "_entity_name": "user"} for row in result
     }
     return [mapping.get(key) for key in keys]
+
+
+async def _load_favorite_status_for_component(
+    keys: list[str], user_id: str, component_type: str, session: AsyncSession
+) -> list[bool]:
+    """Load favorite status for a component type for a specific user."""
+    stmt = select(Favorite.component_id).where(
+        Favorite.user_id == user_id,
+        Favorite.component_type == component_type,
+        Favorite.component_id.in_(keys),
+    )
+    result = await session.execute(stmt)
+    favorited_ids = {str(row[0]) for row in result}
+    return [key in favorited_ids for key in keys]
+
+
+def get_favorite_status_loader(info: Info, user_id: str, component_type: str) -> DataLoader[str, bool]:
+    """Get or create a DataLoader for component favorite status."""
+    loaders = info.context["loaders"]
+    loader_key = f"favorite_status:{component_type}:{user_id}"
+    if loader_key not in loaders:
+        session = info.context["session"]
+        loaders[loader_key] = DataLoader[str, bool](
+            load_fn=lambda keys: _load_favorite_status_for_component(list(keys), user_id, component_type, session)
+        )
+    return loaders[loader_key]
 
 
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:

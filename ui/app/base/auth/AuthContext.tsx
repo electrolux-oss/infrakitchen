@@ -99,9 +99,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "GET" });
-    inMemoryToken.setToken("");
-    setUser(null);
+    try {
+      const mutation = `
+        mutation Logout {
+          logout {
+            success
+          }
+        }
+      `;
+
+      const payload = {
+        query: mutation,
+      };
+
+      const response = await fetch("/api/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+        credentials: "same-origin",
+      });
+
+      const _ = await response.json();
+    } finally {
+      inMemoryToken.setToken("");
+      setUser(null);
+    }
+
     return Promise.resolve();
   };
 

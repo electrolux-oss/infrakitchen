@@ -12,7 +12,7 @@ import { USER_SHORT_FIELDS } from "../../users/graphql";
 import { WORKSPACE_SHORT_FIELDS } from "../../workspaces/graphql";
 
 export const RESOURCE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "state", "status"] as const,
+  short: ["id", "name", "state", "status", "isFavorite"] as const,
   detail: [
     "id",
     "name",
@@ -29,6 +29,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     "createdAt",
     "updatedAt",
     "labels",
+    "isFavorite",
   ] as const,
   relations: {
     template: "template",

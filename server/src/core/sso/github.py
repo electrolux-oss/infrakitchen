@@ -2,12 +2,12 @@ import datetime
 
 import httpx
 from oauthlib.oauth2.rfc6749.errors import CustomOAuth2Error, InvalidGrantError
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi_sso.sso.github import GithubSSO
 
 from core.config import Settings
-from core.errors import EntityExistsError
+from core.errors import AccessUnauthorized, EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
 
@@ -23,7 +23,7 @@ router = APIRouter()
 async def get_github_sso(service: SSOService) -> GithubSSO:
     github_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "github"})
     if len(github_providers) == 0 or not github_providers[0].enabled:
-        raise HTTPException(status_code=401, detail="Github login is disabled")
+        raise AccessUnauthorized("Github login is disabled")
 
     github_provider = github_providers[0]
 
@@ -74,7 +74,7 @@ async def github_refresh_token(
 
     token_endpoint = await github_sso.token_endpoint
     if not token_endpoint:
-        raise HTTPException(status_code=500, detail="token_endpoint is not defined")
+        raise Exception("token_endpoint is not defined")
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -91,22 +91,22 @@ async def github_refresh_token(
         resp_json = resp.json()
 
     if resp_json.get("error"):
-        raise HTTPException(status_code=401, detail=resp_json.get("error_description"))
+        raise AccessUnauthorized(resp_json.get("error_description") or "Authentication failed")
 
     if "access_token" not in resp_json:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     # email is identifier for github auth
     email = await get_user_email(resp_json["access_token"])
     if not email:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=int(Settings().SESSION_EXPIRATION))
 
     user = await service.user_service.get_user_by_identifier(email)
 
     if not user:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     token = create_user_token(user, expiration)
 
@@ -128,16 +128,16 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
     try:
         openid = await github_sso.verify_and_process(request)
     except InvalidGrantError as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed. {e}") from e
+        raise AccessUnauthorized(f"Authentication failed. {e}") from e
     except CustomOAuth2Error as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed. {e}") from e
+        raise AccessUnauthorized(f"Authentication failed. {e}") from e
 
     if not openid:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     github_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "github"})
     if len(github_providers) == 0 or not github_providers[0].enabled:
-        raise HTTPException(status_code=401, detail="Github login is disabled")
+        raise AccessUnauthorized("Github login is disabled")
 
     github_provider = github_providers[0]
 
@@ -146,16 +146,16 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
         del user_from_provider["id"]
 
     if not user_from_provider.get("email"):
-        raise HTTPException(status_code=401, detail="Authentication failed. Email attribute is required")
+        raise AccessUnauthorized("Authentication failed. Email attribute is required")
 
     user_from_provider["email"] = user_from_provider["email"].lower()
     user_from_provider["identifier"] = user_from_provider["email"]
     if len(github_provider.filter_by_domain) > 0:
         if not any(user_from_provider["email"].endswith(f"@{domain}") for domain in github_provider.filter_by_domain):
-            raise HTTPException(status_code=401, detail="Authentication failed")
+            raise AccessUnauthorized("Authentication failed")
 
     if not github_sso.refresh_token:
-        raise HTTPException(status_code=500, detail="Refresh token is required. Check your app configuration.")
+        raise Exception("Refresh token is required. Check your app configuration.")
 
     user = await service.user_service.create_user_if_not_exists(
         UserCreateWithProvider.model_validate(user_from_provider)

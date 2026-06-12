@@ -26,6 +26,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
           componentId={String(resource.id)}
           componentType="resource"
           ariaLabel="Add resource to favorites"
+          isFavorite={resource.isFavorite}
         />
       }
     >

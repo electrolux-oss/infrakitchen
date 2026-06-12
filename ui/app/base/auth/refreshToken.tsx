@@ -1,5 +1,13 @@
 import inMemoryToken from "./inMemoryToken";
 
+const REFRESH_AUTH_TOKEN_MUTATION = `
+  mutation RefreshAuthToken {
+    refreshAuthToken {
+      token
+    }
+  }
+`;
+
 class AuthTokenRefresher {
   private refreshPromise: Promise<string> | null = null;
 
@@ -12,20 +20,35 @@ class AuthTokenRefresher {
     // Create new refresh promise
     this.refreshPromise = (async () => {
       try {
-        const response = await fetch("/api/auth/refresh");
+        const response = await fetch("/api/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: REFRESH_AUTH_TOKEN_MUTATION }),
+          credentials: "same-origin",
+        });
+
         if (!response.ok) {
           throw new Error("Failed to refresh token");
         }
 
-        const tokens = await response.json();
-        const newToken = tokens.token;
+        const payload = await response.json();
+        if (Array.isArray(payload?.errors) && payload.errors.length > 0) {
+          throw new Error(
+            payload.errors[0]?.message || "Failed to refresh token",
+          );
+        }
+
+        const newToken = payload?.data?.refreshAuthToken?.token;
+        if (!newToken) {
+          throw new Error("Failed to refresh token");
+        }
 
         // Store the new token
         inMemoryToken.setToken(newToken);
 
         return newToken;
-      } catch (_) {
-        // Handle refresh failure
       } finally {
         // Clear the promise so subsequent calls can try again
         this.refreshPromise = null;

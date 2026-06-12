@@ -4,6 +4,7 @@ from graphql_api.extensions import GraphQLFailureFlagExtension
 from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.audit_log.queries import AuditLogQuery
+from graphql_api.modules.event.subscriptions import EventSubscription
 from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
@@ -18,6 +19,7 @@ from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.storage.queries import StorageQuery
 from graphql_api.modules.executor.queries import ExecutorQuery
 from graphql_api.modules.favorite.queries import FavoriteQuery
+from graphql_api.modules.favorite.mutations import FavoriteMutation
 from graphql_api.modules.permission.queries import PermissionQuery
 from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQuery
 from graphql_api.modules.revision.queries import RevisionQuery
@@ -34,6 +36,7 @@ from graphql_api.modules.notification.mutations import NotificationMutation
 from graphql_api.modules.resource.mutations import ResourceMutation
 from graphql_api.modules.log.queries import LogQuery
 from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
+from graphql_api.modules.auth.mutations import AuthMutation
 
 
 @strawberry.type
@@ -71,16 +74,19 @@ class Query(
 
 @strawberry.type
 class Mutation(
+    AuthMutation,
     SlackMutation,
     UserMutation,
     NotificationMutation,
     ResourceMutation,
+    FavoriteMutation,
 ):
     pass
 
 
 @strawberry.type
 class Subscription(
+    EventSubscription,
     LogSubscription,
     NotificationSubscription,
 ):

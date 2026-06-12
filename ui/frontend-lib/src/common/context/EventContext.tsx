@@ -1,13 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useRef,
-} from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-import WebSocketManager from "../WebSocketManager";
+import { useEventStreamSubscription } from "../hooks/useEventStreamSubscription";
 
 import { useConfig } from "./ConfigContext";
 
@@ -23,38 +16,15 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
   const [event, setEvent] = useState<any>();
   const { ikApi, webSocketEnabled, globalConfig } = useConfig();
 
-  const socketManagerRef = useRef<WebSocketManager | null>(null);
+  const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
 
-  useEffect(() => {
-    if (
-      socketManagerRef.current === null &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current = new WebSocketManager(ikApi, "/api/ws/events");
-    }
-  }, [ikApi, webSocketEnabled, globalConfig]);
-
-  useEffect(() => {
-    if (
-      socketManagerRef.current &&
-      webSocketEnabled &&
-      globalConfig?.websocket
-    ) {
-      socketManagerRef.current.setEventHandler((messageEvent) => {
-        const data = JSON.parse(messageEvent.data);
-        setEvent(data);
-      });
-      socketManagerRef.current.startVisibilityTracking();
-      socketManagerRef.current.connect();
-    }
-    return () => {
-      if (socketManagerRef.current) {
-        socketManagerRef.current.stopVisibilityTracking();
-        socketManagerRef.current.disconnect();
-      }
-    };
-  }, [setEvent, webSocketEnabled, globalConfig]);
+  useEventStreamSubscription({
+    ikApi,
+    enabled: subscriptionEnabled,
+    onMessage: (data) => {
+      setEvent(data.payload);
+    },
+  });
 
   const contextValue: EventContextType = {
     event,

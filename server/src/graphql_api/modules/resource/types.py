@@ -1,7 +1,12 @@
+import uuid
+
+import strawberry
+from strawberry.types import Info
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.resources.model import Resource
 
+from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
@@ -30,6 +35,7 @@ class ResourceType:
         "source_code_version_id",
     ]
 
+    id: uuid.UUID = strawberry.UNSET
     template: TemplateType | None = None
     storage: StorageType | None = None
     workspace: WorkspaceType | None = None
@@ -39,6 +45,15 @@ class ResourceType:
     parents: list["ResourceType"] | None = None
     children: list["ResourceType"] | None = None
     creator: UserType | None = None
+
+    @strawberry.field
+    async def is_favorite(self, info: Info) -> bool:
+        user = info.context.get("user")
+        if user is None:
+            return False
+
+        loader = get_favorite_status_loader(info, str(user.id), "resource")
+        return await loader.load(str(self.id))
 
 
 resource_mapper.finalize()

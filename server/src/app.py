@@ -17,13 +17,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
 
-from core.event_stream_manager import start_rabbitmq_consumer
+from core.utils.event_stream_manager import start_rabbitmq_consumer
 
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import Settings, setup_service_environment
-from core.utils.websocket_manager import WebSocketConnectionManager
 from application.views import main_router
 from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
@@ -63,7 +62,6 @@ async def lifespan(app: FastAPI):
         mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
         mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
 
-    websocket_manager = WebSocketConnectionManager()
     loop = asyncio.get_running_loop()
     rabbitmq_task = loop.create_task(start_rabbitmq_consumer())
     notification_event_router_task = loop.create_task(start_notification_event_router())
@@ -84,8 +82,6 @@ async def lifespan(app: FastAPI):
         await notification_event_router_task
     except (asyncio.CancelledError, Exception):
         pass
-
-    await websocket_manager.close_all_connections()
 
 
 app = FastAPI(
@@ -118,6 +114,14 @@ async def mask_graphql_secrets(request: Request, call_next):
 
     response = await call_next(request)
 
+    def _copy_headers_preserving_cookies(target_response, source_response):
+        # Keep repeated headers (notably Set-Cookie) by copying raw headers.
+        # Skip content-length/content-type so the new response can recalculate them.
+        for key, value in source_response.raw_headers:
+            if key.lower() in {b"content-length", b"content-type"}:
+                continue
+            target_response.raw_headers.append((key, value))
+
     # Only process JSON responses
     if response.headers.get("content-type") != "application/json":
         return response
@@ -132,12 +136,14 @@ async def mask_graphql_secrets(request: Request, call_next):
         # Apply masking to response data
         if isinstance(data, dict) and "data" in data:
             data["data"] = mask_sensitive_values(data["data"])
-        # Return modified response, exclude Content-Length so it's recalculated
-        headers = {k: v for k, v in response.headers.items() if k.lower() != "content-length"}
-        return JSONResponse(data, status_code=response.status_code, headers=headers)
+        masked_response = JSONResponse(data, status_code=response.status_code)
+        _copy_headers_preserving_cookies(masked_response, response)
+        return masked_response
     except (json.JSONDecodeError, ValueError):
         # If not valid JSON, return original response
-        return StreamingResponse(iter([body]), status_code=response.status_code, headers=dict(response.headers))
+        passthrough_response = StreamingResponse(iter([body]), status_code=response.status_code)
+        _copy_headers_preserving_cookies(passthrough_response, response)
+        return passthrough_response
 
 
 app.include_router(main_router)

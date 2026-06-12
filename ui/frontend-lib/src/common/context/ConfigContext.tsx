@@ -4,12 +4,13 @@ import {
   useState,
   ReactNode,
   useCallback,
-  useEffect,
 } from "react";
 
 import { useEffectOnce } from "react-use";
 
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
+import { UserShort } from "../../users";
+import { transformUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
 import { notifyError } from "../hooks/useNotification";
 
 interface ConfigContextType {
@@ -17,6 +18,9 @@ interface ConfigContextType {
   ikApi: InfraKitchenApi;
   webSocketEnabled?: boolean;
   entities?: string[];
+  bootstrapPermissions?: Record<string, string>;
+  bootstrapLoading?: boolean;
+  bootstrapError?: string | null;
 }
 
 interface GlobalConfigType {
@@ -35,21 +39,27 @@ export const ConfigProvider = ({
 }: {
   children: ReactNode;
   initialLinkPrefix?: string;
-  initialIkApi: InfraKitchenApi | any;
+  initialIkApi: InfraKitchenApi;
   webSocketEnabled?: boolean;
 }) => {
-  const [globalConfig, setGlobalConfig] = useState<GlobalConfigType>({});
-
   const [config, setConfig] = useState<ConfigContextType & GlobalConfigType>({
     linkPrefix: initialLinkPrefix,
     ikApi: initialIkApi,
     webSocketEnabled,
-    globalConfig: globalConfig,
+    globalConfig: {},
+    bootstrapPermissions: {},
+    bootstrapLoading: true,
+    bootstrapError: null,
   });
 
-  const getGlobalConfig = useCallback(async (): Promise<any> => {
-    config.ikApi
-      .graphqlRequest<{ globalConfig: GlobalConfigType; entities: string[] }>(
+  const getBootstrapConfig = useCallback(async (): Promise<void> => {
+    try {
+      const response = await initialIkApi.graphqlRequest<{
+        globalConfig: GlobalConfigType;
+        entities: string[];
+        userApiPolicies: Record<string, string>;
+        currentUser: UserShort | null;
+      }>(
         `{
           globalConfig {
             approvalFlow
@@ -62,36 +72,47 @@ export const ConfigProvider = ({
             secretProviderRegistry
           }
           entities
+          userApiPolicies
+          currentUser {
+            ${USER_SHORT_FIELDS}
+          }
         }`,
-      )
-      .then((response) => {
-        const gql = response.globalConfig;
-        setGlobalConfig({
-          approval_flow: gql.approvalFlow,
-          demo_mode: gql.demoMode,
-          websocket: gql.websocket,
-          cloud_provider_registry: gql.cloudProviderRegistry,
-          git_provider_registry: gql.gitProviderRegistry,
-          storage_provider_registry: gql.storageProviderRegistry,
-          secret_provider_registry: gql.secretProviderRegistry,
-          entities: response.entities,
-        });
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
-  }, [config.ikApi]);
+      );
+
+      const gql = response.globalConfig;
+      const mappedGlobalConfig = {
+        approval_flow: gql.approvalFlow,
+        demo_mode: gql.demoMode,
+        websocket: gql.websocket,
+        cloud_provider_registry: gql.cloudProviderRegistry,
+        git_provider_registry: gql.gitProviderRegistry,
+        storage_provider_registry: gql.storageProviderRegistry,
+        secret_provider_registry: gql.secretProviderRegistry,
+        entities: response.entities,
+      };
+
+      setConfig((prevConfig) => ({
+        ...prevConfig,
+        entities: response.entities,
+        globalConfig: mappedGlobalConfig,
+        bootstrapPermissions: response.userApiPolicies || {},
+        bootstrapLoading: false,
+        bootstrapError: null,
+        currentUser: transformUserShort(response.currentUser),
+      }));
+    } catch (error: any) {
+      notifyError(error);
+      setConfig((prevConfig) => ({
+        ...prevConfig,
+        bootstrapLoading: false,
+        bootstrapError: error?.message || "Failed to load bootstrap config",
+      }));
+    }
+  }, [initialIkApi]);
 
   useEffectOnce(() => {
-    getGlobalConfig();
+    getBootstrapConfig();
   });
-
-  useEffect(() => {
-    setConfig((prevConfig) => ({
-      ...prevConfig,
-      globalConfig: globalConfig,
-    }));
-  }, [globalConfig]);
 
   return (
     <ConfigContext.Provider value={config}>{children}</ConfigContext.Provider>

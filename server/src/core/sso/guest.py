@@ -1,10 +1,10 @@
 import datetime
 from typing import Literal
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 
-from core.errors import EntityExistsError
+from core.errors import AccessUnauthorized, EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
 
@@ -19,24 +19,24 @@ router = APIRouter()
 async def guest_refresh_token(service: SSOService, request: Request, response: Response, cookie: str | None = None):
     guest_provider = await service.auth_provider_service.get_all(filter={"auth_provider": "guest"})
     if len(guest_provider) == 0 or not guest_provider[0].enabled:
-        raise HTTPException(status_code=401, detail="Guest login is disabled")
+        raise AccessUnauthorized("Guest login is disabled")
 
     if not cookie:
-        raise HTTPException(status_code=401, detail="Missing cookie")
+        raise AccessUnauthorized("Missing cookie")
 
     JWT_KEY = Settings().JWT_KEY
     if not JWT_KEY:
-        raise HTTPException(status_code=500, detail="Missing JWT_KEY")
+        raise Exception("Missing JWT_KEY")
 
     try:
         decoded_token = jwt.decode(cookie, key=JWT_KEY, algorithms=["HS256"], audience="infrakitchen")
     except jwt.exceptions.InvalidTokenError as e:
-        raise HTTPException(status_code=401, detail="Invalid token") from e
+        raise AccessUnauthorized("Invalid token") from e
 
     user = await service.user_service.get_user_by_identifier(decoded_token["pld"]["identifier"])
 
     if not user:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=int(Settings().SESSION_EXPIRATION))
     token = create_user_token(user, expiration)
@@ -48,11 +48,11 @@ async def guest_refresh_token(service: SSOService, request: Request, response: R
 async def guest_login(scope: Literal["default", "super", "infra"], service: SSOService = Depends(get_sso_service)):
     guest_provider = await service.auth_provider_service.get_all(filter={"auth_provider": "guest"})
     if len(guest_provider) == 0 or not guest_provider[0].enabled:
-        raise HTTPException(status_code=401, detail="Guest login is disabled")
+        raise AccessUnauthorized("Guest login is disabled")
 
     valid_scopes = ["default", "super", "infra"]
     if scope not in valid_scopes:
-        raise HTTPException(status_code=400, detail="Invalid scope")
+        raise ValueError("Invalid scope")
 
     response = RedirectResponse(url=f"/api/auth/guest/callback/{scope}")
     return response
@@ -62,7 +62,7 @@ async def guest_login(scope: Literal["default", "super", "infra"], service: SSOS
 async def guest_callback(scope: Literal["default", "super", "infra"], service: SSOService = Depends(get_sso_service)):
     guest_provider = await service.auth_provider_service.get_all(filter={"auth_provider": "guest"})
     if len(guest_provider) == 0 or not guest_provider[0].enabled:
-        raise HTTPException(status_code=401, detail="Guest login is disabled")
+        raise AccessUnauthorized("Guest login is disabled")
 
     guest_user = UserCreateWithProvider(
         email=f"guest_{scope}@example.com",

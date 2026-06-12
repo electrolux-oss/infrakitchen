@@ -23,7 +23,7 @@ async def me(user: UserDTO = Security(get_logged_user)):
     return user
 
 
-@auth_router.get("/refresh")
+@auth_router.get("/refresh", deprecated=True)
 async def refresh_token(request: Request, response: Response, service: SSOService = Depends(get_sso_service)):
     refresh_token = request.cookies.get("microsoft-refresh-token")
     if refresh_token:
@@ -42,7 +42,7 @@ async def refresh_token(request: Request, response: Response, service: SSOServic
     raise HTTPException(status_code=401, detail="Authentication failed")
 
 
-@auth_router.get("/logout")
+@auth_router.get("/logout", deprecated=True)
 async def guest_logout():
     response = RedirectResponse(url="/")
 

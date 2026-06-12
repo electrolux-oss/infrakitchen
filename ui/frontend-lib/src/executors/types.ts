@@ -32,6 +32,7 @@ export interface ExecutorResponse {
   source_code_folder: string;
   storage_path: string | null;
   labels: string[];
+  isFavorite?: boolean;
   _entity_name: string;
 }
 

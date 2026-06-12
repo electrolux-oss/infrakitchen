@@ -3,15 +3,6 @@ import {
   NOTIFICATION_SUBSCRIPTION_FIELDS,
 } from "./fragments";
 
-export const CURRENT_USER_NOTIFICATION_QUERY = `
-  query CurrentUserNotificationContext {
-    currentUser {
-      id
-      identifier
-    }
-  }
-`;
-
 export const RESOURCE_NOTIFICATION_STATE_QUERY = `
   query ResourceNotificationState($subscriptionFilter: JSON, $preferenceFilter: JSON) {
     subscriptions(filter: $subscriptionFilter) {

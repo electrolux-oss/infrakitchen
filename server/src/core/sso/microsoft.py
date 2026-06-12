@@ -4,11 +4,11 @@ import os
 import httpx
 import jwt
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi_sso.sso.microsoft import MicrosoftSSO
 
-from core.errors import EntityExistsError
+from core.errors import AccessUnauthorized, EntityExistsError
 from core.sso.service import SSOService
 from core.users.schema import UserCreateWithProvider
 
@@ -24,7 +24,7 @@ router = APIRouter()
 async def get_microsoft_sso(service: SSOService) -> MicrosoftSSO:
     microsoft_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "microsoft"})
     if len(microsoft_providers) == 0 or not microsoft_providers[0].enabled:
-        raise HTTPException(status_code=401, detail="Microsoft login is disabled")
+        raise AccessUnauthorized("Microsoft login is disabled")
 
     microsoft_provider = microsoft_providers[0]
 
@@ -63,7 +63,7 @@ async def microsoft_refresh_token(service: SSOService, request: Request, respons
 
     token_endpoint = await microsoft_sso.token_endpoint
     if not token_endpoint:
-        raise HTTPException(status_code=500, detail="token_endpoint is not defined")
+        raise Exception("token_endpoint is not defined")
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -80,15 +80,15 @@ async def microsoft_refresh_token(service: SSOService, request: Request, respons
         resp_json = resp.json()
 
     if resp_json.get("error"):
-        raise HTTPException(status_code=401, detail=resp_json.get("error_description"))
+        raise AccessUnauthorized(resp_json.get("error_description") or "Authentication failed")
 
     if "access_token" not in resp_json:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     # email is identifier for microsoft auth
     email = get_user_email_from_access_token(resp_json["access_token"])
     if not email:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
         seconds=int(os.getenv("SESSION_EXPIRATION", 3600))
@@ -97,7 +97,7 @@ async def microsoft_refresh_token(service: SSOService, request: Request, respons
     user = await service.user_service.get_user_by_identifier(email)
 
     if not user:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     token = create_user_token(user, expiration)
 
@@ -123,14 +123,14 @@ async def microsoft_callback(
     try:
         openid = await microsoft_sso.verify_and_process(request)
     except InvalidGrantError as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed. {e}") from e
+        raise AccessUnauthorized(f"Authentication failed. {e}") from e
 
     if not openid:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise AccessUnauthorized("Authentication failed")
 
     microsoft_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "microsoft"})
     if len(microsoft_providers) == 0 or not microsoft_providers[0].enabled:
-        raise HTTPException(status_code=401, detail="Microsoft login is disabled")
+        raise AccessUnauthorized("Microsoft login is disabled")
 
     microsoft_provider = microsoft_providers[0]
 
@@ -139,7 +139,7 @@ async def microsoft_callback(
         del user_from_provider["id"]
 
     if not user_from_provider.get("email"):
-        raise HTTPException(status_code=401, detail="Authentication failed. Email attribute is required")
+        raise AccessUnauthorized("Authentication failed. Email attribute is required")
 
     user_from_provider["email"] = user_from_provider["email"].lower()
     user_from_provider["identifier"] = user_from_provider["email"]
@@ -147,7 +147,7 @@ async def microsoft_callback(
         if not any(
             user_from_provider["email"].endswith(f"@{domain}") for domain in microsoft_provider.filter_by_domain
         ):
-            raise HTTPException(status_code=401, detail="Authentication failed")
+            raise AccessUnauthorized("Authentication failed")
 
     user = await service.user_service.create_user_if_not_exists(UserCreateWithProvider(**user_from_provider))
     existing_roles = await service.casbin_enforcer.get_user_roles(user.id)
@@ -161,7 +161,7 @@ async def microsoft_callback(
         pass  # User is already assigned to the role
 
     if not microsoft_sso.refresh_token:
-        raise HTTPException(status_code=500, detail="Refresh token is required. Check your app configuration.")
+        raise Exception("Refresh token is required. Check your app configuration.")
 
     response = RedirectResponse(url="/")
     response.set_cookie(

@@ -41,6 +41,7 @@ export const EXECUTOR_GRAPHQL_FIELDS = {
     "revisionNumber",
     "createdAt",
     "updatedAt",
+    "isFavorite",
   ] as const,
   relations: {
     sourceCode: "sourceCode",

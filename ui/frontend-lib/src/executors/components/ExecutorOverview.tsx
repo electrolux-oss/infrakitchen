@@ -23,6 +23,7 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
           componentId={String(executor.id)}
           componentType="executor"
           ariaLabel="Add executor to favorites"
+          isFavorite={executor.isFavorite}
         />
       }
     >

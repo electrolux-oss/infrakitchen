@@ -32,11 +32,11 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
 export const resourceColumns: EntityTableColumn[] = [
   {
     field: "favorite",
-    fetchFields: [],
+    fetchFields: ["isFavorite"],
     headerName: "",
     width: 60,
     resizable: false,
-    sortable: true,
+    sortable: false,
     filterable: false,
     align: "center",
     headerAlign: "center",
@@ -46,6 +46,7 @@ export const resourceColumns: EntityTableColumn[] = [
         componentType="resource"
         ariaLabel="Toggle resource favorite"
         format="table"
+        isFavorite={params.row.isFavorite}
       />
     ),
   },

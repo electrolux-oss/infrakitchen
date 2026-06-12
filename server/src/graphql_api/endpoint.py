@@ -13,6 +13,12 @@ from .schema import schema
 
 logger = logging.getLogger(__name__)
 
+# Strawberry logs resolver exceptions (with traceback) in addition to our
+# centralized GraphQL error handling below. We suppress that logger to avoid
+# duplicate stack traces for expected API errors while keeping structured
+# logging in graphql_api.error_handling.
+logging.getLogger("strawberry.execution").setLevel(logging.CRITICAL)
+
 
 class InfraKitchenGraphQLRouter(GraphQLRouter[dict[str, Any], None]):
     async def process_result(self, request: Request, result: ExecutionResult) -> GraphQLHTTPResponse:

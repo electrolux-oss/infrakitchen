@@ -38,6 +38,7 @@ type GqlResourceShortFieldTypes = {
   name: string;
   state: string;
   status: string;
+  isFavorite: boolean;
 };
 
 export type GqlResourceShort = Pick<
@@ -63,6 +64,7 @@ type GqlResourceDetailFieldTypes = {
   createdAt: string;
   updatedAt: string;
   labels: string[] | null;
+  isFavorite: boolean;
 };
 
 type GqlResourceRelationFieldTypes = {
@@ -103,6 +105,7 @@ function mapResourceRelation(relation: GqlResourceShort): ResourceShort {
     template: transformTemplateShort(relation.template),
     state: relation.state,
     status: relation.status,
+    isFavorite: relation.isFavorite,
     _entity_name: "resource",
   };
 }
@@ -159,6 +162,7 @@ export function transformResource(gql: GqlResource): ResourceResponse {
     children: (gql.children ?? []).map(mapResourceRelation),
     labels: gql.labels ?? [],
     workspace: gql.workspace ? transformWorkspaceShort(gql.workspace) : null,
+    isFavorite: gql.isFavorite,
     _entity_name: "resource",
   };
 }
@@ -170,6 +174,7 @@ export function transformResourceShort(gql: GqlResourceShort): ResourceShort {
     template: transformTemplateShort(gql.template),
     state: gql.state,
     status: gql.status,
+    isFavorite: gql.isFavorite,
     _entity_name: "resource",
   };
 }
@@ -217,6 +222,7 @@ export function transformResourceOptional(
     workspace: gql.workspace
       ? transformWorkspaceShort(gql.workspace)
       : undefined,
+    isFavorite: gql.isFavorite,
     _entity_name: "resource",
   };
 }

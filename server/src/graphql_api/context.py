@@ -38,4 +38,10 @@ async def get_context(
     session_lock = asyncio.Lock()
     locked = LockedSession(session, session_lock)
 
-    return {"session": locked, "user": user, "loaders": create_entity_loaders(locked)}
+    return {
+        "session": locked,
+        "user": user,
+        "request": connection,
+        "sso_service": service,
+        "loaders": create_entity_loaders(locked),
+    }
