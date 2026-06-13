@@ -57,8 +57,8 @@ class Resource(BaseEntity):
         UUID(as_uuid=True), ForeignKey("source_code_versions.id"), nullable=True
     )
     source_code_version: Mapped[SourceCodeVersion | None] = relationship("SourceCodeVersion", lazy="joined")
-    integration_ids: Mapped[list[Integration]] = relationship(secondary=resource_integrations)
-    secret_ids: Mapped[list[Secret]] = relationship(secondary=resource_secrets)
+    integration_ids: Mapped[list[Integration]] = relationship(secondary=resource_integrations, lazy="selectin")
+    secret_ids: Mapped[list[Secret]] = relationship(secondary=resource_secrets, lazy="selectin")
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("storages.id"), nullable=True)
     storage: Mapped[Storage] = relationship("Storage", lazy="joined")
     storage_path: Mapped[str | None] = mapped_column(nullable=True)
@@ -72,6 +72,7 @@ class Resource(BaseEntity):
         primaryjoin=id == resource_links.c.parent_id,
         secondaryjoin=id == resource_links.c.child_id,
         back_populates="children",
+        lazy="selectin",
     )
     children: Mapped[list["Resource"]] = relationship(
         "Resource",
@@ -79,6 +80,7 @@ class Resource(BaseEntity):
         primaryjoin=id == resource_links.c.child_id,
         secondaryjoin=id == resource_links.c.parent_id,
         back_populates="parents",
+        lazy="selectin",
     )
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     abstract: Mapped[bool] = mapped_column(default=False)

@@ -217,7 +217,13 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
 
         {sortedSteps.map((step, idx) => {
           if (step.status === "done") {
-            return <WorkflowStep key={step.id} step={step} />;
+            return (
+              <WorkflowStep
+                key={step.id}
+                step={step}
+                workflowAction={workflow.action}
+              />
+            );
           }
 
           const stepIntegrations = watchedSteps?.[idx]?.integration_ids || [];

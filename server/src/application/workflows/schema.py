@@ -61,6 +61,7 @@ class WorkflowStepCreate(BaseModel):
     position: int
     status: str = ModelStatus.PENDING
     resolved_variables: dict[str, Any] = Field(default_factory=dict)
+    resource_id: uuid.UUID | None = None
     parent_resource_ids: list[uuid.UUID] = Field(default_factory=list)
     source_code_version_id: uuid.UUID | None = None
     integration_ids: list[uuid.UUID] = Field(default_factory=list)

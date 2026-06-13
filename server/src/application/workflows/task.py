@@ -14,7 +14,7 @@ from application.workflows.model import Workflow, WorkflowStep
 from application.workflows.schema import WorkflowResponse, WorkflowStepResponse
 from application.workflows.service import WorkflowService
 from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions, ModelStatus
+from core.constants.model import ModelActions, ModelState, ModelStatus, WorkflowAction
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed
 from core.users.model import UserDTO
@@ -57,8 +57,10 @@ class WorkflowTask:
         self.resource_service.audit_log_handler.trace_id = str(self.workflow_pydantic.id)
         match self.action:
             case ModelActions.EXECUTE:
-                self.logger.info(f"Starting pipeline with action {self.action}")
-                await self.execute_entity()
+                if self.workflow_instance.action == WorkflowAction.DESTROY:
+                    await self.destroy_entity()
+                else:
+                    await self.execute_entity()
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
@@ -404,3 +406,209 @@ class WorkflowTask:
 
     async def make_failed(self) -> None:
         await self.change_entity_status(new_status=ModelStatus.ERROR)
+
+    async def destroy_entity(self):
+        self.logger.info(f"Destroying workflow {self.workflow_pydantic.id}")
+
+        if self.workflow_instance.status == ModelStatus.PENDING:
+            self.workflow_instance.started_at = datetime.now(UTC)
+
+        await self.change_entity_status(new_status=ModelStatus.IN_PROGRESS)
+
+        if self.step_id:
+            target_step = next((s for s in self.workflow_instance.steps if str(s.id) == self.step_id), None)
+            if target_step and target_step.status == ModelStatus.PENDING:
+                target_step.started_at = datetime.now(UTC)
+
+            if target_step and target_step.status != ModelStatus.DONE:
+                self.logger.info(f"Processing targeted destroy step {self.step_id}")
+                try:
+                    await self.manage_destroy_step(target_step)
+                except Exception as exc:
+                    await self.change_step_status(
+                        target_step,
+                        new_status=ModelStatus.ERROR,
+                        error_message=str(exc),
+                    )
+                    await self.change_entity_status(new_status=ModelStatus.ERROR)
+                    return
+
+                if target_step.status == ModelStatus.DONE:
+                    await self._launch_ready_destroy_steps()
+            return
+
+        await self._launch_ready_destroy_steps()
+
+    async def _launch_ready_destroy_steps(self):
+        """Find and launch all destroy steps at the current lowest pending position."""
+        steps = self.workflow_instance.steps
+
+        current_position: int | None = None
+        for step in steps:
+            if step.status != ModelStatus.DONE:
+                current_position = step.position
+                break
+
+        if current_position is None:
+            self.logger.info("All destroy workflow steps completed")
+            self.workflow_instance.completed_at = datetime.now(UTC)
+            await self.change_entity_status(new_status=ModelStatus.DONE)
+            return
+
+        for step in steps:
+            if step.position < current_position and step.status != ModelStatus.DONE:
+                self.logger.warning(f"Destroy step {step.id} at position {step.position} is not done, cannot proceed")
+                return
+
+        current_steps = [s for s in steps if s.position == current_position]
+
+        if all(s.status == ModelStatus.IN_PROGRESS for s in current_steps):
+            return
+
+        has_error = False
+        for step in current_steps:
+            if step.status == ModelStatus.DONE:
+                continue
+            if step.status == ModelStatus.IN_PROGRESS:
+                continue
+
+            try:
+                await self.manage_destroy_step(step)
+            except Exception as exc:
+                await self.session.rollback()
+                has_error = True
+                await self.change_step_status(
+                    step,
+                    new_status=ModelStatus.ERROR,
+                    error_message=str(exc),
+                )
+
+        if has_error:
+            await self.change_entity_status(new_status=ModelStatus.ERROR)
+            return
+
+        all_current_done = all(s.status == ModelStatus.DONE for s in current_steps)
+        if all_current_done:
+            await self._launch_ready_destroy_steps()
+
+    async def manage_destroy_step(self, step: WorkflowStep):
+        """
+        Drive a single destroy step through its lifecycle, mirroring
+        manage_resource for the create path.
+
+        State machine:
+          PENDING + resource DESTROYED+DONE   → step DONE immediately (already finished)
+          PENDING + resource in DESTROY state → skip re-issuing DESTROY, enter callback loop
+          PENDING + resource not yet in destroy flow → call DESTROY action on resource
+          APPROVAL_PENDING → call APPROVE, then EXECUTE with trace_id
+          READY            → call EXECUTE with trace_id → IN_PROGRESS
+          IN_PROGRESS      → wait for callback
+          resource DESTROYED+DONE → step DONE
+          ERROR            → raise CannotProceed
+        """
+        if step.resource_id is None:
+            raise CannotProceed(f"Destroy step {step.id} has no resource_id")
+
+        if step.status == ModelStatus.PENDING:
+            resource = await self.resource_service.get_by_id(step.resource_id)
+            if not resource:
+                raise CannotProceed(f"Resource {step.resource_id} not found for destroy step {step.id}")
+
+            # Resource already fully destroyed — mark step done immediately
+            if resource.state == ModelState.DESTROYED and resource.status == ModelStatus.DONE:
+                step.completed_at = datetime.now(UTC)
+                await self.change_step_status(step, new_status=ModelStatus.DONE)
+                return
+
+            # Resource already in DESTROY flow — skip re-issuing DESTROY action,
+            # enter the callback loop with the resource's current status
+            if resource.state == ModelState.DESTROY:
+                if resource.status == ModelStatus.ERROR:
+                    # Previous attempt failed — retry by calling EXECUTE
+                    await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+                    resource = await self.resource_service.patch_action(
+                        step.resource_id,
+                        PatchBodyModel(action=ModelActions.EXECUTE),
+                        requester=self.user,
+                        trace_id=str(self.workflow_pydantic.id),
+                    )
+                    await self.change_step_status(
+                        step,
+                        new_status=resource.status,
+                        send_task=resource.status == ModelStatus.APPROVAL_PENDING,
+                    )
+                else:
+                    await self.change_step_status(
+                        step,
+                        new_status=resource.status,
+                        send_task=resource.status in (ModelStatus.APPROVAL_PENDING, ModelStatus.READY),
+                    )
+                return
+
+            # Normal path: resource not yet in destroy flow — issue DESTROY
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+            resource = await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.DESTROY),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            # Reflect initial status back onto the step
+            await self.change_step_status(
+                step,
+                new_status=resource.status,
+                send_task=resource.status == ModelStatus.APPROVAL_PENDING,
+            )
+            return
+
+        # For subsequent callbacks, load current resource state
+        resource = await self.resource_service.get_by_id(step.resource_id)
+        if not resource:
+            raise CannotProceed(f"Resource {step.resource_id} not found for destroy step {step.id}")
+
+        if resource.state == ModelState.DESTROYED and resource.status == ModelStatus.DONE:
+            step.completed_at = datetime.now(UTC)
+            await self.change_step_status(step, new_status=ModelStatus.DONE)
+
+        elif resource.status == ModelStatus.APPROVAL_PENDING:
+            self.logger.info(f"Destroy step {step.id}: approving resource {step.resource_id}")
+            approved = await self.resource_service.patch_action(
+                resource.id,
+                PatchBodyModel(action=ModelActions.APPROVE),
+                requester=self.user,
+            )
+            await self.change_step_status(
+                step,
+                new_status=approved.status,
+                send_task=True,
+            )
+
+        elif resource.status == ModelStatus.READY:
+            resource = await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.EXECUTE),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            await self.change_step_status(step, new_status=resource.status)
+
+        elif resource.status == ModelStatus.IN_PROGRESS:
+            self.logger.debug(
+                f"Destroy step {step.id} resource {step.resource_id} still in progress, waiting for callback"
+            )
+            await self.change_step_status(step, new_status=ModelStatus.IN_PROGRESS)
+
+        elif resource.status == ModelStatus.ERROR and step.status != ModelStatus.ERROR:
+            raise CannotProceed(f"Resource {resource.id} is in error state during cascade destroy")
+
+        elif resource.status == ModelStatus.ERROR and step.status == ModelStatus.ERROR:
+            resource = await self.resource_service.patch_action(
+                step.resource_id,
+                PatchBodyModel(action=ModelActions.EXECUTE),
+                requester=self.user,
+                trace_id=str(self.workflow_pydantic.id),
+            )
+            await self.change_step_status(step, new_status=resource.status)
+
+        else:
+            await self.change_step_status(step, new_status=resource.status)

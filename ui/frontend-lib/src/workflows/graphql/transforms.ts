@@ -78,9 +78,9 @@ function toWorkflowStep(g: GqlWorkflowStep): WorkflowStepResponse {
 
   return {
     id: g.id,
-    template_id: g.templateId,
+    template_id: g.template?.id ?? g.templateId,
     template: g.template ? transformTemplateShort(g.template) : null,
-    resource_id: g.resourceId ?? null,
+    resource_id: g.resource?.id ?? g.resourceId ?? null,
     resource: g.resource ? transformResource(g.resource) : null,
     source_code_version_id: g.sourceCodeVersionId ?? null,
     source_code_version: g.sourceCodeVersion
