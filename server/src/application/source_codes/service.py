@@ -89,18 +89,21 @@ class SourceCodeService:
             raise EntityNotFound("Source code not found")
         return await get_source_code_actions(requester, source_code.status)
 
-    async def create(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCodeResponse:
+    async def create_source_code(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCode:
         """
-        Create a new source_code.
+        Create a new source_code and return the ORM model.
         :param source_code: SourceCodeCreate to create
         :param requester: User who creates the source_code
-        :return: Created source_code
+        :return: Created source_code ORM model
         """
         body = source_code.model_dump(exclude_unset=True)
         body["created_by"] = requester.id
         source_code_to_create = await self.crud.create(body)
         source_code_to_create.status = ModelStatus.READY
         created_source_code = await self.crud.get_by_id(source_code_to_create.id)
+
+        if not created_source_code:
+            raise EntityNotFound("SourceCode not found after creation")
 
         await self.revision_handler.handle_revision(source_code_to_create)
         await self.audit_log_handler.create_log(
@@ -112,17 +115,27 @@ class SourceCodeService:
         response = SourceCodeResponse.model_validate(created_source_code)
         await self.event_sender.send_event(response, ModelActions.CREATE)
 
-        return SourceCodeResponse.model_validate(response)
+        return created_source_code
 
-    async def update(
-        self, source_code_id: str, source_code: SourceCodeUpdate, requester: UserDTO
-    ) -> SourceCodeResponse:
+    async def create(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCodeResponse:
         """
-        Update an existing source_code.
+        Create a new source_code.
+        :param source_code: SourceCodeCreate to create
+        :param requester: User who creates the source_code
+        :return: Created source_code
+        """
+        created_source_code = await self.create_source_code(source_code=source_code, requester=requester)
+        return SourceCodeResponse.model_validate(created_source_code)
+
+    async def update_source_code(
+        self, source_code_id: str, source_code: SourceCodeUpdate, requester: UserDTO
+    ) -> SourceCode:
+        """
+        Update an existing source_code and return the ORM model.
         :param source_code_id: ID of the source_code to update
         :param source_code: SourceCode to update
         :param requester: User who updates the source_code
-        :return: Updated source_code
+        :return: Updated source_code ORM model
         """
         body = source_code.model_dump(exclude_unset=True)
         existing_source_code = await self.crud.get_by_id(source_code_id)
@@ -146,9 +159,23 @@ class SourceCodeService:
         )
 
         await self.crud.refresh(existing_source_code)
-        response = SourceCodeResponse.model_validate(existing_source_code)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        await self.event_sender.send_event(SourceCodeResponse.model_validate(existing_source_code), ModelActions.UPDATE)
+        return existing_source_code
+
+    async def update(
+        self, source_code_id: str, source_code: SourceCodeUpdate, requester: UserDTO
+    ) -> SourceCodeResponse:
+        """
+        Update an existing source_code.
+        :param source_code_id: ID of the source_code to update
+        :param source_code: SourceCode to update
+        :param requester: User who updates the source_code
+        :return: Updated source_code
+        """
+        existing_source_code = await self.update_source_code(
+            source_code_id=source_code_id, source_code=source_code, requester=requester
+        )
+        return SourceCodeResponse.model_validate(existing_source_code)
 
     async def patch(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCodeResponse:
         """
