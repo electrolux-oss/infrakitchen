@@ -342,7 +342,7 @@ class TestUpdate:
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_storage_service, mock_storage_crud):
-        storage_update = Mock(spec=StorageUpdate)
+        storage_update = StorageUpdate(description="Storage description")
         requester = Mock(spec=UserDTO)
         existing_storage = Storage(id=uuid4(), name="Test Storage", state=ModelState.PROVISIONED)
         mock_storage_crud.get_by_id.return_value = existing_storage

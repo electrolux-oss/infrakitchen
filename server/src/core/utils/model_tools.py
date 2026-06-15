@@ -76,7 +76,7 @@ def model_db_dump[TPydanticBaseModel: PydanticBaseModel](
 
 
 def has_field_changes(
-    update_body: dict[str, Any],
+    update_body: dict[str, Any] | None,
     existing: Any,
 ) -> bool:
     """
@@ -91,6 +91,12 @@ def has_field_changes(
     Returns:
         ``True`` if at least one provided field differs from the existing record.
     """
+
+    if update_body is None or not isinstance(update_body, dict):
+        return False
+
+    if isinstance(update_body, dict) and not update_body:
+        return False
 
     for key, new_value in update_body.items():
         current_value = getattr(existing, key)
