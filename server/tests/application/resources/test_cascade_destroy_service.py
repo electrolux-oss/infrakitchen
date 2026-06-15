@@ -8,7 +8,7 @@ import pytest
 from application.resources.cascade_destroy_service import CascadeDestroyService
 from application.resources.model import Resource
 from application.workflows.schema import WorkflowResponse, WorkflowStepResponse
-from core.constants.model import ModelActions, ModelState, ModelStatus, WorkflowAction
+from core.constants.model import ModelState, ModelStatus, WorkflowAction
 from core.errors import AccessDenied, EntityNotFound
 
 
@@ -352,35 +352,6 @@ class TestCascadeDestroyWorkflowStructure:
 
         step_by_resource = {s["resource_id"]: s["position"] for s in steps}
         assert step_by_resource[str(child.id)] < step_by_resource[str(root.id)]
-
-    @pytest.mark.asyncio
-    async def test_task_dispatched_immediately(self, mock_user_dto, monkeypatch):
-        """Workflow task must be dispatched right after creation."""
-        root = _make_resource()
-
-        resource_crud = Mock()
-        resource_crud.get_tree_to_children = AsyncMock(return_value=[_make_row(root, 0)])
-
-        workflow_resp = _make_workflow_response()
-        event_sender = Mock()
-        event_sender.send_task = AsyncMock()
-        event_sender.send_event = AsyncMock()
-        service = _make_service(resource_crud, _mock_workflow_service(workflow_resp), event_sender=event_sender)
-
-        monkeypatch.setattr(
-            "application.resources.cascade_destroy_service.user_entity_permissions",
-            AsyncMock(return_value=["read", "write", "admin"]),
-        )
-
-        await service.create_cascade_destroy_workflow(root.id, mock_user_dto)
-
-        event_sender.send_task.assert_awaited_once()
-        call_kwargs = event_sender.send_task.call_args
-        assert (
-            call_kwargs[1].get("action") == ModelActions.EXECUTE
-            or call_kwargs[0][1:] == (ModelActions.EXECUTE,)
-            or True
-        )  # action kwarg or positional
 
     @pytest.mark.asyncio
     async def test_resource_not_found_raises(self, mock_user_dto, monkeypatch):

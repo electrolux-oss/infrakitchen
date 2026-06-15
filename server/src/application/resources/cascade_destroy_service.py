@@ -75,13 +75,6 @@ class CascadeDestroyService:
 
         await self.audit_log_handler.create_log(workflow.id, requester.id, ModelActions.CASCADE_DESTROY)
 
-        # Kick off immediately - WorkflowTask.start_pipeline routes by workflow.action
-        await self.event_sender.send_task(
-            workflow.id,
-            requester=requester,
-            action=ModelActions.EXECUTE,
-        )
-
         logger.info(
             f"Cascade destroy workflow {workflow.id} created for resource {resource_id} "
             f"covering {len(ordered_resources)} resource(s)"
