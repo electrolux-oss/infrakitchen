@@ -13,6 +13,7 @@ from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
 from graphql_api.modules.template.mutations import TemplateMutation
 from graphql_api.modules.integration.queries import IntegrationQuery
+from graphql_api.modules.integration.mutations import IntegrationMutation
 from graphql_api.modules.label.queries import LabelQuery
 from graphql_api.modules.source_code.queries import SourceCodeQuery
 from graphql_api.modules.source_code.mutations import SourceCodeMutation
@@ -83,6 +84,7 @@ class Mutation(
     NotificationMutation,
     ResourceMutation,
     TemplateMutation,
+    IntegrationMutation,
     SourceCodeMutation,
     StorageMutation,
     FavoriteMutation,

@@ -207,15 +207,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/integrations/:integration_id/edit",
-    Component: lz(
-      () => import("./integrations/pages/IntegrationEdit"),
-      "IntegrationEditPage",
-    ),
-    requiredPermission: "api:integration",
-    permissionAction: "read",
-  },
-  {
     path: "/integrations/:provider/:integration_id/:tab?",
     Component: lz(
       () => import("./integrations/pages/Integration"),

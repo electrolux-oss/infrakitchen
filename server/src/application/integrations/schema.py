@@ -231,7 +231,7 @@ class IntegrationCreate(BaseModel):
 class IntegrationUpdate(BaseModel):
     name: str | None = Field(default=None)
     description: str | None = Field(default=None)
-    labels: list[str] = Field(default_factory=list)
+    labels: list[str] | None = Field(default=None)
     configuration: IntegrationConfigType | None = Field(default=None)
 
 
