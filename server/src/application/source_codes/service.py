@@ -12,6 +12,7 @@ from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import SourceCodeCRUD
 from .functions import get_source_code_actions
 from .schema import SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
@@ -137,7 +138,7 @@ class SourceCodeService:
         :param requester: User who updates the source_code
         :return: Updated source_code ORM model
         """
-        body = source_code.model_dump(exclude_unset=True)
+        body = model_db_dump(source_code, exclude_defaults=True, exclude_none=True)
         existing_source_code = await self.crud.get_by_id(source_code_id)
 
         if not existing_source_code:
@@ -147,6 +148,8 @@ class SourceCodeService:
             logger.error(f"Entity has wrong status for updating {existing_source_code.status}")
             raise EntityWrongState(f"Entity has wrong status for updating {existing_source_code.status}")
 
+        if not has_field_changes(body, existing_source_code):
+            raise ValueError("No changes detected; the source code is already up to date.")
         self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code)
 
         existing_source_code.status = ModelStatus.READY

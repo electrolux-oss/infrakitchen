@@ -1,12 +1,11 @@
 import uuid
-from typing import Any, cast
 
 import strawberry
+from strawberry.experimental import pydantic as strawberry_pydantic
 from strawberry.types import Info
 
 from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.schema import SourceCodeCreate, SourceCodeUpdate
-from application.types import CodeLanguageType, GitProviderType
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied, EntityNotFound
@@ -14,44 +13,21 @@ from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.source_code.types import SourceCodeType
 
 
-@strawberry.input
+@strawberry_pydantic.input(model=SourceCodeCreate, all_fields=False)
 class SourceCodeCreateInput:
-    source_code_url: str
-    source_code_provider: str
-    source_code_language: str
+    source_code_url: str = strawberry.UNSET
+    source_code_provider: str = strawberry.UNSET
+    source_code_language: str = strawberry.UNSET
     description: str = ""
     integration_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
 
-    def to_pydantic(self) -> SourceCodeCreate:
-        return SourceCodeCreate(
-            source_code_url=self.source_code_url,
-            source_code_provider=cast(GitProviderType, self.source_code_provider),
-            source_code_language=cast(CodeLanguageType, self.source_code_language),
-            description=self.description,
-            integration_id=self.integration_id,
-            labels=self.labels,
-        )
 
-
-@strawberry.input
+@strawberry_pydantic.input(model=SourceCodeUpdate, all_fields=False)
 class SourceCodeUpdateInput:
-    description: str | None = strawberry.UNSET
-    integration_id: uuid.UUID | None = strawberry.UNSET
-    labels: list[str] | None = strawberry.UNSET
-
-    def to_pydantic(self) -> SourceCodeUpdate:
-        data: dict[str, Any] = {}
-        if self.description is not strawberry.UNSET:
-            data["description"] = self.description
-        if self.integration_id is not strawberry.UNSET:
-            data["integration_id"] = self.integration_id
-        # Forward `labels` whenever the client provided it (including `[]` to clear or an
-        # explicit `null`). `labels` is non-nullable on SourceCodeUpdate, so passing `None`
-        # lets Pydantic reject it, matching REST validation semantics. Omission stays unset.
-        if self.labels is not strawberry.UNSET:
-            data["labels"] = self.labels
-        return SourceCodeUpdate(**data)
+    description: str | None = None
+    integration_id: uuid.UUID | None = None
+    labels: list[str] | None = None
 
 
 @strawberry.input
