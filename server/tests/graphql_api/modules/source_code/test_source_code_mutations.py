@@ -224,7 +224,7 @@ class TestSourceCodeMutations:
     ):
         source_code_id = uuid4()
         mock_source_code_service.get_actions = AsyncMock()
-        mock_source_code_service.patch = AsyncMock()
+        mock_source_code_service.patch_action = AsyncMock()
         mock_get_service.return_value = mock_source_code_service
 
         result = await schema.execute(
@@ -242,7 +242,7 @@ class TestSourceCodeMutations:
         assert result.errors is not None
         assert any("Invalid action" in error.message for error in result.errors)
         mock_source_code_service.get_actions.assert_not_awaited()
-        mock_source_code_service.patch.assert_not_awaited()
+        mock_source_code_service.patch_action.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.source_code.mutations.get_source_code_service")
@@ -254,7 +254,7 @@ class TestSourceCodeMutations:
     ):
         source_code_id = uuid4()
         mock_source_code_service.get_actions = AsyncMock(return_value=[])
-        mock_source_code_service.patch = AsyncMock()
+        mock_source_code_service.patch_action = AsyncMock()
         mock_get_service.return_value = mock_source_code_service
 
         result = await schema.execute(
@@ -274,7 +274,7 @@ class TestSourceCodeMutations:
         mock_source_code_service.get_actions.assert_awaited_once_with(
             source_code_id=source_code_id, requester=mocked_user
         )
-        mock_source_code_service.patch.assert_not_awaited()
+        mock_source_code_service.patch_action.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.source_code.mutations.get_source_code_service")
@@ -287,8 +287,7 @@ class TestSourceCodeMutations:
     ):
         source_code_id = uuid4()
         mock_source_code_service.get_actions = AsyncMock(return_value=[ModelActions.SYNC.value])
-        mock_source_code_service.patch = AsyncMock()
-        mock_source_code_service.query_by_id = AsyncMock(return_value=mocked_source_code)
+        mock_source_code_service.patch_action = AsyncMock(return_value=mocked_source_code)
         mock_get_service.return_value = mock_source_code_service
 
         result = await schema.execute(
@@ -311,9 +310,9 @@ class TestSourceCodeMutations:
         mock_source_code_service.get_actions.assert_awaited_once_with(
             source_code_id=source_code_id, requester=mocked_user
         )
-        mock_source_code_service.patch.assert_awaited_once()
-        assert mock_source_code_service.patch.await_args
-        call_kwargs = mock_source_code_service.patch.await_args.kwargs
+        mock_source_code_service.patch_action.assert_awaited_once()
+        assert mock_source_code_service.patch_action.await_args
+        call_kwargs = mock_source_code_service.patch_action.await_args.kwargs
         assert call_kwargs["source_code_id"] == str(source_code_id)
         assert call_kwargs["requester"] == mocked_user
         assert call_kwargs["body"].action == ModelActions.SYNC.value

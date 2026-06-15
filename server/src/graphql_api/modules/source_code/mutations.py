@@ -8,7 +8,7 @@ from application.source_codes.dependencies import get_source_code_service
 from application.source_codes.schema import SourceCodeCreate, SourceCodeUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
-from core.errors import AccessDenied, EntityNotFound
+from core.errors import AccessDenied
 from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.source_code.types import SourceCodeType
 
@@ -70,16 +70,11 @@ class SourceCodeMutation:
         if input.action not in await service.get_actions(source_code_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {input.action}")
 
-        await service.patch(
+        return await service.patch_action(
             source_code_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,
         )
-
-        source_code = await service.query_by_id(id)
-        if source_code is None:
-            raise EntityNotFound("SourceCode not found")
-        return source_code
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_source_code(self, info: Info, id: uuid.UUID) -> bool:

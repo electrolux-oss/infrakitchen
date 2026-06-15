@@ -180,13 +180,13 @@ class SourceCodeService:
         )
         return SourceCodeResponse.model_validate(existing_source_code)
 
-    async def patch(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCodeResponse:
+    async def patch_action(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCode:
         """
-        Patch an existing source_code.
+        Patch an existing source_code and return the ORM model.
         :param source_code_id: ID of the source_code to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the source_code
-        :return: Patched source_code
+        :return: Patched source_code ORM instance
         """
         existing_source_code = await self.crud.get_by_id(source_code_id)
         if not existing_source_code:
@@ -220,7 +220,18 @@ class SourceCodeService:
 
         response = SourceCodeResponse.model_validate(existing_source_code)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_source_code
+
+    async def patch(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCodeResponse:
+        """
+        Patch an existing source_code.
+        :param source_code_id: ID of the source_code to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the source_code
+        :return: Patched source_code
+        """
+        result = await self.patch_action(source_code_id=source_code_id, body=body, requester=requester)
+        return SourceCodeResponse.model_validate(result)
 
     async def delete(self, source_code_id: str, requester: UserDTO) -> None:
         existing_source_code = await self.crud.get_by_id(source_code_id)

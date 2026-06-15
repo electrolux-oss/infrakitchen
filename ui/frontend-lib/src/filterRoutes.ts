@@ -346,15 +346,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/source_codes/:source_code_id/edit",
-    Component: lz(
-      () => import("./source_codes/pages/SourceCodeEdit"),
-      "SourceCodeEditPage",
-    ),
-    requiredPermission: "api:source_code",
-    permissionAction: "write",
-  },
-  {
     path: "/source_codes/:source_code_id/:tab?",
     Component: lz(
       () => import("./source_codes/pages/SourceCode"),
@@ -462,15 +453,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./templates/pages/TemplateCreate"),
       "TemplateCreatePage",
-    ),
-    requiredPermission: "api:template",
-    permissionAction: "write",
-  },
-  {
-    path: "/templates/:template_id/edit",
-    Component: lz(
-      () => import("./templates/pages/TemplateEdit"),
-      "TemplateEditPage",
     ),
     requiredPermission: "api:template",
     permissionAction: "write",
