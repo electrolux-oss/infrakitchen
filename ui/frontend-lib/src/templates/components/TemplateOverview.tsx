@@ -1,40 +1,158 @@
-import { Box, Divider } from "@mui/material";
+import { useCallback, useState } from "react";
+
+import { Box, Divider, TextField } from "@mui/material";
 
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
+import { StringChips } from "../../common/components/editors/StringChips";
+import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
 import { InlineCode } from "../../common/components/InlineCode";
+import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { useConfig } from "../../common/context";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { getProviderDisplayName } from "../../common/utils";
-import { TemplateResponse } from "../types";
+import { IkEntity } from "../../types";
+import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
+import {
+  TemplateUpdateFieldInput,
+  UPDATE_TEMPLATE_MUTATION,
+} from "../graphql/mutations";
+import {
+  IntegrationProviderType,
+  TemplateConfig,
+  TemplateResponse,
+} from "../types";
+
+import { NamingConventionInput } from "./NamingConventionInput";
+import { TemplateDocumentationField } from "./TemplateDocumentationField";
+
+const sameStringSet = (a: string[], b: string[]) =>
+  a.length === b.length &&
+  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface TemplateAboutProps {
   template: TemplateResponse;
 }
 
 export const TemplateOverview = ({ template }: TemplateAboutProps) => {
+  const { ikApi } = useConfig();
+  const { refreshEntity } = useEntityProvider();
+  const { checkActionPermission } = usePermissionProvider();
+  const canEdit = checkActionPermission("api:template", "write");
+
+  const [buffer, setBuffer] = useState<Record<string, IkEntity[]>>({});
+
+  const saveField = useCallback(
+    async (input: TemplateUpdateFieldInput) => {
+      try {
+        await ikApi.graphqlRequest(UPDATE_TEMPLATE_MUTATION, {
+          id: template.id,
+          input,
+        });
+        notify("Template updated successfully", "success");
+        refreshEntity?.();
+      } catch (error) {
+        notifyError(error);
+        throw error;
+      }
+    },
+    [ikApi, template.id, refreshEntity],
+  );
+
+  const saveConfiguration = useCallback(
+    (partial: Partial<TemplateConfig>) =>
+      saveField({ configuration: { ...template.configuration, ...partial } }),
+    [saveField, template.configuration],
+  );
+
   return (
     <OverviewCard
       name={template.name}
       description={template.description || "No description"}
       chip={template.abstract ? "Abstract" : undefined}
     >
+      <CommonEditableField<string>
+        name={"Name"}
+        canEdit={canEdit}
+        value={template.name}
+        ariaLabel="Edit name"
+        display={<span>{template.name}</span>}
+        onSave={(value) => saveField({ name: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Name"
+            fullWidth
+            margin="normal"
+            autoFocus
+          />
+        )}
+        size={6}
+      />
       <CommonField
         name={"Status"}
         value={<StatusChip status={template.status} />}
         size={6}
       />
-      <CommonField
+      <CommonEditableField<string>
+        name={"Description"}
+        canEdit={canEdit}
+        value={template.description ?? ""}
+        ariaLabel="Edit description"
+        display={<span>{template.description || "No description"}</span>}
+        onSave={(value) => saveField({ description: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Description"
+            fullWidth
+            multiline
+            minRows={2}
+            margin="normal"
+            autoFocus
+          />
+        )}
+        size={12}
+      />
+      <CommonEditableField<string | null>
         name={"Naming Convention"}
-        value={
+        canEdit={canEdit}
+        value={template.configuration?.naming_convention ?? null}
+        ariaLabel="Edit naming convention"
+        display={
           template.configuration?.naming_convention ? (
             <InlineCode>{template.configuration.naming_convention}</InlineCode>
           ) : null
         }
+        onSave={(value) => saveConfiguration({ naming_convention: value })}
+        renderEditor={({ value, onChange }) => (
+          <Box sx={{ width: "100%" }}>
+            <NamingConventionInput
+              template_id={template.id}
+              parents={template.parents}
+              value={value}
+              onChange={onChange}
+            />
+          </Box>
+        )}
+        size={6}
+      />
+      <TemplateDocumentationField
+        documentation={template.documentation}
+        canEdit={canEdit}
+        onSave={(documentation) => saveField({ documentation })}
         size={6}
       />
       <CommonField
@@ -49,9 +167,22 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         value={<RelativeTime date={template.updated_at} />}
         size={6}
       />
-      <CommonField
+      <CommonEditableField<string[]>
         name={"Labels"}
-        value={<Labels labels={template.labels} />}
+        canEdit={canEdit}
+        value={template.labels}
+        ariaLabel="Edit labels"
+        isEqual={sameStringSet}
+        display={<Labels labels={template.labels} />}
+        onSave={(value) => saveField({ labels: value })}
+        renderEditor={({ value, onChange }) => (
+          <StringTagEditor
+            value={value}
+            onChange={onChange}
+            label="Labels"
+            helperText="Press Enter to add a label"
+          />
+        )}
         size={12}
       />
 
@@ -59,11 +190,15 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         <Divider />
       </Box>
 
-      <CommonField
+      <CommonEditableField<string[]>
         name={"Parents"}
-        value={
+        canEdit={canEdit}
+        value={template.parents.map((parent) => parent.id)}
+        ariaLabel="Edit parents"
+        isEqual={sameStringSet}
+        display={
           template.parents.length > 0 ? (
-            <Box display="flex" gap={1}>
+            <Box display="flex" gap={1} flexWrap="wrap">
               {template.parents.map((parent, idx) => (
                 <span key={parent.id || idx}>
                   <GetReferenceUrlValue {...parent} />
@@ -72,13 +207,30 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
             </Box>
           ) : null
         }
+        onSave={(value) => saveField({ parents: value })}
+        renderEditor={({ value, onChange }) => (
+          <ArrayReferenceInput
+            ikApi={ikApi}
+            buffer={buffer}
+            setBuffer={setBuffer}
+            entity_name="templates"
+            value={value}
+            onChange={onChange}
+            label="Select Parents"
+            multiple
+          />
+        )}
         size={6}
       />
-      <CommonField
+      <CommonEditableField<string[]>
         name={"Children"}
-        value={
+        canEdit={canEdit}
+        value={template.children.map((child) => child.id)}
+        ariaLabel="Edit children"
+        isEqual={sameStringSet}
+        display={
           template.children.length > 0 ? (
-            <Box display="flex" gap={1}>
+            <Box display="flex" gap={1} flexWrap="wrap">
               {template.children.map((child, idx) => (
                 <span key={child.id || idx}>
                   <GetReferenceUrlValue {...child} />
@@ -87,132 +239,125 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
             </Box>
           ) : null
         }
+        onSave={(value) => saveField({ children: value })}
+        renderEditor={({ value, onChange }) => (
+          <ArrayReferenceInput
+            ikApi={ikApi}
+            buffer={buffer}
+            setBuffer={setBuffer}
+            entity_name="templates"
+            value={value}
+            onChange={onChange}
+            label="Select Children"
+            multiple
+          />
+        )}
         size={6}
       />
 
-      <CommonField
+      <CommonEditableField<string[]>
         name={"Cloud Resource Types"}
-        value={
-          template.cloud_resource_types.length > 0 ? (
-            <Box>
-              {template.cloud_resource_types.map((type) => (
-                <Box
-                  key={type}
-                  component="span"
-                  sx={{
-                    display: "inline-block",
-                    backgroundColor: "primary.dark",
-                    color: "primary.contrastText",
-                    borderRadius: 1,
-                    px: 1,
-                    py: 0.5,
-                    mr: 0.5,
-                    mb: 0.5,
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {type}
-                </Box>
-              ))}
-            </Box>
-          ) : null
-        }
+        canEdit={canEdit}
+        value={template.cloud_resource_types}
+        ariaLabel="Edit cloud resource types"
+        isEqual={sameStringSet}
+        display={<StringChips values={template.cloud_resource_types} />}
+        onSave={(value) => saveField({ cloudResourceTypes: value })}
+        renderEditor={({ value, onChange }) => (
+          <ArrayReferenceInput
+            ikApi={ikApi}
+            buffer={buffer}
+            setBuffer={setBuffer}
+            entity_name="cloud_resources"
+            value={value}
+            onChange={onChange}
+            label="Select Cloud Resource Type"
+            multiple
+          />
+        )}
         size={6}
       />
-      <CommonField
+      <CommonEditableField<IntegrationProviderType[]>
         name={"Integration Providers for One Resource Per Integration"}
-        value={
-          template.configuration?.one_resource_per_integration?.length > 0 ? (
-            <Box>
-              {template.configuration.one_resource_per_integration.map(
-                (provider) => (
-                  <Box
-                    key={provider}
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      backgroundColor: "primary.dark",
-                      color: "primary.contrastText",
-                      borderRadius: 1,
-                      px: 1,
-                      py: 0.5,
-                      mr: 0.5,
-                      mb: 0.5,
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {getProviderDisplayName(provider)}
-                  </Box>
-                ),
-              )}
-            </Box>
-          ) : null
+        canEdit={canEdit}
+        value={template.configuration?.one_resource_per_integration ?? []}
+        ariaLabel="Edit one resource per integration providers"
+        isEqual={sameStringSet}
+        display={
+          <StringChips
+            values={template.configuration?.one_resource_per_integration ?? []}
+            format={getProviderDisplayName}
+          />
         }
+        onSave={(value) =>
+          saveConfiguration({ one_resource_per_integration: value })
+        }
+        renderEditor={({ value, onChange }) => (
+          <MultiSelectEditor<IntegrationProviderType>
+            value={value}
+            onChange={onChange}
+            label="Integration Providers to filter on"
+            helperText="Empty means all providers"
+            options={INTEGRATION_PROVIDER_OPTIONS}
+            getOptionLabel={getProviderDisplayName}
+          />
+        )}
         size={6}
       />
 
-      <CommonField
+      <CommonEditableField<IntegrationProviderType[]>
         name={"Allowed Integration Providers"}
-        value={
-          template.configuration?.allowed_provider_integration_types?.length >
-          0 ? (
-            <Box>
-              {template.configuration.allowed_provider_integration_types.map(
-                (provider) => (
-                  <Box
-                    key={provider}
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      backgroundColor: "primary.dark",
-                      color: "primary.contrastText",
-                      borderRadius: 1,
-                      px: 1,
-                      py: 0.5,
-                      mr: 0.5,
-                      mb: 0.5,
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {getProviderDisplayName(provider)}
-                  </Box>
-                ),
-              )}
-            </Box>
-          ) : null
+        canEdit={canEdit}
+        value={template.configuration?.allowed_provider_integration_types ?? []}
+        ariaLabel="Edit allowed integration providers"
+        isEqual={sameStringSet}
+        display={
+          <StringChips
+            values={
+              template.configuration?.allowed_provider_integration_types ?? []
+            }
+            format={getProviderDisplayName}
+          />
         }
+        onSave={(value) =>
+          saveConfiguration({ allowed_provider_integration_types: value })
+        }
+        renderEditor={({ value, onChange }) => (
+          <MultiSelectEditor<IntegrationProviderType>
+            value={value}
+            onChange={onChange}
+            label="Allowed Integration Providers"
+            helperText="Empty means all providers"
+            options={INTEGRATION_PROVIDER_OPTIONS}
+            getOptionLabel={getProviderDisplayName}
+          />
+        )}
         size={6}
       />
-      <CommonField
+      <CommonEditableField<string[]>
         name={"Required Configuration Variables"}
-        value={
-          template.configuration?.required_configuration_variables.length >
-          0 ? (
-            <Box>
-              {template.configuration.required_configuration_variables.map(
-                (variable) => (
-                  <Box
-                    key={variable}
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      backgroundColor: "primary.dark",
-                      color: "primary.contrastText",
-                      borderRadius: 1,
-                      px: 1,
-                      py: 0.5,
-                      mr: 0.5,
-                      mb: 0.5,
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {variable}
-                  </Box>
-                ),
-              )}
-            </Box>
-          ) : null
+        canEdit={canEdit}
+        value={template.configuration?.required_configuration_variables ?? []}
+        ariaLabel="Edit required configuration variables"
+        isEqual={sameStringSet}
+        display={
+          <StringChips
+            values={
+              template.configuration?.required_configuration_variables ?? []
+            }
+          />
         }
+        onSave={(value) =>
+          saveConfiguration({ required_configuration_variables: value })
+        }
+        renderEditor={({ value, onChange }) => (
+          <StringTagEditor
+            value={value}
+            onChange={onChange}
+            label="Required Configuration Variables"
+            helperText="Press Enter to add a variable name"
+          />
+        )}
         size={6}
       />
     </OverviewCard>

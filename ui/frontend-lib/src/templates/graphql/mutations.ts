@@ -1,4 +1,8 @@
-import { TemplateCreateRequest, TemplateUpdate } from "../types";
+import {
+  TemplateConfig,
+  TemplateCreateRequest,
+  TemplateUpdate,
+} from "../types";
 
 export interface TemplateCreateMutationInput {
   name: string;
@@ -8,7 +12,7 @@ export interface TemplateCreateMutationInput {
   parents: string[];
   children: string[];
   cloudResourceTypes: string[];
-  configuration: TemplateCreateRequest["configuration"];
+  configuration: TemplateConfig;
   labels: string[];
   abstract: boolean;
 }
@@ -20,9 +24,15 @@ export interface TemplateUpdateMutationInput {
   parents: string[];
   children: string[];
   cloudResourceTypes: string[];
-  configuration: TemplateUpdate["configuration"];
+  configuration: TemplateConfig;
   labels: string[];
 }
+
+/**
+ * Partial payload for updating a single template field at a time, used by the
+ * inline editing controls on the template overview page.
+ */
+export type TemplateUpdateFieldInput = Partial<TemplateUpdateMutationInput>;
 
 export function toTemplateCreateMutationInput(
   payload: TemplateCreateRequest,

@@ -1,6 +1,5 @@
 import { TemplatePage } from "./pages/Template";
 import { TemplateCreatePage } from "./pages/TemplateCreate";
-import { TemplateEditPage } from "./pages/TemplateEdit";
 import { TemplateImportPage } from "./pages/TemplateImport";
 import { TemplatesPage } from "./pages/Templates";
 
@@ -28,11 +27,5 @@ export const templateRoutes = [
     Component: TemplatePage,
     requiredPermission: "api:template",
     permissionAction: "read",
-  },
-  {
-    path: TemplateEditPage.path,
-    Component: TemplateEditPage,
-    requiredPermission: "api:template",
-    permissionAction: "write",
   },
 ];
