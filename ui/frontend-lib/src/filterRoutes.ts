@@ -409,15 +409,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/storages/:storage_id/edit",
-    Component: lz(
-      () => import("./storages/pages/StorageEdit"),
-      "StorageEditPage",
-    ),
-    requiredPermission: "api:storage",
-    permissionAction: "write",
-  },
-  {
     path: "/storages/:storage_id/:tab?",
     Component: lz(() => import("./storages/pages/Storage"), "StoragePage"),
     requiredPermission: "api:storage",

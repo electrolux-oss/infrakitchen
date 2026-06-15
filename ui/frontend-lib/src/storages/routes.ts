@@ -1,6 +1,5 @@
 import { StoragePage } from "./pages/Storage";
 import { StorageCreatePage } from "./pages/StorageCreate";
-import { StorageEditPage } from "./pages/StorageEdit";
 import { StoragesPage } from "./pages/Storages";
 
 export const storageRoutes = [
@@ -19,12 +18,6 @@ export const storageRoutes = [
   {
     path: StorageCreatePage.path,
     Component: StorageCreatePage,
-    requiredPermission: "api:storage",
-    permissionAction: "write",
-  },
-  {
-    path: StorageEditPage.path,
-    Component: StorageEditPage,
     requiredPermission: "api:storage",
     permissionAction: "write",
   },
