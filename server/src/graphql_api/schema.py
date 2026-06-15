@@ -15,6 +15,7 @@ from graphql_api.modules.template.mutations import TemplateMutation
 from graphql_api.modules.integration.queries import IntegrationQuery
 from graphql_api.modules.label.queries import LabelQuery
 from graphql_api.modules.source_code.queries import SourceCodeQuery
+from graphql_api.modules.source_code.mutations import SourceCodeMutation
 from graphql_api.modules.source_code_version.queries import SourceCodeVersionQuery
 from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.storage.queries import StorageQuery
@@ -81,6 +82,7 @@ class Mutation(
     NotificationMutation,
     ResourceMutation,
     TemplateMutation,
+    SourceCodeMutation,
     FavoriteMutation,
 ):
     pass
