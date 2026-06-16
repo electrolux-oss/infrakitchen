@@ -29,10 +29,10 @@ export type StorageResponseOptional = Partial<StorageResponse>;
 export interface StorageCreate {
   name: string;
   description: string;
-  integration_id: string;
+  integrationId: string;
   labels: string[];
-  storage_type: string;
-  storage_provider: string;
+  storageType: string;
+  storageProvider: string;
   configuration: object;
 }
 
