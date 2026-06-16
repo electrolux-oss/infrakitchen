@@ -1,4 +1,5 @@
 import { GqlUserShort, transformUserShort } from "../../users/graphql";
+import { TaskResponse } from "../types";
 
 export interface GqlTask {
   id: string;
@@ -12,16 +13,16 @@ export interface GqlTask {
   creator: GqlUserShort | null;
 }
 
-export function transformTask(gql: GqlTask) {
+export function transformTask(gql: GqlTask): TaskResponse {
   return {
     id: gql.id,
     entity: gql.entity,
-    entity_id: gql.entityId,
+    entityId: gql.entityId,
     state: gql.state,
     status: gql.status,
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
-    entity_data: gql.entityData,
+    createdAt: gql.createdAt,
+    updatedAt: gql.updatedAt,
+    entityData: gql.entityData,
     creator: transformUserShort(gql.creator),
     _entity_name: "task",
   };

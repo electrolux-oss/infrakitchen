@@ -1,11 +1,14 @@
+import { UserShort } from "../users";
+
 export interface TaskResponse {
   id: string;
   entity: string;
-  entity_id: string;
-  state: string;
+  entityId: string;
+  state: string | null;
   status: string;
-  created_at: Date;
-  updated_at: Date;
-  created_by: { id: string; identifier: string; _entity_name: string } | string;
+  createdAt: string;
+  updatedAt: string;
+  entityData?: Record<string, any> | null;
+  creator: UserShort | null;
   _entity_name: string;
 }
