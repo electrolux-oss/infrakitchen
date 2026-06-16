@@ -40,9 +40,9 @@ export const buildValidationRuleMaps = (
     ruleByVariable[variable_name] = rule;
 
     const summary = getValidationSummary({
-      validation_regex: rule.regex_pattern ?? "",
-      validation_min_value: rule.min_value ?? null,
-      validation_max_value: rule.max_value ?? null,
+      validationRegex: rule.regex_pattern ?? "",
+      validationMinValue: rule.min_value ?? null,
+      validationMaxValue: rule.max_value ?? null,
     });
 
     if (summary) {

@@ -37,10 +37,7 @@ const columns = [
       const sourceCode = params.row.source_code;
       if (!sourceCode) return null;
       return (
-        <GetEntityLink
-          {...sourceCode}
-          identifier={sourceCode.source_code_url}
-        />
+        <GetEntityLink {...sourceCode} identifier={sourceCode.sourceCodeUrl} />
       );
     },
   },

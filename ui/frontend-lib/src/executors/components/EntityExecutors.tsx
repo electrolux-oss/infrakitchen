@@ -37,7 +37,7 @@ const columns = [
       return (
         <GetEntityLink
           {...sourceCode}
-          name={getRepoNameFromUrl(sourceCode.source_code_url)}
+          name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}
         />
       );
     },

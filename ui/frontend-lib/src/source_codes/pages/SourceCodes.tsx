@@ -147,7 +147,7 @@ export const SourceCodesPage = () => {
             Last Updated
           </Typography>
           <RelativeTime
-            date={repository.updated_at}
+            date={repository.updatedAt}
             variant="caption"
             sx={{ fontWeight: 500 }}
           />
@@ -224,14 +224,14 @@ export const SourceCodesPage = () => {
                 entity_name="source_code"
                 icon={
                   <Box sx={{ fontSize: 32 }}>
-                    {IconField(repository.source_code_provider)}
+                    {IconField(repository.sourceCodeProvider)}
                   </Box>
                 }
-                name={getRepoNameFromUrl(repository.source_code_url)}
+                name={getRepoNameFromUrl(repository.sourceCodeUrl)}
                 description={repository.description}
                 detailsUrl={`${linkPrefix}source_codes/${repository.id}`}
                 labels={repository.labels}
-                lastUpdated={repository.updated_at}
+                lastUpdated={repository.updatedAt}
                 entityFields={repositoryCardFields(repository)}
               />
             ))}

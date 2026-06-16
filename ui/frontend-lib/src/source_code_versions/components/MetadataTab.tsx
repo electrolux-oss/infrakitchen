@@ -68,7 +68,7 @@ export const MetadataTab = ({
     {},
   );
   const [draftFolder, setDraftFolder] = useState<string>(
-    entity?.source_code_folder ?? gitFolders[0],
+    entity?.sourceCodeFolder ?? gitFolders[0],
   );
   const [draftTemplate, setDraftTemplate] = useState<string | undefined>(
     entity?.template?.id,
@@ -120,7 +120,7 @@ export const MetadataTab = ({
 
         {hasVersion ? (
           <Typography variant="body2">
-            {entity.source_code_folder ?? "—"}
+            {entity.sourceCodeFolder ?? "—"}
           </Typography>
         ) : (
           <Box onClick={(e) => e.stopPropagation()}>
@@ -236,7 +236,7 @@ export const MetadataTab = ({
                 title={
                   entity.status !== ENTITY_STATUS.DISABLED
                     ? "Version must be disabled before erasing data"
-                    : entity.resources_count > 0
+                    : entity.resourcesCount > 0
                       ? "Version has active resources and cannot be erased"
                       : ""
                 }
@@ -249,7 +249,7 @@ export const MetadataTab = ({
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={
                       entity.status !== ENTITY_STATUS.DISABLED ||
-                      entity.resources_count > 0
+                      entity.resourcesCount > 0
                     }
                   >
                     Erase Data

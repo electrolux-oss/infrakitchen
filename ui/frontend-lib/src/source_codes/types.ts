@@ -9,24 +9,24 @@ export interface RefFolders {
 export interface SourceCodeShort {
   id: string;
   identifier: string;
-  source_code_url: string;
-  source_code_provider: string;
-  source_code_language: string;
+  sourceCodeUrl: string;
+  sourceCodeProvider: string;
+  sourceCodeLanguage: string;
   _entity_name: string;
 }
 
 export interface SourceCodeResponse extends SourceCodeShort {
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   status: string;
-  revision_number: number;
+  revisionNumber: number;
   labels: string[];
   integration: IntegrationShort | null;
-  git_tags: string[];
-  git_tag_messages: Record<string, string>;
-  git_branches: string[];
-  git_branch_messages: Record<string, string>;
-  git_folders_map: RefFolders[];
+  gitTags: string[];
+  gitTagMessages: Record<string, string>;
+  gitBranches: string[];
+  gitBranchMessages: Record<string, string>;
+  gitFoldersMap: RefFolders[];
   creator: UserShort | null;
   description: string;
 }
@@ -35,15 +35,15 @@ export type SourceCodeResponseOptional = Partial<SourceCodeResponse>;
 
 export interface SourceCodeCreate {
   description: string;
-  source_code_url: string;
-  source_code_provider: string;
-  source_code_language: string;
-  integration_id: string | null;
+  sourceCodeUrl: string;
+  sourceCodeProvider: string;
+  sourceCodeLanguage: string;
+  integrationId: string | null;
   labels: string[];
 }
 
 export interface SourceCodeUpdate {
   description: string;
-  integration_id: string | null;
+  integrationId: string | null;
   labels: string[];
 }

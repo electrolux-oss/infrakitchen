@@ -33,9 +33,9 @@ export function transformSourceCodeVersionShort(
   return {
     id: gql.id,
     identifier: gql.identifier,
-    source_code_version: gql.sourceCodeVersion ?? "",
-    source_code_branch: gql.sourceCodeBranch ?? "",
-    source_code_folder: gql.sourceCodeFolder,
+    sourceCodeVersion: gql.sourceCodeVersion ?? "",
+    sourceCodeBranch: gql.sourceCodeBranch ?? "",
+    sourceCodeFolder: gql.sourceCodeFolder,
     template: transformTemplateShort(gql.template),
     source_code: transformSourceCodeShort(gql.sourceCode),
     _entity_name: "source_code_version",
@@ -74,23 +74,23 @@ export function transformSourceCodeVersion(
   return {
     id: gql.id,
     identifier: gql.identifier,
-    source_code_version: gql.sourceCodeVersion ?? "",
-    source_code_branch: gql.sourceCodeBranch ?? "",
-    source_code_folder: gql.sourceCodeFolder,
+    sourceCodeVersion: gql.sourceCodeVersion ?? "",
+    sourceCodeBranch: gql.sourceCodeBranch ?? "",
+    sourceCodeFolder: gql.sourceCodeFolder,
     template: transformTemplateShort(gql.template),
     source_code: transformSourceCodeShort(gql.sourceCode),
     _entity_name: "source_code_version",
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     status: gql.status?.toLocaleLowerCase(),
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? [],
     creator: transformUserShort(gql.creator)!,
     variables: gql.variables ?? [],
     outputs: gql.outputs ?? [],
     description: gql.description || "",
-    resources_count: gql.resourcesCount ?? 0,
-    code_snapshot: gql.codeSnapshot || "",
+    resourcesCount: gql.resourcesCount ?? 0,
+    codeSnapshot: gql.codeSnapshot || "",
   };
 }
 
@@ -100,26 +100,26 @@ export function transformSourceCodeVersionOptional(
   return {
     id: gql.id,
     identifier: gql.identifier,
-    source_code_version: gql.sourceCodeVersion ?? undefined,
-    source_code_branch: gql.sourceCodeBranch ?? undefined,
-    source_code_folder: gql.sourceCodeFolder,
+    sourceCodeVersion: gql.sourceCodeVersion ?? undefined,
+    sourceCodeBranch: gql.sourceCodeBranch ?? undefined,
+    sourceCodeFolder: gql.sourceCodeFolder,
     template: gql.template ? transformTemplateShort(gql.template) : undefined,
     source_code: gql.sourceCode
       ? transformSourceCodeShort(gql.sourceCode)
       : undefined,
     _entity_name: "source_code_version",
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     status: gql.status?.toLocaleLowerCase(),
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? undefined,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
     variables: gql.variables ?? undefined,
     outputs: gql.outputs ?? undefined,
     description: gql.description ?? undefined,
-    resources_count: gql.resourcesCount ?? undefined,
-    code_snapshot: gql.codeSnapshot ?? undefined,
+    resourcesCount: gql.resourcesCount ?? undefined,
+    codeSnapshot: gql.codeSnapshot ?? undefined,
   };
 }
 
@@ -156,10 +156,10 @@ export function transformSourceConfig(
 ): SourceConfigResponse {
   return {
     id: gql.id,
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     index: gql.index,
-    source_code_version_id: gql.sourceCodeVersionId,
+    sourceCodeVersionId: gql.sourceCodeVersionId,
     required: gql.required,
     default: gql.default,
     frozen: gql.frozen,
@@ -181,7 +181,7 @@ export function transformSourceOutputConfig(
     index: gql.index,
     name: gql.name,
     description: gql.description,
-    source_code_version_id: gql.sourceCodeVersionId,
+    sourceCodeVersionId: gql.sourceCodeVersionId,
   };
 }
 
@@ -198,10 +198,10 @@ export function transformSourceConfigTemplateReference(
 ): SourceConfigTemplateReferenceResponse {
   return {
     id: gql.id,
-    template_id: gql.templateId,
-    reference_template_id: gql.referenceTemplateId,
-    input_config_name: gql.inputConfigName,
-    output_config_name: gql.outputConfigName,
+    templateId: gql.templateId,
+    referenceTemplateId: gql.referenceTemplateId,
+    inputConfigName: gql.inputConfigName,
+    outputConfigName: gql.outputConfigName,
   };
 }
 
@@ -219,8 +219,8 @@ export function transformSourceOutputConfigTemplate(
   return {
     name: gql.name,
     description: gql.description,
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     status: gql.status,
   };
 }

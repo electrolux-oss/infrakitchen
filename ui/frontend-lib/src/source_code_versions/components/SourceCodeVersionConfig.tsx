@@ -26,13 +26,13 @@ interface ConfigSnapshot {
   unique: boolean;
   restricted: boolean;
   options: unknown;
-  validation_rule_id: string | null;
-  validation_regex: string;
-  validation_min_value: string;
-  validation_max_value: string;
-  validation_enabled: boolean;
-  reference_template_id: string | null;
-  output_config_name: string | null;
+  validationRuleId: string | null;
+  validationRegex: string;
+  validationMinValue: string;
+  validationMaxValue: string;
+  validationEnabled: boolean;
+  referenceTemplateId: string | null;
+  outputConfigName: string | null;
 }
 
 type ValidationRuleUpdate =
@@ -64,16 +64,16 @@ const hasConfigChanged = (
     formConfig.unique !== original.unique ||
     formConfig.restricted !== original.restricted ||
     JSON.stringify(formConfig.options) !== JSON.stringify(original.options) ||
-    formConfig.reference_template_id !== original.reference_template_id ||
-    formConfig.output_config_name !== original.output_config_name ||
-    formConfig.validation_rule_id !== original.validation_rule_id ||
-    (formConfig.validation_regex || "") !== (original.validation_regex || "") ||
-    normalizeNumericField(formConfig.validation_min_value) !==
-      normalizeNumericField(original.validation_min_value) ||
-    normalizeNumericField(formConfig.validation_max_value) !==
-      normalizeNumericField(original.validation_max_value) ||
-    Boolean(formConfig.validation_enabled) !==
-      Boolean(original.validation_enabled)
+    formConfig.referenceTemplateId !== original.referenceTemplateId ||
+    formConfig.outputConfigName !== original.outputConfigName ||
+    formConfig.validationRuleId !== original.validationRuleId ||
+    (formConfig.validationRegex || "") !== (original.validationRegex || "") ||
+    normalizeNumericField(formConfig.validationMinValue) !==
+      normalizeNumericField(original.validationMinValue) ||
+    normalizeNumericField(formConfig.validationMaxValue) !==
+      normalizeNumericField(original.validationMaxValue) ||
+    Boolean(formConfig.validationEnabled) !==
+      Boolean(original.validationEnabled)
   );
 };
 
@@ -84,19 +84,19 @@ const buildValidationRuleUpdate = (
   original?: ConfigSnapshot,
 ): ValidationRuleUpdate | null => {
   const targetType = sourceConfig.type === "number" ? "number" : "string";
-  const trimmedRegex = (config.validation_regex || "").trim();
-  const normalizedMin = parseNumericField(config.validation_min_value);
-  const normalizedMax = parseNumericField(config.validation_max_value);
-  const wantsValidation = Boolean(config.validation_enabled);
+  const trimmedRegex = (config.validationRegex || "").trim();
+  const normalizedMin = parseNumericField(config.validationMinValue);
+  const normalizedMax = parseNumericField(config.validationMaxValue);
+  const wantsValidation = Boolean(config.validationEnabled);
 
   const hasConstraints =
     wantsValidation &&
     (Boolean(trimmedRegex) || normalizedMin !== null || normalizedMax !== null);
 
-  const originalTrimmedRegex = (original?.validation_regex || "").trim();
-  const originalMin = parseNumericField(original?.validation_min_value);
-  const originalMax = parseNumericField(original?.validation_max_value);
-  const originalWantsValidation = Boolean(original?.validation_enabled);
+  const originalTrimmedRegex = (original?.validationRegex || "").trim();
+  const originalMin = parseNumericField(original?.validationMinValue);
+  const originalMax = parseNumericField(original?.validationMaxValue);
+  const originalWantsValidation = Boolean(original?.validationEnabled);
   const originalHasConstraints =
     originalWantsValidation &&
     (Boolean(originalTrimmedRegex) ||
@@ -132,27 +132,27 @@ const buildValidationRuleUpdate = (
 };
 
 const hasValidationData = (config: {
-  validation_regex?: string | null;
-  validation_min_value?: string | number | null;
-  validation_max_value?: string | number | null;
-  validation_rule_id?: string | null;
+  validationRegex?: string | null;
+  validationMinValue?: string | number | null;
+  validationMaxValue?: string | number | null;
+  validationRuleId?: string | null;
 }): boolean => {
   const regexValue =
-    typeof config.validation_regex === "string"
-      ? config.validation_regex
-      : config.validation_regex
-        ? String(config.validation_regex)
+    typeof config.validationRegex === "string"
+      ? config.validationRegex
+      : config.validationRegex
+        ? String(config.validationRegex)
         : "";
   const hasRegex = regexValue.trim().length > 0;
   const hasMin =
-    config.validation_min_value !== null &&
-    config.validation_min_value !== undefined &&
-    config.validation_min_value !== "";
+    config.validationMinValue !== null &&
+    config.validationMinValue !== undefined &&
+    config.validationMinValue !== "";
   const hasMax =
-    config.validation_max_value !== null &&
-    config.validation_max_value !== undefined &&
-    config.validation_max_value !== "";
-  const hasReference = Boolean(config.validation_rule_id);
+    config.validationMaxValue !== null &&
+    config.validationMaxValue !== undefined &&
+    config.validationMaxValue !== "";
+  const hasReference = Boolean(config.validationRuleId);
 
   return hasRegex || hasMin || hasMax || hasReference;
 };
@@ -179,10 +179,10 @@ export const SourceCodeVersionConfig = () => {
     () =>
       new Map(
         templateReferences.map((reference) => [
-          reference.input_config_name,
+          reference.inputConfigName,
           {
-            reference_template_id: reference.reference_template_id || null,
-            output_config_name: reference.output_config_name || null,
+            referenceTemplateId: reference.referenceTemplateId || null,
+            outputConfigName: reference.outputConfigName || null,
           },
         ]),
       ),
@@ -202,18 +202,13 @@ export const SourceCodeVersionConfig = () => {
           unique: config.unique,
           restricted: config.restricted,
           options: config.options,
-          validation_rule_id: config.validation_rule_id ?? null,
-          validation_regex: config.validation_regex || "",
-          validation_min_value: normalizeNumericField(
-            config.validation_min_value,
-          ),
-          validation_max_value: normalizeNumericField(
-            config.validation_max_value,
-          ),
-          validation_enabled: hasValidationData(config),
-          reference_template_id:
-            templateReference?.reference_template_id || null,
-          output_config_name: templateReference?.output_config_name || null,
+          validationRuleId: config.validationRuleId ?? null,
+          validationRegex: config.validationRegex || "",
+          validationMinValue: normalizeNumericField(config.validationMinValue),
+          validationMaxValue: normalizeNumericField(config.validationMaxValue),
+          validationEnabled: hasValidationData(config),
+          referenceTemplateId: templateReference?.referenceTemplateId || null,
+          outputConfigName: templateReference?.outputConfigName || null,
         };
       }),
     [sourceConfigs, templateReferenceMap],
@@ -233,12 +228,8 @@ export const SourceCodeVersionConfig = () => {
     if (sourceConfigs.length > 0) {
       const formattedConfigs = sourceConfigs.map((config) => {
         const templateReference = templateReferenceMap.get(config.name);
-        const normalizedMin = normalizeNumericField(
-          config.validation_min_value,
-        );
-        const normalizedMax = normalizeNumericField(
-          config.validation_max_value,
-        );
+        const normalizedMin = normalizeNumericField(config.validationMinValue);
+        const normalizedMax = normalizeNumericField(config.validationMaxValue);
 
         return {
           id: config.id,
@@ -252,14 +243,13 @@ export const SourceCodeVersionConfig = () => {
           restricted: config.restricted,
           sensitive: config.sensitive,
           options: config.options,
-          validation_rule_id: config.validation_rule_id ?? null,
-          validation_regex: config.validation_regex || "",
-          validation_min_value: normalizedMin,
-          validation_max_value: normalizedMax,
-          validation_enabled: hasValidationData(config),
-          reference_template_id:
-            templateReference?.reference_template_id || null,
-          output_config_name: templateReference?.output_config_name || null,
+          validationRuleId: config.validationRuleId ?? null,
+          validationRegex: config.validationRegex || "",
+          validationMinValue: normalizedMin,
+          validationMaxValue: normalizedMax,
+          validationEnabled: hasValidationData(config),
+          referenceTemplateId: templateReference?.referenceTemplateId || null,
+          outputConfigName: templateReference?.outputConfigName || null,
         };
       });
       reset({ configs: formattedConfigs });
@@ -292,7 +282,7 @@ export const SourceCodeVersionConfig = () => {
           const sourceConfig = sourceConfigMap.get(config.id);
           const ruleIdForSubmission =
             sourceConfig?.type === "string"
-              ? (config.validation_rule_id ?? null)
+              ? (config.validationRuleId ?? null)
               : null;
 
           configUpdates.push({
@@ -303,17 +293,17 @@ export const SourceCodeVersionConfig = () => {
             unique: config.unique,
             restricted: config.restricted,
             options: config.options,
-            template_id: sourceCodeVersion.template.id,
-            reference_template_id: config.reference_template_id,
-            output_config_name: config.output_config_name,
-            validation_rule_id: ruleIdForSubmission,
-            validation_enabled: config.validation_enabled,
-            validation_regex: config.validation_regex || "",
-            validation_min_value: normalizeNumericField(
-              config.validation_min_value,
+            templateId: sourceCodeVersion.template.id,
+            referenceTemplateId: config.referenceTemplateId,
+            outputConfigName: config.outputConfigName,
+            validationRuleId: ruleIdForSubmission,
+            validationEnabled: config.validationEnabled,
+            validationRegex: config.validationRegex || "",
+            validationMinValue: normalizeNumericField(
+              config.validationMinValue,
             ),
-            validation_max_value: normalizeNumericField(
-              config.validation_max_value,
+            validationMaxValue: normalizeNumericField(
+              config.validationMaxValue,
             ),
           });
 

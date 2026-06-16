@@ -10,6 +10,16 @@ export type SourceCodeUpdateFieldInput = Partial<{
   labels: string[];
 }>;
 
+export const CREATE_SOURCE_CODE_MUTATION = `
+  mutation CreateSourceCode($input: SourceCodeCreateInput!) {
+    createSourceCode(input: $input) {
+      id
+      identifier
+      sourceCodeUrl
+    }
+  }
+`;
+
 export const UPDATE_SOURCE_CODE_MUTATION = `
   mutation UpdateSourceCode($id: UUID!, $input: SourceCodeUpdateInput!) {
     updateSourceCode(id: $id, input: $input) {

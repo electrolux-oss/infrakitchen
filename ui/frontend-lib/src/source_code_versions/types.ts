@@ -10,31 +10,31 @@ export enum RefType {
 export interface SourceCodeVersionShort {
   id: string;
   identifier: string;
-  source_code_version: string;
-  source_code_branch: string;
-  source_code_folder: string;
+  sourceCodeVersion: string;
+  sourceCodeBranch: string;
+  sourceCodeFolder: string;
   template: TemplateShort;
   source_code: SourceCodeShort;
   _entity_name: string;
 }
 
 export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: string;
-  revision_number: number;
+  revisionNumber: number;
   labels: string[];
   creator: UserShort;
   template: TemplateShort;
   source_code: SourceCodeShort;
-  source_code_version: string;
-  source_code_branch: string;
-  source_code_folder: string;
+  sourceCodeVersion: string;
+  sourceCodeBranch: string;
+  sourceCodeFolder: string;
   variables: VariableInput[];
   outputs: VariableOutput[];
   description: string;
-  resources_count: number;
-  code_snapshot: string | null;
+  resourcesCount: number;
+  codeSnapshot: string | null;
 }
 
 export type SourceCodeVersionResponseOptional =
@@ -43,11 +43,11 @@ export type SourceCodeVersionResponseOptional =
 export interface SourceCodeVersionCreate {
   description: string;
   labels: string[];
-  source_code_id: string;
-  source_code_version?: string;
-  source_code_branch?: string;
-  source_code_folder: string;
-  template_id: string;
+  sourceCodeId: string;
+  sourceCodeVersion?: string;
+  sourceCodeBranch?: string;
+  sourceCodeFolder: string;
+  templateId: string;
 }
 
 export interface SourceCodeVersionUpdate {
@@ -77,14 +77,14 @@ export interface SourceOutputConfigShort {
   index: number;
   name: string;
   description: string;
-  source_code_version_id: string;
+  sourceCodeVersionId: string;
 }
 
 export interface SourceConfigResponse extends Record<string, any> {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   index: number;
-  source_code_version_id: string;
+  sourceCodeVersionId: string;
   required: boolean;
   default: any;
   frozen: boolean;
@@ -95,10 +95,10 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
-  validation_rule_id?: string | null;
-  validation_regex?: string;
-  validation_min_value?: string | number | null;
-  validation_max_value?: string | number | null;
+  validationRuleId?: string | null;
+  validationRegex?: string;
+  validationMinValue?: string | number | null;
+  validationMaxValue?: string | number | null;
 }
 
 export interface SourceConfigUpdate extends Record<string, any> {
@@ -112,14 +112,14 @@ export interface SourceConfigUpdate extends Record<string, any> {
 
 export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   id: string;
-  template_id: string;
-  reference_template_id: string | null;
-  output_config_name?: string | null;
-  validation_rule_id?: string | null;
-  validation_regex?: string;
-  validation_min_value?: string | number | null;
-  validation_max_value?: string | number | null;
-  validation_enabled: boolean;
+  templateId: string;
+  referenceTemplateId: string | null;
+  outputConfigName?: string | null;
+  validationRuleId?: string | null;
+  validationRegex?: string;
+  validationMinValue?: string | number | null;
+  validationMaxValue?: string | number | null;
+  validationEnabled: boolean;
 }
 
 export interface SourceOutputConfigResponse extends Record<string, any> {
@@ -127,21 +127,21 @@ export interface SourceOutputConfigResponse extends Record<string, any> {
   index: number;
   name: string;
   description: string;
-  source_code_version_id: string;
+  sourceCodeVersionId: string;
 }
 
 export interface SourceOutputConfigTemplateResponse {
   name: string;
   description: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: string;
 }
 
 export interface SourceConfigTemplateReferenceResponse {
   id: string;
-  template_id: string;
-  reference_template_id: string;
-  input_config_name: string;
-  output_config_name: string;
+  templateId: string;
+  referenceTemplateId: string;
+  inputConfigName: string;
+  outputConfigName: string;
 }

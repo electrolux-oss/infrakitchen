@@ -189,8 +189,8 @@ export const TemplateConfiguration = ({
                 <GetEntityLink
                   {...resource.source_code_version}
                   name={
-                    resource.source_code_version.source_code_version ||
-                    resource.source_code_version.source_code_branch
+                    resource.source_code_version?.sourceCodeVersion ||
+                    resource.source_code_version?.sourceCodeBranch
                   }
                 />
               ) : null

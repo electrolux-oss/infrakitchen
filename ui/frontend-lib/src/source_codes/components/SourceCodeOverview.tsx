@@ -60,15 +60,15 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
 
   return (
     <OverviewCard
-      name={getRepoNameFromUrl(sourceCode.source_code_url)}
+      name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}
       description={sourceCode.description}
     >
       <CommonField
         name={"URL"}
         value={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {IconField(sourceCode.source_code_provider)}
-            {getRemoteUrlValue(sourceCode.source_code_url)}
+            {IconField(sourceCode.sourceCodeProvider)}
+            {getRemoteUrlValue(sourceCode.sourceCodeUrl)}
           </Box>
         }
       />
@@ -76,8 +76,8 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         name={"Type"}
         value={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {IconField(sourceCode.source_code_language)}
-            {sourceCode.source_code_language}
+            {IconField(sourceCode.sourceCodeLanguage)}
+            {sourceCode.sourceCodeLanguage}
           </Box>
         }
       />
@@ -93,7 +93,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         display={
           sourceCode.integration ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {IconField(sourceCode.source_code_provider)}
+              {IconField(sourceCode.sourceCodeProvider)}
               <GetReferenceUrlValue
                 {...sourceCode.integration}
                 urlProvider={sourceCode.integration.integration_provider}
@@ -119,15 +119,12 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       <CommonField
         name={"Created"}
         value={
-          <RelativeTime
-            date={sourceCode.created_at}
-            user={sourceCode.creator}
-          />
+          <RelativeTime date={sourceCode.createdAt} user={sourceCode.creator} />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={sourceCode.updated_at} />}
+        value={<RelativeTime date={sourceCode.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}

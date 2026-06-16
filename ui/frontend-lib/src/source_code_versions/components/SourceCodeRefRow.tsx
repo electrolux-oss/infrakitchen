@@ -197,9 +197,9 @@ export const SourceCodeRefRow = ({
             {entry}
           </Typography>
           {hasVersion &&
-            !!entity.resources_count && ( // Render only when the SCV has resources
+            !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Chip
-                label={`${entity.resources_count}`}
+                label={`${entity.resourcesCount}`}
                 size="small"
                 variant="outlined"
                 onClick={handleResourcesClick}
@@ -329,7 +329,7 @@ export const SourceCodeRefRow = ({
             <Audit
               entityId={entity.id}
               useVersionId
-              sourceCodeLanguage={entity?.source_code?.source_code_language}
+              sourceCodeLanguage={entity?.source_code?.sourceCodeLanguage}
               showRevisionColumn
             />
           )}

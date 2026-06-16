@@ -77,7 +77,7 @@ export const ExecutorsPage = () => {
           return (
             <GetEntityLink
               {...sourceCodeVersion}
-              name={getRepoNameFromUrl(params.row.source_code?.source_code_url)}
+              name={getRepoNameFromUrl(params.row.source_code?.sourceCodeUrl)}
             />
           );
         },

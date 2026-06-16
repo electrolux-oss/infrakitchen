@@ -86,7 +86,7 @@ export const SourceCodeVersionsPage = () => {
           return (
             <GetEntityLink
               {...sourceCode}
-              identifier={sourceCode.source_code_url}
+              identifier={sourceCode.sourceCodeUrl}
             />
           );
         },

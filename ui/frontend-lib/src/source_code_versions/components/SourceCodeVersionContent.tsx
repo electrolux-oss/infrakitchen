@@ -49,17 +49,17 @@ export const SourceCodeVersionContent = () => {
       label: "Code",
       content: (
         <CodeSnapshotTab
-          codeSnapshot={source_code_version.code_snapshot}
+          codeSnapshot={source_code_version.codeSnapshot}
           defaultRef={
-            source_code_version.source_code_version ||
-            source_code_version.source_code_branch
+            source_code_version.sourceCodeVersion ||
+            source_code_version.sourceCodeBranch
           }
         />
       ),
     },
     {
       label: `Resources`,
-      tabLabel: `Resources (${source_code_version.resources_count ?? 0})`,
+      tabLabel: `Resources (${source_code_version.resourcesCount ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}

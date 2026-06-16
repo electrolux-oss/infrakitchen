@@ -78,12 +78,12 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (_value: any, row: any) => {
       const scv = row.source_code_version;
       if (!scv) return "";
-      return scv.source_code_version ?? scv.source_code_branch;
+      return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
     },
     renderCell: (params: GridRenderCellParams) => {
       const scv = params.row.source_code_version;
       if (!scv) return null;
-      const ref = scv.source_code_version ?? scv.source_code_branch;
+      const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
       return <GetEntityLink {...scv} name={ref} />;
     },
   },

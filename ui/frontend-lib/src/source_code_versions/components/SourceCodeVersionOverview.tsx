@@ -73,24 +73,24 @@ export const SourceCodeVersionOverview = ({
       <CommonField
         name={"Source Code Directory"}
         value={getTextValue(
-          source_code_version.source_code_folder
-            ? source_code_version.source_code_folder
+          source_code_version.sourceCodeFolder
+            ? source_code_version.sourceCodeFolder
             : "No Source Code Folder",
         )}
       />
       <CommonField
         name={"Branch"}
         value={getTextValue(
-          source_code_version.source_code_branch
-            ? source_code_version.source_code_branch
+          source_code_version.sourceCodeBranch
+            ? source_code_version.sourceCodeBranch
             : "No Branch",
         )}
       />
       <CommonField
         name={"Source Code Tag"}
         value={getTextValue(
-          source_code_version.source_code_version
-            ? source_code_version.source_code_version
+          source_code_version.sourceCodeVersion
+            ? source_code_version.sourceCodeVersion
             : "No Version",
         )}
       />
@@ -98,14 +98,14 @@ export const SourceCodeVersionOverview = ({
         name={"Created"}
         value={
           <RelativeTime
-            date={source_code_version.created_at}
+            date={source_code_version.createdAt}
             user={source_code_version.creator}
           />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={source_code_version.updated_at} />}
+        value={<RelativeTime date={source_code_version.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}

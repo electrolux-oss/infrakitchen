@@ -64,7 +64,7 @@ export const ResourceContent = ({
         <EntityLogs
           entityId={entity.id}
           sourceCodeLanguage={
-            entity.source_code_version?.source_code?.source_code_language
+            entity.source_code_version?.source_code?.sourceCodeLanguage
           }
         />
       ),
@@ -75,7 +75,7 @@ export const ResourceContent = ({
         <Audit
           entityId={entity.id}
           sourceCodeLanguage={
-            entity.source_code_version?.source_code?.source_code_language
+            entity.source_code_version?.source_code?.sourceCodeLanguage
           }
           showRevisionColumn
           showTimelineView

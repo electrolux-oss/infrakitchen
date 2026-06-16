@@ -56,13 +56,13 @@ export const SourceConfigForm = (props: {
   const required = useWatch({ control, name: `configs.${index}.required` });
   const restricted = useWatch({ control, name: `configs.${index}.restricted` });
   const sensitive = useWatch({ control, name: `configs.${index}.sensitive` });
-  const validationEnabledField = `configs.${index}.validation_enabled` as const;
-  const validationRuleIdField = `configs.${index}.validation_rule_id` as const;
-  const validationRegexField = `configs.${index}.validation_regex` as const;
+  const validationEnabledField = `configs.${index}.validationEnabled` as const;
+  const validationRuleIdField = `configs.${index}.validationRuleId` as const;
+  const validationRegexField = `configs.${index}.validationRegex` as const;
   const validationMinValueField =
-    `configs.${index}.validation_min_value` as const;
+    `configs.${index}.validationMinValue` as const;
   const validationMaxValueField =
-    `configs.${index}.validation_max_value` as const;
+    `configs.${index}.validationMaxValue` as const;
   const validationEnabled = Boolean(
     useWatch({ control, name: validationEnabledField, defaultValue: false }),
   );
@@ -120,17 +120,17 @@ export const SourceConfigForm = (props: {
   };
 
   const validationSummary = getValidationSummary({
-    validation_regex: useWatch({
+    validationRegex: useWatch({
       control,
-      name: `configs.${index}.validation_regex`,
+      name: `configs.${index}.validationRegex`,
     }),
-    validation_min_value: useWatch({
+    validationMinValue: useWatch({
       control,
-      name: `configs.${index}.validation_min_value`,
+      name: `configs.${index}.validationMinValue`,
     }),
-    validation_max_value: useWatch({
+    validationMaxValue: useWatch({
       control,
-      name: `configs.${index}.validation_max_value`,
+      name: `configs.${index}.validationMaxValue`,
     }),
   });
 

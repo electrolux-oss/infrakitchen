@@ -83,13 +83,13 @@ const ResourceRow = ({
         >
           {resource.name}
         </Typography>
-        {resource.template_name && (
+        {resource.templateName && (
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ lineHeight: 1.2 }}
           >
-            {resource.template_name}
+            {resource.templateName}
           </Typography>
         )}
       </Box>

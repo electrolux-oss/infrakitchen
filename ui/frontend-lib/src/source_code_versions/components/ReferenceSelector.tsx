@@ -37,7 +37,7 @@ export const ReferenceSelector = () => {
         onChange={handleAutocompleteChange}
         isOptionEqualToValue={(option, val) => option.id === val.id}
         getOptionLabel={(option) =>
-          option.source_code_version || option.source_code_branch || ""
+          option.sourceCodeVersion || option.sourceCodeBranch || ""
         }
         renderInput={(params) => (
           <TextField
@@ -53,7 +53,7 @@ export const ReferenceSelector = () => {
             <li {...props}>
               <Box>
                 <Typography variant="body2">
-                  {option.source_code_version || option.source_code_branch}
+                  {option.sourceCodeVersion || option.sourceCodeBranch}
                 </Typography>
                 {option.description && (
                   <Typography variant="caption" color="text.secondary">
