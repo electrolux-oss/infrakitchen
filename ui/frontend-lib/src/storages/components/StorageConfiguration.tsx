@@ -27,9 +27,9 @@ export const StorageConfiguration = ({
       />
       <CommonField
         name={"Storage Provider"}
-        value={getProviderValue(storage.storage_provider)}
+        value={getProviderValue(storage.storageProvider)}
       />
-      <CommonField name={"Storage Type"} value={storage.storage_type} />
+      <CommonField name={"Storage Type"} value={storage.storageType} />
       {Object.entries(storage.configuration).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
       })}

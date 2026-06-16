@@ -13,16 +13,13 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import { IconField } from "../../icons/Icons";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
 import { IntegrationResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface IntegrationAboutProps {
   integration: IntegrationResponse;

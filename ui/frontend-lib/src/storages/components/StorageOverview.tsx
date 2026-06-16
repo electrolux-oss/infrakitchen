@@ -13,15 +13,12 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import {
   StorageUpdateFieldInput,
   UPDATE_STORAGE_MUTATION,
 } from "../graphql/mutations";
 import { StorageResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface StorageAboutProps {
   storage: StorageResponse;
@@ -79,13 +76,11 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={storage.created_at} user={storage.creator} />
-        }
+        value={<RelativeTime date={storage.createdAt} user={storage.creator} />}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={storage.updated_at} />}
+        value={<RelativeTime date={storage.updatedAt} />}
       />
       <CommonEditableField<string[]>
         name={"Storage Tags"}

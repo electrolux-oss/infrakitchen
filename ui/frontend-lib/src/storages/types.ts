@@ -8,20 +8,20 @@ export interface StorageShort {
 }
 
 export interface StorageResponse extends StorageShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: string;
   state: string;
   description: string;
-  revision_number: number;
+  revisionNumber: number;
   labels: string[];
   integration: IntegrationShort;
   creator: UserShort;
-  storage_type: string;
-  storage_provider: string;
+  storageType: string;
+  storageProvider: string;
   configuration: object;
-  resources_count: number;
-  executors_count: number;
+  resourcesCount: number;
+  executorsCount: number;
 }
 
 export type StorageResponseOptional = Partial<StorageResponse>;
@@ -34,9 +34,4 @@ export interface StorageCreate {
   storageType: string;
   storageProvider: string;
   configuration: object;
-}
-
-export interface StorageUpdate {
-  description: string;
-  labels: string[];
 }

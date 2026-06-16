@@ -20,7 +20,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getProviderDisplayName } from "../../common/utils";
+import { getProviderDisplayName, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
 import {
@@ -36,15 +36,6 @@ import {
 
 import { NamingConventionInput } from "./NamingConventionInput";
 import { TemplateDocumentationField } from "./TemplateDocumentationField";
-
-const sameStringSet = (a: string[] | undefined, b: string[] | undefined) => {
-  const x = a ?? [];
-  const y = b ?? [];
-  return (
-    x.length === y.length &&
-    [...x].sort().join("\u0000") === [...y].sort().join("\u0000")
-  );
-};
 
 export interface TemplateAboutProps {
   template: TemplateResponse;

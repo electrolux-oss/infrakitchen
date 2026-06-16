@@ -19,16 +19,13 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
 import { ResourceResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface ResourceAboutProps {
   resource: ResourceResponse;

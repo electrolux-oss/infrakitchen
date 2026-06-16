@@ -17,15 +17,12 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import {
   SourceCodeVersionUpdateFieldInput,
   UPDATE_SOURCE_CODE_VERSION_MUTATION,
 } from "../graphql/mutations";
 import { SourceCodeVersionResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface SourceCodeVersionAboutProps {
   source_code_version: SourceCodeVersionResponse;

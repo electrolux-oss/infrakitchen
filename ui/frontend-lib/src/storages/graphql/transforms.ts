@@ -72,20 +72,20 @@ export function transformStorage(gql: GqlStorage): StorageResponse {
     id: gql.id,
     name: gql.name,
     _entity_name: "storage",
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     status: gql.status,
     state: gql.state,
     description: gql.description ?? "",
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? [],
     integration: transformIntegrationShort(gql.integration)!,
     creator: transformUserShort(gql.creator)!,
-    storage_type: gql.storageType,
-    storage_provider: gql.storageProvider,
+    storageType: gql.storageType,
+    storageProvider: gql.storageProvider,
     configuration: gql.configuration ?? {},
-    resources_count: gql.resourcesCount ?? 0,
-    executors_count: gql.executorsCount ?? 0,
+    resourcesCount: gql.resourcesCount ?? 0,
+    executorsCount: gql.executorsCount ?? 0,
   };
 }
 
@@ -96,12 +96,12 @@ export function transformStorageOptional(
     id: gql.id,
     name: gql.name,
     _entity_name: "storage",
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     status: gql.status,
     state: gql.state,
     description: gql.description ?? undefined,
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? undefined,
     integration:
       gql.integration !== undefined
@@ -109,10 +109,10 @@ export function transformStorageOptional(
         : undefined,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
-    storage_type: gql.storageType,
-    storage_provider: gql.storageProvider,
+    storageType: gql.storageType,
+    storageProvider: gql.storageProvider,
     configuration: gql.configuration ?? undefined,
-    resources_count: gql.resourcesCount,
-    executors_count: gql.executorsCount,
+    resourcesCount: gql.resourcesCount,
+    executorsCount: gql.executorsCount,
   };
 }

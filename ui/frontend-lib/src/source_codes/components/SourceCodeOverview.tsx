@@ -19,17 +19,13 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getRepoNameFromUrl } from "../../common/utils";
+import { getRepoNameFromUrl, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
 import {
   SourceCodeUpdateFieldInput,
   UPDATE_SOURCE_CODE_MUTATION,
 } from "../graphql/mutations";
 import { SourceCodeResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface SourceCodeOverviewProps {
   sourceCode: SourceCodeResponse;
