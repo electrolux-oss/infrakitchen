@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 import { Box, Typography } from "@mui/material";
 
 import { formatLabel } from "../../common";
@@ -7,7 +9,17 @@ import {
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
-import { CustomSecret, SecretResponse } from "../types";
+import { useConfig } from "../../common/context";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
+import {
+  SecretUpdateFieldInput,
+  UPDATE_SECRET_MUTATION,
+} from "../graphql/mutations";
+import { CustomSecret, SecretResponse, SecretUpdate } from "../types";
+
+import { SecretConfigurationField } from "./SecretConfigurationField";
 
 export interface SecretConfigurationProps {
   secret: SecretResponse;
@@ -39,6 +51,34 @@ const getCustomSecrets = (secrets: CustomSecret[]) => {
 };
 
 export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
+  const { ikApi } = useConfig();
+  const { refreshEntity } = useEntityProvider();
+  const { checkActionPermission } = usePermissionProvider();
+  const canEdit = checkActionPermission("api:secret", "write");
+
+  const saveConfiguration = useCallback(
+    async (configuration: SecretUpdate["configuration"]) => {
+      const input: SecretUpdateFieldInput = {
+        configuration,
+        // secret_provider is the Pydantic discriminator for the configuration
+        // union type; the backend needs it to deserialize the correct variant.
+        secretProvider: secret.secret_provider,
+      };
+      try {
+        await ikApi.graphqlRequest(UPDATE_SECRET_MUTATION, {
+          id: secret.id,
+          input,
+        });
+        notify("Secret updated successfully", "success");
+        refreshEntity?.();
+      } catch (error) {
+        notifyError(error);
+        throw error;
+      }
+    },
+    [ikApi, secret.id, secret.secret_provider, refreshEntity],
+  );
+
   return (
     <OverviewCard name="Secret Configuration">
       <CommonField
@@ -69,6 +109,11 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
           value={getCustomSecrets(secret.configuration.secrets)}
         />
       )}
+      <SecretConfigurationField
+        secret={secret}
+        canEdit={canEdit}
+        onSave={saveConfiguration}
+      />
     </OverviewCard>
   );
 };

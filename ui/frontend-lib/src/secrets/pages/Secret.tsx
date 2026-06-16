@@ -54,6 +54,7 @@ export const SecretPage = () => {
     >
       <EntityContainer
         title={"Secret Overview"}
+        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"

@@ -1,6 +1,5 @@
 import { SecretPage } from "./pages/Secret";
 import { SecretCreatePage } from "./pages/SecretCreate";
-import { SecretEditPage } from "./pages/SecretEdit";
 import { SecretsPage } from "./pages/Secrets";
 
 export const secretRoutes = [
@@ -19,12 +18,6 @@ export const secretRoutes = [
   {
     path: SecretCreatePage.path,
     Component: SecretCreatePage,
-    requiredPermission: "api:secret",
-    permissionAction: "write",
-  },
-  {
-    path: SecretEditPage.path,
-    Component: SecretEditPage,
     requiredPermission: "api:secret",
     permissionAction: "write",
   },

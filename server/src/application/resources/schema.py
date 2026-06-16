@@ -246,23 +246,12 @@ class ResourcePatch(BaseModel):
     )
 
     @model_validator(mode="before")
+    @classmethod
     def at_least_one_field_present(cls, values):
-        fields = [
-            "name",
-            "description",
-            "source_code_version_id",
-            "integration_ids",
-            "secret_ids",
-            "variables",
-            "dependency_tags",
-            "dependency_config",
-            "labels",
-            "workspace_id",
-            "storage_id",
-            "storage_path",
-        ]
-        if not any(values.get(field) not in (None, [], "") for field in fields):
-            raise ValueError("At least one field must be provided in ResourcePatch.")
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in ResourcePatch.model_fields):
+            raise ValueError("At least one field must be provided in Resource update.")
         return values
 
 
