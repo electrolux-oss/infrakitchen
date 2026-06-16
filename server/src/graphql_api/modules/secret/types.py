@@ -30,4 +30,10 @@ class SecretType:
         return await info.context["loaders"]["secret_executor_count"].load(str(self.id))
 
 
+@strawberry.type
+class SecretValidationType:
+    is_valid: bool
+    message: str | None = None
+
+
 secret_mapper.finalize()

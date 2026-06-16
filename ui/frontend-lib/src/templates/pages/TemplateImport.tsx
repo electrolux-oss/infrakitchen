@@ -156,7 +156,7 @@ export const TemplateImportPage = () => {
                 {...field}
                 entity_name="integrations"
                 filter={{ integration_type: "git" }}
-                showFields={["integration_provider", "name"]}
+                showFields={["integrationProvider", "name"]}
                 error={!!errors.integrationId}
                 helpertext={
                   errors.integrationId

@@ -9,9 +9,10 @@ from application.secrets.dependencies import get_secret_service
 from application.secrets.schema import SecretCreate, SecretUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
-from core.errors import AccessDenied
+from core.errors import AccessDenied, EntityNotFound
+from core.users.functions import user_has_access_to_api
 from graphql_api.helpers import IsAuthenticated
-from graphql_api.modules.secret.types import SecretType
+from graphql_api.modules.secret.types import SecretType, SecretValidationType
 
 
 @strawberry_pydantic.input(model=SecretCreate, all_fields=False)
@@ -88,3 +89,31 @@ class SecretMutation:
 
         await service.delete(secret_id=str(id), requester=requester)
         return True
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def validate_secret(self, info: Info, id: uuid.UUID) -> SecretValidationType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_secret_service(session)
+
+        if not await user_has_access_to_api(requester, "secret", action="write"):
+            raise AccessDenied("Access denied")
+
+        secret = await service.get_by_id(secret_id=str(id))
+        if not secret:
+            raise EntityNotFound("Secret not found")
+
+        result = await service.validate(secret)
+        return SecretValidationType(is_valid=result.is_valid, message=result.message)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def validate_secret_config(self, info: Info, input: SecretCreateInput) -> SecretValidationType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_secret_service(session)
+
+        if not await user_has_access_to_api(requester, "secret", action="write"):
+            raise AccessDenied("Access denied")
+
+        result = await service.validate(input.to_pydantic())
+        return SecretValidationType(is_valid=result.is_valid, message=result.message)

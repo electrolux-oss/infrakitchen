@@ -21,7 +21,7 @@ export const StorageConfiguration = ({
         value={
           <GetReferenceUrlValue
             {...storage.integration}
-            urlProvider={storage.integration.integration_provider}
+            urlProvider={storage.integration.integrationProvider}
           />
         }
       />

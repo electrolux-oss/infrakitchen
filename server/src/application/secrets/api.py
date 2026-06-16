@@ -136,6 +136,7 @@ async def get_actions(request: Request, secret_id: str, service: SecretService =
     "/secrets/validate",
     response_model=SecretValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate_on_create(
     request: Request, body: SecretCreate, service: SecretService = Depends(get_secret_service)

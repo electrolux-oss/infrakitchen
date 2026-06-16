@@ -74,7 +74,7 @@ export const IntegrationConfigurationEditor = ({
         const input: IntegrationUpdateFieldInput = {
           configuration: {
             ...data.configuration,
-            integration_provider: integration.integration_provider,
+            integration_provider: integration.integrationProvider,
           },
         };
         await ikApi.graphqlRequest(UPDATE_INTEGRATION_MUTATION, {
@@ -90,11 +90,11 @@ export const IntegrationConfigurationEditor = ({
         setSaving(false);
       }
     },
-    [ikApi, integration.id, integration.integration_provider, refreshEntity],
+    [ikApi, integration.id, integration.integrationProvider, refreshEntity],
   );
 
   const providerFields = renderFieldsForProvider(
-    integration.integration_provider,
+    integration.integrationProvider,
     control as Control<any>,
     errors,
   );
@@ -119,7 +119,7 @@ export const IntegrationConfigurationEditor = ({
           <DialogTitle>Edit Configuration</DialogTitle>
           <DialogContent>
             {renderFieldsForProvider(
-              integration.integration_provider,
+              integration.integrationProvider,
               control as Control<any>,
               errors,
             )}

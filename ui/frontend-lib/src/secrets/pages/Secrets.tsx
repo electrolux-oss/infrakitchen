@@ -26,9 +26,15 @@ export const SecretsPage = () => {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/secret").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query SecretLabels {
+          labels: labels(entity: "secret")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   // Configure filters
@@ -79,12 +85,12 @@ export const SecretsPage = () => {
         },
       },
       {
-        field: "secret_type",
+        field: "secretType",
         headerName: "Type",
         flex: 1,
       },
       {
-        field: "secret_provider",
+        field: "secretProvider",
         headerName: "Provider",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -108,7 +114,7 @@ export const SecretsPage = () => {
       },
 
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

@@ -150,6 +150,7 @@ async def get_actions(
     "/integrations/validate",
     response_model=IntegrationValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate_on_create(
     request: Request, body: IntegrationValidationRequest, service: IntegrationService = Depends(get_integration_service)

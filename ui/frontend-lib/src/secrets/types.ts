@@ -14,25 +14,25 @@ export interface CustomSecretConfig {
 export interface SecretShort {
   id: string;
   name: string;
-  secret_provider: string;
+  secretProvider: string;
   _entity_name: string;
 }
 
 export interface SecretResponse extends SecretShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: string;
   state: string;
   description: string;
-  revision_number: number;
+  revisionNumber: number;
   labels: string[];
   integration: IntegrationShort | null;
   creator: UserShort;
-  secret_type: string;
-  secret_provider: string;
+  secretType: string;
+  secretProvider: string;
   configuration: CustomSecretConfig;
-  resources_count: number;
-  executors_count: number;
+  resourcesCount: number;
+  executorsCount: number;
 }
 
 export type SecretResponseOptional = Partial<SecretResponse>;
@@ -40,10 +40,10 @@ export type SecretResponseOptional = Partial<SecretResponse>;
 export interface SecretCreate {
   name: string;
   description: string;
-  integration_id: string | null;
+  integrationId: string | null;
   labels: string[];
-  secret_type: string;
-  secret_provider: string;
+  secretType: string;
+  secretProvider: string;
   configuration: object | CustomSecretConfig;
 }
 
@@ -54,6 +54,11 @@ export interface SecretUpdate {
 }
 
 export interface SecretValidateResponse {
-  is_valid: boolean;
+  isValid: boolean;
+  message: string | null;
+}
+
+export interface SecretValidationResult {
+  isValid: boolean;
   message: string | null;
 }

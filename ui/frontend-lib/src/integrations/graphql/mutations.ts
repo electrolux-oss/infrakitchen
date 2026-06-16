@@ -14,3 +14,21 @@ export const UPDATE_INTEGRATION_MUTATION = `
     }
   }
 `;
+
+export const VALIDATE_INTEGRATION_MUTATION = `
+  mutation ValidateIntegration($id: UUID!) {
+    validateIntegration(id: $id) {
+      isValid
+      message
+    }
+  }
+`;
+
+export const VALIDATE_INTEGRATION_CONFIG_MUTATION = `
+  mutation ValidateIntegrationConfig($input: IntegrationCreateInput!) {
+    validateIntegrationConfig(input: $input) {
+      isValid
+      message
+    }
+  }
+`;

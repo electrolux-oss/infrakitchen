@@ -19,15 +19,19 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { renderFieldsForProvider } from "../components/SecretProviderForms";
-import { SecretCreate, SecretResponse, SecretValidateResponse } from "../types";
+import {
+  CREATE_SECRET_MUTATION,
+  VALIDATE_SECRET_CONFIG_MUTATION,
+} from "../graphql";
+import { SecretCreate, SecretValidationResult } from "../types";
 
-const secret_provider_mapping: Record<string, string> = {
+const secretProviderMapping: Record<string, string> = {
   custom: "IK Custom Secret",
   aws: "AWS Secret Manager",
   gcp: "GCP Secret Manager",
 };
 
-const secret_types = ["tofu"];
+const secretTypes = ["tofu"];
 
 const SecretCreatePageInner = () => {
   const { ikApi, linkPrefix, globalConfig } = useConfig();
@@ -43,7 +47,7 @@ const SecretCreatePageInner = () => {
     {},
   );
 
-  const selectedProvider = watch("secret_provider");
+  const selectedProvider = watch("secretProvider");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}secrets`);
@@ -55,30 +59,37 @@ const SecretCreatePageInner = () => {
         notifyError(new Error("Fix validation errors before testing."));
         return;
       }
-      const payload = {
-        ...data,
+      const input = {
+        name: data.name,
+        description: data.description,
+        secretType: data.secretType,
+        secretProvider: data.secretProvider,
+        integrationId: data.integrationId,
+        labels: data.labels,
         configuration: {
           ...data.configuration,
-          secret_provider: data.secret_provider,
+          secret_provider: data.secretProvider,
         },
       };
 
-      ikApi
-        .postRaw("secrets/validate", payload)
-        .then((response: SecretValidateResponse) => {
-          if (response.is_valid) {
-            notify(response.message, "success");
-          } else {
-            notifyError(
-              new Error(
-                `Validation failed: ${response.message || "No message provided."}`,
-              ),
-            );
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          validateSecretConfig: SecretValidationResult;
+        }>(VALIDATE_SECRET_CONFIG_MUTATION, { input });
+
+        const result = response.validateSecretConfig;
+        if (result.isValid) {
+          notify(result.message, "success");
+        } else {
+          notifyError(
+            new Error(
+              `Validation failed: ${result.message || "No message provided."}`,
+            ),
+          );
+        }
+      } catch (error: any) {
+        notifyError(error);
+      }
     },
     [ikApi, trigger],
   );
@@ -92,28 +103,28 @@ const SecretCreatePageInner = () => {
         notifyError(new Error("Please fix the errors in the form"));
         return;
       }
-      const updatedData = {
+      const input = {
         ...data,
         configuration: {
           ...data.configuration,
-          secret_provider: data.secret_provider,
+          secret_provider: data.secretProvider,
         },
       };
 
-      ikApi
-        .postRaw("secrets", updatedData)
-        .then((response: SecretResponse) => {
-          if (response.id) {
-            notify("Secret created successfully", "success");
-            navigate(`${linkPrefix}secrets/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        })
-        .finally(() => {
-          setSaving(false);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createSecret: { id: string };
+        }>(CREATE_SECRET_MUTATION, { input });
+        const createdSecret = response.createSecret;
+        if (createdSecret?.id) {
+          notify("Secret created successfully", "success");
+          navigate(`${linkPrefix}secrets/${createdSecret.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
     [ikApi, navigate, trigger, setSaving, linkPrefix],
   );
@@ -197,7 +208,7 @@ const SecretCreatePageInner = () => {
               render={({ field }) => <LabelInput {...field} errors={errors} />}
             />
             <Controller
-              name="secret_provider"
+              name="secretProvider"
               control={control}
               rules={{ required: "Secret provider is required" }}
               render={({ field }) => (
@@ -206,10 +217,10 @@ const SecretCreatePageInner = () => {
                   select
                   label="Secret Provider"
                   variant="outlined"
-                  error={!!errors.secret_provider}
+                  error={!!errors.secretProvider}
                   helperText={
-                    errors.secret_provider
-                      ? errors.secret_provider.message
+                    errors.secretProvider
+                      ? errors.secretProvider.message
                       : "Select the secret provider"
                   }
                   fullWidth
@@ -218,7 +229,7 @@ const SecretCreatePageInner = () => {
                   {globalConfig?.secret_provider_registry?.map(
                     (option: string) => (
                       <MenuItem key={option} value={option}>
-                        {secret_provider_mapping[option] || option}
+                        {secretProviderMapping[option] || option}
                       </MenuItem>
                     ),
                   )}
@@ -228,7 +239,7 @@ const SecretCreatePageInner = () => {
 
             {selectedProvider != "custom" && (
               <Controller
-                name="integration_id"
+                name="integrationId"
                 control={control}
                 rules={{ required: "Integration is required" }}
                 render={({ field }) => (
@@ -243,10 +254,10 @@ const SecretCreatePageInner = () => {
                       integration_type: "cloud",
                       integration_provider: selectedProvider,
                     }}
-                    error={!!errors.integration_id}
+                    error={!!errors.integrationId}
                     helpertext={
-                      errors.integration_id
-                        ? errors.integration_id.message
+                      errors.integrationId
+                        ? errors.integrationId.message
                         : "Select credentials for the secret"
                     }
                     value={field.value}
@@ -257,7 +268,7 @@ const SecretCreatePageInner = () => {
               />
             )}
             <Controller
-              name="secret_type"
+              name="secretType"
               control={control}
               rules={{ required: "Secret type is required" }}
               render={({ field }) => (
@@ -267,16 +278,16 @@ const SecretCreatePageInner = () => {
                   disabled
                   label="Secret Type"
                   variant="outlined"
-                  error={!!errors.secret_type}
+                  error={!!errors.secretType}
                   helperText={
-                    errors.secret_type
-                      ? errors.secret_type.message
+                    errors.secretType
+                      ? errors.secretType.message
                       : "Select the secret type"
                   }
                   fullWidth
                   margin="normal"
                 >
-                  {secret_types.map((option) => (
+                  {secretTypes.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -289,7 +300,7 @@ const SecretCreatePageInner = () => {
 
         {selectedProvider && (
           <PropertyCard
-            title={`Configuration for ${secret_provider_mapping[selectedProvider] || ""}`}
+            title={`Configuration for ${secretProviderMapping[selectedProvider] || ""}`}
           >
             <Box>
               {renderFieldsForProvider(
@@ -310,10 +321,10 @@ const SecretCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      integration_id: "",
+      integrationId: "",
       labels: [],
-      secret_type: "tofu",
-      secret_provider: "",
+      secretType: "tofu",
+      secretProvider: "",
       configuration: {},
     },
     mode: "onChange",

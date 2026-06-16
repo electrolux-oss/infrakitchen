@@ -8,25 +8,25 @@ export interface IntegrationShort {
   id: string;
   name: string;
   _entity_name: string;
-  integration_provider: string;
+  integrationProvider: string;
 }
 
 export interface IntegrationResponse extends IntegrationShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: INTEGRATION_STATUS;
   state: string;
-  revision_number: number;
+  revisionNumber: number;
   labels: string[];
-  integration_type: string;
-  integration_provider: string;
+  integrationType: string;
+  integrationProvider: string;
   description: string;
   configuration: object;
   creator: UserShort;
-  resource_count?: number;
-  source_code_count?: number;
-  workspace_count?: number;
-  executor_count?: number;
+  resourceCount?: number;
+  sourceCodeCount?: number;
+  workspaceCount?: number;
+  executorCount?: number;
 }
 
 export type IntegrationResponseOptional = Partial<IntegrationResponse>;
@@ -34,14 +34,14 @@ export type IntegrationResponseOptional = Partial<IntegrationResponse>;
 export interface IntegrationCreate extends IntegrationShort {
   name: string;
   description: string;
-  integration_type: string;
-  integration_provider: string;
+  integrationType: string;
+  integrationProvider: string;
   labels: string[];
   configuration: object;
 }
 
 export interface IntegrationWithStorageCreate extends IntegrationCreate {
-  create_storage: boolean;
+  createStorage: boolean;
 }
 
 export interface IntegrationUpdate extends IntegrationShort {
@@ -72,13 +72,7 @@ export interface Provider {
   tokenLink: string;
 }
 
-export interface IntegrationValidateRequest {
-  integration_type: string;
-  integration_provider: string;
-  configuration: object;
-}
-
-export interface IntegrationValidateResponse {
-  is_valid: boolean;
+export interface IntegrationValidationResult {
+  isValid: boolean;
   message: string | null;
 }

@@ -90,7 +90,7 @@ export const SecretConfigurationField = ({
         <DialogContent>
           <FormProvider {...methods}>
             {renderFieldsForProvider(
-              secret.secret_provider,
+              secret.secretProvider,
               control as Control<any>,
               errors,
             )}

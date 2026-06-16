@@ -21,7 +21,7 @@ export const WorkspaceConfiguration = ({
         value={
           <GetReferenceUrlValue
             {...workspace.integration}
-            urlProvider={workspace.integration.integration_provider}
+            urlProvider={workspace.integration.integrationProvider}
           />
         }
       />

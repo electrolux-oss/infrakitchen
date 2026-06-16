@@ -42,11 +42,11 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
       metadata={[
         {
           label: "Created",
-          value: getDateValue(integration.created_at),
+          value: getDateValue(integration.createdAt),
         },
         {
           label: "Last Updated",
-          value: getDateValue(integration.updated_at),
+          value: getDateValue(integration.updatedAt),
         },
         {
           label: "Status",
@@ -54,7 +54,7 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
         },
         {
           label: "Revision Number",
-          value: integration.revision_number.toString(),
+          value: integration.revisionNumber.toString(),
         },
       ]}
       onClick={handleLink}

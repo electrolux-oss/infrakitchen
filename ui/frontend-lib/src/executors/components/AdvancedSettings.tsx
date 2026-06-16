@@ -32,7 +32,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
                 <span key={parent.id}>
                   <GetReferenceUrlValue
                     {...parent}
-                    urlProvider={parent.integration_provider}
+                    urlProvider={parent.integrationProvider}
                   />
                 </span>
               ))}

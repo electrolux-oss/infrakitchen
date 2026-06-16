@@ -60,7 +60,7 @@ export function transformSecretShort(gql: GqlSecretShort): SecretShort {
   return {
     id: gql.id,
     name: gql.name,
-    secret_provider: gql.secretProvider,
+    secretProvider: gql.secretProvider,
     _entity_name: "secret",
   };
 }
@@ -77,22 +77,22 @@ export function transformSecret(gql: GqlSecret): SecretResponse {
     id: gql.id,
     name: gql.name,
     _entity_name: "secret",
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     status: gql.status,
     state: gql.state,
     description: gql.description ?? "",
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? [],
     integration: transformIntegrationShort(gql.integration),
     creator: transformUserShort(gql.creator)!,
-    secret_type: gql.secretType,
-    secret_provider: gql.secretProvider,
+    secretType: gql.secretType,
+    secretProvider: gql.secretProvider,
     configuration:
       (gql.configuration as SecretResponse["configuration"] | null) ??
       defaultConfiguration(gql.secretProvider),
-    resources_count: gql.resourcesCount ?? 0,
-    executors_count: gql.executorsCount ?? 0,
+    resourcesCount: gql.resourcesCount ?? 0,
+    executorsCount: gql.executorsCount ?? 0,
   };
 }
 
@@ -103,12 +103,12 @@ export function transformSecretOptional(
     id: gql.id,
     name: gql.name,
     _entity_name: "secret",
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     status: gql.status,
     state: gql.state,
     description: gql.description ?? undefined,
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     labels: gql.labels ?? undefined,
     integration:
       gql.integration !== undefined
@@ -116,10 +116,10 @@ export function transformSecretOptional(
         : undefined,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
-    secret_type: gql.secretType,
-    secret_provider: gql.secretProvider,
-    resources_count: gql.resourcesCount,
-    executors_count: gql.executorsCount,
+    secretType: gql.secretType,
+    secretProvider: gql.secretProvider,
+    resourcesCount: gql.resourcesCount,
+    executorsCount: gql.executorsCount,
     configuration: gql.configuration
       ? (gql.configuration as SecretResponse["configuration"])
       : gql.secretProvider

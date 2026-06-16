@@ -34,4 +34,10 @@ class IntegrationType:
         return await info.context["loaders"]["integration_executor_count"].load(str(self.id))
 
 
+@strawberry.type
+class IntegrationValidationType:
+    is_valid: bool
+    message: str | None = None
+
+
 integration_mapper.finalize()

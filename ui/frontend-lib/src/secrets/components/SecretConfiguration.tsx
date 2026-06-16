@@ -62,7 +62,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         configuration,
         // secret_provider is the Pydantic discriminator for the configuration
         // union type; the backend needs it to deserialize the correct variant.
-        secretProvider: secret.secret_provider,
+        secretProvider: secret.secretProvider,
       };
       try {
         await ikApi.graphqlRequest(UPDATE_SECRET_MUTATION, {
@@ -76,7 +76,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         throw error;
       }
     },
-    [ikApi, secret.id, secret.secret_provider, refreshEntity],
+    [ikApi, secret.id, secret.secretProvider, refreshEntity],
   );
 
   return (
@@ -87,23 +87,23 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
           secret.integration ? (
             <GetReferenceUrlValue
               {...secret.integration}
-              urlProvider={secret.integration.integration_provider}
+              urlProvider={secret.integration.integrationProvider}
             />
           ) : null
         }
       />
       <CommonField
         name={"Secret Provider"}
-        value={getProviderValue(secret.secret_provider)}
+        value={getProviderValue(secret.secretProvider)}
       />
-      <CommonField name={"Secret Type"} value={secret.secret_type} />
-      {secret.secret_provider !== "custom" &&
+      <CommonField name={"Secret Type"} value={secret.secretType} />
+      {secret.secretProvider !== "custom" &&
         Object.entries(secret.configuration).map(([k, v]) => {
           return (
             <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />
           );
         })}
-      {secret.secret_provider === "custom" && (
+      {secret.secretProvider === "custom" && (
         <CommonField
           name={"Secret List"}
           value={getCustomSecrets(secret.configuration.secrets)}

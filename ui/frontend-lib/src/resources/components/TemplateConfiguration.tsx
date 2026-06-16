@@ -219,7 +219,7 @@ export const TemplateConfiguration = ({
                     <span key={parent.id}>
                       <GetReferenceUrlValue
                         {...parent}
-                        urlProvider={parent.integration_provider}
+                        urlProvider={parent.integrationProvider}
                       />
                     </span>
                   ))}

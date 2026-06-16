@@ -55,11 +55,11 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={<RelativeTime date={secret.created_at} user={secret.creator} />}
+        value={<RelativeTime date={secret.createdAt} user={secret.creator} />}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={secret.updated_at} />}
+        value={<RelativeTime date={secret.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}

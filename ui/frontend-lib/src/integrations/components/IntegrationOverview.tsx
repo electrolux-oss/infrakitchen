@@ -52,8 +52,8 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
     <OverviewCard
       name={integration.name}
       description={integration.description || "No description"}
-      icon={IconField(integration.integration_provider)}
-      chip={integration.integration_type}
+      icon={IconField(integration.integrationProvider)}
+      chip={integration.integrationType}
     >
       <CommonEditableField<string>
         name={"Name"}
@@ -104,14 +104,14 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
         name={"Created"}
         value={
           <RelativeTime
-            date={integration.created_at}
+            date={integration.createdAt}
             user={integration.creator}
           />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={integration.updated_at} />}
+        value={<RelativeTime date={integration.updatedAt} />}
       />
       <CommonEditableField<string[]>
         name={"Labels"}

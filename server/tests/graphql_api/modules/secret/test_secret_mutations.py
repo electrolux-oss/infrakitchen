@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from application.secrets.schema import SecretValidationResponse
 from core.constants.model import ModelActions
 from graphql_api.schema import schema
 
@@ -41,6 +42,25 @@ SECRET_ACTION_MUTATION = """
 DELETE_SECRET_MUTATION = """
     mutation DeleteSecret($id: UUID!) {
         deleteSecret(id: $id)
+    }
+"""
+
+
+VALIDATE_SECRET_MUTATION = """
+    mutation ValidateSecret($id: UUID!) {
+        validateSecret(id: $id) {
+            isValid
+            message
+        }
+    }
+"""
+
+VALIDATE_SECRET_CONFIG_MUTATION = """
+    mutation ValidateSecretConfig($input: SecretCreateInput!) {
+        validateSecretConfig(input: $input) {
+            isValid
+            message
+        }
     }
 """
 
@@ -345,3 +365,167 @@ class TestSecretMutations:
         assert result.data == {"deleteSecret": True}
         mock_secret_service.get_actions.assert_awaited_once_with(secret_id=secret_id, requester=mocked_user)
         mock_secret_service.delete.assert_awaited_once_with(secret_id=str(secret_id), requester=mocked_user)
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.secret.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.secret.mutations.get_secret_service")
+    async def test_validate_secret_returns_validation_result(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_secret_service,
+        mocked_secret_response,
+        mocked_user,
+    ):
+        secret_id = uuid4()
+        mock_has_access.return_value = True
+        mock_secret_service.get_by_id = AsyncMock(return_value=mocked_secret_response)
+        mock_secret_service.validate = AsyncMock(
+            return_value=SecretValidationResponse(is_valid=True, message="Connection successful")
+        )
+        mock_get_service.return_value = mock_secret_service
+
+        result = await schema.execute(
+            VALIDATE_SECRET_MUTATION,
+            variable_values={"id": str(secret_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"validateSecret": {"isValid": True, "message": "Connection successful"}}
+        mock_has_access.assert_awaited_once_with(mocked_user, "secret", action="write")
+        mock_secret_service.get_by_id.assert_awaited_once_with(secret_id=str(secret_id))
+        mock_secret_service.validate.assert_awaited_once_with(mocked_secret_response)
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.secret.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.secret.mutations.get_secret_service")
+    async def test_validate_secret_denies_without_write_access(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_secret_service,
+        mocked_user,
+    ):
+        secret_id = uuid4()
+        mock_has_access.return_value = False
+        mock_secret_service.get_by_id = AsyncMock()
+        mock_secret_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_secret_service
+
+        result = await schema.execute(
+            VALIDATE_SECRET_MUTATION,
+            variable_values={"id": str(secret_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateSecret"] is None
+        assert result.errors is not None
+        assert any("Access denied" in error.message for error in result.errors)
+        mock_secret_service.get_by_id.assert_not_awaited()
+        mock_secret_service.validate.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.secret.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.secret.mutations.get_secret_service")
+    async def test_validate_secret_raises_when_not_found(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_secret_service,
+        mocked_user,
+    ):
+        secret_id = uuid4()
+        mock_has_access.return_value = True
+        mock_secret_service.get_by_id = AsyncMock(return_value=None)
+        mock_secret_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_secret_service
+
+        result = await schema.execute(
+            VALIDATE_SECRET_MUTATION,
+            variable_values={"id": str(secret_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateSecret"] is None
+        assert result.errors is not None
+        assert any("Secret not found" in error.message for error in result.errors)
+        mock_secret_service.validate.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.secret.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.secret.mutations.get_secret_service")
+    async def test_validate_secret_config_returns_validation_result(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_secret_service,
+        mocked_secret,
+        mocked_user,
+    ):
+        mock_has_access.return_value = True
+        mock_secret_service.validate = AsyncMock(
+            return_value=SecretValidationResponse(is_valid=True, message="Connection successful")
+        )
+        mock_get_service.return_value = mock_secret_service
+
+        result = await schema.execute(
+            VALIDATE_SECRET_CONFIG_MUTATION,
+            variable_values={
+                "input": {
+                    "name": "TestSecret",
+                    "secretType": "tofu",
+                    "secretProvider": "aws",
+                    "integrationId": str(mocked_secret.integration_id),
+                    "configuration": {
+                        "name": "test-secret",
+                        "aws_region": "us-west-2",
+                        "secret_provider": "aws",
+                    },
+                }
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"validateSecretConfig": {"isValid": True, "message": "Connection successful"}}
+        mock_has_access.assert_awaited_once_with(mocked_user, "secret", action="write")
+        mock_secret_service.validate.assert_awaited_once_with(ANY)
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.secret.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.secret.mutations.get_secret_service")
+    async def test_validate_secret_config_denies_without_write_access(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_secret_service,
+        mocked_secret,
+        mocked_user,
+    ):
+        mock_has_access.return_value = False
+        mock_secret_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_secret_service
+
+        result = await schema.execute(
+            VALIDATE_SECRET_CONFIG_MUTATION,
+            variable_values={
+                "input": {
+                    "name": "TestSecret",
+                    "secretType": "tofu",
+                    "secretProvider": "aws",
+                    "integrationId": str(mocked_secret.integration_id),
+                    "configuration": {
+                        "name": "test-secret",
+                        "aws_region": "us-west-2",
+                        "secret_provider": "aws",
+                    },
+                }
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateSecretConfig"] is None
+        assert result.errors is not None
+        assert any("Access denied" in error.message for error in result.errors)
+        mock_secret_service.validate.assert_not_awaited()

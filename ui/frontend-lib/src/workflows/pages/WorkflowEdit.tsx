@@ -276,7 +276,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     ikApi={ikApi}
                     entity_name="integrations"
                     filter={{ integration_type: "cloud" }}
-                    showFields={["integration_provider", "name"]}
+                    showFields={["integrationProvider", "name"]}
                     buffer={buffer}
                     setBuffer={setBuffer}
                     error={false}

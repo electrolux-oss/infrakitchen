@@ -213,7 +213,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                 setBuffer={setBuffer}
                 entity_name="integrations"
                 filter={{ integration_type: "cloud" }}
-                showFields={["integration_provider", "name"]}
+                showFields={["integrationProvider", "name"]}
                 optionFilter={integrationOptionFilter}
                 value={value}
                 onChange={onChange}

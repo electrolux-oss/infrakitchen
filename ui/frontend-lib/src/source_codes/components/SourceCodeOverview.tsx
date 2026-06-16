@@ -96,7 +96,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
               {IconField(sourceCode.sourceCodeProvider)}
               <GetReferenceUrlValue
                 {...sourceCode.integration}
-                urlProvider={sourceCode.integration.integration_provider}
+                urlProvider={sourceCode.integration.integrationProvider}
               />
             </Box>
           ) : null

@@ -22,11 +22,11 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { renderFieldsForProvider } from "../components/IntegrationProviderForms";
 import { providers } from "../constants";
+import { VALIDATE_INTEGRATION_CONFIG_MUTATION } from "../graphql";
 import {
   ConnectionType,
   IntegrationResponse,
-  IntegrationValidateRequest,
-  IntegrationValidateResponse,
+  IntegrationValidationResult,
   IntegrationWithStorageCreate,
 } from "../types";
 
@@ -63,11 +63,11 @@ const IntegrationCreatePage = () => {
     mode: "onChange",
     defaultValues: {
       name: "",
-      integration_type: providerObject?.type,
-      integration_provider: providerObject?.slug,
+      integrationType: providerObject?.type,
+      integrationProvider: providerObject?.slug,
       description: "",
       labels: [],
-      create_storage: false,
+      createStorage: false,
       configuration: {},
     },
   });
@@ -86,8 +86,12 @@ const IntegrationCreatePage = () => {
       }
 
       const payload = {
-        ...data,
+        name: data.name,
+        description: data.description,
+        labels: data.labels,
+        integration_type: data.integrationType,
         integration_provider: formProviderSlug,
+        create_storage: data.createStorage,
         configuration: {
           ...data.configuration,
           integration_provider: formProviderSlug,
@@ -114,32 +118,39 @@ const IntegrationCreatePage = () => {
       notifyError(new Error("Fix validation errors before testing."));
       return;
     }
-    const { configuration, integration_type } = getValues();
+    const { name, description, labels, configuration, integrationType } =
+      getValues();
 
-    const payload: IntegrationValidateRequest = {
-      integration_type,
-      integration_provider: formProviderSlug,
+    const input = {
+      name,
+      description,
+      labels,
+      integrationType,
+      integrationProvider: formProviderSlug,
       configuration: {
         ...configuration,
         integration_provider: formProviderSlug,
       },
     };
-    ikApi
-      .postRaw("integrations/validate", payload)
-      .then((response: IntegrationValidateResponse) => {
-        if (response.is_valid) {
-          notify("Validation successful!", "success");
-        } else {
-          notifyError(
-            new Error(
-              `Validation failed: ${response.message || "No message provided."}`,
-            ),
-          );
-        }
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      });
+
+    try {
+      const response = await ikApi.graphqlRequest<{
+        validateIntegrationConfig: IntegrationValidationResult;
+      }>(VALIDATE_INTEGRATION_CONFIG_MUTATION, { input });
+
+      const result = response.validateIntegrationConfig;
+      if (result.isValid) {
+        notify("Validation successful!", "success");
+      } else {
+        notifyError(
+          new Error(
+            `Validation failed: ${result.message || "No message provided."}`,
+          ),
+        );
+      }
+    } catch (error: any) {
+      notifyError(error);
+    }
   }, [ikApi, getValues, trigger, formProviderSlug]);
 
   if (!providerObject) {
