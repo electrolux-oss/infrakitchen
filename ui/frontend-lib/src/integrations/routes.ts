@@ -1,6 +1,5 @@
 import { IntegrationPage } from "./pages/Integration";
 import { IntegrationCreatePage } from "./pages/IntegrationCreate";
-import { IntegrationEditPage } from "./pages/IntegrationEdit";
 import { IntegrationsPage } from "./pages/Integrations";
 
 export const integrationRoutes = [
@@ -13,12 +12,6 @@ export const integrationRoutes = [
   {
     path: IntegrationCreatePage.path,
     Component: IntegrationCreatePage,
-    requiredPermission: "api:integration",
-    permissionAction: "write",
-  },
-  {
-    path: IntegrationEditPage.path,
-    Component: IntegrationEditPage,
     requiredPermission: "api:integration",
     permissionAction: "write",
   },

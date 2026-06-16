@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 import re
 from typing import Literal
 import uuid
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from application.types import IntegrationProviderType
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
@@ -79,24 +79,26 @@ class TemplateUpdate(BaseModel):
     Container for a single template record.
     """
 
-    name: str = Field(
-        ...,
-    )
-    description: str = Field(default="")
-    documentation: str = Field(default="")
-    parents: list[uuid.UUID] = Field(
-        default_factory=list,
-    )
-    children: list[uuid.UUID] = Field(
-        default_factory=list,
-    )
-    cloud_resource_types: list[str] = Field(default_factory=list)
-    configuration: TemplateConfig = Field(default_factory=TemplateConfig)
-    labels: list[str] = Field(default_factory=list)
+    name: str | None = Field(default=None)
+    description: str | None = Field(default="")
+    documentation: str | None = Field(default="")
+    parents: list[uuid.UUID] | None = Field(default=None)
+    children: list[uuid.UUID] | None = Field(default=None)
+    cloud_resource_types: list[str] | None = Field(default=None)
+    configuration: TemplateConfig | None = Field(default=None)
+    labels: list[str] | None = Field(default=None)
 
     model_config = ConfigDict(
         from_attributes=True,
     )
+
+    @model_validator(mode="before")
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in TemplateUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Template update.")
+        return values
 
 
 class TemplateResponse(BaseModel):

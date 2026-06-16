@@ -16,7 +16,7 @@ export const SourceCodeVersionPage = () => {
       transformFn={transformSourceCodeVersion}
       entityFields={SCV_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Template Version Overview"}>
+      <EntityContainer title={"Template Version Overview"} hideEditAction>
         <SourceCodeVersionContent />
         <LogLiveTail />
       </EntityContainer>

@@ -75,6 +75,7 @@ async def get_all(
     "/source_code_versions",
     response_model=SourceCodeVersionResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,
@@ -95,6 +96,7 @@ async def post(
     "/source_code_versions/{source_code_version_id}",
     response_model=SourceCodeVersionResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -118,6 +120,7 @@ async def update(
     "/source_code_versions/{source_code_version_id}/actions",
     response_model=SourceCodeVersionResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def patch_action(
     request: Request,
@@ -139,7 +142,11 @@ async def patch_action(
     return entity
 
 
-@router.delete("/source_code_versions/{source_code_version_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/source_code_versions/{source_code_version_id}",
+    status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
+)
 async def delete(
     request: Request,
     source_code_version_id: str,

@@ -16,7 +16,7 @@ export const StoragePage = () => {
       transformFn={transformStorage}
       entityFields={STORAGE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Storage Overview"}>
+      <EntityContainer title={"Storage Overview"} hideEditAction>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

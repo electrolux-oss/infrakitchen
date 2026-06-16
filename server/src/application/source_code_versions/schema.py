@@ -192,8 +192,8 @@ class SourceCodeVersionUpdate(BaseModel):
     Request model for updating an existing source code version.
     """
 
-    description: str = Field(default="")
-    labels: list[str] = Field(default_factory=list)
+    description: str | None = Field(default=None)
+    labels: list[str] | None = Field(default=None)
 
 
 class SourceCodeVersionShort(BaseModel):

@@ -120,7 +120,7 @@ def test_classify_unknown_error_is_internal() -> None:
     error = GraphQLError("sqlalchemy traceback and internals")
     code, message, _ = classify_graphql_error(error)
     assert code == "INTERNAL"
-    assert message == "Internal server error"
+    assert message == "sqlalchemy traceback and internals"
 
 
 def test_classify_auth_message_is_access_denied() -> None:

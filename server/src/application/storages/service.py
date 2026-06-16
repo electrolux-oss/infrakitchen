@@ -13,6 +13,7 @@ from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.utils.entity_state_handler import delete_entity, execute_entity, recreate_entity
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import StorageCRUD
 from .functions import get_storage_actions
 from .model import Storage
@@ -75,12 +76,12 @@ class StorageService:
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
-    async def create(self, storage: StorageCreate, requester: UserDTO) -> StorageResponse:
+    async def create_storage(self, storage: StorageCreate, requester: UserDTO) -> Storage:
         """
-        Create a new storage.
+        Create a new storage and return the ORM model.
         :param storage: StorageCreate to create
         :param requester: User who creates the storage
-        :return: Created storage
+        :return: Created storage ORM instance
         """
         storage_providers = ["aws", "azurerm", "gcp"]
         if storage.storage_type == "tofu":
@@ -88,6 +89,7 @@ class StorageService:
                 raise ValueError("Invalid storage provider, must be one of 'aws', 'azurerm', 'gcp'")
 
         body = storage.model_dump(exclude_unset=True)
+
         body["created_by"] = requester.id
         if not storage.integration_id:
             raise ValueError("Integration ID is required to create a storage")
@@ -106,23 +108,36 @@ class StorageService:
         new_storage.status = ModelStatus.READY
         result = await self.crud.get_by_id(new_storage.id)
 
+        if not result:
+            raise EntityNotFound("Storage not found after creation")
+
         await self.revision_handler.handle_revision(new_storage)
         await self.audit_log_handler.create_log(
             new_storage.id, requester.id, ModelActions.CREATE, revision_number=new_storage.revision_number
         )
         response = StorageResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        return result
 
-    async def update(self, storage_id: str, storage: StorageUpdate, requester: UserDTO) -> StorageResponse:
+    async def create(self, storage: StorageCreate, requester: UserDTO) -> StorageResponse:
         """
-        Update an existing storage.
+        Create a new storage.
+        :param storage: StorageCreate to create
+        :param requester: User who creates the storage
+        :return: Created storage
+        """
+        result = await self.create_storage(storage=storage, requester=requester)
+        return StorageResponse.model_validate(result)
+
+    async def update_storage(self, storage_id: str, storage: StorageUpdate, requester: UserDTO) -> Storage:
+        """
+        Update an existing storage and return the ORM model.
         :param storage_id: ID of the storage to update
         :param storage: Storage to update
         :param requester: User who updates the storage
-        :return: Updated storage
+        :return: Updated storage ORM instance
         """
-        body = storage.model_dump(exclude_unset=True)
+        body = model_db_dump(storage, exclude_defaults=True, exclude_none=True)
         existing_storage = await self.crud.get_by_id(storage_id)
 
         if not existing_storage:
@@ -132,12 +147,13 @@ class StorageService:
             logger.error(f"Entity has wrong status for updating {existing_storage.status}")
             raise ValueError(f"Entity has wrong status for updating {existing_storage.status}")
 
+        if not has_field_changes(body, existing_storage):
+            raise ValueError("No changes detected; the storage is already up to date.")
+
         self.revision_handler.original_entity_instance_dump = to_dict(existing_storage)
 
         if existing_storage.state in [ModelState.DESTROY, ModelState.DESTROYED]:
             raise ValueError(f"Entity cannot be updated, has wrong state {existing_storage.state}")
-
-        existing_storage.status = ModelStatus.READY
 
         await self.crud.update(existing_storage, body)
 
@@ -149,15 +165,26 @@ class StorageService:
 
         response = StorageResponse.model_validate(existing_storage)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        return existing_storage
 
-    async def patch_action(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> StorageResponse:
+    async def update(self, storage_id: str, storage: StorageUpdate, requester: UserDTO) -> StorageResponse:
         """
-        Patch an existing storage.
+        Update an existing storage.
+        :param storage_id: ID of the storage to update
+        :param storage: Storage to update
+        :param requester: User who updates the storage
+        :return: Updated storage
+        """
+        result = await self.update_storage(storage_id=storage_id, storage=storage, requester=requester)
+        return StorageResponse.model_validate(result)
+
+    async def patch_action_storage(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> Storage:
+        """
+        Patch an existing storage and return the ORM model.
         :param storage_id: ID of the storage to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the storage
-        :return: Patched storage
+        :return: Patched storage ORM instance
         """
         existing_storage = await self.crud.get_by_id(storage_id)
         if not existing_storage:
@@ -225,7 +252,18 @@ class StorageService:
 
         response = StorageResponse.model_validate(existing_storage)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_storage
+
+    async def patch_action(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> StorageResponse:
+        """
+        Patch an existing storage.
+        :param storage_id: ID of the storage to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the storage
+        :return: Patched storage
+        """
+        result = await self.patch_action_storage(storage_id=storage_id, body=body, requester=requester)
+        return StorageResponse.model_validate(result)
 
     async def delete(self, storage_id: str, requester: UserDTO) -> None:
         existing_storage = await self.crud.get_by_id(storage_id)

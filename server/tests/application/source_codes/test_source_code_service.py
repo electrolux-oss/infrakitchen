@@ -224,11 +224,12 @@ class TestUpdate:
         update_body = {
             "description": "Test Source Code 1 new",
             "integration_id": str(mocked_source_code.integration_id),
-            "updated_by": str(mock_user_dto.id),
         }
 
-        mocked_source_code_update = Mock(spec=SourceCodeUpdate)
-        mocked_source_code_update.model_dump = Mock(return_value=update_body)
+        mocked_source_code_update = SourceCodeUpdate(
+            description="Test Source Code 1 new",
+            integration_id=str(mocked_source_code.integration_id),
+        )
 
         existing_source_code = mocked_source_code
         existing_source_code.status = ModelStatus.DONE
@@ -249,7 +250,6 @@ class TestUpdate:
             source_code_id=existing_source_code.id, source_code=mocked_source_code_update, requester=mock_user_dto
         )
 
-        mocked_source_code_update.model_dump.assert_called_once_with(exclude_unset=True)
         mock_source_code_crud.update.assert_awaited_once_with(existing_source_code, update_body)
         mock_source_code_crud.refresh.assert_called_once_with(updated_source_code)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -260,7 +260,7 @@ class TestUpdate:
         )
         mock_revision_handler.handle_revision.assert_called_once_with(existing_source_code)
         response = SourceCodeResponse.model_validate(updated_source_code_response)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "update")
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
 
         assert result.status == ModelStatus.READY
 

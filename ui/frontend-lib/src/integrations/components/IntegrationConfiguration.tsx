@@ -6,7 +6,10 @@ import {
   getProviderValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { IntegrationResponse } from "../types";
+
+import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";
 
 export interface TemplateConfigurationProps {
   integration: IntegrationResponse;
@@ -15,6 +18,9 @@ export interface TemplateConfigurationProps {
 export const IntegrationConfiguration = ({
   integration,
 }: TemplateConfigurationProps) => {
+  const { checkActionPermission } = usePermissionProvider();
+  const canEdit = checkActionPermission("api:integration", "write");
+
   return (
     <OverviewCard>
       <CommonField
@@ -36,6 +42,10 @@ export const IntegrationConfiguration = ({
           );
         }
       })}
+      <IntegrationConfigurationEditor
+        integration={integration}
+        canEdit={canEdit}
+      />
     </OverviewCard>
   );
 };

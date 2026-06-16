@@ -8,6 +8,7 @@ from pydantic import PydanticUserError, ValidationError
 
 from application.integrations.model import Integration
 from application.integrations.schema import (
+    AWSIntegrationConfig,
     IntegrationResponse,
     IntegrationCreate,
     IntegrationUpdate,
@@ -320,7 +321,7 @@ class TestUpdate:
         integration_update.description = "Updated description"
         integration_update.integration_type = "cloud"
         integration_update.integration_provider = "aws"
-        integration_update.configuration = aws_integration_config
+        integration_update.configuration = None
 
         mocked_integration.status = ModelStatus.ENABLED
         mocked_integration.name = "New Integration name"
@@ -349,7 +350,7 @@ class TestUpdate:
         )
 
         integration_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
         )
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
 
@@ -396,7 +397,7 @@ class TestUpdate:
         integration_update.description = "Updated description"
         integration_update.integration_type = "cloud"
         integration_update.integration_provider = "aws"
-        integration_update.configuration = aws_integration_config
+        integration_update.configuration = None
 
         mocked_integration.status = ModelStatus.DISABLED
         mocked_integration.name = "New Integration name"
@@ -425,7 +426,7 @@ class TestUpdate:
         )
 
         integration_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
         )
         mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
         mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
@@ -446,6 +447,9 @@ class TestUpdate:
         self, mock_integration_service, mock_integration_crud, mocked_integration, mock_user_dto, monkeypatch
     ):
         integration_update = Mock(spec=IntegrationUpdate)
+        integration_update.name = "Changed name"
+        integration_update.configuration = None
+        integration_update.model_dump = Mock(return_value={"name": "Changed name"})
         mock_integration_crud.get_by_id.return_value = mocked_integration
         mock_integration_crud.update.side_effect = RuntimeError("update fail")
 
@@ -457,6 +461,158 @@ class TestUpdate:
             )
 
         assert isinstance(exc.value, RuntimeError)
+
+    @pytest.mark.asyncio
+    async def test_update_integration_empty_labels_clears_labels(
+        self,
+        mock_integration_service,
+        mock_integration_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_event_sender,
+        monkeypatch,
+        mocked_integration,
+        mocked_integration_response,
+        mock_user_dto,
+    ):
+        """Explicitly sending labels=[] must pass {"labels": []} to crud.update,
+        clearing the existing labels on the integration."""
+        # Existing integration has labels
+        assert mocked_integration.labels == ["label1", "label2"]
+
+        # Build a real IntegrationUpdate with only labels=[] set
+        integration_update = IntegrationUpdate(labels=[])
+
+        mock_integration_crud.get_by_id.return_value = mocked_integration
+        mock_integration_crud.update.return_value = mocked_integration
+
+        monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
+        monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
+
+        await mock_integration_service.update_integration(
+            integration_id=str(mocked_integration.id), integration=integration_update, requester=mock_user_dto
+        )
+
+        # The body passed to crud.update must contain only {"labels": []}
+        mock_integration_crud.update.assert_called_once()
+        actual_body = mock_integration_crud.update.call_args[0][1]
+        assert actual_body == {"labels": []}
+
+    @pytest.mark.asyncio
+    async def test_update_integration_omitted_labels_not_in_body(
+        self,
+        mock_integration_service,
+        mock_integration_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_event_sender,
+        monkeypatch,
+        mocked_integration,
+        mocked_integration_response,
+        mock_user_dto,
+    ):
+        """When labels is omitted (None), the update body must not contain
+        a 'labels' key, preserving existing labels on the integration."""
+        # Build a real IntegrationUpdate with only name changed, labels omitted
+        integration_update = IntegrationUpdate(name="Renamed Integration")
+
+        mock_integration_crud.get_by_id.return_value = mocked_integration
+        mock_integration_crud.update.return_value = mocked_integration
+
+        monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
+        monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
+
+        await mock_integration_service.update_integration(
+            integration_id=str(mocked_integration.id), integration=integration_update, requester=mock_user_dto
+        )
+
+        mock_integration_crud.update.assert_called_once()
+        actual_body = mock_integration_crud.update.call_args[0][1]
+        assert "labels" not in actual_body
+        assert actual_body == {"name": "Renamed Integration"}
+
+    @pytest.mark.asyncio
+    async def test_update_integration_configuration_preserves_defaults(
+        self,
+        mock_integration_service,
+        mock_integration_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_event_sender,
+        monkeypatch,
+        mocked_integration,
+        mocked_integration_response,
+        mock_user_dto,
+    ):
+        """Explicit configuration update must persist all fields including
+        discriminator and default-valued fields like integration_provider,
+        aws_default_region, and aws_session_duration."""
+        aws_config = AWSIntegrationConfig(
+            aws_access_key_id="new_key",
+            aws_secret_access_key=EncryptedSecretStr("new_secret"),
+            aws_account="123456789012",
+            # Leave aws_default_region, aws_session_duration, integration_provider at defaults
+        )
+        integration_update = IntegrationUpdate(configuration=aws_config)
+
+        mock_integration_crud.get_by_id.return_value = mocked_integration
+        mock_integration_crud.update.return_value = mocked_integration
+
+        monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
+        monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
+
+        await mock_integration_service.update_integration(
+            integration_id=str(mocked_integration.id), integration=integration_update, requester=mock_user_dto
+        )
+
+        mock_integration_crud.update.assert_called_once()
+        actual_body = mock_integration_crud.update.call_args[0][1]
+
+        # configuration must be the only top-level key
+        assert set(actual_body.keys()) == {"configuration"}
+
+        config = actual_body["configuration"]
+        # Discriminator field must be present
+        assert config["integration_provider"] == "aws"
+        # Default-valued fields must be present
+        assert config["aws_default_region"] == "us-east-1"
+        assert config["aws_session_duration"] == 3600
+        # Explicitly set fields must be present
+        assert config["aws_access_key_id"] == "new_key"
+        assert config["aws_account"] == "123456789012"
+        # Optional field left at default must also be present
+        assert "aws_assumed_role_name" in config
+
+    @pytest.mark.asyncio
+    async def test_update_integration_omitted_configuration_not_in_body(
+        self,
+        mock_integration_service,
+        mock_integration_crud,
+        mock_revision_handler,
+        mock_audit_log_handler,
+        mock_event_sender,
+        monkeypatch,
+        mocked_integration,
+        mocked_integration_response,
+        mock_user_dto,
+    ):
+        """When configuration is omitted, the update body must not contain
+        a 'configuration' key, preserving the existing configuration."""
+        integration_update = IntegrationUpdate(name="Renamed Integration")
+
+        mock_integration_crud.get_by_id.return_value = mocked_integration
+        mock_integration_crud.update.return_value = mocked_integration
+
+        monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
+        monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
+
+        await mock_integration_service.update_integration(
+            integration_id=str(mocked_integration.id), integration=integration_update, requester=mock_user_dto
+        )
+
+        mock_integration_crud.update.assert_called_once()
+        actual_body = mock_integration_crud.update.call_args[0][1]
+        assert "configuration" not in actual_body
 
 
 class TestPatch:

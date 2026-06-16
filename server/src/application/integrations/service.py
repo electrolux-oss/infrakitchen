@@ -18,7 +18,7 @@ from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import model_db_dump
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import IntegrationCRUD
 from .functions import get_integration_actions
 from .model import Integration, IntegrationDTO
@@ -94,12 +94,12 @@ class IntegrationService:
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
-    async def create(self, integration: IntegrationCreate, requester: UserDTO) -> IntegrationResponse:
+    async def create_integration(self, integration: IntegrationCreate, requester: UserDTO) -> Integration:
         """
-        Create a new integration.
+        Create a new integration and return the ORM model.
         :param integration: IntegrationCreate to create
         :param requester: User who creates the integration
-        :return: Created integration
+        :return: Created integration ORM model
         """
         cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog"]
         source_code_providers = [
@@ -129,6 +129,9 @@ class IntegrationService:
         new_integration.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_integration.id)
 
+        if not result:
+            raise EntityNotFound("Integration not found after creation")
+
         await self.revision_handler.handle_revision(new_integration)
         await self.audit_log_handler.create_log(
             new_integration.id, requester.id, ModelActions.CREATE, revision_number=new_integration.revision_number
@@ -146,17 +149,27 @@ class IntegrationService:
             reload_permission=False,
         )
         await self.permission_service.casbin_enforcer.send_reload_event()
-        return response
+        return result
 
-    async def update(
-        self, integration_id: str, integration: IntegrationUpdate, requester: UserDTO
-    ) -> IntegrationResponse:
+    async def create(self, integration: IntegrationCreate, requester: UserDTO) -> IntegrationResponse:
         """
-        Update an existing integration.
+        Create a new integration.
+        :param integration: IntegrationCreate to create
+        :param requester: User who creates the integration
+        :return: Created integration
+        """
+        result = await self.create_integration(integration=integration, requester=requester)
+        return IntegrationResponse.model_validate(result)
+
+    async def update_integration(
+        self, integration_id: str, integration: IntegrationUpdate, requester: UserDTO
+    ) -> Integration:
+        """
+        Update an existing integration and return the ORM model.
         :param integration_id: ID of the integration to update
         :param integration: Integration to update
         :param requester: User who updates the integration
-        :return: Updated integration
+        :return: Updated integration ORM model
         """
         existing_integration = await self.crud.get_by_id(integration_id)
 
@@ -166,7 +179,18 @@ class IntegrationService:
         self.revision_handler.original_entity_instance_dump = to_dict(existing_integration)
 
         self.validate_configuration(integration_update=integration, existing_integration=existing_integration)
-        body = model_db_dump(integration)
+        body = model_db_dump(integration, exclude_defaults=True, exclude_none=True)
+
+        # configuration is a replacement JSON object – it must be serialized in
+        # full (including discriminator/default fields like integration_provider,
+        # aws_default_region, etc.) so the stored value stays valid.  The
+        # exclude_defaults used above strips those nested defaults, so
+        # re-serialize configuration without that flag when it was provided.
+        if integration.configuration is not None:
+            body["configuration"] = model_db_dump(integration.configuration)
+
+        if not has_field_changes(body, existing_integration):
+            raise ValueError("No changes detected; the integration is already up to date.")
 
         await self.crud.update(existing_integration, body)
 
@@ -180,15 +204,30 @@ class IntegrationService:
         await self.crud.refresh(existing_integration)
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        return existing_integration
 
-    async def patch(self, integration_id, body: PatchBodyModel, requester: UserDTO) -> IntegrationResponse:
+    async def update(
+        self, integration_id: str, integration: IntegrationUpdate, requester: UserDTO
+    ) -> IntegrationResponse:
         """
-        Patch an existing integration.
+        Update an existing integration.
+        :param integration_id: ID of the integration to update
+        :param integration: Integration to update
+        :param requester: User who updates the integration
+        :return: Updated integration
+        """
+        existing_integration = await self.update_integration(
+            integration_id=integration_id, integration=integration, requester=requester
+        )
+        return IntegrationResponse.model_validate(existing_integration)
+
+    async def patch_action(self, integration_id: str, body: PatchBodyModel, requester: UserDTO) -> Integration:
+        """
+        Patch an existing integration and return the ORM model.
         :param integration_id: ID of the integration to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the integration
-        :return: Patched integration
+        :return: Patched integration ORM instance
         """
         existing_integration = await self.crud.get_by_id(integration_id)
         if not existing_integration:
@@ -210,7 +249,18 @@ class IntegrationService:
 
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_integration
+
+    async def patch(self, integration_id: str, body: PatchBodyModel, requester: UserDTO) -> IntegrationResponse:
+        """
+        Patch an existing integration.
+        :param integration_id: ID of the integration to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the integration
+        :return: Patched integration
+        """
+        existing_integration = await self.patch_action(integration_id=integration_id, body=body, requester=requester)
+        return IntegrationResponse.model_validate(existing_integration)
 
     async def delete(self, integration_id: str, requester: UserDTO) -> None:
         existing_integration = await self.crud.get_by_id(integration_id)

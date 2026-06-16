@@ -320,7 +320,9 @@ class TestUpdate:
             template_id=template_id, template=template_update, requester=requester
         )
 
-        template_update.model_dump.assert_called_once_with(exclude_unset=True)
+        template_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
+        )
         mock_template_crud.get_by_id.await_count = 2
         mock_template_crud.update.assert_awaited_once_with(existing_template, template_update_body)
 
@@ -364,6 +366,23 @@ class TestUpdate:
             await mock_template_service.update(
                 template_id=existing_template.id, template=template_update, requester=mocked_user
             )
+
+    @pytest.mark.asyncio
+    async def test_update_template_no_changes_raises(
+        self, mock_template_service, mock_template_crud, mocked_template, mocked_user
+    ):
+        template_update = Mock(spec=TemplateUpdate)
+        # Only the name is provided and it matches the existing template's name.
+        template_update.model_dump = Mock(return_value={"name": mocked_template.name})
+
+        mock_template_crud.get_by_id.return_value = mocked_template
+
+        with pytest.raises(ValueError, match="No changes detected"):
+            await mock_template_service.update(
+                template_id=mocked_template.id, template=template_update, requester=mocked_user
+            )
+
+        mock_template_crud.update.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_template_service, mock_template_crud, mocked_template, mocked_user):

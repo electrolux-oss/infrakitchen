@@ -66,6 +66,7 @@ async def get_all(
     "/integrations",
     response_model=IntegrationResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request, body: IntegrationCreate, service: IntegrationService = Depends(get_integration_service)
@@ -84,6 +85,7 @@ async def post(
     "/integrations/{integration_id}",
     response_model=IntegrationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -99,7 +101,10 @@ async def update(
 
 
 @router.patch(
-    "/integrations/{integration_id}/actions", response_model=IntegrationResponse, status_code=http_status.HTTP_200_OK
+    "/integrations/{integration_id}/actions",
+    response_model=IntegrationResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def patch_action(
     request: Request,
@@ -119,7 +124,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/integrations/{integration_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/integrations/{integration_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, integration_id: str, service: IntegrationService = Depends(get_integration_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(integration_id=integration_id, requester=requester):

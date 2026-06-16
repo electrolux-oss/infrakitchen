@@ -207,15 +207,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/integrations/:integration_id/edit",
-    Component: lz(
-      () => import("./integrations/pages/IntegrationEdit"),
-      "IntegrationEditPage",
-    ),
-    requiredPermission: "api:integration",
-    permissionAction: "read",
-  },
-  {
     path: "/integrations/:provider/:integration_id/:tab?",
     Component: lz(
       () => import("./integrations/pages/Integration"),
@@ -346,15 +337,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/source_codes/:source_code_id/edit",
-    Component: lz(
-      () => import("./source_codes/pages/SourceCodeEdit"),
-      "SourceCodeEditPage",
-    ),
-    requiredPermission: "api:source_code",
-    permissionAction: "write",
-  },
-  {
     path: "/source_codes/:source_code_id/:tab?",
     Component: lz(
       () => import("./source_codes/pages/SourceCode"),
@@ -384,15 +366,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/source_code_versions/:source_code_version_id/edit",
-    Component: lz(
-      () => import("./source_code_versions/pages/SourceCodeVersionEdit"),
-      "SourceCodeVersionEditPage",
-    ),
-    requiredPermission: "api:source_code_version",
-    permissionAction: "write",
-  },
-  {
     path: "/source_code_versions/:source_code_version_id/:tab?",
     Component: lz(
       () => import("./source_code_versions/pages/SourceCodeVersion"),
@@ -413,15 +386,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./storages/pages/StorageCreate"),
       "StorageCreatePage",
-    ),
-    requiredPermission: "api:storage",
-    permissionAction: "write",
-  },
-  {
-    path: "/storages/:storage_id/edit",
-    Component: lz(
-      () => import("./storages/pages/StorageEdit"),
-      "StorageEditPage",
     ),
     requiredPermission: "api:storage",
     permissionAction: "write",
@@ -462,15 +426,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./templates/pages/TemplateCreate"),
       "TemplateCreatePage",
-    ),
-    requiredPermission: "api:template",
-    permissionAction: "write",
-  },
-  {
-    path: "/templates/:template_id/edit",
-    Component: lz(
-      () => import("./templates/pages/TemplateEdit"),
-      "TemplateEditPage",
     ),
     requiredPermission: "api:template",
     permissionAction: "write",

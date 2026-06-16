@@ -10,6 +10,7 @@ from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityWrongState, EntityNotFound
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .functions import get_template_actions
 from .crud import TemplateCRUD
 from .model import Template
@@ -66,7 +67,7 @@ class TemplateService:
         """Return ORM models directly, with optimized loading based on requested fields."""
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
-    async def create(self, template: TemplateCreate, requester: UserDTO) -> TemplateResponse:
+    async def create_template(self, template: TemplateCreate, requester: UserDTO) -> Template:
         """
         Create a new template.
         :param template: TemplateCreate to create
@@ -100,15 +101,22 @@ class TemplateService:
         new_template.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_template.id)
 
+        if not result:
+            raise EntityNotFound("Template not found after creation")
+
         await self.revision_handler.handle_revision(new_template)
         await self.audit_log_handler.create_log(
             new_template.id, requester.id, ModelActions.CREATE, revision_number=new_template.revision_number
         )
         response = TemplateResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        return result
 
-    async def update(self, template_id: str, template: TemplateUpdate, requester: UserDTO) -> TemplateResponse:
+    async def create(self, template: TemplateCreate, requester: UserDTO) -> TemplateResponse:
+        new_template = await self.create_template(template=template, requester=requester)
+        return TemplateResponse.model_validate(new_template)
+
+    async def update_template(self, template_id: str, template: TemplateUpdate, requester: UserDTO) -> Template:
         """
         Update an existing template.
         :param template_id: ID of the template to update
@@ -116,14 +124,19 @@ class TemplateService:
         :param requester: User who updates the template
         :return: Updated template
         """
-        body = template.model_dump(exclude_unset=True)
         existing_template = await self.crud.get_by_id(template_id)
 
         if not existing_template:
             raise EntityNotFound("Template not found")
 
-        if set(body.get("parents", [])) & set(body.get("children", [])):
+        body = model_db_dump(template, exclude_defaults=True, exclude_none=True)
+        parents = body.get("parents") or []
+        children = body.get("children") or []
+        if set(parents) & set(children):
             raise ValueError("A template cannot be both a parent and a child of another template")
+
+        if not has_field_changes(body, existing_template):
+            raise ValueError("No changes detected; the template is already up to date.")
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_template)
 
@@ -135,14 +148,20 @@ class TemplateService:
 
         await self.revision_handler.handle_revision(existing_template)
         await self.audit_log_handler.create_log(
-            template_id, requester.id, ModelActions.UPDATE, revision_number=existing_template.revision_number
+            existing_template.id,
+            requester.id,
+            ModelActions.UPDATE,
+            revision_number=existing_template.revision_number,
         )
         await self.crud.refresh(existing_template)
-        response = TemplateResponse.model_validate(existing_template)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        await self.event_sender.send_event(TemplateResponse.model_validate(existing_template), ModelActions.UPDATE)
+        return existing_template
 
-    async def patch(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> TemplateResponse:
+    async def update(self, template_id: str, template: TemplateUpdate, requester: UserDTO) -> TemplateResponse:
+        existing_template = await self.update_template(template_id=template_id, template=template, requester=requester)
+        return TemplateResponse.model_validate(existing_template)
+
+    async def patch(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> Template:
         """
         Patch an existing template.
         :param template_id: ID of the template to patch
@@ -170,7 +189,11 @@ class TemplateService:
 
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_template
+
+    async def template_action(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> TemplateResponse:
+        result = await self.patch(template_id=template_id, body=body, requester=requester)
+        return TemplateResponse.model_validate(result)
 
     async def delete(self, template_id: str, requester: UserDTO) -> None:
         existing_template = await self.crud.get_by_id(template_id)

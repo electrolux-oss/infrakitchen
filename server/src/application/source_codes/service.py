@@ -12,6 +12,7 @@ from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import SourceCodeCRUD
 from .functions import get_source_code_actions
 from .schema import SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
@@ -89,18 +90,21 @@ class SourceCodeService:
             raise EntityNotFound("Source code not found")
         return await get_source_code_actions(requester, source_code.status)
 
-    async def create(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCodeResponse:
+    async def create_source_code(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCode:
         """
-        Create a new source_code.
+        Create a new source_code and return the ORM model.
         :param source_code: SourceCodeCreate to create
         :param requester: User who creates the source_code
-        :return: Created source_code
+        :return: Created source_code ORM model
         """
         body = source_code.model_dump(exclude_unset=True)
         body["created_by"] = requester.id
         source_code_to_create = await self.crud.create(body)
         source_code_to_create.status = ModelStatus.READY
         created_source_code = await self.crud.get_by_id(source_code_to_create.id)
+
+        if not created_source_code:
+            raise EntityNotFound("SourceCode not found after creation")
 
         await self.revision_handler.handle_revision(source_code_to_create)
         await self.audit_log_handler.create_log(
@@ -112,7 +116,63 @@ class SourceCodeService:
         response = SourceCodeResponse.model_validate(created_source_code)
         await self.event_sender.send_event(response, ModelActions.CREATE)
 
-        return SourceCodeResponse.model_validate(response)
+        return created_source_code
+
+    async def create(self, source_code: SourceCodeCreate, requester: UserDTO) -> SourceCodeResponse:
+        """
+        Create a new source_code.
+        :param source_code: SourceCodeCreate to create
+        :param requester: User who creates the source_code
+        :return: Created source_code
+        """
+        created_source_code = await self.create_source_code(source_code=source_code, requester=requester)
+        return SourceCodeResponse.model_validate(created_source_code)
+
+    async def update_source_code(
+        self, source_code_id: str, source_code: SourceCodeUpdate, requester: UserDTO
+    ) -> SourceCode:
+        """
+        Update an existing source_code and return the ORM model.
+        :param source_code_id: ID of the source_code to update
+        :param source_code: SourceCode to update
+        :param requester: User who updates the source_code
+        :return: Updated source_code ORM model
+        """
+
+        def check_critical_fields_changed(existing: SourceCode, patched: SourceCodeUpdate) -> bool:
+            critical_fields = ["integration_id"]
+            for field in critical_fields:
+                if getattr(patched, field) is not None and getattr(patched, field) != getattr(existing, field):
+                    return True
+            return False
+
+        body = model_db_dump(source_code, exclude_defaults=True, exclude_none=True)
+        existing_source_code = await self.crud.get_by_id(source_code_id)
+
+        if not existing_source_code:
+            raise EntityNotFound("SourceCode not found")
+
+        if existing_source_code.status in [ModelStatus.IN_PROGRESS, ModelStatus.DISABLED, ModelStatus.QUEUED]:
+            logger.error(f"Entity has wrong status for updating {existing_source_code.status}")
+            raise EntityWrongState(f"Entity has wrong status for updating {existing_source_code.status}")
+
+        if not has_field_changes(body, existing_source_code):
+            raise ValueError("No changes detected; the source code is already up to date.")
+        self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code)
+
+        if check_critical_fields_changed(existing_source_code, source_code):
+            existing_source_code.status = ModelStatus.READY
+
+        await self.crud.update(existing_source_code, body)
+
+        await self.revision_handler.handle_revision(existing_source_code)
+        await self.audit_log_handler.create_log(
+            source_code_id, requester.id, ModelActions.UPDATE, revision_number=existing_source_code.revision_number
+        )
+
+        await self.crud.refresh(existing_source_code)
+        await self.event_sender.send_event(SourceCodeResponse.model_validate(existing_source_code), ModelActions.UPDATE)
+        return existing_source_code
 
     async def update(
         self, source_code_id: str, source_code: SourceCodeUpdate, requester: UserDTO
@@ -124,39 +184,18 @@ class SourceCodeService:
         :param requester: User who updates the source_code
         :return: Updated source_code
         """
-        body = source_code.model_dump(exclude_unset=True)
-        existing_source_code = await self.crud.get_by_id(source_code_id)
-
-        if not existing_source_code:
-            raise EntityNotFound("SourceCode not found")
-
-        if existing_source_code.status in [ModelStatus.IN_PROGRESS, ModelStatus.DISABLED, ModelStatus.QUEUED]:
-            logger.error(f"Entity has wrong status for updating {existing_source_code.status}")
-            raise EntityWrongState(f"Entity has wrong status for updating {existing_source_code.status}")
-
-        self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code)
-
-        existing_source_code.status = ModelStatus.READY
-
-        await self.crud.update(existing_source_code, body)
-
-        await self.revision_handler.handle_revision(existing_source_code)
-        await self.audit_log_handler.create_log(
-            source_code_id, requester.id, ModelActions.UPDATE, revision_number=existing_source_code.revision_number
+        existing_source_code = await self.update_source_code(
+            source_code_id=source_code_id, source_code=source_code, requester=requester
         )
+        return SourceCodeResponse.model_validate(existing_source_code)
 
-        await self.crud.refresh(existing_source_code)
-        response = SourceCodeResponse.model_validate(existing_source_code)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
-
-    async def patch(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCodeResponse:
+    async def patch_action(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCode:
         """
-        Patch an existing source_code.
+        Patch an existing source_code and return the ORM model.
         :param source_code_id: ID of the source_code to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the source_code
-        :return: Patched source_code
+        :return: Patched source_code ORM instance
         """
         existing_source_code = await self.crud.get_by_id(source_code_id)
         if not existing_source_code:
@@ -190,7 +229,18 @@ class SourceCodeService:
 
         response = SourceCodeResponse.model_validate(existing_source_code)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_source_code
+
+    async def patch(self, source_code_id, body: PatchBodyModel, requester: UserDTO) -> SourceCodeResponse:
+        """
+        Patch an existing source_code.
+        :param source_code_id: ID of the source_code to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the source_code
+        :return: Patched source_code
+        """
+        result = await self.patch_action(source_code_id=source_code_id, body=body, requester=requester)
+        return SourceCodeResponse.model_validate(result)
 
     async def delete(self, source_code_id: str, requester: UserDTO) -> None:
         existing_source_code = await self.crud.get_by_id(source_code_id)

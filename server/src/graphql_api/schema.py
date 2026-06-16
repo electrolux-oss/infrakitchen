@@ -11,12 +11,17 @@ from graphql_api.modules.batch_operation.queries import BatchOperationQuery
 from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
+from graphql_api.modules.template.mutations import TemplateMutation
 from graphql_api.modules.integration.queries import IntegrationQuery
+from graphql_api.modules.integration.mutations import IntegrationMutation
 from graphql_api.modules.label.queries import LabelQuery
 from graphql_api.modules.source_code.queries import SourceCodeQuery
+from graphql_api.modules.source_code.mutations import SourceCodeMutation
 from graphql_api.modules.source_code_version.queries import SourceCodeVersionQuery
+from graphql_api.modules.source_code_version.mutations import SourceCodeVersionMutation
 from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.storage.queries import StorageQuery
+from graphql_api.modules.storage.mutations import StorageMutation
 from graphql_api.modules.executor.queries import ExecutorQuery
 from graphql_api.modules.favorite.queries import FavoriteQuery
 from graphql_api.modules.favorite.mutations import FavoriteMutation
@@ -79,6 +84,11 @@ class Mutation(
     UserMutation,
     NotificationMutation,
     ResourceMutation,
+    TemplateMutation,
+    IntegrationMutation,
+    SourceCodeMutation,
+    SourceCodeVersionMutation,
+    StorageMutation,
     FavoriteMutation,
 ):
     pass

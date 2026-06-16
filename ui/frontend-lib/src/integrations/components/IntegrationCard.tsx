@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router";
 
-import { Edit } from "@mui/icons-material";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { getDateValue } from "../../common/components/CommonField";
@@ -22,9 +21,6 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
 
   const handleLink = () => {
     navigate(`${linkPrefix}integrations/${provider.slug}/${integration.id}`);
-  };
-  const handleEdit = () => {
-    navigate(`${linkPrefix}integrations/${integration.id}/edit`);
   };
 
   return (
@@ -62,13 +58,6 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
         },
       ]}
       onClick={handleLink}
-      actions={
-        <>
-          <IconButton onClick={handleEdit} aria-label="Edit Integration">
-            <Edit />
-          </IconButton>
-        </>
-      }
     />
   );
 };
