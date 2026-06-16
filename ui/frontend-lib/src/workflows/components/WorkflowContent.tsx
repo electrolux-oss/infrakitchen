@@ -61,14 +61,20 @@ const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
       }
     >
       {view === "list" ? (
-        <WorkflowSteps steps={workflow.steps} />
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
       ) : hasWiring ? (
         <WorkflowWiringViewer
           wiring={workflow.wiring_snapshot}
           steps={workflow.steps}
         />
       ) : (
-        <WorkflowSteps steps={workflow.steps} />
+        <WorkflowSteps
+          steps={workflow.steps}
+          workflowAction={workflow.action}
+        />
       )}
     </PropertyCard>
   );
@@ -86,14 +92,18 @@ export const WorkflowContent = () => {
       label: "Steps",
       content: <WorkflowStepsTab workflow={workflow} />,
     },
-    {
-      label: "Variables",
-      content: (
-        <PropertyCard title="Resolved Variables">
-          <WorkflowResolvedVariables steps={workflow.steps} />
-        </PropertyCard>
-      ),
-    },
+    ...(workflow.action !== "destroy"
+      ? [
+          {
+            label: "Variables",
+            content: (
+              <PropertyCard title="Resolved Variables">
+                <WorkflowResolvedVariables steps={workflow.steps} />
+              </PropertyCard>
+            ),
+          },
+        ]
+      : []),
     {
       label: "Logs",
       content: (

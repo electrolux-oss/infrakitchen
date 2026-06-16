@@ -1,5 +1,8 @@
 from typing import Any, Literal
+from uuid import UUID
+
 from application.resources.service import ResourceService
+from application.workflows.schema import WorkflowResponse
 from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -19,7 +22,8 @@ from .schema import (
     RoleResourcesResponse,
     UserResourceResponse,
 )
-from .dependencies import get_resource_service
+from .dependencies import get_cascade_destroy_service, get_resource_service
+from .cascade_destroy_service import CascadeDestroyService
 
 router = APIRouter()
 
@@ -146,6 +150,35 @@ async def delete(request: Request, resource_id: str, service: ResourceService = 
 async def get_actions(request: Request, resource_id: str, service: ResourceService = Depends(get_resource_service)):
     requester = request.state.user
     return await service.get_actions(resource_id=resource_id, requester=requester)
+
+
+@router.patch(
+    "/resources/{resource_id}/cascade_destroy",
+    response_model=WorkflowResponse,
+    status_code=http_status.HTTP_200_OK,
+    response_description=(
+        "Cascade destroy a resource and all its descendants. Creates and immediately triggers a destroy workflow."
+    ),
+)
+async def cascade_destroy(
+    request: Request,
+    resource_id: str,
+    service: CascadeDestroyService = Depends(get_cascade_destroy_service),
+    resource_service: ResourceService = Depends(get_resource_service),
+):
+    requester: UserDTO | None = request.state.user
+    if not requester:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if ModelActions.CASCADE_DESTROY not in await resource_service.get_actions(
+        resource_id=resource_id, requester=requester
+    ):
+        raise HTTPException(status_code=403, detail=f"Access denied for action {ModelActions.CASCADE_DESTROY.value}")
+
+    return await service.create_cascade_destroy_workflow(
+        resource_id=UUID(resource_id),
+        requester=requester,
+    )
 
 
 @router.get(

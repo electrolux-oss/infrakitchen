@@ -1327,6 +1327,7 @@ class TestGetResourceActions:
                 ["read", "write"],
                 [
                     ModelActions.DESTROY,
+                    ModelActions.CASCADE_DESTROY,
                     ModelActions.EDIT,
                     ModelActions.EXECUTE,
                     ModelActions.DOWNLOAD,
@@ -1351,6 +1352,7 @@ class TestGetResourceActions:
                 ["read", "write"],
                 [
                     ModelActions.DESTROY,
+                    ModelActions.CASCADE_DESTROY,
                     ModelActions.DOWNLOAD,
                     ModelActions.EXECUTE,
                     ModelActions.DRYRUN,
@@ -1409,6 +1411,7 @@ class TestGetResourceActions:
                 ["read", "write", "admin"],
                 [
                     ModelActions.DESTROY,
+                    ModelActions.CASCADE_DESTROY,
                     ModelActions.DOWNLOAD,
                     ModelActions.EXECUTE,
                     ModelActions.DRYRUN,
@@ -1475,6 +1478,7 @@ class TestGetResourceActions:
                 ["read", "write"],
                 [
                     ModelActions.DESTROY,
+                    ModelActions.CASCADE_DESTROY,
                     ModelActions.EDIT,
                     ModelActions.EXECUTE,
                     ModelActions.DOWNLOAD,
@@ -1504,6 +1508,7 @@ class TestGetResourceActions:
                 ["read", "write", "admin"],
                 [
                     ModelActions.DESTROY,
+                    ModelActions.CASCADE_DESTROY,
                     ModelActions.EDIT,
                     ModelActions.EXECUTE,
                     ModelActions.DOWNLOAD,

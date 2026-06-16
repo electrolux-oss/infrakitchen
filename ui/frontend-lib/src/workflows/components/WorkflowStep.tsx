@@ -28,9 +28,10 @@ import { WorkflowStepResponse } from "../types";
 
 interface WorkflowStepProps {
   step: WorkflowStepResponse;
+  workflowAction?: "create" | "destroy";
 }
 
-export const WorkflowStep = ({ step }: WorkflowStepProps) => {
+export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
   const [expandedVars, setExpandedVars] = useState<string | null>(null);
 
   const templateName = step.template?.name;
@@ -122,7 +123,7 @@ export const WorkflowStep = ({ step }: WorkflowStepProps) => {
                 Resource
               </Typography>
               <Box sx={{ mt: 0.5 }}>
-                {step.resource_id ? (
+                {step.resource_id != null ? (
                   <GetReferenceUrlValue
                     id={step.resource_id}
                     _entity_name="resource"
@@ -132,7 +133,9 @@ export const WorkflowStep = ({ step }: WorkflowStepProps) => {
                   />
                 ) : (
                   <Typography variant="body2" color="text.disabled">
-                    Not created yet
+                    {workflowAction === "destroy"
+                      ? "Resource removed"
+                      : "Not created yet"}
                   </Typography>
                 )}
               </Box>

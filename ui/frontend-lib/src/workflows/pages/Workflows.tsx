@@ -30,6 +30,12 @@ export const WorkflowsPage = () => {
         ),
       },
       {
+        field: "action",
+        headerName: "Action",
+        flex: 0.7,
+        valueGetter: (_value: any, row: any) => row.action.toUpperCase() ?? "",
+      },
+      {
         field: "status",
         headerName: "Status",
         flex: 0.7,

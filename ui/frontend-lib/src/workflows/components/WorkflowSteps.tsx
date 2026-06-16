@@ -6,9 +6,13 @@ import { WorkflowStep } from "./WorkflowStep";
 
 interface WorkflowStepsProps {
   steps: WorkflowStepResponse[];
+  workflowAction?: "create" | "destroy";
 }
 
-export const WorkflowSteps = ({ steps }: WorkflowStepsProps) => {
+export const WorkflowSteps = ({
+  steps,
+  workflowAction,
+}: WorkflowStepsProps) => {
   if (steps.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
@@ -22,7 +26,13 @@ export const WorkflowSteps = ({ steps }: WorkflowStepsProps) => {
   return (
     <Box sx={{ width: "100%" }}>
       {sorted.map((step) => {
-        return <WorkflowStep step={step} key={step.id} />;
+        return (
+          <WorkflowStep
+            step={step}
+            key={step.id}
+            workflowAction={workflowAction}
+          />
+        );
       })}
     </Box>
   );
