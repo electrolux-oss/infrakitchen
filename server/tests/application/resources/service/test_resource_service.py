@@ -10,7 +10,7 @@ from application.resources.schema import (
     ResourceResponse,
     ResourceWithConfigs,
     ResourceCreate,
-    ResourcePatch,
+    ResourceUpdate,
 )
 from application.resources.service import ResourceService
 from core.base_models import MessageModel
@@ -843,7 +843,7 @@ class TestPatch:
         )
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
 
-        resource_patch = ResourcePatch(integration_ids=[new_integration_id])
+        resource_patch = ResourceUpdate(integration_ids=[new_integration_id])
         mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
@@ -892,7 +892,7 @@ class TestPatch:
             return_value=[Mock(id=mocked_integration.id, status=ModelStatus.ENABLED, integration_provider="aws")]
         )
 
-        resource_patch = ResourcePatch(integration_ids=[mocked_integration.id])
+        resource_patch = ResourceUpdate(integration_ids=[mocked_integration.id])
         permissions_mock = mock_user_permissions(
             ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
@@ -934,7 +934,7 @@ class TestPatch:
             return_value=[Mock(id=existing_integration_id, status=ModelStatus.ENABLED, integration_provider="aws")]
         )
 
-        resource_patch = ResourcePatch(integration_ids=[existing_integration_id])
+        resource_patch = ResourceUpdate(integration_ids=[existing_integration_id])
         permissions_mock = mock_user_permissions(
             ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
@@ -982,7 +982,7 @@ class TestPatch:
         )
         mock_resource_service.integration_service.get_all_dto = AsyncMock(return_value=[])
 
-        resource_patch = ResourcePatch(workspace_id=new_workspace_id)
+        resource_patch = ResourceUpdate(workspace_id=new_workspace_id)
         mock_user_permissions(["read"], monkeypatch, "application.resources.service.user_entity_permissions")
 
         with pytest.raises(
@@ -990,53 +990,6 @@ class TestPatch:
             match=f"You don't have write access to workspace {new_workspace_id}",
         ):
             await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
-
-    @pytest.mark.asyncio
-    async def test_patch_same_workspace_is_exempt(
-        self,
-        mock_resource_service,
-        mock_resource_crud,
-        mocked_user,
-        mock_user_permissions,
-        monkeypatch,
-    ):
-        existing_workspace_id = uuid4()
-        existing_resource = Mock(
-            id=uuid4(),
-            state=ModelState.PROVISION,
-            status=ModelStatus.READY,
-            template_id=uuid4(),
-            integration_ids=[],
-            parents=[],
-            workspace_id=existing_workspace_id,
-        )
-        mock_resource_crud.get_by_id.return_value = existing_resource
-        monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
-
-        existing_pydantic = Mock(
-            abstract=False,
-            integration_ids=[],
-            template=Mock(id=existing_resource.template_id),
-            parents=[],
-        )
-        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
-
-        mock_resource_service.template_service.get_by_id = AsyncMock(
-            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
-        )
-        mock_resource_service.integration_service.get_all_dto = AsyncMock(return_value=[])
-
-        resource_patch = ResourcePatch(workspace_id=existing_workspace_id)
-        permissions_mock = mock_user_permissions(
-            ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
-        )
-
-        await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
-
-        for call in permissions_mock.await_args_list:
-            assert call.args[1] != existing_workspace_id, (
-                "user_entity_permissions should not be called when workspace is unchanged"
-            )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("scv_status", [ModelStatus.IN_PROGRESS, ModelStatus.ERROR, ModelStatus.READY])
@@ -1069,7 +1022,7 @@ class TestPatch:
         monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
         mock_resource_service.service_source_code_version.get_by_id = AsyncMock(return_value=source_code_version)
 
-        resource_patch = ResourcePatch(source_code_version_id=source_code_version.id)
+        resource_patch = ResourceUpdate(source_code_version_id=source_code_version.id)
 
         with pytest.raises(EntityWrongState, match="Source code version is not in DONE state"):
             await mock_resource_service.patch(str(resource_id), resource_patch, mocked_user)

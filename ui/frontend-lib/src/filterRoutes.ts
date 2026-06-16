@@ -244,15 +244,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/resources/:resource_id/edit",
-    Component: lz(
-      () => import("./resources/pages/ResourceEdit"),
-      "ResourceEditPage",
-    ),
-    requiredPermission: "api:resource",
-    permissionAction: "read",
-  },
-  {
     path: "/resources/:resource_id/metadata",
     Component: lz(
       () => import("./resources/components/ResourceMetadata"),

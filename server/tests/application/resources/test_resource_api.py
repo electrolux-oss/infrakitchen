@@ -55,7 +55,13 @@ class MockResourceService:
     async def patch(self, resource_id, resource, requester):
         return self._patched
 
+    async def update_resource(self, resource_id, resource, requester):
+        return self._patched
+
     async def patch_action(self, resource_id, body, requester):
+        return self._patched
+
+    async def patch_action_resource(self, resource_id, body, requester):
         return self._patched
 
     async def delete(self, resource_id, requester):
@@ -198,7 +204,7 @@ class TestResourcePatch:
             "description": None,
         }
 
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
