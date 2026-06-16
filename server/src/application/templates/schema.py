@@ -96,7 +96,7 @@ class TemplateUpdate(BaseModel):
     def at_least_one_field_present(cls, values):
         if not isinstance(values, dict):
             return values
-        if not any(values.get(field) not in (None, [], "") for field in cls.model_fields):
+        if not any(values.get(field) not in (None, [], "") for field in TemplateUpdate.model_fields):
             raise ValueError("At least one field must be provided in Template update.")
         return values
 

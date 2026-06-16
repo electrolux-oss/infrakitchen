@@ -366,15 +366,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/source_code_versions/:source_code_version_id/edit",
-    Component: lz(
-      () => import("./source_code_versions/pages/SourceCodeVersionEdit"),
-      "SourceCodeVersionEditPage",
-    ),
-    requiredPermission: "api:source_code_version",
-    permissionAction: "write",
-  },
-  {
     path: "/source_code_versions/:source_code_version_id/:tab?",
     Component: lz(
       () => import("./source_code_versions/pages/SourceCodeVersion"),

@@ -93,7 +93,7 @@ class StorageCreate(BaseModel):
 
 class StorageUpdate(BaseModel):
     description: str | None = Field(default=None)
-    labels: list[str] = Field(default_factory=list)
+    labels: list[str] | None = Field(default=None)
 
 
 class StorageShort(BaseModel):

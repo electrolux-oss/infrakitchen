@@ -16,7 +16,7 @@ export const SourceCodePage = () => {
       transformFn={transformSourceCode}
       entityFields={SOURCE_CODE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Code Repository"}>
+      <EntityContainer title={"Code Repository"} hideEditAction>
         <SourceCodeContent />
         <LogLiveTail />
       </EntityContainer>

@@ -22,7 +22,7 @@ from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import valid_uuid
+from core.utils.model_tools import has_field_changes, model_db_dump, valid_uuid
 from .crud import SourceCodeVersionCRUD
 from .schema import (
     BatchTemplatePortsResponse,
@@ -130,14 +130,14 @@ class SourceCodeVersionService:
             raise EntityNotFound("Source code version not found")
         return await get_source_code_version_actions(requester, scv.status)
 
-    async def create(
+    async def create_source_code_version(
         self, source_code_version: SourceCodeVersionCreate, requester: UserDTO
-    ) -> SourceCodeVersionResponse:
+    ) -> SourceCodeVersion:
         """
-        Create a new source_code_version.
+        Create a new source_code_version and return the ORM model.
         :param source_code_version: SourceCodeVersionCreate to create
         :param requester: User who creates the source_code_version
-        :return: Created source_code_version
+        :return: Created source_code_version ORM model
         """
 
         if not (source_code_version.source_code_version or source_code_version.source_code_branch):
@@ -203,6 +203,9 @@ class SourceCodeVersionService:
         new_source_code_version.status = ModelStatus.READY
         result = await self.crud.get_by_id(new_source_code_version.id)
 
+        if not result:
+            raise EntityNotFound("SourceCodeVersion not found after creation")
+
         await self.revision_handler.handle_revision(new_source_code_version)
         await self.audit_log_handler.create_log(
             new_source_code_version.id,
@@ -212,7 +215,73 @@ class SourceCodeVersionService:
         )
         response = SourceCodeVersionResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        return result
+
+    async def create(
+        self, source_code_version: SourceCodeVersionCreate, requester: UserDTO
+    ) -> SourceCodeVersionResponse:
+        """
+        Create a new source_code_version.
+        :param source_code_version: SourceCodeVersionCreate to create
+        :param requester: User who creates the source_code_version
+        :return: Created source_code_version
+        """
+        new_source_code_version = await self.create_source_code_version(
+            source_code_version=source_code_version, requester=requester
+        )
+        return SourceCodeVersionResponse.model_validate(new_source_code_version)
+
+    async def update_source_code_version(
+        self,
+        source_code_version_id: str,
+        source_code_version: SourceCodeVersionUpdate,
+        requester: UserDTO,
+    ) -> SourceCodeVersion:
+        """
+        Update an existing source_code_version and return the ORM model.
+        :param source_code_version_id: ID of the source_code_version to update
+        :param source_code_version: SourceCodeVersion to update
+        :param requester: User who updates the source_code_version
+        :return: Updated source_code_version ORM model
+        """
+
+        # TODO: Add validation for output referenced
+        # should be None if output is not referenced
+        # can not be referenced few times on the same source code version output
+        # Can not be self referenced
+        # if config variable is unique, it should be required as well
+        #
+        # check if resources already created with non unique variable when config is changed to unique or required
+        #    and do exception if it exists
+
+        body = model_db_dump(source_code_version, exclude_defaults=True, exclude_none=True)
+        existing_source_code_version = await self.crud.get_by_id(source_code_version_id)
+
+        if not existing_source_code_version:
+            raise EntityNotFound("SourceCodeVersion not found")
+
+        if existing_source_code_version.status in [ModelStatus.DISABLED, ModelStatus.IN_PROGRESS]:
+            logger.error(f"Entity has wrong status for updating {existing_source_code_version.status}")
+            raise ValueError(f"Entity has wrong status for updating {existing_source_code_version.status}")
+
+        if not has_field_changes(body, existing_source_code_version):
+            raise ValueError("No changes detected; the source code version is already up to date.")
+
+        self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code_version)
+
+        await self.crud.update(existing_source_code_version, body)
+
+        await self.revision_handler.handle_revision(existing_source_code_version)
+        await self.audit_log_handler.create_log(
+            source_code_version_id,
+            requester.id,
+            ModelActions.UPDATE,
+            revision_number=existing_source_code_version.revision_number,
+        )
+        await self.crud.refresh(existing_source_code_version)
+        response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
+        await self.event_sender.send_event(response, ModelActions.UPDATE)
+        return existing_source_code_version
 
     async def update(
         self,
@@ -227,53 +296,22 @@ class SourceCodeVersionService:
         :param requester: User who updates the source_code_version
         :return: Updated source_code_version
         """
-
-        # TODO: Add validation for output referenced
-        # should be None if output is not referenced
-        # can not be referenced few times on the same source code version output
-        # Can not be self referenced
-        # if config variable is unique, it should be required as well
-        #
-        # check if resources already created with non unique variable when config is changed to unique or required
-        #    and do exception if it exists
-
-        body = source_code_version.model_dump(exclude_unset=True)
-        existing_source_code_version = await self.crud.get_by_id(source_code_version_id)
-
-        if not existing_source_code_version:
-            raise EntityNotFound("SourceCodeVersion not found")
-
-        if existing_source_code_version.status in [ModelStatus.DISABLED, ModelStatus.IN_PROGRESS]:
-            logger.error(f"Entity has wrong status for updating {existing_source_code_version.status}")
-            raise ValueError(f"Entity has wrong status for updating {existing_source_code_version.status}")
-
-        self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code_version)
-
-        existing_source_code_version.status = ModelStatus.READY
-
-        await self.crud.update(existing_source_code_version, body)
-
-        await self.revision_handler.handle_revision(existing_source_code_version)
-        await self.audit_log_handler.create_log(
-            source_code_version_id,
-            requester.id,
-            ModelActions.UPDATE,
-            revision_number=existing_source_code_version.revision_number,
+        existing_source_code_version = await self.update_source_code_version(
+            source_code_version_id=source_code_version_id,
+            source_code_version=source_code_version,
+            requester=requester,
         )
-        await self.crud.refresh(existing_source_code_version)
-        response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        return SourceCodeVersionResponse.model_validate(existing_source_code_version)
 
-    async def patch(
-        self, source_code_version_id, body: PatchBodyModel, requester: UserDTO
-    ) -> SourceCodeVersionResponse:
+    async def patch_action(
+        self, source_code_version_id: str, body: PatchBodyModel, requester: UserDTO
+    ) -> SourceCodeVersion:
         """
-        Patch an existing source_code_version.
+        Patch an existing source_code_version and return the ORM model.
         :param source_code_version_id: ID of the source_code_version to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the source_code_version
-        :return: Patched source_code_version
+        :return: Patched source_code_version ORM instance
         """
         existing_source_code_version = await self.crud.get_by_id(source_code_version_id)
         if not existing_source_code_version:
@@ -310,7 +348,20 @@ class SourceCodeVersionService:
 
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_source_code_version
+
+    async def patch(
+        self, source_code_version_id: str, body: PatchBodyModel, requester: UserDTO
+    ) -> SourceCodeVersionResponse:
+        """
+        Patch an existing source_code_version.
+        :param source_code_version_id: ID of the source_code_version to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the source_code_version
+        :return: Patched source_code_version
+        """
+        result = await self.patch_action(source_code_version_id=source_code_version_id, body=body, requester=requester)
+        return SourceCodeVersionResponse.model_validate(result)
 
     async def delete(self, source_code_version_id: str, requester: UserDTO) -> None:
         existing_source_code_version = await self.crud.get_by_id(source_code_version_id)

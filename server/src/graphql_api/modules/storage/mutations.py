@@ -25,7 +25,7 @@ class StorageCreateInput:
     labels: list[str] = strawberry.field(default_factory=list)
 
 
-@strawberry.input
+@strawberry_pydantic.input(model=StorageUpdate, all_fields=False)
 class StorageUpdateInput:
     description: str | None = strawberry.UNSET
     labels: list[str] | None = strawberry.UNSET
@@ -34,21 +34,6 @@ class StorageUpdateInput:
 @strawberry.input
 class StorageActionInput:
     action: str
-
-
-def _build_storage_update(input: StorageUpdateInput) -> StorageUpdate:
-    """Build a StorageUpdate from only the fields the client actually sent.
-
-    Fields left at ``strawberry.UNSET`` (i.e. omitted by the client) are
-    excluded so that ``model_dump(exclude_unset=True)`` in the service
-    correctly skips them, preserving the existing DB values.
-    """
-    data: dict[str, object] = {}
-    if input.description is not strawberry.UNSET:
-        data["description"] = input.description
-    if input.labels is not strawberry.UNSET:
-        data["labels"] = input.labels
-    return StorageUpdate.model_validate(data)
 
 
 @strawberry.type
@@ -69,8 +54,7 @@ class StorageMutation:
         if ModelActions.EDIT not in await service.get_actions(storage_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
 
-        storage_update = _build_storage_update(input)
-        return await service.update_storage(storage_id=str(id), storage=storage_update, requester=requester)
+        return await service.update_storage(storage_id=str(id), storage=input.to_pydantic(), requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def storage_action(self, info: Info, id: uuid.UUID, input: StorageActionInput) -> StorageType:

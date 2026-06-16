@@ -211,7 +211,9 @@ class TestSourceCodeMutations:
         # (mirroring REST/Pydantic) rather than silently dropped.
         assert result.data is None or result.data["updateSourceCode"] is None
         assert result.errors is not None
-        assert any("list" in error.message.lower() for error in result.errors)
+        assert any(
+            "At least one field must be provided in Source Code update" in error.message for error in result.errors
+        )
         mock_source_code_service.update_source_code.assert_not_awaited()
 
     @pytest.mark.asyncio

@@ -513,7 +513,9 @@ class TestUpdate:
             requester=mock_user_dto,
         )
 
-        mocked_source_code_update.model_dump.assert_called_once_with(exclude_unset=True)
+        mocked_source_code_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
+        )
         mock_source_code_version_crud.update.assert_awaited_once_with(existing_source_code, update_body)
         mock_source_code_version_crud.refresh.assert_called_once_with(updated_source_code)
         mock_audit_log_handler.create_log.assert_awaited_once_with(

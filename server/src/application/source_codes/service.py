@@ -138,6 +138,14 @@ class SourceCodeService:
         :param requester: User who updates the source_code
         :return: Updated source_code ORM model
         """
+
+        def check_critical_fields_changed(existing: SourceCode, patched: SourceCodeUpdate) -> bool:
+            critical_fields = ["integration_id"]
+            for field in critical_fields:
+                if getattr(patched, field) is not None and getattr(patched, field) != getattr(existing, field):
+                    return True
+            return False
+
         body = model_db_dump(source_code, exclude_defaults=True, exclude_none=True)
         existing_source_code = await self.crud.get_by_id(source_code_id)
 
@@ -152,7 +160,8 @@ class SourceCodeService:
             raise ValueError("No changes detected; the source code is already up to date.")
         self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code)
 
-        existing_source_code.status = ModelStatus.READY
+        if check_critical_fields_changed(existing_source_code, source_code):
+            existing_source_code.status = ModelStatus.READY
 
         await self.crud.update(existing_source_code, body)
 

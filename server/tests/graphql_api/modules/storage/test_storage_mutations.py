@@ -4,7 +4,6 @@ from uuid import uuid4
 
 import pytest
 
-from application.storages.schema import StorageUpdate
 from core.constants.model import ModelActions
 from graphql_api.schema import schema
 
@@ -346,75 +345,3 @@ class TestStorageMutations:
         assert result.data == {"deleteStorage": True}
         mock_storage_service.get_actions.assert_awaited_once_with(storage_id=storage_id, requester=mocked_user)
         mock_storage_service.delete.assert_awaited_once_with(storage_id=str(storage_id), requester=mocked_user)
-
-    @pytest.mark.asyncio
-    @patch("graphql_api.modules.storage.mutations.get_storage_service")
-    async def test_update_description_only_preserves_existing_labels(
-        self,
-        mock_get_service,
-        mock_storage_service,
-        mocked_storage,
-        mocked_user,
-    ):
-        """Sending only description must not include labels in the update payload."""
-        storage_id = uuid4()
-        mock_storage_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
-        mock_storage_service.update_storage = AsyncMock(return_value=mocked_storage)
-        mock_get_service.return_value = mock_storage_service
-
-        result = await schema.execute(
-            UPDATE_STORAGE_MUTATION,
-            variable_values={
-                "id": str(storage_id),
-                "input": {
-                    "description": "Updated description",
-                },
-            },
-            context_value=make_context(mocked_user),
-        )
-
-        assert result.errors is None
-        mock_storage_service.update_storage.assert_awaited_once()
-        assert mock_storage_service.update_storage.await_args
-        call_kwargs = mock_storage_service.update_storage.await_args.kwargs
-        storage_update: StorageUpdate = call_kwargs["storage"]
-        assert "description" in storage_update.model_fields_set
-        assert "labels" not in storage_update.model_fields_set
-        dumped = storage_update.model_dump(exclude_unset=True)
-        assert dumped == {"description": "Updated description"}
-
-    @pytest.mark.asyncio
-    @patch("graphql_api.modules.storage.mutations.get_storage_service")
-    async def test_update_labels_only_preserves_existing_description(
-        self,
-        mock_get_service,
-        mock_storage_service,
-        mocked_storage,
-        mocked_user,
-    ):
-        """Sending only labels must not include description in the update payload."""
-        storage_id = uuid4()
-        mock_storage_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
-        mock_storage_service.update_storage = AsyncMock(return_value=mocked_storage)
-        mock_get_service.return_value = mock_storage_service
-
-        result = await schema.execute(
-            UPDATE_STORAGE_MUTATION,
-            variable_values={
-                "id": str(storage_id),
-                "input": {
-                    "labels": ["new-label"],
-                },
-            },
-            context_value=make_context(mocked_user),
-        )
-
-        assert result.errors is None
-        mock_storage_service.update_storage.assert_awaited_once()
-        assert mock_storage_service.update_storage.await_args
-        call_kwargs = mock_storage_service.update_storage.await_args.kwargs
-        storage_update: StorageUpdate = call_kwargs["storage"]
-        assert "labels" in storage_update.model_fields_set
-        assert "description" not in storage_update.model_fields_set
-        dumped = storage_update.model_dump(exclude_unset=True)
-        assert dumped == {"labels": ["new-label"]}

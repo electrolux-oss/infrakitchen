@@ -155,8 +155,6 @@ class StorageService:
         if existing_storage.state in [ModelState.DESTROY, ModelState.DESTROYED]:
             raise ValueError(f"Entity cannot be updated, has wrong state {existing_storage.state}")
 
-        existing_storage.status = ModelStatus.READY
-
         await self.crud.update(existing_storage, body)
 
         await self.revision_handler.handle_revision(existing_storage)

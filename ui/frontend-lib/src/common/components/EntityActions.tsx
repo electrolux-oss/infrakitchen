@@ -22,9 +22,11 @@ import { CommonDialog } from "./CommonDialog";
 export interface EntityActionsProps {
   entity_name: string;
   entity_id: string;
+  /** When true the legacy "Edit" navigation button is hidden (entity uses inline editing). */
+  hideEditAction?: boolean;
 }
 export function EntityActions(props: EntityActionsProps) {
-  const { entity_id, entity_name } = props;
+  const { entity_id, entity_name, hideEditAction } = props;
 
   const { linkPrefix, ikApi } = useConfig();
   const { actions } = useEntityProvider();
@@ -141,7 +143,7 @@ export function EntityActions(props: EntityActionsProps) {
           Enable
         </Button>
       )}
-      {actions.includes("edit") && (
+      {actions.includes("edit") && !hideEditAction && (
         <Tooltip title="Edit configuration">
           <Button
             variant="outlined"

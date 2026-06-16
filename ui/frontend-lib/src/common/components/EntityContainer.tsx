@@ -21,10 +21,12 @@ export interface EntityContainerProps {
   children: ReactNode;
   title?: string;
   actions?: ReactNode;
+  /** When true the legacy "Edit" navigation button is hidden (entity uses inline editing). */
+  hideEditAction?: boolean;
 }
 
 export const EntityContainer = (props: EntityContainerProps) => {
-  const { children, title, actions } = props;
+  const { children, title, actions, hideEditAction } = props;
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
@@ -87,6 +89,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
           <EntityActions
             entity_id={entity.id}
             entity_name={entity._entity_name}
+            hideEditAction={hideEditAction}
           />
           {actions}
           <Tooltip title="Refresh">
