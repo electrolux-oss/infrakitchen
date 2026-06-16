@@ -13,10 +13,10 @@ export const KubernetesRelations = (props: { entity: ResourceResponse }) => {
   const { ikApi } = useConfig();
   const kubernetesResourceTypes = useMemo(
     () =>
-      entity.template?.cloud_resource_types?.filter((type: string) =>
+      entity.template?.cloudResourceTypes?.filter((type: string) =>
         type.endsWith("eks"),
       ) || [],
-    [entity.template?.cloud_resource_types],
+    [entity.template?.cloudResourceTypes],
   );
 
   const [namespaces, setNamespaces] = useState<string[]>([]);

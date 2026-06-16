@@ -1,16 +1,39 @@
 import { TreeResponse } from "../../common/components/tree/types";
 import { GqlUserShort, transformUserShort } from "../../users/graphql";
-import {
-  TemplateResponse,
-  TemplateResponseOptional,
-  TemplateShort,
-} from "../types";
+import { TemplateConfig, TemplateResponse, TemplateShort } from "../types";
 
 import type {
   TemplateGraphqlShortField,
   TemplateGraphqlDetailField,
   TemplateGraphqlRelationField,
 } from "./fragments";
+
+/**
+ * Backend serves `configuration` as an opaque JSON scalar with snake_case keys.
+ * These helpers convert between that shape and the frontend camelCase
+ * `TemplateConfig` interface.
+ */
+
+export function configFromBackend(
+  raw: Record<string, any> | null | undefined,
+): TemplateConfig {
+  return {
+    oneResourcePerIntegration: raw?.one_resource_per_integration ?? [],
+    allowedProviderIntegrationTypes:
+      raw?.allowed_provider_integration_types ?? [],
+    namingConvention: raw?.naming_convention ?? null,
+    requiredConfigurationVariables: raw?.required_configuration_variables ?? [],
+  };
+}
+
+export function configToBackend(config: TemplateConfig): Record<string, any> {
+  return {
+    one_resource_per_integration: config.oneResourcePerIntegration,
+    allowed_provider_integration_types: config.allowedProviderIntegrationTypes,
+    naming_convention: config.namingConvention,
+    required_configuration_variables: config.requiredConfigurationVariables,
+  };
+}
 
 type GqlTemplateShortFieldTypes = {
   id: string;
@@ -56,15 +79,12 @@ export type GqlTemplate = Pick<
   TemplateGraphqlDetailField | TemplateGraphqlRelationField
 >;
 
-export type GqlTemplateOptional = Partial<GqlTemplate> &
-  Pick<GqlTemplateShortFieldTypes, "id" | "name">;
-
 export function transformTemplateShort(gql: GqlTemplateShort): TemplateShort {
   return {
     id: gql.id,
     name: gql.name,
     abstract: gql.abstract,
-    cloud_resource_types: gql.cloudResourceTypes ?? [],
+    cloudResourceTypes: gql.cloudResourceTypes ?? [],
     _entity_name: "template",
   };
 }
@@ -76,65 +96,19 @@ export function transformTemplate(gql: GqlTemplate): TemplateResponse {
     description: gql.description ?? "",
     documentation: gql.documentation ?? "",
     template: gql.template,
-    cloud_resource_types: gql.cloudResourceTypes ?? [],
+    cloudResourceTypes: gql.cloudResourceTypes ?? [],
     abstract: gql.abstract,
-    configuration: {
-      one_resource_per_integration:
-        gql.configuration?.one_resource_per_integration ?? [],
-      allowed_provider_integration_types:
-        gql.configuration?.allowed_provider_integration_types ?? [],
-      naming_convention: gql.configuration?.naming_convention ?? null,
-      required_configuration_variables:
-        gql.configuration?.required_configuration_variables ?? [],
-    },
+    configuration: configFromBackend(gql.configuration),
     labels: gql.labels ?? [],
     status: gql.status as TemplateResponse["status"],
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     creator: transformUserShort(gql.creator),
     parents: (gql.parents ?? []).map(transformTemplateShort),
     children: (gql.children ?? []).map(transformTemplateShort),
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
-    resources_count: gql.resourcesCount,
-    source_code_versions_count: gql.sourceCodeVersionsCount,
-    _entity_name: "template",
-  };
-}
-
-export function transformTemplateOptional(
-  gql: GqlTemplateOptional,
-): TemplateResponseOptional {
-  return {
-    id: gql.id,
-    name: gql.name,
-    description: gql.description ?? undefined,
-    documentation: gql.documentation ?? undefined,
-    template: gql.template,
-    cloud_resource_types: gql.cloudResourceTypes ?? undefined,
-    abstract: gql.abstract,
-    configuration: gql.configuration
-      ? {
-          one_resource_per_integration:
-            gql.configuration.one_resource_per_integration ?? [],
-          allowed_provider_integration_types:
-            gql.configuration.allowed_provider_integration_types ?? [],
-          naming_convention: gql.configuration.naming_convention ?? null,
-          required_configuration_variables:
-            gql.configuration.required_configuration_variables ?? [],
-        }
-      : undefined,
-    labels: gql.labels ?? undefined,
-    status: gql.status as TemplateResponse["status"] | undefined,
-    revision_number: gql.revisionNumber,
-    creator:
-      gql.creator !== undefined ? transformUserShort(gql.creator) : undefined,
-    parents: gql.parents ? gql.parents.map(transformTemplateShort) : undefined,
-    children: gql.children
-      ? gql.children.map(transformTemplateShort)
-      : undefined,
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
-    resources_count: gql.resourcesCount,
+    createdAt: gql.createdAt,
+    updatedAt: gql.updatedAt,
+    resourcesCount: gql.resourcesCount,
+    sourceCodeVersionsCount: gql.sourceCodeVersionsCount,
     _entity_name: "template",
   };
 }
@@ -152,10 +126,10 @@ export function transformTemplateTreeNode(
 ): TreeResponse {
   return {
     id: gql.id,
-    node_id: gql.nodeId,
+    nodeId: gql.nodeId,
     name: gql.name,
     status: gql.status,
-    template_name: gql.name,
+    templateName: gql.name,
     children: (gql.children ?? []).map(transformTemplateTreeNode),
   };
 }

@@ -18,7 +18,7 @@ import {
 import { TemplateShort } from "../types";
 
 interface NamingConventionInputProps {
-  template_id: string;
+  templateId: string;
   parents?: TemplateShort[];
   value: string | null;
   onChange: (value: string | null) => void;
@@ -32,7 +32,7 @@ interface ParentOutputGroup {
 }
 
 export const NamingConventionInput = ({
-  template_id,
+  templateId,
   parents = [],
   value,
   onChange,
@@ -48,12 +48,12 @@ export const NamingConventionInput = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchConfigs = useCallback(async () => {
-    if (!template_id) return;
+    if (!templateId) return;
     setLoading(true);
     try {
       const [configsResponse, ...parentOutputResponses] = await Promise.all([
         ikApi.get(
-          `source_code_versions/template/${template_id}/configs`,
+          `source_code_versions/template/${templateId}/configs`,
         ) as Promise<SourceConfigResponse[]>,
         ...parents.map((p) =>
           (
@@ -75,7 +75,7 @@ export const NamingConventionInput = ({
     } finally {
       setLoading(false);
     }
-  }, [ikApi, template_id, parents]);
+  }, [ikApi, templateId, parents]);
 
   useEffect(() => {
     fetchConfigs();

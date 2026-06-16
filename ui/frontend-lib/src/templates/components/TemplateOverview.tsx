@@ -27,6 +27,7 @@ import {
   TemplateUpdateFieldInput,
   UPDATE_TEMPLATE_MUTATION,
 } from "../graphql/mutations";
+import { configToBackend } from "../graphql/transforms";
 import {
   IntegrationProviderType,
   TemplateConfig,
@@ -36,9 +37,14 @@ import {
 import { NamingConventionInput } from "./NamingConventionInput";
 import { TemplateDocumentationField } from "./TemplateDocumentationField";
 
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
+const sameStringSet = (a: string[] | undefined, b: string[] | undefined) => {
+  const x = a ?? [];
+  const y = b ?? [];
+  return (
+    x.length === y.length &&
+    [...x].sort().join("\u0000") === [...y].sort().join("\u0000")
+  );
+};
 
 export interface TemplateAboutProps {
   template: TemplateResponse;
@@ -71,7 +77,12 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
 
   const saveConfiguration = useCallback(
     (partial: Partial<TemplateConfig>) =>
-      saveField({ configuration: { ...template.configuration, ...partial } }),
+      saveField({
+        configuration: configToBackend({
+          ...template.configuration,
+          ...partial,
+        }),
+      }),
     [saveField, template.configuration],
   );
 
@@ -129,18 +140,18 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string | null>
         name={"Naming Convention"}
         canEdit={canEdit}
-        value={template.configuration?.naming_convention ?? null}
+        value={template.configuration?.namingConvention ?? null}
         ariaLabel="Edit naming convention"
         display={
-          template.configuration?.naming_convention ? (
-            <InlineCode>{template.configuration.naming_convention}</InlineCode>
+          template.configuration?.namingConvention ? (
+            <InlineCode>{template.configuration.namingConvention}</InlineCode>
           ) : null
         }
-        onSave={(value) => saveConfiguration({ naming_convention: value })}
+        onSave={(value) => saveConfiguration({ namingConvention: value })}
         renderEditor={({ value, onChange }) => (
           <Box sx={{ width: "100%" }}>
             <NamingConventionInput
-              template_id={template.id}
+              templateId={template.id}
               parents={template.parents}
               value={value}
               onChange={onChange}
@@ -158,13 +169,13 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonField
         name={"Created"}
         value={
-          <RelativeTime date={template.created_at} user={template.creator} />
+          <RelativeTime date={template.createdAt} user={template.creator} />
         }
         size={6}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={template.updated_at} />}
+        value={<RelativeTime date={template.updatedAt} />}
         size={6}
       />
       <CommonEditableField<string[]>
@@ -258,10 +269,10 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Cloud Resource Types"}
         canEdit={canEdit}
-        value={template.cloud_resource_types}
+        value={template.cloudResourceTypes}
         ariaLabel="Edit cloud resource types"
         isEqual={sameStringSet}
-        display={<StringChips values={template.cloud_resource_types} />}
+        display={<StringChips values={template.cloudResourceTypes} />}
         onSave={(value) => saveField({ cloudResourceTypes: value })}
         renderEditor={({ value, onChange }) => (
           <ArrayReferenceInput
@@ -280,17 +291,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<IntegrationProviderType[]>
         name={"Integration Providers for One Resource Per Integration"}
         canEdit={canEdit}
-        value={template.configuration?.one_resource_per_integration ?? []}
+        value={template.configuration?.oneResourcePerIntegration ?? []}
         ariaLabel="Edit one resource per integration providers"
         isEqual={sameStringSet}
         display={
           <StringChips
-            values={template.configuration?.one_resource_per_integration ?? []}
+            values={template.configuration?.oneResourcePerIntegration ?? []}
             format={getProviderDisplayName}
           />
         }
         onSave={(value) =>
-          saveConfiguration({ one_resource_per_integration: value })
+          saveConfiguration({ oneResourcePerIntegration: value })
         }
         renderEditor={({ value, onChange }) => (
           <MultiSelectEditor<IntegrationProviderType>
@@ -308,19 +319,19 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<IntegrationProviderType[]>
         name={"Allowed Integration Providers"}
         canEdit={canEdit}
-        value={template.configuration?.allowed_provider_integration_types ?? []}
+        value={template.configuration?.allowedProviderIntegrationTypes ?? []}
         ariaLabel="Edit allowed integration providers"
         isEqual={sameStringSet}
         display={
           <StringChips
             values={
-              template.configuration?.allowed_provider_integration_types ?? []
+              template.configuration?.allowedProviderIntegrationTypes ?? []
             }
             format={getProviderDisplayName}
           />
         }
         onSave={(value) =>
-          saveConfiguration({ allowed_provider_integration_types: value })
+          saveConfiguration({ allowedProviderIntegrationTypes: value })
         }
         renderEditor={({ value, onChange }) => (
           <MultiSelectEditor<IntegrationProviderType>
@@ -337,18 +348,18 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Required Configuration Variables"}
         canEdit={canEdit}
-        value={template.configuration?.required_configuration_variables ?? []}
+        value={template.configuration?.requiredConfigurationVariables ?? []}
         ariaLabel="Edit required configuration variables"
         isEqual={sameStringSet}
         display={
           <StringChips
             values={
-              template.configuration?.required_configuration_variables ?? []
+              template.configuration?.requiredConfigurationVariables ?? []
             }
           />
         }
         onSave={(value) =>
-          saveConfiguration({ required_configuration_variables: value })
+          saveConfiguration({ requiredConfigurationVariables: value })
         }
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

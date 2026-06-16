@@ -13,27 +13,27 @@ export type TemplateStatus =
   (typeof TEMPLATE_STATUS)[keyof typeof TEMPLATE_STATUS];
 
 export interface TemplateConfig {
-  one_resource_per_integration: IntegrationProviderType[];
-  allowed_provider_integration_types: IntegrationProviderType[];
-  naming_convention: string | null;
-  required_configuration_variables: string[];
+  oneResourcePerIntegration: IntegrationProviderType[];
+  allowedProviderIntegrationTypes: IntegrationProviderType[];
+  namingConvention: string | null;
+  requiredConfigurationVariables: string[];
 }
 
 export interface TemplateShort {
   id: string;
   name: string;
   abstract: boolean;
-  cloud_resource_types?: string[];
+  cloudResourceTypes?: string[];
   _entity_name: string;
 }
 
 export interface TemplateResponse {
   id: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   status: TemplateStatus;
   abstract: boolean;
-  revision_number: number;
+  revisionNumber: number;
   creator: UserShort | null;
   name: string;
   description: string;
@@ -41,22 +41,20 @@ export interface TemplateResponse {
   template: string;
   parents: TemplateShort[];
   children: TemplateShort[];
-  cloud_resource_types: string[];
+  cloudResourceTypes: string[];
   configuration: TemplateConfig;
   labels: string[];
-  resources_count?: number;
-  source_code_versions_count?: number;
+  resourcesCount?: number;
+  sourceCodeVersionsCount?: number;
   _entity_name: string;
 }
 
-export type TemplateResponseOptional = Partial<TemplateResponse>;
-
 export interface TemplateImportRequest {
-  source_code_language: string;
-  integration_id: string;
-  source_code_url: string;
-  source_code_folder: string;
-  source_code_branch: string;
+  sourceCodeLanguage: string;
+  integrationId: string;
+  sourceCodeUrl: string;
+  sourceCodeFolder: string;
+  sourceCodeBranch: string;
   name: string;
   description?: string;
   documentation: string;
@@ -72,18 +70,7 @@ export interface TemplateCreateRequest {
   parents: string[];
   children: string[];
   labels: string[];
-  cloud_resource_types: string[];
-  configuration: TemplateConfig;
-  abstract: boolean;
-}
-
-export interface TemplateUpdate extends TemplateShort {
-  description: string;
-  documentation: string;
-  parents: string[];
-  children: string[];
-  labels: string[];
-  cloud_resource_types: string[];
+  cloudResourceTypes: string[];
   configuration: TemplateConfig;
   abstract: boolean;
 }

@@ -162,7 +162,7 @@ export const TemplatesPage = () => {
             Last Updated
           </Typography>
           <RelativeTime
-            date={template.updated_at}
+            date={template.updatedAt}
             variant="caption"
             sx={{ fontWeight: 500 }}
           />
@@ -261,7 +261,7 @@ export const TemplatesPage = () => {
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
                   labels={template.labels}
                   chip={template.abstract ? "Abstract" : undefined}
-                  lastUpdated={template.updated_at}
+                  lastUpdated={template.updatedAt}
                   entityFields={templateCardFields(template)}
                 />
               );

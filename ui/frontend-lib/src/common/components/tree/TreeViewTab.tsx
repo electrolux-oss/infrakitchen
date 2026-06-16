@@ -9,7 +9,7 @@ import { EntityTreeViewItems } from "./TreeViewItems";
 import { TreeResponse } from "./types";
 
 const getAllNodeIds = (node: TreeResponse): string[] => [
-  node.node_id,
+  node.nodeId,
   ...(node.children?.flatMap(getAllNodeIds) ?? []),
 ];
 
@@ -31,7 +31,7 @@ export const EntityTreeViewTab = ({
   useEffect(() => {
     ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
       setTree(tree);
-      setSelected([tree.node_id]);
+      setSelected([tree.nodeId]);
       setTreeExpanded(getAllNodeIds(tree));
     });
   }, [entity_id, entity_name, ikApi]);

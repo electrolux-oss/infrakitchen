@@ -29,7 +29,7 @@ export const EntityTreeView = ({ entity_id, entity_name }: TreeViewProps) => {
     if (!isExpanded) return;
     ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
       setTree(tree);
-      setSelected([tree.node_id]);
+      setSelected([tree.nodeId]);
     });
   }, [entity_id, entity_name, ikApi, isExpanded]);
 

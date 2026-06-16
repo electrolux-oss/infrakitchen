@@ -1,9 +1,9 @@
 export interface TreeResponse {
   id: string;
-  node_id: string;
+  nodeId: string;
   name: string;
   state?: string;
   status: string;
-  template_name: string;
+  templateName: string;
   children: TreeResponse[];
 }

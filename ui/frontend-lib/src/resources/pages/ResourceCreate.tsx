@@ -236,9 +236,9 @@ const ResourceCreatePageInner = () => {
   );
 
   useEffect(() => {
-    if (watchedTemplate?.configuration?.naming_convention) {
-      setNamingConvention(watchedTemplate.configuration.naming_convention);
-      setValue("name", watchedTemplate.configuration.naming_convention, {
+    if (watchedTemplate?.configuration?.namingConvention) {
+      setNamingConvention(watchedTemplate.configuration.namingConvention);
+      setValue("name", watchedTemplate.configuration.namingConvention, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -252,7 +252,7 @@ const ResourceCreatePageInner = () => {
 
   useEffect(() => {
     const requiredVars =
-      watchedTemplate?.configuration?.required_configuration_variables || [];
+      watchedTemplate?.configuration?.requiredConfigurationVariables || [];
     if (requiredVars.length === 0) return;
     const currentConfig = (watch("dependency_config") || []) as Array<{
       name: string;
@@ -589,7 +589,7 @@ const ResourceCreatePageInner = () => {
                         requiredConfigVars: (value) => {
                           const required =
                             watchedTemplate?.configuration
-                              ?.required_configuration_variables;
+                              ?.requiredConfigurationVariables;
                           if (!required || required.length === 0) return true;
                           const provided = new Set(
                             (value || []).map(
@@ -807,8 +807,8 @@ const ResourceCreatePageInner = () => {
                         value={field.value}
                         label={`Cloud Integrations. ${
                           watchedTemplate?.configuration
-                            .allowed_provider_integration_types
-                            ? `Only ${watchedTemplate.configuration.allowed_provider_integration_types.join(", ")} integrations are allowed for this template.`
+                            .allowedProviderIntegrationTypes
+                            ? `Only ${watchedTemplate.configuration.allowedProviderIntegrationTypes.join(", ")} integrations are allowed for this template.`
                             : ""
                         }`}
                         required

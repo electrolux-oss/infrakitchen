@@ -56,7 +56,7 @@ export const TemplateContent = () => {
       : []),
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resources_count ?? 0})`,
+      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -66,7 +66,7 @@ export const TemplateContent = () => {
     },
     {
       label: "Template Versions",
-      tabLabel: `Template Versions (${entity.source_code_versions_count ?? 0})`,
+      tabLabel: `Template Versions (${entity.sourceCodeVersionsCount ?? 0})`,
       content: (
         <EntitySourceCodeVersions
           fixedFilters={fixedFilters}

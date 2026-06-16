@@ -33,12 +33,12 @@ export const TemplateImportPage = () => {
       name: "",
       description: "",
       documentation: "",
-      source_code_folder: "/",
-      source_code_branch: "main",
-      source_code_url: "",
-      source_code_language: "opentofu",
+      sourceCodeFolder: "/",
+      sourceCodeBranch: "main",
+      sourceCodeUrl: "",
+      sourceCodeLanguage: "opentofu",
       labels: [],
-      integration_id: "",
+      integrationId: "",
       parents: [],
     },
   });
@@ -54,8 +54,20 @@ export const TemplateImportPage = () => {
   const onSubmit = useCallback(
     (data: TemplateImportRequest) => {
       setIsSubmitting(true);
+      const payload = {
+        name: data.name,
+        description: data.description,
+        documentation: data.documentation,
+        labels: data.labels,
+        parents: data.parents,
+        source_code_language: data.sourceCodeLanguage,
+        integration_id: data.integrationId,
+        source_code_url: data.sourceCodeUrl,
+        source_code_folder: data.sourceCodeFolder,
+        source_code_branch: data.sourceCodeBranch,
+      };
       ikApi
-        .postRaw("use_cases/create_template_with_scv", data)
+        .postRaw("use_cases/create_template_with_scv", payload)
         .then((response: TemplateResponse) => {
           setIsSubmitting(false);
           if (response.id) {
@@ -100,25 +112,25 @@ export const TemplateImportPage = () => {
       <PropertyCard title="Template Source Configuration">
         <Box>
           <Controller
-            name="source_code_language"
+            name="sourceCodeLanguage"
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
-                id="source_code_language"
+                id="sourceCodeLanguage"
                 label="Template Type"
                 required
                 select
                 fullWidth
                 disabled
                 margin="normal"
-                error={!!errors.source_code_language}
-                helperText={errors.source_code_language?.message}
+                error={!!errors.sourceCodeLanguage}
+                helperText={errors.sourceCodeLanguage?.message}
                 slotProps={{
                   select: {
                     inputProps: {
                       "aria-label": "Template Type",
-                      id: "source_code_language",
+                      id: "sourceCodeLanguage",
                     },
                   },
                 }}
@@ -132,7 +144,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="integration_id"
+            name="integrationId"
             control={control}
             render={({ field }) => (
               <ReferenceInput
@@ -145,10 +157,10 @@ export const TemplateImportPage = () => {
                 entity_name="integrations"
                 filter={{ integration_type: "git" }}
                 showFields={["integration_provider", "name"]}
-                error={!!errors.integration_id}
+                error={!!errors.integrationId}
                 helpertext={
-                  errors.integration_id
-                    ? errors.integration_id.message
+                  errors.integrationId
+                    ? errors.integrationId.message
                     : "Select Git Integration"
                 }
                 value={field.value}
@@ -156,7 +168,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_url"
+            name="sourceCodeUrl"
             control={control}
             rules={{
               required: "Repository URL is required",
@@ -171,11 +183,11 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Repository URL"
                 required
-                error={!!errors.source_code_url}
+                error={!!errors.sourceCodeUrl}
                 placeholder="Enter repository URL"
                 type="url"
                 helperText={
-                  errors.source_code_url ? errors.source_code_url.message : ""
+                  errors.sourceCodeUrl ? errors.sourceCodeUrl.message : ""
                 }
                 fullWidth
                 margin="normal"
@@ -183,7 +195,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_folder"
+            name="sourceCodeFolder"
             control={control}
             rules={{ required: "Directory path is required" }}
             render={({ field }) => (
@@ -191,12 +203,10 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Directory Path"
                 required
-                error={!!errors.source_code_folder}
+                error={!!errors.sourceCodeFolder}
                 placeholder="Enter directory path"
                 helperText={
-                  errors.source_code_folder
-                    ? errors.source_code_folder.message
-                    : ""
+                  errors.sourceCodeFolder ? errors.sourceCodeFolder.message : ""
                 }
                 fullWidth
                 margin="normal"
@@ -204,7 +214,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_branch"
+            name="sourceCodeBranch"
             control={control}
             rules={{ required: "Branch name is required" }}
             render={({ field }) => (
@@ -212,12 +222,10 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Branch"
                 required
-                error={!!errors.source_code_branch}
+                error={!!errors.sourceCodeBranch}
                 placeholder="Enter branch name"
                 helperText={
-                  errors.source_code_branch
-                    ? errors.source_code_branch.message
-                    : ""
+                  errors.sourceCodeBranch ? errors.sourceCodeBranch.message : ""
                 }
                 fullWidth
                 margin="normal"

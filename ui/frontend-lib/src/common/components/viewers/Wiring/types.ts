@@ -11,7 +11,7 @@ export interface GenericTemplate {
   id: string;
   name: string;
   abstract: boolean;
-  cloud_resource_types?: string[];
+  cloudResourceTypes?: string[];
   _entity_name: string;
 }
 

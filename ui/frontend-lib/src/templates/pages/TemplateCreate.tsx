@@ -24,10 +24,7 @@ import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
 } from "../components/TemplateConfigurationFields";
-import {
-  CREATE_TEMPLATE_MUTATION,
-  toTemplateCreateMutationInput,
-} from "../graphql";
+import { CREATE_TEMPLATE_MUTATION, configToBackend } from "../graphql";
 import { TemplateCreateRequest } from "../types";
 
 export const TemplateCreatePage = () => {
@@ -46,11 +43,11 @@ export const TemplateCreatePage = () => {
       parents: [],
       children: [],
       labels: [],
-      cloud_resource_types: [],
+      cloudResourceTypes: [],
       configuration: {
-        one_resource_per_integration: [],
-        allowed_provider_integration_types: [],
-        required_configuration_variables: [],
+        oneResourcePerIntegration: [],
+        allowedProviderIntegrationTypes: [],
+        requiredConfigurationVariables: [],
       },
       abstract: false,
     },
@@ -63,9 +60,11 @@ export const TemplateCreatePage = () => {
 
   const onSubmit = useCallback(
     async (data: TemplateCreateRequest) => {
-      const input = toTemplateCreateMutationInput(data);
-
       try {
+        const input = {
+          ...data,
+          configuration: configToBackend(data.configuration),
+        };
         const response = await ikApi.graphqlRequest<{
           createTemplate: {
             id: string;
@@ -273,7 +272,7 @@ export const TemplateCreatePage = () => {
             )}
           />
           <Controller
-            name="cloud_resource_types"
+            name="cloudResourceTypes"
             control={control}
             render={({ field }) => (
               <ArrayReferenceInput
@@ -282,10 +281,10 @@ export const TemplateCreatePage = () => {
                 setBuffer={setBuffer}
                 {...field}
                 entity_name="cloud_resources"
-                error={!!errors.cloud_resource_types}
+                error={!!errors.cloudResourceTypes}
                 helpertext={
-                  errors.cloud_resource_types
-                    ? errors.cloud_resource_types.message
+                  errors.cloudResourceTypes
+                    ? errors.cloudResourceTypes.message
                     : "Cloud resource types of the template"
                 }
                 value={field.value}

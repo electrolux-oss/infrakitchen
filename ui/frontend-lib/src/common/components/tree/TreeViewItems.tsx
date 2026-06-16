@@ -64,8 +64,8 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
                 fontWeight: "bold",
               }}
             >
-              {item.template_name && `${item.template_name}: ${item.name}`}
-              {!item.template_name && `${item.name}`}
+              {item.templateName && `${item.templateName}: ${item.name}`}
+              {!item.templateName && `${item.name}`}
             </Typography>
             <Tooltip title={stateValue} arrow>
               <Box
@@ -96,7 +96,7 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
   };
 
   const getTreeItems = (node: TreeResponse) => {
-    const id = node.node_id;
+    const id = node.nodeId;
     allNodeIds.push(id);
     return (
       <StyledTreeItem key={id} nodeId={id} entity_id={node.id} item={node}>
