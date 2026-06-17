@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { GqlAuditLog, transformAuditLogs } from "../audit_logs/graphql";
+import { GqlAuditLog } from "../audit_logs/graphql";
 import { useConfig } from "../common";
 import { notifyError } from "../common/hooks/useNotification";
 import { GqlFavorite } from "../favorites/graphql";
@@ -90,9 +90,7 @@ export const useDashboardData = () => {
       setFavorites(favoriteDetails);
 
       setActivities(
-        Array.isArray(response?.auditLogs)
-          ? transformAuditLogs(response.auditLogs)
-          : [],
+        Array.isArray(response?.auditLogs) ? response.auditLogs : [],
       );
     } catch (err) {
       notifyError(err);

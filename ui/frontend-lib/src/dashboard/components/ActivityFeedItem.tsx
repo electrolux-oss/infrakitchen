@@ -53,7 +53,7 @@ export const ActivityFeedItem = ({
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const href = `${linkPrefix}${activity.model}s/${activity.entity_id}/audit`;
+  const href = `${linkPrefix}${activity.model}s/${activity.entityId}/audit`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -115,16 +115,16 @@ export const ActivityFeedItem = ({
               >
                 {activity.model?.replace(/_/g, " ")}
               </Typography>
-              {(entityName || activity.entity_id) && (
+              {(entityName || activity.entityId) && (
                 <>
                   <Typography variant="caption" color="text.disabled">
                     ·
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     <GetEntityLink
-                      id={activity.entity_id}
+                      id={activity.entityId}
                       _entity_name={activity.model}
-                      name={entityName ?? activity.entity_id}
+                      name={entityName ?? activity.entityId}
                     />
                   </Typography>
                 </>
@@ -141,7 +141,7 @@ export const ActivityFeedItem = ({
                         id={activity.creator.id}
                         _entity_name="user"
                         name={
-                          activity.creator.display_name ||
+                          activity.creator.displayName ||
                           activity.creator.identifier
                         }
                       />
@@ -158,7 +158,7 @@ export const ActivityFeedItem = ({
               whiteSpace="nowrap"
             >
               <RelativeTime
-                date={activity.created_at}
+                date={activity.createdAt}
                 sx={{ fontSize: "0.75rem", display: "flex" }}
               />
             </Typography>

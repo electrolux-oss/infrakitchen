@@ -13,18 +13,22 @@ export interface FavoriteResource
   [key: string]: any;
 }
 
-export interface ActivityLogEntry extends Omit<IkEntity, "creator" | "status"> {
+export interface ActivityLogEntry {
   id: string;
   action: string;
   creator?: {
     id: string;
     identifier: string;
-    display_name?: string;
-  };
+    displayName?: string;
+  } | null;
   model: string;
-  entity_id: string;
-  created_at: string | Date;
-  status: "success" | "failure" | "pending";
+  entityId: string;
+  createdAt: string | Date;
+  entityData?: {
+    name?: string;
+    status?: string;
+  };
+  status?: "success" | "failure" | "pending";
   [key: string]: any;
 }
 

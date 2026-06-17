@@ -75,8 +75,8 @@ export const RecentActivityWidget = ({
                 <ActivityFeedItem
                   key={activity.id}
                   activity={activity}
-                  entityName={activity.entity_data?.name}
-                  entityStatus={activity.entity_data?.status}
+                  entityName={activity.entityData?.name}
+                  entityStatus={activity.entityData?.status}
                 />
               );
             })}

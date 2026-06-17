@@ -41,9 +41,9 @@ export const RevisionTimelines = ({
     const result: [string, AuditLogEntity[]][] = [];
     const map = new Map<string, AuditLogEntity[]>();
     for (const log of filteredLogs) {
-      // Falls back to "v1" when revision_number is not available
-      const revision = log.revision_number
-        ? `v${log.revision_number}`
+      // Falls back to "v1" when revisionNumber is not available
+      const revision = log.revisionNumber
+        ? `v${log.revisionNumber}`
         : "No revision";
       if (!map.has(revision)) {
         const arr: AuditLogEntity[] = [];

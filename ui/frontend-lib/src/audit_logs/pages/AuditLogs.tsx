@@ -7,11 +7,7 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
-import {
-  AUDIT_LOG_ACTIONS_QUERY,
-  AUDIT_LOG_FIELD_MAP,
-  transformAuditLog,
-} from "../graphql";
+import { AUDIT_LOG_ACTIONS_QUERY, AUDIT_LOG_FIELD_MAP } from "../graphql";
 
 export const AuditLogsPage = () => {
   const { ikApi } = useConfig();
@@ -54,19 +50,20 @@ export const AuditLogsPage = () => {
   const columns = useMemo(
     () => [
       {
-        field: "entity_id",
-        fetchFields: ["model", "entity_id", "entity_data"],
+        field: "entityId",
+        fetchFields: ["model", "entityId", "entityData"],
         headerName: "Entity",
         flex: 1,
         sortable: true,
+        sortField: "entity_id",
         hideable: false,
         valueGetter: (value: string) => value,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.entity_id}
+              id={params.row.entityId}
               _entity_name={params.row.model}
-              name={params.row.entity_data?.name ?? params.row.model}
+              name={params.row.entityData?.name ?? params.row.model}
             />
           );
         },
@@ -84,7 +81,7 @@ export const AuditLogsPage = () => {
               <GetEntityLink
                 id={creator.id}
                 _entity_name="user"
-                name={creator.display_name || creator.identifier}
+                name={creator.identifier}
               />
             );
           }
@@ -104,9 +101,10 @@ export const AuditLogsPage = () => {
         renderCell: (params: GridRenderCellParams) => params.value,
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Time",
         flex: 1,
+        sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
@@ -125,7 +123,6 @@ export const AuditLogsPage = () => {
         entityName="auditLog"
         columns={columns}
         entityFieldMap={AUDIT_LOG_FIELD_MAP}
-        transformFn={transformAuditLog}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

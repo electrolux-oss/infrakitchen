@@ -58,12 +58,7 @@ export interface LogEntity {
   _entity_name: "log";
 }
 
-export interface AuditLogEntity extends IkEntity {
-  model: string;
-  entity_id: string;
-  action: string;
-  revision_number?: number;
-}
+export type { GqlAuditLog as AuditLogEntity } from "./audit_logs/graphql";
 
 export type ValidationRuleTargetType = "string" | "number";
 

@@ -109,6 +109,7 @@ const SecretCreatePageInner = () => {
           ...data.configuration,
           secret_provider: data.secretProvider,
         },
+        integrationId: data.integrationId || null, // Ensure we send null if no integration is selected
       };
 
       try {

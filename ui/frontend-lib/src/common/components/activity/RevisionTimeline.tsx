@@ -37,15 +37,15 @@ export const RevisionTimeline = ({
           color="primary"
           variant="outlined"
           sx={{
-            cursor: logs[0].revision_number ? "pointer" : "default",
+            cursor: logs[0].revisionNumber ? "pointer" : "default",
           }}
           onClick={() => {
-            if (logs[0].revision_number && onRevisionClick) {
-              onRevisionClick(logs[0].revision_number);
+            if (logs[0].revisionNumber && onRevisionClick) {
+              onRevisionClick(logs[0].revisionNumber);
             }
           }}
         />
-        <RelativeTime date={logs[0].created_at} sx={{ fontSize: "0.75rem" }} />
+        <RelativeTime date={logs[0].createdAt} sx={{ fontSize: "0.75rem" }} />
       </Stack>
       <Box sx={{ mt: 3 }}>
         <HorizontalTimeline
@@ -56,8 +56,10 @@ export const RevisionTimeline = ({
                 {log.action}
               </Typography>
               <RelativeTime
-                date={log.created_at}
-                user={log.creator}
+                date={log.createdAt}
+                user={
+                  log.creator ? { ...log.creator, _entity_name: "user" } : null
+                }
                 sx={{ fontSize: "0.7rem" }}
               />
               {actionsWithLogs.includes(log.action) && (
