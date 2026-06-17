@@ -53,6 +53,7 @@ async def get_all(
     "/auth_providers",
     response_model=AuthProviderResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,
@@ -72,6 +73,7 @@ async def post(
     "/auth_providers/{auth_provider_id}",
     response_model=AuthProviderResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -88,7 +90,7 @@ async def update(
     return entity
 
 
-@router.delete("/auth_providers/{auth_provider_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/auth_providers/{auth_provider_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(
     request: Request, auth_provider_id: str, service: AuthProviderService = Depends(get_auth_provider_service)
 ):

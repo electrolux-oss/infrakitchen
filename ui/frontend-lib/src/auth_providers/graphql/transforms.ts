@@ -55,12 +55,12 @@ export function transformAuthProvider(
     name: gql.name,
     description: gql.description ?? "",
     enabled: gql.enabled,
-    auth_provider: gql.authProvider as AuthProviderResponse["auth_provider"],
+    authProvider: gql.authProvider as AuthProviderResponse["authProvider"],
     configuration: gql.configuration ?? {},
-    filter_by_domain: gql.filterByDomain ?? [],
+    filterByDomain: gql.filterByDomain ?? [],
     creator: transformUserShort(gql.creator),
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     _entity_name: "auth_provider",
   };
 }
@@ -73,15 +73,15 @@ export function transformAuthProviderOptional(
     name: gql.name,
     description: gql.description ?? undefined,
     enabled: gql.enabled,
-    auth_provider: gql.authProvider as
-      | AuthProviderResponse["auth_provider"]
+    authProvider: gql.authProvider as
+      | AuthProviderResponse["authProvider"]
       | undefined,
     configuration: gql.configuration ?? undefined,
-    filter_by_domain: gql.filterByDomain ?? undefined,
+    filterByDomain: gql.filterByDomain ?? undefined,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator) : undefined,
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     _entity_name: "auth_provider",
   };
 }

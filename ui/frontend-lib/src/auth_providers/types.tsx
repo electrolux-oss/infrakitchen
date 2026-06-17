@@ -6,12 +6,12 @@ export interface AuthProviderShort {
 }
 
 export interface AuthProviderResponse extends AuthProviderShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   creator: UserShort | null;
   description: string;
   enabled: boolean;
-  auth_provider:
+  authProvider:
     | "microsoft"
     | "guest"
     | "github"
@@ -19,7 +19,7 @@ export interface AuthProviderResponse extends AuthProviderShort {
     | "backstage"
     | "ik_service_account";
   configuration: object;
-  filter_by_domain: string[];
+  filterByDomain: string[];
   _entity_name: string;
 }
 
@@ -29,7 +29,7 @@ export interface AuthProviderCreate {
   name: string;
   description: string;
   configuration: object;
-  auth_provider:
+  authProvider:
     | "microsoft"
     | "guest"
     | "github"
@@ -37,7 +37,7 @@ export interface AuthProviderCreate {
     | "backstage"
     | "ik_service_account"
     | "";
-  filter_by_domain: string[];
+  filterByDomain: string[];
   enabled: boolean;
 }
 
@@ -45,6 +45,6 @@ export interface AuthProviderUpdate {
   name: string;
   description: string;
   configuration: object;
-  filter_by_domain: string[];
+  filterByDomain: string[];
   enabled: boolean;
 }

@@ -42,9 +42,10 @@ export const AuthProvidersPage = () => {
         flex: 1,
       },
       {
-        field: "auth_provider",
+        field: "authProvider",
         headerName: "Provider",
         flex: 1,
+        sortField: "auth_provider",
         renderCell: (params: GridRenderCellParams) => (
           <Box display="flex" alignItems="center" height="100%">
             {getProviderValue(params.value)}
@@ -59,9 +60,10 @@ export const AuthProvidersPage = () => {
           getBooleanLabel(params.row.enabled),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
+        sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}

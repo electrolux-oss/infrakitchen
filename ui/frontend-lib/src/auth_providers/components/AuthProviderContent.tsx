@@ -18,7 +18,7 @@ export const AuthProviderContent = () => {
   const tabs: TabDefinition[] = [
     {
       label: "Configuration",
-      content: <AuthProviderConfiguration auth_provider={entity} />,
+      content: <AuthProviderConfiguration authProvider={entity} />,
     },
     {
       label: "Audit",

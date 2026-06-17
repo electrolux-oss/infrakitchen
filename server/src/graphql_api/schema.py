@@ -3,6 +3,7 @@ from graphql_api.extensions import GraphQLFailureFlagExtension
 
 from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
+from graphql_api.modules.auth_provider.mutations import AuthProviderMutation
 from graphql_api.modules.audit_log.queries import AuditLogQuery
 from graphql_api.modules.event.subscriptions import EventSubscription
 from graphql_api.modules.log.subscriptions import LogSubscription
@@ -86,6 +87,7 @@ class Query(
 @strawberry.type
 class Mutation(
     AuthMutation,
+    AuthProviderMutation,
     SlackMutation,
     UserMutation,
     NotificationMutation,

@@ -15,7 +15,7 @@ export const AuthProviderPage = () => {
       entityFields={AUTH_PROVIDER_FIELDS}
       transformFn={transformAuthProvider}
     >
-      <EntityContainer title={"Auth Provider Overview"}>
+      <EntityContainer title={"Auth Provider Overview"} hideEditAction>
         <AuthProviderContent />
       </EntityContainer>
     </EntityProvider>

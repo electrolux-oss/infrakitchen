@@ -61,15 +61,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/auth_providers/:auth_provider_id/edit",
-    Component: lz(
-      () => import("./auth_providers/pages/AuthProviderEdit"),
-      "AuthProviderEditPage",
-    ),
-    requiredPermission: "api:auth_provider",
-    permissionAction: "write",
-  },
-  {
     path: "/auth_providers/:auth_provider_id/:tab?",
     Component: lz(
       () => import("./auth_providers/pages/AuthProvider"),

@@ -334,7 +334,7 @@ class TestUpdate:
         monkeypatch,
         mocked_user_response,
     ):
-        auth_provider_update = AuthProviderUpdate(enabled=True)
+        auth_provider_update = AuthProviderUpdate(enabled=True, description="Updated description")
         existing_auth_provider = auth_provider
         mock_auth_provider_crud.get_by_id.return_value = existing_auth_provider
 

@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from typing import Annotated, Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from core.users.schema import UserShort
 from ..models.encrypted_secret import EncryptedSecretStr
@@ -123,3 +123,12 @@ class AuthProviderUpdate(BaseModel):
             Field(discriminator="auth_provider"),
         ]
     ) = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in AuthProviderUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Workspace update.")
+        return values
