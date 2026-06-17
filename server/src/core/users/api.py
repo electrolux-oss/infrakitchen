@@ -52,6 +52,7 @@ async def get_all(
     "/users",
     response_model=UserResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: UserCreate, service: UserService = Depends(get_user_service)):
     requester = request.state.user
@@ -59,7 +60,7 @@ async def post(request: Request, body: UserCreate, service: UserService = Depend
     if await user_is_super_admin(requester) is False:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    entity = await service.create(user=body, requester=requester)
+    entity = await service.create_user(user=body, requester=requester)
 
     return entity
 
@@ -68,6 +69,7 @@ async def post(request: Request, body: UserCreate, service: UserService = Depend
     "/users/{user_id}",
     response_model=UserResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -99,6 +101,7 @@ async def get_actions(request: Request, user_id: str, service: UserService = Dep
     "/users/{primary_user_id}/link/{secondary_user_id}",
     response_model=UserResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def link_accounts(
     request: Request,
@@ -120,6 +123,7 @@ async def link_accounts(
     "/users/{primary_user_id}/link/{secondary_user_id}",
     response_model=UserResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def unlink_accounts(
     request: Request,

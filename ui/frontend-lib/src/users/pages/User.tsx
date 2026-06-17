@@ -15,7 +15,7 @@ export const UserPage = () => {
       transformFn={transformUser}
       entityFields={USER_FIELDS}
     >
-      <EntityContainer title={"User Overview"}>
+      <EntityContainer title={"User Overview"} hideEditAction>
         <UserContent />
       </EntityContainer>
     </EntityProvider>

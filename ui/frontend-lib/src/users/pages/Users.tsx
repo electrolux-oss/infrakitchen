@@ -58,7 +58,7 @@ export const UsersPage = () => {
         },
       },
       {
-        field: "display_name",
+        field: "displayName",
         headerName: "Display Name",
         flex: 1,
       },
@@ -91,7 +91,7 @@ export const UsersPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -102,7 +102,7 @@ export const UsersPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -118,12 +118,12 @@ export const UsersPage = () => {
         flex: 1,
       },
       {
-        field: "first_name",
+        field: "firstName",
         headerName: "First Name",
         flex: 1,
       },
       {
-        field: "last_name",
+        field: "lastName",
         headerName: "Last Name",
         flex: 1,
       },
@@ -133,17 +133,17 @@ export const UsersPage = () => {
         flex: 1,
       },
       {
-        field: "is_primary",
+        field: "isPrimary",
         headerName: "Is Primary Account",
         flex: 1,
       },
       {
-        field: "secondary_accounts",
+        field: "secondaryAccounts",
         headerName: "Secondary Accounts",
         flex: 1,
         sortField: "primary_account.identifier",
         valueGetter: (_value: any, row: any) =>
-          (row.secondary_accounts || [])
+          (row.secondaryAccounts || [])
             .map((u: any) => u.identifier)
             .join(", "),
         renderCell: (params: GridRenderCellParams) => (
@@ -154,19 +154,19 @@ export const UsersPage = () => {
             alignItems="center"
             height="100%"
           >
-            {(params.row.secondary_accounts || []).map((u: any) => (
+            {(params.row.secondaryAccounts || []).map((u: any) => (
               <GetEntityLink key={u.id} {...u} />
             ))}
           </Box>
         ),
       },
       {
-        field: "primary_account",
+        field: "primaryAccount",
         headerName: "Primary Account (Link)",
         flex: 1,
         sortField: "primary_account.identifier",
         valueGetter: (_value: any, row: any) =>
-          (row.primary_account || []).map((u: any) => u.identifier).join(", "),
+          (row.primaryAccount || []).map((u: any) => u.identifier).join(", "),
         renderCell: (params: GridRenderCellParams) => (
           <Box
             display="flex"
@@ -175,7 +175,7 @@ export const UsersPage = () => {
             alignItems="center"
             height="100%"
           >
-            {(params.row.primary_account || []).map((u: any) => (
+            {(params.row.primaryAccount || []).map((u: any) => (
               <GetEntityLink key={u.id} {...u} />
             ))}
           </Box>
@@ -213,14 +213,14 @@ export const UsersPage = () => {
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{
-          updated_at: false,
+          updatedAt: false,
           description: false,
-          first_name: false,
-          last_name: false,
+          firstName: false,
+          lastName: false,
           deactivated: false,
-          is_primary: false,
-          secondary_accounts: false,
-          primary_account: false,
+          isPrimary: false,
+          secondaryAccounts: false,
+          primaryAccount: false,
         }}
       />
     </PageContainer>

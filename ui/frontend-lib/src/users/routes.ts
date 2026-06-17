@@ -1,6 +1,5 @@
 import { UserPage } from "./pages/User";
 import { UserCreatePage } from "./pages/UserCreate";
-import { UserEditPage } from "./pages/UserEdit";
 import { UsersPage } from "./pages/Users";
 
 export const usersRoutes = [
@@ -19,12 +18,6 @@ export const usersRoutes = [
   {
     path: UserCreatePage.path,
     Component: UserCreatePage,
-    requiredPermission: "api:user",
-    permissionAction: "write",
-  },
-  {
-    path: UserEditPage.path,
-    Component: UserEditPage,
     requiredPermission: "api:user",
     permissionAction: "write",
   },

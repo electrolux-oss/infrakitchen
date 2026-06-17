@@ -234,6 +234,15 @@ class IntegrationUpdate(BaseModel):
     labels: list[str] | None = Field(default=None)
     configuration: IntegrationConfigType | None = Field(default=None)
 
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None,) for field in IntegrationUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Integration update.")
+        return values
+
 
 class IntegrationShort(BaseModel):
     id: uuid.UUID

@@ -14,7 +14,8 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { UserCreate, UserResponse } from "../types";
+import { CREATE_USER_MUTATION } from "../graphql";
+import { UserCreate } from "../types";
 
 const UserCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -39,20 +40,19 @@ const UserCreatePageInner = () => {
         return;
       }
 
-      ikApi
-        .postRaw("users", data)
-        .then((response: UserResponse) => {
-          if (response.id) {
-            notify("User created successfully", "success");
-            navigate(`${linkPrefix}users/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        })
-        .finally(() => {
-          setSaving(false);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createUser: { id: string; identifier: string };
+        }>(CREATE_USER_MUTATION, { input: data });
+        if (response.createUser?.id) {
+          notify("User created successfully", "success");
+          navigate(`${linkPrefix}users/${response.createUser.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
     [ikApi, navigate, trigger, setSaving, linkPrefix],
   );

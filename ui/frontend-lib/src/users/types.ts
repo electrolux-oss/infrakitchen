@@ -6,21 +6,21 @@ export interface UserShort {
 }
 
 export interface UserMetadata {
-  slack_id?: string | null;
+  slackId?: string | null;
 }
 
 export interface UserResponse extends UserShort {
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   description: string;
   email: string;
-  first_name: string;
-  last_name: string;
-  display_name: string;
+  firstName: string;
+  lastName: string;
+  displayName: string;
   deactivated: boolean;
-  is_primary: boolean;
-  secondary_accounts?: UserShort[] | null;
-  primary_account?: UserShort[] | null;
+  isPrimary: boolean;
+  secondaryAccounts?: UserShort[] | null;
+  primaryAccount?: UserShort[] | null;
   provider: string;
   password?: string;
   meta?: UserMetadata | null;

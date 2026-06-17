@@ -82,13 +82,13 @@ class UserService:
 
         return UserDTO.model_validate(result)
 
-    async def create(self, user: UserCreate, requester: UserDTO) -> UserResponse:
+    async def create_user(self, user: UserCreate, requester: UserDTO) -> User:
         """
         Create a new user.
         Only ik_service_account provider is allowed.
         :param user: UserCreate to create
         :param requester: User who creates the user
-        :return: Created user
+        :return: ORM user entity
         """
         assert user.password, "Password is required"
         user_password = user.password.get_decrypted_value()
@@ -108,9 +108,12 @@ class UserService:
         new_user = await self.crud.create(body)
         result = await self.crud.get_by_id(new_user.id)
 
+        if not result:
+            raise ValueError("User could not be created")
+
         if self.audit_log_handler:
             await self.audit_log_handler.create_log(new_user.id, requester.id, ModelActions.CREATE)
-        return UserResponse.model_validate(result)
+        return result
 
     async def update_entity(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> User:
         """
@@ -177,7 +180,7 @@ class UserService:
 
     async def link_accounts(
         self, primary_user_id: str | UUID, secondary_user_id: str | UUID, requester: UserDTO
-    ) -> UserResponse:
+    ) -> User:
         """
         Link two user accounts together.
         :param primary_user_id: ID of the primary user
@@ -224,11 +227,11 @@ class UserService:
         if self.audit_log_handler:
             await self.audit_log_handler.create_log(primary_user.id, requester.id, "link_accounts")
 
-        return UserResponse.model_validate(primary_user)
+        return primary_user
 
     async def unlink_accounts(
         self, primary_user_id: str | UUID, secondary_user_id: str | UUID, requester: UserDTO
-    ) -> UserResponse:
+    ) -> User:
         """
         Unlink two user accounts.
         :param primary_user_id: ID of the primary user
@@ -276,4 +279,4 @@ class UserService:
             await self.audit_log_handler.create_log(primary_user.id, requester.id, "unlink_accounts")
             await self.audit_log_handler.create_log(secondary_user.id, requester.id, "unlink_accounts")
 
-        return UserResponse.model_validate(primary_user)
+        return primary_user
