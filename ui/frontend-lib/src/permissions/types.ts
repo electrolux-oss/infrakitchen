@@ -2,8 +2,8 @@ import { UserResponseOptional, UserShort } from "../users";
 
 export interface PermissionResponse {
   id: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   creator?: UserShort;
   ptype: string;
   v0: string | null;
@@ -13,26 +13,26 @@ export interface PermissionResponse {
   v4: string | null;
   v5: string | null;
   // custom fields
-  entity_data?: {
+  entityData?: {
     name?: string;
     id?: string;
     _entity_name?: string;
   };
-  user_data?: UserResponseOptional;
+  userData?: UserResponseOptional;
 }
 
 export interface EntityPolicyCreate {
   role?: string;
-  user_id?: string;
-  entity_id: string;
-  entity_name: string;
+  userId?: string;
+  entityId: string;
+  entityName: string;
   action: string;
-  inherits_children: boolean;
+  inheritsChildren: boolean;
 }
 
 export interface ResourceUserPolicyCreate {
-  resource_id: string;
-  user_id: string;
+  resourceId: string;
+  userId: string;
   action: string;
 }
 

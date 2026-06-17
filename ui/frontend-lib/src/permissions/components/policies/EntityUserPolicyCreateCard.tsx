@@ -15,12 +15,13 @@ import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSea
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity } from "../../../types";
+import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
 
 interface EntityUserPolicyCreateCardProps {
-  user_id?: string;
-  entity_name?: string;
-  entity_id?: string;
+  userId?: string;
+  entityName?: string;
+  entityId?: string;
   onClose?: () => void;
   formId?: string;
 }
@@ -34,13 +35,7 @@ const actions = [
 export const EntityUserPolicyCreateCard = (
   props: EntityUserPolicyCreateCardProps,
 ) => {
-  const {
-    user_id,
-    entity_name = "resource",
-    entity_id,
-    onClose,
-    formId,
-  } = props;
+  const { userId, entityName = "resource", entityId, onClose, formId } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -49,10 +44,10 @@ export const EntityUserPolicyCreateCard = (
   } = useForm<EntityPolicyCreate>({
     mode: "onChange",
     defaultValues: {
-      entity_name: entity_name,
-      entity_id: entity_id,
+      entityName: entityName,
+      entityId: entityId,
       action: "read",
-      user_id: user_id,
+      userId: userId,
     },
   });
 
@@ -65,7 +60,7 @@ export const EntityUserPolicyCreateCard = (
   const onSubmit = useCallback(
     async (data: EntityPolicyCreate) => {
       try {
-        if (!data.entity_id) {
+        if (!data.entityId) {
           notifyError(new Error("Resource is required for resource policy."));
           return;
         }
@@ -73,10 +68,12 @@ export const EntityUserPolicyCreateCard = (
           notifyError(new Error("Action is required for resource policy."));
           return;
         }
-        const response = await ikApi.postRaw("permissions/policy/entity", data);
-        if (response.id) {
+        const response = await ikApi.graphqlRequest<{
+          createEntityPolicy: { id: string; v1: string; v2: string };
+        }>(CREATE_ENTITY_POLICY_MUTATION, { input: data });
+        if (response.createEntityPolicy.id) {
           notify(
-            `Resource policy created successfully: ${response.v1} - ${response.v2}`,
+            `Resource policy created successfully: ${response.createEntityPolicy.v1} - ${response.createEntityPolicy.v2}`,
             "success",
           );
           onClose?.();
@@ -91,22 +88,22 @@ export const EntityUserPolicyCreateCard = (
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
-        {!entity_id && (
+        {!entityId && (
           <Controller
-            name="entity_id"
+            name="entityId"
             control={control}
             rules={{ required: "Resource is required" }}
             render={({ field }) => (
               <ReferenceSearchInput
                 {...field}
                 ikApi={ikApi}
-                entity_name={`${entity_name}s`}
+                entity_name={`${entityName}s`}
                 searchField="name"
                 showFields={["template.name", "name"]}
                 buffer={buffer}
                 setBuffer={setBuffer}
-                error={!!errors.entity_id}
-                helpertext={errors.entity_id ? errors.entity_id.message : ""}
+                error={!!errors.entityId}
+                helpertext={errors.entityId ? errors.entityId.message : ""}
                 value={field.value}
                 label="Select Resource"
                 sx={{ mb: 3 }}
@@ -114,9 +111,9 @@ export const EntityUserPolicyCreateCard = (
             )}
           />
         )}
-        {!user_id && (
+        {!userId && (
           <Controller
-            name="user_id"
+            name="userId"
             control={control}
             render={({ field }) => (
               <ReferenceSearchInput
@@ -125,8 +122,8 @@ export const EntityUserPolicyCreateCard = (
                 entity_name="users"
                 showFields={["identifier", "provider"]}
                 searchField="identifier"
-                error={!!errors.user_id}
-                helpertext={errors.user_id ? errors.user_id.message : ""}
+                error={!!errors.userId}
+                helpertext={errors.userId ? errors.userId.message : ""}
                 buffer={buffer}
                 setBuffer={setBuffer}
                 value={field.value}

@@ -31,6 +31,7 @@ from graphql_api.modules.executor.mutations import ExecutorMutation
 from graphql_api.modules.favorite.queries import FavoriteQuery
 from graphql_api.modules.favorite.mutations import FavoriteMutation
 from graphql_api.modules.permission.queries import PermissionQuery
+from graphql_api.modules.permission.mutations import PermissionMutation
 from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQuery
 from graphql_api.modules.revision.queries import RevisionQuery
 from graphql_api.modules.task.queries import TaskQuery
@@ -102,6 +103,7 @@ class Mutation(
     ExecutorMutation,
     FavoriteMutation,
     BatchOperationMutation,
+    PermissionMutation,
     WorkflowMutation,
     WorkspaceMutation,
 ):

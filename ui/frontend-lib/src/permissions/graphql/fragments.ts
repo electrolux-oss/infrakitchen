@@ -26,4 +26,7 @@ export const PERMISSION_FIELDS = `
 export const PERMISSION_FIELD_MAP: GraphqlFieldMap = {
   creator: `creator { ${PERMISSION_CREATOR_FIELDS} }`,
   user_data: `userData { ${PERMISSION_CREATOR_FIELDS} }`,
+  // entity_data: `entityData { id name _entity_name }`,
+  userData: `userData { ${PERMISSION_CREATOR_FIELDS} }`,
+  // entityData: `entityData { id name _entity_name }`,
 };

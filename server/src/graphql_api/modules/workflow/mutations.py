@@ -11,6 +11,7 @@ from application.workflows.schema import (
     WorkflowUpdate,
 )
 from application.workflows.service import WorkflowService
+from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
 from graphql_api.helpers import IsAuthenticated
@@ -49,6 +50,11 @@ class WorkflowUpdateInput:
     steps: list[WorkflowStepUpdateInput] | None = strawberry.UNSET
 
 
+@strawberry.input
+class WorkflowActionInput:
+    action: str
+
+
 def _build_service(info: Info) -> WorkflowService:
     session = info.context["session"]
     return get_workflow_service(session=session)
@@ -78,3 +84,21 @@ class WorkflowMutation:
 
         await service.delete(workflow_id=id, requester=requester)
         return True
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def workflow_action(self, info: Info, id: uuid.UUID, input: WorkflowActionInput) -> WorkflowType:
+        requester = info.context["request"].state.user
+        service = _build_service(info)
+
+        actions_list = [action.value for action in ModelActions]
+        if input.action not in actions_list:
+            raise ValueError("Invalid action")
+
+        if input.action not in await service.get_actions(workflow_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {input.action}")
+
+        return await service.patch_action(
+            workflow_id=id,
+            body=PatchBodyModel(action=input.action),
+            requester=requester,
+        )

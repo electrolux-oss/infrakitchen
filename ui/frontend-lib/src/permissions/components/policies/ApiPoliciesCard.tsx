@@ -30,22 +30,22 @@ export const ApiPoliciesCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "entity_data",
-        fetchFields: ["entity_data", "v1"],
+        field: "entityData",
+        fetchFields: ["entityData", "v1"],
         headerName: "Entity Name",
         flex: 1,
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          if (!params.row.entity_data) {
+          if (!params.row.entityData) {
             // API type policy
             return params.row.v1;
           }
           return (
             <GetEntityLink
-              id={params.row.entity_data?.id}
-              _entity_name={params.row.entity_data?._entity_name}
-              name={params.row.entity_data?.name}
+              id={params.row.entityData?.id}
+              _entity_name={params.row.entityData?._entity_name}
+              name={params.row.entityData?.name}
             />
           );
         },
@@ -64,7 +64,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

@@ -15,7 +15,7 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { PermissionResponse } from "../../permissions/types";
+import { CREATE_ROLE_MUTATION } from "../../permissions/graphql/mutations";
 import { IkEntity } from "../../types";
 import { RoleCreate } from "../types";
 
@@ -35,20 +35,24 @@ const RoleCreatePageInner = () => {
   );
 
   const handleSave = useCallback(
-    (data: RoleCreate) => {
-      ikApi
-        .postRaw(`permissions/role`, data)
-        .then((response: PermissionResponse) => {
-          if (response.id) {
-            notify(`Role created successfully: ${response.v1}`, "success");
-
-            navigate(`${linkPrefix}roles/${response.v1}`);
-            return response;
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
+    async (data: RoleCreate) => {
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createRole: { id: string; v1: string };
+        }>(CREATE_ROLE_MUTATION, {
+          input: {
+            userId: data.userId,
+            role: data.role,
+          },
         });
+        const createdRole = response.createRole;
+        if (createdRole.id) {
+          notify(`Role created successfully: ${createdRole.v1}`, "success");
+          navigate(`${linkPrefix}roles/${createdRole.v1}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      }
     },
     [ikApi, navigate, linkPrefix],
   );
@@ -106,7 +110,7 @@ const RoleCreatePageInner = () => {
               )}
             />
             <Controller
-              name="user_id"
+              name="userId"
               control={control}
               rules={{ required: "User is required" }}
               render={({ field }) => (
@@ -116,8 +120,8 @@ const RoleCreatePageInner = () => {
                   entity_name="users"
                   showFields={["identifier", "provider"]}
                   searchField="identifier"
-                  error={!!errors.user_id}
-                  helpertext={errors.user_id ? errors.user_id.message : ""}
+                  error={!!errors.userId}
+                  helpertext={errors.userId ? errors.userId.message : ""}
                   buffer={buffer}
                   setBuffer={setBuffer}
                   value={field.value}
@@ -137,7 +141,7 @@ const RoleCreatePage = () => {
   const form = useForm<RoleCreate>({
     defaultValues: {
       role: "",
-      user_id: "",
+      userId: "",
     },
     mode: "onChange",
   });

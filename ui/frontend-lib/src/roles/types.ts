@@ -1,6 +1,6 @@
 export interface RoleCreate {
   role: string;
-  user_id: string;
+  userId: string;
 }
 
 export interface User {

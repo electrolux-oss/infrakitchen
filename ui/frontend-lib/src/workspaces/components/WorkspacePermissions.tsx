@@ -10,8 +10,8 @@ export const WorkspacePermissions = ({
 }: WorkspacePermissionsProps) => {
   return (
     <EntityPoliciesTab
-      entity_id={workspace.id}
-      entity_name={workspace._entity_name}
+      entityId={workspace.id}
+      entityName={workspace._entity_name}
     />
   );
 };

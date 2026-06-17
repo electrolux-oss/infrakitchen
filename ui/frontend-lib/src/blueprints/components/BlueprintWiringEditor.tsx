@@ -9,6 +9,7 @@ import { WiringCanvas } from "../../common/components/viewers/Wiring/WiringCanva
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
 import { BlueprintResponse, BlueprintUpdateRequest } from "../types";
 
@@ -105,13 +106,13 @@ export const BlueprintWiringEditor = ({
       const constantWiring = allWiring.filter((w) =>
         constantIds.has(w.source_template_id),
       );
-      const payload = {
+      const input = {
         name: data.name,
         description: data.description,
-        template_ids: data.templateIds,
-        external_template_ids: form.externalTemplates.map((t) => t.id),
+        templateIds: data.templateIds,
+        externalTemplateIds: form.externalTemplates.map((t) => t.id),
         wiring: templateWiring,
-        default_variables: data.defaultVariables,
+        defaultVariables: data.defaultVariables,
         configuration: {
           ...data.configuration,
           constants: form.constants,
@@ -122,13 +123,15 @@ export const BlueprintWiringEditor = ({
 
       setSaving(true);
       try {
-        const response: BlueprintResponse = await ikApi.patchRaw(
-          `blueprints/${blueprint.id}`,
-          payload,
-        );
-        if (response.id) {
+        const response = await ikApi.graphqlRequest<{
+          updateBlueprint: { id: string };
+        }>(UPDATE_BLUEPRINT_MUTATION, {
+          id: blueprint.id,
+          input,
+        });
+        if (response.updateBlueprint.id) {
           notify("Blueprint updated successfully", "success");
-          refreshEntity?.(response);
+          refreshEntity?.();
           onClose();
         }
       } catch (error: any) {

@@ -15,8 +15,9 @@ import {
   Stack,
 } from "@mui/material";
 
-import { useConfig } from "../../common/context/ConfigContext";
+import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
+import { DELETE_PERMISSION_MUTATION } from "../graphql/mutations";
 
 interface DeletePermissionActionButtonProps {
   permission_id: string;
@@ -50,7 +51,10 @@ export const DeletePermissionButton = (
 
     setIsLoading(true);
     ikApi
-      .deleteRaw(`permissions/${permission_id}`, {})
+      .graphqlRequest<{ deletePermission: boolean }>(
+        DELETE_PERMISSION_MUTATION,
+        { id: permission_id },
+      )
       .then(() => {
         if (onDelete) {
           onDelete();

@@ -30,8 +30,8 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "entity_data",
-        fetchFields: ["entity_data", "v1"],
+        field: "entityData",
+        fetchFields: ["entityData", "v1"],
         headerName: "Entity Name",
         flex: 1,
         sortable: false,
@@ -39,9 +39,9 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.entity_data?.id}
-              _entity_name={params.row.entity_data?._entity_name}
-              name={params.row.entity_data?.name || params.row.v1}
+              id={params.row.entityData?.id}
+              _entity_name={params.row.entityData?._entity_name}
+              name={params.row.entityData?.name || params.row.v1}
             />
           );
         },
@@ -60,7 +60,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -123,7 +123,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           Add Resource Policy
         </Button>
         <RolePolicyEntityCreateDialog
-          role_name={role}
+          roleName={role}
           open={isDialogOpen}
           onClose={handleCloseDialog}
         />

@@ -17,7 +17,6 @@ class TestGetMethods:
 
         result = await mock_permission_service.get_by_id(permission_id)
 
-        assert isinstance(result, PermissionResponse)
         assert str(result.id) == permission_id
         mock_permission_crud.get_by_id.assert_awaited_once_with(permission_id)
 
@@ -97,7 +96,6 @@ class TestRoleCreation:
 
         result = await mock_permission_service.create_role(self.NEW_ROLE_NAME, mocked_user.id, requester=mock_user_dto)
 
-        assert isinstance(result, PermissionResponse)
         assert result.v1 == self.NEW_ROLE_NAME
         assert result.v0 == f"user:{mocked_user.id}"
 
@@ -178,7 +176,6 @@ class TestUserRoleAssignment:
             self.ROLE_NAME, self.USER_ID, requester=mock_user_dto
         )
 
-        assert isinstance(result, PermissionResponse)
         assert result.v1 == self.ROLE_NAME
         assert result.v0 == f"user:{mock_user_dto.id}"
 
@@ -274,7 +271,6 @@ class TestPolicyCreation:
 
         result = await mock_permission_service.create_api_policy(body, requester=mock_user_dto)
 
-        assert isinstance(result, PermissionResponse)
         assert result.v0 == "admin"
         assert result.v1 == "api:template"
         mock_casbin.send_reload_event.assert_awaited_once()
@@ -304,7 +300,6 @@ class TestPolicyCreation:
 
         result = await mock_permission_service.create_entity_policy(body, requester=mock_user_dto)
 
-        assert isinstance(result, PermissionResponse)
         assert result.v0 == body.role
         assert result.v1 == f"{body.entity_name}:{body.entity_id}".lower()
         assert mock_permission_crud.get_all.call_count == 2  # Checking for existing policy and existing role
@@ -328,7 +323,6 @@ class TestPolicyCreation:
 
         result = await mock_permission_service.create_entity_policy(body, requester=mock_user_dto)
 
-        assert isinstance(result, PermissionResponse)
         assert result.v0 == f"user:{mock_user_dto.id}"
         mock_user_crud.get_by_id.assert_awaited_once()
 

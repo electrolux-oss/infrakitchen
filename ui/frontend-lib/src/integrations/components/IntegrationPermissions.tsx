@@ -10,8 +10,8 @@ export const IntegrationPermissions = ({
 }: IntegrationPermissionsProps) => {
   return (
     <EntityPoliciesTab
-      entity_id={integration.id}
-      entity_name={integration._entity_name}
+      entityId={integration.id}
+      entityName={integration._entity_name}
     />
   );
 };

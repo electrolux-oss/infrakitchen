@@ -31,6 +31,11 @@ class BlueprintUpdateInput:
     name: str | None = None
     description: str | None = None
     labels: list[str] | None = None
+    template_ids: list[uuid.UUID] | None = None
+    external_template_ids: list[uuid.UUID] | None = None
+    wiring: JSON | None = None
+    default_variables: JSON | None = None
+    configuration: JSON | None = None
 
 
 @strawberry.input
@@ -57,6 +62,18 @@ class BlueprintMutation:
             raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
 
         return await service.update_blueprint(blueprint_id=str(id), blueprint=input.to_pydantic(), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def delete_blueprint(self, info: Info, id: uuid.UUID) -> bool:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_blueprint_service(session)
+
+        if ModelActions.DELETE not in await service.get_actions(blueprint_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.DELETE.value}")
+
+        await service.delete(blueprint_id=id, requester=requester)
+        return True
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def blueprint_action(self, info: Info, id: uuid.UUID, input: BlueprintActionInput) -> BlueprintType:

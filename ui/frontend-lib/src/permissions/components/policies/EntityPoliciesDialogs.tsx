@@ -8,8 +8,8 @@ import { EntityRolePolicyCreateCard } from "./EntityRolePoliciesCreateCard";
 import { EntityUserPolicyCreateCard } from "./EntityUserPolicyCreateCard";
 
 interface EntityPolicyRoleCreateDialogProps {
-  entity_id: string;
-  entity_name: string;
+  entityId: string;
+  entityName: string;
   open: boolean;
   onClose: () => void;
 }
@@ -36,7 +36,7 @@ export const EntityPolicyRoleCreateDialog = (
 };
 
 interface RolePolicyEntityCreateDialogProps {
-  role_name: string;
+  roleName: string;
   open: boolean;
   onClose: () => void;
 }
@@ -44,7 +44,7 @@ interface RolePolicyEntityCreateDialogProps {
 export const RolePolicyEntityCreateDialog = (
   props: RolePolicyEntityCreateDialogProps,
 ) => {
-  const { role_name, onClose, open } = props;
+  const { roleName, onClose, open } = props;
   const formId = useId();
 
   return (
@@ -59,7 +59,7 @@ export const RolePolicyEntityCreateDialog = (
       }
       content={
         <EntityRolePolicyCreateCard
-          role_name={role_name}
+          roleName={roleName}
           onClose={onClose}
           formId={formId}
         />
@@ -69,7 +69,7 @@ export const RolePolicyEntityCreateDialog = (
 };
 
 interface EntityPolicyUserCreateDialogProps {
-  user_id: string;
+  userId: string;
   open: boolean;
   onClose: () => void;
 }
@@ -77,7 +77,7 @@ interface EntityPolicyUserCreateDialogProps {
 export const EntityPolicyUserCreateDialog = (
   props: EntityPolicyUserCreateDialogProps,
 ) => {
-  const { user_id, onClose, open } = props;
+  const { userId, onClose, open } = props;
   const formId = useId();
 
   return (
@@ -92,7 +92,7 @@ export const EntityPolicyUserCreateDialog = (
       }
       content={
         <EntityUserPolicyCreateCard
-          user_id={user_id}
+          userId={userId}
           onClose={onClose}
           formId={formId}
         />
@@ -102,8 +102,8 @@ export const EntityPolicyUserCreateDialog = (
 };
 
 interface UserPolicyEntityCreateDialogProps {
-  entity_id: string;
-  entity_name: string;
+  entityId: string;
+  entityName: string;
   open: boolean;
   onClose: () => void;
 }
@@ -111,7 +111,7 @@ interface UserPolicyEntityCreateDialogProps {
 export const UserPolicyEntityCreateDialog = (
   props: UserPolicyEntityCreateDialogProps,
 ) => {
-  const { entity_name, entity_id, onClose, open } = props;
+  const { entityName, entityId, onClose, open } = props;
   const formId = useId();
 
   return (
@@ -126,8 +126,8 @@ export const UserPolicyEntityCreateDialog = (
       }
       content={
         <EntityUserPolicyCreateCard
-          entity_id={entity_id}
-          entity_name={entity_name}
+          entityId={entityId}
+          entityName={entityName}
           onClose={onClose}
           formId={formId}
         />

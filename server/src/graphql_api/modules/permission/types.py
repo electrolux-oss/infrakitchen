@@ -18,8 +18,13 @@ class PermissionType:
     __exclude__ = ["created_by"]
 
     id: uuid.UUID = strawberry.UNSET
+    ptype: str | None = None
     v0: str | None = None
     v1: str | None = None
+    v2: str | None = None
+    v3: str | None = None
+    v4: str | None = None
+    v5: str | None = None
     creator: UserType | None = None
 
     @strawberry.field

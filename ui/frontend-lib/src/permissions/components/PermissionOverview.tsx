@@ -39,15 +39,12 @@ export const PermissionOverview = ({ permission }: PermissionAboutProps) => {
       <CommonField
         name={"Created"}
         value={
-          <RelativeTime
-            date={permission.created_at}
-            user={permission.creator}
-          />
+          <RelativeTime date={permission.createdAt} user={permission.creator} />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={permission.updated_at} />}
+        value={<RelativeTime date={permission.updatedAt} />}
       />
     </OverviewCard>
   );

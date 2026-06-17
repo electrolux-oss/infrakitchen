@@ -9,21 +9,22 @@ import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSea
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity } from "../../../types";
+import { ASSIGN_USER_TO_ROLE_MUTATION } from "../../graphql/mutations";
 
 interface RoleCreateProps {
-  user_id?: string;
-  role_name?: string;
+  userId?: string;
+  roleName?: string;
   onClose?: () => void;
   formId?: string;
 }
 
 interface FormValues {
   role: string;
-  user_id: string;
+  userId: string;
 }
 
 export const AssignUserToRole = (props: RoleCreateProps) => {
-  const { user_id, role_name, onClose, formId } = props;
+  const { userId, roleName, onClose, formId } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -32,8 +33,8 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
   } = useForm<FormValues>({
     mode: "onChange",
     defaultValues: {
-      role: role_name || "",
-      user_id: user_id || "",
+      role: roleName || "",
+      userId: userId || "",
     },
   });
 
@@ -43,14 +44,20 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
 
   const onSubmit = useCallback(
     (data: any) => {
-      if (!data["role"] || !data["user_id"]) {
+      if (!data["role"] || !data["userId"]) {
         notifyError(new Error("Both Role and User must be selected."));
         return;
       }
       ikApi
-        .postRaw(`permissions/role/${data["role"]}/${data["user_id"]}`, {})
-        .then((response: { id: string }) => {
-          if (response.id) {
+        .graphqlRequest<{ assignUserToRole: { id: string } }>(
+          ASSIGN_USER_TO_ROLE_MUTATION,
+          {
+            roleId: data["role"],
+            userId: data["userId"],
+          },
+        )
+        .then((response) => {
+          if (response.assignUserToRole.id) {
             notify(`Role assigned successfully`, "success");
             onClose?.();
 
@@ -70,7 +77,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
   return (
     <Box sx={{ width: "50%" }}>
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
-        {user_id && (
+        {userId && (
           <Controller
             name="role"
             control={control}
@@ -91,9 +98,9 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
             )}
           />
         )}
-        {role_name && (
+        {roleName && (
           <Controller
-            name="user_id"
+            name="userId"
             control={control}
             render={({ field }) => (
               <ReferenceSearchInput
@@ -102,8 +109,8 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
                 entity_name="users"
                 showFields={["identifier", "provider"]}
                 searchField="identifier"
-                error={!!errors.user_id}
-                helpertext={errors.user_id ? errors.user_id.message : ""}
+                error={!!errors.userId}
+                helpertext={errors.userId ? errors.userId.message : ""}
                 buffer={buffer}
                 setBuffer={setBuffer}
                 value={field.value}
@@ -118,14 +125,14 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
 };
 
 interface UserRoleCreateProps {
-  user_id?: string;
-  role_name?: string;
+  userId?: string;
+  roleName?: string;
   open: boolean;
   onClose: () => void;
 }
 
 export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
-  const { user_id, role_name, onClose, open } = props;
+  const { userId, roleName, onClose, open } = props;
   const formId = useId();
 
   return (
@@ -140,8 +147,8 @@ export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
       }
       content={
         <AssignUserToRole
-          user_id={user_id}
-          role_name={role_name}
+          userId={userId}
+          roleName={roleName}
           onClose={onClose}
           formId={formId}
         />

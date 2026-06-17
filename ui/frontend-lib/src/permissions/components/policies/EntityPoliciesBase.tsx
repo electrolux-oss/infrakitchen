@@ -20,13 +20,13 @@ import {
 } from "./EntityPoliciesDialogs";
 
 interface EntityPoliciesBaseProps {
-  entity_id: string;
-  entity_name: string;
+  entityId: string;
+  entityName: string;
 }
 
 export const EntityPoliciesBase = ({
-  entity_id,
-  entity_name = "resource",
+  entityId,
+  entityName = "resource",
 }: EntityPoliciesBaseProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
@@ -74,7 +74,7 @@ export const EntityPoliciesBase = ({
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -127,8 +127,8 @@ export const EntityPoliciesBase = ({
           Add Role
         </Button>
         <EntityPolicyRoleCreateDialog
-          entity_id={entity_id}
-          entity_name={entity_name}
+          entityId={entityId}
+          entityName={entityName}
           open={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
         />
@@ -140,16 +140,16 @@ export const EntityPoliciesBase = ({
           Add User
         </Button>
         <UserPolicyEntityCreateDialog
-          entity_id={entity_id}
-          entity_name={entity_name}
+          entityId={entityId}
+          entityName={entityName}
           open={isUserDialogOpen}
           onClose={() => setIsUserDialogOpen(false)}
         />
       </PermissionWrapper>
       <EntityFetchTable
-        title={`${capitalizeFirstLetter(entity_name)} Policies`}
+        title={`${capitalizeFirstLetter(entityName)} Policies`}
         entityName="permission"
-        defaultFilter={{ ptype: "p", v1: `${entity_name}:${entity_id}` }}
+        defaultFilter={{ ptype: "p", v1: `${entityName}:${entityId}` }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
         transformFn={transformPermission}

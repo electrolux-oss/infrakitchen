@@ -123,6 +123,7 @@ async def perform_action(
 @router.delete(
     "/blueprints/{blueprint_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(request: Request, blueprint_id: str, service: BlueprintService = Depends(get_blueprint_service)):
     requester: UserDTO = request.state.user

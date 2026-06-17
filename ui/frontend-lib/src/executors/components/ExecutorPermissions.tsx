@@ -8,8 +8,8 @@ export interface AdvancedSettingsProps {
 export const ExecutorPermissions = ({ executor }: AdvancedSettingsProps) => {
   return (
     <EntityPoliciesTab
-      entity_id={executor.id}
-      entity_name={executor._entity_name}
+      entityId={executor.id}
+      entityName={executor._entity_name}
     />
   );
 };
