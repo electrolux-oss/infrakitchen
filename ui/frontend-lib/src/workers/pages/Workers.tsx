@@ -8,7 +8,7 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformWorker, WORKER_FIELD_MAP } from "../graphql";
+import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
 // same as the one in the original code.
@@ -30,7 +30,7 @@ const flattenObject = (object: any) => {
 };
 
 const HostInfoField = {
-  field: "host_metadata",
+  field: "hostMetadata",
   sortable: false,
   headerName: "Host info",
   flex: 2,
@@ -95,7 +95,7 @@ export default function WorkerList() {
 
       { field: "host", headerName: "Host", flex: 1 },
       {
-        field: "current_task",
+        field: "currentTask",
         headerName: "Last Task",
         flex: 2,
         sortable: false,
@@ -107,6 +107,7 @@ export default function WorkerList() {
               </Typography>
             );
           }
+          // current_task is a free-form JSON blob stored with snake_case keys.
           const { entity, entity_id, action, user, started_at } = params.value;
           const label = `${entity} / ${action}`;
           return (
@@ -130,17 +131,19 @@ export default function WorkerList() {
         },
       },
       {
-        field: "tasks_completed",
+        field: "tasksCompleted",
         headerName: "Completed",
         flex: 0.5,
+        sortField: "tasks_completed",
         renderCell: (params: GridRenderCellParams) => (
           <Typography variant="body2">{params.value ?? 0}</Typography>
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
+        sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
@@ -152,9 +155,10 @@ export default function WorkerList() {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
+        sortField: "updated_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
@@ -177,7 +181,6 @@ export default function WorkerList() {
         entityName="worker"
         columns={columns}
         entityFieldMap={WORKER_FIELD_MAP}
-        transformFn={transformWorker}
       />
     </PageContainer>
   );
