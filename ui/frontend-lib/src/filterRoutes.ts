@@ -172,15 +172,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/executors/:executor_id/edit",
-    Component: lz(
-      () => import("./executors/pages/ExecutorEdit"),
-      "ExecutorEditPage",
-    ),
-    requiredPermission: "api:executor",
-    permissionAction: "read",
-  },
-  {
     path: "/executors/:executor_id/:tab?",
     Component: lz(() => import("./executors/pages/Executor"), "ExecutorPage"),
     requiredPermission: "api:executor",

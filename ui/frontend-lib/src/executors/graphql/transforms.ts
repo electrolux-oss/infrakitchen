@@ -44,27 +44,27 @@ export function transformExecutor(gql: GqlExecutor): ExecutorResponse {
   return {
     id: gql.id,
     name: gql.name,
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     state: gql.state,
     status: gql.status,
     description: gql.description ?? "",
-    command_args: gql.commandArgs ?? "",
+    commandArgs: gql.commandArgs ?? "",
     runtime: gql.runtime ?? "",
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     creator: transformUserShort(gql.creator),
-    integration_ids: (gql.integrationIds ?? []).map(
+    integrationIds: (gql.integrationIds ?? []).map(
       transformIntegrationShort,
-    ) as ExecutorResponse["integration_ids"],
-    secret_ids: (gql.secretIds ?? []).map(transformSecretShort),
+    ) as ExecutorResponse["integrationIds"],
+    secretIds: (gql.secretIds ?? []).map(transformSecretShort),
     storage: gql.storage ? transformStorageShort(gql.storage) : null,
-    source_code: gql.sourceCode
+    sourceCode: gql.sourceCode
       ? transformSourceCodeShort(gql.sourceCode)
       : null,
-    source_code_branch: gql.sourceCodeBranch,
-    source_code_version: gql.sourceCodeVersion,
-    source_code_folder: gql.sourceCodeFolder ?? "",
-    storage_path: gql.storagePath,
+    sourceCodeBranch: gql.sourceCodeBranch,
+    sourceCodeVersion: gql.sourceCodeVersion,
+    sourceCodeFolder: gql.sourceCodeFolder ?? "",
+    storagePath: gql.storagePath,
     labels: gql.labels ?? [],
     isFavorite: gql.isFavorite,
     _entity_name: "executor",
@@ -77,22 +77,22 @@ export function transformExecutorOptional(
   return {
     id: gql.id,
     name: gql.name,
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     state: gql.state,
     status: gql.status,
     description: gql.description ?? undefined,
-    command_args: gql.commandArgs ?? undefined,
+    commandArgs: gql.commandArgs ?? undefined,
     runtime: gql.runtime ?? undefined,
-    revision_number: gql.revisionNumber,
+    revisionNumber: gql.revisionNumber,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator) : undefined,
-    integration_ids: gql.integrationIds
+    integrationIds: gql.integrationIds
       ? (gql.integrationIds.map(
           transformIntegrationShort,
-        ) as ExecutorResponse["integration_ids"])
+        ) as ExecutorResponse["integrationIds"])
       : undefined,
-    secret_ids: gql.secretIds
+    secretIds: gql.secretIds
       ? gql.secretIds.map(transformSecretShort)
       : undefined,
     storage:
@@ -101,16 +101,16 @@ export function transformExecutorOptional(
           ? transformStorageShort(gql.storage)
           : null
         : undefined,
-    source_code:
+    sourceCode:
       gql.sourceCode !== undefined
         ? gql.sourceCode
           ? transformSourceCodeShort(gql.sourceCode)
           : null
         : undefined,
-    source_code_branch: gql.sourceCodeBranch,
-    source_code_version: gql.sourceCodeVersion,
-    source_code_folder: gql.sourceCodeFolder ?? undefined,
-    storage_path: gql.storagePath,
+    sourceCodeBranch: gql.sourceCodeBranch,
+    sourceCodeVersion: gql.sourceCodeVersion,
+    sourceCodeFolder: gql.sourceCodeFolder ?? undefined,
+    storagePath: gql.storagePath,
     labels: gql.labels ?? undefined,
     isFavorite: gql.isFavorite,
     _entity_name: "executor",

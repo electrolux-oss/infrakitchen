@@ -66,18 +66,18 @@ export const ExecutorsPage = () => {
         },
       },
       {
-        field: "source_code",
+        field: "sourceCode",
         headerName: "Code Repository",
         flex: 1,
         sortField: "source_code.source_code_url",
         valueGetter: (_value: any, row: any) =>
-          row.source_code?.identifier || "",
+          row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code;
+          const sourceCodeVersion = params.row.sourceCode;
           return (
             <GetEntityLink
               {...sourceCodeVersion}
-              name={getRepoNameFromUrl(params.row.source_code?.sourceCodeUrl)}
+              name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
             />
           );
         },
@@ -96,7 +96,7 @@ export const ExecutorsPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -107,7 +107,7 @@ export const ExecutorsPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

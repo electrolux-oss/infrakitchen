@@ -16,7 +16,7 @@ export const ExecutorPage = () => {
       transformFn={transformExecutor}
       entityFields={EXECUTOR_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Executor Overview"}>
+      <EntityContainer title={"Executor Overview"} hideEditAction>
         <ExecutorContent />
         <LogLiveTail />
       </EntityContainer>

@@ -77,6 +77,7 @@ async def get_all(
     "/executors",
     response_model=ExecutorResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: ExecutorCreate, service: ExecutorService = Depends(get_executor_service)):
     requester: UserDTO | None = request.state.user
@@ -93,6 +94,7 @@ async def post(request: Request, body: ExecutorCreate, service: ExecutorService 
     "/executors/{executor_id}",
     response_model=ExecutorResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -107,7 +109,12 @@ async def update(
     return entity
 
 
-@router.patch("/executors/{executor_id}/actions", response_model=ExecutorResponse, status_code=http_status.HTTP_200_OK)
+@router.patch(
+    "/executors/{executor_id}/actions",
+    response_model=ExecutorResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
+)
 async def patch_action(
     request: Request,
     executor_id: str,
@@ -127,7 +134,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/executors/{executor_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/executors/{executor_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, executor_id: str, service: ExecutorService = Depends(get_executor_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(executor_id=executor_id, requester=requester):

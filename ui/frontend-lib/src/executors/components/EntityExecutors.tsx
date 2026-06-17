@@ -26,13 +26,13 @@ const columns = [
     },
   },
   {
-    field: "source_code",
+    field: "sourceCode",
     headerName: "Code Repository",
     flex: 1,
     sortField: "source_code.source_code_url",
-    valueGetter: (_value: any, row: any) => row.source_code?.identifier || "",
+    valueGetter: (_value: any, row: any) => row.sourceCode?.identifier || "",
     renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row.source_code;
+      const sourceCode = params.row.sourceCode;
       if (!sourceCode) return null;
       return (
         <GetEntityLink
@@ -56,7 +56,7 @@ const columns = [
     ),
   },
   {
-    field: "created_at",
+    field: "createdAt",
     headerName: "Created",
     flex: 1,
     renderCell: (params: GridRenderCellParams) => (

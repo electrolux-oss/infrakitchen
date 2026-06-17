@@ -24,6 +24,7 @@ from graphql_api.modules.secret.mutations import SecretMutation
 from graphql_api.modules.storage.queries import StorageQuery
 from graphql_api.modules.storage.mutations import StorageMutation
 from graphql_api.modules.executor.queries import ExecutorQuery
+from graphql_api.modules.executor.mutations import ExecutorMutation
 from graphql_api.modules.favorite.queries import FavoriteQuery
 from graphql_api.modules.favorite.mutations import FavoriteMutation
 from graphql_api.modules.permission.queries import PermissionQuery
@@ -91,6 +92,7 @@ class Mutation(
     SourceCodeVersionMutation,
     StorageMutation,
     SecretMutation,
+    ExecutorMutation,
     FavoriteMutation,
 ):
     pass

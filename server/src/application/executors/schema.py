@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from typing import Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from application.secrets.schema import SecretShort
 from application.source_codes.schema import SourceCodeShort
@@ -123,19 +123,19 @@ class ExecutorCreate(BaseModel):
 
 
 class ExecutorUpdate(BaseModel):
-    description: str | None = Field(default="")
-    command_args: str = Field(default="")
-    integration_ids: list[uuid.UUID] = Field(
-        default=[],
+    description: str | None = Field(default=None)
+    command_args: str | None = Field(default=None)
+    integration_ids: list[uuid.UUID] | None = Field(
+        default=None,
     )
-    secret_ids: list[uuid.UUID] = Field(
-        default=[],
+    secret_ids: list[uuid.UUID] | None = Field(
+        default=None,
     )
-    source_code_id: uuid.UUID = Field(...)
+    source_code_id: uuid.UUID | None = Field(default=None)
     source_code_version: str | None = Field(default=None)
     source_code_branch: str | None = Field(default=None)
-    source_code_folder: str = Field(...)
-    labels: list[str] = Field(default_factory=list)
+    source_code_folder: str | None = Field(default=None)
+    labels: list[str] | None = Field(default=None)
 
     # critical change, as changing storage may cause issues with existing resources
     storage_id: uuid.UUID | StorageShort | None = Field(
@@ -144,6 +144,19 @@ class ExecutorUpdate(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in ExecutorUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Executor update.")
+        return values
 
 
 class RoleExecutorsResponse(BaseModel):

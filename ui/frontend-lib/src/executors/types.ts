@@ -7,30 +7,30 @@ import { UserShort } from "../users";
 export interface ExecutorShort {
   id: string;
   name: string;
-  source_code: SourceCodeShort;
+  sourceCode: SourceCodeShort;
   _entity_name: string;
 }
 
 export interface ExecutorResponse {
   id: string;
   name: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   state: string;
   status: string;
   description: string;
-  command_args: string;
+  commandArgs: string;
   runtime: string;
-  revision_number: number;
+  revisionNumber: number;
   creator: UserShort | null;
-  integration_ids: IntegrationShort[];
-  secret_ids: SecretShort[];
+  integrationIds: IntegrationShort[];
+  secretIds: SecretShort[];
   storage: StorageShort | null;
-  source_code: SourceCodeShort | null;
-  source_code_branch: string | null;
-  source_code_version: string | null;
-  source_code_folder: string;
-  storage_path: string | null;
+  sourceCode: SourceCodeShort | null;
+  sourceCodeBranch: string | null;
+  sourceCodeVersion: string | null;
+  sourceCodeFolder: string;
+  storagePath: string | null;
   labels: string[];
   isFavorite?: boolean;
   _entity_name: string;
@@ -41,29 +41,29 @@ export type ExecutorResponseOptional = Partial<ExecutorResponse>;
 export interface ExecutorCreate {
   name: string;
   description: string;
-  command_args: string;
+  commandArgs: string;
   runtime: string;
-  storage_id: string | null;
-  source_code_id: string;
-  source_code_branch?: string;
-  source_code_version?: string;
-  source_code_folder: string;
-  integration_ids: string[];
-  secret_ids: string[];
-  storage_path: string | null;
+  storageId: string | null;
+  sourceCodeId: string;
+  sourceCodeBranch?: string;
+  sourceCodeVersion?: string;
+  sourceCodeFolder: string;
+  integrationIds: string[];
+  secretIds: string[];
+  storagePath: string | null;
   labels: string[];
 }
 
 export interface ExecutorUpdate {
   description: string;
-  command_args: string;
-  source_code_branch?: string;
-  source_code_version?: string;
-  source_code_folder: string;
-  source_code_id: string;
-  integration_ids: string[];
-  secret_ids: string[];
+  commandArgs: string;
+  sourceCodeBranch?: string;
+  sourceCodeVersion?: string;
+  sourceCodeFolder: string;
+  sourceCodeId: string;
+  integrationIds: string[];
+  secretIds: string[];
   labels: string[];
-  storage_path: string | null;
-  storage_id: string | null;
+  storagePath: string | null;
+  storageId: string | null;
 }
