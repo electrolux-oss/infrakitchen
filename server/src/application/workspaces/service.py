@@ -11,7 +11,7 @@ from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import model_db_dump
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import WorkspaceCRUD
 from .functions import get_workspace_actions
 from .model import Workspace
@@ -94,6 +94,16 @@ class WorkspaceService:
         :param requester: User who creates the workspace
         :return: Created workspace
         """
+        result = await self.create_workspace(workspace=workspace, requester=requester)
+        return WorkspaceResponse.model_validate(result)
+
+    async def create_workspace(self, workspace: WorkspaceCreate, requester: UserDTO) -> Workspace:
+        """
+        Create a new workspace and return the ORM model.
+        :param workspace: WorkspaceCreate to create
+        :param requester: User who creates the workspace
+        :return: Created workspace ORM model
+        """
         workspace_providers = ["github", "bitbucket", "azure_devops"]
         if workspace.workspace_provider not in workspace_providers:
             raise ValueError("Invalid workspace provider, must be one of 'github', 'bitbucket', or 'azure_devops'")
@@ -118,10 +128,11 @@ class WorkspaceService:
         body["created_by"] = requester.id
         new_workspace = await self.crud.create(body)
         result = await self.crud.get_by_id(new_workspace.id)
+        if result is None:
+            raise EntityNotFound("Workspace not found after creation")
 
         await self.audit_log_handler.create_log(new_workspace.id, requester.id, ModelActions.CREATE)
-        response = WorkspaceResponse.model_validate(result)
-        await self.event_sender.send_event(response, ModelActions.CREATE)
+        await self.event_sender.send_event(WorkspaceResponse.model_validate(result), ModelActions.CREATE)
         await self.permission_service.create_entity_policy(
             EntityPolicyCreate(
                 user_id=requester.id,
@@ -133,7 +144,7 @@ class WorkspaceService:
             reload_permission=False,
         )
         await self.permission_service.casbin_enforcer.send_reload_event()
-        return response
+        return result
 
     async def update(self, workspace_id: str, workspace: WorkspaceUpdate, requester: UserDTO) -> WorkspaceResponse:
         """
@@ -143,19 +154,34 @@ class WorkspaceService:
         :param requester: User who updates the workspace
         :return: Updated workspace
         """
-        body = workspace.model_dump(exclude_unset=True)
+        existing_workspace = await self.update_workspace(
+            workspace_id=workspace_id, workspace=workspace, requester=requester
+        )
+        return WorkspaceResponse.model_validate(existing_workspace)
+
+    async def update_workspace(self, workspace_id: str, workspace: WorkspaceUpdate, requester: UserDTO) -> Workspace:
+        """
+        Update an existing workspace and return the ORM model.
+        :param workspace_id: ID of the workspace to update
+        :param workspace: Workspace to update
+        :param requester: User who updates the workspace
+        :return: Updated workspace ORM model
+        """
+        body = model_db_dump(workspace, exclude_defaults=True, exclude_none=True)
         existing_workspace = await self.crud.get_by_id(workspace_id)
 
         if not existing_workspace:
             raise EntityNotFound("Workspace not found")
 
+        if not has_field_changes(body, existing_workspace):
+            raise ValueError("No changes detected; the workspace is already up to date.")
+
         await self.crud.update(existing_workspace, body)
 
         await self.audit_log_handler.create_log(existing_workspace.id, requester.id, ModelActions.UPDATE)
         await self.crud.refresh(existing_workspace)
-        response = WorkspaceResponse.model_validate(existing_workspace)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        await self.event_sender.send_event(WorkspaceResponse.model_validate(existing_workspace), ModelActions.UPDATE)
+        return existing_workspace
 
     async def delete(self, workspace_id: str) -> None:
         existing_workspace = await self.crud.get_by_id(workspace_id)

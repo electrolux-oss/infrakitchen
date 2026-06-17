@@ -84,7 +84,7 @@ export const WorkspacesPage = () => {
         },
       },
       {
-        field: "workspace_provider",
+        field: "workspaceProvider",
         headerName: "Provider",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -103,7 +103,7 @@ export const WorkspacesPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -114,7 +114,7 @@ export const WorkspacesPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

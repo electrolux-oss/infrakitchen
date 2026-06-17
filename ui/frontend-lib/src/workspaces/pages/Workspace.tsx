@@ -16,7 +16,7 @@ export const WorkspacePage = () => {
       transformFn={transformWorkspace}
       entityFields={WORKSPACE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Workspace Overview"}>
+      <EntityContainer title={"Workspace Overview"} hideEditAction>
         <WorkspaceContent />
         <LogLiveTail />
       </EntityContainer>

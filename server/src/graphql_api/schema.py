@@ -36,6 +36,7 @@ from graphql_api.modules.task.queries import TaskQuery
 from graphql_api.modules.workflow.queries import WorkflowQuery
 from graphql_api.modules.workflow.mutations import WorkflowMutation
 from graphql_api.modules.workspace.queries import WorkspaceQuery
+from graphql_api.modules.workspace.mutations import WorkspaceMutation
 from graphql_api.modules.worker.queries import WorkerQuery
 from graphql_api.modules.providers.slack.queries import SlackQuery
 from graphql_api.modules.providers.slack.mutations import SlackMutation
@@ -100,6 +101,7 @@ class Mutation(
     FavoriteMutation,
     BatchOperationMutation,
     WorkflowMutation,
+    WorkspaceMutation,
 ):
     pass
 

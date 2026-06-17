@@ -475,15 +475,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/workspaces/:workspace_id/edit",
-    Component: lz(
-      () => import("./workspaces/pages/WorkspaceEdit"),
-      "WorkspaceEditPage",
-    ),
-    requiredPermission: "api:workspace",
-    permissionAction: "read",
-  },
-  {
     path: "/workspaces/:workspace_id/:tab?",
     Component: lz(
       () => import("./workspaces/pages/Workspace"),

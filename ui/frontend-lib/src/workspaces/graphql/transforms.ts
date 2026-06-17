@@ -61,7 +61,7 @@ export function transformWorkspaceShort(
   return {
     id: gql.id,
     name: gql.name,
-    workspace_provider: gql.workspaceProvider,
+    workspaceProvider: gql.workspaceProvider,
     _entity_name: "workspace",
   };
 }
@@ -71,16 +71,16 @@ export function transformWorkspace(gql: GqlWorkspace): WorkspaceResponse {
     id: gql.id,
     name: gql.name,
     _entity_name: "workspace",
-    created_at: new Date(gql.createdAt),
-    updated_at: new Date(gql.updatedAt),
+    createdAt: new Date(gql.createdAt),
+    updatedAt: new Date(gql.updatedAt),
     description: gql.description ?? "",
     labels: gql.labels ?? [],
     integration: transformIntegrationShort(gql.integration)!,
     creator: transformUserShort(gql.creator)!,
     status: gql.status,
-    workspace_provider: gql.workspaceProvider,
+    workspaceProvider: gql.workspaceProvider,
     configuration: gql.configuration ?? {},
-    resources_count: gql.resourcesCount ?? 0,
+    resourcesCount: gql.resourcesCount ?? 0,
   };
 }
 
@@ -91,8 +91,8 @@ export function transformWorkspaceOptional(
     id: gql.id,
     name: gql.name,
     _entity_name: "workspace",
-    created_at: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updated_at: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
+    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
+    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
     description: gql.description ?? undefined,
     labels: gql.labels ?? undefined,
     integration:
@@ -102,8 +102,8 @@ export function transformWorkspaceOptional(
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
     status: gql.status,
-    workspace_provider: gql.workspaceProvider,
+    workspaceProvider: gql.workspaceProvider,
     configuration: gql.configuration ?? undefined,
-    resources_count: gql.resourcesCount,
+    resourcesCount: gql.resourcesCount,
   };
 }

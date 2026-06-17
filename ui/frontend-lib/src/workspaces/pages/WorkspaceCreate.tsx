@@ -23,7 +23,8 @@ import BitbucketRepos from "../../providers/bitbucket/Repos";
 import GithubOrganizations from "../../providers/github/Organizations";
 import GithubRepos from "../../providers/github/Repos";
 import { IkEntity } from "../../types";
-import { WorkspaceCreate, WorkspaceResponse } from "../types";
+import { CREATE_WORKSPACE_MUTATION } from "../graphql";
+import { WorkspaceCreate } from "../types";
 
 const workspace_providers = ["github", "bitbucket", "azure_devops"];
 
@@ -39,8 +40,8 @@ const WorkspaceCreatePageInner = () => {
     setValue,
   } = useFormContext<WorkspaceCreate>();
 
-  const selectedProvider = watch("workspace_provider");
-  const selectedIntegration = watch("integration_id");
+  const selectedProvider = watch("workspaceProvider");
+  const selectedIntegration = watch("integrationId");
   const selectedOrg = watch("configuration.organization");
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -60,19 +61,23 @@ const WorkspaceCreatePageInner = () => {
         return;
       }
       const updatedData = {
-        ...data,
-        configuration: {
-          ...data.configuration,
-          workspace_provider: data.workspace_provider,
-        },
+        description: data.description,
+        workspaceProvider: data.workspaceProvider,
+        integrationId: data.integrationId,
+        labels: data.labels,
+        configuration: data.configuration,
       };
 
       ikApi
-        .postRaw("workspaces", updatedData)
-        .then((response: WorkspaceResponse) => {
-          if (response.id) {
+        .graphqlRequest<{ createWorkspace: { id: string; name: string } }>(
+          CREATE_WORKSPACE_MUTATION,
+          { input: updatedData },
+        )
+        .then((response) => {
+          const created = response.createWorkspace;
+          if (created?.id) {
             notify("Workspace created successfully", "success");
-            navigate(`${linkPrefix}workspaces/${response.id}`);
+            navigate(`${linkPrefix}workspaces/${created.id}`);
           }
         })
         .catch((error: any) => {
@@ -144,7 +149,7 @@ const WorkspaceCreatePageInner = () => {
             />
 
             <Controller
-              name="workspace_provider"
+              name="workspaceProvider"
               control={control}
               rules={{ required: "Workspace provider is required" }}
               render={({ field }) => (
@@ -152,17 +157,17 @@ const WorkspaceCreatePageInner = () => {
                   {...field}
                   onChange={(e) => {
                     field.onChange(e);
-                    setValue("integration_id", "");
+                    setValue("integrationId", "");
                     setValue("configuration", {});
                     setBuffer({});
                   }}
                   select
                   label="Workspace Provider"
                   variant="outlined"
-                  error={!!errors.workspace_provider}
+                  error={!!errors.workspaceProvider}
                   helperText={
-                    errors.workspace_provider
-                      ? errors.workspace_provider.message
+                    errors.workspaceProvider
+                      ? errors.workspaceProvider.message
                       : "Select the workspace provider"
                   }
                   fullWidth
@@ -179,7 +184,7 @@ const WorkspaceCreatePageInner = () => {
 
             {selectedProvider && (
               <Controller
-                name="integration_id"
+                name="integrationId"
                 control={control}
                 rules={{ required: "Integration is required" }}
                 render={({ field }) => (
@@ -202,10 +207,10 @@ const WorkspaceCreatePageInner = () => {
                       integration_type: "git",
                       integration_provider: selectedProvider,
                     }}
-                    error={!!errors.integration_id}
+                    error={!!errors.integrationId}
                     helpertext={
-                      errors.integration_id
-                        ? errors.integration_id.message
+                      errors.integrationId
+                        ? errors.integrationId.message
                         : "Select credentials for the workspace"
                     }
                     value={field.value}
@@ -232,12 +237,12 @@ const WorkspaceCreatePageInner = () => {
                       buffer={buffer}
                       setBuffer={setBuffer}
                       queryParams={{
-                        integration_id: getValues("integration_id"),
+                        integration_id: getValues("integrationId"),
                       }}
                       {...field}
                       entity_name="bitbucket_organizations"
                       filter={{
-                        integration_id: getValues("integration_id"),
+                        integration_id: getValues("integrationId"),
                       }}
                       error={!!errors.configuration?.organization}
                       helpertext={
@@ -262,7 +267,7 @@ const WorkspaceCreatePageInner = () => {
                       buffer={buffer}
                       setBuffer={setBuffer}
                       queryParams={{
-                        integration_id: getValues("integration_id"),
+                        integration_id: getValues("integrationId"),
                       }}
                       {...field}
                       error={!!errors.configuration?.organization}
@@ -288,7 +293,7 @@ const WorkspaceCreatePageInner = () => {
                       buffer={buffer}
                       setBuffer={setBuffer}
                       queryParams={{
-                        integration_id: getValues("integration_id"),
+                        integration_id: getValues("integrationId"),
                       }}
                       {...field}
                       value={field.value}
@@ -316,7 +321,7 @@ const WorkspaceCreatePageInner = () => {
                           buffer={buffer}
                           org={selectedOrg}
                           queryParams={{
-                            integration_id: getValues("integration_id"),
+                            integration_id: getValues("integrationId"),
                           }}
                           setBuffer={setBuffer}
                           {...field}
@@ -343,7 +348,7 @@ const WorkspaceCreatePageInner = () => {
                           org={selectedOrg}
                           setBuffer={setBuffer}
                           queryParams={{
-                            integration_id: getValues("integration_id"),
+                            integration_id: getValues("integrationId"),
                           }}
                           {...field}
                           error={!!errors.configuration?.repo}
@@ -369,7 +374,7 @@ const WorkspaceCreatePageInner = () => {
                           project={selectedOrg}
                           setBuffer={setBuffer}
                           queryParams={{
-                            integration_id: getValues("integration_id"),
+                            integration_id: getValues("integrationId"),
                           }}
                           {...field}
                           error={!!errors.configuration?.repo}
@@ -399,9 +404,9 @@ const WorkspaceCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      integration_id: "",
+      integrationId: "",
       labels: [],
-      workspace_provider: "",
+      workspaceProvider: "",
       configuration: {},
     },
     mode: "onChange",

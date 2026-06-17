@@ -11,7 +11,7 @@ interface WorkspacePullRequestsProps {
 export const WorkspacePullRequests = ({
   workspace,
 }: WorkspacePullRequestsProps) => {
-  const provider = workspace.workspace_provider;
+  const provider = workspace.workspaceProvider;
   const queryParams = { integration_id: workspace.integration.id };
   const organization = workspace.configuration.organization;
   const name = workspace.name;

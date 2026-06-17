@@ -27,7 +27,7 @@ export const WorkspaceConfiguration = ({
       />
       <CommonField
         name={"Workspace Provider"}
-        value={getProviderValue(workspace.workspace_provider)}
+        value={getProviderValue(workspace.workspaceProvider)}
       />
       {Object.entries(workspace.configuration).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
