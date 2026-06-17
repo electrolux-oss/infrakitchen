@@ -45,12 +45,10 @@ async def get_by_id(executor_id: str, service: ExecutorService = Depends(get_exe
     deprecated=True,
 )
 async def get_all(
-    request: Request,
     response: Response,
     service: ExecutorService = Depends(get_executor_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    requester: UserDTO | None = getattr(request.state, "user", None)
     filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
@@ -62,7 +60,6 @@ async def get_all(
                 filter=filter,
                 range=range_,
                 sort=sort,
-                requester_id=requester.id if requester else None,
             )
         )
     headers = {"Content-Range": f"executors 0-{len(result)}/{total}"}

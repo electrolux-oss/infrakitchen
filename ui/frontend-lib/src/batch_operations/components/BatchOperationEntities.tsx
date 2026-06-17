@@ -38,6 +38,7 @@ import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
+import { BATCH_OPERATION_ENTITY_IDS_MUTATION } from "../graphql";
 import { BatchOperation, BatchOperationCreate } from "../types";
 
 import { BatchOperationEntitySelector } from "./BatchOperationEntitySelector";
@@ -53,7 +54,7 @@ export const BatchOperationEntities = ({
 
   const [entities, setEntities] = useState<any[]>([]);
   const [entityIds, setEntityIds] = useState<string[]>(
-    batchOperation.entity_ids || [],
+    batchOperation.entityIds || [],
   );
   const [entitiesLoading, setEntitiesLoading] = useState(false);
   const [logsEntityId, setLogsEntityId] = useState<string | null>(null);
@@ -86,8 +87,8 @@ export const BatchOperationEntities = ({
     defaultValues: {
       name: "",
       description: "",
-      entity_type: batchOperation.entity_type,
-      entity_ids: [],
+      entityType: batchOperation.entityType,
+      entityIds: [],
     },
   });
 
@@ -99,7 +100,7 @@ export const BatchOperationEntities = ({
 
     setEntitiesLoading(true);
     try {
-      const isResource = batchOperation.entity_type === "resource";
+      const isResource = batchOperation.entityType === "resource";
       const entityName = isResource ? "resource" : "executor";
       const fields = isResource
         ? [
@@ -148,11 +149,11 @@ export const BatchOperationEntities = ({
     } finally {
       setEntitiesLoading(false);
     }
-  }, [batchOperation.entity_type, entityIds, ikApi]);
+  }, [batchOperation.entityType, entityIds, ikApi]);
 
   useEffect(() => {
-    setEntityIds(batchOperation.entity_ids || []);
-  }, [batchOperation.entity_ids]);
+    setEntityIds(batchOperation.entityIds || []);
+  }, [batchOperation.entityIds]);
 
   useEffect(() => {
     loadEntities();
@@ -172,7 +173,7 @@ export const BatchOperationEntities = ({
         .graphqlRequest<{ auditLogs: GqlAuditLog[] }>(
           buildAuditLogsQuery(["id"]),
           {
-            filter: { entity_id, model: batchOperation.entity_type },
+            filter: { entity_id, model: batchOperation.entityType },
             sort: ["created_at", "DESC"],
             range: [0, 1],
           },
@@ -186,7 +187,7 @@ export const BatchOperationEntities = ({
           setAuditId(null);
         });
     },
-    [ikApi, batchOperation.entity_type],
+    [ikApi, batchOperation.entityType],
   );
 
   const handleOpenLogs = useCallback(
@@ -205,8 +206,8 @@ export const BatchOperationEntities = ({
     addForm.reset({
       name: "",
       description: "",
-      entity_type: batchOperation.entity_type,
-      entity_ids: [],
+      entityType: batchOperation.entityType,
+      entityIds: [],
     });
     setAddDialogOpen(true);
   };
@@ -233,7 +234,7 @@ export const BatchOperationEntities = ({
     if (ids.length === 0) return;
 
     const entityName =
-      batchOperation.entity_type === "resource" ? "resources" : "executors";
+      batchOperation.entityType === "resource" ? "resources" : "executors";
 
     setActionRunning(true);
     setActionResults(
@@ -284,23 +285,26 @@ export const BatchOperationEntities = ({
     );
 
     setActionRunning(false);
-  }, [actionType, batchOperation.entity_type, ikApi, selectedEntityIds]);
+  }, [actionType, batchOperation.entityType, ikApi, selectedEntityIds]);
 
   const handleRemoveEntity = useCallback(
     async (entityId: string) => {
       if (!batchOperation?.id) return;
       try {
         setEntitiesLoading(true);
-        const response = await ikApi.patchRaw(
-          `batch_operations/${batchOperation.id}/entity_ids`,
-          {
+        const response = await ikApi.graphqlRequest<{
+          batchOperationEntityIds: { id: string; entityIds: string[] };
+        }>(BATCH_OPERATION_ENTITY_IDS_MUTATION, {
+          id: batchOperation.id,
+          input: {
             action: "remove",
-            entity_ids: [entityId],
+            entityIds: [entityId],
           },
-        );
-        if (response?.id) {
+        });
+        const updated = response.batchOperationEntityIds;
+        if (updated?.id) {
           notify("Entity removed from batch operation", "success");
-          setEntityIds(response.entity_ids || []);
+          setEntityIds(updated.entityIds || []);
         }
       } catch (error) {
         notifyError(error);
@@ -314,21 +318,24 @@ export const BatchOperationEntities = ({
   const handleAddEntities = useCallback(
     async (values: BatchOperationCreate) => {
       if (!batchOperation?.id) return;
-      if (!values.entity_ids || values.entity_ids.length === 0) return;
+      if (!values.entityIds || values.entityIds.length === 0) return;
 
       try {
         setEntitiesLoading(true);
-        const response = await ikApi.patchRaw(
-          `batch_operations/${batchOperation.id}/entity_ids`,
-          {
+        const response = await ikApi.graphqlRequest<{
+          batchOperationEntityIds: { id: string; entityIds: string[] };
+        }>(BATCH_OPERATION_ENTITY_IDS_MUTATION, {
+          id: batchOperation.id,
+          input: {
             action: "add",
-            entity_ids: values.entity_ids,
+            entityIds: values.entityIds,
           },
-        );
-        if (response?.id) {
+        });
+        const updated = response.batchOperationEntityIds;
+        if (updated?.id) {
           notify("Entities added to batch operation", "success");
           setAddDialogOpen(false);
-          setEntityIds(response.entity_ids || []);
+          setEntityIds(updated.entityIds || []);
         }
       } catch (error) {
         notifyError(error);
@@ -413,7 +420,7 @@ export const BatchOperationEntities = ({
     ];
 
     // Add resource-specific columns
-    if (batchOperation?.entity_type === "resource") {
+    if (batchOperation?.entityType === "resource") {
       baseColumns.splice(1, 0, {
         field: "template",
         headerName: "Template",
@@ -427,11 +434,11 @@ export const BatchOperationEntities = ({
     }
 
     return baseColumns;
-  }, [batchOperation?.entity_type, handleRemoveEntity, handleOpenLogs]);
+  }, [batchOperation?.entityType, handleRemoveEntity, handleOpenLogs]);
 
   return (
     <PropertyCard
-      title={`${batchOperation?.entity_type === "resource" ? "Resources" : "Executors"} in Batch`}
+      title={`${batchOperation?.entityType === "resource" ? "Resources" : "Executors"} in Batch`}
       actions={
         <>
           <Button
@@ -520,14 +527,14 @@ export const BatchOperationEntities = ({
         maxWidth="xl"
       >
         <DialogTitle>
-          {`Add ${batchOperation?.entity_type === "resource" ? "Resources" : "Executors"}`}
+          {`Add ${batchOperation?.entityType === "resource" ? "Resources" : "Executors"}`}
         </DialogTitle>
         <FormProvider {...addForm}>
           <DialogContent>
             <BatchOperationEntitySelector
               control={addForm.control}
               errors={addForm.formState.errors}
-              entityType={batchOperation.entity_type}
+              entityType={batchOperation.entityType}
               setValue={addForm.setValue}
             />
           </DialogContent>

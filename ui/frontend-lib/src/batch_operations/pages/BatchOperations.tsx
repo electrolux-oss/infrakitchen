@@ -29,18 +29,18 @@ export const BatchOperationsPage = () => {
         },
       },
       {
-        field: "entity_type",
+        field: "entityType",
         headerName: "Entity",
         flex: 0.5,
       },
       {
-        field: "entity_ids",
+        field: "entityIds",
         headerName: "# of Entities",
         flex: 0.5,
         valueGetter: (value: any) => (value ? value.length : 0),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -51,7 +51,7 @@ export const BatchOperationsPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (

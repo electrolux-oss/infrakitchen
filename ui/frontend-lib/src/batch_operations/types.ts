@@ -4,18 +4,18 @@ export interface BatchOperation {
   id: string;
   name: string;
   description: string;
-  entity_type: "resource" | "executor";
-  entity_ids: string[];
-  error_entity_ids?: Record<string, string>;
+  entityType: "resource" | "executor";
+  entityIds: string[];
+  errorEntityIds?: Record<string, string>;
   creator: UserShort | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   _entity_name: "batch_operation";
 }
 
 export interface BatchOperationCreate {
   name: string;
   description?: string;
-  entity_type: "resource" | "executor";
-  entity_ids: string[];
+  entityType: "resource" | "executor";
+  entityIds: string[];
 }

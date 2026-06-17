@@ -32,11 +32,11 @@ export function transformBatchOperation(gql: GqlBatchOperation) {
     id: gql.id,
     name: gql.name,
     description: gql.description,
-    entity_type: gql.entityType,
-    entity_ids: gql.entityIds || [],
+    entityType: gql.entityType,
+    entityIds: gql.entityIds || [],
     creator: transformUserShort(gql.creator),
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
+    createdAt: gql.createdAt,
+    updatedAt: gql.updatedAt,
     _entity_name: "batch_operation",
   };
 }

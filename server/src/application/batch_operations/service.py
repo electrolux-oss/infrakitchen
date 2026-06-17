@@ -85,25 +85,32 @@ class BatchOperationService:
             raise EntityNotFound("Batch operation not found")
         return await get_batch_operation_actions(requester)
 
+    async def create_batch_operation(
+        self,
+        batch_operation: BatchOperationCreate,
+        requester: UserDTO,
+    ) -> BatchOperation:
+        """Create a batch operation and return the ORM model."""
+        body = batch_operation.model_dump(exclude_unset=True)
+        body["created_by"] = requester.id
+        return await self.crud.create(body=body)
+
     async def create(
         self,
         batch_operation: BatchOperationCreate,
         requester: UserDTO,
     ) -> BatchOperationResponse:
         """Create a batch operation and dispatch tasks to workers"""
-
-        body = batch_operation.model_dump(exclude_unset=True)
-        body["created_by"] = requester.id
-        entity = await self.crud.create(body=body)
+        entity = await self.create_batch_operation(batch_operation=batch_operation, requester=requester)
         return BatchOperationResponse.model_validate(entity)
 
-    async def patch_entity_ids(
+    async def patch_entity_ids_orm(
         self,
         batch_operation_id: str | UUID,
         body: BatchOperationEntityIdsPatch,
         requester: UserDTO,
-    ) -> BatchOperationResponse:
-        """Patch entity_ids list on a batch operation"""
+    ) -> BatchOperation:
+        """Patch entity_ids list on a batch operation and return the ORM model."""
         entity = await self.crud.get_by_id(batch_operation_id=batch_operation_id)
         if not entity:
             raise EntityNotFound(f"Batch operation {batch_operation_id} not found")
@@ -123,7 +130,18 @@ class BatchOperationService:
             existing_ids = [value for value in existing_ids if str(value) not in patch_ids_set]
 
         entity.entity_ids = existing_ids
-        updated_entity = await self.crud.update(entity)
+        return await self.crud.update(entity)
+
+    async def patch_entity_ids(
+        self,
+        batch_operation_id: str | UUID,
+        body: BatchOperationEntityIdsPatch,
+        requester: UserDTO,
+    ) -> BatchOperationResponse:
+        """Patch entity_ids list on a batch operation"""
+        updated_entity = await self.patch_entity_ids_orm(
+            batch_operation_id=batch_operation_id, body=body, requester=requester
+        )
         return BatchOperationResponse.model_validate(updated_entity)
 
     async def delete(

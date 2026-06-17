@@ -19,7 +19,8 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { BatchOperationEntitySelector } from "../components/BatchOperationEntitySelector";
-import { BatchOperationCreate, BatchOperation } from "../types";
+import { CREATE_BATCH_OPERATION_MUTATION } from "../graphql";
+import { BatchOperationCreate } from "../types";
 
 export const BatchOperationCreatePage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -34,22 +35,26 @@ export const BatchOperationCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      entity_type: "resource",
-      entity_ids: [],
+      entityType: "resource",
+      entityIds: [],
     },
     mode: "onChange",
   });
 
-  const entityType = watch("entity_type");
+  const entityType = watch("entityType");
 
   const onSubmit = useCallback(
     (data: BatchOperationCreate) => {
       ikApi
-        .postRaw("batch_operations", data)
-        .then((response: BatchOperation) => {
-          if (response.id) {
+        .graphqlRequest<{ createBatchOperation: { id: string } }>(
+          CREATE_BATCH_OPERATION_MUTATION,
+          { input: data },
+        )
+        .then((response) => {
+          const created = response.createBatchOperation;
+          if (created?.id) {
             notify("Batch operation created successfully", "success");
-            navigate(`${linkPrefix}batch_operations/${response.id}`);
+            navigate(`${linkPrefix}batch_operations/${created.id}`);
           }
         })
         .catch((error: any) => {
@@ -137,21 +142,21 @@ export const BatchOperationCreatePage = () => {
             )}
           />
           <Controller
-            name="entity_type"
+            name="entityType"
             control={control}
             rules={{ required: "Entity type is required" }}
             render={({ field }) => (
               <FormControl
                 fullWidth
                 margin="normal"
-                error={!!errors.entity_type}
+                error={!!errors.entityType}
               >
                 <InputLabel id="entity-type-label">Entity Type</InputLabel>
                 <Select
                   {...field}
                   onChange={(e) => {
                     field.onChange(e);
-                    setValue("entity_ids", []);
+                    setValue("entityIds", []);
                   }}
                   labelId="entity-type-label"
                   label="Entity Type"
@@ -161,8 +166,8 @@ export const BatchOperationCreatePage = () => {
                   <MenuItem value="executor">Executors</MenuItem>
                 </Select>
                 <FormHelperText>
-                  {errors.entity_type
-                    ? errors.entity_type.message
+                  {errors.entityType
+                    ? errors.entityType.message
                     : "Type of entities to operate on"}
                 </FormHelperText>
               </FormControl>

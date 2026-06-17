@@ -11,7 +11,7 @@ interface BatchOperationErrorEntitiesProps {
 export const BatchOperationErrorEntities = ({
   batchOperation,
 }: BatchOperationErrorEntitiesProps) => {
-  const errorEntities = batchOperation.error_entity_ids || {};
+  const errorEntities = batchOperation.errorEntityIds || {};
   const errorEntries = Object.entries(errorEntities);
 
   if (errorEntries.length === 0) {
@@ -32,7 +32,7 @@ export const BatchOperationErrorEntities = ({
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     <GetEntityLink
                       id={entityId}
-                      _entity_name={batchOperation.entity_type}
+                      _entity_name={batchOperation.entityType}
                       name={entityId}
                     />
                   </Typography>

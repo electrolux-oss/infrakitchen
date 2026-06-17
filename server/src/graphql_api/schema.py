@@ -8,6 +8,7 @@ from graphql_api.modules.event.subscriptions import EventSubscription
 from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
+from graphql_api.modules.batch_operation.mutations import BatchOperationMutation
 from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
@@ -94,6 +95,7 @@ class Mutation(
     SecretMutation,
     ExecutorMutation,
     FavoriteMutation,
+    BatchOperationMutation,
 ):
     pass
 

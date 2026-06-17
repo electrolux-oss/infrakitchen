@@ -45,7 +45,7 @@ export const BatchOperationEntitySelector = (
 
   const selectedEntityIds = useWatch({
     control,
-    name: "entity_ids",
+    name: "entityIds",
   }) as Array<string | number> | undefined;
 
   const [labels, setLabels] = useState<string[]>([]);
@@ -363,7 +363,7 @@ export const BatchOperationEntitySelector = (
 
   return (
     <Controller
-      name="entity_ids"
+      name="entityIds"
       control={control}
       rules={{
         required: "At least one entity must be selected",
@@ -371,7 +371,7 @@ export const BatchOperationEntitySelector = (
           value.length > 0 || "At least one entity must be selected",
       }}
       render={({ field }) => (
-        <FormControl fullWidth margin="normal" error={!!errors.entity_ids}>
+        <FormControl fullWidth margin="normal" error={!!errors.entityIds}>
           <InputLabel shrink>
             {`Select ${entityType === "resource" ? "Resources" : "Executors"}`}
           </InputLabel>
@@ -417,7 +417,7 @@ export const BatchOperationEntitySelector = (
                         )
                       : Array.from(excludedIds);
 
-                  setValue("entity_ids", nextSelected, {
+                  setValue("entityIds", nextSelected, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
@@ -454,8 +454,8 @@ export const BatchOperationEntitySelector = (
             </Box>
           </Box>
           <FormHelperText>
-            {errors.entity_ids
-              ? errors.entity_ids.message
+            {errors.entityIds
+              ? errors.entityIds.message
               : `Select ${entityType}s to include in this batch operation`}
           </FormHelperText>
         </FormControl>
