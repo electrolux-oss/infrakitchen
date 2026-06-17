@@ -10,7 +10,7 @@ import {
 } from "@mui/x-data-grid";
 
 import { useConfig } from "../../../common";
-import { buildLogsQuery, GqlLog, transformLog } from "../../../logs/graphql";
+import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
@@ -40,7 +40,7 @@ export const EntityLogs = ({
   } | null>(null);
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "created_at", sort: "desc" },
+    { field: "createdAt", sort: "desc" },
   ]);
 
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -81,7 +81,7 @@ export const EntityLogs = ({
         },
       )
       .then((response) => {
-        setLogHeads((response.logs || []).map(transformLog) as LogEntity[]);
+        setLogHeads(response.logs || []);
       })
       .catch(() => {
         setLogHeads([]);
@@ -113,7 +113,7 @@ export const EntityLogs = ({
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Started",
         flex: 0.2,
         renderCell: (params) => (
@@ -137,18 +137,18 @@ export const EntityLogs = ({
             sourceCodeLanguage={sourceCodeLanguage}
             onOpenSummary={() =>
               setSelectedLog({
-                executionStart: params.row.execution_start,
+                executionStart: params.row.executionStart,
                 action: params.row.data,
                 view: "summary",
-                entityId: params.row.entity_id,
+                entityId: params.row.entityId,
               })
             }
             onOpenLogs={() =>
               setSelectedLog({
-                executionStart: params.row.execution_start,
+                executionStart: params.row.executionStart,
                 action: params.row.data,
                 view: "logs",
-                entityId: params.row.entity_id,
+                entityId: params.row.entityId,
               })
             }
           />

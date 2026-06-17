@@ -59,14 +59,14 @@ export const FavoriteResourceItem = ({
           >
             {resource.name}
           </Typography>
-          {resource.updated_at && (
+          {resource.updatedAt && (
             <Typography
               variant="caption"
               color="text.disabled"
               whiteSpace="nowrap"
             >
               <RelativeTime
-                date={resource.updated_at}
+                date={resource.updatedAt}
                 sx={{ fontSize: "0.75rem", display: "flex" }}
               />
             </Typography>

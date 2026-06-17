@@ -44,7 +44,7 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
             "name": row.name,
             "status": row.status,
             "state": row.state,
-            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
             "_entity_name": "resource",
         }
         for row in result
@@ -76,7 +76,7 @@ async def _load_executors(keys: list[str], session: AsyncSession) -> list[dict[s
             "name": row.name,
             "status": row.status,
             "state": row.state,
-            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+            "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
             "_entity_name": "executor",
         }
         for row in result

@@ -7,8 +7,8 @@ export interface FavoriteResource
   type?: string;
   status: string;
   state: string;
-  updated_at?: string;
-  created_at?: string;
+  updatedAt?: string;
+  createdAt?: string;
   _component_type: "resource" | "executor";
   [key: string]: any;
 }

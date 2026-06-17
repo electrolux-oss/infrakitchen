@@ -5,8 +5,7 @@ import { useEffectOnce } from "react-use";
 
 import { Box, Typography } from "@mui/material";
 
-import { GqlLog, transformLog, LOG_DETAIL_FIELDS } from "../../logs/graphql";
-import { LogEntity } from "../../types";
+import { GqlLog, LOG_DETAIL_FIELDS } from "../../logs/graphql";
 import { getTimeOnlyValue } from "../components/CommonField";
 import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
@@ -23,13 +22,13 @@ const LOGS_VIEW_QUERY = `
   }
 `;
 
-function createLog(log: LogEntity[]) {
+function createLog(log: GqlLog[]) {
   const result: { id: string; data: string }[] = [];
   if (!log || log.length === 0) return result;
 
   for (let i = 0; i < log.length; i++) {
     const l = log[i];
-    const createdAtStr = getTimeOnlyValue(l.created_at.toString());
+    const createdAtStr = getTimeOnlyValue(l.createdAt.toString());
     let logMessage = l.data;
     if (l.level === "warn") {
       logMessage = `\u001b[1m\u001b[36m${logMessage}\u001b[22m\u001b[30m`;
@@ -53,7 +52,7 @@ export const LogsView = (props: {
     props;
   const { ikApi } = useConfig();
 
-  const [logs, setLogs] = useState<LogEntity[]>([]);
+  const [logs, setLogs] = useState<GqlLog[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const isFetching = useRef(false);
   const indexRef = useRef(1);
@@ -84,8 +83,7 @@ export const LogsView = (props: {
       })
       .then((response) => {
         if (response.logs.length > 0) {
-          const transformed = response.logs.map(transformLog) as LogEntity[];
-          setLogs((prevItems) => [...transformed.reverse(), ...prevItems]);
+          setLogs((prevItems) => [...response.logs.reverse(), ...prevItems]);
           indexRef.current += 1;
         } else {
           setHasMore(false);

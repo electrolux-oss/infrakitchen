@@ -45,7 +45,7 @@ function transformFavoriteToResource(
     name: gql.componentData.name ?? "",
     status: gql.componentData.status ?? "",
     state: gql.componentData.state ?? "",
-    updated_at: gql.componentData.updated_at,
+    updatedAt: gql.componentData.updatedAt,
     _component_type: gql.componentType as "resource" | "executor",
     _component_id: gql.componentId,
     _entity_name: gql.componentData._entity_name,
