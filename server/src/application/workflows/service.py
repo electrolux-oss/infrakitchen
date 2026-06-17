@@ -100,16 +100,17 @@ class WorkflowService:
 
         return WorkflowResponse.model_validate(workflow)
 
-    async def update_with_steps(
+    async def update_with_steps_orm(
         self,
         workflow_id: str | UUID,
         request: WorkflowUpdate,
         requester: UserDTO,
-    ) -> WorkflowResponse:
+    ) -> Workflow:
         """
         Update a pending workflow - edits each step's resolved variables / SCV
         / integrations / secrets / storage / parent resources. Only allowed
-        while the workflow is still pending or in error state.
+        while the workflow is still pending or in error state. Returns the
+        refreshed ORM model.
         """
         workflow = await self.crud.get_by_id(workflow_id)
         if workflow is None:
@@ -130,9 +131,21 @@ class WorkflowService:
 
         await self.audit_log_handler.create_log(workflow.id, requester.id, ModelActions.UPDATE)
         refreshed = await self.crud.get_by_id(workflow.id)
+        if refreshed is None:
+            raise EntityNotFound("Workflow not found")
         response = WorkflowResponse.model_validate(refreshed)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        return refreshed
+
+    async def update_with_steps(
+        self,
+        workflow_id: str | UUID,
+        request: WorkflowUpdate,
+        requester: UserDTO,
+    ) -> WorkflowResponse:
+        """Update a pending workflow and its steps, returning the response schema."""
+        refreshed = await self.update_with_steps_orm(workflow_id=workflow_id, request=request, requester=requester)
+        return WorkflowResponse.model_validate(refreshed)
 
     async def update_step(self, step_id: UUID, update_data: dict[str, Any]) -> WorkflowStepResponse:
         step = await self.crud.update_step(step_id, update_data)

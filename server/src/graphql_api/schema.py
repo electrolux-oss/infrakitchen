@@ -34,6 +34,7 @@ from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQue
 from graphql_api.modules.revision.queries import RevisionQuery
 from graphql_api.modules.task.queries import TaskQuery
 from graphql_api.modules.workflow.queries import WorkflowQuery
+from graphql_api.modules.workflow.mutations import WorkflowMutation
 from graphql_api.modules.workspace.queries import WorkspaceQuery
 from graphql_api.modules.worker.queries import WorkerQuery
 from graphql_api.modules.providers.slack.queries import SlackQuery
@@ -98,6 +99,7 @@ class Mutation(
     ExecutorMutation,
     FavoriteMutation,
     BatchOperationMutation,
+    WorkflowMutation,
 ):
     pass
 

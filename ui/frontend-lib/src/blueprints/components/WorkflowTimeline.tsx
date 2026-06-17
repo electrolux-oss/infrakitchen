@@ -73,7 +73,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
               <StatusChip status={exec.status} />
             </Box>
             <Typography variant="caption" color="text.secondary">
-              {new Date(exec.created_at).toLocaleString()}
+              {new Date(exec.createdAt).toLocaleString()}
             </Typography>
           </Box>
 
@@ -116,14 +116,14 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {step.error_message ? (
+                      {step.errorMessage ? (
                         <Typography
                           variant="caption"
                           color="error"
                           sx={{ maxWidth: 200, display: "block" }}
                           noWrap
                         >
-                          {step.error_message}
+                          {step.errorMessage}
                         </Typography>
                       ) : (
                         "-"

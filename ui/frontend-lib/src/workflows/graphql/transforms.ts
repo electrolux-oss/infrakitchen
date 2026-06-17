@@ -78,24 +78,25 @@ function toWorkflowStep(g: GqlWorkflowStep): WorkflowStepResponse {
 
   return {
     id: g.id,
-    template_id: g.template?.id ?? g.templateId,
+    templateId: g.template?.id ?? g.templateId,
     template: g.template ? transformTemplateShort(g.template) : null,
-    resource_id: g.resource?.id ?? g.resourceId ?? null,
+    resourceId: g.resource?.id ?? g.resourceId ?? null,
     resource: g.resource ? transformResource(g.resource) : null,
-    source_code_version_id: g.sourceCodeVersionId ?? null,
-    source_code_version: g.sourceCodeVersion
+    sourceCodeVersionId: g.sourceCodeVersionId ?? null,
+    sourceCodeVersion: g.sourceCodeVersion
       ? transformSourceCodeVersionShort(g.sourceCodeVersion)
       : null,
-    parent_resource_ids: parentResourceIds,
-    integration_ids: integrationIds,
-    secret_ids: (g.secretIds ?? []).map(transformSecret),
-    storage_id: g.storageId ? g.storageId : null,
+    parentResourceIds:
+      parentResourceIds as WorkflowStepResponse["parentResourceIds"],
+    integrationIds,
+    secretIds: (g.secretIds ?? []).map(transformSecret),
+    storageId: g.storageId ? g.storageId : null,
     position: g.position,
     status: g.status as WorkflowStepResponse["status"],
-    error_message: g.errorMessage,
-    resolved_variables: g.resolvedVariables ?? {},
-    started_at: g.startedAt,
-    completed_at: g.completedAt,
+    errorMessage: g.errorMessage,
+    resolvedVariables: g.resolvedVariables ?? {},
+    startedAt: g.startedAt,
+    completedAt: g.completedAt,
   };
 }
 
@@ -104,13 +105,13 @@ export function transformWorkflow(gql: GqlWorkflow): WorkflowResponse {
     id: gql.id,
     action: (gql.action || "create") as WorkflowResponse["action"],
     status: gql.status as WorkflowResponse["status"],
-    error_message: gql.errorMessage,
+    errorMessage: gql.errorMessage,
     steps: (gql.steps ?? []).map(toWorkflowStep),
-    wiring_snapshot: gql.wiringSnapshot ?? [],
+    wiringSnapshot: gql.wiringSnapshot ?? [],
     creator: transformUserShort(gql.creator)!,
-    started_at: gql.startedAt,
-    completed_at: gql.completedAt,
-    created_at: gql.createdAt,
+    startedAt: gql.startedAt,
+    completedAt: gql.completedAt,
+    createdAt: gql.createdAt,
     _entity_name: "workflow",
   };
 }
@@ -122,14 +123,14 @@ export function transformWorkflowOptional(
     id: gql.id,
     action: (gql.action || "create") as WorkflowResponse["action"] | undefined,
     status: gql.status as WorkflowResponse["status"] | undefined,
-    error_message: gql.errorMessage,
+    errorMessage: gql.errorMessage,
     steps: gql.steps ? gql.steps.map(toWorkflowStep) : undefined,
-    wiring_snapshot: gql.wiringSnapshot ?? undefined,
+    wiringSnapshot: gql.wiringSnapshot ?? undefined,
     creator:
       gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
-    started_at: gql.startedAt,
-    completed_at: gql.completedAt,
-    created_at: gql.createdAt,
+    startedAt: gql.startedAt,
+    completedAt: gql.completedAt,
+    createdAt: gql.createdAt,
     _entity_name: "workflow",
   };
 }

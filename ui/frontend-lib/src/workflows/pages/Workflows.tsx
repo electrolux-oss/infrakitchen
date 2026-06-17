@@ -63,16 +63,18 @@ export const WorkflowsPage = () => {
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created At",
         flex: 1,
+        sortField: "created_at",
         renderCell: (params: GridRenderCellParams) =>
           getDateValue(params.value),
       },
       {
-        field: "completed_at",
+        field: "completedAt",
         headerName: "Completed At",
         flex: 1,
+        sortField: "completed_at",
         renderCell: (params: GridRenderCellParams) =>
           params.value ? getDateValue(params.value) : "-",
       },

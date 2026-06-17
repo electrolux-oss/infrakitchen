@@ -72,6 +72,7 @@ async def get_workflow(
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_200_OK,
     response_description="Update a pending workflow and its steps",
+    deprecated=True,
 )
 async def update_workflow(
     request: Request,
@@ -136,6 +137,7 @@ async def get_actions(
 @router.delete(
     "/workflows/{workflow_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete_execution(
     request: Request,

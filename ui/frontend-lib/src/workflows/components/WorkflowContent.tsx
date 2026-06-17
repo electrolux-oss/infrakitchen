@@ -35,7 +35,7 @@ const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
     setKey(storageKey, { view: v });
   };
 
-  const hasWiring = workflow.wiring_snapshot.length > 0;
+  const hasWiring = workflow.wiringSnapshot.length > 0;
 
   return (
     <PropertyCard
@@ -67,7 +67,7 @@ const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
         />
       ) : hasWiring ? (
         <WorkflowWiringViewer
-          wiring={workflow.wiring_snapshot}
+          wiring={workflow.wiringSnapshot}
           steps={workflow.steps}
         />
       ) : (

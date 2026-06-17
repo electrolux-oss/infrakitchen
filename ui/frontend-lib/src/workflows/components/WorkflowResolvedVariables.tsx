@@ -40,12 +40,12 @@ export const WorkflowResolvedVariables = ({
       }
     >();
     for (const step of steps) {
-      const key = step.template?.id ?? step.template_id;
+      const key = step.template?.id ?? step.templateId;
       if (!map.has(key)) {
         map.set(key, {
           templateId: key,
           templateName:
-            step.template?.name ?? `Template ${step.template_id.slice(0, 8)}`,
+            step.template?.name ?? `Template ${step.templateId.slice(0, 8)}`,
           steps: [],
         });
       }
@@ -130,8 +130,8 @@ const StepVariablesBlock = ({
   step,
   showPosition,
 }: StepVariablesBlockProps) => {
-  const entries = Object.entries(step.resolved_variables ?? {});
-  const jsonText = JSON.stringify(step.resolved_variables ?? {}, null, 2);
+  const entries = Object.entries(step.resolvedVariables ?? {});
+  const jsonText = JSON.stringify(step.resolvedVariables ?? {}, null, 2);
 
   const handleCopy = async () => {
     try {

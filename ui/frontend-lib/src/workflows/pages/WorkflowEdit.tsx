@@ -27,8 +27,12 @@ import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { IkEntity } from "../../types";
 import { WorkflowStep } from "../components/WorkflowStep";
-import { WORKFLOW_QUERY } from "../graphql/queries";
-import { GqlWorkflow, transformWorkflow } from "../graphql/transforms";
+import {
+  GqlWorkflow,
+  transformWorkflow,
+  UPDATE_WORKFLOW_MUTATION,
+  WORKFLOW_QUERY,
+} from "../graphql";
 import { WorkflowResponse, WorkflowStepResponse } from "../types";
 
 interface JsonFieldProps {
@@ -91,12 +95,12 @@ const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
 
 interface StepFormValues {
   id: string;
-  source_code_version_id: string | null;
-  integration_ids: string[];
-  secret_ids: string[];
-  storage_id: string | null;
-  parent_resource_ids: string[];
-  resolved_variables: Record<string, any>;
+  sourceCodeVersionId: string | null;
+  integrationIds: string[];
+  secretIds: string[];
+  storageId: string | null;
+  parentResourceIds: string[];
+  resolvedVariables: Record<string, any>;
 }
 
 interface WorkflowFormValues {
@@ -106,12 +110,12 @@ interface WorkflowFormValues {
 function stepToFormValues(step: WorkflowStepResponse): StepFormValues {
   return {
     id: step.id,
-    source_code_version_id: step.source_code_version_id,
-    integration_ids: step.integration_ids.map((i) => i.id),
-    secret_ids: step.secret_ids.map((s) => s.id),
-    storage_id: step.storage_id,
-    parent_resource_ids: step.parent_resource_ids.map((r) => r.id),
-    resolved_variables: step.resolved_variables,
+    sourceCodeVersionId: step.sourceCodeVersionId,
+    integrationIds: step.integrationIds.map((i) => i.id),
+    secretIds: step.secretIds.map((s) => s.id),
+    storageId: step.storageId,
+    parentResourceIds: step.parentResourceIds.map((r) => r.id),
+    resolvedVariables: step.resolvedVariables,
   };
 }
 
@@ -150,7 +154,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
 
   const commonIntegrationIds = useMemo(() => {
     if (!watchedSteps || watchedSteps.length === 0) return [];
-    return watchedSteps[0].integration_ids;
+    return watchedSteps[0].integrationIds;
   }, [watchedSteps]);
 
   const onSubmit = useCallback(
@@ -161,23 +165,24 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
       }
 
       try {
-        const payload = {
-          steps: data.steps.map((s) => ({
-            id: s.id,
-            resolved_variables: s.resolved_variables,
-            source_code_version_id: s.source_code_version_id,
-            integration_ids: s.integration_ids,
-            secret_ids: s.secret_ids,
-            storage_id: s.storage_id,
-            parent_resource_ids: s.parent_resource_ids,
-          })),
-        };
-        const response: WorkflowResponse = await ikApi.patchRaw(
-          `workflows/${workflow.id}`,
-          payload,
-        );
+        const response = await ikApi.graphqlRequest<{
+          updateWorkflow: GqlWorkflow;
+        }>(UPDATE_WORKFLOW_MUTATION, {
+          id: workflow.id,
+          input: {
+            steps: data.steps.map((s) => ({
+              id: s.id,
+              resolvedVariables: s.resolvedVariables,
+              sourceCodeVersionId: s.sourceCodeVersionId,
+              integrationIds: s.integrationIds,
+              secretIds: s.secretIds,
+              storageId: s.storageId,
+              parentResourceIds: s.parentResourceIds,
+            })),
+          },
+        });
         notify("Workflow updated", "success");
-        navigate(`${linkPrefix}workflows/${response.id}`);
+        navigate(`${linkPrefix}workflows/${response.updateWorkflow.id}`);
       } catch (e: any) {
         notifyError(e);
       }
@@ -226,7 +231,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
             );
           }
 
-          const stepIntegrations = watchedSteps?.[idx]?.integration_ids || [];
+          const stepIntegrations = watchedSteps?.[idx]?.integrationIds || [];
 
           return (
             <PropertyCard
@@ -240,13 +245,13 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     sx={{ fontWeight: 700, minWidth: 28 }}
                   />
                   <span>
-                    {step.template?.name ?? step.template_id.slice(0, 8)}
+                    {step.template?.name ?? step.templateId.slice(0, 8)}
                   </span>
                 </Box>
               }
             >
               <Controller
-                name={`steps.${idx}.source_code_version_id`}
+                name={`steps.${idx}.sourceCodeVersionId`}
                 control={control}
                 render={({ field }) => (
                   <ReferenceInput
@@ -258,7 +263,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     showFields={["source_code_version", "name"]}
                     error={false}
                     helpertext="Select the template version to use"
-                    filter={{ template_id: step.template_id }}
+                    filter={{ template_id: step.templateId }}
                     value={field.value}
                     label="Template Version"
                     bufferKey={`source_code_versions_${step.id}`}
@@ -269,7 +274,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
               />
 
               <Controller
-                name={`steps.${idx}.integration_ids`}
+                name={`steps.${idx}.integrationIds`}
                 control={control}
                 render={({ field }) => (
                   <ArrayReferenceInput
@@ -293,7 +298,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
               />
 
               <Controller
-                name={`steps.${idx}.secret_ids`}
+                name={`steps.${idx}.secretIds`}
                 control={control}
                 render={({ field }) => (
                   <ArrayReferenceInput
@@ -316,7 +321,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
               />
 
               <Controller
-                name={`steps.${idx}.storage_id`}
+                name={`steps.${idx}.storageId`}
                 control={control}
                 render={({ field }) => (
                   <ReferenceInput
@@ -342,7 +347,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
               />
 
               <Controller
-                name={`steps.${idx}.parent_resource_ids`}
+                name={`steps.${idx}.parentResourceIds`}
                 control={control}
                 render={({ field }) => (
                   <ArrayReferenceInput
@@ -381,7 +386,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
               />
 
               <Controller
-                name={`steps.${idx}.resolved_variables`}
+                name={`steps.${idx}.resolvedVariables`}
                 control={control}
                 render={({ field }) => (
                   <JsonField

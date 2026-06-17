@@ -9,37 +9,37 @@ import { ENTITY_STATUS } from "../utils";
 
 export interface WorkflowStepResponse {
   id: string;
-  template_id: string;
+  templateId: string;
   template: TemplateShort | null;
-  resource_id: string | null;
+  resourceId: string | null;
   resource: ResourceShort | null;
   position: number;
   status: ENTITY_STATUS;
-  error_message: string | null;
-  resolved_variables: Record<string, any>;
-  parent_resource_ids: ResourceShort[] & {
+  errorMessage: string | null;
+  resolvedVariables: Record<string, any>;
+  parentResourceIds: ResourceShort[] & {
     template?: TemplateShort;
   };
-  integration_ids: IntegrationShort[];
-  secret_ids: SecretShort[];
-  source_code_version_id: string | null;
-  source_code_version: SourceCodeVersionShort | null;
-  storage_id: string | null;
-  started_at: string | null;
-  completed_at: string | null;
+  integrationIds: IntegrationShort[];
+  secretIds: SecretShort[];
+  sourceCodeVersionId: string | null;
+  sourceCodeVersion: SourceCodeVersionShort | null;
+  storageId: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
 }
 
 export interface WorkflowResponse {
   id: string;
   action: "create" | "destroy";
   status: ENTITY_STATUS;
-  error_message: string | null;
+  errorMessage: string | null;
   steps: WorkflowStepResponse[];
-  wiring_snapshot: WiringRule[];
+  wiringSnapshot: WiringRule[];
   creator: UserShort;
-  started_at: string | null;
-  completed_at: string | null;
-  created_at: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
   _entity_name: string;
 }
 
