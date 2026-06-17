@@ -50,12 +50,10 @@ async def get_by_id(resource_id: str, service: ResourceService = Depends(get_res
     deprecated=True,
 )
 async def get_all(
-    request: Request,
     response: Response,
     service: ResourceService = Depends(get_resource_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    requester: UserDTO | None = getattr(request.state, "user", None)
     filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
@@ -67,7 +65,6 @@ async def get_all(
                 filter=filter,
                 range=range_,
                 sort=sort,
-                requester_id=requester.id if requester else None,
             )
         )
     headers = {"Content-Range": f"resources 0-{len(result)}/{total}"}
