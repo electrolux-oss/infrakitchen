@@ -10,6 +10,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { BlueprintFormFields } from "../components/BlueprintFormFields";
+import { CREATE_BLUEPRINT_MUTATION } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
 import { BlueprintCreateRequest, BlueprintResponse } from "../types";
 
@@ -27,10 +28,10 @@ export const BlueprintCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      template_ids: [],
-      external_template_ids: [],
+      templateIds: [],
+      externalTemplateIds: [],
       wiring: [],
-      default_variables: {},
+      defaultVariables: {},
       configuration: {},
       labels: [],
     },
@@ -52,22 +53,30 @@ export const BlueprintCreatePage = () => {
       const constantWiring = data.wiring.filter((w) =>
         constantIds.has(w.source_template_id),
       );
-      const payload = {
-        ...data,
+      const input = {
+        name: data.name,
+        description: data.description,
+        templateIds: data.templateIds,
+        externalTemplateIds: form.externalTemplates.map((t) => t.id),
         wiring: templateWiring,
-        external_template_ids: form.externalTemplates.map((t) => t.id),
+        defaultVariables: data.defaultVariables,
         configuration: {
           ...data.configuration,
           constants: form.constants,
           constant_wires: constantWiring,
         },
+        labels: data.labels,
       };
       ikApi
-        .postRaw("blueprints", payload)
-        .then((response: BlueprintResponse) => {
-          if (response.id) {
+        .graphqlRequest<{ createBlueprint: BlueprintResponse }>(
+          CREATE_BLUEPRINT_MUTATION,
+          { input },
+        )
+        .then((response) => {
+          const created = response.createBlueprint;
+          if (created?.id) {
             notify("Blueprint created successfully", "success");
-            navigate(`${linkPrefix}blueprints/${response.id}`);
+            navigate(`${linkPrefix}blueprints/${created.id}`);
           }
         })
         .catch((error: any) => {

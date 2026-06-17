@@ -99,15 +99,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/blueprints/:blueprint_id/edit",
-    Component: lz(
-      () => import("./blueprints/pages/BlueprintEdit"),
-      "BlueprintEditPage",
-    ),
-    requiredPermission: "api:blueprint",
-    permissionAction: "write",
-  },
-  {
     path: "/blueprints/:blueprint_id/use",
     Component: lz(
       () => import("./blueprints/pages/BlueprintUse"),

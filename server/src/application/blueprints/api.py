@@ -66,6 +66,7 @@ async def get_all(
     "/blueprints",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: BlueprintCreate, service: BlueprintService = Depends(get_blueprint_service)):
     requester: UserDTO | None = request.state.user
@@ -81,6 +82,7 @@ async def post(request: Request, body: BlueprintCreate, service: BlueprintServic
     "/blueprints/{blueprint_id}",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -97,6 +99,7 @@ async def update(
     "/blueprints/{blueprint_id}/actions",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def perform_action(
     request: Request,

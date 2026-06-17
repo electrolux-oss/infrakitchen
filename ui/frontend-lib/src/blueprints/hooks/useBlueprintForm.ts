@@ -396,7 +396,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     if (!isSameOrder) {
       setSelectedTemplates(sorted);
       setValue(
-        "template_ids",
+        "templateIds",
         sorted.map((t) => t.id),
       );
     }
@@ -419,7 +419,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
       const newSelected = [...selectedTemplates, template];
       setSelectedTemplates(newSelected);
       setValue(
-        "template_ids",
+        "templateIds",
         newSelected.map((t) => t.id),
       );
 
@@ -430,9 +430,9 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
   const handleTemplateRemove = useCallback(
     (templateId: string) => {
-      const currentIds: string[] = watch("template_ids") || [];
+      const currentIds: string[] = watch("templateIds") || [];
       const newIds = currentIds.filter((id) => id !== templateId);
-      setValue("template_ids", newIds);
+      setValue("templateIds", newIds);
 
       const wiring: WiringRule[] = watch("wiring") || [];
       const newWiring = wiring.filter(

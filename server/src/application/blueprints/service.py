@@ -14,6 +14,7 @@ from core.database import FieldSpec
 from core.revisions.handler import RevisionHandler
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
+from core.utils.model_tools import model_db_dump
 
 from .crud import BlueprintCRUD
 from .functions import get_blueprint_actions
@@ -89,7 +90,8 @@ class BlueprintService:
             raise EntityNotFound("Blueprint not found")
         return await get_blueprint_actions(requester, blueprint.status)
 
-    async def create(self, blueprint: BlueprintCreate, requester: UserDTO) -> BlueprintResponse:
+    async def create_blueprint(self, blueprint: BlueprintCreate, requester: UserDTO) -> Blueprint:
+        """Create a new blueprint and return the ORM model."""
         body = blueprint.model_dump(exclude_unset=True)
         body["created_by"] = requester.id
 
@@ -99,17 +101,26 @@ class BlueprintService:
 
         new_blueprint = await self.crud.create(body)
         result = await self.crud.get_by_id(new_blueprint.id)
+        if result is None:
+            raise EntityNotFound("Blueprint not found after creation")
 
         await self.revision_handler.handle_revision(new_blueprint)
         await self.audit_log_handler.create_log(new_blueprint.id, requester.id, ModelActions.CREATE)
-        response = BlueprintResponse.model_validate(result)
-        await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        await self.event_sender.send_event(BlueprintResponse.model_validate(result), ModelActions.CREATE)
+        return result
 
-    async def update(
+    async def create(self, blueprint: BlueprintCreate, requester: UserDTO) -> BlueprintResponse:
+        result = await self.create_blueprint(blueprint=blueprint, requester=requester)
+        return BlueprintResponse.model_validate(result)
+
+    async def update_blueprint(
         self, blueprint_id: str | UUID, blueprint: BlueprintUpdate, requester: UserDTO
-    ) -> BlueprintResponse:
-        body = blueprint.model_dump(exclude_unset=True)
+    ) -> Blueprint:
+        """Update an existing blueprint and return the ORM model."""
+
+        body = model_db_dump(blueprint, exclude_defaults=True, exclude_none=True)
+        if not body:
+            raise ValueError("No fields to update")
 
         if "wiring" in body:
             body["wiring"] = [w if isinstance(w, dict) else w.model_dump() for w in body["wiring"]]
@@ -119,17 +130,22 @@ class BlueprintService:
             raise EntityNotFound("Blueprint not found")
 
         await self.audit_log_handler.create_log(updated.id, requester.id, ModelActions.UPDATE)
-        response = BlueprintResponse.model_validate(updated)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        await self.event_sender.send_event(BlueprintResponse.model_validate(updated), ModelActions.UPDATE)
+        return updated
 
-    async def patch(self, blueprint_id: str, body: PatchBodyModel, requester: UserDTO) -> BlueprintResponse:
+    async def update(
+        self, blueprint_id: str | UUID, blueprint: BlueprintUpdate, requester: UserDTO
+    ) -> BlueprintResponse:
+        updated = await self.update_blueprint(blueprint_id=blueprint_id, blueprint=blueprint, requester=requester)
+        return BlueprintResponse.model_validate(updated)
+
+    async def patch_action(self, blueprint_id: str, body: PatchBodyModel, requester: UserDTO) -> Blueprint:
         """
-        Patch an existing blueprint.
+        Patch an existing blueprint and return the ORM model.
         :param blueprint_id: ID of the blueprint to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the blueprint (for audit logging)
-        :return: Patched blueprint response
+        :return: Patched blueprint ORM instance
         """
         existing_blueprint = await self.crud.get_by_id(blueprint_id)
         if not existing_blueprint:
@@ -147,9 +163,19 @@ class BlueprintService:
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
-        response = BlueprintResponse.model_validate(existing_blueprint)
-        await self.event_sender.send_event(response, body.action)
-        return response
+        await self.event_sender.send_event(BlueprintResponse.model_validate(existing_blueprint), body.action)
+        return existing_blueprint
+
+    async def patch(self, blueprint_id: str, body: PatchBodyModel, requester: UserDTO) -> BlueprintResponse:
+        """
+        Patch an existing blueprint.
+        :param blueprint_id: ID of the blueprint to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the blueprint (for audit logging)
+        :return: Patched blueprint response
+        """
+        existing_blueprint = await self.patch_action(blueprint_id=blueprint_id, body=body, requester=requester)
+        return BlueprintResponse.model_validate(existing_blueprint)
 
     async def delete(self, blueprint_id: str | UUID, requester: UserDTO) -> None:
         await self.crud.delete(blueprint_id)

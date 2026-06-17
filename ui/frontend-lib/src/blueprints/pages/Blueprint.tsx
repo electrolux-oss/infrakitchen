@@ -23,6 +23,7 @@ export const BlueprintPage = () => {
     >
       <EntityContainer
         title="Blueprint Overview"
+        hideEditAction
         actions={
           <Button
             variant="contained"

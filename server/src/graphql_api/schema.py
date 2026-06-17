@@ -10,6 +10,7 @@ from graphql_api.modules.notification.subscriptions import NotificationSubscript
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
 from graphql_api.modules.batch_operation.mutations import BatchOperationMutation
 from graphql_api.modules.blueprint.queries import BlueprintQuery
+from graphql_api.modules.blueprint.mutations import BlueprintMutation
 from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
 from graphql_api.modules.template.mutations import TemplateMutation
@@ -88,6 +89,7 @@ class Mutation(
     NotificationMutation,
     ResourceMutation,
     TemplateMutation,
+    BlueprintMutation,
     IntegrationMutation,
     SourceCodeMutation,
     SourceCodeVersionMutation,

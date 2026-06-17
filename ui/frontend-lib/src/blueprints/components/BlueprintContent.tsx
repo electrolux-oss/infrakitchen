@@ -1,4 +1,8 @@
-import { Box } from "@mui/material";
+import { useState } from "react";
+
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { Box, Button } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/DangerZoneCard";
@@ -10,17 +14,23 @@ import {
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { BlueprintResponse } from "../types";
 
 import { BlueprintOverview } from "./BlueprintOverview";
+import { BlueprintWiringEditor } from "./BlueprintWiringEditor";
 import { WorkflowTimeline } from "./WorkflowTimeline";
 
 export const BlueprintContent = () => {
   const { entity } = useEntityProvider();
+  const { checkActionPermission } = usePermissionProvider();
+  const [wiringEdit, setWiringEdit] = useState(false);
 
   const blueprint = entity as BlueprintResponse | undefined;
 
   if (!blueprint) return null;
+
+  const canEdit = checkActionPermission("api:blueprint", "write");
 
   const externalTemplates = blueprint.external_templates || [];
 
@@ -39,18 +49,39 @@ export const BlueprintContent = () => {
     constants.length > 0;
 
   const tabs: TabDefinition[] = [
-    ...(hasWiring
+    ...(hasWiring || canEdit
       ? [
           {
             label: "Wiring",
             content: (
-              <PropertyCard title="Wiring Diagram">
-                <WiringDiagram
-                  templates={blueprint.templates}
-                  wiring={[...blueprint.wiring, ...constantWires]}
-                  externalTemplates={externalTemplates}
-                  constants={constants}
-                />
+              <PropertyCard
+                title="Wiring Diagram"
+                action={
+                  canEdit ? (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={wiringEdit ? <VisibilityIcon /> : <EditIcon />}
+                      onClick={() => setWiringEdit((prev) => !prev)}
+                    >
+                      {wiringEdit ? "View" : "Edit"}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                {wiringEdit ? (
+                  <BlueprintWiringEditor
+                    blueprint={blueprint}
+                    onClose={() => setWiringEdit(false)}
+                  />
+                ) : (
+                  <WiringDiagram
+                    templates={blueprint.templates}
+                    wiring={[...blueprint.wiring, ...constantWires]}
+                    externalTemplates={externalTemplates}
+                    constants={constants}
+                  />
+                )}
               </PropertyCard>
             ),
           },

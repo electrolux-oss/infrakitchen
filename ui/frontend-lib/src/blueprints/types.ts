@@ -31,10 +31,10 @@ export interface BlueprintConfiguration {
 export interface BlueprintCreateRequest {
   name: string;
   description: string;
-  template_ids: string[];
-  external_template_ids: string[];
+  templateIds: string[];
+  externalTemplateIds: string[];
   wiring: WiringRule[];
-  default_variables: Record<string, Record<string, any>>;
+  defaultVariables: Record<string, Record<string, any>>;
   configuration: Record<string, any>;
   labels: string[];
 }
@@ -42,10 +42,10 @@ export interface BlueprintCreateRequest {
 export interface BlueprintUpdateRequest {
   name?: string;
   description?: string;
-  template_ids?: string[];
-  external_template_ids?: string[];
+  templateIds?: string[];
+  externalTemplateIds?: string[];
   wiring?: WiringRule[];
-  default_variables?: Record<string, Record<string, any>>;
+  defaultVariables?: Record<string, Record<string, any>>;
   configuration?: Record<string, any>;
   labels?: string[];
 }
