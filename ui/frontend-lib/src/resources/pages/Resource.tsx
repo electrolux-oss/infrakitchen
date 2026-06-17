@@ -48,6 +48,7 @@ export const ResourcePage = () => {
     >
       <EntityContainer
         title={"Resource Overview"}
+        hideEditAction
         actions={
           <>
             <SubscribeNotificationButton

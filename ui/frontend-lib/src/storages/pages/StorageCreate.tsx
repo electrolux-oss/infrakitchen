@@ -19,9 +19,10 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { renderFieldsForProvider } from "../components/StorageProviderForms";
-import { StorageCreate, StorageResponse } from "../types";
+import { CREATE_STORAGE_MUTATION } from "../graphql";
+import { StorageCreate } from "../types";
 
-const storage_types = ["tofu"];
+const storageTypes = ["tofu"];
 
 const StorageCreatePageInner = () => {
   const { ikApi, linkPrefix, globalConfig } = useConfig();
@@ -37,7 +38,7 @@ const StorageCreatePageInner = () => {
     {},
   );
 
-  const selectedProvider = watch("storage_provider");
+  const selectedProvider = watch("storageProvider");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}storages`);
@@ -51,28 +52,27 @@ const StorageCreatePageInner = () => {
         notifyError(new Error("Please fix the errors in the form"));
         return;
       }
-      const updatedData = {
+      const input = {
         ...data,
         configuration: {
           ...data.configuration,
-          storage_provider: data.storage_provider,
+          storage_provider: data.storageProvider,
         },
       };
-
-      ikApi
-        .postRaw("storages", updatedData)
-        .then((response: StorageResponse) => {
-          if (response.id) {
-            notify("Storage created successfully", "success");
-            navigate(`${linkPrefix}storages/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        })
-        .finally(() => {
-          setSaving(false);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createStorage: { id: string };
+        }>(CREATE_STORAGE_MUTATION, { input });
+        const createdStorage = response.createStorage;
+        if (createdStorage?.id) {
+          notify("Storage created successfully", "success");
+          navigate(`${linkPrefix}storages/${createdStorage.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
     [ikApi, navigate, trigger, setSaving, linkPrefix],
   );
@@ -153,7 +153,7 @@ const StorageCreatePageInner = () => {
               render={({ field }) => <LabelInput {...field} errors={errors} />}
             />
             <Controller
-              name="storage_provider"
+              name="storageProvider"
               control={control}
               rules={{ required: "Storage provider is required" }}
               render={({ field }) => (
@@ -162,10 +162,10 @@ const StorageCreatePageInner = () => {
                   select
                   label="Storage Provider"
                   variant="outlined"
-                  error={!!errors.storage_provider}
+                  error={!!errors.storageProvider}
                   helperText={
-                    errors.storage_provider
-                      ? errors.storage_provider.message
+                    errors.storageProvider
+                      ? errors.storageProvider.message
                       : "Select the storage provider"
                   }
                   fullWidth
@@ -183,7 +183,7 @@ const StorageCreatePageInner = () => {
             />
 
             <Controller
-              name="integration_id"
+              name="integrationId"
               control={control}
               rules={{ required: "Integration is required" }}
               render={({ field }) => (
@@ -198,10 +198,10 @@ const StorageCreatePageInner = () => {
                     integration_type: "cloud",
                     integration_provider: selectedProvider,
                   }}
-                  error={!!errors.integration_id}
+                  error={!!errors.integrationId}
                   helpertext={
-                    errors.integration_id
-                      ? errors.integration_id.message
+                    errors.integrationId
+                      ? errors.integrationId.message
                       : "Select credentials for the storage"
                   }
                   value={field.value}
@@ -211,7 +211,7 @@ const StorageCreatePageInner = () => {
               )}
             />
             <Controller
-              name="storage_type"
+              name="storageType"
               control={control}
               rules={{ required: "Storage type is required" }}
               render={({ field }) => (
@@ -221,16 +221,16 @@ const StorageCreatePageInner = () => {
                   disabled
                   label="Storage Type"
                   variant="outlined"
-                  error={!!errors.storage_type}
+                  error={!!errors.storageType}
                   helperText={
-                    errors.storage_type
-                      ? errors.storage_type.message
+                    errors.storageType
+                      ? errors.storageType.message
                       : "Select the storage type"
                   }
                   fullWidth
                   margin="normal"
                 >
-                  {storage_types.map((option) => (
+                  {storageTypes.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -260,10 +260,10 @@ const StorageCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      integration_id: "",
+      integrationId: "",
       labels: [],
-      storage_type: "tofu",
-      storage_provider: "",
+      storageType: "tofu",
+      storageProvider: "",
       configuration: {},
     },
     mode: "onChange",

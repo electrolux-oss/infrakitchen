@@ -93,6 +93,7 @@ class TemplateUpdate(BaseModel):
     )
 
     @model_validator(mode="before")
+    @classmethod
     def at_least_one_field_present(cls, values):
         if not isinstance(values, dict):
             return values

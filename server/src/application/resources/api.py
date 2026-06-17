@@ -18,7 +18,7 @@ from .schema import (
     ResourceCreate,
     ResourceResponse,
     ResourceTreeResponse,
-    ResourcePatch,
+    ResourceUpdate,
     RoleResourcesResponse,
     UserResourceResponse,
 )
@@ -82,6 +82,7 @@ async def get_all(
     "/resources",
     response_model=ResourceResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: ResourceCreate, service: ResourceService = Depends(get_resource_service)):
     requester: UserDTO | None = request.state.user
@@ -98,11 +99,12 @@ async def post(request: Request, body: ResourceCreate, service: ResourceService 
     "/resources/{resource_id}",
     response_model=ResourceResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def patch(
     request: Request,
     resource_id: str,
-    body: ResourcePatch,
+    body: ResourceUpdate,
     service: ResourceService = Depends(get_resource_service),
 ):
     requester: UserDTO = request.state.user
@@ -112,7 +114,12 @@ async def patch(
     return entity
 
 
-@router.patch("/resources/{resource_id}/actions", response_model=ResourceResponse, status_code=http_status.HTTP_200_OK)
+@router.patch(
+    "/resources/{resource_id}/actions",
+    response_model=ResourceResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
+)
 async def patch_action(
     request: Request,
     resource_id: str,
@@ -132,7 +139,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/resources/{resource_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/resources/{resource_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, resource_id: str, service: ResourceService = Depends(get_resource_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(resource_id=resource_id, requester=requester):

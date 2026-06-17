@@ -217,22 +217,22 @@ class ResourceCreate(BaseModel):
     )
 
 
-class ResourcePatch(BaseModel):
+class ResourceUpdate(BaseModel):
     name: str | None = Field(default=None)
-    description: str | None = Field(default="")
+    description: str | None = Field(default=None)
     source_code_version_id: uuid.UUID | None = Field(
         default=None,
     )
     integration_ids: list[uuid.UUID] | None = Field(
-        default=[],
+        default=None,
     )
     secret_ids: list[uuid.UUID] | None = Field(
-        default=[],
+        default=None,
     )
-    variables: list[Variables] | None = Field(default=[])
-    dependency_tags: list[DependencyTag] | None = Field(default_factory=list)
-    dependency_config: list[DependencyConfig] | None = Field(default_factory=list)
-    labels: list[str] | None = Field(default_factory=list)
+    variables: list[Variables] | None = Field(default=None)
+    dependency_tags: list[DependencyTag] | None = Field(default=None)
+    dependency_config: list[DependencyConfig] | None = Field(default=None)
+    labels: list[str] | None = Field(default=None)
     workspace_id: OptionalUUID = Field(
         default=None,
     )
@@ -246,23 +246,12 @@ class ResourcePatch(BaseModel):
     )
 
     @model_validator(mode="before")
+    @classmethod
     def at_least_one_field_present(cls, values):
-        fields = [
-            "name",
-            "description",
-            "source_code_version_id",
-            "integration_ids",
-            "secret_ids",
-            "variables",
-            "dependency_tags",
-            "dependency_config",
-            "labels",
-            "workspace_id",
-            "storage_id",
-            "storage_path",
-        ]
-        if not any(values.get(field) not in (None, [], "") for field in fields):
-            raise ValueError("At least one field must be provided in ResourcePatch.")
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in ResourceUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Resource update.")
         return values
 
 

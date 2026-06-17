@@ -1,17 +1,18 @@
-from unittest.mock import Mock, call
+from unittest.mock import AsyncMock, Mock, call
 from uuid import uuid4
 
 import pytest
 
 from application.resources.schema import (
     ResourceResponse,
-    ResourcePatch,
+    ResourceUpdate,
 )
 from core.base_models import PatchBodyModel
 from core.config import InfrakitchenConfig
 from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.users.model import UserDTO
+from core.utils.model_tools import model_db_dump
 
 RESOURCE_ID = "abc123"
 
@@ -42,7 +43,8 @@ class TestPatch:
         mocked_user_response,
         mocked_resource_temp_state_handler,
     ):
-        resource_patch = ResourcePatch(description="Resource description")
+        mock_resource_service.publish_notification_event = AsyncMock()
+        resource_patch = ResourceUpdate(description="Resource description")
         resource_id = uuid4()
         existing_resource = mocked_resource
         updated_resource = mocked_resource
@@ -81,7 +83,7 @@ class TestPatch:
 
     @pytest.mark.asyncio
     async def test_patch_resource_does_not_exist(self, mock_resource_service, mock_resource_crud, mock_user_dto):
-        resource_update = Mock(spec=ResourcePatch)
+        resource_update = Mock(spec=ResourceUpdate)
         mock_resource_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Resource not found"):
@@ -102,7 +104,7 @@ class TestPatch:
     async def test_patch_resource_has_invalid_status(
         self, state, status, mock_resource_service, mock_resource_crud, mocked_resource, mock_user_dto
     ):
-        resource_update = Mock(spec=ResourcePatch)
+        resource_update = Mock(spec=ResourceUpdate)
         resource_update.source_code_version_id = None
 
         existing_resource = mocked_resource
@@ -145,7 +147,8 @@ class TestPatch:
         mock_user_permissions,
         monkeypatch,
     ):
-        resource_patch = ResourcePatch(
+        mock_resource_service.publish_notification_event = AsyncMock()
+        resource_patch = ResourceUpdate(
             name="name",
             description="desc",
             source_code_version_id=uuid4(),
@@ -182,15 +185,16 @@ class TestPatch:
         assert result.state == expected_state
         assert result.status == expected_status
         mock_resource_crud.get_by_id.assert_awaited_once_with(str(resource_id))
+        expected_resource = model_db_dump(resource_patch, exclude_unset=True, exclude_none=True)
         mocked_resource_temp_state_handler.set_resource_temp_state.assert_awaited_once_with(
-            resource_id=resource_id, value=resource_patch.model_dump(), created_by=mocked_user_response.id
+            resource_id=resource_id, value=expected_resource, created_by=mocked_user_response.id
         )
 
     @pytest.mark.asyncio
     async def test_patch_error(
         self, mock_resource_service, mock_resource_crud, template_response, mocked_user_response, monkeypatch
     ):
-        resource_update = Mock(spec=ResourcePatch)
+        resource_update = Mock(spec=ResourceUpdate)
 
         error = RuntimeError("get resource fail")
         mock_resource_crud.get_by_id.side_effect = error
@@ -216,13 +220,14 @@ class TestPatch:
         source_code_version,
         mock_source_code_version_crud,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         source_code_version.template_id = mocked_template.id
         mocked_resource.state = ModelState.PROVISIONED
         mocked_resource.status = ModelStatus.DONE
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
         mocked_template.abstract = False
         mocked_integration.integration_provider = "aws"
-        resource_patch = ResourcePatch(
+        resource_patch = ResourceUpdate(
             integration_ids=[mocked_integration.id],
         )
 
@@ -253,13 +258,14 @@ class TestPatch:
         source_code_version,
         mock_source_code_version_crud,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         source_code_version.template_id = mocked_template.id
         mocked_resource.state = ModelState.PROVISIONED
         mocked_resource.status = ModelStatus.DONE
         mocked_template.configuration["allowed_provider_integration_types"] = ["aws"]
         mocked_template.abstract = False
         mocked_integration.integration_provider = "gcp"
-        resource_patch = ResourcePatch(
+        resource_patch = ResourceUpdate(
             integration_ids=[mocked_integration.id],
         )
 
@@ -292,6 +298,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.APPROVE)
 
         resource_id = uuid4()
@@ -349,6 +356,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.APPROVE)
 
         resource_id = uuid4()
@@ -418,6 +426,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.APPROVE)
 
         resource_id = uuid4()
@@ -475,6 +484,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.APPROVE)
 
         resource_id = uuid4()
@@ -553,6 +563,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.REJECT)
         resource_id = uuid4()
         existing_resource = mocked_resource
@@ -607,6 +618,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.REJECT)
         resource_id = uuid4()
         existing_resource = mocked_resource
@@ -667,6 +679,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         if disabled_approval_flow_feature is True:
             InfrakitchenConfig().approval_flow = False
 
@@ -716,6 +729,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         patch_body = PatchBodyModel(action=ModelActions.DESTROY)
 
         resource_id = uuid4()
@@ -768,6 +782,7 @@ class TestPatchAction:
         mocked_user,
         mocked_resource,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
         if disabled_approval_flow_feature is True:
             InfrakitchenConfig().approval_flow = False
 

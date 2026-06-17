@@ -5,7 +5,7 @@ import { useParams } from "react-router";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { Button } from "@mui/material";
 
-import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
+import { PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -54,6 +54,7 @@ export const SecretPage = () => {
     >
       <EntityContainer
         title={"Secret Overview"}
+        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"
@@ -71,7 +72,6 @@ export const SecretPage = () => {
         }
       >
         <SecretContent />
-        <LogLiveTail />
       </EntityContainer>
     </EntityProvider>
   );

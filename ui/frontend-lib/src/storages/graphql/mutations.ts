@@ -1,3 +1,12 @@
+export const CREATE_STORAGE_MUTATION = `
+  mutation CreateStorage($input: StorageCreateInput!) {
+    createStorage(input: $input) {
+      id
+      name
+    }
+  }
+`;
+
 /**
  * Partial payload for updating a single storage field at a time, used by the
  * inline editing controls on the storage overview page.

@@ -14,7 +14,7 @@ from core.database import FieldSpec, to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import model_db_dump
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import SecretCRUD
 from .functions import get_secret_actions
 from .schema import CustomSecretConfig, SecretCreate, SecretResponse, SecretUpdate, SecretValidationResponse
@@ -78,12 +78,12 @@ class SecretService:
             raise EntityNotFound("Secret not found")
         return await get_secret_actions(requester, secret.status)
 
-    async def create(self, secret: SecretCreate, requester: UserDTO) -> SecretResponse:
+    async def create_secret(self, secret: SecretCreate, requester: UserDTO) -> Secret:
         """
-        Create a new secret.
+        Create a new secret and return the ORM model.
         :param secret: SecretCreate to create
         :param requester: User who creates the secret
-        :return: Created secret
+        :return: Created secret ORM instance
         """
         secret_providers = ["aws", "gcp", "custom"]
         if secret.secret_type == "tofu":
@@ -111,21 +111,34 @@ class SecretService:
         new_secret.status = ModelStatus.ENABLED
         result = await self.crud.get_by_id(new_secret.id)
 
+        if not result:
+            raise EntityNotFound("Secret not found after creation")
+
         await self.revision_handler.handle_revision(new_secret)
         await self.audit_log_handler.create_log(
             new_secret.id, requester.id, ModelActions.CREATE, revision_number=new_secret.revision_number
         )
         response = SecretResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        return result
 
-    async def update(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> SecretResponse:
+    async def create(self, secret: SecretCreate, requester: UserDTO) -> SecretResponse:
         """
-        Update an existing secret.
+        Create a new secret.
+        :param secret: SecretCreate to create
+        :param requester: User who creates the secret
+        :return: Created secret
+        """
+        result = await self.create_secret(secret=secret, requester=requester)
+        return SecretResponse.model_validate(result)
+
+    async def update_secret(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> Secret:
+        """
+        Update an existing secret and return the ORM model.
         :param secret_id: ID of the secret to update
         :param secret: Secret to update
         :param requester: User who updates the secret
-        :return: Updated secret
+        :return: Updated secret ORM instance
         """
         existing_secret = await self.crud.get_by_id(secret_id)
 
@@ -135,7 +148,11 @@ class SecretService:
         self.revision_handler.original_entity_instance_dump = to_dict(existing_secret)
         self.validate_configuration(secret_update=secret, existing_secret=existing_secret)
 
-        body = model_db_dump(secret, exclude_unset=True)
+        body = model_db_dump(secret, exclude_unset=True, exclude_none=True)
+
+        if not has_field_changes(body, existing_secret):
+            raise ValueError("No changes detected; the secret is already up to date.")
+
         await self.crud.update(existing_secret, body)
 
         await self.revision_handler.handle_revision(existing_secret)
@@ -146,15 +163,26 @@ class SecretService:
 
         response = SecretResponse.model_validate(existing_secret)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        return existing_secret
 
-    async def patch_action(self, secret_id: str, body: PatchBodyModel, requester: UserDTO) -> SecretResponse:
+    async def update(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> SecretResponse:
         """
-        Patch an existing secret.
+        Update an existing secret.
+        :param secret_id: ID of the secret to update
+        :param secret: Secret to update
+        :param requester: User who updates the secret
+        :return: Updated secret
+        """
+        result = await self.update_secret(secret_id=secret_id, secret=secret, requester=requester)
+        return SecretResponse.model_validate(result)
+
+    async def patch_action_secret(self, secret_id: str, body: PatchBodyModel, requester: UserDTO) -> Secret:
+        """
+        Patch an existing secret and return the ORM model.
         :param secret_id: ID of the secret to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the secret
-        :return: Patched secret
+        :return: Patched secret ORM instance
         """
         existing_secret = await self.crud.get_by_id(secret_id)
         if not existing_secret:
@@ -176,7 +204,18 @@ class SecretService:
 
         response = SecretResponse.model_validate(existing_secret)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_secret
+
+    async def patch_action(self, secret_id: str, body: PatchBodyModel, requester: UserDTO) -> SecretResponse:
+        """
+        Patch an existing secret.
+        :param secret_id: ID of the secret to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the secret
+        :return: Patched secret
+        """
+        result = await self.patch_action_secret(secret_id=secret_id, body=body, requester=requester)
+        return SecretResponse.model_validate(result)
 
     async def delete(self, secret_id: str, requester: UserDTO) -> None:
         existing_secret = await self.crud.get_by_id(secret_id)

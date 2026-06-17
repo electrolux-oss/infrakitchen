@@ -374,7 +374,7 @@ class TestUpdate:
         )
 
         secret_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=False, exclude_unset=True
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=True, exclude_unset=True
         )
         mock_secret_crud.update.assert_called_once_with(mocked_secret, update_secret_body)
         mock_secret_crud.refresh.assert_called_once_with(mocked_secret)
@@ -389,7 +389,7 @@ class TestUpdate:
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_secret_service, mock_secret_crud, mocked_secret):
-        secret_update = Mock(spec=SecretUpdate)
+        secret_update = SecretUpdate(description="Secret description")
         requester = Mock(spec=UserDTO)
         mock_secret_crud.get_by_id.return_value = mocked_secret
 

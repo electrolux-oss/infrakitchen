@@ -1,22 +1,96 @@
-import { Box, Divider } from "@mui/material";
+import { useCallback, useMemo, useState } from "react";
+
+import { Box, Divider, TextField } from "@mui/material";
 
 import {
   CommonField,
   GetReferenceUrlValue,
-  GetEntityLink,
 } from "../../common/components/CommonField";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { useConfig } from "../../common/context";
+import { useEntityProvider } from "../../common/context/EntityContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { IkEntity } from "../../types";
+import {
+  ResourceUpdateFieldInput,
+  UPDATE_RESOURCE_MUTATION,
+} from "../graphql/mutations";
 import { ResourceResponse } from "../types";
+
+const sameStringSet = (a: string[], b: string[]) =>
+  a.length === b.length &&
+  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface ResourceAboutProps {
   resource: ResourceResponse;
 }
 
 export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
+  const { ikApi } = useConfig();
+  const { refreshEntity } = useEntityProvider();
+  const { checkActionPermission, permissions } = usePermissionProvider();
+  const canEdit = checkActionPermission("api:resource", "write");
+
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
+
+  const existingIntegrationIds = useMemo(
+    () => new Set(resource.integration_ids.map((i) => String(i.id))),
+    [resource.integration_ids],
+  );
+
+  const integrationOptionFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (existingIntegrationIds.has(String(option.id))) return true;
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`integration:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [existingIntegrationIds, permissions],
+  );
+
+  const existingWorkspaceId = resource.workspace?.id
+    ? String(resource.workspace.id)
+    : null;
+
+  const workspaceOptionFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (existingWorkspaceId && String(option.id) === existingWorkspaceId)
+        return true;
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`workspace:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [existingWorkspaceId, permissions],
+  );
+
+  const saveField = useCallback(
+    async (input: ResourceUpdateFieldInput) => {
+      try {
+        await ikApi.graphqlRequest(UPDATE_RESOURCE_MUTATION, {
+          id: resource.id,
+          input,
+        });
+        notify("Resource updated successfully", "success");
+        refreshEntity?.();
+      } catch (error) {
+        notifyError(error);
+        throw error;
+      }
+    },
+    [ikApi, resource.id, refreshEntity],
+  );
+
   return (
     <OverviewCard
       name={resource.name}
@@ -30,33 +104,53 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         />
       }
     >
+      <CommonEditableField<string>
+        name="Name"
+        canEdit={canEdit}
+        value={resource.name}
+        ariaLabel="Edit name"
+        display={<span>{resource.name}</span>}
+        onSave={(value) => saveField({ name: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Name"
+            fullWidth
+            margin="normal"
+            autoFocus
+          />
+        )}
+        size={4}
+      />
+
       <CommonField
         name="State"
         value={<StatusChip status={resource.status} state={resource.state} />}
         size={4}
       />
 
-      <CommonField
-        name="Template Version"
-        value={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <GetEntityLink {...resource.template} />
-            {"/"}
-            {resource.source_code_version ? (
-              <GetEntityLink
-                {...resource.source_code_version}
-                name={
-                  resource.source_code_version?.source_code_version ||
-                  resource.source_code_version?.source_code_branch
-                }
-              />
-            ) : null}
-          </Box>
-        }
-        size={4}
+      <CommonEditableField<string>
+        name="Description"
+        canEdit={canEdit}
+        value={resource.description ?? ""}
+        ariaLabel="Edit description"
+        display={<span>{resource.description || "No description"}</span>}
+        onSave={(value) => saveField({ description: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Description"
+            fullWidth
+            multiline
+            minRows={2}
+            margin="normal"
+            autoFocus
+          />
+        )}
+        size={12}
       />
-
-      <CommonField name="Revision" value={resource.revision_number} size={4} />
 
       <CommonField
         name="Created"
@@ -70,16 +164,132 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         value={<RelativeTime date={resource.updated_at} />}
         size={4}
       />
+      <CommonField name="Revision" value={resource.revision_number} size={4} />
 
-      <CommonField
+      <CommonEditableField<string[]>
         name="Labels"
-        value={<Labels labels={resource.labels} />}
+        canEdit={canEdit}
+        value={resource.labels}
+        ariaLabel="Edit labels"
+        isEqual={sameStringSet}
+        display={<Labels labels={resource.labels} />}
+        onSave={(value) => saveField({ labels: value })}
+        renderEditor={({ value, onChange }) => (
+          <StringTagEditor
+            value={value}
+            onChange={onChange}
+            label="Labels"
+            helperText="Press Enter to add a label"
+          />
+        )}
         size={12}
       />
 
       <Box sx={{ width: "100%", my: 1 }}>
         <Divider />
       </Box>
+
+      {resource.abstract === false && (
+        <>
+          <CommonEditableField<string[]>
+            name="Cloud Integrations"
+            canEdit={canEdit}
+            value={resource.integration_ids.map((i) => i.id)}
+            ariaLabel="Edit cloud integrations"
+            isEqual={sameStringSet}
+            display={
+              resource.integration_ids.length > 0 ? (
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  {resource.integration_ids.map((integration) => (
+                    <span key={integration.id}>
+                      <GetReferenceUrlValue {...integration} />
+                    </span>
+                  ))}
+                </Box>
+              ) : null
+            }
+            onSave={(value) => saveField({ integrationIds: value })}
+            renderEditor={({ value, onChange }) => (
+              <ArrayReferenceInput
+                ikApi={ikApi}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                entity_name="integrations"
+                filter={{ integration_type: "cloud" }}
+                showFields={["integration_provider", "name"]}
+                optionFilter={integrationOptionFilter}
+                value={value}
+                onChange={onChange}
+                label="Cloud Integrations"
+                helpertext="Existing integrations are kept; new options are limited to those you have write access to."
+                multiple
+              />
+            )}
+            size={6}
+          />
+
+          <CommonEditableField<string[]>
+            name="Secrets"
+            canEdit={canEdit}
+            value={resource.secret_ids.map((s) => s.id)}
+            ariaLabel="Edit secrets"
+            isEqual={sameStringSet}
+            display={
+              resource.secret_ids.length > 0 ? (
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  {resource.secret_ids.map((secret) => (
+                    <span key={secret.id}>
+                      <GetReferenceUrlValue {...secret} />
+                    </span>
+                  ))}
+                </Box>
+              ) : null
+            }
+            onSave={(value) => saveField({ secretIds: value })}
+            renderEditor={({ value, onChange }) => (
+              <ArrayReferenceInput
+                ikApi={ikApi}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                entity_name="secrets"
+                value={value}
+                onChange={onChange}
+                label="Secrets"
+                multiple
+              />
+            )}
+            size={6}
+          />
+
+          <CommonEditableField<string | null>
+            name="Workspace"
+            canEdit={canEdit}
+            value={resource.workspace?.id ?? null}
+            ariaLabel="Edit workspace"
+            display={
+              resource.workspace ? (
+                <GetReferenceUrlValue {...resource.workspace} />
+              ) : null
+            }
+            onSave={(value) => saveField({ workspaceId: value })}
+            renderEditor={({ value, onChange }) => (
+              <ReferenceInput
+                ikApi={ikApi}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                entity_name="workspaces"
+                showFields={["name", "workspace_provider"]}
+                optionFilter={workspaceOptionFilter}
+                value={value}
+                onChange={onChange}
+                label="Workspace"
+                helpertext="Only workspaces you have write access to are shown"
+              />
+            )}
+            size={6}
+          />
+        </>
+      )}
 
       <CommonField
         name="Parents"

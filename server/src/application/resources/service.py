@@ -53,7 +53,7 @@ from core.utils.entity_state_handler import (
     approve_entity,
 )
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import is_valid_uuid
+from core.utils.model_tools import has_field_changes, is_valid_uuid, model_db_dump
 from .crud import ResourceCRUD
 from .schema import (
     ResourceCreate,
@@ -62,7 +62,7 @@ from .schema import (
     ResourceTreeResponse,
     ResourceVariableSchema,
     ResourceWithConfigs,
-    ResourcePatch,
+    ResourceUpdate,
     RoleResourcesResponse,
     UserResourceResponse,
 )
@@ -160,17 +160,17 @@ class ResourceService:
             requester, resource.id, resource.status, resource.state, resource_temp_state is not None
         )
 
-    async def create(
+    async def create_resource(
         self,
         resource: ResourceCreate,
         requester: UserDTO,
         allowed_parent_states: list[Any] | None = None,
-    ) -> ResourceResponse:
+    ) -> Resource:
         """
         Create a new resource.
         :param resource: ResourceCreate to create
         :param requester: User who creates the resource
-        :return: Created resource
+        :return: ORM model of the created resource
         """
 
         if allowed_parent_states is None:
@@ -366,6 +366,8 @@ class ResourceService:
             new_resource.status = ModelStatus.READY
 
         result = await self.crud.get_by_id(new_resource.id)
+        if not result:
+            raise EntityNotFound("Resource not found after creation")
 
         await self.revision_handler.handle_revision(new_resource)
         await self.audit_log_handler.create_log(
@@ -396,18 +398,29 @@ class ResourceService:
             )
 
         await self.permission_service.casbin_enforcer.send_reload_event()
-        return response
+        return result
 
-    async def patch(self, resource_id: str, resource: ResourcePatch, requester: UserDTO) -> ResourceResponse:
+    async def create(
+        self,
+        resource: ResourceCreate,
+        requester: UserDTO,
+        allowed_parent_states: list[Any] | None = None,
+    ) -> ResourceResponse:
+        result = await self.create_resource(
+            resource=resource, requester=requester, allowed_parent_states=allowed_parent_states
+        )
+        return ResourceResponse.model_validate(result)
+
+    async def update_resource(self, resource_id: str, resource: ResourceUpdate, requester: UserDTO) -> Resource:
         """
         Update an existing resource.
         :param resource_id: ID of the resource to update
         :param resource: Resource to update
         :param requester: User who updates the resource
-        :return: Updated resource
+        :return: ORM model of the updated resource
         """
 
-        def check_critical_fields_changed(existing: Resource, patched: ResourcePatch) -> bool:
+        def check_critical_fields_changed(existing: Resource, patched: ResourceUpdate) -> bool:
             critical_fields = ["storage_id", "storage_path"]
             for field in critical_fields:
                 if getattr(patched, field) is not None and getattr(patched, field) != getattr(existing, field):
@@ -451,6 +464,12 @@ class ResourceService:
                     raise EntityWrongState(
                         "Source code version is not in DONE state. You should sync it before using in resource"
                     )
+
+                # When source_code_version_id changes without explicit variables,
+                # carry over the existing resource's variables so they can be
+                # validated/merged against the new schema automatically.
+                if "variables" not in resource.model_fields_set:
+                    resource.variables = existing_resource_pydantic.variables
 
                 resource_variables_schema = await self.get_variable_schema(
                     source_code_version_id=source_code_version.id,
@@ -522,7 +541,10 @@ class ResourceService:
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:
                     raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
 
-        body = resource.model_dump(exclude_unset=True)
+        body = model_db_dump(resource, exclude_unset=True, exclude_none=True)
+
+        if not has_field_changes(body, existing_resource):
+            raise ValueError("No changes detected; the resource is already up to date.")
 
         if (
             existing_resource_pydantic.status == ModelStatus.APPROVAL_PENDING
@@ -539,8 +561,8 @@ class ResourceService:
                 resource_id=existing_resource.id, value=body, created_by=requester.id
             )
 
-        response = ResourceResponse.model_validate(existing_resource)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
+        response_pydantic = ResourceResponse.model_validate(existing_resource)
+        await self.event_sender.send_event(response_pydantic, ModelActions.UPDATE)
         await self.publish_notification_event(existing_resource, ModelActions.UPDATE, status="info")
 
         if existing_resource.workspace_id is not None:
@@ -548,7 +570,18 @@ class ResourceService:
                 existing_resource.id, requester=requester, action=ModelActions.UPDATE
             )
 
-        return response
+        return existing_resource
+
+    async def patch(self, resource_id: str, resource: ResourceUpdate, requester: UserDTO) -> ResourceResponse:
+        """
+        Update an existing resource.
+        :param resource_id: ID of the resource to update
+        :param resource: Resource to update
+        :param requester: User who updates the resource
+        :return: Updated resource
+        """
+        result = await self.update_resource(resource_id=resource_id, resource=resource, requester=requester)
+        return ResourceResponse.model_validate(result)
 
     async def action_reject(
         self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO
@@ -716,15 +749,15 @@ class ResourceService:
                 existing_resource.id, requester=requester, action=ModelActions.RECREATE
             )
 
-    async def patch_action(
-        self, resource_id, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
-    ) -> ResourceResponse:
+    async def patch_action_resource(
+        self, resource_id: str | UUID, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
+    ) -> Resource:
         """
         Patch an existing resource.
         :param resource_id: ID of the resource to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the resource
-        :return: Patched resource
+        :return: ORM model of the patched resource
         """
         existing_resource = await self.crud.get_by_id(resource_id)
         if not existing_resource:
@@ -819,7 +852,15 @@ class ResourceService:
 
         response = ResourceResponse.model_validate(existing_resource)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_resource
+
+    async def patch_action(
+        self, resource_id: str | UUID, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
+    ) -> ResourceResponse:
+        result = await self.patch_action_resource(
+            resource_id=resource_id, body=body, requester=requester, trace_id=trace_id
+        )
+        return ResourceResponse.model_validate(result)
 
     async def delete(self, resource_id: str, requester: UserDTO) -> None:
         existing_resource = await self.crud.get_by_id(resource_id)

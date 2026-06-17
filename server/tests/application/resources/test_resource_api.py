@@ -55,7 +55,13 @@ class MockResourceService:
     async def patch(self, resource_id, resource, requester):
         return self._patched
 
+    async def update_resource(self, resource_id, resource, requester):
+        return self._patched
+
     async def patch_action(self, resource_id, body, requester):
+        return self._patched
+
+    async def patch_action_resource(self, resource_id, body, requester):
         return self._patched
 
     async def delete(self, resource_id, requester):
@@ -198,12 +204,12 @@ class TestResourcePatch:
             "description": None,
         }
 
-        service = MockResourceService(patched=resource_response)
+        service = MockResourceService(patched=resource_response, actions=[ModelActions.EDIT])
         override_service(service)
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-        assert "At least one field must be provided in ResourcePatch" in response.text
+        assert "At least one field must be provided in Resource update" in response.json()["detail"][0]["msg"]
 
     def test_patch_all_fields_are_null_error(self, client_with_user, resource_response, override_service):
         resource_patch = {}
@@ -213,7 +219,7 @@ class TestResourcePatch:
 
         response = client_with_user.patch(f"/resources/{RESOURCE_ID}", json=resource_patch)
         assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-        assert "At least one field must be provided in ResourcePatch" in response.text
+        assert "At least one field must be provided in Resource update" in response.json()["detail"][0]["msg"]
 
     def test_patch_source_code_version_id_success(self, client_with_user, resource_response, override_service):
         resource_patch = {

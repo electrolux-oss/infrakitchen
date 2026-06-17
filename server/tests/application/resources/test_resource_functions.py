@@ -12,7 +12,7 @@ from application.resources.functions import (
 )
 from application.resources.schema import (
     ResourceCreate,
-    ResourcePatch,
+    ResourceUpdate,
     ResourceVariableSchema,
     Variables,
 )
@@ -315,7 +315,7 @@ async def test_validate_resource_variables_patch_success_no_change(resource_resp
     old = resource_response
     old.variables = [Variables(name="env", value="prod")]
 
-    update = ResourcePatch(
+    update = ResourceUpdate(
         variables=[Variables(name="env", value="prod")]  # same value
     )
 
@@ -329,7 +329,7 @@ async def test_validate_resource_variables_patch_success_valid_change(resource_r
     ]
     old = resource_response
     old.variables = [Variables(name="replicas", value=2)]
-    update = ResourcePatch(variables=[Variables(name="replicas", value=3)])
+    update = ResourceUpdate(variables=[Variables(name="replicas", value=3)])
 
     await update_resource_variables_on_patch(schema, old, update)
 
@@ -339,7 +339,7 @@ async def test_validate_resource_variables_patch_frozen_change(resource_response
     schema = [ResourceVariableSchema(name="env", type="string", frozen=True)]
     old = resource_response
     old.variables = [Variables(name="env", value="prod")]
-    update = ResourcePatch(variables=[Variables(name="env", value="staging")])
+    update = ResourceUpdate(variables=[Variables(name="env", value="staging")])
 
     with pytest.raises(ValueError, match=r"Variable 'env' is frozen and cannot be changed"):
         await update_resource_variables_on_patch(schema, old, update, allow_frozen_variable_changes=False)
@@ -350,7 +350,7 @@ async def test_validate_resource_variables_patch_frozen_change_allowed(resource_
     schema = [ResourceVariableSchema(name="env", type="string", frozen=True)]
     old = resource_response
     old.variables = [Variables(name="env", value="prod")]
-    update = ResourcePatch(variables=[Variables(name="env", value="staging")])
+    update = ResourceUpdate(variables=[Variables(name="env", value="staging")])
 
     await update_resource_variables_on_patch(
         schema,
@@ -365,7 +365,7 @@ async def test_validate_resource_variables_patch_invalid_type(resource_response)
     schema = [ResourceVariableSchema(name="replicas", type="number")]
     old = resource_response
     old.variables = [Variables(name="replicas", value=2)]
-    update = ResourcePatch(variables=[Variables(name="replicas", value="wrong-type")])
+    update = ResourceUpdate(variables=[Variables(name="replicas", value="wrong-type")])
 
     with pytest.raises(ValueError, match=r"Variable 'replicas' has an invalid type. Expected number."):
         await update_resource_variables_on_patch(schema, old, update)
@@ -376,7 +376,7 @@ async def test_validate_resource_variables_patch_invalid_option(resource_respons
     schema = [ResourceVariableSchema(name="color", type="string", options=["red", "green", "blue"])]
     old = resource_response
     old.variables = [Variables(name="color", value="green")]
-    update = ResourcePatch(variables=[Variables(name="color", value="yellow")])
+    update = ResourceUpdate(variables=[Variables(name="color", value="yellow")])
 
     with pytest.raises(ValueError, match=r"Variable 'color' has an invalid value. Expected one of"):
         await update_resource_variables_on_patch(schema, old, update)
@@ -399,7 +399,7 @@ async def test_validate_resource_variables_patch_enforces_rules(resource_respons
     ]
     old = resource_response
     old.variables = [Variables(name="env", value="staging")]
-    update = ResourcePatch(variables=[Variables(name="env", value="staging")])
+    update = ResourceUpdate(variables=[Variables(name="env", value="staging")])
 
     with pytest.raises(ValueError, match=r"does not match required pattern"):
         await update_resource_variables_on_patch(schema, old, update)

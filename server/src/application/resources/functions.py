@@ -12,7 +12,7 @@ from application.resources.schema import (
     ResourceResponse,
     ResourceVariableSchema,
     ResourceWithConfigs,
-    ResourcePatch,
+    ResourceUpdate,
     Variables,
 )
 from application.source_code_versions.schema import (
@@ -423,7 +423,7 @@ async def validate_resource_variables_on_create(
 async def update_resource_variables_on_patch(
     schema: list[ResourceVariableSchema],
     resource: ResourceResponse,
-    patched_resource: ResourcePatch,
+    patched_resource: ResourceUpdate,
     allow_frozen_variable_changes: bool = False,
 ) -> None:
     """

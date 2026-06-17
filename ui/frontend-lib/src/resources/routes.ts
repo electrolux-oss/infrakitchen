@@ -1,7 +1,6 @@
 import { ResourceMetadataPage } from "./components/ResourceMetadata";
 import { ResourcePage } from "./pages/Resource";
 import { ResourceCreatePage } from "./pages/ResourceCreate";
-import { ResourceEditPage } from "./pages/ResourceEdit";
 import { ResourcesPage } from "./pages/Resources";
 
 export const resourceRoutes = [
@@ -20,12 +19,6 @@ export const resourceRoutes = [
   {
     path: ResourceCreatePage.path,
     Component: ResourceCreatePage,
-    requiredPermission: "api:resource",
-    permissionAction: "read",
-  },
-  {
-    path: ResourceEditPage.path,
-    Component: ResourceEditPage,
     requiredPermission: "api:resource",
     permissionAction: "read",
   },
