@@ -7,6 +7,7 @@ import { Box, Alert, Button, CircularProgress } from "@mui/material";
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { ENTITY_STATUS } from "../../utils";
+import { REPLACE_VALIDATION_RULES_MUTATION } from "../../validation_rules/graphql";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import { SourceConfigUpdateWithId } from "../types";
 import { normalizeNumericField, parseNumericField } from "../utils/numeric";
@@ -38,15 +39,15 @@ interface ConfigSnapshot {
 type ValidationRuleUpdate =
   | {
       action: "upsert";
-      target_type: "string" | "number";
-      rule_id?: string | null;
-      regex_pattern?: string | null;
-      min_value?: number | null;
-      max_value?: number | null;
+      targetType: "string" | "number";
+      ruleId?: string | null;
+      regexPattern?: string | null;
+      minValue?: number | null;
+      maxValue?: number | null;
     }
   | {
       action: "clear";
-      target_type: "string" | "number";
+      targetType: "string" | "number";
     };
 
 const hasConfigChanged = (
@@ -106,15 +107,15 @@ const buildValidationRuleUpdate = (
   if (hasConstraints) {
     return {
       action: "upsert",
-      target_type: targetType,
-      rule_id: ruleIdForSubmission,
-      regex_pattern:
+      targetType,
+      ruleId: ruleIdForSubmission,
+      regexPattern:
         targetType === "string" && trimmedRegex ? trimmedRegex : null,
-      min_value:
+      minValue:
         targetType === "number" && normalizedMin !== null
           ? normalizedMin
           : null,
-      max_value:
+      maxValue:
         targetType === "number" && normalizedMax !== null
           ? normalizedMax
           : null,
@@ -124,7 +125,7 @@ const buildValidationRuleUpdate = (
   if (originalHasConstraints) {
     return {
       action: "clear",
-      target_type: targetType,
+      targetType,
     };
   }
 
@@ -332,45 +333,37 @@ export const SourceCodeVersionConfig = () => {
         }
 
         for (const [variableName, validationData] of validationRuleUpdates) {
-          if (validationData.action === "clear") {
-            await ikApi.updateRaw(
-              `validation_rules/template/${sourceCodeVersion.template.id}/${variableName}`,
-              { rules: [] },
-            );
-            continue;
-          }
+          const rules =
+            validationData.action === "clear"
+              ? []
+              : [
+                  {
+                    ...(validationData.ruleId
+                      ? { id: validationData.ruleId }
+                      : {}),
+                    ...(validationData.regexPattern
+                      ? { regexPattern: validationData.regexPattern }
+                      : {}),
+                    ...(validationData.minValue !== null &&
+                    validationData.minValue !== undefined
+                      ? { minValue: validationData.minValue }
+                      : {}),
+                    ...(validationData.maxValue !== null &&
+                    validationData.maxValue !== undefined
+                      ? { maxValue: validationData.maxValue }
+                      : {}),
+                    targetType:
+                      validationData.targetType === "string"
+                        ? "STRING"
+                        : "NUMBER",
+                  },
+                ];
 
-          const rules = [];
-          const rule: any = {
-            target_type: validationData.target_type,
-          };
-
-          if (validationData.regex_pattern) {
-            rule.regex_pattern = validationData.regex_pattern;
-          }
-          if (
-            validationData.min_value !== null &&
-            validationData.min_value !== undefined
-          ) {
-            rule.min_value = validationData.min_value;
-          }
-          if (
-            validationData.max_value !== null &&
-            validationData.max_value !== undefined
-          ) {
-            rule.max_value = validationData.max_value;
-          }
-
-          if (validationData.rule_id) {
-            rule.id = validationData.rule_id;
-          }
-
-          rules.push(rule);
-
-          await ikApi.updateRaw(
-            `validation_rules/template/${sourceCodeVersion.template.id}/${variableName}`,
-            { rules },
-          );
+          await ikApi.graphqlRequest(REPLACE_VALIDATION_RULES_MUTATION, {
+            templateId: sourceCodeVersion.template.id,
+            variableName,
+            rules,
+          });
         }
 
         notify("Configurations updated successfully", "success");

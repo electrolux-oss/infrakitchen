@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
@@ -23,3 +24,13 @@ validation_rule_mapper.finalize()
 class ValidationRulesByVariableType:
     variable_name: str
     rules: list[ValidationRuleType]
+
+
+@strawberry.type
+class ValidationRuleTemplateReferenceType:
+    id: uuid.UUID
+    template_id: uuid.UUID
+    variable_name: str
+    validation_rule_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime

@@ -104,7 +104,7 @@ export const SourceCodeVersionsPage = () => {
         headerName: "Created At",
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+          getDateValue(params.row.createdAt),
       },
       {
         field: "creator",

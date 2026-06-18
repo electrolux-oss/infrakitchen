@@ -48,6 +48,7 @@ from graphql_api.modules.notification.queries import NotificationQuery
 from graphql_api.modules.notification.mutations import NotificationMutation
 from graphql_api.modules.resource.mutations import ResourceMutation
 from graphql_api.modules.log.queries import LogQuery
+from graphql_api.modules.validation_rule.mutations import ValidationRuleMutation
 from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 from graphql_api.modules.auth.mutations import AuthMutation
 
@@ -106,6 +107,7 @@ class Mutation(
     PermissionMutation,
     WorkflowMutation,
     WorkspaceMutation,
+    ValidationRuleMutation,
 ):
     pass
 
