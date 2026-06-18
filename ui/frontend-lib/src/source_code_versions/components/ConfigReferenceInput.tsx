@@ -50,12 +50,12 @@ export const ConfigReferenceInput = ({
   const { templates } = useSourceCodeVersionConfigContext();
   const selectedTemplateId = useWatch({
     control,
-    name: `configs.${index}.reference_template_id`,
+    name: `configs.${index}.referenceTemplateId`,
   });
 
   const handleDeleteTemplateSelection = () => {
-    setValue(`configs.${index}.reference_template_id`, null);
-    setValue(`configs.${index}.output_config_name`, null);
+    setValue(`configs.${index}.referenceTemplateId`, null);
+    setValue(`configs.${index}.outputConfigName`, null);
     setTemplate(null);
     setSourceOutputs([]);
   };
@@ -103,7 +103,7 @@ export const ConfigReferenceInput = ({
   return (
     <>
       <Controller
-        name={`configs.${index}.reference_template_id`}
+        name={`configs.${index}.referenceTemplateId`}
         control={control}
         render={({ field }) => (
           <FormControl fullWidth margin="normal">
@@ -131,7 +131,7 @@ export const ConfigReferenceInput = ({
       {loadingOutputs && <GradientCircularProgress />}
       {sourceOutputs.length > 0 && selectedTemplateId && (
         <Controller
-          name={`configs.${index}.output_config_name`}
+          name={`configs.${index}.outputConfigName`}
           control={control}
           render={({ field }) => (
             <FormControl fullWidth margin="normal">

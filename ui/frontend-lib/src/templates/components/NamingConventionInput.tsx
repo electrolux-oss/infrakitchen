@@ -12,6 +12,14 @@ import {
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
+  GqlSourceConfig,
+  GqlSourceOutputConfigTemplate,
+  SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY,
+  SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
+  transformSourceConfig,
+  transformSourceOutputConfigTemplate,
+} from "../../source_code_versions/graphql";
+import {
   SourceOutputConfigTemplateResponse,
   SourceConfigResponse,
 } from "../../source_code_versions/types";
@@ -52,16 +60,30 @@ export const NamingConventionInput = ({
     setLoading(true);
     try {
       const [configsResponse, ...parentOutputResponses] = await Promise.all([
-        ikApi.get(
-          `source_code_versions/template/${templateId}/configs`,
-        ) as Promise<SourceConfigResponse[]>,
+        ikApi
+          .graphqlRequest<{
+            sourceCodeVersionTemplateConfigs: GqlSourceConfig[];
+          }>(SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY, {
+            templateId,
+          })
+          .then((response) =>
+            response.sourceCodeVersionTemplateConfigs.map(
+              transformSourceConfig,
+            ),
+          ),
         ...parents.map((p) =>
-          (
-            ikApi.get(
-              `source_code_versions/template/${p.id}/outputs`,
-            ) as Promise<SourceOutputConfigTemplateResponse[]>
-          )
-            .then((outputs) => ({ parentName: p.name, outputs }))
+          ikApi
+            .graphqlRequest<{
+              sourceCodeVersionTemplateOutputs: GqlSourceOutputConfigTemplate[];
+            }>(SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY, {
+              templateId: p.id,
+            })
+            .then((response) => ({
+              parentName: p.name,
+              outputs: response.sourceCodeVersionTemplateOutputs.map(
+                transformSourceOutputConfigTemplate,
+              ),
+            }))
             .catch(() => ({
               parentName: p.name,
               outputs: [] as SourceOutputConfigTemplateResponse[],

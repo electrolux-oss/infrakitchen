@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfig } from "../../common";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { TemplatePorts } from "../../common/components/viewers/Wiring/WiringCanvas.types";
+import { TEMPLATE_PORTS_QUERY } from "../../source_code_versions/graphql";
 import { TemplateResponse, TemplateShort } from "../../templates/types";
 import { IkEntity } from "../../types";
 import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
@@ -18,10 +19,10 @@ interface SourceConfigItem {
 }
 
 interface SourceConfigTemplateReferenceItem {
-  reference_template_id: string;
-  template_id: string;
-  input_config_name: string;
-  output_config_name: string;
+  referenceTemplateId: string;
+  templateId: string;
+  inputConfigName: string;
+  outputConfigName: string;
 }
 
 interface BatchTemplatePortsItem {
@@ -32,7 +33,7 @@ interface BatchTemplatePortsItem {
 }
 
 interface BatchTemplatePortsResponse {
-  templates: BatchTemplatePortsItem[];
+  templatePorts: BatchTemplatePortsItem[];
 }
 
 interface UseBlueprintFormOptions {
@@ -95,14 +96,13 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
       ];
 
       try {
-        const resp = (await ikApi.postRaw(
-          "source_code_versions/templates/ports",
-          { template_ids: allIds },
-        )) as BatchTemplatePortsResponse;
+        const resp = (await ikApi.graphqlRequest(TEMPLATE_PORTS_QUERY, {
+          templateIds: allIds,
+        })) as BatchTemplatePortsResponse;
 
         // Update ports
         const newPorts: Record<string, TemplatePorts> = {};
-        for (const item of resp.templates) {
+        for (const item of resp.templatePorts) {
           newPorts[item.template.id] = {
             inputs: item.configs.map((c) => c.name),
             outputs: item.outputs.map((o) => o.name),
@@ -112,7 +112,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
         // Update parents
         const newParents: Record<string, TemplateShort[]> = {};
-        for (const item of resp.templates) {
+        for (const item of resp.templatePorts) {
           newParents[item.template.id] = item.template.parents || [];
         }
         setTemplateParents((prev) => ({ ...prev, ...newParents }));
@@ -127,26 +127,26 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
           const unique: WiringRule[] = [];
           const uniqueKeys = new Set<string>();
-          for (const item of resp.templates) {
+          for (const item of resp.templatePorts) {
             for (const ref of item.references) {
               if (
-                !validSourceIds.has(ref.reference_template_id) ||
-                !selectedIds.has(ref.template_id)
+                !validSourceIds.has(ref.referenceTemplateId) ||
+                !selectedIds.has(ref.templateId)
               ) {
                 continue;
               }
 
-              const key = `${ref.reference_template_id}|${ref.output_config_name}|${ref.template_id}|${ref.input_config_name}`;
+              const key = `${ref.referenceTemplateId}|${ref.outputConfigName}|${ref.templateId}|${ref.inputConfigName}`;
               if (uniqueKeys.has(key)) {
                 continue;
               }
               uniqueKeys.add(key);
 
               unique.push({
-                source_template_id: ref.reference_template_id,
-                source_output: ref.output_config_name,
-                target_template_id: ref.template_id,
-                target_variable: ref.input_config_name,
+                source_template_id: ref.referenceTemplateId,
+                source_output: ref.outputConfigName,
+                target_template_id: ref.templateId,
+                target_variable: ref.inputConfigName,
               });
             }
           }

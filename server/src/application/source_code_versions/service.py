@@ -512,18 +512,18 @@ class SourceCodeVersionService:
 
                 await self.crud.create_template_references(tr.model_dump(exclude_unset=True))
 
-    async def update_configs(
+    async def update_configs_orm(
         self, source_code_version_id: str | UUID, configs: list[SourceConfigUpdateWithId]
-    ) -> list[SourceConfigResponse]:
+    ) -> list[SourceConfig]:
         """
-        Update existing source code version configs.
+        Update existing source code version configs and return ORM models.
         :param source_code_version_id: ID of the source code version
         :param configs: List of SourceConfigUpdate to update
-        :return: List of updated source code version configs
+        :return: List of updated source code version config ORM models
         """
         existing_configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
         existing_configs_dict = {config.id: config for config in existing_configs}
-        updated_configs: list[SourceConfigResponse] = []
+        updated_configs: list[SourceConfig] = []
         template_references_to_create: list[SourceConfigTemplateReferenceCreate] = []
         template_id = None
         template = await self.template_service.get_by_id(configs[0].template_id)
@@ -545,7 +545,7 @@ class SourceCodeVersionService:
             body = config.model_dump(exclude_unset=True)
             verify_config_type(body, expected_type=existing_configs_dict[config.id].type)
             await self.crud.update_config(existing_configs_dict[config.id], body)
-            updated_configs.append(SourceConfigResponse.model_validate(existing_configs_dict[config.id]))
+            updated_configs.append(existing_configs_dict[config.id])
 
             # Handle template references
             pydantic_config = SourceConfigResponse.model_validate(existing_configs_dict[config.id])
@@ -561,6 +561,21 @@ class SourceCodeVersionService:
             await self.update_template_references(template_references=template_references_to_create)
 
         return updated_configs
+
+    async def update_configs(
+        self, source_code_version_id: str | UUID, configs: list[SourceConfigUpdateWithId]
+    ) -> list[SourceConfigResponse]:
+        """
+        Update existing source code version configs.
+        :param source_code_version_id: ID of the source code version
+        :param configs: List of SourceConfigUpdate to update
+        :return: List of updated source code version configs
+        """
+        updated_configs = await self.update_configs_orm(
+            source_code_version_id=source_code_version_id,
+            configs=configs,
+        )
+        return [SourceConfigResponse.model_validate(config) for config in updated_configs]
 
     async def get_output_configs_by_scv_id(self, source_code_version_id: str) -> list[SourceOutputConfigResponse]:
         """

@@ -28,6 +28,12 @@ from graphql_api.modules.source_code_version.types import (
     SourceConfigType,
     SourceOutputConfigTemplateType,
     SourceOutputConfigType,
+    TemplatePortsConfigType,
+    TemplatePortsItemType,
+    TemplatePortsOutputType,
+    TemplatePortsParentType,
+    TemplatePortsReferenceType,
+    TemplatePortsTemplateType,
 )
 
 
@@ -114,6 +120,32 @@ class SourceCodeVersionQuery:
         return result.unique().scalars().all()
 
     @strawberry.field(permission_classes=[IsAuthenticated])
+    async def source_code_version_template_configs(
+        self,
+        info: Info,
+        template_id: uuid.UUID,
+    ) -> list[SourceConfigType]:
+        session = info.context["session"]
+        entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersionTemplateConfigs")
+        stmt = (
+            select(SourceConfig)
+            .join(SourceCodeVersion, SourceConfig.source_code_version_id == SourceCodeVersion.id)
+            .where(SourceCodeVersion.template_id == template_id)
+            .options(*source_config_options(entity_fields))
+            .order_by(SourceCodeVersion.created_at.asc(), SourceConfig.index.asc())
+        )
+        result = await session.execute(stmt)
+
+        unique_configs: list[SourceConfig] = []
+        seen_names: set[str] = set()
+        for config in result.unique().scalars().all():
+            if config.name in seen_names:
+                continue
+            seen_names.add(config.name)
+            unique_configs.append(config)
+        return unique_configs
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code_version_outputs(
         self,
         info: Info,
@@ -155,4 +187,42 @@ class SourceCodeVersionQuery:
                 status=o.status,
             )
             for o in filtered
+        ]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def template_ports(
+        self,
+        info: Info,
+        template_ids: list[uuid.UUID],
+    ) -> list[TemplatePortsItemType]:
+        service = _build_service(info)
+        response = await service.get_batch_template_ports(template_ids=template_ids)
+        return [
+            TemplatePortsItemType(
+                template=TemplatePortsTemplateType(
+                    id=item.template.id,
+                    name=item.template.name,
+                    abstract=item.template.abstract,
+                    parents=[
+                        TemplatePortsParentType(
+                            id=parent.id,
+                            name=parent.name,
+                            abstract=parent.abstract,
+                        )
+                        for parent in item.template.parents
+                    ],
+                ),
+                configs=[TemplatePortsConfigType(name=config.name) for config in item.configs],
+                outputs=[TemplatePortsOutputType(name=output.name) for output in item.outputs],
+                references=[
+                    TemplatePortsReferenceType(
+                        reference_template_id=reference.reference_template_id,
+                        template_id=reference.template_id,
+                        input_config_name=reference.input_config_name,
+                        output_config_name=reference.output_config_name,
+                    )
+                    for reference in item.references
+                ],
+            )
+            for item in response.templates
         ]

@@ -9,6 +9,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { ENTITY_STATUS } from "../../utils";
 import { REPLACE_VALIDATION_RULES_MUTATION } from "../../validation_rules/graphql";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
+import { UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION } from "../graphql";
 import { SourceConfigUpdateWithId } from "../types";
 import { normalizeNumericField, parseNumericField } from "../utils/numeric";
 
@@ -326,9 +327,21 @@ export const SourceCodeVersionConfig = () => {
         });
 
         if (configUpdates.length > 0) {
-          await ikApi.updateRaw(
-            `source_code_versions/${sourceCodeVersion.id}/configs`,
-            configUpdates,
+          await ikApi.graphqlRequest(
+            UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION,
+            {
+              id: sourceCodeVersion.id,
+              configs: configUpdates.map(
+                ({
+                  validationRuleId: _validationRuleId,
+                  validationEnabled: _validationEnabled,
+                  validationRegex: _validationRegex,
+                  validationMinValue: _validationMinValue,
+                  validationMaxValue: _validationMaxValue,
+                  ...rest
+                }) => rest,
+              ),
+            },
           );
         }
 

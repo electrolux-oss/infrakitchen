@@ -111,6 +111,32 @@ export const SCV_TEMPLATE_OUTPUT_FIELDS = `
   status
 `;
 
+export const TEMPLATE_PORTS_FIELDS = `
+  template {
+    id
+    name
+    abstract
+    parents {
+      id
+      name
+      abstract
+      cloudResourceTypes
+    }
+  }
+  configs {
+    name
+  }
+  outputs {
+    name
+  }
+  references {
+    referenceTemplateId
+    templateId
+    inputConfigName
+    outputConfigName
+  }
+`;
+
 export const SCV_DETAIL_FIELDS = `
   ${buildSelection(SCV_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(SCV_GRAPHQL_FIELDS.relations.template, TEMPLATE_SHORT_FIELDS)}

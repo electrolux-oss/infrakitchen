@@ -66,3 +66,44 @@ class SourceOutputConfigTemplateType:
     created_at: datetime
     updated_at: datetime
     status: str
+
+
+@strawberry.type
+class TemplatePortsParentType:
+    id: uuid.UUID
+    name: str
+    abstract: bool
+
+
+@strawberry.type
+class TemplatePortsTemplateType:
+    id: uuid.UUID
+    name: str
+    abstract: bool
+    parents: list[TemplatePortsParentType]
+
+
+@strawberry.type
+class TemplatePortsConfigType:
+    name: str
+
+
+@strawberry.type
+class TemplatePortsOutputType:
+    name: str
+
+
+@strawberry.type
+class TemplatePortsReferenceType:
+    reference_template_id: uuid.UUID
+    template_id: uuid.UUID
+    input_config_name: str
+    output_config_name: str
+
+
+@strawberry.type
+class TemplatePortsItemType:
+    template: TemplatePortsTemplateType
+    configs: list[TemplatePortsConfigType]
+    outputs: list[TemplatePortsOutputType]
+    references: list[TemplatePortsReferenceType]
