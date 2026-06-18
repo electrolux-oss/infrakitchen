@@ -59,6 +59,7 @@ async def get_all(
     "/source_codes",
     response_model=SourceCodeResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: SourceCodeCreate, service: SourceCodeService = Depends(get_source_code_service)):
     requester: UserDTO | None = request.state.user
@@ -75,6 +76,7 @@ async def post(request: Request, body: SourceCodeCreate, service: SourceCodeServ
     "/source_codes/{source_code_id}",
     response_model=SourceCodeResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -91,7 +93,10 @@ async def update(
 
 
 @router.patch(
-    "/source_codes/{source_code_id}/actions", response_model=SourceCodeResponse, status_code=http_status.HTTP_200_OK
+    "/source_codes/{source_code_id}/actions",
+    response_model=SourceCodeResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def patch_action(
     request: Request,
@@ -113,7 +118,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/source_codes/{source_code_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/source_codes/{source_code_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, source_code_id: str, service: SourceCodeService = Depends(get_source_code_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(source_code_id=source_code_id, requester=requester):

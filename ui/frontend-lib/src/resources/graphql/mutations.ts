@@ -28,3 +28,11 @@ export const UPDATE_RESOURCE_MUTATION = `
     }
   }
 `;
+
+export const CASCADE_DESTROY_RESOURCE_MUTATION = `
+  mutation CascadeDestroyResource($id: UUID!) {
+    cascadeDestroyResource(id: $id) {
+      id
+    }
+  }
+`;

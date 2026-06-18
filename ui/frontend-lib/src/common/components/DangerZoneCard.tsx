@@ -15,8 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 
+import { CASCADE_DESTROY_RESOURCE_MUTATION } from "../../resources/graphql";
 import { ENTITY_ACTION } from "../../utils";
-import { WorkflowResponse } from "../../workflows/types";
 import { useConfig } from "../context";
 import { useEntityProvider } from "../context/EntityContext";
 import { notify, notifyError } from "../hooks/useNotification";
@@ -238,11 +238,16 @@ export const DangerZoneCard = () => {
         onConfirm={() => {
           setCascadeDestroyLoading(true);
           ikApi
-            .patchRaw(`resources/${entity.id}/cascade_destroy`, {})
-            .then((response: WorkflowResponse) => {
+            .graphqlRequest<{ cascadeDestroyResource: { id: string } }>(
+              CASCADE_DESTROY_RESOURCE_MUTATION,
+              { id: entity.id },
+            )
+            .then((response) => {
               notify("Cascade destroy workflow created", "success");
               changeDialog("cascade_destroy");
-              navigate(`${linkPrefix}workflows/${response.id}`);
+              navigate(
+                `${linkPrefix}workflows/${response.cascadeDestroyResource.id}`,
+              );
             })
             .catch((error: unknown) => {
               notifyError(error);

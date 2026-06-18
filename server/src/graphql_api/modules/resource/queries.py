@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import strawberry
 from strawberry.scalars import JSON
@@ -14,6 +14,17 @@ from graphql_api.modules.resource.types import ResourceType
 def _build_service(info: Info) -> ResourceService:
     session = info.context["session"]
     return get_resource_service(session=session)
+
+
+@strawberry.type
+class ResourceTreeNodeType:
+    id: uuid.UUID
+    name: str
+    state: str
+    status: str
+    template_name: str
+    node_id: uuid.UUID
+    children: list["ResourceTreeNodeType"]
 
 
 @strawberry.type
@@ -59,3 +70,31 @@ class ResourceQuery:
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(resource_id=id, requester=requester)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def resource_tree(
+        self,
+        info: Info,
+        id: uuid.UUID,
+        direction: str = "parents",
+    ) -> ResourceTreeNodeType | None:
+        service = _build_service(info)
+        tree = await service.get_tree(
+            resource_id=str(id),
+            direction=cast(Literal["parents", "children"], direction),
+        )
+        if tree is None:
+            return None
+        return _map_tree_node(tree)
+
+
+def _map_tree_node(node: Any) -> ResourceTreeNodeType:
+    return ResourceTreeNodeType(
+        id=node.id,
+        name=node.name,
+        state=node.state,
+        status=node.status,
+        template_name=node.template_name,
+        node_id=node.node_id,
+        children=[_map_tree_node(child) for child in node.children],
+    )

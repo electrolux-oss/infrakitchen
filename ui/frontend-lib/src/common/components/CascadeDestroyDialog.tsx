@@ -13,6 +13,11 @@ import {
   Typography,
 } from "@mui/material";
 
+import {
+  GqlResourceTreeNode,
+  RESOURCE_TREE_QUERY,
+  transformResourceTreeNode,
+} from "../../resources/graphql";
 import { useConfig } from "../context";
 import StatusChip from "../StatusChip";
 import { getStateColor } from "../utils";
@@ -144,8 +149,17 @@ export const CascadeDestroyDialog = ({
     }
     setTreeLoading(true);
     ikApi
-      .getTree("resources", entityId, "children")
-      .then((t: TreeResponse) => setTree(t))
+      .graphqlRequest<{ resourceTree: GqlResourceTreeNode | null }>(
+        RESOURCE_TREE_QUERY,
+        { id: entityId, direction: "children" },
+      )
+      .then((response) =>
+        setTree(
+          response.resourceTree
+            ? transformResourceTreeNode(response.resourceTree)
+            : null,
+        ),
+      )
       .catch(() => setTree(null))
       .finally(() => setTreeLoading(false));
   }, [open, entityId, ikApi]);

@@ -228,6 +228,7 @@ async def get_integration_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Create integration policy",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_integration_permissions(
     request: Request,

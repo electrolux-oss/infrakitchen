@@ -1,3 +1,4 @@
+import { TreeResponse } from "../../common/components/tree/types";
 import {
   GqlIntegrationShort,
   transformIntegrationShort,
@@ -96,6 +97,16 @@ export interface GqlResourceTempState {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface GqlResourceTreeNode {
+  id: string;
+  name: string;
+  state: string;
+  status: string;
+  templateName: string;
+  nodeId: string;
+  children: GqlResourceTreeNode[];
 }
 
 function mapResourceRelation(relation: GqlResourceShort): ResourceShort {
@@ -224,6 +235,20 @@ export function transformResourceOptional(
       : undefined,
     isFavorite: gql.isFavorite,
     _entity_name: "resource",
+  };
+}
+
+export function transformResourceTreeNode(
+  gql: GqlResourceTreeNode,
+): TreeResponse {
+  return {
+    id: gql.id,
+    nodeId: gql.nodeId,
+    name: gql.name,
+    state: gql.state,
+    status: gql.status,
+    templateName: gql.templateName,
+    children: (gql.children ?? []).map(transformResourceTreeNode),
   };
 }
 

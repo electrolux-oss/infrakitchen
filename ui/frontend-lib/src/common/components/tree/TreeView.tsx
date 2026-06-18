@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useConfig, useLocalStorage } from "../../context";
 import { PropertyCollapseCard } from "../PropertyCollapseCard";
 
+import { fetchEntityTree } from "./fetchEntityTree";
 import { EntityTreeViewItems } from "./TreeViewItems";
 import { TreeResponse } from "./types";
 
@@ -27,7 +28,7 @@ export const EntityTreeView = ({ entity_id, entity_name }: TreeViewProps) => {
 
   useEffect(() => {
     if (!isExpanded) return;
-    ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
+    fetchEntityTree(ikApi, entity_name, entity_id, "children").then((tree) => {
       setTree(tree);
       setSelected([tree.nodeId]);
     });

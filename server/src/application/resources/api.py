@@ -163,6 +163,7 @@ async def get_actions(request: Request, resource_id: str, service: ResourceServi
     response_description=(
         "Cascade destroy a resource and all its descendants. Creates and immediately triggers a destroy workflow."
     ),
+    deprecated=True,
 )
 async def cascade_destroy(
     request: Request,

@@ -65,6 +65,7 @@ async def get_all(
     "/batch_operations",
     response_model=BatchOperationResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,
@@ -85,6 +86,7 @@ async def post(
     "/batch_operations/{batch_operation_id}/entity_ids",
     response_model=BatchOperationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def patch_entity_ids(
     request: Request,
@@ -106,6 +108,7 @@ async def patch_entity_ids(
 @router.delete(
     "/batch_operations/{batch_operation_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(
     request: Request,
