@@ -59,6 +59,7 @@ async def get_all(
     "/storages",
     response_model=StorageResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: StorageCreate, service: StorageService = Depends(get_storage_service)):
     requester: UserDTO | None = request.state.user
@@ -75,6 +76,7 @@ async def post(request: Request, body: StorageCreate, service: StorageService = 
     "/storages/{storage_id}",
     response_model=StorageResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -90,7 +92,12 @@ async def update(
     return entity
 
 
-@router.patch("/storages/{storage_id}/actions", response_model=StorageResponse, status_code=http_status.HTTP_200_OK)
+@router.patch(
+    "/storages/{storage_id}/actions",
+    response_model=StorageResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
+)
 async def patch_action(
     request: Request,
     storage_id: str,
@@ -110,7 +117,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/storages/{storage_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/storages/{storage_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, storage_id: str, service: StorageService = Depends(get_storage_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(storage_id=storage_id, requester=requester):

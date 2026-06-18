@@ -220,6 +220,7 @@ async def get_metadata(
     "/resources/{resource_id}/sync",
     response_model=ResourceResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def sync_workspace(
     request: Request,
@@ -281,6 +282,7 @@ async def get_resource_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Sync role permissions with resources",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_resource_permissions(
     request: Request,

@@ -35,6 +35,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 import {
   ResourceUpdateFieldInput,
+  SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
 import { ResourceResponse, VariableInput, VariableOutput } from "../types";
@@ -159,7 +160,7 @@ export const TemplateConfiguration = ({
   const handleSync = () => {
     setIsSyncing(true);
     ikApi
-      .patchRaw(`resources/${resource.id}/sync`, {})
+      .graphqlRequest(SYNC_WORKSPACE_MUTATION, { id: resource.id })
       .then(() => {
         notify("Sent sync workspace request", "success");
       })

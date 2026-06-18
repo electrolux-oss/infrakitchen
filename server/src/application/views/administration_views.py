@@ -10,6 +10,7 @@ router = APIRouter()
     "/administration/reload_permissions",
     response_description="Reload all permissions",
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def reload_permissions(request: Request, body=Body(...)):
     if not await user_is_super_admin(request.state.user):

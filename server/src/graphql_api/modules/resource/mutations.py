@@ -93,6 +93,17 @@ class ResourceMutation:
         return await service.update_resource(resource_id=str(id), resource=input.to_pydantic(), requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def sync_workspace(self, info: Info, id: uuid.UUID) -> ResourceType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_resource_service(session)
+
+        if ModelActions.EDIT not in await service.get_actions(resource_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
+
+        return await service.sync_workspace(resource_id=str(id), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def resource_action(self, info: Info, id: uuid.UUID, input: ResourceActionInput) -> ResourceType:
         session = info.context["session"]
         requester = info.context["request"].state.user

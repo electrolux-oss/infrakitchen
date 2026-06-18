@@ -13,6 +13,7 @@ router = APIRouter()
     "/feature_flags",
     response_description="Manage feature flag",
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def get_feature_flags(request: Request, service: FeatureFlagService = Depends(get_feature_flag_service)):
     if not await user_is_super_admin(request.state.user):
@@ -22,7 +23,7 @@ async def get_feature_flags(request: Request, service: FeatureFlagService = Depe
     return {"status": "ok", "data": feature_flags}
 
 
-@router.patch("/feature_flags", status_code=http_status.HTTP_200_OK, response_model=FeatureFlagDTO)
+@router.patch("/feature_flags", status_code=http_status.HTTP_200_OK, response_model=FeatureFlagDTO, deprecated=True)
 async def config_feature_flag(
     request: Request, feature_flag: FeatureFlagDTO, service: FeatureFlagService = Depends(get_feature_flag_service)
 ):
@@ -39,6 +40,7 @@ async def config_feature_flag(
     "/feature_flags/reload",
     response_description="Reload all feature flags",
     response_model_by_alias=False,
+    deprecated=True,
 )
 async def reload_feature_flags(request: Request):
     if not await user_is_super_admin(request.state.user):

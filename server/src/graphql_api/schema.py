@@ -5,6 +5,8 @@ from graphql_api.modules.config.queries import ConfigQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.auth_provider.mutations import AuthProviderMutation
 from graphql_api.modules.audit_log.queries import AuditLogQuery
+from graphql_api.modules.administration.queries import AdministrationQuery
+from graphql_api.modules.administration.mutations import AdministrationMutation
 from graphql_api.modules.event.subscriptions import EventSubscription
 from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
@@ -26,6 +28,8 @@ from graphql_api.modules.secret.queries import SecretQuery
 from graphql_api.modules.secret.mutations import SecretMutation
 from graphql_api.modules.storage.queries import StorageQuery
 from graphql_api.modules.storage.mutations import StorageMutation
+from graphql_api.modules.scheduler.queries import SchedulerQuery
+from graphql_api.modules.scheduler.mutations import SchedulerMutation
 from graphql_api.modules.executor.queries import ExecutorQuery
 from graphql_api.modules.executor.mutations import ExecutorMutation
 from graphql_api.modules.favorite.queries import FavoriteQuery
@@ -55,6 +59,7 @@ from graphql_api.modules.auth.mutations import AuthMutation
 
 @strawberry.type
 class Query(
+    AdministrationQuery,
     ConfigQuery,
     AuthProviderQuery,
     AuditLogQuery,
@@ -67,6 +72,7 @@ class Query(
     SourceCodeQuery,
     SourceCodeVersionQuery,
     SecretQuery,
+    SchedulerQuery,
     StorageQuery,
     ExecutorQuery,
     FavoriteQuery,
@@ -88,6 +94,7 @@ class Query(
 
 @strawberry.type
 class Mutation(
+    AdministrationMutation,
     AuthMutation,
     AuthProviderMutation,
     SlackMutation,
@@ -101,6 +108,7 @@ class Mutation(
     SourceCodeVersionMutation,
     StorageMutation,
     SecretMutation,
+    SchedulerMutation,
     ExecutorMutation,
     FavoriteMutation,
     BatchOperationMutation,

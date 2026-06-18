@@ -50,6 +50,15 @@ CASCADE_DESTROY_RESOURCE_MUTATION = """
     }
 """
 
+SYNC_WORKSPACE_MUTATION = """
+    mutation SyncWorkspace($id: UUID!) {
+        syncWorkspace(id: $id) {
+            id
+            name
+        }
+    }
+"""
+
 
 def make_context(user, session=None):
     request = Mock()
@@ -188,6 +197,63 @@ class TestResourceMutations:
             resource=ANY,
             requester=mocked_user,
         )
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.resource.mutations.get_resource_service")
+    async def test_sync_workspace_returns_resource(
+        self,
+        mock_get_service,
+        mock_resource_service,
+        mocked_resource,
+        mocked_user,
+    ):
+        resource_id = uuid4()
+        mock_resource_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
+        mock_resource_service.sync_workspace = AsyncMock(return_value=mocked_resource)
+        mock_get_service.return_value = mock_resource_service
+
+        result = await schema.execute(
+            SYNC_WORKSPACE_MUTATION,
+            variable_values={"id": str(resource_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {
+            "syncWorkspace": {
+                "id": str(mocked_resource.id),
+                "name": mocked_resource.name,
+            }
+        }
+        mock_resource_service.get_actions.assert_awaited_once_with(resource_id=resource_id, requester=mocked_user)
+        mock_resource_service.sync_workspace.assert_awaited_once_with(
+            resource_id=str(resource_id),
+            requester=mocked_user,
+        )
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.resource.mutations.get_resource_service")
+    async def test_sync_workspace_denies_without_edit_action(
+        self,
+        mock_get_service,
+        mock_resource_service,
+        mocked_user,
+    ):
+        resource_id = uuid4()
+        mock_resource_service.get_actions = AsyncMock(return_value=[])
+        mock_resource_service.sync_workspace = AsyncMock()
+        mock_get_service.return_value = mock_resource_service
+
+        result = await schema.execute(
+            SYNC_WORKSPACE_MUTATION,
+            variable_values={"id": str(resource_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["syncWorkspace"] is None
+        assert result.errors is not None
+        assert any("Access denied for action edit" in error.message for error in result.errors)
+        mock_resource_service.sync_workspace.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.resource.mutations.get_resource_service")

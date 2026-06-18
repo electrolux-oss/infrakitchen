@@ -36,3 +36,11 @@ export const CASCADE_DESTROY_RESOURCE_MUTATION = `
     }
   }
 `;
+
+export const SYNC_WORKSPACE_MUTATION = `
+  mutation SyncWorkspace($id: UUID!) {
+    syncWorkspace(id: $id) {
+      id
+    }
+  }
+`;

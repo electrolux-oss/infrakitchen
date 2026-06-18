@@ -22,6 +22,11 @@ import {
 import { useConfig } from "../../common";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import {
+  CREATE_SCHEDULER_MUTATION,
+  SCHEDULERS_QUERY,
+  UPDATE_SCHEDULER_MUTATION,
+} from "../graphql";
 
 const DEFAULT_SQL_EXAMPLES = [
   {
@@ -49,7 +54,7 @@ type SchedulerJobDTO = {
   type: "SQL" | "BASH";
   script: string;
   cron: string;
-  created_at: string;
+  createdAt: string;
 };
 
 export const SchedulerJobsSection = () => {
@@ -75,23 +80,13 @@ export const SchedulerJobsSection = () => {
   const [newSchedulerCron, setNewSchedulerCron] = useState("0 * * * *");
   const [newSchedulerScript, setNewSchedulerScript] = useState("");
 
-  const extractSchedulerJobs = (response: any): SchedulerJobDTO[] => {
-    if (Array.isArray(response)) {
-      return response;
-    }
-
-    if (Array.isArray(response?.data)) {
-      return response.data;
-    }
-
-    return [];
-  };
-
   const fetchSchedulerJobs = useCallback(async () => {
     try {
       setSchedulerLoading(true);
-      const response = await ikApi.get("schedulers");
-      setSchedulerJobs(extractSchedulerJobs(response));
+      const response = await ikApi.graphqlRequest<{
+        schedulers: SchedulerJobDTO[];
+      }>(SCHEDULERS_QUERY);
+      setSchedulerJobs(response.schedulers);
     } catch (error: any) {
       notifyError(error);
     } finally {
@@ -113,10 +108,12 @@ export const SchedulerJobsSection = () => {
 
     try {
       setCreatingSchedulerJob(true);
-      await ikApi.postRaw("schedulers", {
-        type: "SQL",
-        script,
-        cron,
+      await ikApi.graphqlRequest(CREATE_SCHEDULER_MUTATION, {
+        input: {
+          type: "SQL",
+          script,
+          cron,
+        },
       });
 
       setNewSchedulerScript("");
@@ -157,10 +154,13 @@ export const SchedulerJobsSection = () => {
 
     try {
       setUpdatingSchedulerJob(true);
-      await ikApi.patchRaw(`schedulers/${editingSchedulerJobId}`, {
-        type: editingSchedulerType,
-        script,
-        cron,
+      await ikApi.graphqlRequest(UPDATE_SCHEDULER_MUTATION, {
+        id: editingSchedulerJobId,
+        input: {
+          type: editingSchedulerType,
+          script,
+          cron,
+        },
       });
 
       await fetchSchedulerJobs();

@@ -4,6 +4,11 @@ import { Box, Button, Grid, Stack, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import {
+  FEATURE_FLAGS_QUERY,
+  RELOAD_FEATURE_FLAGS_MUTATION,
+  UPDATE_FEATURE_FLAG_MUTATION,
+} from "../graphql";
 
 import { FeatureFlagCard, type FeatureFlagDTO } from "./FeatureFlagCard";
 
@@ -16,10 +21,10 @@ export const FeatureFlagSection = () => {
   const fetchFeatureFlags = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await ikApi.get("feature_flags");
-      if (result.status === "ok") {
-        setFeatureFlags(result.data);
-      }
+      const result = await ikApi.graphqlRequest<{
+        featureFlags: FeatureFlagDTO[];
+      }>(FEATURE_FLAGS_QUERY);
+      setFeatureFlags(result.featureFlags);
     } catch (error: any) {
       notifyError(error);
     } finally {
@@ -43,9 +48,11 @@ export const FeatureFlagSection = () => {
       setLoading(true);
 
       const promises = Object.entries(changes).map(([flagName, enabled]) =>
-        ikApi.patchRaw("feature_flags", {
-          name: flagName,
-          enabled,
+        ikApi.graphqlRequest(UPDATE_FEATURE_FLAG_MUTATION, {
+          input: {
+            name: flagName,
+            enabled,
+          },
         }),
       );
 
@@ -78,7 +85,7 @@ export const FeatureFlagSection = () => {
   const handleFeatureFlagReload = async () => {
     try {
       setLoading(true);
-      await ikApi.postRaw("feature_flags/reload", {});
+      await ikApi.graphqlRequest(RELOAD_FEATURE_FLAGS_MUTATION);
       await fetchFeatureFlags();
       setChanges({});
       notify("Feature flags reloaded successfully", "success");
