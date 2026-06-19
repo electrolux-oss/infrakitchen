@@ -1,5 +1,3 @@
-import { UserShort } from "../users";
-
 import { TEMPLATE_STATUS } from "./constants";
 
 export type IntegrationProviderType =
@@ -13,40 +11,10 @@ export type TemplateStatus =
   (typeof TEMPLATE_STATUS)[keyof typeof TEMPLATE_STATUS];
 
 export interface TemplateConfig {
-  oneResourcePerIntegration: IntegrationProviderType[];
-  allowedProviderIntegrationTypes: IntegrationProviderType[];
-  namingConvention: string | null;
-  requiredConfigurationVariables: string[];
-}
-
-export interface TemplateShort {
-  id: string;
-  name: string;
-  abstract: boolean;
-  cloudResourceTypes?: string[];
-  _entity_name: string;
-}
-
-export interface TemplateResponse {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  status: TemplateStatus;
-  abstract: boolean;
-  revisionNumber: number;
-  creator: UserShort | null;
-  name: string;
-  description: string;
-  documentation?: string;
-  template: string;
-  parents: TemplateShort[];
-  children: TemplateShort[];
-  cloudResourceTypes: string[];
-  configuration: TemplateConfig;
-  labels: string[];
-  resourcesCount?: number;
-  sourceCodeVersionsCount?: number;
-  _entity_name: string;
+  one_resource_per_integration: IntegrationProviderType[];
+  allowed_provider_integration_types: IntegrationProviderType[];
+  naming_convention: string | null;
+  required_configuration_variables: string[];
 }
 
 export interface TemplateImportRequest {

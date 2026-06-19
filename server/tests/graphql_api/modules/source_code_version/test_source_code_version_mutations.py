@@ -14,6 +14,7 @@ CREATE_SOURCE_CODE_VERSION_MUTATION = """
             sourceCodeFolder
             sourceCodeVersion
             description
+            entityName
         }
     }
 """
@@ -25,6 +26,7 @@ UPDATE_SOURCE_CODE_VERSION_MUTATION = """
             sourceCodeFolder
             sourceCodeVersion
             description
+            entityName
         }
     }
 """
@@ -35,6 +37,7 @@ SOURCE_CODE_VERSION_ACTION_MUTATION = """
             id
             sourceCodeFolder
             sourceCodeVersion
+            entityName
         }
     }
 """
@@ -97,6 +100,7 @@ class TestSourceCodeVersionMutations:
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
             "description": source_code_version.description,
+            "entityName": "source_code_version",
         }
         mock_service.create_source_code_version.assert_awaited_once_with(source_code_version=ANY, requester=mocked_user)
 
@@ -194,6 +198,7 @@ class TestSourceCodeVersionMutations:
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
             "description": source_code_version.description,
+            "entityName": "source_code_version",
         }
         mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
         mock_service.update_source_code_version.assert_awaited_once_with(
@@ -408,6 +413,7 @@ class TestSourceCodeVersionMutations:
             "id": str(source_code_version.id),
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
+            "entityName": "source_code_version",
         }
         mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
         mock_service.patch_action.assert_awaited_once()

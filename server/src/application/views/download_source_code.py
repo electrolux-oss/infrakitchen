@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get(
     "/resources/{resource_id}/download",
     response_description="Download resource source code",
+    deprecated=True,
 )
 async def get_resource_source_code(
     request: Request,

@@ -13,6 +13,7 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { GITHUB_ORGANIZATIONS_QUERY } from "./graphql";
 import { GithubOrganization } from "./types";
 
 interface GithubOrganizationsProps {
@@ -55,13 +56,17 @@ const GithubOrganizations = forwardRef<any, GithubOrganizationsProps>(
         buffer["github_organizations"].length === 0
       ) {
         try {
-          const response: GithubOrganization[] = await ikApi.get(
-            `provider/github/organizations`,
-            queryParams,
-          );
+          const response = (await ikApi.graphqlRequest(
+            GITHUB_ORGANIZATIONS_QUERY,
+            {
+              integrationId: queryParams?.integration_id,
+            },
+          )) as {
+            githubOrganizations: GithubOrganization[];
+          };
           setBuffer((prev: Record<string, GithubOrganization[]>) => ({
             ...prev,
-            ["github_organizations"]: response,
+            ["github_organizations"]: response.githubOrganizations,
           }));
         } catch (error: any) {
           notifyError(error);

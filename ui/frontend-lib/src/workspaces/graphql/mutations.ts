@@ -15,6 +15,7 @@ export const UPDATE_WORKSPACE_MUTATION = `
     updateWorkspace(id: $id, input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -36,6 +37,7 @@ export const CREATE_WORKSPACE_MUTATION = `
     createWorkspace(input: $input) {
       id
       name
+      entityName
     }
   }
 `;

@@ -212,7 +212,7 @@ class PermissionService:
     async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
         await self.crud.delete_entity_permissions(entity_name, entity_id)
 
-    async def get_actions(self, permission_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, permission_id: str | UUID, requester: UserDTO) -> list[str]:
         role = await self.crud.get_by_id(permission_id)
         if not role:
             raise EntityNotFound("Role not found")

@@ -15,7 +15,7 @@ import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { BlueprintResponse } from "../types";
+import { GqlBlueprint } from "../graphql";
 
 import { BlueprintOverview } from "./BlueprintOverview";
 import { BlueprintWiringEditor } from "./BlueprintWiringEditor";
@@ -26,13 +26,13 @@ export const BlueprintContent = () => {
   const { checkActionPermission } = usePermissionProvider();
   const [wiringEdit, setWiringEdit] = useState(false);
 
-  const blueprint = entity as BlueprintResponse | undefined;
+  const blueprint = entity as GqlBlueprint | undefined;
 
   if (!blueprint) return null;
 
   const canEdit = checkActionPermission("api:blueprint", "write");
 
-  const externalTemplates = blueprint.external_templates || [];
+  const externalTemplates = blueprint.externalTemplates || [];
 
   const constants =
     (blueprint.configuration?.constants as Array<{
@@ -91,7 +91,7 @@ export const BlueprintContent = () => {
       label: "Workflows",
       content: (
         <PropertyCard title="Workflows">
-          <WorkflowTimeline workflows={blueprint.workflows} />
+          <WorkflowTimeline workflows={blueprint.workflows || []} />
         </PropertyCard>
       ),
     },

@@ -43,7 +43,7 @@ export const ResourceReviewView = () => {
         entity_id={entity.id}
         actions={actions}
         title="Review Changes"
-        entity_name={entity._entity_name}
+        entity_name={entity.entityName}
         onClose={() => {
           setOpenStateReview(false);
         }}

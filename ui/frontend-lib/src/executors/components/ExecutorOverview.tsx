@@ -18,13 +18,16 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
-import { ExecutorUpdateFieldInput, EXECUTOR_UPDATE_MUTATION } from "../graphql";
-import { ExecutorResponse } from "../types";
+import {
+  ExecutorUpdateFieldInput,
+  EXECUTOR_UPDATE_MUTATION,
+  GqlExecutor,
+} from "../graphql";
 
 import { SourceCodeConfigEditor } from "./SourceCodeConfigEditor";
 
 export interface ExecutorAboutProps {
-  executor: ExecutorResponse;
+  executor: GqlExecutor;
 }
 
 export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
@@ -110,10 +113,10 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={executor.labels}
+        value={executor.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={executor.labels} />}
+        display={<Labels labels={executor.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

@@ -15,7 +15,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import { USER_FIELD_MAP } from "../graphql/fragments";
-import { transformUserOptional } from "../graphql/transforms";
 
 export const UsersPage = () => {
   const { linkPrefix } = useConfig();
@@ -50,6 +49,7 @@ export const UsersPage = () => {
     () => [
       {
         field: "identifier",
+        fetchFields: ["id", "identifier", "entityName"],
         headerName: "Identifier",
         flex: 1,
         hideable: false,
@@ -209,7 +209,6 @@ export const UsersPage = () => {
         entityName="user"
         columns={columns}
         entityFieldMap={USER_FIELD_MAP}
-        transformFn={transformUserOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

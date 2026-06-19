@@ -15,7 +15,6 @@ import {
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
 } from "../components/resourceTableConfig";
-import { transformResourceOptional } from "../graphql";
 import { RESOURCE_FIELD_MAP } from "../graphql/fragments";
 
 export const ResourcesPage = () => {
@@ -174,7 +173,6 @@ export const ResourcesPage = () => {
         entityName="resource"
         columns={resourceColumns}
         entityFieldMap={RESOURCE_FIELD_MAP}
-        transformFn={transformResourceOptional}
         defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
         filterConfigs={filterConfigs}
         initialFilters={initialFilter}

@@ -6,10 +6,11 @@ import CodeMirror from "@uiw/react-codemirror";
 
 import { useConfig, GradientCircularProgress } from "../../../common";
 import { notifyError } from "../../../common/hooks/useNotification";
-import { ResourceResponse } from "../../types";
+import { GqlResource } from "../../graphql";
+import { RESOURCE_METADATA_QUERY } from "../../graphql";
 
 export interface ResourceMetadataProps {
-  entity: ResourceResponse;
+  entity: GqlResource;
 }
 
 export function MetadataComponent(props: ResourceMetadataProps) {
@@ -24,9 +25,10 @@ export function MetadataComponent(props: ResourceMetadataProps) {
     setLoading(true);
     setError(null);
     ikApi
-      .get(`resources/${entity.id}/metadata`)
-      .then((response: any) => {
-        setMetadata(response);
+      .graphqlRequest(RESOURCE_METADATA_QUERY, { id: entity.id })
+      .then((response) => {
+        const typedResponse = response as { resourceMetadata: any };
+        setMetadata(typedResponse.resourceMetadata);
       })
       .catch((err: { message: string }) => {
         notifyError(err);

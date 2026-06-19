@@ -52,7 +52,7 @@ export const RolesPage = () => {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              _entity_name={"role"}
+              entityName={"role"}
               identifier={params.row.v1}
               id={params.row.v1}
             />

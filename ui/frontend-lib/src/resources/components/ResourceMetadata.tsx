@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 
 import { EntityProvider } from "../../common";
-import { RESOURCE_DETAIL_FIELDS, transformResource } from "../graphql";
+import { RESOURCE_DETAIL_FIELDS } from "../graphql";
 
 import { RelationsComponent } from "./relations";
 
@@ -12,7 +12,6 @@ export function ResourceMetadataPage() {
     <EntityProvider
       entity_name="resource"
       entity_id={resource_id || ""}
-      transformFn={transformResource}
       entityFields={RESOURCE_DETAIL_FIELDS}
     >
       <RelationsComponent />

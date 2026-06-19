@@ -20,16 +20,11 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
-import {
-  GqlSourceCode,
-  SOURCE_CODES_QUERY,
-  transformSourceCode,
-} from "../graphql";
-import { SourceCodeResponse } from "../types";
+import { GqlSourceCode, SOURCE_CODES_QUERY } from "../graphql";
 
 export const SourceCodesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const [repositories, setRepositories] = useState<SourceCodeResponse[]>([]);
+  const [repositories, setRepositories] = useState<GqlSourceCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
@@ -66,7 +61,7 @@ export const SourceCodesPage = () => {
         range: [0, 1000],
       })
       .then((response) => {
-        setRepositories((response.sourceCodes || []).map(transformSourceCode));
+        setRepositories(response.sourceCodes || []);
         setLabels(response.labels || []);
         setIsInitialLoad(false);
       })
@@ -91,7 +86,7 @@ export const SourceCodesPage = () => {
         return (
           !s ||
           repository.identifier.toLowerCase().includes(s) ||
-          repository.description.toLowerCase().includes(s)
+          repository.description?.toLowerCase().includes(s)
         );
       }),
     [repositories, filterValues.name],
@@ -133,7 +128,7 @@ export const SourceCodesPage = () => {
     </PermissionWrapper>
   );
 
-  const repositoryCardFields = (repository: SourceCodeResponse) => {
+  const repositoryCardFields = (repository: GqlSourceCode) => {
     return (
       <>
         <Box>
@@ -228,9 +223,9 @@ export const SourceCodesPage = () => {
                   </Box>
                 }
                 name={getRepoNameFromUrl(repository.sourceCodeUrl)}
-                description={repository.description}
+                description={repository.description || "No description"}
                 detailsUrl={`${linkPrefix}source_codes/${repository.id}`}
-                labels={repository.labels}
+                labels={repository.labels || []}
                 lastUpdated={repository.updatedAt}
                 entityFields={repositoryCardFields(repository)}
               />

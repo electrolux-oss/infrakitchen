@@ -1,3 +1,4 @@
+import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.workflows.model import Workflow, WorkflowStep
@@ -45,6 +46,10 @@ class WorkflowType:
     creator: UserType | None = None
 
     steps: list[WorkflowStepType] | None = None
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "workflow"
 
 
 workflow_mapper.finalize()

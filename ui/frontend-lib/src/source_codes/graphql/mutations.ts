@@ -16,6 +16,7 @@ export const CREATE_SOURCE_CODE_MUTATION = `
       id
       identifier
       sourceCodeUrl
+      entityName
     }
   }
 `;
@@ -26,6 +27,7 @@ export const UPDATE_SOURCE_CODE_MUTATION = `
       id
       identifier
       sourceCodeUrl
+      entityName
     }
   }
 `;

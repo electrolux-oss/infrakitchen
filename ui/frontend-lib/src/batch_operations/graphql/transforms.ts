@@ -1,4 +1,4 @@
-import { GqlUserShort, transformUserShort } from "../../users/graphql";
+import { GqlUserShort } from "../../users/graphql";
 
 import type {
   BatchOperationGraphqlBaseField,
@@ -13,6 +13,7 @@ type GqlBatchOperationBaseFieldTypes = {
   entityIds: string[];
   createdAt: string;
   updatedAt: string;
+  entityName: string;
 };
 
 type GqlBatchOperationRelationFieldTypes = {
@@ -26,17 +27,3 @@ export type GqlBatchOperation = Pick<
   GqlBatchOperationFieldTypes,
   BatchOperationGraphqlBaseField | BatchOperationGraphqlRelationField
 >;
-
-export function transformBatchOperation(gql: GqlBatchOperation) {
-  return {
-    id: gql.id,
-    name: gql.name,
-    description: gql.description,
-    entityType: gql.entityType,
-    entityIds: gql.entityIds || [],
-    creator: transformUserShort(gql.creator),
-    createdAt: gql.createdAt,
-    updatedAt: gql.updatedAt,
-    _entity_name: "batch_operation",
-  };
-}

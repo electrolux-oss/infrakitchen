@@ -121,7 +121,7 @@ export default function WorkerList() {
             >
               <Typography variant="body1">
                 <GetEntityLink
-                  _entity_name={entity}
+                  entityName={entity}
                   id={entity_id}
                   identifier={label}
                 />

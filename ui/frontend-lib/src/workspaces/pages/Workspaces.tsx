@@ -20,7 +20,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformWorkspaceOptional } from "../graphql";
 import { WORKSPACE_FIELD_MAP } from "../graphql/fragments";
 
 export const WorkspacesPage = () => {
@@ -31,9 +30,15 @@ export const WorkspacesPage = () => {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/workspace").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query WorkspaceLabels {
+          labels: labels(entity: "workspace")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   // Configure filters
@@ -77,6 +82,7 @@ export const WorkspacesPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["id", "name", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -184,7 +190,6 @@ export const WorkspacesPage = () => {
         entityName="workspace"
         columns={columns}
         entityFieldMap={WORKSPACE_FIELD_MAP}
-        transformFn={transformWorkspaceOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

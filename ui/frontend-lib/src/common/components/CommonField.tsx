@@ -28,7 +28,7 @@ export const getRemoteUrlValue = (url: string) => {
 
 interface GetReferenceUrlValueProps {
   id: string;
-  _entity_name: string;
+  entityName: string;
   urlProvider?: string;
   name?: string;
   display_name?: string;
@@ -37,7 +37,7 @@ interface GetReferenceUrlValueProps {
 
 export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   id,
-  _entity_name,
+  entityName,
   urlProvider,
   name,
   display_name,
@@ -46,7 +46,7 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const basePath = `${linkPrefix}${_entity_name}s`;
+  const basePath = `${linkPrefix}${entityName}s`;
   const fullPath = urlProvider
     ? `${basePath}/${urlProvider}/${id}`
     : `${basePath}/${id}`;
@@ -84,21 +84,21 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
 
 interface GetEntityLinkProps {
   id: string;
-  _entity_name: string;
+  entityName?: string;
   name?: string;
   identifier?: string;
 }
 
 export const GetEntityLink: FC<GetEntityLinkProps> = ({
   id,
-  _entity_name,
+  entityName,
   name,
   identifier,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const fullPath = `${linkPrefix}${_entity_name}s/${id}`;
+  const fullPath = `${linkPrefix}${entityName}s/${id}`;
   const displayText = name || identifier;
 
   const handleClick = useCallback(
@@ -116,9 +116,7 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
 
   return (
     <Box display="inline-flex" alignItems="center" gap={1}>
-      {_entity_name === "user" && (
-        <UserAvatar id={id} identifier={displayText} />
-      )}
+      {entityName === "user" && <UserAvatar id={id} identifier={displayText} />}
       <Link
         href={fullPath}
         onClick={handleClick}

@@ -11,13 +11,14 @@ import {
   DialogTitle,
 } from "@mui/material";
 
-import { SecretResponse, SecretUpdate } from "../types";
+import { GqlSecret } from "../graphql";
+import { SecretUpdate } from "../types";
 
 import { renderFieldsForProvider } from "./SecretProviderForms";
 
 export interface SecretConfigurationFieldProps {
   /** The full secret entity (provides provider type and current configuration). */
-  secret: SecretResponse;
+  secret: GqlSecret;
   /** Whether the current user is allowed to edit the configuration. */
   canEdit: boolean;
   /** Persists the new configuration. Should throw on failure. */
@@ -40,7 +41,7 @@ export const SecretConfigurationField = ({
   const methods = useForm<SecretUpdate>({
     mode: "onChange",
     defaultValues: {
-      configuration: secret.configuration,
+      configuration: secret.configuration || {},
     },
   });
 
@@ -52,7 +53,7 @@ export const SecretConfigurationField = ({
   } = methods;
 
   const openDialog = () => {
-    reset({ configuration: secret.configuration });
+    reset({ configuration: secret.configuration || {} });
     setDialogOpen(true);
   };
 

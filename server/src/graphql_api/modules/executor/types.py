@@ -29,6 +29,10 @@ class ExecutorType:
     creator: UserType | None = None
 
     @strawberry.field
+    def entity_name(self) -> str:
+        return "executor"
+
+    @strawberry.field
     async def is_favorite(self, info: Info) -> bool:
         user = info.context.get("user")
         if user is None:

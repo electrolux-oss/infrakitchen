@@ -15,7 +15,6 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   DELETE_SUBSCRIPTION_MUTATION,
   NOTIFICATION_SUBSCRIPTION_FIELD_MAP,
-  transformNotificationSubscription,
 } from "../../notifications";
 
 const DeleteSubscriptionButton = ({ id }: { id: string }) => {
@@ -88,7 +87,7 @@ export const UserNotificationSubscriptionsCard = (props: {
     () => [
       {
         field: "entity",
-        fetchFields: ["entity_data"],
+        fetchFields: ["entityData"],
         headerName: "Entity",
         flex: 1,
         sortable: false,
@@ -96,15 +95,15 @@ export const UserNotificationSubscriptionsCard = (props: {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.entity_data?.id}
-              _entity_name={params.row.entity_data?._entity_name}
-              name={params.row.entity_data?.name || params.row.v1}
+              id={params.row.entityData?.id}
+              entityName={params.row.entityData?.entityName}
+              name={params.row.entityData?.name || params.row.v1}
             />
           );
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -134,7 +133,6 @@ export const UserNotificationSubscriptionsCard = (props: {
         columns={columns}
         defaultFilter={{ user_id }}
         entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
-        transformFn={transformNotificationSubscription}
       />
     </OverviewCard>
   );

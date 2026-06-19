@@ -16,7 +16,6 @@ import {
 import {
   GqlResourceTreeNode,
   RESOURCE_TREE_QUERY,
-  transformResourceTreeNode,
 } from "../../resources/graphql";
 import { useConfig } from "../context";
 import StatusChip from "../StatusChip";
@@ -24,7 +23,6 @@ import { getStateColor } from "../utils";
 
 import { CommonDialog } from "./CommonDialog";
 import { ConfirmNameField } from "./ConfirmNameField";
-import { TreeResponse } from "./tree/types";
 
 interface CascadeDestroyDialogProps {
   open: boolean;
@@ -35,7 +33,7 @@ interface CascadeDestroyDialogProps {
   loading: boolean;
 }
 
-function flattenTree(node: TreeResponse): TreeResponse[] {
+function flattenTree(node: GqlResourceTreeNode): GqlResourceTreeNode[] {
   return [node, ...(node.children ?? []).flatMap(flattenTree)];
 }
 
@@ -43,7 +41,7 @@ const ResourceRow = ({
   resource,
   depth,
 }: {
-  resource: TreeResponse;
+  resource: GqlResourceTreeNode;
   depth: number;
 }) => {
   const { linkPrefix } = useConfig();
@@ -119,7 +117,10 @@ const ResourceRow = ({
   );
 };
 
-function renderTreeRows(node: TreeResponse, depth = 0): React.ReactElement[] {
+function renderTreeRows(
+  node: GqlResourceTreeNode,
+  depth = 0,
+): React.ReactElement[] {
   return [
     <ResourceRow key={node.id} resource={node} depth={depth} />,
     ...(node.children ?? []).flatMap((child) =>
@@ -138,7 +139,7 @@ export const CascadeDestroyDialog = ({
 }: CascadeDestroyDialogProps) => {
   const { ikApi } = useConfig();
   const [confirmValue, setConfirmValue] = useState("");
-  const [tree, setTree] = useState<TreeResponse | null>(null);
+  const [tree, setTree] = useState<GqlResourceTreeNode | null>(null);
   const [treeLoading, setTreeLoading] = useState(false);
 
   useEffect(() => {
@@ -154,11 +155,7 @@ export const CascadeDestroyDialog = ({
         { id: entityId, direction: "children" },
       )
       .then((response) =>
-        setTree(
-          response.resourceTree
-            ? transformResourceTreeNode(response.resourceTree)
-            : null,
-        ),
+        setTree(response.resourceTree ? response.resourceTree : null),
       )
       .catch(() => setTree(null))
       .finally(() => setTreeLoading(false));

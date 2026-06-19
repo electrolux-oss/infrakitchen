@@ -22,6 +22,10 @@ class SecretType:
     integration: IntegrationType | None = None
 
     @strawberry.field
+    def entity_name(self) -> str:
+        return "secret"
+
+    @strawberry.field
     async def resources_count(self, info: Info) -> int:
         return await info.context["loaders"]["secret_resource_count"].load(str(self.id))
 

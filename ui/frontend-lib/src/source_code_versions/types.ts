@@ -1,44 +1,7 @@
-import { SourceCodeShort } from "../source_codes/types";
-import { TemplateShort } from "../templates/types";
-import { UserShort } from "../users";
-
 export enum RefType {
   BRANCH = "branch",
   TAG = "tag",
 }
-
-export interface SourceCodeVersionShort {
-  id: string;
-  identifier: string;
-  sourceCodeVersion: string;
-  sourceCodeBranch: string;
-  sourceCodeFolder: string;
-  template: TemplateShort;
-  source_code: SourceCodeShort;
-  _entity_name: string;
-}
-
-export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
-  createdAt: Date;
-  updatedAt: Date;
-  status: string;
-  revisionNumber: number;
-  labels: string[];
-  creator: UserShort;
-  template: TemplateShort;
-  source_code: SourceCodeShort;
-  sourceCodeVersion: string;
-  sourceCodeBranch: string;
-  sourceCodeFolder: string;
-  variables: VariableInput[];
-  outputs: VariableOutput[];
-  description: string;
-  resourcesCount: number;
-  codeSnapshot: string | null;
-}
-
-export type SourceCodeVersionResponseOptional =
-  Partial<SourceCodeVersionResponse>;
 
 export interface SourceCodeVersionCreate {
   description: string;
@@ -50,28 +13,7 @@ export interface SourceCodeVersionCreate {
   templateId: string;
 }
 
-export interface SourceCodeVersionUpdate {
-  description: string;
-  labels: string[];
-}
-
 // Configs
-export interface VariableInput {
-  name: string;
-  type: string;
-  original_type: string;
-  description: string;
-  required: boolean;
-  default: any;
-  sensitive: boolean;
-}
-
-export interface VariableOutput {
-  name: string;
-  value: any;
-  description: string;
-}
-
 export interface SourceOutputConfigShort {
   id: string;
   index: number;
@@ -81,8 +23,9 @@ export interface SourceOutputConfigShort {
 }
 
 export interface SourceConfigResponse extends Record<string, any> {
-  createdAt: Date;
-  updatedAt: Date;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
   index: number;
   sourceCodeVersionId: string;
   required: boolean;
@@ -122,19 +65,11 @@ export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   validationEnabled: boolean;
 }
 
-export interface SourceOutputConfigResponse extends Record<string, any> {
-  id: string;
-  index: number;
-  name: string;
-  description: string;
-  sourceCodeVersionId: string;
-}
-
 export interface SourceOutputConfigTemplateResponse {
   name: string;
   description: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   status: string;
 }
 

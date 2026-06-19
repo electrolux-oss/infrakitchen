@@ -1,6 +1,7 @@
 import datetime
 import functools
 import json
+from typing import Any
 from uuid import UUID
 
 from pydantic import HttpUrl
@@ -22,3 +23,7 @@ class JsonEncoder(json.JSONEncoder):
             return str(o)
         else:
             return json.JSONEncoder.default(self, o)
+
+
+def json_serialize(data: Any) -> Any:
+    return json.loads(json.dumps(data, cls=JsonEncoder))

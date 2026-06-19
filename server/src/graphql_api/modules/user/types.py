@@ -20,6 +20,10 @@ class UserShortType:
     identifier: str | None = None
     provider: str | None = None
 
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "user"
+
 
 @user_mapper.type(User)
 class UserType:
@@ -27,6 +31,10 @@ class UserType:
 
     secondary_accounts: list[UserShortType] = strawberry.field(default_factory=list)
     primary_account: list[UserShortType] = strawberry.field(default_factory=list)
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "user"
 
     @strawberry.field
     def meta(self) -> UserMetadataType | None:

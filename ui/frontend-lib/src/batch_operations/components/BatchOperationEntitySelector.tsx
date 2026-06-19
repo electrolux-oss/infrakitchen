@@ -24,8 +24,11 @@ import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
+import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
+import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { BatchOperationCreate } from "../types";
 
@@ -65,30 +68,48 @@ export const BatchOperationEntitySelector = (
 
   useEffect(() => {
     if (entityType === "resource") {
-      ikApi.get("labels/resource").then((response: string[]) => {
-        setLabels(response);
-      });
-
       ikApi
-        .getList("templates", {
-          pagination: { page: 1, perPage: 1000 },
-          fields: ["id", "name"],
-          sort: { field: "name", order: "ASC" },
-        })
-        .then((response: any) => {
-          const templateNames = response.data.map((t: any) => t.name);
+        .graphqlRequest<{ labels: string[]; templates: { name: string }[] }>(
+          `
+            query BatchOperationResourceFilters($sort: [String!], $range: [Int!]) {
+              labels: labels(entity: "resource")
+              templates(sort: $sort, range: $range) {
+                name
+              }
+            }
+          `,
+          {
+            sort: ["name", "ASC"],
+            range: [0, 1000],
+          },
+        )
+        .then((response) => {
+          setLabels(response.labels || []);
+          const templateNames = (response.templates || []).map((t) => t.name);
           setTemplates(templateNames);
         })
         .catch(() => {
+          setLabels([]);
           setTemplates([]);
         });
+
+      return;
     }
 
-    if (entityType === "executor") {
-      ikApi.get("labels/executor").then((response: string[]) => {
-        setLabels(response);
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `
+          query BatchOperationExecutorLabels {
+            labels: labels(entity: "executor")
+          }
+        `,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      })
+      .catch(() => {
+        setLabels([]);
       });
-    }
   }, [ikApi, entityType]);
 
   const resourceColumns: GridColDef[] = useMemo(
@@ -96,6 +117,7 @@ export const BatchOperationEntitySelector = (
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -103,7 +125,7 @@ export const BatchOperationEntitySelector = (
         },
       },
       {
-        field: "template_id",
+        field: "template",
         headerName: "Template",
         flex: 1,
         valueGetter: (value: any) => value?.name || "",
@@ -113,13 +135,13 @@ export const BatchOperationEntitySelector = (
         },
       },
       {
-        field: "source_code_version_id",
+        field: "sourceCodeVersion",
         headerName: "Source Code Version",
         flex: 1,
         valueGetter: (value: any, row: any) =>
-          row.source_code_version?.identifier || "",
+          row.sourceCodeVersion?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code_version;
+          const sourceCodeVersion = params.row.sourceCodeVersion;
           return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
@@ -136,7 +158,7 @@ export const BatchOperationEntitySelector = (
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -155,6 +177,7 @@ export const BatchOperationEntitySelector = (
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -162,13 +185,12 @@ export const BatchOperationEntitySelector = (
         },
       },
       {
-        field: "source_code_id",
+        field: "sourceCode",
         headerName: "Source Code",
         flex: 1,
-        valueGetter: (value: any, row: any) =>
-          row.source_code_version?.identifier || "",
+        valueGetter: (value: any, row: any) => row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code;
+          const sourceCodeVersion = params.row.sourceCode;
           return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
@@ -185,7 +207,7 @@ export const BatchOperationEntitySelector = (
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -291,6 +313,9 @@ export const BatchOperationEntitySelector = (
 
     const fetchEntities = async () => {
       setLoading(true);
+      const entityName = entityType === "resource" ? "resource" : "executor";
+      const fieldMap =
+        entityType === "resource" ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
 
       const sort =
         sortModel.length === 0
@@ -309,35 +334,48 @@ export const BatchOperationEntitySelector = (
               "id",
               "name",
               "template",
-              "source_code_version",
+              "sourceCodeVersion",
               "state",
               "status",
-              "created_at",
+              "createdAt",
               "labels",
+              "entityName",
             ]
           : [
               "id",
               "name",
-              "source_code",
+              "sourceCode",
               "state",
               "status",
-              "created_at",
+              "createdAt",
               "labels",
+              "entityName",
             ];
 
       try {
-        const response = await ikApi.getList(`${entityType}s`, {
-          filter: buildApiFilters(filterValues),
-          pagination: {
-            page: paginationModel.page + 1,
-            perPage: paginationModel.pageSize,
+        const response = await ikApi.graphqlRequest<Record<string, any>>(
+          `
+            query BatchOperationSelectorEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
+              ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+                ${buildGraphqlFields(fields, fieldMap)}
+              }
+              ${entityName}sCount(filter: $filter)
+            }
+          `,
+          {
+            filter: buildApiFilters(filterValues),
+            sort: [apiSort.field, apiSort.order],
+            range: [
+              paginationModel.page * paginationModel.pageSize,
+              (paginationModel.page + 1) * paginationModel.pageSize,
+            ],
           },
-          sort: apiSort,
-          fields,
-        });
+        );
         if (!cancelled) {
-          setEntities(response.data || []);
-          setTotalRows(response.total ? response.total : 0);
+          const rows = response[`${entityName}s`] || [];
+
+          setEntities(rows);
+          setTotalRows(response[`${entityName}sCount`] || 0);
         }
       } catch (e) {
         if (!cancelled) notifyError(e);

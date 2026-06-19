@@ -24,7 +24,6 @@ import {
 import {
   TEMPLATE_SHORT_FIELDS,
   GqlTemplateShort,
-  transformTemplateShort,
 } from "../../../../templates/graphql";
 import { useConfig } from "../../../context";
 
@@ -73,9 +72,7 @@ export function WiringCanvasSidebar({
           range: [0, 500],
         },
       )
-      .then((res) =>
-        setTemplates((res.templates || []).map(transformTemplateShort)),
-      )
+      .then((res) => setTemplates(res.templates || []))
       .catch(() => {});
   }, [ikApi]);
 
@@ -96,7 +93,7 @@ export function WiringCanvasSidebar({
       JSON.stringify({
         id: template.id,
         name: template.name,
-        _entity_name: template._entity_name,
+        _entity_name: template.entityName,
       }),
     );
     e.dataTransfer.effectAllowed = "copy";

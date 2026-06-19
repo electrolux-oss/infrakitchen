@@ -7,6 +7,7 @@ import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { BITBUCKET_REPOS_QUERY } from "./graphql";
 import { BitbucketRepo } from "./types";
 
 interface BitbucketReposProps {
@@ -54,13 +55,15 @@ const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
     if (!buffer["bitbucket_repos"] || buffer["bitbucket_repos"].length === 0) {
       setIsLoading(true);
       try {
-        const response: BitbucketRepo[] = await ikApi.get(
-          `provider/bitbucket/${org}/repos`,
-          queryParams,
-        );
+        const response = (await ikApi.graphqlRequest(BITBUCKET_REPOS_QUERY, {
+          integrationId: queryParams?.integration_id,
+          org,
+        })) as {
+          bitbucketRepos: BitbucketRepo[];
+        };
         setBuffer((prev: Record<string, BitbucketRepo[]>) => ({
           ...prev,
-          ["bitbucket_repos"]: response,
+          ["bitbucket_repos"]: response.bitbucketRepos,
         }));
       } catch (error: any) {
         notifyError(error);

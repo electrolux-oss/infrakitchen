@@ -13,9 +13,7 @@ import {
   GqlResource,
   GqlResourceTempState,
   RESOURCE_TEMP_STATE_FIELDS,
-  transformResourceTempState,
 } from "../graphql";
-import { ResourceTempStateResponse } from "../types";
 
 interface JsonDiffViewerProps {
   originalText: string;
@@ -62,7 +60,7 @@ export const ResourceStateReviewDialog: React.FC<
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
   const [resourceTempState, setResourceTempState] = useState<
-    ResourceTempStateResponse | undefined
+    GqlResourceTempState | undefined
   >();
   const [error, setError] = useState<any>();
 
@@ -92,9 +90,7 @@ export const ResourceStateReviewDialog: React.FC<
         )
         .then((response) => {
           if (response.resourceTempStateByResource) {
-            setResourceTempState(
-              transformResourceTempState(response.resourceTempStateByResource),
-            );
+            setResourceTempState(response.resourceTempStateByResource);
           }
           setError(undefined);
         })

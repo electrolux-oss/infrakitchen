@@ -11,6 +11,45 @@ function snakeToCamel(s: string): string {
   return s.replace(SNAKE_TO_CAMEL_RE, (_, c) => c.toUpperCase());
 }
 
+type SelectionNode = {
+  children: Map<string, SelectionNode>;
+};
+
+function createSelectionNode(): SelectionNode {
+  return { children: new Map<string, SelectionNode>() };
+}
+
+function addPath(root: SelectionNode, path: string): void {
+  const parts = path.split(".").filter(Boolean).map(snakeToCamel);
+  let current = root;
+
+  for (const part of parts) {
+    let child = current.children.get(part);
+    if (!child) {
+      child = createSelectionNode();
+      current.children.set(part, child);
+    }
+    current = child;
+  }
+}
+
+function renderSelectionTree(node: SelectionNode, indent = ""): string[] {
+  const lines: string[] = [];
+
+  for (const [field, child] of node.children.entries()) {
+    if (child.children.size === 0) {
+      lines.push(`${indent}${field}`);
+      continue;
+    }
+
+    lines.push(`${indent}${field} {`);
+    lines.push(...renderSelectionTree(child, `${indent}  `));
+    lines.push(`${indent}}`);
+  }
+
+  return lines;
+}
+
 /**
  * Build a GraphQL field selection string from the list of requested table fields.
  *
@@ -24,17 +63,20 @@ export function buildGraphqlFields(
   requestedFields: string[],
   fieldMap?: GraphqlFieldMap,
 ): string {
-  const selections = new Set<string>();
+  const rawSelections = new Set<string>();
+  const selectionTree = createSelectionNode();
 
   for (const field of requestedFields) {
     if (fieldMap && field in fieldMap) {
-      selections.add(fieldMap[field]);
+      rawSelections.add(fieldMap[field]);
     } else {
-      selections.add(snakeToCamel(field));
+      addPath(selectionTree, field);
     }
   }
 
-  return Array.from(selections).join("\n      ");
+  return [...rawSelections, ...renderSelectionTree(selectionTree)].join(
+    "\n      ",
+  );
 }
 
 /** Utility function to build a selection string from a list of fields. */

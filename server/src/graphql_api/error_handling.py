@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -18,6 +19,7 @@ from core.errors import (
     EntityValueError,
     EntityWrongState,
 )
+from core.utils.json_encoder import JsonEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +115,7 @@ def format_graphql_error(error: GraphQLError) -> dict[str, Any]:
 
     extensions: dict[str, Any] = {"code": code}
     if extras:
-        extensions.update(extras)
+        extensions.update(json.loads(json.dumps(extras, cls=JsonEncoder)))
 
     result: dict[str, Any] = {
         "message": message,

@@ -11,6 +11,7 @@ CREATE_AUTH_PROVIDER_MUTATION = """
         createAuthProvider(input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -20,6 +21,7 @@ UPDATE_AUTH_PROVIDER_MUTATION = """
         updateAuthProvider(id: $id, input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -74,6 +76,7 @@ class TestAuthProviderMutations:
         assert result.errors is None
         assert result.data is not None
         assert result.data["createAuthProvider"]["id"] == str(auth_provider.id)
+        assert result.data["createAuthProvider"]["entityName"] == "auth_provider"
         mock_auth_provider_service.create_auth_provider.assert_awaited_once()
 
     @pytest.mark.asyncio
@@ -132,6 +135,7 @@ class TestAuthProviderMutations:
         assert result.errors is None
         assert result.data is not None
         assert result.data["updateAuthProvider"]["id"] == str(auth_provider.id)
+        assert result.data["updateAuthProvider"]["entityName"] == "auth_provider"
         mock_auth_provider_service.get_actions.assert_awaited_once_with(
             auth_provider_id=auth_provider.id, requester=mocked_user
         )

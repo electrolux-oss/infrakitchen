@@ -41,7 +41,7 @@ export const ResourceContent = ({
       content: (
         <EntityTreeViewTab
           entity_id={entity.id}
-          entity_name={entity._entity_name}
+          entity_name={entity.entityName}
         />
       ),
     },

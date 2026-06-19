@@ -9,12 +9,12 @@ import { WiringCanvas } from "../../common/components/viewers/Wiring/WiringCanva
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { UPDATE_BLUEPRINT_MUTATION } from "../graphql";
+import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
-import { BlueprintResponse, BlueprintUpdateRequest } from "../types";
+import { BlueprintUpdateRequest } from "../types";
 
 interface BlueprintWiringEditorProps {
-  blueprint: BlueprintResponse;
+  blueprint: GqlBlueprint;
   onClose: () => void;
 }
 
@@ -60,14 +60,14 @@ export const BlueprintWiringEditor = ({
       description: blueprint.description || "",
       templateIds: blueprint.templates.map((t) => t.id),
       wiring: [...blueprint.wiring, ...constantWires],
-      defaultVariables: blueprint.default_variables,
+      defaultVariables: blueprint.defaultVariables || {},
       configuration: blueprint.configuration,
-      labels: blueprint.labels,
+      labels: blueprint.labels || [],
     });
 
     form.setSelectedTemplates(blueprint.templates);
 
-    const extTemplates = blueprint.external_templates || [];
+    const extTemplates = blueprint.externalTemplates || [];
     if (extTemplates.length > 0) {
       form.setExternalTemplates(extTemplates);
     }

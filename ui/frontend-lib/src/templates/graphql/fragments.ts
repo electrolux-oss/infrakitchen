@@ -5,7 +5,13 @@ import {
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const TEMPLATE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "abstract", "cloudResourceTypes"] as const,
+  short: [
+    "id",
+    "name",
+    "abstract",
+    "cloudResourceTypes",
+    "entityName",
+  ] as const,
   list: [
     "id",
     "name",
@@ -15,6 +21,7 @@ export const TEMPLATE_GRAPHQL_FIELDS = {
     "abstract",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   detail: [
     "id",
@@ -32,6 +39,7 @@ export const TEMPLATE_GRAPHQL_FIELDS = {
     "sourceCodeVersionsCount",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     creator: "creator",

@@ -15,13 +15,13 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import {
+  GqlWorkspace,
   UPDATE_WORKSPACE_MUTATION,
   WorkspaceUpdateFieldInput,
 } from "../graphql";
-import { WorkspaceResponse } from "../types";
 
 export interface WorkspaceAboutProps {
-  workspace: WorkspaceResponse;
+  workspace: GqlWorkspace;
 }
 
 export const WorkspaceOverview = ({ workspace }: WorkspaceAboutProps) => {
@@ -109,10 +109,10 @@ export const WorkspaceOverview = ({ workspace }: WorkspaceAboutProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={workspace.labels}
+        value={workspace.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={workspace.labels} />}
+        display={<Labels labels={workspace.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

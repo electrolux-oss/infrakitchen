@@ -11,7 +11,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { WORKFLOW_FIELD_MAP } from "../graphql";
-import { transformWorkflowOptional } from "../graphql/transforms";
 
 export const WorkflowsPage = () => {
   const columns = useMemo(
@@ -24,7 +23,7 @@ export const WorkflowsPage = () => {
         renderCell: (params: GridRenderCellParams) => (
           <GetEntityLink
             id={params.row.id}
-            _entity_name="workflow"
+            entityName="workflow"
             name={params.row.id.slice(0, 8) + "…"}
           />
         ),
@@ -115,7 +114,6 @@ export const WorkflowsPage = () => {
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         entityFieldMap={WORKFLOW_FIELD_MAP}
-        transformFn={transformWorkflowOptional}
       />
     </PageContainer>
   );

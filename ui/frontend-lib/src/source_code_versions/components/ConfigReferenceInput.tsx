@@ -14,11 +14,10 @@ import {
 import { GradientCircularProgress, useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
-import { TemplateShort } from "../../templates/types";
+import { GqlTemplateShort } from "../../templates/graphql";
 import {
   SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
   GqlSourceOutputConfigTemplate,
-  transformSourceOutputConfigTemplate,
 } from "../graphql";
 import {
   SourceConfigUpdateWithId,
@@ -38,7 +37,7 @@ export const ConfigReferenceInput = ({
   control,
   index,
 }: ConfigReferenceInputProps) => {
-  const [template, setTemplate] = useState<TemplateShort | null>(null);
+  const [template, setTemplate] = useState<GqlTemplateShort | null>(null);
   const [sourceOutputs, setSourceOutputs] = useState<
     SourceOutputConfigTemplateResponse[]
   >([]);
@@ -62,7 +61,7 @@ export const ConfigReferenceInput = ({
   useEffect(() => {
     if (selectedTemplateId) {
       const selectedItem =
-        templates?.find((e: TemplateShort) => e.id === selectedTemplateId) ||
+        templates?.find((e: GqlTemplateShort) => e.id === selectedTemplateId) ||
         null;
       setTemplate(selectedItem);
     }
@@ -78,9 +77,7 @@ export const ConfigReferenceInput = ({
           }>(SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY, {
             templateId: template.id,
           });
-          const response = gqlResponse.sourceCodeVersionTemplateOutputs.map(
-            transformSourceOutputConfigTemplate,
-          );
+          const response = gqlResponse.sourceCodeVersionTemplateOutputs;
           if (response.length > 0) {
             setSourceOutputs(response);
           } else {
@@ -115,7 +112,7 @@ export const ConfigReferenceInput = ({
               onChange={field.onChange}
             >
               {templates &&
-                templates.map((e: TemplateShort) => (
+                templates.map((e: GqlTemplateShort) => (
                   <MenuItem key={e.id} value={e.id}>
                     {e.name}
                   </MenuItem>

@@ -29,11 +29,10 @@ import { IkEntity } from "../../types";
 import { WorkflowStep } from "../components/WorkflowStep";
 import {
   GqlWorkflow,
-  transformWorkflow,
+  GqlWorkflowStep,
   UPDATE_WORKFLOW_MUTATION,
   WORKFLOW_QUERY,
 } from "../graphql";
-import { WorkflowResponse, WorkflowStepResponse } from "../types";
 
 interface JsonFieldProps {
   label: string;
@@ -107,19 +106,19 @@ interface WorkflowFormValues {
   steps: StepFormValues[];
 }
 
-function stepToFormValues(step: WorkflowStepResponse): StepFormValues {
+function stepToFormValues(step: GqlWorkflowStep): StepFormValues {
   return {
     id: step.id,
-    sourceCodeVersionId: step.sourceCodeVersionId,
-    integrationIds: step.integrationIds.map((i) => i.id),
-    secretIds: step.secretIds.map((s) => s.id),
-    storageId: step.storageId,
-    parentResourceIds: step.parentResourceIds.map((r) => r.id),
-    resolvedVariables: step.resolvedVariables,
+    sourceCodeVersionId: step.sourceCodeVersion?.id ?? null,
+    integrationIds: step.integrationIds?.map((i) => i.id) ?? [],
+    secretIds: step.secretIds?.map((s) => s.id) ?? [],
+    storageId: step.storageId ?? null,
+    parentResourceIds: step.parentResourceIds?.map((r) => r.id) ?? [],
+    resolvedVariables: step.resolvedVariables ?? {},
   };
 }
 
-const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
+const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
   const { workflow } = props;
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -245,7 +244,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     sx={{ fontWeight: 700, minWidth: 28 }}
                   />
                   <span>
-                    {step.template?.name ?? step.templateId.slice(0, 8)}
+                    {step.template?.name ?? step.template.id.slice(0, 8)}
                   </span>
                 </Box>
               }
@@ -260,10 +259,10 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     entity_name="source_code_versions"
                     buffer={buffer}
                     setBuffer={setBuffer}
-                    showFields={["source_code_version", "name"]}
+                    showFields={["source_code_version", "identifier"]}
                     error={false}
                     helpertext="Select the template version to use"
-                    filter={{ template_id: step.templateId }}
+                    filter={{ template_id: step.template.id }}
                     value={field.value}
                     label="Template Version"
                     bufferKey={`source_code_versions_${step.id}`}
@@ -304,7 +303,7 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                   <ArrayReferenceInput
                     ikApi={ikApi}
                     entity_name="secrets"
-                    showFields={["name", "secret_provider"]}
+                    showFields={["name", "secretProvider"]}
                     buffer={buffer}
                     setBuffer={setBuffer}
                     error={false}
@@ -359,11 +358,16 @@ const WorkflowEditPageInner = (props: { workflow: WorkflowResponse }) => {
                     showFields={["template.name", "name"]}
                     fields={[
                       "name",
-                      "template",
-                      "integration_ids",
-                      "storage",
-                      "workspace",
-                      "secret_ids",
+                      "template.id",
+                      "template.name",
+                      "integrationIds.id",
+                      "integrationIds.name",
+                      "storage.id",
+                      "storage.name",
+                      "workspace.id",
+                      "workspace.name",
+                      "secretIds.id",
+                      "secretIds.name",
                       "id",
                     ]}
                     error={false}
@@ -409,7 +413,7 @@ export const WorkflowEditPage = () => {
   const { workflow_id } = useParams();
   const { ikApi } = useConfig();
 
-  const [workflow, setWorkflow] = useState<WorkflowResponse>();
+  const [workflow, setWorkflow] = useState<GqlWorkflow>();
   const [error, setError] = useState<Error>();
 
   const getWorkflow = useCallback(async () => {
@@ -426,7 +430,7 @@ export const WorkflowEditPage = () => {
         if (!response.workflow) {
           throw new Error("Workflow not found");
         }
-        setWorkflow(transformWorkflow(response.workflow));
+        setWorkflow(response.workflow);
         setError(undefined);
       })
       .catch((e: any) => setError(e));

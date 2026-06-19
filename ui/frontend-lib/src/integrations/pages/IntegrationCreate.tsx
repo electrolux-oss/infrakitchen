@@ -20,12 +20,15 @@ import { alpha } from "@mui/material/styles";
 import { useConfig, StyledTab, LabelInput } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
 import { renderFieldsForProvider } from "../components/IntegrationProviderForms";
 import { providers } from "../constants";
-import { VALIDATE_INTEGRATION_CONFIG_MUTATION } from "../graphql";
+import {
+  GqlIntegration,
+  VALIDATE_INTEGRATION_CONFIG_MUTATION,
+} from "../graphql";
 import {
   ConnectionType,
-  IntegrationResponse,
   IntegrationValidationResult,
   IntegrationWithStorageCreate,
 } from "../types";
@@ -85,29 +88,31 @@ const IntegrationCreatePage = () => {
         return;
       }
 
-      const payload = {
-        name: data.name,
-        description: data.description,
-        labels: data.labels,
-        integration_type: data.integrationType,
-        integration_provider: formProviderSlug,
-        create_storage: data.createStorage,
-        configuration: {
-          ...data.configuration,
-          integration_provider: formProviderSlug,
-        },
-      };
-      ikApi
-        .postRaw("use_cases/create_integration_with_storage", payload)
-        .then((response: IntegrationResponse) => {
-          if (response.id) {
-            navigate(`${linkPrefix}integrations`);
-            notify("Integration created successfully!", "success");
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createIntegrationWithStorage: GqlIntegration;
+        }>(CREATE_INTEGRATION_WITH_STORAGE_MUTATION, {
+          input: {
+            name: data.name,
+            description: data.description,
+            labels: data.labels,
+            integrationType: data.integrationType,
+            integrationProvider: formProviderSlug,
+            createStorage: data.createStorage,
+            configuration: {
+              ...data.configuration,
+              integration_provider: formProviderSlug,
+            },
+          },
         });
+
+        if (response.createIntegrationWithStorage.id) {
+          navigate(`${linkPrefix}integrations`);
+          notify("Integration created successfully!", "success");
+        }
+      } catch (error: any) {
+        notifyError(error);
+      }
     },
     [ikApi, linkPrefix, trigger, navigate, formProviderSlug],
   );

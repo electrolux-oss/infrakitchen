@@ -15,6 +15,7 @@ CREATE_SECRET_MUTATION = """
             name
             secretType
             secretProvider
+            entityName
         }
     }
 """
@@ -25,6 +26,7 @@ UPDATE_SECRET_MUTATION = """
             id
             name
             description
+            entityName
         }
     }
 """
@@ -35,6 +37,7 @@ SECRET_ACTION_MUTATION = """
             id
             name
             status
+            entityName
         }
     }
 """
@@ -109,6 +112,7 @@ class TestSecretMutations:
             "name": mocked_secret.name,
             "secretType": mocked_secret.secret_type,
             "secretProvider": mocked_secret.secret_provider,
+            "entityName": "secret",
         }
         mock_secret_service.create_secret.assert_awaited_once_with(secret=ANY, requester=mocked_user)
 
@@ -211,6 +215,7 @@ class TestSecretMutations:
             "id": str(mocked_secret.id),
             "name": mocked_secret.name,
             "description": mocked_secret.description,
+            "entityName": "secret",
         }
         mock_secret_service.get_actions.assert_awaited_once_with(secret_id=secret_id, requester=mocked_user)
         mock_secret_service.update_secret.assert_awaited_once_with(

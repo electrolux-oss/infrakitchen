@@ -12,6 +12,7 @@ CREATE_SOURCE_CODE_MUTATION = """
         createSourceCode(input: $input) {
             id
             sourceCodeUrl
+            entityName
         }
     }
 """
@@ -21,6 +22,7 @@ UPDATE_SOURCE_CODE_MUTATION = """
         updateSourceCode(id: $id, input: $input) {
             id
             sourceCodeUrl
+            entityName
         }
     }
 """
@@ -30,6 +32,7 @@ SOURCE_CODE_ACTION_MUTATION = """
         sourceCodeAction(id: $id, input: $input) {
             id
             sourceCodeUrl
+            entityName
         }
     }
 """
@@ -77,6 +80,7 @@ class TestSourceCodeMutations:
         assert result.data["createSourceCode"] == {
             "id": str(mocked_source_code.id),
             "sourceCodeUrl": mocked_source_code.source_code_url,
+            "entityName": "source_code",
         }
         mock_source_code_service.create_source_code.assert_awaited_once_with(source_code=ANY, requester=mocked_user)
 
@@ -173,6 +177,7 @@ class TestSourceCodeMutations:
         assert result.data["updateSourceCode"] == {
             "id": str(mocked_source_code.id),
             "sourceCodeUrl": mocked_source_code.source_code_url,
+            "entityName": "source_code",
         }
         mock_source_code_service.get_actions.assert_awaited_once_with(
             source_code_id=source_code_id, requester=mocked_user
@@ -308,6 +313,7 @@ class TestSourceCodeMutations:
         assert result.data["sourceCodeAction"] == {
             "id": str(mocked_source_code.id),
             "sourceCodeUrl": mocked_source_code.source_code_url,
+            "entityName": "source_code",
         }
         mock_source_code_service.get_actions.assert_awaited_once_with(
             source_code_id=source_code_id, requester=mocked_user

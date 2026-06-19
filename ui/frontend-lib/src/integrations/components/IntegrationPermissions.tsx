@@ -1,8 +1,8 @@
 import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
-import { IntegrationResponse } from "../types";
+import { GqlIntegration } from "../graphql";
 
 export interface IntegrationPermissionsProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
 }
 
 export const IntegrationPermissions = ({
@@ -11,7 +11,7 @@ export const IntegrationPermissions = ({
   return (
     <EntityPoliciesTab
       entityId={integration.id}
-      entityName={integration._entity_name}
+      entityName={integration.entityName}
     />
   );
 };

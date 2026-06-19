@@ -11,7 +11,7 @@ import {
 } from "../../common/context/EntityContext";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { TemplateContent } from "../components/TemplateContent";
-import { TEMPLATE_DETAIL_FIELDS, transformTemplate } from "../graphql";
+import { TEMPLATE_DETAIL_FIELDS } from "../graphql";
 
 export const TemplatePage = () => {
   const { template_id } = useParams();
@@ -20,7 +20,6 @@ export const TemplatePage = () => {
     <EntityProvider
       entity_name="template"
       entity_id={template_id || ""}
-      transformFn={transformTemplate}
       entityFields={TEMPLATE_DETAIL_FIELDS}
     >
       <TemplatePageContent />
@@ -44,7 +43,6 @@ const TemplatePageContent = () => {
   return (
     <EntityContainer
       title={"Template Overview"}
-      hideEditAction
       actions={
         entity?.status !== ENTITY_STATUS.DISABLED ? (
           <Tooltip title="Create a new resource from this template">

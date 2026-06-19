@@ -67,17 +67,17 @@ class KubernetesClient:
     async def read_namespaced_deployment(self, deployment_name: str, namespace: str):
         async with ApiClient(self.configuration) as api:
             apps_v1 = AppsV1Api(api)
-            return apps_v1.read_namespaced_deployment(name=deployment_name, namespace=namespace)
+            return await apps_v1.read_namespaced_deployment(name=deployment_name, namespace=namespace)
 
     async def patch_namespaced_deployment(self, deployment: str, namespace: str, body: dict[str, Any]):
         async with ApiClient(self.configuration) as api:
             apps_v1 = AppsV1Api(api)
-            return apps_v1.patch_namespaced_deployment(deployment, namespace, body)
+            return await apps_v1.patch_namespaced_deployment(deployment, namespace, body)
 
     async def delete_namespaced_deployment(self, deployment: str, namespace: str):
         async with ApiClient(self.configuration) as api:
             apps_v1 = AppsV1Api(api)
-            return apps_v1.delete_namespaced_deployment(deployment, namespace)
+            return await apps_v1.delete_namespaced_deployment(deployment, namespace)
 
     async def delete_namespaced_pod(self, pod_name: str, namespace: str):
         async with ApiClient(self.configuration) as api:

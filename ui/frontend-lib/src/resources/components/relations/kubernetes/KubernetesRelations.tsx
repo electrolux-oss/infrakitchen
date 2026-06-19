@@ -3,11 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, List, ListItem, Typography } from "@mui/material";
 
 import { useConfig, GradientCircularProgress } from "../../../../common";
-import { ResourceResponse } from "../../../types";
+import { KUBERNETES_NAMESPACES_QUERY } from "../../../../providers/kubernetes/graphql";
+import { GqlResource } from "../../../graphql";
 
 import { DeploymentsDetails } from "./K8sDeployment";
 
-export const KubernetesRelations = (props: { entity: ResourceResponse }) => {
+export const KubernetesRelations = (props: { entity: GqlResource }) => {
   const { entity } = props;
 
   const { ikApi } = useConfig();
@@ -29,11 +30,15 @@ export const KubernetesRelations = (props: { entity: ResourceResponse }) => {
       return;
     }
     ikApi
-      .get(
-        `provider/kubernetes/${kubernetesResourceTypes[0]}/${entity.id}/namespaces`,
+      .graphqlRequest<{ kubernetesNamespaces: string[] }>(
+        KUBERNETES_NAMESPACES_QUERY,
+        {
+          k8sService: kubernetesResourceTypes[0],
+          resourceId: entity.id,
+        },
       )
       .then((response) => {
-        setNamespaces(response);
+        setNamespaces(response.kubernetesNamespaces);
         setLoading(false);
       })
       .catch((error) => {

@@ -1,3 +1,5 @@
+import { WORKFLOW_FIELDS } from "../../workflows/graphql";
+
 export interface BlueprintUpdateMutationInput {
   name: string;
   description: string;
@@ -15,6 +17,7 @@ export const UPDATE_BLUEPRINT_MUTATION = `
     updateBlueprint(id: $id, input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -39,6 +42,25 @@ export const CREATE_BLUEPRINT_MUTATION = `
     createBlueprint(input: $input) {
       id
       name
+      entityName
+    }
+  }
+`;
+
+export interface BlueprintWorkflowCreateMutationInput {
+  variableOverrides: Record<string, Record<string, any>>;
+  workspaceId: string | null;
+  integrationIds: string[];
+  storageId: string | null;
+  secretIds: string[];
+  sourceCodeVersionOverrides: Record<string, string>;
+  parentOverrides: Record<string, string[]>;
+}
+
+export const CREATE_BLUEPRINT_WORKFLOW_MUTATION = `
+  mutation CreateBlueprintWorkflow($id: UUID!, $input: BlueprintWorkflowCreateInput!) {
+    createBlueprintWorkflow(id: $id, input: $input) {
+      ${WORKFLOW_FIELDS}
     }
   }
 `;

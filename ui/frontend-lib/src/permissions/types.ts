@@ -1,10 +1,10 @@
-import { UserResponseOptional, UserShort } from "../users";
+import { GqlUserShort } from "../users/graphql";
 
 export interface PermissionResponse {
   id: string;
   createdAt: Date;
   updatedAt: Date;
-  creator?: UserShort;
+  creator?: GqlUserShort;
   ptype: string;
   v0: string | null;
   v1: string | null;
@@ -16,9 +16,9 @@ export interface PermissionResponse {
   entityData?: {
     name?: string;
     id?: string;
-    _entity_name?: string;
+    entityName?: string;
   };
-  userData?: UserResponseOptional;
+  userData?: GqlUserShort;
 }
 
 export interface EntityPolicyCreate {

@@ -12,7 +12,6 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IntegrationContent } from "../components/IntegrationContent";
 import {
   INTEGRATION_DETAILS_FIELDS,
-  transformIntegration,
   VALIDATE_INTEGRATION_MUTATION,
 } from "../graphql";
 import { IntegrationValidationResult } from "../types";
@@ -55,12 +54,10 @@ export const IntegrationPage = () => {
     <EntityProvider
       entity_name="integration"
       entity_id={integration_id || ""}
-      transformFn={transformIntegration}
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
         title={"Integration Overview"}
-        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission={"api:integration"}

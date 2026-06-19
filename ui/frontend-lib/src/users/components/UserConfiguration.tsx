@@ -9,13 +9,13 @@ import {
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { UserResponse, UserShort } from "../types";
+import { GqlUser, GqlUserShort } from "../graphql";
 
 import { LinkUserDialog } from "./LinkAccountDialog";
 import { UnlinkAccountButton } from "./UnlinkAccountDialog";
 
 export interface TemplateConfigurationProps {
-  user: UserResponse;
+  user: GqlUser;
 }
 
 export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
@@ -39,7 +39,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           value={
             <>
               <Box>
-                {user.secondaryAccounts?.map((ent: UserShort) => (
+                {user.secondaryAccounts?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
                     value={<GetReferenceUrlValue {...ent} />}
@@ -75,7 +75,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           value={
             <>
               <Box>
-                {user.primaryAccount?.map((ent: UserShort) => (
+                {user.primaryAccount?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
                     value={<GetReferenceUrlValue {...ent} />}

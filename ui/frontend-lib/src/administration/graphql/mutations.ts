@@ -48,3 +48,9 @@ export const UPDATE_SCHEDULER_MUTATION = `
     }
   }
 `;
+
+export const DELETE_SCHEDULER_MUTATION = `
+  mutation DeleteScheduler($id: UUID!) {
+    deleteScheduler(id: $id)
+  }
+`;

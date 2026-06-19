@@ -14,16 +14,16 @@ import {
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,
   UPDATE_AUTH_PROVIDER_MUTATION,
 } from "../graphql/mutations";
-import { AuthProviderResponse } from "../types";
 
 import { renderFieldsForProvider } from "./AuthProviderForms";
 
 export interface AuthProviderConfigurationEditorProps {
-  authProvider: AuthProviderResponse;
+  authProvider: GqlAuthProvider;
   canEdit: boolean;
 }
 
@@ -47,7 +47,7 @@ export const AuthProviderConfigurationEditor = ({
   const methods = useForm<{ configuration: Record<string, any> }>({
     mode: "onChange",
     defaultValues: {
-      configuration: authProvider.configuration,
+      configuration: authProvider.configuration || {},
     },
   });
 
@@ -59,7 +59,7 @@ export const AuthProviderConfigurationEditor = ({
   } = methods;
 
   const openDialog = useCallback(() => {
-    reset({ configuration: authProvider.configuration });
+    reset({ configuration: authProvider.configuration || {} });
     setDialogOpen(true);
   }, [authProvider.configuration, reset]);
 

@@ -39,6 +39,12 @@ UPDATE_SCHEDULER_MUTATION = """
     }
 """
 
+DELETE_SCHEDULER_MUTATION = """
+    mutation DeleteScheduler($id: UUID!) {
+        deleteScheduler(id: $id)
+    }
+"""
+
 
 def make_context(user):
     request = Mock()
@@ -144,3 +150,23 @@ class TestSchedulerGraphql:
                 "cron": "*/5 * * * *",
             }
         }
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.scheduler.mutations.user_is_super_admin")
+    @patch("graphql_api.modules.scheduler.mutations.get_scheduler_job_service")
+    async def test_delete_scheduler_returns_true(self, mock_get_service, mock_is_super_admin, mocked_user):
+        mock_is_super_admin.return_value = True
+        job_id = uuid4()
+        service = Mock()
+        service.delete = AsyncMock(return_value=True)
+        mock_get_service.return_value = service
+
+        result = await schema.execute(
+            DELETE_SCHEDULER_MUTATION,
+            variable_values={"id": str(job_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"deleteScheduler": True}
+        service.delete.assert_awaited_once_with(job_id=job_id)

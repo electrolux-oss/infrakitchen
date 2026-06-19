@@ -14,6 +14,7 @@ export const CREATE_BATCH_OPERATION_MUTATION = `
   mutation CreateBatchOperation($input: BatchOperationCreateInput!) {
     createBatchOperation(input: $input) {
       id
+      entityName
     }
   }
 `;
@@ -23,6 +24,7 @@ export const BATCH_OPERATION_ENTITY_IDS_MUTATION = `
     batchOperationEntityIds(id: $id, input: $input) {
       id
       entityIds
+      entityName
     }
   }
 `;

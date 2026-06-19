@@ -21,9 +21,8 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
-import { UPDATE_BLUEPRINT_MUTATION } from "../graphql";
+import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
-import { BlueprintResponse } from "../types";
 
 export const BlueprintOverview = () => {
   const { entity, refreshEntity } = useEntityProvider();
@@ -33,7 +32,7 @@ export const BlueprintOverview = () => {
 
   const canEdit = checkActionPermission("api:blueprint", "write");
 
-  const blueprint = entity as BlueprintResponse | null;
+  const blueprint = entity as GqlBlueprint | null;
 
   const saveField = useCallback(
     async (input: BlueprintUpdateFieldInput) => {
@@ -55,7 +54,7 @@ export const BlueprintOverview = () => {
 
   if (!blueprint) return null;
 
-  const externalTemplates = blueprint.external_templates || [];
+  const externalTemplates = blueprint.externalTemplates || [];
 
   const constants =
     (blueprint.configuration?.constants as Array<{
@@ -126,17 +125,17 @@ export const BlueprintOverview = () => {
 
       <CommonField
         name="Last Updated"
-        value={<RelativeTime date={blueprint.updated_at} />}
+        value={<RelativeTime date={blueprint.updatedAt} />}
         size={6}
       />
 
       <CommonEditableField<string[]>
         name="Labels"
         canEdit={canEdit}
-        value={blueprint.labels}
+        value={blueprint.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={blueprint.labels} />}
+        display={<Labels labels={blueprint.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

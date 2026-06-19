@@ -11,7 +11,7 @@ import {
 } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import {
@@ -35,7 +35,7 @@ export const EntityPoliciesBase = ({
     () => [
       {
         field: "v1",
-        fetchFields: ["v0", "v1"],
+        fetchFields: ["v0", "v1", "entityName"],
         headerName: "Role/User",
         flex: 1,
         sortable: false,
@@ -45,7 +45,7 @@ export const EntityPoliciesBase = ({
             return (
               <GetEntityLink
                 id={params.row.v0.split(":")[1]}
-                _entity_name={"user"}
+                entityName={"user"}
                 name={params.row.v0.split(":")[1]}
               />
             );
@@ -53,7 +53,7 @@ export const EntityPoliciesBase = ({
             return (
               <GetEntityLink
                 id={params.row.v0}
-                _entity_name={"role"}
+                entityName={"role"}
                 name={params.row.v0}
               />
             );
@@ -152,7 +152,6 @@ export const EntityPoliciesBase = ({
         defaultFilter={{ ptype: "p", v1: `${entityName}:${entityId}` }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </>
   );

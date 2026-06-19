@@ -21,7 +21,7 @@ import {
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { useHashParams } from "../../common/hooks/useHashParams";
 import { ENTITY_STATUS } from "../../utils";
-import { SCV_FIELD_MAP, transformSourceCodeVersion } from "../graphql";
+import { SCV_FIELD_MAP } from "../graphql";
 import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
@@ -62,7 +62,7 @@ const SourceCodeGitRefRows = ({
   const versionMap = useMemo(() => {
     return new Map(
       entities.map((v) => [
-        type === RefType.BRANCH ? v.source_code_branch : v.source_code_version,
+        type === RefType.BRANCH ? v.sourceCodeBranch : v.sourceCodeVersion,
         v,
       ]),
     );
@@ -72,9 +72,7 @@ const SourceCodeGitRefRows = ({
     if (enabledOnly) {
       return entities
         .map((v) =>
-          type === RefType.BRANCH
-            ? v.source_code_branch
-            : v.source_code_version,
+          type === RefType.BRANCH ? v.sourceCodeBranch : v.sourceCodeVersion,
         )
         .filter((r): r is string => !!r);
     }
@@ -202,8 +200,10 @@ export const SourceCodeRefSection = ({
           "source_code_branch",
           "source_code_version",
           "source_code_folder",
-          "template",
-          "source_code",
+          "template.id",
+          "template.name",
+          "source_code.id",
+          "source_code.identifier",
           "id",
           "status",
           "resources_count",
@@ -219,8 +219,10 @@ export const SourceCodeRefSection = ({
           "source_code_branch",
           "source_code_version",
           "source_code_folder",
-          "template",
-          "source_code",
+          "template.id",
+          "template.name",
+          "source_code.id",
+          "source_code.identifier",
           "id",
           "status",
           "resources_count",
@@ -254,7 +256,6 @@ export const SourceCodeRefSection = ({
     <EntityListProvider
       entity_name="sourceCodeVersion"
       params={params}
-      transformFn={transformSourceCodeVersion}
       entityFieldMap={SCV_FIELD_MAP}
     >
       <OverviewCard>

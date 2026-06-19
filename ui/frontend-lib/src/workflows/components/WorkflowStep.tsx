@@ -24,10 +24,11 @@ import {
 import { Duration } from "../../common/components/Duration";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { WorkflowStepResponse } from "../types";
+import { GqlTemplateShort } from "../../templates/graphql";
+import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
-  step: WorkflowStepResponse;
+  step: GqlWorkflowStep;
   workflowAction?: "create" | "destroy";
 }
 
@@ -35,7 +36,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
   const [expandedVars, setExpandedVars] = useState<string | null>(null);
 
   const templateName = step.template?.name;
-  const hasVars = Object.keys(step.resolvedVariables).length > 0;
+  const hasVars = Object.keys(step.resolvedVariables || {}).length > 0;
   const externalInputs = step.parentResourceIds;
 
   return (
@@ -76,14 +77,10 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               sx={{ fontWeight: 700, minWidth: 28 }}
             />
             {templateName ? (
-              <GetEntityLink
-                id={step.templateId}
-                _entity_name="template"
-                name={templateName}
-              />
+              <GetEntityLink {...(step.template as GqlTemplateShort)} />
             ) : (
               <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
-                {step.templateId.slice(0, 8)}…
+                {step.template?.id.slice(0, 8)}…
               </Typography>
             )}
             {step.template?.abstract && (
@@ -123,12 +120,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 Resource
               </Typography>
               <Box sx={{ mt: 0.5 }}>
-                {step.resourceId != null ? (
+                {step.resource?.id != null ? (
                   <GetReferenceUrlValue
-                    id={step.resourceId}
-                    _entity_name="resource"
+                    id={step.resource.id}
+                    entityName="resource"
                     identifier={
-                      step.resource?.name ?? step.resourceId.slice(0, 8) + "…"
+                      step.resource?.name ?? step.resource.id.slice(0, 8) + "…"
                     }
                   />
                 ) : (
@@ -142,18 +139,18 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             </Box>
 
             {/* SCV */}
-            {step.sourceCodeVersionId && (
+            {step.sourceCodeVersion?.id && (
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Source Code Version
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
                   <GetReferenceUrlValue
-                    id={step.sourceCodeVersionId}
-                    _entity_name="source_code_version"
+                    id={step.sourceCodeVersion.id}
+                    entityName="source_code_version"
                     identifier={
                       step.sourceCodeVersion?.identifier ??
-                      step.sourceCodeVersionId.slice(0, 8) + "…"
+                      step.sourceCodeVersion.id.slice(0, 8) + "…"
                     }
                   />
                 </Box>
@@ -173,7 +170,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             )}
 
             {/* Parents */}
-            {step.parentResourceIds.length > 0 && (
+            {step.parentResourceIds && step.parentResourceIds.length > 0 && (
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
@@ -196,7 +193,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       label={
                         <GetReferenceUrlValue
                           id={res.id}
-                          _entity_name="resource"
+                          entityName="resource"
                           identifier={res.name ?? res.id.slice(0, 8) + "…"}
                         />
                       }
@@ -209,7 +206,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             )}
 
             {/* External inputs from workflow wiring (read-only) */}
-            {externalInputs.length > 0 && (
+            {externalInputs && externalInputs.length > 0 && (
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
@@ -270,7 +267,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       </Box>
                       <GetReferenceUrlValue
                         id={resource.id}
-                        _entity_name="resource"
+                        entityName="resource"
                         identifier={
                           resource.name ?? resource.id.slice(0, 8) + "…"
                         }
@@ -282,7 +279,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             )}
 
             {/* integrations */}
-            {step.integrationIds.length > 0 && (
+            {step.integrationIds && step.integrationIds.length > 0 && (
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
@@ -305,7 +302,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       label={
                         <GetReferenceUrlValue
                           id={integration.id}
-                          _entity_name="integration"
+                          entityName="integration"
                           name={integration.name}
                         />
                       }
@@ -355,7 +352,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
                   Resolved Variables (
-                  {Object.keys(step.resolvedVariables).length})
+                  {Object.keys(step.resolvedVariables || {}).length})
                 </Typography>
               </AccordionSummary>
               <AccordionDetails sx={{ p: 0 }}>
@@ -368,7 +365,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {Object.entries(step.resolvedVariables).map(
+                      {Object.entries(step.resolvedVariables || {}).map(
                         ([key, value]) => (
                           <TableRow key={key}>
                             <TableCell>

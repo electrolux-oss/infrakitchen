@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 
 import { notify } from "../../common/hooks/useNotification";
-import { WorkflowStepResponse } from "../types";
+import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowResolvedVariablesProps {
-  steps: WorkflowStepResponse[];
+  steps: GqlWorkflowStep[];
 }
 
 /**
@@ -36,16 +36,16 @@ export const WorkflowResolvedVariables = ({
       {
         templateName: string;
         templateId: string;
-        steps: WorkflowStepResponse[];
+        steps: GqlWorkflowStep[];
       }
     >();
     for (const step of steps) {
-      const key = step.template?.id ?? step.templateId;
+      const key = step.template?.id;
       if (!map.has(key)) {
         map.set(key, {
           templateId: key,
           templateName:
-            step.template?.name ?? `Template ${step.templateId.slice(0, 8)}`,
+            step.template?.name ?? `Template ${step.template.id.slice(0, 8)}`,
           steps: [],
         });
       }
@@ -122,7 +122,7 @@ export const WorkflowResolvedVariables = ({
 };
 
 interface StepVariablesBlockProps {
-  step: WorkflowStepResponse;
+  step: GqlWorkflowStep;
   showPosition: boolean;
 }
 

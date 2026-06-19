@@ -422,10 +422,12 @@ class TestCreateWorkflow:
         mock_workflow_service,
         mocked_blueprint,
         mocked_workflow,
+        mock_workflow_crud,
         mock_user_dto,
     ):
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         request = WorkflowRequest()
         result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
@@ -453,6 +455,7 @@ class TestCreateWorkflow:
         mock_workflow_service,
         mocked_blueprint,
         mocked_workflow,
+        mock_workflow_crud,
         mocked_template,
         mock_user_dto,
     ):
@@ -492,6 +495,7 @@ class TestCreateWorkflow:
 
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         request = WorkflowRequest(
             variable_overrides={str(template_id_1): {"region": "us-east-1"}},
@@ -581,6 +585,7 @@ class TestCreateWorkflow:
         mocked_blueprint,
         mocked_workflow,
         mocked_template,
+        mock_workflow_crud,
         mock_user_dto,
     ):
         constant_id = str(uuid4())
@@ -597,6 +602,7 @@ class TestCreateWorkflow:
         }
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         request = WorkflowRequest(
             variable_overrides={str(mocked_template.id): {"environment": "prod"}},
@@ -614,6 +620,7 @@ class TestCreateWorkflow:
         mock_workflow_service,
         mocked_blueprint,
         mocked_workflow,
+        mock_workflow_crud,
         mock_user_dto,
     ):
         # A constant is declared but never wired to any template — no value required.
@@ -623,6 +630,7 @@ class TestCreateWorkflow:
         }
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
         mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
 
         result = await mock_blueprint_service.create_workflow(mocked_blueprint.id, WorkflowRequest(), mock_user_dto)
 

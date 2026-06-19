@@ -28,12 +28,7 @@ import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
-import {
-  REVISION_FIELDS,
-  GqlRevision,
-  transformRevision,
-} from "../../../revision/graphql";
-import { RevisionResponse } from "../../../revision/types";
+import { REVISION_FIELDS, GqlRevision } from "../../../revision/graphql";
 import { AuditLogEntity } from "../../../types";
 import {
   LogActionButtons,
@@ -122,9 +117,9 @@ export const Audit = ({
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
 
   const [revisionDialogLeft, setRevisionDialogLeft] =
-    useState<RevisionResponse | null>(null);
+    useState<GqlRevision | null>(null);
   const [revisionDialogRight, setRevisionDialogRight] =
-    useState<RevisionResponse | null>(null);
+    useState<GqlRevision | null>(null);
   const [revisionDialogRev, setRevisionDialogRev] = useState<number | null>(
     null,
   );
@@ -159,8 +154,8 @@ export const Audit = ({
             : { entityId: resourceId, leftNum: rev - 1, rightNum: rev },
         )
         .then((res) => {
-          setRevisionDialogLeft(res.left ? transformRevision(res.left) : null);
-          setRevisionDialogRight(transformRevision(res.right));
+          setRevisionDialogLeft(res.left ? res.left : null);
+          setRevisionDialogRight(res.right);
           setRevisionDialogLoading(false);
         })
         .catch(() => {
@@ -289,7 +284,7 @@ export const Audit = ({
             return "System";
           }
           const creatorData = params.row.creator;
-          return <GetEntityLink {...creatorData} _entity_name="user" />;
+          return <GetEntityLink {...creatorData} />;
         },
       },
       {

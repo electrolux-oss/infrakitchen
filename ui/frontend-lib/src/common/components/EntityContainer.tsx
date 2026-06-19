@@ -21,12 +21,11 @@ export interface EntityContainerProps {
   children: ReactNode;
   title?: string;
   actions?: ReactNode;
-  /** When true the legacy "Edit" navigation button is hidden (entity uses inline editing). */
-  hideEditAction?: boolean;
+  showEditAction?: boolean;
 }
 
 export const EntityContainer = (props: EntityContainerProps) => {
-  const { children, title, actions, hideEditAction } = props;
+  const { children, title, actions, showEditAction } = props;
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
@@ -41,7 +40,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
     return (
       <PageContainer
         title="Loading..."
-        onBack={() => navigate(`${linkPrefix}${entity?._entity_name}s`)}
+        onBack={() => navigate(`${linkPrefix}${entity?.entityName}s`)}
       >
         <Box
           sx={{
@@ -61,7 +60,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
     return (
       <PageContainer
         title="Error"
-        onBack={() => navigate(`${linkPrefix}${entity?._entity_name}s`)}
+        onBack={() => navigate(`${linkPrefix}${entity?.entityName}s`)}
       >
         <Alert severity="error" sx={{ width: "100%" }}>
           {error}
@@ -83,13 +82,13 @@ export const EntityContainer = (props: EntityContainerProps) => {
   return (
     <PageContainer
       title={title || entity?.name || entity?.identifier || "Entity"}
-      onBack={() => navigate(`${linkPrefix}${entity._entity_name}s`)}
+      onBack={() => navigate(`${linkPrefix}${entity.entityName}s`)}
       actions={
         <>
           <EntityActions
             entity_id={entity.id}
-            entity_name={entity._entity_name}
-            hideEditAction={hideEditAction}
+            entity_name={entity.entityName}
+            showEditAction={showEditAction}
           />
           {actions}
           <Tooltip title="Refresh">

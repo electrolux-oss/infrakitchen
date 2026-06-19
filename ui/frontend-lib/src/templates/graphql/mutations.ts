@@ -21,6 +21,7 @@ export const CREATE_TEMPLATE_MUTATION = `
       id
       name
       template
+      entityName
     }
   }
 `;
@@ -31,6 +32,7 @@ export const UPDATE_TEMPLATE_MUTATION = `
       id
       name
       template
+      entityName
     }
   }
 `;

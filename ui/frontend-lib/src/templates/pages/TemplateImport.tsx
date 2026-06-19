@@ -20,7 +20,9 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
-import { TemplateImportRequest, TemplateResponse } from "../types";
+import { CREATE_TEMPLATE_WITH_SCV_MUTATION } from "../../use_cases/graphql";
+import { GqlTemplate } from "../graphql";
+import { TemplateImportRequest } from "../types";
 
 export const TemplateImportPage = () => {
   const {
@@ -52,36 +54,39 @@ export const TemplateImportPage = () => {
   );
 
   const onSubmit = useCallback(
-    (data: TemplateImportRequest) => {
+    async (data: TemplateImportRequest) => {
       setIsSubmitting(true);
-      const payload = {
-        name: data.name,
-        description: data.description,
-        documentation: data.documentation,
-        labels: data.labels,
-        parents: data.parents,
-        source_code_language: data.sourceCodeLanguage,
-        integration_id: data.integrationId,
-        source_code_url: data.sourceCodeUrl,
-        source_code_folder: data.sourceCodeFolder,
-        source_code_branch: data.sourceCodeBranch,
-      };
-      ikApi
-        .postRaw("use_cases/create_template_with_scv", payload)
-        .then((response: TemplateResponse) => {
-          setIsSubmitting(false);
-          if (response.id) {
-            notify(
-              "Template import initiated. It may take a few minutes to complete.",
-              "info",
-            );
-            navigate(`${linkPrefix}templates/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-          setIsSubmitting(false);
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createTemplateWithScv: GqlTemplate;
+        }>(CREATE_TEMPLATE_WITH_SCV_MUTATION, {
+          input: {
+            name: data.name,
+            description: data.description,
+            labels: data.labels,
+            parents: data.parents,
+            sourceCodeLanguage: data.sourceCodeLanguage,
+            integrationId: data.integrationId,
+            sourceCodeUrl: data.sourceCodeUrl,
+            sourceCodeFolder: data.sourceCodeFolder,
+            sourceCodeBranch: data.sourceCodeBranch,
+          },
         });
+
+        if (response.createTemplateWithScv.id) {
+          notify(
+            "Template import initiated. It may take a few minutes to complete.",
+            "info",
+          );
+          navigate(
+            `${linkPrefix}templates/${response.createTemplateWithScv.id}`,
+          );
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
     [ikApi, navigate, linkPrefix],
   );

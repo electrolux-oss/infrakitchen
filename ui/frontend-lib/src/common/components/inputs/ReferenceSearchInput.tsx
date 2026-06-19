@@ -9,9 +9,18 @@ import {
 
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
 import { getOptionLabel } from "./utils";
+
+const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
+
+const entityPathToGraphql = (entityName: string): string =>
+  (entityName.split("/").pop() || entityName).replace(
+    SNAKE_TO_CAMEL_RE,
+    (_, c) => c.toUpperCase(),
+  );
 
 interface ReferenceSearchInputProps {
   ikApi: InfraKitchenApi;
@@ -22,9 +31,10 @@ interface ReferenceSearchInputProps {
   value: any;
   label: string;
   error?: boolean;
+  fields?: Array<string>;
   showFields?: Array<string>;
   helpertext?: string;
-  buffer: Record<string, IkEntity>;
+  buffer: Record<string, IkEntity | IkEntity[]>;
   setBuffer: (selectedEntity: any) => void;
   [key: string]: any;
 }
@@ -36,6 +46,7 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
       onChange,
       entity_name,
       filter = {},
+      fields,
       showFields = ["name"],
       value,
       searchField,
@@ -48,8 +59,12 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
     const [loading, setLoading] = useState(false);
     const [warning, setWarning] = useState<string | null>(null);
 
+    const graphqlEntityName = entityPathToGraphql(entity_name);
+    const graphqlCountName = `${graphqlEntityName}Count`;
     const [selectedOption, setSelectedOption] = useState<IkEntity | null>(null);
-    const options: IkEntity[] = buffer[entity_name] || [];
+    const options: IkEntity[] = Array.isArray(buffer[entity_name])
+      ? buffer[entity_name]
+      : [];
 
     const handleAutocompleteChange = (
       event: React.SyntheticEvent,
@@ -89,14 +104,24 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
         };
 
         ikApi
-          .getList(entity_name, {
-            pagination: { page: 1, perPage: 100 },
-            sort: { field: searchField, order: "ASC" },
-            filter: apiFilter,
-          })
-          .then((response: { data: IkEntity[] }) => {
+          .graphqlRequest(
+            `query ReferenceSearchInput($filter: JSON, $sort: [String!], $range: [Int!]) {
+              ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+                ${buildGraphqlFields(["id", ...(fields || showFields)])}
+              }
+              ${graphqlCountName}(filter: $filter)
+            }`,
+            {
+              filter: apiFilter,
+              sort: [searchField, "ASC"],
+              range: [0, 100],
+            },
+          )
+          .then((response: { [key: string]: IkEntity[] | number }) => {
+            const data = (response[graphqlEntityName] as IkEntity[]) || [];
+
             if (
-              response.data.length === 0 &&
+              data.length === 0 &&
               otherProps.required === true &&
               !inputSearchValue
             ) {
@@ -106,9 +131,10 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
             } else {
               setWarning(null);
             }
+
             setBuffer((prev: Record<string, IkEntity[]>) => ({
               ...prev,
-              [entity_name]: response.data,
+              [entity_name]: data,
             }));
           })
           .catch((error: { message: string }) => {
@@ -120,34 +146,56 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
       },
       [
         filter,
+        fields,
         entity_name,
+        graphqlCountName,
+        graphqlEntityName,
         ikApi,
         props.label,
         otherProps.disabled,
         otherProps.required,
         searchField,
         setBuffer,
+        showFields,
       ],
     );
 
     useEffect(() => {
       // If there's an ID but no corresponding selected object (and we are not currently loading options)
-      if (value && !selectedOption) {
+      if (value && selectedOption?.id !== value) {
         ikApi
-          .get(`${entity_name}/${value}`)
-          .then((response: IkEntity) => {
-            setSelectedOption(response);
+          .graphqlRequest(
+            `query ReferenceSearchInputById($filter: JSON, $range: [Int!]) {
+              ${graphqlEntityName}(filter: $filter, range: $range) {
+                ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+              }
+            }`,
+            {
+              filter: { id: value },
+              range: [0, 1],
+            },
+          )
+          .then((response: { [key: string]: IkEntity[] }) => {
+            const entity = ((response[graphqlEntityName] as IkEntity[]) ||
+              [])[0];
+
+            if (!entity) {
+              setSelectedOption(null);
+              return;
+            }
+
+            setSelectedOption(entity);
             setBuffer((prev: Record<string, IkEntity[]>) => {
               const existingOptions = prev[entity_name] || [];
               // Avoid duplicates
               const isAlreadyInOptions = existingOptions.some(
-                (option) => option.id === response.id,
+                (option) => option.id === entity.id,
               );
               return {
                 ...prev,
                 [entity_name]: isAlreadyInOptions
                   ? existingOptions
-                  : [...existingOptions, response],
+                  : [...existingOptions, entity],
               };
             });
           })
@@ -157,7 +205,16 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
       } else if (!value) {
         setSelectedOption(null);
       }
-    }, [value, ikApi, entity_name, selectedOption, setBuffer]);
+    }, [
+      value,
+      ikApi,
+      entity_name,
+      graphqlEntityName,
+      fields,
+      selectedOption?.id,
+      setBuffer,
+      showFields,
+    ]);
 
     useEffect(() => {
       if (inputValue.trim() === "") {

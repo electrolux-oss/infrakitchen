@@ -9,7 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { PolicyApiCreateDialog } from "./PolicyApiCreateDialog";
@@ -41,13 +41,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
             // API type policy
             return params.row.v1;
           }
-          return (
-            <GetEntityLink
-              id={params.row.entityData?.id}
-              _entity_name={params.row.entityData?._entity_name}
-              name={params.row.entityData?.name}
-            />
-          );
+          return <GetEntityLink {...params.row.entityData} />;
         },
       },
       {
@@ -82,13 +76,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
           if (!creator) return null;
-          return (
-            <GetEntityLink
-              {...creator}
-              name={creator.identifier}
-              _entity_name="user"
-            />
-          );
+          return <GetEntityLink {...creator} />;
         },
       },
       {
@@ -138,7 +126,6 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         defaultFilter={{ v0: role, ptype: "p", v1__like: "api:%" }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

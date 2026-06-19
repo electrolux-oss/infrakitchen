@@ -18,14 +18,14 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
+import { GqlSourceCodeVersion } from "../graphql";
 import {
   SourceCodeVersionUpdateFieldInput,
   UPDATE_SOURCE_CODE_VERSION_MUTATION,
 } from "../graphql/mutations";
-import { SourceCodeVersionResponse } from "../types";
 
 export interface SourceCodeVersionAboutProps {
-  source_code_version: SourceCodeVersionResponse;
+  source_code_version: GqlSourceCodeVersion;
 }
 
 export const SourceCodeVersionOverview = ({
@@ -68,7 +68,7 @@ export const SourceCodeVersionOverview = ({
       />
       <CommonField
         name={"Source Code"}
-        value={<GetReferenceUrlValue {...source_code_version.source_code} />}
+        value={<GetReferenceUrlValue {...source_code_version.sourceCode} />}
       />
       <CommonField
         name={"Source Code Directory"}
@@ -131,10 +131,10 @@ export const SourceCodeVersionOverview = ({
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={source_code_version.labels}
+        value={source_code_version.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={source_code_version.labels} />}
+        display={<Labels labels={source_code_version.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

@@ -15,14 +15,14 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SlackSync } from "../../common/providers/slack/SlackSync";
+import { GqlUser } from "../graphql";
 import {
   UserUpdateFieldInput,
   UPDATE_USER_MUTATION,
 } from "../graphql/mutations";
-import { UserResponse } from "../types";
 
 export interface UserAboutProps {
-  user: UserResponse;
+  user: GqlUser;
 }
 
 export const UserOverview = ({ user }: UserAboutProps) => {

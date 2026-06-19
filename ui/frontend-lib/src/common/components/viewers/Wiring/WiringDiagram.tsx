@@ -168,7 +168,9 @@ export const WiringDiagram = ({
   const stepByTemplate = useMemo(() => {
     if (!steps) return undefined;
     const m = new Map<string, GenericStep>();
-    for (const s of steps) m.set(s.template_id, s);
+    for (const s of steps) {
+      if (s.template_id) m.set(s.template_id, s);
+    }
     return m;
   }, [steps]);
 

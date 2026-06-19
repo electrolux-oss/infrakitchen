@@ -9,7 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -38,7 +38,7 @@ export const UserRolesCard = (props: { userId: string }) => {
             <GetEntityLink
               name={params.row.v1}
               id={params.row.v1}
-              _entity_name={"role"}
+              entityName={"role"}
             />
           );
         },
@@ -110,7 +110,6 @@ export const UserRolesCard = (props: { userId: string }) => {
         columns={columns}
         defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </OverviewCard>
   );

@@ -24,7 +24,7 @@ async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dic
     stmt = select(Integration.id, Integration.name).where(Integration.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "integration"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "integration"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -45,7 +45,7 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
             "status": row.status,
             "state": row.state,
             "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
-            "_entity_name": "resource",
+            "entityName": "resource",
         }
         for row in result
     }
@@ -56,7 +56,7 @@ async def _load_storages(keys: list[str], session: AsyncSession) -> list[dict[st
     stmt = select(Storage.id, Storage.name).where(Storage.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "storage"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "storage"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -77,7 +77,7 @@ async def _load_executors(keys: list[str], session: AsyncSession) -> list[dict[s
             "status": row.status,
             "state": row.state,
             "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
-            "_entity_name": "executor",
+            "entityName": "executor",
         }
         for row in result
     }
@@ -88,7 +88,7 @@ async def _load_workspaces(keys: list[str], session: AsyncSession) -> list[dict[
     stmt = select(Workspace.id, Workspace.name).where(Workspace.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "workspace"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "workspace"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -97,7 +97,7 @@ async def _load_source_codes(keys: list[str], session: AsyncSession) -> list[dic
     stmt = select(SourceCode.id, SourceCode.source_code_url).where(SourceCode.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.source_code_url, "_entity_name": "source_code"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.source_code_url, "entityName": "source_code"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -114,7 +114,7 @@ async def _load_source_code_versions(keys: list[str], session: AsyncSession) -> 
         str(row.id): {
             "id": str(row.id),
             "name": f"{row.source_code_folder}:{row.source_code_version or row.source_code_branch}",
-            "_entity_name": "source_code_version",
+            "entityName": "source_code_version",
         }
         for row in result
     }
@@ -125,7 +125,7 @@ async def _load_templates(keys: list[str], session: AsyncSession) -> list[dict[s
     stmt = select(Template.id, Template.name).where(Template.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "template"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "template"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -134,7 +134,7 @@ async def _load_auth_providers(keys: list[str], session: AsyncSession) -> list[d
     stmt = select(AuthProvider.id, AuthProvider.name).where(AuthProvider.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "auth_provider"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "auth_provider"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -143,7 +143,7 @@ async def _load_secrets(keys: list[str], session: AsyncSession) -> list[dict[str
     stmt = select(Secret.id, Secret.name).where(Secret.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "_entity_name": "secret"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "secret"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -152,7 +152,7 @@ async def _load_workflows(keys: list[str], session: AsyncSession) -> list[dict[s
     stmt = select(Workflow.id, Workflow.action).where(Workflow.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.action, "_entity_name": "workflow"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.action, "entityName": "workflow"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -161,7 +161,7 @@ async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, 
     stmt = select(User.id, User.identifier).where(User.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.identifier, "_entity_name": "user"} for row in result
+        str(row.id): {"id": str(row.id), "name": row.identifier, "entityName": "user"} for row in result
     }
     return [mapping.get(key) for key in keys]
 

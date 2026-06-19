@@ -12,7 +12,7 @@ import {
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
-import { SourceCodeVersionResponse } from "../types";
+import { GqlSourceCodeVersion } from "../graphql";
 
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
@@ -21,7 +21,7 @@ import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
 
 export const SourceCodeVersionContent = () => {
   const { entity } = useEntityProvider();
-  const source_code_version = entity as SourceCodeVersionResponse;
+  const source_code_version = entity as GqlSourceCodeVersion;
   const fixedFilters = useMemo(
     () => ({ source_code_version_id: source_code_version?.id }),
     [source_code_version?.id],
@@ -37,7 +37,11 @@ export const SourceCodeVersionContent = () => {
       label: "Outputs",
       content: (
         <Box sx={{ pt: 0.5 }}>
-          <HclItemList items={source_code_version.outputs} type="outputs" />
+          {source_code_version.outputs ? (
+            <HclItemList items={source_code_version.outputs} type="outputs" />
+          ) : (
+            "No outputs defined."
+          )}
         </Box>
       ),
     },
@@ -52,7 +56,8 @@ export const SourceCodeVersionContent = () => {
           codeSnapshot={source_code_version.codeSnapshot}
           defaultRef={
             source_code_version.sourceCodeVersion ||
-            source_code_version.sourceCodeBranch
+            source_code_version.sourceCodeBranch ||
+            "N/A"
           }
         />
       ),

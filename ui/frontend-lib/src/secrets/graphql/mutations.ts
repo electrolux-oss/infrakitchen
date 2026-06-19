@@ -5,6 +5,7 @@ export const CREATE_SECRET_MUTATION = `
     createSecret(input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -27,6 +28,7 @@ export const UPDATE_SECRET_MUTATION = `
     updateSecret(id: $id, input: $input) {
       id
       name
+      entityName
       secretProvider
     }
   }

@@ -11,7 +11,6 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { transformSourceCodeOptional } from "../../source_codes/graphql";
 
 interface IntegrationSourceCodeDependenciesProps {
   integration_id: string;
@@ -25,15 +24,22 @@ export const IntegrationSourceCodeDependencies = (
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/source_code").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query SourceCodeLabels {
+          labels: labels(entity: "source_code")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   const columns = useMemo(
     () => [
       {
         field: "sourceCodeUrl",
+        fetchFields: ["id", "sourceCodeUrl", "entityName"],
         headerName: "URL",
         flex: 2,
         hideable: false,
@@ -150,7 +156,6 @@ export const IntegrationSourceCodeDependencies = (
       filterConfigs={filterConfigs}
       filterStorageKey={`filter_integration_code_repos`}
       buildApiFilters={buildApiFilters}
-      transformFn={transformSourceCodeOptional}
     />
   );
 };

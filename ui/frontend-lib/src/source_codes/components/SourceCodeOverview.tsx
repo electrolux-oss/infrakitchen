@@ -21,14 +21,14 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
+import { GqlSourceCode } from "../graphql";
 import {
   SourceCodeUpdateFieldInput,
   UPDATE_SOURCE_CODE_MUTATION,
 } from "../graphql/mutations";
-import { SourceCodeResponse } from "../types";
 
 export interface SourceCodeOverviewProps {
-  sourceCode: SourceCodeResponse;
+  sourceCode: GqlSourceCode;
 }
 
 export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
@@ -148,10 +148,10 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={sourceCode.labels}
+        value={sourceCode.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={sourceCode.labels} />}
+        display={<Labels labels={sourceCode.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

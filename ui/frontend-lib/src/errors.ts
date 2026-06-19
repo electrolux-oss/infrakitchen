@@ -8,13 +8,13 @@ export class ApiClientError extends Error {
   public status: number;
   public message: string;
   public error_code: string;
-  public metadata: { [key: string]: any };
+  public metadata: { [key: string]: any } | Array<any>;
 
   constructor(
     status: number,
     detail: string,
     error_code: string,
-    metadata: { [key: string]: any },
+    metadata: { [key: string]: any } | Array<any>,
   ) {
     super(`${status} (${error_code}): ${detail}`);
 

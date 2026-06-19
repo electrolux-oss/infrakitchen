@@ -1,16 +1,13 @@
-export * from "./revision/types";
-import { UserResponse } from "./users/types";
+import { GqlUser } from "./users/graphql";
 
 export interface IkEntity extends Record<string, any> {
   id: string;
   name: string;
   state: string;
   status: string;
-  creator?: UserResponse;
+  creator?: GqlUser;
   created_at: Date;
   updated_at: Date;
-
-  _entity_name: string;
 }
 
 export interface SortPayload {

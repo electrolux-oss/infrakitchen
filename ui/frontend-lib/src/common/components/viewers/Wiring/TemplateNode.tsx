@@ -164,7 +164,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           </Typography>
           <GetReferenceUrlValue
             id={data.resourceId}
-            _entity_name="resource"
+            entityName="resource"
             identifier={data.resourceName ?? `${data.resourceId.slice(0, 8)}…`}
           />
         </Box>

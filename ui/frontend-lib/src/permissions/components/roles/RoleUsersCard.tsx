@@ -9,7 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -39,7 +39,7 @@ export const RoleUsersCard = (props: { role: string }) => {
             <GetEntityLink
               {...params.row.userData}
               id={params.row.userData?.id}
-              _entity_name={"user"}
+              entityName={"user"}
             />
           );
         },
@@ -67,7 +67,7 @@ export const RoleUsersCard = (props: { role: string }) => {
             <GetEntityLink
               {...creator}
               name={creator.identifier}
-              _entity_name="user"
+              entityName="user"
             />
           );
         },
@@ -117,7 +117,6 @@ export const RoleUsersCard = (props: { role: string }) => {
         defaultFilter={{ ptype: "g", v1: role, v0__like: "user:%" }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

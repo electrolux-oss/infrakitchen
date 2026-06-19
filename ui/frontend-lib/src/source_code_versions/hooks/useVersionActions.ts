@@ -6,17 +6,14 @@ import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils";
 import {
   CREATE_SOURCE_CODE_VERSION_MUTATION,
   DELETE_SOURCE_CODE_VERSION_MUTATION,
+  GqlSourceCodeVersion,
   SOURCE_CODE_VERSION_ACTION_MUTATION,
 } from "../graphql";
-import {
-  RefType,
-  SourceCodeVersionCreate,
-  SourceCodeVersionResponse,
-} from "../types";
+import { RefType, SourceCodeVersionCreate } from "../types";
 
 export function useVersionActions(
   sourceCodeId: string,
-  entity: SourceCodeVersionResponse | undefined,
+  entity: GqlSourceCodeVersion | undefined,
   onRefresh: () => void,
 ) {
   const { ikApi } = useConfig();

@@ -50,6 +50,10 @@ class PermissionType:
         loader = get_user_type_loader(info, "userData")
         return await loader.load(user_id)
 
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "permission"
+
 
 @strawberry.type
 class RoleType:

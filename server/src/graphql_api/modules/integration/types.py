@@ -18,6 +18,10 @@ class IntegrationType:
     creator: UserType | None = None
 
     @strawberry.field
+    def entity_name(self) -> str:
+        return "integration"
+
+    @strawberry.field
     async def resource_count(self, info: Info) -> int:
         return await info.context["loaders"]["integration_resource_count"].load(str(self.id))
 

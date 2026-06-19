@@ -5,12 +5,12 @@ import {
   WiringRule,
 } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
-import { TemplateShort } from "../../templates/types";
-import { WorkflowStepResponse } from "../types";
+import { GqlTemplateShort } from "../../templates/graphql";
+import { GqlWorkflowStep } from "../graphql";
 
 export interface WorkflowWiringViewerProps {
   wiring: WiringRule[];
-  steps: WorkflowStepResponse[];
+  steps: GqlWorkflowStep[];
   height?: number;
 }
 
@@ -19,12 +19,12 @@ export interface WorkflowWiringViewerProps {
  * camelCase workflow steps to that shape at this boundary so the shared viewer
  * (also used by blueprints) stays unchanged.
  */
-function toGenericStep(step: WorkflowStepResponse): GenericStep {
+function toGenericStep(step: GqlWorkflowStep): GenericStep {
   return {
     id: step.id,
-    template_id: step.templateId,
+    template_id: step.template?.id,
     template: step.template,
-    resource_id: step.resourceId,
+    resource_id: step.resource?.id,
     resource: step.resource,
     position: step.position,
     status: step.status,
@@ -46,7 +46,7 @@ export const WorkflowWiringViewer = ({
     () =>
       steps
         .map((s) => s.template)
-        .filter((t): t is TemplateShort => t !== null),
+        .filter((t): t is GqlTemplateShort => t !== null),
     [steps],
   );
 
@@ -56,7 +56,7 @@ export const WorkflowWiringViewer = ({
       {
         id: string;
         name: string;
-        resource: WorkflowStepResponse["parentResourceIds"][number];
+        resource: NonNullable<GqlWorkflowStep["parentResourceIds"]>[number];
       }
     >();
 

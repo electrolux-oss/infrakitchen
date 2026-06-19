@@ -11,9 +11,15 @@ import {
 
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
 import { getOptionLabel } from "./utils";
+
+const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
+
+const pluralEntityToGraphql = (entityName: string): string =>
+  entityName.replace(SNAKE_TO_CAMEL_RE, (_, c) => c.toUpperCase());
 
 interface ArrayReferenceInputProps {
   ikApi: InfraKitchenApi;
@@ -56,6 +62,9 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       ...otherProps
     } = props;
 
+    const graphqlEntityName = pluralEntityToGraphql(entity_name);
+    const graphqlCountName = `${graphqlEntityName}Count`;
+
     const handleEntityChange = (
       _event: React.SyntheticEvent,
       value: IkEntity | IkEntity[] | null,
@@ -88,16 +97,24 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
         return;
       }
       ikApi
-        .getList(entity_name, {
-          pagination: { page: 1, perPage: 1000 },
-          sort: { field: "name", order: "ASC" },
-          filter: filter,
-          fields: fields,
-        })
-        .then((response: { data: IkEntity[] }) => {
+        .graphqlRequest(
+          `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
+            ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+              ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+            }
+            ${graphqlCountName}(filter: $filter)
+          }`,
+          {
+            filter,
+            sort: ["name", "ASC"],
+            range: [0, 1000],
+          },
+        )
+        .then((response: { [key: string]: IkEntity[] | number }) => {
+          const data = (response[graphqlEntityName] as IkEntity[]) || [];
           setBuffer((prev: Record<string, IkEntity[]>) => ({
             ...prev,
-            [resolvedBufferKey]: response.data,
+            [resolvedBufferKey]: data,
           }));
         })
         .catch((error: { message: string }) => {

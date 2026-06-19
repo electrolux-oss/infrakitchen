@@ -13,6 +13,7 @@ CREATE_RESOURCE_MUTATION = """
             id
             name
             description
+            entityName
         }
     }
 """
@@ -23,6 +24,7 @@ UPDATE_RESOURCE_MUTATION = """
             id
             name
             description
+            entityName
         }
     }
 """
@@ -32,6 +34,7 @@ RESOURCE_ACTION_MUTATION = """
         resourceAction(id: $id, input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -55,6 +58,7 @@ SYNC_WORKSPACE_MUTATION = """
         syncWorkspace(id: $id) {
             id
             name
+            entityName
         }
     }
 """
@@ -96,6 +100,7 @@ class TestResourceMutations:
             "id": str(mocked_resource.id),
             "name": mocked_resource.name,
             "description": mocked_resource.description,
+            "entityName": "resource",
         }
         mock_resource_service.create_resource.assert_awaited_once_with(resource=ANY, requester=mocked_user)
 
@@ -190,6 +195,7 @@ class TestResourceMutations:
             "id": str(mocked_resource.id),
             "name": mocked_resource.name,
             "description": mocked_resource.description,
+            "entityName": "resource",
         }
         mock_resource_service.get_actions.assert_awaited_once_with(resource_id=resource_id, requester=mocked_user)
         mock_resource_service.update_resource.assert_awaited_once_with(
@@ -223,6 +229,7 @@ class TestResourceMutations:
             "syncWorkspace": {
                 "id": str(mocked_resource.id),
                 "name": mocked_resource.name,
+                "entityName": "resource",
             }
         }
         mock_resource_service.get_actions.assert_awaited_once_with(resource_id=resource_id, requester=mocked_user)
@@ -345,6 +352,7 @@ class TestResourceMutations:
         assert result.data["resourceAction"] == {
             "id": str(mocked_resource.id),
             "name": mocked_resource.name,
+            "entityName": "resource",
         }
         mock_resource_service.get_actions.assert_awaited_once_with(resource_id=resource_id, requester=mocked_user)
         mock_resource_service.patch_action_resource.assert_awaited_once()

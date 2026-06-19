@@ -14,16 +14,16 @@ import {
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { GqlIntegration } from "../graphql";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
-import { IntegrationResponse } from "../types";
 
 import { renderFieldsForProvider } from "./IntegrationProviderForms";
 
 export interface IntegrationConfigurationEditorProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
   canEdit: boolean;
 }
 
@@ -47,7 +47,7 @@ export const IntegrationConfigurationEditor = ({
   const methods = useForm<{ configuration: Record<string, any> }>({
     mode: "onChange",
     defaultValues: {
-      configuration: integration.configuration,
+      configuration: integration.configuration || {},
     },
   });
 
@@ -59,7 +59,7 @@ export const IntegrationConfigurationEditor = ({
   } = methods;
 
   const openDialog = useCallback(() => {
-    reset({ configuration: integration.configuration });
+    reset({ configuration: integration.configuration || {} });
     setDialogOpen(true);
   }, [integration.configuration, reset]);
 

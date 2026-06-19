@@ -1,15 +1,15 @@
 import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
-import { ResourceResponse } from "../types";
+import { GqlResource } from "../graphql";
 
 export interface AdvancedSettingsProps {
-  resource: ResourceResponse;
+  resource: GqlResource;
 }
 
 export const ResourcePermissions = ({ resource }: AdvancedSettingsProps) => {
   return (
     <EntityPoliciesTab
       entityId={resource.id}
-      entityName={resource._entity_name}
+      entityName={resource.entityName}
     />
   );
 };

@@ -21,7 +21,7 @@ export const TemplateConfigurationFields = ({
 }: TemplateConfigurationFieldsProps) => (
   <>
     <Controller
-      name="configuration.oneResourcePerIntegration"
+      name="configuration.one_resource_per_integration"
       control={control}
       render={({ field }) => (
         <Autocomplete
@@ -50,10 +50,10 @@ export const TemplateConfigurationFields = ({
             <TextField
               {...params}
               label="Integration Providers to filter on"
-              error={!!errors.configuration?.oneResourcePerIntegration}
+              error={!!errors.configuration?.one_resource_per_integration}
               helperText={
-                errors.configuration?.oneResourcePerIntegration
-                  ? errors.configuration.oneResourcePerIntegration.message
+                errors.configuration?.one_resource_per_integration
+                  ? errors.configuration.one_resource_per_integration.message
                   : "Enforce one resource per integration for selected providers (empty means all providers)"
               }
               fullWidth
@@ -64,7 +64,7 @@ export const TemplateConfigurationFields = ({
       )}
     />
     <Controller
-      name="configuration.allowedProviderIntegrationTypes"
+      name="configuration.allowed_provider_integration_types"
       control={control}
       render={({ field }) => (
         <Autocomplete
@@ -93,10 +93,11 @@ export const TemplateConfigurationFields = ({
             <TextField
               {...params}
               label="Allowed Integration Providers"
-              error={!!errors.configuration?.allowedProviderIntegrationTypes}
+              error={!!errors.configuration?.allowed_provider_integration_types}
               helperText={
-                errors.configuration?.allowedProviderIntegrationTypes
-                  ? errors.configuration.allowedProviderIntegrationTypes.message
+                errors.configuration?.allowed_provider_integration_types
+                  ? errors.configuration.allowed_provider_integration_types
+                      .message
                   : "Restrict template usage to selected providers (empty means all providers)"
               }
               fullWidth
@@ -107,7 +108,7 @@ export const TemplateConfigurationFields = ({
       )}
     />
     <Controller
-      name="configuration.requiredConfigurationVariables"
+      name="configuration.required_configuration_variables"
       control={control}
       render={({ field }) => (
         <Autocomplete

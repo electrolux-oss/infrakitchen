@@ -4,7 +4,7 @@ import { LogLiveTail } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { SourceCodeVersionContent } from "../components/SourceCodeVersionContent";
-import { SCV_DETAIL_FIELDS, transformSourceCodeVersion } from "../graphql";
+import { SCV_DETAIL_FIELDS } from "../graphql";
 
 export const SourceCodeVersionPage = () => {
   const { source_code_version_id } = useParams();
@@ -13,10 +13,9 @@ export const SourceCodeVersionPage = () => {
     <EntityProvider
       entity_name="sourceCodeVersion"
       entity_id={source_code_version_id || ""}
-      transformFn={transformSourceCodeVersion}
       entityFields={SCV_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Template Version Overview"} hideEditAction>
+      <EntityContainer title={"Template Version Overview"}>
         <SourceCodeVersionContent />
         <LogLiveTail />
       </EntityContainer>

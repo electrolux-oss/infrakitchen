@@ -21,6 +21,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { BITBUCKET_REPO_QUERY } from "./graphql";
 import { BitbucketRepo } from "./types";
 
 interface BitbucketRepoMetadataProps {
@@ -36,16 +37,19 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
   const [metadata, setMetadata] = useState<BitbucketRepo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const link = `provider/bitbucket/repos/${organization}/${name}`;
 
   useEffect(() => {
     setLoading(true);
     setError(null); // Clear previous errors
     ikApi
-      .get(link, queryParams)
-      .then((response: BitbucketRepo) => {
-        // Cast response to BitbucketRepo
-        setMetadata(response);
+      .graphqlRequest(BITBUCKET_REPO_QUERY, {
+        integrationId: queryParams?.integration_id,
+        org: organization,
+        repo: name,
+      })
+      .then((response) => {
+        const typedResponse = response as { bitbucketRepo: BitbucketRepo };
+        setMetadata(typedResponse.bitbucketRepo);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -54,7 +58,7 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, name, organization, link, queryParams]);
+  }, [ikApi, name, organization, queryParams]);
 
   if (loading) {
     return (

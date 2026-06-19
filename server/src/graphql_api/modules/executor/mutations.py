@@ -87,7 +87,7 @@ class ExecutorMutation:
         if input.action not in await service.get_actions(executor_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {input.action}")
 
-        return await service.patch_action(
+        return await service.patch_action_executor(
             executor_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,

@@ -8,6 +8,7 @@ import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { GITHUB_REPOS_QUERY } from "./graphql";
 import { GithubRepo } from "./types";
 
 interface GithubReposProps {
@@ -54,13 +55,15 @@ const GithubRepos = forwardRef<any, GithubReposProps>((props, _ref) => {
     if (!buffer["github_repos"] || buffer["github_repos"].length === 0) {
       setIsLoading(true);
       try {
-        const response: GithubRepo[] = await ikApi.get(
-          `provider/github/${org}/repos`,
-          queryParams,
-        );
+        const response = (await ikApi.graphqlRequest(GITHUB_REPOS_QUERY, {
+          integrationId: queryParams?.integration_id,
+          org,
+        })) as {
+          githubRepos: GithubRepo[];
+        };
         setBuffer((prev: Record<string, GithubRepo[]>) => ({
           ...prev,
-          ["github_repos"]: response,
+          ["github_repos"]: response.githubRepos,
         }));
       } catch (error: any) {
         notifyError(error);

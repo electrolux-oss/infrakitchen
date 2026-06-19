@@ -9,7 +9,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import StatusChip from "../../common/StatusChip";
-import { WorkflowResponse } from "../types";
+import { GqlWorkflow } from "../graphql";
 
 export const WorkflowOverview = () => {
   const { entity } = useEntityProvider();
@@ -17,7 +17,7 @@ export const WorkflowOverview = () => {
   const navigate = useNavigate();
 
   if (!entity) return null;
-  const workflow = entity as WorkflowResponse;
+  const workflow = entity as GqlWorkflow;
 
   // Derive unique templates from steps
   const templates = workflow.steps

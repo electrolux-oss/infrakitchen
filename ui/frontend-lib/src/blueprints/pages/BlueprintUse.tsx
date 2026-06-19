@@ -34,15 +34,18 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { ResourceVariableRow } from "../../resources/components/variables/ResourceVariablesForm";
 import { ResourceVariableSchema } from "../../resources/types";
-import { TemplateShort } from "../../templates/types";
+import { GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
-import { WorkflowResponse } from "../../workflows/types";
-import { BLUEPRINT_USE_QUERY } from "../graphql/queries";
+import { GqlWorkflow } from "../../workflows/graphql";
 import {
-  BlueprintUseData,
+  BLUEPRINT_USE_QUERY,
+  BLUEPRINT_USE_SOURCE_CODE_VERSIONS_QUERY,
+  BLUEPRINT_USE_VARIABLE_SCHEMA_QUERY,
+  CREATE_BLUEPRINT_WORKFLOW_MUTATION,
+  GqlBlueprintResourceVariableSchema,
   GqlBlueprintUse,
-  transformBlueprintUse,
-} from "../graphql/transforms";
+  BlueprintWorkflowCreateMutationInput,
+} from "../graphql";
 
 interface BlueprintUseFormValues {
   integrationIds: string[];
@@ -89,10 +92,10 @@ function computeWiredVariables(
 }
 
 function computeMissingParents(
-  templates: Array<{ id: string; parents: TemplateShort[] }>,
+  templates: Array<{ id: string; parents: GqlTemplateShort[] }>,
   blueprintTemplateIds: Set<string>,
-): Record<string, TemplateShort[]> {
-  const result: Record<string, TemplateShort[]> = {};
+): Record<string, GqlTemplateShort[]> {
+  const result: Record<string, GqlTemplateShort[]> = {};
   for (const t of templates) {
     const missing = (t.parents || []).filter(
       (p) => !blueprintTemplateIds.has(p.id),
@@ -111,7 +114,7 @@ export const BlueprintUsePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const [blueprint, setBlueprint] = useState<BlueprintUseData | null>(null);
+  const [blueprint, setBlueprint] = useState<GqlBlueprintUse | null>(null);
   const [scvsByTemplate, setScvsByTemplate] = useState<
     Record<string, IkEntity[]>
   >({});
@@ -163,7 +166,7 @@ export const BlueprintUsePage = () => {
           setError("Blueprint not found");
           return;
         }
-        setBlueprint(transformBlueprintUse(result.blueprint));
+        setBlueprint(result.blueprint);
       })
       .catch((e: any) => setError(e.message || "Failed to load blueprint"))
       .finally(() => setLoading(false));
@@ -189,9 +192,17 @@ export const BlueprintUsePage = () => {
         Object.entries(selectedScv).map(async ([templateId, scvId]) => {
           if (!scvId) return;
           try {
-            const schema = await ikApi.getVariableSchema(
-              scvId,
-              Array.from(parentIds),
+            const response = await ikApi.graphqlRequest<{
+              resourceVariableSchema: GqlBlueprintResourceVariableSchema[];
+            }>(BLUEPRINT_USE_VARIABLE_SCHEMA_QUERY, {
+              sourceCodeVersionId: scvId,
+              parentResourceIds: Array.from(parentIds),
+            });
+            const schema = (response.resourceVariableSchema || []).map(
+              (variable) => ({
+                ...variable,
+                description: variable.description || "",
+              }),
             );
             schemas[templateId] = schema.sort((a, b) => {
               if (a.required !== b.required) return b.required ? 1 : -1;
@@ -223,13 +234,13 @@ export const BlueprintUsePage = () => {
   }, [selectedScv, parentSelections, ikApi, setValue, getValues]);
 
   const blueprintTemplateIds = useMemo(
-    () => new Set(blueprint?.templates.map((t) => t.id) || []),
+    () => new Set(blueprint?.templates?.map((t) => t.id) || []),
     [blueprint],
   );
 
   // External templates mark which parent templates are expected inputs.
   const externalTemplates = useMemo(
-    () => blueprint?.external_templates || [],
+    () => blueprint?.externalTemplates || [],
     [blueprint],
   );
 
@@ -256,7 +267,7 @@ export const BlueprintUsePage = () => {
       blueprint
         ? computeWiredVariables(
             [...blueprint.wiring, ...constantWires],
-            [...blueprint.templates, ...externalTemplates],
+            [...(blueprint.templates || []), ...externalTemplates],
             constantBlocks,
           )
         : {},
@@ -300,7 +311,7 @@ export const BlueprintUsePage = () => {
       v === null ||
       (typeof v === "string" && v.trim() === "");
 
-    return blueprint.templates.every((t) => {
+    return blueprint.templates?.every((t) => {
       const schemas = variableSchemas[t.id] || [];
       const wired = wiredVariables[t.id] || {};
       const values = variableValues[t.id] || {};
@@ -315,16 +326,18 @@ export const BlueprintUsePage = () => {
 
   // Load SCVs only after all required parents are selected
   useEffect(() => {
-    if (!blueprint || blueprint.templates.length === 0 || !allParentsResolved)
+    if (!blueprint || blueprint.templates?.length === 0 || !allParentsResolved)
       return;
 
     const load = async () => {
       try {
-        const templateIds = blueprint.templates.map((t) => t.id);
-        const scvResult = await ikApi.getList("source_code_versions", {
-          pagination: { page: 1, perPage: 500 },
-          sort: { field: "updated_at", order: "DESC" },
+        const templateIds = blueprint.templates?.map((t) => t.id) || [];
+        const scvResult = await ikApi.graphqlRequest<{
+          sourceCodeVersions: IkEntity[];
+        }>(BLUEPRINT_USE_SOURCE_CODE_VERSIONS_QUERY, {
           filter: { template_id: templateIds },
+          sort: ["updated_at", "DESC"],
+          range: [0, 500],
         });
 
         const scvsMap: Record<string, IkEntity[]> = {};
@@ -332,8 +345,8 @@ export const BlueprintUsePage = () => {
         for (const tid of templateIds) {
           scvsMap[tid] = [];
         }
-        for (const scv of scvResult.data || []) {
-          const tid = scv.template_id || scv.template?.id;
+        for (const scv of scvResult.sourceCodeVersions || []) {
+          const tid = scv.template?.id;
           if (tid && scvsMap[tid]) {
             scvsMap[tid].push(scv);
           }
@@ -361,7 +374,7 @@ export const BlueprintUsePage = () => {
 
   // Unique parent templates that need resource selection (deduped)
   const uniqueParentTemplates = useMemo(() => {
-    const map = new Map<string, TemplateShort>();
+    const map = new Map<string, GqlTemplateShort>();
     // From external templates configuration
     for (const ext of externalTemplates) {
       map.set(ext.id, ext);
@@ -471,20 +484,25 @@ export const BlueprintUsePage = () => {
           if (allIds.length > 0) parent_overrides[templateId] = allIds;
         }
 
-        await ikApi
-          .postRaw(`blueprints/${blueprint_id}/create_workflow`, {
-            variable_overrides,
-            integration_ids: data.integrationIds,
-            storage_id: data.storageId,
-            workspace_id: data.workspaceId,
-            secret_ids: data.secretIds,
-            source_code_version_overrides: data.selectedScv,
-            parent_overrides,
-          })
-          .then((response: WorkflowResponse) => {
-            notify("Workflow was created", "success");
-            navigate(`${linkPrefix}workflows/${response.id}`);
-          });
+        const response = await ikApi.graphqlRequest<{
+          createBlueprintWorkflow: GqlWorkflow;
+        }>(CREATE_BLUEPRINT_WORKFLOW_MUTATION, {
+          id: blueprint_id,
+          input: {
+            variableOverrides: variable_overrides,
+            integrationIds: data.integrationIds,
+            storageId: data.storageId,
+            workspaceId: data.workspaceId,
+            secretIds: data.secretIds,
+            sourceCodeVersionOverrides: data.selectedScv,
+            parentOverrides: parent_overrides,
+          } satisfies BlueprintWorkflowCreateMutationInput,
+        });
+
+        notify("Workflow was created", "success");
+        navigate(
+          `${linkPrefix}workflows/${response.createBlueprintWorkflow.id}`,
+        );
       } catch (e: any) {
         notifyError(e);
       } finally {
@@ -527,7 +545,7 @@ export const BlueprintUsePage = () => {
     );
   }
 
-  const hasAllScvs = blueprint.templates.every((t) => selectedScv[t.id]);
+  const hasAllScvs = blueprint.templates?.every((t) => selectedScv[t.id]);
   const canSubmit =
     !submitting &&
     allParentsResolved &&
@@ -644,11 +662,16 @@ export const BlueprintUsePage = () => {
                     showFields={["template.name", "name"]}
                     fields={[
                       "name",
-                      "template",
-                      "integration_ids",
-                      "storage",
-                      "workspace",
-                      "secret_ids",
+                      "template.id",
+                      "template.name",
+                      "integration_ids.id",
+                      "integration_ids.name",
+                      "storage.id",
+                      "storage.name",
+                      "workspace.id",
+                      "workspace.name",
+                      "secret_ids.id",
+                      "secret_ids.name",
                       "id",
                     ]}
                     error={false}
@@ -735,7 +758,7 @@ export const BlueprintUsePage = () => {
       )}
 
       {allParentsResolved &&
-        blueprint.templates.map((t, idx) => {
+        blueprint.templates?.map((t, idx) => {
           const scvs = scvsByTemplate[t.id] || [];
           const currentScv = selectedScv[t.id] || null;
           const vars = variableSchemas[t.id] || [];
@@ -789,7 +812,7 @@ export const BlueprintUsePage = () => {
               <Autocomplete
                 options={scvs}
                 getOptionLabel={(opt: IkEntity) =>
-                  opt.source_code_version || opt.name || opt.id
+                  opt.sourceCodeVersion || opt.name || opt.id
                 }
                 value={scvs.find((s) => s.id === currentScv) || null}
                 onChange={(_e, newVal) =>

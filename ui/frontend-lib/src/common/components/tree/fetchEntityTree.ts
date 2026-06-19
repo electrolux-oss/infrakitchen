@@ -2,12 +2,10 @@ import { InfraKitchenApi } from "../../..";
 import {
   RESOURCE_TREE_QUERY,
   GqlResourceTreeNode,
-  transformResourceTreeNode,
 } from "../../../resources/graphql";
 import {
   GqlTemplateTreeNode,
   TEMPLATE_TREE_QUERY,
-  transformTemplateTreeNode,
 } from "../../../templates/graphql";
 
 import { TreeResponse } from "./types";
@@ -30,7 +28,7 @@ export async function fetchEntityTree(
       throw new Error("Could not load resource tree");
     }
 
-    return transformResourceTreeNode(response.resourceTree);
+    return response.resourceTree;
   }
 
   if (entityName === "template") {
@@ -45,7 +43,7 @@ export async function fetchEntityTree(
       throw new Error("Could not load template tree");
     }
 
-    return transformTemplateTreeNode(response.templateTree);
+    return response.templateTree;
   }
 
   throw new Error(`Tree query is not supported for entity ${entityName}`);

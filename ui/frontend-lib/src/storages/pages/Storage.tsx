@@ -4,7 +4,7 @@ import { LogLiveTail } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { StorageContent } from "../components/StorageContent";
-import { STORAGE_DETAIL_FIELDS, transformStorage } from "../graphql";
+import { STORAGE_DETAIL_FIELDS } from "../graphql";
 
 export const StoragePage = () => {
   const { storage_id } = useParams();
@@ -13,10 +13,9 @@ export const StoragePage = () => {
     <EntityProvider
       entity_name="storage"
       entity_id={storage_id || ""}
-      transformFn={transformStorage}
       entityFields={STORAGE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Storage Overview"} hideEditAction>
+      <EntityContainer title={"Storage Overview"}>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

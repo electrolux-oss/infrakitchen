@@ -11,7 +11,7 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { TASK_FIELD_MAP, transformTask } from "../graphql";
+import { TASK_FIELD_MAP } from "../graphql";
 
 export const TasksPage = () => {
   const { linkPrefix, globalConfig } = useConfig();
@@ -121,7 +121,6 @@ export const TasksPage = () => {
         entityName="task"
         columns={columns}
         entityFieldMap={TASK_FIELD_MAP}
-        transformFn={transformTask}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

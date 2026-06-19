@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { AuthProviderContent } from "../components/AuthProviderContent";
-import { AUTH_PROVIDER_FIELDS, transformAuthProvider } from "../graphql";
+import { AUTH_PROVIDER_FIELDS } from "../graphql";
 
 export const AuthProviderPage = () => {
   const { auth_provider_id } = useParams();
@@ -13,9 +13,8 @@ export const AuthProviderPage = () => {
       entity_name="authProvider"
       entity_id={auth_provider_id || ""}
       entityFields={AUTH_PROVIDER_FIELDS}
-      transformFn={transformAuthProvider}
     >
-      <EntityContainer title={"Auth Provider Overview"} hideEditAction>
+      <EntityContainer title={"Auth Provider Overview"}>
         <AuthProviderContent />
       </EntityContainer>
     </EntityProvider>

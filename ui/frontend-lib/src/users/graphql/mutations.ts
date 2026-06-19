@@ -3,6 +3,7 @@ export const CREATE_USER_MUTATION = `
     createUser(input: $input) {
       id
       identifier
+      entityName
     }
   }
 `;
@@ -24,6 +25,7 @@ export const UPDATE_USER_MUTATION = `
     updateUser(id: $id, body: $body) {
       id
       identifier
+      entityName
     }
   }
 `;
@@ -36,6 +38,7 @@ export const LINK_USER_ACCOUNT_MUTATION = `
     ) {
       id
       identifier
+      entityName
     }
   }
 `;
@@ -48,6 +51,7 @@ export const UNLINK_USER_ACCOUNT_MUTATION = `
     ) {
       id
       identifier
+      entityName
     }
   }
 `;

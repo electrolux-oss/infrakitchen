@@ -58,7 +58,7 @@ export const RevisionTimeline = ({
               <RelativeTime
                 date={log.createdAt}
                 user={
-                  log.creator ? { ...log.creator, _entity_name: "user" } : null
+                  log.creator ? { ...log.creator, entityName: "user" } : null
                 }
                 sx={{ fontSize: "0.7rem" }}
               />

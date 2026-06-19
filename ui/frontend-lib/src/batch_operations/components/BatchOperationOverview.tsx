@@ -1,10 +1,10 @@
 import { CommonField } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import { BatchOperation } from "../types";
+import { GqlBatchOperation } from "../graphql";
 
 interface BatchOperationOverviewProps {
-  batchOperation: BatchOperation;
+  batchOperation: GqlBatchOperation;
 }
 
 export const BatchOperationOverview = ({

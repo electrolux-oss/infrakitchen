@@ -1,37 +1,9 @@
 import React from "react";
 
 import { IconProps } from "../icons/Icons";
-import { UserShort } from "../users";
-import { INTEGRATION_STATUS } from "../utils/constants";
 
-export interface IntegrationShort {
+export interface IntegrationCreate {
   id: string;
-  name: string;
-  _entity_name: string;
-  integrationProvider: string;
-}
-
-export interface IntegrationResponse extends IntegrationShort {
-  createdAt: Date;
-  updatedAt: Date;
-  status: INTEGRATION_STATUS;
-  state: string;
-  revisionNumber: number;
-  labels: string[];
-  integrationType: string;
-  integrationProvider: string;
-  description: string;
-  configuration: object;
-  creator: UserShort;
-  resourceCount?: number;
-  sourceCodeCount?: number;
-  workspaceCount?: number;
-  executorCount?: number;
-}
-
-export type IntegrationResponseOptional = Partial<IntegrationResponse>;
-
-export interface IntegrationCreate extends IntegrationShort {
   name: string;
   description: string;
   integrationType: string;
@@ -42,13 +14,6 @@ export interface IntegrationCreate extends IntegrationShort {
 
 export interface IntegrationWithStorageCreate extends IntegrationCreate {
   createStorage: boolean;
-}
-
-export interface IntegrationUpdate extends IntegrationShort {
-  name: string;
-  description: string;
-  labels: string[];
-  configuration: object;
 }
 
 export enum IntegrationType {

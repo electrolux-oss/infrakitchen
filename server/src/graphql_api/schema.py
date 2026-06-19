@@ -2,6 +2,7 @@ import strawberry
 from graphql_api.extensions import GraphQLFailureFlagExtension
 
 from graphql_api.modules.config.queries import ConfigQuery
+from graphql_api.modules.cloud_resource.queries import CloudResourceQuery
 from graphql_api.modules.auth_provider.queries import AuthProviderQuery
 from graphql_api.modules.auth_provider.mutations import AuthProviderMutation
 from graphql_api.modules.audit_log.queries import AuditLogQuery
@@ -19,6 +20,7 @@ from graphql_api.modules.template.queries import TemplateQuery
 from graphql_api.modules.template.mutations import TemplateMutation
 from graphql_api.modules.integration.queries import IntegrationQuery
 from graphql_api.modules.integration.mutations import IntegrationMutation
+from graphql_api.modules.use_case.mutations import UseCaseMutation
 from graphql_api.modules.label.queries import LabelQuery
 from graphql_api.modules.source_code.queries import SourceCodeQuery
 from graphql_api.modules.source_code.mutations import SourceCodeMutation
@@ -45,6 +47,11 @@ from graphql_api.modules.workspace.queries import WorkspaceQuery
 from graphql_api.modules.workspace.mutations import WorkspaceMutation
 from graphql_api.modules.worker.queries import WorkerQuery
 from graphql_api.modules.providers.slack.queries import SlackQuery
+from graphql_api.modules.providers.github.queries import GithubQuery
+from graphql_api.modules.providers.bitbucket.queries import BitbucketQuery
+from graphql_api.modules.providers.azure_devops.queries import AzureDevopsQuery
+from graphql_api.modules.providers.kubernetes.queries import KubernetesQuery
+from graphql_api.modules.providers.kubernetes.mutations import KubernetesMutation
 from graphql_api.modules.providers.slack.mutations import SlackMutation
 from graphql_api.modules.user.queries import UserQuery
 from graphql_api.modules.user.mutations import UserMutation
@@ -61,6 +68,7 @@ from graphql_api.modules.auth.mutations import AuthMutation
 class Query(
     AdministrationQuery,
     ConfigQuery,
+    CloudResourceQuery,
     AuthProviderQuery,
     AuditLogQuery,
     BatchOperationQuery,
@@ -83,6 +91,10 @@ class Query(
     WorkflowQuery,
     WorkspaceQuery,
     WorkerQuery,
+    GithubQuery,
+    BitbucketQuery,
+    AzureDevopsQuery,
+    KubernetesQuery,
     SlackQuery,
     UserQuery,
     LogQuery,
@@ -98,6 +110,7 @@ class Mutation(
     AuthMutation,
     AuthProviderMutation,
     SlackMutation,
+    KubernetesMutation,
     UserMutation,
     NotificationMutation,
     ResourceMutation,
@@ -116,6 +129,7 @@ class Mutation(
     WorkflowMutation,
     WorkspaceMutation,
     ValidationRuleMutation,
+    UseCaseMutation,
 ):
     pass
 

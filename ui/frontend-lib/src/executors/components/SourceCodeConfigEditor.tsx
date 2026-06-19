@@ -21,17 +21,16 @@ import { CommonField } from "../../common/components/CommonField";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { GqlSourceCode, SOURCE_CODE_QUERY } from "../../source_codes/graphql";
+import { RefFolders } from "../../source_codes/types";
 import {
-  GqlSourceCode,
-  SOURCE_CODE_QUERY,
-  transformSourceCode,
-} from "../../source_codes/graphql";
-import { RefFolders, SourceCodeResponse } from "../../source_codes/types";
-import { ExecutorUpdateFieldInput, EXECUTOR_UPDATE_MUTATION } from "../graphql";
-import { ExecutorResponse } from "../types";
+  ExecutorUpdateFieldInput,
+  EXECUTOR_UPDATE_MUTATION,
+  GqlExecutor,
+} from "../graphql";
 
 export interface SourceCodeConfigEditorProps {
-  executor: ExecutorResponse;
+  executor: GqlExecutor;
   canEdit: boolean;
 }
 
@@ -71,7 +70,7 @@ export const SourceCodeConfigEditor = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sourceCode, setSourceCode] = useState<SourceCodeResponse | null>(null);
+  const [sourceCode, setSourceCode] = useState<GqlSourceCode | null>(null);
 
   const [version, setVersion] = useState<string | null>(
     executor.sourceCodeVersion,
@@ -79,7 +78,9 @@ export const SourceCodeConfigEditor = ({
   const [branch, setBranch] = useState<string | null>(
     executor.sourceCodeBranch,
   );
-  const [folder, setFolder] = useState<string>(executor.sourceCodeFolder);
+  const [folder, setFolder] = useState<string | null>(
+    executor.sourceCodeFolder,
+  );
 
   const sourceCodeId = executor.sourceCode?.id ?? null;
 
@@ -91,7 +92,7 @@ export const SourceCodeConfigEditor = ({
         sourceCode: GqlSourceCode | null;
       }>(SOURCE_CODE_QUERY, { id: sourceCodeId });
       if (response.sourceCode) {
-        setSourceCode(transformSourceCode(response.sourceCode));
+        setSourceCode(response.sourceCode);
       }
     } catch (error) {
       notifyError(error);
@@ -127,7 +128,7 @@ export const SourceCodeConfigEditor = ({
   const folderOptions = useMemo(() => {
     const refFolders =
       selectedRef && sourceCode
-        ? (sourceCode.gitFoldersMap.find(
+        ? (sourceCode.gitFoldersMap?.find(
             (r: RefFolders) => r.ref === selectedRef,
           )?.folders ?? [])
         : [];
@@ -152,6 +153,10 @@ export const SourceCodeConfigEditor = ({
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      if (!folder) {
+        notify("Please select a directory path", "warning");
+        return;
+      }
       await saveField({
         sourceCodeVersion: version ?? undefined,
         sourceCodeBranch: branch ?? undefined,

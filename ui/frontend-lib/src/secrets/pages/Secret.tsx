@@ -10,11 +10,7 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SecretContent } from "../components/SecretContent";
-import {
-  SECRET_DETAIL_FIELDS,
-  transformSecret,
-  VALIDATE_SECRET_MUTATION,
-} from "../graphql";
+import { SECRET_DETAIL_FIELDS, VALIDATE_SECRET_MUTATION } from "../graphql";
 import { SecretValidationResult } from "../types";
 
 export const SecretPage = () => {
@@ -56,12 +52,10 @@ export const SecretPage = () => {
     <EntityProvider
       entity_name="secret"
       entity_id={secret_id || ""}
-      transformFn={transformSecret}
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
         title={"Secret Overview"}
-        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"

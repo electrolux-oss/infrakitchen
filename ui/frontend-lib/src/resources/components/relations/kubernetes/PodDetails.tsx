@@ -28,11 +28,16 @@ import {
 import { CommonDialog, useConfig } from "../../../../common";
 import { getDateValue } from "../../../../common/components/CommonField";
 import { notify, notifyError } from "../../../../common/hooks/useNotification";
+import {
+  DELETE_KUBERNETES_POD_MUTATION,
+  RESTART_KUBERNETES_DEPLOYMENT_MUTATION,
+} from "../../../../providers/kubernetes/graphql";
+import { K8sPod } from "../../../../providers/kubernetes/types";
 
 interface PodDetailsProps {
   loadingPods: boolean;
   errorPods: Error | null;
-  pods: any[];
+  pods: K8sPod[];
   deploymentName: string;
   namespace: string;
   entityId: string;
@@ -41,7 +46,7 @@ interface PodDetailsProps {
 }
 
 const PodRow = (props: {
-  pod: any;
+  pod: K8sPod;
   entityId: string;
   namespace: string;
   kubernetesResourceType: string;
@@ -71,10 +76,12 @@ const PodRow = (props: {
   const handleKillPod = (pod_name: string) => {
     setIsLoading(true);
     ikApi
-      .deleteRaw(
-        `provider/kubernetes/${kubernetesResourceType}/${entityId}/namespaces/${namespace}/pods/${pod_name}`,
-        {},
-      )
+      .graphqlRequest(DELETE_KUBERNETES_POD_MUTATION, {
+        k8sService: kubernetesResourceType,
+        resourceId: entityId,
+        namespace,
+        podName: pod_name,
+      })
       .then(() => {
         notify(`Pod ${pod_name} termination initiated.`, "info");
         setIsConfirmingKill(false);
@@ -345,10 +352,12 @@ const RestartPodsDialog = (props: {
   const handleRestart = () => {
     setIsLoading(true);
     ikApi
-      .updateRaw(
-        `provider/kubernetes/${kubernetesResourceType}/${entityId}/namespaces/${namespace}/deployments/${deploymentName}`,
-        {},
-      )
+      .graphqlRequest(RESTART_KUBERNETES_DEPLOYMENT_MUTATION, {
+        k8sService: kubernetesResourceType,
+        resourceId: entityId,
+        namespace,
+        deploymentName,
+      })
       .then(() => {
         notify("Deployment restarted successfully", "success");
         setIsLoading(false);

@@ -8,7 +8,6 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { transformWorkspaceOptional } from "../../workspaces/graphql";
 
 interface IntegrationWorkspaceDependenciesProps {
   integration_id: string;
@@ -22,9 +21,15 @@ export const IntegrationWorkspaceDependencies = (
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/workspace").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query WorkspaceLabels {
+          labels: labels(entity: "workspace")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   const columns = useMemo(
@@ -32,6 +37,7 @@ export const IntegrationWorkspaceDependencies = (
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["id", "name", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => (
@@ -48,7 +54,7 @@ export const IntegrationWorkspaceDependencies = (
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -59,7 +65,7 @@ export const IntegrationWorkspaceDependencies = (
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -133,7 +139,6 @@ export const IntegrationWorkspaceDependencies = (
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
       filterConfigs={filterConfigs}
       filterStorageKey={`filter_integration_workspaces`}
-      transformFn={transformWorkspaceOptional}
       buildApiFilters={buildApiFilters}
     />
   );

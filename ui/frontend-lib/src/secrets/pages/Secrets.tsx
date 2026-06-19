@@ -15,7 +15,6 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformSecretOptional } from "../graphql";
 import { SECRET_FIELD_MAP } from "../graphql/fragments";
 
 export const SecretsPage = () => {
@@ -78,6 +77,7 @@ export const SecretsPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["id", "name", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -133,7 +133,7 @@ export const SecretsPage = () => {
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
           if (!creator) return null;
-          return <GetEntityLink {...creator} name={creator.identifier} />;
+          return <GetEntityLink {...creator} />;
         },
       },
     ],
@@ -164,7 +164,6 @@ export const SecretsPage = () => {
         entityName="secret"
         columns={columns}
         entityFieldMap={SECRET_FIELD_MAP}
-        transformFn={transformSecretOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

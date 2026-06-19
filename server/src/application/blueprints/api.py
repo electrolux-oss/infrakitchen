@@ -153,6 +153,7 @@ async def get_actions(request: Request, blueprint_id: str, service: BlueprintSer
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_201_CREATED,
     response_description="Create workflows - creates resources in dependency order",
+    deprecated=True,
 )
 async def create_workflow_from_blueprint(
     request: Request,

@@ -12,7 +12,7 @@ import {
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { EntityPolicyUserCreateDialog } from "./EntityPoliciesDialogs";
@@ -43,7 +43,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
           return (
             <GetEntityLink
               id={params.row.entityData?.id}
-              _entity_name={params.row.entityData?._entity_name}
+              entityName={params.row.entityData?.entityName}
               name={params.row.entityData?.name || "Unknown Entity"}
             />
           );
@@ -126,7 +126,6 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         defaultFilter={{ ptype: "p", v0: `user:${userId}` }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </OverviewCard>
   );

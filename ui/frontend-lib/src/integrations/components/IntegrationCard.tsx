@@ -6,10 +6,11 @@ import { useConfig } from "../../common";
 import { getDateValue } from "../../common/components/CommonField";
 import ExpandableCard from "../../common/components/ExpandableCard";
 import StatusChip from "../../common/StatusChip";
-import { IntegrationResponse, Provider } from "../types";
+import { GqlIntegration } from "../graphql";
+import { Provider } from "../types";
 
 interface IntegrationItemProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
   provider: Provider;
 }
 
@@ -37,8 +38,8 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
           </Box>
         </Box>
       }
-      labels={integration.labels}
-      description={integration.description}
+      labels={integration.labels || []}
+      description={integration.description || "No description provided."}
       metadata={[
         {
           label: "Created",

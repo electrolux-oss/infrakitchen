@@ -2,12 +2,12 @@ import { formatLabel } from "../../common";
 import { CommonField } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { AuthProviderResponse } from "../types";
+import { GqlAuthProvider } from "../graphql";
 
 import { AuthProviderConfigurationEditor } from "./AuthProviderConfigurationEditor";
 
 export interface AuthProviderConfigurationProps {
-  authProvider: AuthProviderResponse;
+  authProvider: GqlAuthProvider;
 }
 
 export const AuthProviderConfiguration = ({
@@ -26,7 +26,7 @@ export const AuthProviderConfiguration = ({
         name={"Auth Provider Type"}
         value={authProvider.authProvider}
       />
-      {Object.entries(authProvider.configuration)
+      {Object.entries(authProvider.configuration || {})
         .filter(([k]) => k !== "auth_provider")
         .map(([k, v]) => {
           // Mask secret values

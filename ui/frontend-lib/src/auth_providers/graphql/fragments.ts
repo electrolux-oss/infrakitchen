@@ -16,6 +16,7 @@ export const AUTH_PROVIDER_GRAPHQL_FIELDS = {
     "filterByDomain",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     creator: "creator",

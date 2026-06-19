@@ -23,22 +23,18 @@ import StatusChip from "../../common/StatusChip";
 import { getProviderDisplayName, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
+import { GqlTemplate } from "../graphql";
 import {
   TemplateUpdateFieldInput,
   UPDATE_TEMPLATE_MUTATION,
 } from "../graphql/mutations";
-import { configToBackend } from "../graphql/transforms";
-import {
-  IntegrationProviderType,
-  TemplateConfig,
-  TemplateResponse,
-} from "../types";
+import { IntegrationProviderType, TemplateConfig } from "../types";
 
 import { NamingConventionInput } from "./NamingConventionInput";
 import { TemplateDocumentationField } from "./TemplateDocumentationField";
 
 export interface TemplateAboutProps {
-  template: TemplateResponse;
+  template: GqlTemplate;
 }
 
 export const TemplateOverview = ({ template }: TemplateAboutProps) => {
@@ -69,10 +65,10 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   const saveConfiguration = useCallback(
     (partial: Partial<TemplateConfig>) =>
       saveField({
-        configuration: configToBackend({
+        configuration: {
           ...template.configuration,
           ...partial,
-        }),
+        },
       }),
     [saveField, template.configuration],
   );
@@ -131,19 +127,19 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string | null>
         name={"Naming Convention"}
         canEdit={canEdit}
-        value={template.configuration?.namingConvention ?? null}
+        value={template.configuration?.naming_convention ?? null}
         ariaLabel="Edit naming convention"
         display={
-          template.configuration?.namingConvention ? (
-            <InlineCode>{template.configuration.namingConvention}</InlineCode>
+          template.configuration?.naming_convention ? (
+            <InlineCode>{template.configuration.naming_convention}</InlineCode>
           ) : null
         }
-        onSave={(value) => saveConfiguration({ namingConvention: value })}
+        onSave={(value) => saveConfiguration({ naming_convention: value })}
         renderEditor={({ value, onChange }) => (
           <Box sx={{ width: "100%" }}>
             <NamingConventionInput
               templateId={template.id}
-              parents={template.parents}
+              parents={template.parents || []}
               value={value}
               onChange={onChange}
             />
@@ -172,10 +168,10 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={template.labels}
+        value={template.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={template.labels} />}
+        display={<Labels labels={template.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor
@@ -195,11 +191,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Parents"}
         canEdit={canEdit}
-        value={template.parents.map((parent) => parent.id)}
+        value={template.parents?.map((parent) => parent.id) || []}
         ariaLabel="Edit parents"
         isEqual={sameStringSet}
         display={
-          template.parents.length > 0 ? (
+          template.parents && template.parents.length > 0 ? (
             <Box display="flex" gap={1} flexWrap="wrap">
               {template.parents.map((parent, idx) => (
                 <span key={parent.id || idx}>
@@ -227,11 +223,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Children"}
         canEdit={canEdit}
-        value={template.children.map((child) => child.id)}
+        value={template.children?.map((child) => child.id) || []}
         ariaLabel="Edit children"
         isEqual={sameStringSet}
         display={
-          template.children.length > 0 ? (
+          template.children && template.children.length > 0 ? (
             <Box display="flex" gap={1} flexWrap="wrap">
               {template.children.map((child, idx) => (
                 <span key={child.id || idx}>
@@ -260,10 +256,10 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Cloud Resource Types"}
         canEdit={canEdit}
-        value={template.cloudResourceTypes}
+        value={template.cloudResourceTypes || []}
         ariaLabel="Edit cloud resource types"
         isEqual={sameStringSet}
-        display={<StringChips values={template.cloudResourceTypes} />}
+        display={<StringChips values={template.cloudResourceTypes || []} />}
         onSave={(value) => saveField({ cloudResourceTypes: value })}
         renderEditor={({ value, onChange }) => (
           <ArrayReferenceInput
@@ -282,17 +278,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<IntegrationProviderType[]>
         name={"Integration Providers for One Resource Per Integration"}
         canEdit={canEdit}
-        value={template.configuration?.oneResourcePerIntegration ?? []}
+        value={template.configuration?.one_resource_per_integration ?? []}
         ariaLabel="Edit one resource per integration providers"
         isEqual={sameStringSet}
         display={
           <StringChips
-            values={template.configuration?.oneResourcePerIntegration ?? []}
+            values={template.configuration?.one_resource_per_integration ?? []}
             format={getProviderDisplayName}
           />
         }
         onSave={(value) =>
-          saveConfiguration({ oneResourcePerIntegration: value })
+          saveConfiguration({ one_resource_per_integration: value })
         }
         renderEditor={({ value, onChange }) => (
           <MultiSelectEditor<IntegrationProviderType>
@@ -310,19 +306,19 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<IntegrationProviderType[]>
         name={"Allowed Integration Providers"}
         canEdit={canEdit}
-        value={template.configuration?.allowedProviderIntegrationTypes ?? []}
+        value={template.configuration?.allowed_provider_integration_types ?? []}
         ariaLabel="Edit allowed integration providers"
         isEqual={sameStringSet}
         display={
           <StringChips
             values={
-              template.configuration?.allowedProviderIntegrationTypes ?? []
+              template.configuration?.allowed_provider_integration_types ?? []
             }
             format={getProviderDisplayName}
           />
         }
         onSave={(value) =>
-          saveConfiguration({ allowedProviderIntegrationTypes: value })
+          saveConfiguration({ allowed_provider_integration_types: value })
         }
         renderEditor={({ value, onChange }) => (
           <MultiSelectEditor<IntegrationProviderType>
@@ -339,18 +335,18 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Required Configuration Variables"}
         canEdit={canEdit}
-        value={template.configuration?.requiredConfigurationVariables ?? []}
+        value={template.configuration?.required_configuration_variables ?? []}
         ariaLabel="Edit required configuration variables"
         isEqual={sameStringSet}
         display={
           <StringChips
             values={
-              template.configuration?.requiredConfigurationVariables ?? []
+              template.configuration?.required_configuration_variables ?? []
             }
           />
         }
         onSave={(value) =>
-          saveConfiguration({ requiredConfigurationVariables: value })
+          saveConfiguration({ required_configuration_variables: value })
         }
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

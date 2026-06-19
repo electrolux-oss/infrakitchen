@@ -4,6 +4,6 @@ export interface TreeResponse {
   name: string;
   state?: string;
   status: string;
-  templateName: string;
+  templateName?: string;
   children: TreeResponse[];
 }

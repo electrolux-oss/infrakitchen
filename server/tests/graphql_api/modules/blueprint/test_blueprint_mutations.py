@@ -12,6 +12,7 @@ CREATE_BLUEPRINT_MUTATION = """
         createBlueprint(input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -21,6 +22,7 @@ UPDATE_BLUEPRINT_MUTATION = """
         updateBlueprint(id: $id, input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -30,6 +32,7 @@ BLUEPRINT_ACTION_MUTATION = """
         blueprintAction(id: $id, input: $input) {
             id
             name
+            entityName
         }
     }
 """
@@ -70,6 +73,7 @@ class TestBlueprintMutations:
         assert result.data["createBlueprint"] == {
             "id": str(mocked_blueprint.id),
             "name": mocked_blueprint.name,
+            "entityName": "blueprint",
         }
         mock_blueprint_service.create_blueprint.assert_awaited_once_with(blueprint=ANY, requester=mocked_user)
 
@@ -163,6 +167,7 @@ class TestBlueprintMutations:
         assert result.data["updateBlueprint"] == {
             "id": str(mocked_blueprint.id),
             "name": mocked_blueprint.name,
+            "entityName": "blueprint",
         }
         mock_blueprint_service.get_actions.assert_awaited_once_with(blueprint_id=blueprint_id, requester=mocked_user)
         mock_blueprint_service.update_blueprint.assert_awaited_once_with(
@@ -261,6 +266,7 @@ class TestBlueprintMutations:
         assert result.data["blueprintAction"] == {
             "id": str(mocked_blueprint.id),
             "name": mocked_blueprint.name,
+            "entityName": "blueprint",
         }
         mock_blueprint_service.patch_action.assert_awaited_once_with(
             blueprint_id=str(blueprint_id),

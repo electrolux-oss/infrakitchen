@@ -422,6 +422,7 @@ export const SourceCodeVersionConfig = () => {
                 </Alert>
               )}
               {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+                sourceCodeVersion.variables &&
                 sourceCodeVersion.variables.length === 0 && (
                   <Alert severity="info">
                     This source code version has no variables.{" "}
@@ -431,6 +432,7 @@ export const SourceCodeVersionConfig = () => {
           )}
         </Box>
         {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+          sourceCodeVersion.variables &&
           sourceCodeVersion.variables.length > 0 && (
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <ReferenceSelector />
@@ -439,6 +441,7 @@ export const SourceCodeVersionConfig = () => {
       </Box>
 
       {sourceCodeVersion.status === ENTITY_STATUS.DONE &&
+        sourceCodeVersion.variables &&
         sourceCodeVersion.variables.length > 0 && (
           <>
             <ConfigList control={control as Control<any>} fields={fields} />

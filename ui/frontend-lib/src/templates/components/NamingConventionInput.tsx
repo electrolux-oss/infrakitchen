@@ -16,18 +16,16 @@ import {
   GqlSourceOutputConfigTemplate,
   SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY,
   SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
-  transformSourceConfig,
-  transformSourceOutputConfigTemplate,
 } from "../../source_code_versions/graphql";
 import {
   SourceOutputConfigTemplateResponse,
   SourceConfigResponse,
 } from "../../source_code_versions/types";
-import { TemplateShort } from "../types";
+import { GqlTemplateShort } from "../graphql";
 
 interface NamingConventionInputProps {
   templateId: string;
-  parents?: TemplateShort[];
+  parents?: GqlTemplateShort[];
   value: string | null;
   onChange: (value: string | null) => void;
   error?: boolean;
@@ -66,11 +64,7 @@ export const NamingConventionInput = ({
           }>(SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY, {
             templateId,
           })
-          .then((response) =>
-            response.sourceCodeVersionTemplateConfigs.map(
-              transformSourceConfig,
-            ),
-          ),
+          .then((response) => response.sourceCodeVersionTemplateConfigs),
         ...parents.map((p) =>
           ikApi
             .graphqlRequest<{
@@ -80,9 +74,7 @@ export const NamingConventionInput = ({
             })
             .then((response) => ({
               parentName: p.name,
-              outputs: response.sourceCodeVersionTemplateOutputs.map(
-                transformSourceOutputConfigTemplate,
-              ),
+              outputs: response.sourceCodeVersionTemplateOutputs,
             }))
             .catch(() => ({
               parentName: p.name,

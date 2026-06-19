@@ -188,9 +188,9 @@ export const DangerZoneCard = () => {
         actions={
           <DeleteButton
             onClose={() => changeDialog("delete")}
-            onDelete={() => navigate(`${linkPrefix}/${entity._entity_name}s`)}
+            onDelete={() => navigate(`${linkPrefix}/${entity.entityName}s`)}
             ikApi={ikApi}
-            entity_name={entity._entity_name}
+            entity_name={entity.entityName}
             entity_id={entity.id}
           >
             Delete

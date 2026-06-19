@@ -39,7 +39,6 @@
     "graphql-ws": "^6.0.8",
     "jwt-decode": "^4.0.0",
     "material-ui-popup-state": "5.3.7",
-    "query-string": "^9.4.0",
     "react": "^19.2.7",
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^19.2.7",

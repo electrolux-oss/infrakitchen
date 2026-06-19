@@ -52,3 +52,13 @@ class SchedulerMutation:
         service = get_scheduler_job_service(session=session)
         job = await service.update(job_id=id, job=input.to_pydantic())
         return SchedulerJobType(**job.model_dump()) if job else None
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def delete_scheduler(self, info: Info, id: uuid.UUID) -> bool:
+        requester = info.context["request"].state.user
+        if not requester or not await user_is_super_admin(requester):
+            raise PermissionError("Access denied")
+
+        session = info.context["session"]
+        service = get_scheduler_job_service(session=session)
+        return await service.delete(job_id=id)

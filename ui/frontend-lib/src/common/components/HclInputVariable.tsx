@@ -185,7 +185,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
             <Typography variant="caption" color="text.secondary">
               Type:
             </Typography>
-            {formatTypeDisplay(variable.original_type || variable.type)}
+            {formatTypeDisplay(variable.type)}
           </Box>
 
           <Typography

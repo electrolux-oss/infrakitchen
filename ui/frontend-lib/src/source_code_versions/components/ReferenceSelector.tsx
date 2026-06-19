@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
-import { SourceCodeVersionResponse } from "../types";
+import { GqlSourceCodeVersion } from "../graphql";
 
 export const ReferenceSelector = () => {
   const { handleReferenceChange, references, selectedReferenceId } =
@@ -21,7 +21,7 @@ export const ReferenceSelector = () => {
 
   const handleAutocompleteChange = (
     event: SyntheticEvent,
-    newValue: SourceCodeVersionResponse | null,
+    newValue: GqlSourceCodeVersion | null,
   ) => {
     const newReferenceId = newValue ? newValue.id : "";
     handleReferenceChange(newReferenceId);

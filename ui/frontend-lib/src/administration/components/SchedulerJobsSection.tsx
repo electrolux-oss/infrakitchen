@@ -20,10 +20,10 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_SCHEDULER_MUTATION,
+  DELETE_SCHEDULER_MUTATION,
   SCHEDULERS_QUERY,
   UPDATE_SCHEDULER_MUTATION,
 } from "../graphql";
@@ -64,6 +64,7 @@ export const SchedulerJobsSection = () => {
   const [schedulerLoading, setSchedulerLoading] = useState(false);
   const [creatingSchedulerJob, setCreatingSchedulerJob] = useState(false);
   const [updatingSchedulerJob, setUpdatingSchedulerJob] = useState(false);
+  const [deletingSchedulerJob, setDeletingSchedulerJob] = useState(false);
   const [deleteDialogJobId, setDeleteDialogJobId] = useState<string | null>(
     null,
   );
@@ -170,6 +171,29 @@ export const SchedulerJobsSection = () => {
       notifyError(error);
     } finally {
       setUpdatingSchedulerJob(false);
+    }
+  };
+
+  const handleDeleteSchedulerJob = async () => {
+    if (!deleteDialogJobId) {
+      return;
+    }
+
+    try {
+      setDeletingSchedulerJob(true);
+      await ikApi.graphqlRequest(DELETE_SCHEDULER_MUTATION, {
+        id: deleteDialogJobId,
+      });
+      if (editingSchedulerJobId === deleteDialogJobId) {
+        handleCancelEditSchedulerJob();
+      }
+      await fetchSchedulerJobs();
+      notify("Scheduler job deleted", "success");
+      setDeleteDialogJobId(null);
+    } catch (error: any) {
+      notifyError(error);
+    } finally {
+      setDeletingSchedulerJob(false);
     }
   };
 
@@ -405,20 +429,14 @@ export const SchedulerJobsSection = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogJobId(null)}>Cancel</Button>
-          <DeleteButton
-            entity_name="scheduler"
-            entity_id={deleteDialogJobId || ""}
-            ikApi={ikApi}
-            onDelete={() => {
-              if (editingSchedulerJobId === deleteDialogJobId) {
-                handleCancelEditSchedulerJob();
-              }
-              fetchSchedulerJobs();
-            }}
-            onClose={() => setDeleteDialogJobId(null)}
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteSchedulerJob}
+            disabled={deletingSchedulerJob}
           >
             Delete
-          </DeleteButton>
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -21,6 +21,7 @@ export const EXECUTOR_CREATE_MUTATION = `
     createExecutor(input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -30,6 +31,7 @@ export const EXECUTOR_UPDATE_MUTATION = `
     updateExecutor(id: $id, input: $input) {
       id
       name
+      entityName
     }
   }
 `;

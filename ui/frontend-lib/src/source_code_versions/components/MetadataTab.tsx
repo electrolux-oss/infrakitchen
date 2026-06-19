@@ -24,8 +24,9 @@ import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { IkEntity } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
+import { GqlSourceCodeVersion } from "../graphql";
 import { useVersionActions } from "../hooks/useVersionActions";
-import { RefType, SourceCodeVersionResponse } from "../types";
+import { RefType } from "../types";
 
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <Typography
@@ -41,7 +42,7 @@ const FieldLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 type MetadataTabProps = {
-  entity: SourceCodeVersionResponse | undefined;
+  entity: GqlSourceCodeVersion | undefined;
   gitFolders: string[];
   entry: string;
   type: RefType;
@@ -236,7 +237,7 @@ export const MetadataTab = ({
                 title={
                   entity.status !== ENTITY_STATUS.DISABLED
                     ? "Version must be disabled before erasing data"
-                    : entity.resourcesCount > 0
+                    : (entity.resourcesCount || 0) > 0
                       ? "Version has active resources and cannot be erased"
                       : ""
                 }
@@ -249,7 +250,7 @@ export const MetadataTab = ({
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={
                       entity.status !== ENTITY_STATUS.DISABLED ||
-                      entity.resourcesCount > 0
+                      (entity.resourcesCount || 0) > 0
                     }
                   >
                     Erase Data

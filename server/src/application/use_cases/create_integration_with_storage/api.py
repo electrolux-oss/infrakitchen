@@ -15,6 +15,7 @@ router = APIRouter()
     "/create_integration_with_storage",
     response_model=IntegrationResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,

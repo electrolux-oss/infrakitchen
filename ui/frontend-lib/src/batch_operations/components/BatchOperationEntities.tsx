@@ -32,19 +32,23 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
+import { buildEntityActionMutation } from "../../common/graphql/entityActionMutation";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { LogActionButtons } from "../../common/LogsComponent/LogActionButtons";
 import { Logs } from "../../common/LogsComponent/Logs";
 import StatusChip from "../../common/StatusChip";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
-import { BATCH_OPERATION_ENTITY_IDS_MUTATION } from "../graphql";
-import { BatchOperation, BatchOperationCreate } from "../types";
+import {
+  BATCH_OPERATION_ENTITY_IDS_MUTATION,
+  GqlBatchOperation,
+} from "../graphql";
+import { BatchOperationCreate } from "../types";
 
 import { BatchOperationEntitySelector } from "./BatchOperationEntitySelector";
 
 interface BatchOperationEntitiesProps {
-  batchOperation: BatchOperation;
+  batchOperation: GqlBatchOperation;
 }
 
 export const BatchOperationEntities = ({
@@ -111,8 +115,17 @@ export const BatchOperationEntities = ({
             "created_at",
             "updated_at",
             "template",
+            "entityName",
           ]
-        : ["id", "name", "state", "status", "created_at", "updated_at"];
+        : [
+            "id",
+            "name",
+            "state",
+            "status",
+            "created_at",
+            "updated_at",
+            "entityName",
+          ];
       const fieldMap = isResource ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
 
       const query = `
@@ -137,9 +150,9 @@ export const BatchOperationEntities = ({
         status: item.status,
         created_at: item.createdAt,
         updated_at: item.updatedAt,
-        _entity_name: entityName,
+        entityName: entityName,
         ...(isResource && item.template
-          ? { template: { ...item.template, _entity_name: "template" } }
+          ? { template: { ...item.template, entityName: "template" } }
           : {}),
       }));
 
@@ -234,7 +247,8 @@ export const BatchOperationEntities = ({
     if (ids.length === 0) return;
 
     const entityName =
-      batchOperation.entityType === "resource" ? "resources" : "executors";
+      batchOperation.entityType === "resource" ? "resource" : "executor";
+    const mutation = buildEntityActionMutation(entityName);
 
     setActionRunning(true);
     setActionResults(
@@ -250,8 +264,9 @@ export const BatchOperationEntities = ({
     const results = await Promise.all(
       ids.map(async (id) => {
         try {
-          await ikApi.patchRaw(`${entityName}/${id}/actions`, {
-            action: actionType,
+          await ikApi.graphqlRequest(mutation, {
+            id,
+            input: { action: actionType },
           });
           return { id, status: "success" as const };
         } catch (error: any) {

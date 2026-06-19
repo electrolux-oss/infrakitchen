@@ -47,15 +47,19 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import { TemplateResponse } from "../../templates/types";
+import { GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
-import { ValidationRule, ValidationRulesByVariable } from "../../types";
-import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
+import { ValidationRule } from "../../types";
+import { ENTITY_STATUS } from "../../utils";
 import {
-  ResourceCreate,
-  ResourceResponse,
-  ResourceVariableSchema,
-} from "../types";
+  GqlValidationRulesByVariable,
+  transformValidationRulesByVariable,
+  VALIDATION_RULES_BY_TEMPLATE_QUERY,
+} from "../../validation_rules/graphql";
+import { ResourceVariableForm } from "../components/variables/ResourceVariablesForm";
+import { GqlResource, RESOURCE_VARIABLE_SCHEMA_QUERY } from "../graphql";
+import { CREATE_RESOURCE_MUTATION } from "../graphql/mutations";
+import { ResourceCreate, ResourceVariableSchema } from "../types";
 import {
   getFirstErrorFieldPath,
   validateTagEntries,
@@ -122,11 +126,11 @@ const ResourceCreatePageInner = () => {
         });
       };
       const sectionByField: Record<string, RefObject<HTMLDivElement | null>> = {
-        template_id: resourceDefinitionSectionRef,
+        templateId: resourceDefinitionSectionRef,
         name: resourceDefinitionSectionRef,
         description: resourceDefinitionSectionRef,
-        dependency_tags: dependencyTagsSectionRef,
-        dependency_config: dependencyConfigSectionRef,
+        dependencyTags: dependencyTagsSectionRef,
+        dependencyConfig: dependencyConfigSectionRef,
       };
 
       if (rootField === "variables") {
@@ -147,9 +151,9 @@ const ResourceCreatePageInner = () => {
   );
 
   useEffect(() => {
-    const template_id = location.state?.template_id as string | undefined;
-    if (template_id) {
-      setValue("template_id", template_id);
+    const templateId = location.state?.template_id as string | undefined;
+    if (templateId) {
+      setValue("templateId", templateId);
     }
   }, [location.state, setValue]);
 
@@ -160,16 +164,20 @@ const ResourceCreatePageInner = () => {
       setSaving(true);
       const payload: ResourceCreate = {
         ...data,
-        storage_id: data.storage_id || null,
-        workspace_id: data.workspace_id || null,
-        source_code_version_id: data.source_code_version_id || null,
+        storageId: data.storageId || null,
+        workspaceId: data.workspaceId || null,
+        sourceCodeVersionId: data.sourceCodeVersionId || null,
       };
       ikApi
-        .postRaw("resources", payload)
-        .then((response: ResourceResponse) => {
-          if (response.id) {
+        .graphqlRequest<{ createResource: { id: string } }>(
+          CREATE_RESOURCE_MUTATION,
+          { input: payload },
+        )
+        .then((response) => {
+          const created = response.createResource;
+          if (created.id) {
             notify("Resource created successfully", "success");
-            navigate(`${linkPrefix}resources/${response.id}`);
+            navigate(`${linkPrefix}resources/${created.id}`);
           }
         })
         .catch((error: any) => {
@@ -190,15 +198,15 @@ const ResourceCreatePageInner = () => {
     [scrollToErrorSection],
   );
 
-  const watchedIntegrationIds = watch("integration_ids");
-  const watchedTemplateId = watch("template_id");
+  const watchedIntegrationIds = watch("integrationIds");
+  const watchedTemplateId = watch("templateId");
   const watchedTemplate =
     buffer["templates"]?.find(
-      (e: TemplateResponse) => e.id === watchedTemplateId,
+      (e: GqlTemplateShort) => e.id === watchedTemplateId,
     ) || null;
-  const watchedStorage = watch("storage_id");
+  const watchedStorage = watch("storageId");
   const watchedParentIds = watch("parents");
-  const watchedSourceCodeVersionId = watch("source_code_version_id");
+  const watchedSourceCodeVersionId = watch("sourceCodeVersionId");
   const hasDocs = Boolean(watchedTemplate?.documentation);
 
   const filter_storage = useMemo(
@@ -247,14 +255,14 @@ const ResourceCreatePageInner = () => {
   }, [watchedTemplate, setValue]);
 
   useEffect(() => {
-    setValue("source_code_version_id", null);
+    setValue("sourceCodeVersionId", null);
   }, [watchedTemplateId, setValue]);
 
   useEffect(() => {
     const requiredVars =
       watchedTemplate?.configuration?.requiredConfigurationVariables || [];
     if (requiredVars.length === 0) return;
-    const currentConfig = (watch("dependency_config") || []) as Array<{
+    const currentConfig = (watch("dependencyConfig") || []) as Array<{
       name: string;
       value: string;
       inherited_by_children: boolean;
@@ -268,7 +276,7 @@ const ResourceCreatePageInner = () => {
         inherited_by_children: true,
       }));
     if (newEntries.length > 0) {
-      setValue("dependency_config", [...currentConfig, ...newEntries]);
+      setValue("dependencyConfig", [...currentConfig, ...newEntries]);
     }
   }, [watchedTemplate, setValue, watch]);
 
@@ -280,7 +288,7 @@ const ResourceCreatePageInner = () => {
   useEffect(() => {
     if (watchedTemplate) {
       setValue(
-        "storage_path",
+        "storagePath",
         `service-catalog/${watchedTemplate.template}/${watchedName}/terraform.tfstate`.replaceAll(
           " ",
           "_",
@@ -299,14 +307,21 @@ const ResourceCreatePageInner = () => {
     const primaryParentId = watchedParentIds.at(-1);
     return (
       parentCandidates.find(
-        (e: ResourceResponse) => String(e.id) === String(primaryParentId),
+        (e: GqlResource) => String(e.id) === String(primaryParentId),
       ) || null
     );
   }, [watchedParentIds, watchedTemplate, buffer]);
 
   const inherited = useMemo(() => {
-    const parent = resolvedLastParent as ResourceResponse | null;
-    const integrationIds = parent?.integration_ids?.map((i) => i.id) || [];
+    const parent = resolvedLastParent as
+      | (IkEntity & {
+          integrationIds?: Array<{ id: string }>;
+          storage?: { id: string } | null;
+          workspace?: { id: string } | null;
+        })
+      | null;
+    const integrationIds =
+      parent?.integrationIds?.map((i: { id: string }) => i.id) || [];
     return {
       integration: integrationIds.length > 0,
       storage: Boolean(parent?.storage?.id),
@@ -327,13 +342,13 @@ const ResourceCreatePageInner = () => {
     if (lastAppliedParentIdRef.current === parentId) return;
     lastAppliedParentIdRef.current = parentId;
     if (inherited.integration) {
-      setValue("integration_ids", inherited.integrationIds);
+      setValue("integrationIds", inherited.integrationIds);
     }
     if (inherited.storage) {
-      setValue("storage_id", inherited.storageId);
+      setValue("storageId", inherited.storageId);
     }
     if (inherited.workspace) {
-      setValue("workspace_id", inherited.workspaceId);
+      setValue("workspaceId", inherited.workspaceId);
     }
   }, [resolvedLastParent, inherited, setValue]);
 
@@ -341,11 +356,18 @@ const ResourceCreatePageInner = () => {
     if (watchedSourceCodeVersionId) {
       setIsLoading(true);
       ikApi
-        .getVariableSchema(
-          watchedSourceCodeVersionId,
-          watchedParentIds ? watchedParentIds : [],
+        .graphqlRequest<{ resourceVariableSchema: ResourceVariableSchema[] }>(
+          RESOURCE_VARIABLE_SCHEMA_QUERY,
+          {
+            sourceCodeVersionId: watchedSourceCodeVersionId,
+            parentResourceIds: watchedParentIds ? watchedParentIds : [],
+          },
         )
-        .then((response: ResourceVariableSchema[]) => {
+        .then(({ resourceVariableSchema }) => {
+          const response = resourceVariableSchema.map((variable) => ({
+            ...variable,
+            description: variable.description || "",
+          }));
           setSchema(
             response.sort((a, b) => {
               // Sort required items first
@@ -385,8 +407,15 @@ const ResourceCreatePageInner = () => {
     }
 
     ikApi
-      .get(`validation_rules/template/${watchedTemplateId}`)
-      .then((response: ValidationRulesByVariable[]) => {
+      .graphqlRequest<{
+        validationRulesByTemplate: GqlValidationRulesByVariable[];
+      }>(VALIDATION_RULES_BY_TEMPLATE_QUERY, {
+        templateId: watchedTemplateId,
+      })
+      .then(({ validationRulesByTemplate }) => {
+        const response = validationRulesByTemplate.map(
+          transformValidationRulesByVariable,
+        );
         const { summaryByVariable, ruleByVariable } =
           buildValidationRuleMaps(response);
 
@@ -442,7 +471,7 @@ const ResourceCreatePageInner = () => {
             <PropertyCard title="Resource Definition">
               <Box>
                 <Controller
-                  name="template_id"
+                  name="templateId"
                   control={control}
                   rules={{ required: "*Required" }}
                   render={({ field }) => (
@@ -450,9 +479,17 @@ const ResourceCreatePageInner = () => {
                       {...field}
                       ikApi={ikApi}
                       entity_name="templates"
+                      fields={[
+                        "name",
+                        "template",
+                        "configuration",
+                        "abstract",
+                        "parents.id",
+                        "parents.name",
+                      ]}
                       buffer={buffer}
                       setBuffer={setBuffer}
-                      error={!!errors.template_id}
+                      error={!!errors.templateId}
                       value={field.value}
                       label="Template"
                       required
@@ -562,7 +599,7 @@ const ResourceCreatePageInner = () => {
               <Box>
                 <Box ref={dependencyTagsSectionRef}>
                   <Controller
-                    name="dependency_tags"
+                    name="dependencyTags"
                     control={control}
                     rules={{
                       validate: {
@@ -581,7 +618,7 @@ const ResourceCreatePageInner = () => {
                 </Box>
                 <Box ref={dependencyConfigSectionRef}>
                   <Controller
-                    name="dependency_config"
+                    name="dependencyConfig"
                     control={control}
                     rules={{
                       validate: {
@@ -638,11 +675,16 @@ const ResourceCreatePageInner = () => {
                                 buffer={buffer}
                                 fields={[
                                   "name",
-                                  "template",
-                                  "integration_ids",
-                                  "storage",
-                                  "workspace",
-                                  "secret_ids",
+                                  "template.id",
+                                  "template.name",
+                                  "integrationIds.id",
+                                  "integrationIds.name",
+                                  "storage.id",
+                                  "storage.name",
+                                  "workspace.id",
+                                  "workspace.name",
+                                  "secretIds.id",
+                                  "secretIds.name",
                                   "id",
                                 ]}
                                 setBuffer={setBuffer}
@@ -710,11 +752,16 @@ const ResourceCreatePageInner = () => {
                               buffer={buffer}
                               fields={[
                                 "name",
-                                "template",
-                                "integration_ids",
-                                "storage",
-                                "workspace",
-                                "secret_ids",
+                                "template.id",
+                                "template.name",
+                                "integrationIds.id",
+                                "integrationIds.name",
+                                "storage.id",
+                                "storage.name",
+                                "workspace.id",
+                                "workspace.name",
+                                "secretIds.id",
+                                "secretIds.name",
                                 "id",
                               ]}
                               setBuffer={setBuffer}
@@ -769,7 +816,7 @@ const ResourceCreatePageInner = () => {
                   />
 
                   <Controller
-                    name="integration_ids"
+                    name="integrationIds"
                     control={control}
                     rules={{
                       validate: {
@@ -787,7 +834,7 @@ const ResourceCreatePageInner = () => {
                         showFields={["integrationProvider", "name"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
-                        error={!!errors.integration_ids}
+                        error={!!errors.integrationIds}
                         optionFilter={(option: IkEntity) => {
                           if (
                             inherited.integration &&
@@ -798,8 +845,8 @@ const ResourceCreatePageInner = () => {
                           return integrationWriteFilter(option);
                         }}
                         helpertext={
-                          errors.integration_ids
-                            ? (errors.integration_ids as any).message
+                          errors.integrationIds
+                            ? (errors.integrationIds as any).message
                             : inherited.integration
                               ? "Pre-filled from parent. You can remove inherited integrations or add others you have write access to."
                               : "Only integrations you have write access to are shown"
@@ -819,20 +866,20 @@ const ResourceCreatePageInner = () => {
                   />
 
                   <Controller
-                    name="secret_ids"
+                    name="secretIds"
                     control={control}
                     render={({ field }) => (
                       <ArrayReferenceInput
                         {...field}
                         ikApi={ikApi}
                         entity_name="secrets"
-                        showFields={["name", "secret_provider"]}
+                        showFields={["name", "secretProvider"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
-                        error={!!errors.secret_ids}
+                        error={!!errors.secretIds}
                         helpertext={
-                          errors.secret_ids
-                            ? (errors.secret_ids as any).message
+                          errors.secretIds
+                            ? (errors.secretIds as any).message
                             : "Select Secrets"
                         }
                         value={field.value}
@@ -845,7 +892,7 @@ const ResourceCreatePageInner = () => {
 
                   {watchedIntegrationIds.length > 0 && (
                     <Controller
-                      name="storage_id"
+                      name="storageId"
                       control={control}
                       rules={{ required: "*Required" }}
                       render={({ field }) => (
@@ -854,11 +901,11 @@ const ResourceCreatePageInner = () => {
                           ikApi={ikApi}
                           entity_name="storages"
                           buffer={buffer}
-                          showFields={["name", "storage_provider"]}
+                          showFields={["name", "storageProvider"]}
                           setBuffer={setBuffer}
-                          error={!!errors.storage_id}
+                          error={!!errors.storageId}
                           helpertext={
-                            errors.storage_id ? errors.storage_id.message : ""
+                            errors.storageId ? errors.storageId.message : ""
                           }
                           filter={filter_storage}
                           value={field.value}
@@ -871,7 +918,7 @@ const ResourceCreatePageInner = () => {
 
                   {watchedStorage && (
                     <Controller
-                      name="storage_path"
+                      name="storagePath"
                       control={control}
                       rules={{
                         validate: {
@@ -883,13 +930,13 @@ const ResourceCreatePageInner = () => {
                       render={({ field }) => (
                         <TextField
                           {...field}
-                          error={!!errors.storage_path}
+                          error={!!errors.storagePath}
                           fullWidth
                           margin="normal"
                           label="Storage Path"
                           helperText={
-                            errors.storage_path
-                              ? errors.storage_path.message
+                            errors.storagePath
+                              ? errors.storagePath.message
                               : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
                           }
                         />
@@ -898,7 +945,7 @@ const ResourceCreatePageInner = () => {
                   )}
 
                   <Controller
-                    name="workspace_id"
+                    name="workspaceId"
                     control={control}
                     render={({ field }) => (
                       <ReferenceInput
@@ -906,13 +953,13 @@ const ResourceCreatePageInner = () => {
                         ikApi={ikApi}
                         entity_name="workspaces"
                         buffer={buffer}
-                        showFields={["name", "workspace_provider"]}
+                        showFields={["name", "workspaceProvider"]}
                         setBuffer={setBuffer}
-                        error={!!errors.workspace_id}
+                        error={!!errors.workspaceId}
                         optionFilter={workspaceWriteFilter}
                         helpertext={
-                          errors.workspace_id
-                            ? errors.workspace_id.message
+                          errors.workspaceId
+                            ? errors.workspaceId.message
                             : "Only workspaces you have write access to are shown"
                         }
                         value={field.value}
@@ -924,7 +971,7 @@ const ResourceCreatePageInner = () => {
 
                 <Box>
                   <Controller
-                    name="source_code_version_id"
+                    name="sourceCodeVersionId"
                     control={control}
                     rules={{
                       validate: {
@@ -938,15 +985,16 @@ const ResourceCreatePageInner = () => {
                         {...field}
                         ikApi={ikApi}
                         entity_name="source_code_versions"
+                        fields={["identifier", "status"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
                         getOptionDisabled={(option: any) =>
-                          option.status !== "done"
+                          option.status !== ENTITY_STATUS.DONE
                         }
-                        error={!!errors.source_code_version_id}
+                        error={!!errors.sourceCodeVersionId}
                         helpertext={
-                          errors.source_code_version_id
-                            ? errors.source_code_version_id.message
+                          errors.sourceCodeVersionId
+                            ? errors.sourceCodeVersionId.message
                             : ""
                         }
                         filter={filter_template}
@@ -1017,22 +1065,22 @@ const ResourceCreatePageInner = () => {
 
 const ResourceCreatePage = () => {
   const location = useLocation();
-  const template = location.state?.template as TemplateResponse | undefined;
+  const template = location.state?.template as GqlTemplateShort | undefined;
 
   const methods = useForm<ResourceCreate>({
     defaultValues: {
       name: "",
       description: "",
-      template_id: template?.id,
+      templateId: template?.id,
       parents: [],
-      integration_ids: [],
-      source_code_version_id: "",
+      integrationIds: [],
+      sourceCodeVersionId: "",
       variables: [],
-      workspace_id: "",
-      dependency_tags: [],
-      dependency_config: [],
-      storage_id: "",
-      storage_path: "",
+      workspaceId: "",
+      dependencyTags: [],
+      dependencyConfig: [],
+      storageId: "",
+      storagePath: "",
     },
     mode: "onChange",
   });

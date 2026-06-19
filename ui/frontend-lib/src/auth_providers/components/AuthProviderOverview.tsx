@@ -18,14 +18,14 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { sameStringSet } from "../../common/utils";
+import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,
   UPDATE_AUTH_PROVIDER_MUTATION,
 } from "../graphql/mutations";
-import { AuthProviderResponse } from "../types";
 
 export interface AuthProviderAboutProps {
-  authProvider: AuthProviderResponse;
+  authProvider: GqlAuthProvider;
 }
 
 export const AuthProviderOverview = ({
@@ -126,10 +126,11 @@ export const AuthProviderOverview = ({
       <CommonEditableField<string[]>
         name={"Filter By Domain"}
         canEdit={canEdit}
-        value={authProvider.filterByDomain}
+        value={authProvider.filterByDomain || []}
         ariaLabel="Edit filter by domain"
         isEqual={sameStringSet}
         display={
+          authProvider.filterByDomain &&
           authProvider.filterByDomain.length > 0 ? (
             <Labels labels={authProvider.filterByDomain} />
           ) : (

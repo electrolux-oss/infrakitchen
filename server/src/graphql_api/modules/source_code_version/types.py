@@ -37,7 +37,7 @@ class SourceConfigTemplateReferenceType:
 class SourceCodeVersionType:
     __exclude__ = ["variable_configs", "output_configs", "created_by", "template_id", "source_code_id"]
 
-    id: uuid.UUID = strawberry.UNSET  # type: ignore[assignment]
+    id: uuid.UUID = strawberry.UNSET
     source_code_folder: str | None = None
     source_code_version: str | None = None
     source_code_branch: str | None = None
@@ -46,6 +46,11 @@ class SourceCodeVersionType:
     variable_configs: list[SourceConfigType] | None = None
     output_configs: list[SourceOutputConfigType] | None = None
     creator: UserType | None = None
+    status: str | None = None
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "source_code_version"
 
     @strawberry.field
     def identifier(self) -> str:

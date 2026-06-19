@@ -27,6 +27,7 @@ export const CREATE_SOURCE_CODE_VERSION_MUTATION = `
     createSourceCodeVersion(input: $input) {
       id
       identifier
+      entityName
     }
   }
 `;
@@ -36,6 +37,7 @@ export const UPDATE_SOURCE_CODE_VERSION_MUTATION = `
     updateSourceCodeVersion(id: $id, input: $input) {
       id
       identifier
+      entityName
     }
   }
 `;
@@ -45,6 +47,7 @@ export const SOURCE_CODE_VERSION_ACTION_MUTATION = `
     sourceCodeVersionAction(id: $id, input: $input) {
       id
       identifier
+      entityName
     }
   }
 `;

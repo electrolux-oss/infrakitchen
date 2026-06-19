@@ -63,6 +63,7 @@ async def update(
 @router.delete(
     "/schedulers/{job_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(request: Request, job_id: UUID, service: SchedulerJobService = Depends(get_scheduler_job_service)):
     requester = request.state.user

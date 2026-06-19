@@ -12,7 +12,7 @@ import { USER_SHORT_FIELDS } from "../../users/graphql";
 import { WORKSPACE_SHORT_FIELDS } from "../../workspaces/graphql";
 
 export const RESOURCE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "state", "status", "isFavorite"] as const,
+  short: ["id", "name", "state", "status", "isFavorite", "entityName"] as const,
   detail: [
     "id",
     "name",
@@ -30,6 +30,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     "updatedAt",
     "labels",
     "isFavorite",
+    "entityName",
   ] as const,
   relations: {
     template: "template",
@@ -81,15 +82,15 @@ export const RESOURCE_TEMP_STATE_FIELDS = `
 
 /** Maps snake_case table column fields to their GraphQL selection strings. */
 export const RESOURCE_FIELD_MAP: GraphqlFieldMap = {
-  source_code_version: buildNestedSelection(
+  sourceCodeVersion: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.sourceCodeVersion,
     SCV_SHORT_FIELDS,
   ),
-  integration_ids: buildNestedSelection(
+  integrationIds: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.integrationIds,
     INTEGRATION_SHORT_FIELDS,
   ),
-  secret_ids: buildNestedSelection(
+  secretIds: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.secretIds,
     SECRET_SHORT_FIELDS,
   ),

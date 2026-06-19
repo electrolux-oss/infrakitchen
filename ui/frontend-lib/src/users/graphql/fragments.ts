@@ -5,7 +5,7 @@ import {
 } from "../../common/graphql/buildGraphqlFields";
 
 export const USER_GRAPHQL_FIELDS = {
-  short: ["id", "identifier", "provider"] as const,
+  short: ["id", "identifier", "provider", "entityName"] as const,
   base: [
     "id",
     "identifier",
@@ -19,6 +19,7 @@ export const USER_GRAPHQL_FIELDS = {
     "lastName",
     "deactivated",
     "isPrimary",
+    "entityName",
   ] as const,
   nested: {
     meta: "meta { slackId }",

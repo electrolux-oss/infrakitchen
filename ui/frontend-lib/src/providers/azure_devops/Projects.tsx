@@ -13,6 +13,7 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { AZURE_DEVOPS_PROJECTS_QUERY } from "./graphql";
 import { AzureDevopsProject } from "./types";
 
 interface AzureDevopsProjectsProps {
@@ -55,13 +56,17 @@ const AzureDevopsProjects = forwardRef<any, AzureDevopsProjectsProps>(
         buffer["azure_devops_projects"].length === 0
       ) {
         try {
-          const response: AzureDevopsProject[] = await ikApi.get(
-            `provider/azure_devops/projects`,
-            queryParams,
-          );
+          const response = (await ikApi.graphqlRequest(
+            AZURE_DEVOPS_PROJECTS_QUERY,
+            {
+              integrationId: queryParams?.integration_id,
+            },
+          )) as {
+            azureDevopsProjects: AzureDevopsProject[];
+          };
           setBuffer((prev: Record<string, AzureDevopsProject[]>) => ({
             ...prev,
-            ["azure_devops_projects"]: response,
+            ["azure_devops_projects"]: response.azureDevopsProjects,
           }));
         } catch (error: any) {
           notifyError(error);

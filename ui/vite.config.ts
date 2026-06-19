@@ -27,8 +27,7 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (
               id.includes('date-fns') ||
-              id.includes('jwt-decode') ||
-              id.includes('query-string')
+              id.includes('jwt-decode')
             ) {
               return 'vendor-utils';
             }

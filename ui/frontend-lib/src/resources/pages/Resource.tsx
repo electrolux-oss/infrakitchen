@@ -10,7 +10,7 @@ import { EntityProvider } from "../../common/context/EntityContext";
 import { SubscribeNotificationButton } from "../components/notifications/SubscribeNotificationButton";
 import { ResourceContent } from "../components/ResourceContent";
 import { ResourceReviewView } from "../components/ResourceReviewView";
-import { RESOURCE_DETAIL_FIELDS, transformResource } from "../graphql";
+import { RESOURCE_DETAIL_FIELDS } from "../graphql";
 import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
 
 export const ResourcePage = () => {
@@ -43,12 +43,10 @@ export const ResourcePage = () => {
     <EntityProvider
       entity_name="resource"
       entity_id={resource_id || ""}
-      transformFn={transformResource}
       entityFields={RESOURCE_DETAIL_FIELDS}
     >
       <EntityContainer
         title={"Resource Overview"}
-        hideEditAction
         actions={
           <>
             <SubscribeNotificationButton

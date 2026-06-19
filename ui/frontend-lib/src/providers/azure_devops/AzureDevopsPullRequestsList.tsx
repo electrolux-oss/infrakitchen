@@ -19,6 +19,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { AZURE_DEVOPS_PULL_REQUESTS_QUERY } from "./graphql";
 import { AzureDevopsPullRequest } from "./types";
 
 interface AzureDevopsPullRequestsListProps {
@@ -39,15 +40,20 @@ export function AzureDevopsPullRequestsList(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const link = `provider/azure_devops/repos/${organization}/${repoName}/pulls`;
-
   useEffect(() => {
     setLoading(true);
     setError(null); // Reset error on new fetch
     ikApi
-      .get(link, queryParams)
-      .then((response: AzureDevopsPullRequest[]) => {
-        setPullRequests(response);
+      .graphqlRequest(AZURE_DEVOPS_PULL_REQUESTS_QUERY, {
+        integrationId: queryParams?.integration_id,
+        project: organization,
+        repo: repoName,
+      })
+      .then((response) => {
+        const typedResponse = response as {
+          azureDevopsPullRequests: AzureDevopsPullRequest[];
+        };
+        setPullRequests(typedResponse.azureDevopsPullRequests);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -56,7 +62,7 @@ export function AzureDevopsPullRequestsList(
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, organization, repoName, link, queryParams]);
+  }, [ikApi, organization, repoName, queryParams]);
 
   if (loading) {
     return (

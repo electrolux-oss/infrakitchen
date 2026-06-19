@@ -16,6 +16,11 @@ def build_source_code_query_options(fields: FieldSpec | None = None) -> list[Any
             joinedload(SourceCode.creator),
         ]
 
+    # Identifier is a computed field that depends on these DB columns.
+    if "identifier" in fields:
+        fields = dict(fields)
+        fields.setdefault("sourceCodeUrl", None)
+
     opts: list[Any] = build_load_only(SourceCode, set(fields.keys()))
 
     if "integration" in fields:

@@ -4,7 +4,8 @@ from typing import Any
 from uuid import UUID
 
 from application.blueprints.model import blueprint_workflows
-from application.workflows.schema import WorkflowCreate, WorkflowRequest, WorkflowResponse, WorkflowStepCreate
+from application.workflows.model import Workflow
+from application.workflows.schema import WorkflowCreate, WorkflowRequest, WorkflowStepCreate
 from application.workflows.service import WorkflowService
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
@@ -186,7 +187,7 @@ class BlueprintService:
         blueprint_id: str | UUID,
         request: WorkflowRequest,
         requester: UserDTO,
-    ) -> WorkflowResponse:
+    ) -> Workflow:
         """
         Create a BlueprintExecution with steps in topological order.
         """
@@ -238,7 +239,11 @@ class BlueprintService:
             blueprint_workflows.insert().values(blueprint_id=blueprint.id, workflow_id=execution.id)
         )
 
-        return WorkflowResponse.model_validate(execution)
+        workflow_orm = await self.workflow_service.crud.get_by_id(execution.id)
+        if workflow_orm is None:
+            raise ValueError("Workflow was not persisted")
+
+        return workflow_orm
 
     @staticmethod
     def _validate_constants(blueprint: Any, variable_overrides: dict[str, dict[str, Any]]) -> None:

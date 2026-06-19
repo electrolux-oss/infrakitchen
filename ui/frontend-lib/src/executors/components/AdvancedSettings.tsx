@@ -19,11 +19,14 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import { sameStringSet } from "../../common/utils";
 import { PermissionWrapper } from "../../common/wrappers";
 import { IkEntity } from "../../types";
-import { ExecutorUpdateFieldInput, EXECUTOR_UPDATE_MUTATION } from "../graphql";
-import { ExecutorResponse } from "../types";
+import {
+  ExecutorUpdateFieldInput,
+  EXECUTOR_UPDATE_MUTATION,
+  GqlExecutor,
+} from "../graphql";
 
 export interface AdvancedSettingsProps {
-  executor: ExecutorResponse;
+  executor: GqlExecutor;
 }
 
 const STORAGE_DANGER_HELPER =
@@ -64,11 +67,11 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   // storage belongs to a single integration, so the selectable storages must
   // follow whatever integrations the user has picked.
   const [selectedIntegrationIds, setSelectedIntegrationIds] = useState<
-    string[]
-  >(() => executor.integrationIds.map((i) => i.id));
+    string[] | undefined
+  >(() => executor.integrationIds?.map((i) => i.id));
 
   useEffect(() => {
-    setSelectedIntegrationIds(executor.integrationIds.map((i) => i.id));
+    setSelectedIntegrationIds(executor.integrationIds?.map((i) => i.id));
   }, [executor.integrationIds]);
 
   const storageFilter = { integration_id: selectedIntegrationIds };
@@ -153,11 +156,11 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
       <CommonEditableField<string[]>
         name={"Integrations"}
         canEdit={canEdit}
-        value={executor.integrationIds.map((i) => i.id)}
+        value={executor.integrationIds?.map((i) => i.id) ?? []}
         ariaLabel="Edit integrations"
         isEqual={sameStringSet}
         display={
-          executor.integrationIds.length > 0 ? (
+          executor.integrationIds && executor.integrationIds.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.integrationIds.map((parent) => (
                 <span key={parent.id}>
@@ -194,11 +197,11 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
       <CommonEditableField<string[]>
         name={"Secrets"}
         canEdit={canEdit}
-        value={executor.secretIds.map((s) => s.id)}
+        value={executor.secretIds?.map((s) => s.id) ?? []}
         ariaLabel="Edit secrets"
         isEqual={sameStringSet}
         display={
-          executor.secretIds.length > 0 ? (
+          executor.secretIds && executor.secretIds.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.secretIds.map((secret) => (
                 <span key={secret.id}>

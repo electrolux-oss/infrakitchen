@@ -1,9 +1,5 @@
-import {
-  GqlIntegrationShort,
-  transformIntegrationShort,
-} from "../../integrations/graphql";
-import { GqlUserShort, transformUserShort } from "../../users/graphql";
-import { SecretResponse, SecretResponseOptional, SecretShort } from "../types";
+import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlUserShort } from "../../users/graphql";
 
 import type {
   SecretGraphqlShortField,
@@ -16,6 +12,7 @@ type GqlSecretShortFieldTypes = {
   name: string;
   secretType: string;
   secretProvider: string;
+  entityName: string;
 };
 
 export type GqlSecretShort = Pick<
@@ -38,6 +35,7 @@ type GqlSecretBaseFieldTypes = {
   executorsCount: number;
   createdAt: string;
   updatedAt: string;
+  entityName: string;
 };
 
 type GqlSecretRelationFieldTypes = {
@@ -54,76 +52,4 @@ export type GqlSecret = Pick<
 >;
 
 export type GqlSecretOptional = Partial<GqlSecret> &
-  Pick<GqlSecretShortFieldTypes, "id" | "name">;
-
-export function transformSecretShort(gql: GqlSecretShort): SecretShort {
-  return {
-    id: gql.id,
-    name: gql.name,
-    secretProvider: gql.secretProvider,
-    _entity_name: "secret",
-  };
-}
-
-function defaultConfiguration(secretProvider: string) {
-  return {
-    secret_provider: secretProvider,
-    secrets: [],
-  };
-}
-
-export function transformSecret(gql: GqlSecret): SecretResponse {
-  return {
-    id: gql.id,
-    name: gql.name,
-    _entity_name: "secret",
-    createdAt: new Date(gql.createdAt),
-    updatedAt: new Date(gql.updatedAt),
-    status: gql.status,
-    state: gql.state,
-    description: gql.description ?? "",
-    revisionNumber: gql.revisionNumber,
-    labels: gql.labels ?? [],
-    integration: transformIntegrationShort(gql.integration),
-    creator: transformUserShort(gql.creator)!,
-    secretType: gql.secretType,
-    secretProvider: gql.secretProvider,
-    configuration:
-      (gql.configuration as SecretResponse["configuration"] | null) ??
-      defaultConfiguration(gql.secretProvider),
-    resourcesCount: gql.resourcesCount ?? 0,
-    executorsCount: gql.executorsCount ?? 0,
-  };
-}
-
-export function transformSecretOptional(
-  gql: GqlSecretOptional,
-): SecretResponseOptional {
-  return {
-    id: gql.id,
-    name: gql.name,
-    _entity_name: "secret",
-    createdAt: gql.createdAt ? new Date(gql.createdAt) : undefined,
-    updatedAt: gql.updatedAt ? new Date(gql.updatedAt) : undefined,
-    status: gql.status,
-    state: gql.state,
-    description: gql.description ?? undefined,
-    revisionNumber: gql.revisionNumber,
-    labels: gql.labels ?? undefined,
-    integration:
-      gql.integration !== undefined
-        ? transformIntegrationShort(gql.integration)
-        : undefined,
-    creator:
-      gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
-    secretType: gql.secretType,
-    secretProvider: gql.secretProvider,
-    resourcesCount: gql.resourcesCount,
-    executorsCount: gql.executorsCount,
-    configuration: gql.configuration
-      ? (gql.configuration as SecretResponse["configuration"])
-      : gql.secretProvider
-        ? defaultConfiguration(gql.secretProvider)
-        : undefined,
-  };
-}
+  Pick<GqlSecretShortFieldTypes, "id" | "name" | "entityName">;

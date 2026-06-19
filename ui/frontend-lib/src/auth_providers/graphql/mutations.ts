@@ -17,6 +17,7 @@ export const CREATE_AUTH_PROVIDER_MUTATION = `
     createAuthProvider(input: $input) {
       id
       name
+      entityName
     }
   }
 `;

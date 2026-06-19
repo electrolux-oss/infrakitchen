@@ -10,6 +10,7 @@ UPDATE_WORKFLOW_MUTATION = """
     mutation UpdateWorkflow($id: UUID!, $input: WorkflowUpdateInput!) {
         updateWorkflow(id: $id, input: $input) {
             id
+            entityName
             status
             steps {
                 id
@@ -67,6 +68,7 @@ class TestWorkflowMutations:
         assert result.errors is None
         assert result.data is not None
         assert result.data["updateWorkflow"]["id"] == str(mocked_workflow.id)
+        assert result.data["updateWorkflow"]["entityName"] == "workflow"
         mock_workflow_service.get_actions.assert_awaited_once_with(
             workflow_id=mocked_workflow.id, requester=mocked_user
         )

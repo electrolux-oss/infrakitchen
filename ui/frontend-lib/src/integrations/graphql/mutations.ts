@@ -10,6 +10,7 @@ export const UPDATE_INTEGRATION_MUTATION = `
     updateIntegration(id: $id, input: $input) {
       id
       name
+      entityName
       integrationProvider
     }
   }

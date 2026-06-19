@@ -14,14 +14,14 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
+import { GqlSecret } from "../graphql";
 import {
   SecretUpdateFieldInput,
   UPDATE_SECRET_MUTATION,
 } from "../graphql/mutations";
-import { SecretResponse } from "../types";
 
 export interface SecretAboutProps {
-  secret: SecretResponse;
+  secret: GqlSecret;
 }
 
 export const SecretOverview = ({ secret }: SecretAboutProps) => {
@@ -85,10 +85,10 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       <CommonEditableField<string[]>
         name={"Secret Tags"}
         canEdit={canEdit}
-        value={secret.labels}
+        value={secret.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={secret.labels} />}
+        display={<Labels labels={secret.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

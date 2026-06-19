@@ -12,6 +12,7 @@ router = APIRouter()
     response_description="Get all constants",
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_constants_api() -> dict[str, list[ConstantModel]]:
     # hardcoded values for now

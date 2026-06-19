@@ -14,6 +14,7 @@ CREATE_INTEGRATION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -24,6 +25,7 @@ UPDATE_INTEGRATION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -34,6 +36,7 @@ INTEGRATION_ACTION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -107,6 +110,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.create_integration.assert_awaited_once_with(integration=ANY, requester=mocked_user)
 
@@ -210,6 +214,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.get_actions.assert_awaited_once_with(
             integration_id=str(integration_id), requester=mocked_user
@@ -313,6 +318,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.get_actions.assert_awaited_once_with(
             integration_id=str(integration_id), requester=mocked_user

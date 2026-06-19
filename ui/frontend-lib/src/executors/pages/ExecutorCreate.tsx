@@ -62,10 +62,10 @@ const ExecutorCreatePageInner = () => {
           (code: IkEntity) => code.id === watchedSourceCode,
         );
         if (sourceCode) {
-          setGitTags(sourceCode.git_tags || []);
-          setGitBranches(sourceCode.git_branches || []);
-          setGitTagMessages(sourceCode.git_tag_messages || {});
-          setGitBranchMessages(sourceCode.git_branch_messages || {});
+          setGitTags(sourceCode.gitTags || []);
+          setGitBranches(sourceCode.gitBranches || []);
+          setGitTagMessages(sourceCode.gitTagMessages || {});
+          setGitBranchMessages(sourceCode.gitBranchMessages || {});
         }
       }
     }
@@ -97,11 +97,11 @@ const ExecutorCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const version = sourceCode.git_tags.find(
+        const version = sourceCode.gitTags.find(
           (tag: string) => tag === watchedVersion,
         );
         if (version) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === version,
           );
           if (gitFolders) {
@@ -118,11 +118,11 @@ const ExecutorCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const branch = sourceCode.git_branches.find(
+        const branch = sourceCode.gitBranches.find(
           (branch: string) => branch === watchedBranch,
         );
         if (branch) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === branch,
           );
           if (gitFolders) {
@@ -270,6 +270,14 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   ikApi={ikApi}
                   entity_name="source_codes"
+                  fields={[
+                    "identifier",
+                    "gitTags",
+                    "gitBranches",
+                    "gitFoldersMap",
+                    "gitTagMessages",
+                    "gitBranchMessages",
+                  ]}
                   buffer={buffer}
                   setBuffer={setBuffer}
                   error={!!errors.sourceCodeId}

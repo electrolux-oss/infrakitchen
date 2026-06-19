@@ -14,14 +14,14 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
+import { GqlStorage } from "../graphql";
 import {
   StorageUpdateFieldInput,
   UPDATE_STORAGE_MUTATION,
 } from "../graphql/mutations";
-import { StorageResponse } from "../types";
 
 export interface StorageAboutProps {
-  storage: StorageResponse;
+  storage: GqlStorage;
 }
 
 export const StorageOverview = ({ storage }: StorageAboutProps) => {
@@ -85,10 +85,10 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
       <CommonEditableField<string[]>
         name={"Storage Tags"}
         canEdit={canEdit}
-        value={storage.labels}
+        value={storage.labels || []}
         ariaLabel="Edit storage tags"
         isEqual={sameStringSet}
-        display={<Labels labels={storage.labels} />}
+        display={<Labels labels={storage.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

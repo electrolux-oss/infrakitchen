@@ -11,6 +11,7 @@ CREATE_USER_MUTATION = """
         createUser(input: $input) {
             id
             identifier
+            entityName
         }
     }
 """
@@ -20,6 +21,7 @@ LINK_USER_ACCOUNT_MUTATION = """
         linkUserAccount(primaryUserId: $primaryUserId, secondaryUserId: $secondaryUserId) {
             id
             identifier
+            entityName
         }
     }
 """
@@ -29,6 +31,7 @@ UNLINK_USER_ACCOUNT_MUTATION = """
         unlinkUserAccount(primaryUserId: $primaryUserId, secondaryUserId: $secondaryUserId) {
             id
             identifier
+            entityName
         }
     }
 """
@@ -73,6 +76,7 @@ class TestCreateUserMutation:
         assert result.data["createUser"] == {
             "id": str(mocked_user.id),
             "identifier": mocked_user.identifier,
+            "entityName": "user",
         }
         mock_user_service.create_user.assert_awaited_once()
         assert mock_user_service.create_user.await_args is not None
@@ -171,6 +175,7 @@ class TestLinkUserAccountMutation:
         assert result.errors is None
         assert result.data is not None
         assert result.data["linkUserAccount"]["id"] == str(mocked_user.id)
+        assert result.data["linkUserAccount"]["entityName"] == "user"
         mock_user_service.link_accounts.assert_awaited_once_with(
             primary_user_id=primary_id, secondary_user_id=secondary_id, requester=mocked_user_response
         )
@@ -235,6 +240,7 @@ class TestUnlinkUserAccountMutation:
         assert result.errors is None
         assert result.data is not None
         assert result.data["unlinkUserAccount"]["id"] == str(mocked_user.id)
+        assert result.data["unlinkUserAccount"]["entityName"] == "user"
         mock_user_service.unlink_accounts.assert_awaited_once_with(
             primary_user_id=primary_id, secondary_user_id=secondary_id, requester=mocked_user_response
         )

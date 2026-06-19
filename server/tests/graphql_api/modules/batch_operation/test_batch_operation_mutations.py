@@ -13,6 +13,7 @@ CREATE_BATCH_OPERATION_MUTATION = """
             name
             entityType
             entityIds
+            entityName
         }
     }
 """
@@ -22,6 +23,7 @@ BATCH_OPERATION_ENTITY_IDS_MUTATION = """
         batchOperationEntityIds(id: $id, input: $input) {
             id
             entityIds
+            entityName
         }
     }
 """
@@ -69,6 +71,7 @@ class TestBatchOperationMutations:
         assert result.data["createBatchOperation"]["id"] == str(mocked_batch_operation.id)
         assert result.data["createBatchOperation"]["name"] == mocked_batch_operation.name
         assert result.data["createBatchOperation"]["entityType"] == mocked_batch_operation.entity_type
+        assert result.data["createBatchOperation"]["entityName"] == "batch_operation"
         mock_batch_operation_service.create_batch_operation.assert_awaited_once_with(
             batch_operation=ANY, requester=mocked_user
         )
@@ -187,6 +190,7 @@ class TestBatchOperationMutations:
         assert result.errors is None
         assert result.data is not None
         assert result.data["batchOperationEntityIds"]["id"] == str(mocked_batch_operation.id)
+        assert result.data["batchOperationEntityIds"]["entityName"] == "batch_operation"
         mock_batch_operation_service.get_actions.assert_awaited_once_with(
             batch_operation_id=batch_operation_id, requester=mocked_user
         )

@@ -62,7 +62,7 @@ export const AuditLogsPage = () => {
           return (
             <GetEntityLink
               id={params.row.entityId}
-              _entity_name={params.row.model}
+              entityName={params.row.model}
               name={params.row.entityData?.name ?? params.row.model}
             />
           );
@@ -80,7 +80,7 @@ export const AuditLogsPage = () => {
             return (
               <GetEntityLink
                 id={creator.id}
-                _entity_name="user"
+                entityName="user"
                 name={creator.identifier}
               />
             );

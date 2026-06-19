@@ -17,7 +17,7 @@ export const getPermissionReference = (text: any) => {
   if (text.startsWith("resource:")) {
     return (
       <GetReferenceUrlValue
-        _entity_name="resource"
+        entityName="resource"
         name="resource"
         id={text.slice(9)}
       />

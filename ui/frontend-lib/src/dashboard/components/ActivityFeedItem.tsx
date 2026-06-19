@@ -123,7 +123,7 @@ export const ActivityFeedItem = ({
                   <Typography variant="caption" color="text.secondary">
                     <GetEntityLink
                       id={activity.entityId}
-                      _entity_name={activity.model}
+                      entityName={activity.model}
                       name={entityName ?? activity.entityId}
                     />
                   </Typography>
@@ -139,7 +139,7 @@ export const ActivityFeedItem = ({
                     <span onClick={(e) => e.stopPropagation()}>
                       <GetEntityLink
                         id={activity.creator.id}
-                        _entity_name="user"
+                        entityName="user"
                         name={
                           activity.creator.displayName ||
                           activity.creator.identifier

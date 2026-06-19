@@ -10,9 +10,9 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { BlueprintFormFields } from "../components/BlueprintFormFields";
-import { CREATE_BLUEPRINT_MUTATION } from "../graphql";
+import { CREATE_BLUEPRINT_MUTATION, GqlBlueprint } from "../graphql";
 import { useBlueprintForm } from "../hooks/useBlueprintForm";
-import { BlueprintCreateRequest, BlueprintResponse } from "../types";
+import { BlueprintCreateRequest } from "../types";
 
 export const BlueprintCreatePage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -68,7 +68,7 @@ export const BlueprintCreatePage = () => {
         labels: data.labels,
       };
       ikApi
-        .graphqlRequest<{ createBlueprint: BlueprintResponse }>(
+        .graphqlRequest<{ createBlueprint: GqlBlueprint }>(
           CREATE_BLUEPRINT_MUTATION,
           { input },
         )

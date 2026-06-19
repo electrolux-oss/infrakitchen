@@ -16,7 +16,6 @@ import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformStorageOptional } from "../graphql";
 import { STORAGE_FIELD_MAP } from "../graphql/fragments";
 
 export const StoragesPage = () => {
@@ -79,6 +78,7 @@ export const StoragesPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -191,7 +191,6 @@ export const StoragesPage = () => {
         entityName="storage"
         columns={columns}
         entityFieldMap={STORAGE_FIELD_MAP}
-        transformFn={transformStorageOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

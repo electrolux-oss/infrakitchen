@@ -10,9 +10,9 @@ import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { IntegrationShort } from "../../integrations/types";
-import { SecretShort } from "../../secrets/types";
-import { ResourceShort } from "../types";
+import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlSecretShort } from "../../secrets/graphql";
+import { GqlResourceShort } from "../graphql";
 
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   creator: false,
@@ -51,6 +51,7 @@ export const resourceColumns: EntityTableColumn[] = [
   },
   {
     field: "name",
+    fetchFields: ["name", "entityName"],
     headerName: "Name",
     flex: 1,
     hideable: false,
@@ -71,17 +72,17 @@ export const resourceColumns: EntityTableColumn[] = [
     },
   },
   {
-    field: "source_code_version",
+    field: "sourceCodeVersion",
     headerName: "Template Version",
     flex: 1,
     sortField: "source_code_version.tag",
     valueGetter: (_value: any, row: any) => {
-      const scv = row.source_code_version;
+      const scv = row.sourceCodeVersion;
       if (!scv) return "";
       return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
     },
     renderCell: (params: GridRenderCellParams) => {
-      const scv = params.row.source_code_version;
+      const scv = params.row.sourceCodeVersion;
       if (!scv) return null;
       const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
       return <GetEntityLink {...scv} name={ref} />;
@@ -106,7 +107,7 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     renderCell: (params: GridRenderCellParams) => (
       <RelativeTime
-        date={params.value}
+        date={params.row.createdAt}
         sx={{ fontSize: "0.75rem", display: "flex" }}
       />
     ),
@@ -117,7 +118,7 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     renderCell: (params: GridRenderCellParams) => (
       <RelativeTime
-        date={params.value}
+        date={params.row.updatedAt}
         sx={{ fontSize: "0.75rem", display: "flex" }}
       />
     ),
@@ -131,7 +132,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const creator = params.row.creator;
       if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
+      return <GetEntityLink {...creator} />;
     },
   },
   {
@@ -157,15 +158,16 @@ export const resourceColumns: EntityTableColumn[] = [
     },
   },
   {
-    field: "integration_ids",
+    field: "integrationIds",
     headerName: "Integrations",
     flex: 1,
     valueGetter: (_value: any, row: any) =>
-      (row.integration_ids || [])
-        .map((i: IntegrationShort) => i.name)
+      (row.integrationIds || [])
+        .map((i: GqlIntegrationShort) => i.name)
         .join(", "),
     renderCell: (params: GridRenderCellParams) => {
-      const integrations: IntegrationShort[] = params.row.integration_ids || [];
+      const integrations: GqlIntegrationShort[] =
+        params.row.integrationIds || [];
       if (integrations.length === 0) return null;
       return (
         <span>
@@ -180,13 +182,14 @@ export const resourceColumns: EntityTableColumn[] = [
     },
   },
   {
-    field: "secret_ids",
+    field: "secretIds",
     headerName: "Secrets",
     flex: 1,
+    sortField: "secret_ids.name",
     valueGetter: (_value: any, row: any) =>
-      (row.secret_ids || []).map((s: SecretShort) => s.name).join(", "),
+      (row.secretIds || []).map((s: GqlSecretShort) => s.name).join(", "),
     renderCell: (params: GridRenderCellParams) => {
-      const secrets: SecretShort[] = params.row.secret_ids || [];
+      const secrets: GqlSecretShort[] = params.row.secretIds || [];
       if (secrets.length === 0) return null;
       return (
         <span>
@@ -203,11 +206,12 @@ export const resourceColumns: EntityTableColumn[] = [
   {
     field: "parents",
     headerName: "Parents",
+    sortField: "parents.name",
     flex: 1,
     valueGetter: (_value: any, row: any) =>
-      (row.parents || []).map((p: ResourceShort) => p.name).join(", "),
+      (row.parents || []).map((p: GqlResourceShort) => p.name).join(", "),
     renderCell: (params: GridRenderCellParams) => {
-      const parents: ResourceShort[] = params.row.parents || [];
+      const parents: GqlResourceShort[] = params.row.parents || [];
       if (parents.length === 0) return null;
       return (
         <span>
@@ -224,11 +228,12 @@ export const resourceColumns: EntityTableColumn[] = [
   {
     field: "children",
     headerName: "Children",
+    sortField: "children.name",
     flex: 1,
     valueGetter: (_value: any, row: any) =>
-      (row.children || []).map((c: ResourceShort) => c.name).join(", "),
+      (row.children || []).map((c: GqlResourceShort) => c.name).join(", "),
     renderCell: (params: GridRenderCellParams) => {
-      const children: ResourceShort[] = params.row.children || [];
+      const children: GqlResourceShort[] = params.row.children || [];
       if (children.length === 0) return null;
       return (
         <span>
@@ -274,18 +279,18 @@ export const resourceColumns: EntityTableColumn[] = [
     ),
   },
   {
-    field: "dependency_tags",
+    field: "dependencyTags",
     headerName: "Dependency Tags",
     flex: 1,
     valueGetter: (_value: any, row: any) =>
-      (row.dependency_tags || [])
+      (row.dependencyTags || [])
         .map(
           (tag: { name: string; value: unknown }) =>
             `${tag.name}:${String(tag.value ?? "")}`,
         )
         .join(", "),
     renderCell: (params: GridRenderCellParams) =>
-      (params.row.dependency_tags || [])
+      (params.row.dependencyTags || [])
         .map(
           (tag: { name: string; value: unknown }) =>
             `${tag.name}:${String(tag.value ?? "")}`,
@@ -293,18 +298,18 @@ export const resourceColumns: EntityTableColumn[] = [
         .join(", ") || null,
   },
   {
-    field: "dependency_config",
+    field: "dependencyConfig",
     headerName: "Dependency Config",
     flex: 1,
     valueGetter: (_value: any, row: any) =>
-      (row.dependency_config || [])
+      (row.dependencyConfig || [])
         .map(
           (cfg: { name: string; value: unknown }) =>
             `${cfg.name}:${String(cfg.value ?? "")}`,
         )
         .join(", "),
     renderCell: (params: GridRenderCellParams) =>
-      (params.row.dependency_config || [])
+      (params.row.dependencyConfig || [])
         .map(
           (cfg: { name: string; value: unknown }) =>
             `${cfg.name}:${String(cfg.value ?? "")}`,

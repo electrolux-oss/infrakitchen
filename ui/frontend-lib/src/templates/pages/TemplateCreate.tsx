@@ -24,7 +24,7 @@ import {
   TemplateConfigurationFields,
   TemplateConfigurationControl,
 } from "../components/TemplateConfigurationFields";
-import { CREATE_TEMPLATE_MUTATION, configToBackend } from "../graphql";
+import { CREATE_TEMPLATE_MUTATION } from "../graphql";
 import { TemplateCreateRequest } from "../types";
 
 export const TemplateCreatePage = () => {
@@ -45,9 +45,9 @@ export const TemplateCreatePage = () => {
       labels: [],
       cloudResourceTypes: [],
       configuration: {
-        oneResourcePerIntegration: [],
-        allowedProviderIntegrationTypes: [],
-        requiredConfigurationVariables: [],
+        one_resource_per_integration: [],
+        allowed_provider_integration_types: [],
+        required_configuration_variables: [],
       },
       abstract: false,
     },
@@ -63,7 +63,7 @@ export const TemplateCreatePage = () => {
       try {
         const input = {
           ...data,
-          configuration: configToBackend(data.configuration),
+          configuration: data.configuration,
         };
         const response = await ikApi.graphqlRequest<{
           createTemplate: {

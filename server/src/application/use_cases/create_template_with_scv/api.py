@@ -15,6 +15,7 @@ router = APIRouter()
     "/create_template_with_scv",
     response_model=TemplateResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,

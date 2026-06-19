@@ -7,7 +7,6 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { transformExecutorOptional } from "../graphql";
 import { EXECUTOR_FIELD_MAP } from "../graphql/fragments";
 
 interface EntityExecutorsProps {
@@ -18,6 +17,7 @@ interface EntityExecutorsProps {
 const columns = [
   {
     field: "name",
+    fetchFields: ["name", "id", "entityName"],
     headerName: "Name",
     flex: 1,
     hideable: false,
@@ -100,7 +100,6 @@ export const EntityExecutors = ({
     <EntityFetchTable
       title="Executors"
       entityName="executor"
-      transformFn={transformExecutorOptional}
       entityFieldMap={EXECUTOR_FIELD_MAP}
       columns={columns}
       filterStorageKey={filterStorageKey}

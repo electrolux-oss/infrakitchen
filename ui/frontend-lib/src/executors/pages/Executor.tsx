@@ -4,7 +4,7 @@ import { LogLiveTail } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ExecutorContent } from "../components/ExecutorContent";
-import { EXECUTOR_DETAIL_FIELDS, transformExecutor } from "../graphql";
+import { EXECUTOR_DETAIL_FIELDS } from "../graphql";
 
 export const ExecutorPage = () => {
   const { executor_id } = useParams();
@@ -13,10 +13,9 @@ export const ExecutorPage = () => {
     <EntityProvider
       entity_name="executor"
       entity_id={executor_id || ""}
-      transformFn={transformExecutor}
       entityFields={EXECUTOR_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Executor Overview"} hideEditAction>
+      <EntityContainer title={"Executor Overview"}>
         <ExecutorContent />
         <LogLiveTail />
       </EntityContainer>

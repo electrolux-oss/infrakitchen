@@ -15,14 +15,14 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IconField } from "../../icons/Icons";
+import { GqlIntegration } from "../graphql";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
-import { IntegrationResponse } from "../types";
 
 export interface IntegrationAboutProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
 }
 
 export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
@@ -116,10 +116,10 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={integration.labels}
+        value={integration.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={integration.labels} />}
+        display={<Labels labels={integration.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

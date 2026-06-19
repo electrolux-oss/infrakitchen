@@ -11,7 +11,7 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
-import { BATCH_OPERATION_FIELD_MAP, transformBatchOperation } from "../graphql";
+import { BATCH_OPERATION_FIELD_MAP } from "../graphql";
 
 export const BatchOperationsPage = () => {
   const { linkPrefix } = useConfig();
@@ -22,6 +22,7 @@ export const BatchOperationsPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -123,7 +124,6 @@ export const BatchOperationsPage = () => {
         entityName="batchOperation"
         columns={columns}
         entityFieldMap={BATCH_OPERATION_FIELD_MAP}
-        transformFn={transformBatchOperation}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

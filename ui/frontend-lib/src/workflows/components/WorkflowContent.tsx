@@ -14,14 +14,14 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { WorkflowResponse } from "../types";
+import { GqlWorkflow } from "../graphql";
 
 import { WorkflowOverview } from "./WorkflowOverview";
 import { WorkflowResolvedVariables } from "./WorkflowResolvedVariables";
 import { WorkflowSteps } from "./WorkflowSteps";
 import { WorkflowWiringViewer } from "./WorkflowWiringViewer";
 
-const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
+const WorkflowStepsTab = ({ workflow }: { workflow: GqlWorkflow }) => {
   const storageKey = `workflow_view`;
   const { get, setKey } = useLocalStorage<Record<string, any>>();
   const savedState = get(storageKey);
@@ -83,7 +83,7 @@ const WorkflowStepsTab = ({ workflow }: { workflow: WorkflowResponse }) => {
 export const WorkflowContent = () => {
   const { entity } = useEntityProvider();
 
-  const workflow = entity as WorkflowResponse | undefined;
+  const workflow = entity as GqlWorkflow | undefined;
 
   if (!workflow) return null;
 

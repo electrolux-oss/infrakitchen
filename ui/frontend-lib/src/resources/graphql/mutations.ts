@@ -1,3 +1,31 @@
+export type ResourceCreateFieldInput = {
+  name: string;
+  description: string;
+  templateId: string;
+  storageId: string | null;
+  sourceCodeVersionId: string | null;
+  integrationIds: string[];
+  secretIds: string[];
+  storagePath: string | null;
+  variables: object[];
+  outputs: object[];
+  dependencyTags: object[];
+  dependencyConfig: object[];
+  labels: string[];
+  parents: string[];
+  workspaceId: string | null;
+};
+
+export const CREATE_RESOURCE_MUTATION = `
+  mutation CreateResource($input: ResourceCreateInput!) {
+    createResource(input: $input) {
+      id
+      name
+      entityName
+    }
+  }
+`;
+
 /**
  * Partial payload for updating a single resource field at a time, used by the
  * inline editing controls on the resource overview page.
@@ -25,6 +53,7 @@ export const UPDATE_RESOURCE_MUTATION = `
     updateResource(id: $id, input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -41,6 +70,7 @@ export const SYNC_WORKSPACE_MUTATION = `
   mutation SyncWorkspace($id: UUID!) {
     syncWorkspace(id: $id) {
       id
-    }
+      name
+      entityName
   }
 `;

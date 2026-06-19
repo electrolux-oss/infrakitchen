@@ -16,10 +16,10 @@ import {
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import StatusChip from "../../common/StatusChip";
-import { WorkflowResponse } from "../../workflows/types";
+import { GqlWorkflow } from "../../workflows/graphql";
 
 interface WorkflowTimelineProps {
-  workflows: WorkflowResponse[];
+  workflows: GqlWorkflow[];
 }
 
 export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
@@ -96,7 +96,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                     <TableCell>{step.position + 1}</TableCell>
                     <TableCell>
                       <GetEntityLink
-                        _entity_name="template"
+                        entityName="template"
                         id={step.template?.id || ""}
                         name={step.template?.name || "Template"}
                       />
@@ -107,7 +107,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                     <TableCell>
                       {step.resource ? (
                         <GetEntityLink
-                          _entity_name="resource"
+                          entityName="resource"
                           id={step.resource?.id || ""}
                           name={step.resource?.name || "Resource"}
                         />

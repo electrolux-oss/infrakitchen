@@ -33,17 +33,18 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
+import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
-import { ResourceResponse, VariableInput, VariableOutput } from "../types";
+import { VariableInput, VariableOutput } from "../types";
 
 import { ResourceVariablesEditDialog } from "./variables/ResourceVariablesEditDialog";
 
 export interface TemplateConfigurationProps {
-  resource: ResourceResponse;
+  resource: GqlResource;
 }
 
 const getSourceCodeVariables = (
@@ -135,9 +136,9 @@ export const TemplateConfiguration = ({
 
   const storageFilter = useMemo(
     () => ({
-      integration_id: resource.integration_ids.map((i) => i.id),
+      integration_id: resource.integrationIds?.map((i) => i.id),
     }),
-    [resource.integration_ids],
+    [resource.integrationIds],
   );
 
   const saveField = useCallback(
@@ -176,22 +177,25 @@ export const TemplateConfiguration = ({
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <OverviewCard name="Overview">
         <Grid container spacing={2} sx={{ ml: 3, mt: 2 }}>
-          <CommonField
-            name="Template"
-            value={<GetReferenceUrlValue {...resource.template} />}
-          />
+          {resource.template && (
+            <CommonField
+              name="Template"
+              value={<GetReferenceUrlValue {...resource.template} />}
+            />
+          )}
           <CommonEditableField<string | null>
             name="Template Version"
             canEdit={canEdit}
-            value={resource.source_code_version?.id ?? null}
+            value={resource.sourceCodeVersion?.id ?? null}
             ariaLabel="Edit template version"
             display={
-              resource.source_code_version?.source_code ? (
+              resource.sourceCodeVersion?.sourceCode ? (
                 <GetEntityLink
-                  {...resource.source_code_version}
+                  {...resource.sourceCodeVersion}
                   name={
-                    resource.source_code_version?.sourceCodeVersion ||
-                    resource.source_code_version?.sourceCodeBranch
+                    resource.sourceCodeVersion?.sourceCodeVersion ||
+                    resource.sourceCodeVersion?.sourceCodeBranch ||
+                    "Unnamed Version"
                   }
                 />
               ) : null
@@ -201,6 +205,7 @@ export const TemplateConfiguration = ({
               <ReferenceInput
                 ikApi={ikApi}
                 entity_name="source_code_versions"
+                showFields={["identifier"]}
                 buffer={buffer}
                 setBuffer={setBuffer}
                 getOptionDisabled={(option: any) => option.status !== "done"}
@@ -214,9 +219,9 @@ export const TemplateConfiguration = ({
           <CommonField
             name="Integrations"
             value={
-              resource.integration_ids.length > 0 ? (
+              resource.integrationIds && resource.integrationIds.length > 0 ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.integration_ids.map((parent) => (
+                  {resource.integrationIds.map((parent) => (
                     <span key={parent.id}>
                       <GetReferenceUrlValue
                         {...parent}
@@ -232,9 +237,9 @@ export const TemplateConfiguration = ({
           <CommonField
             name="Secrets"
             value={
-              resource.secret_ids.length > 0 ? (
+              resource.secretIds && resource.secretIds.length > 0 ? (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.secret_ids.map((parent) => (
+                  {resource.secretIds.map((parent) => (
                     <span key={parent.id}>
                       <GetReferenceUrlValue {...parent} />
                     </span>
@@ -245,104 +250,106 @@ export const TemplateConfiguration = ({
             size={6}
           />
 
-          {canEditStorage && resource.integration_ids.length > 0 && (
-            <>
-              <Grid size={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mt: 1,
-                  }}
-                >
-                  <Tooltip
-                    title={
-                      isStorageEditable
-                        ? "Lock storage field"
-                        : "Unlock storage field"
-                    }
+          {canEditStorage &&
+            resource.integrationIds &&
+            resource.integrationIds?.length > 0 && (
+              <>
+                <Grid size={12}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mt: 1,
+                    }}
                   >
-                    <IconButton
-                      size="small"
-                      color="warning"
-                      onClick={() =>
-                        setIsStorageEditable((editable) => !editable)
+                    <Tooltip
+                      title={
+                        isStorageEditable
+                          ? "Lock storage field"
+                          : "Unlock storage field"
                       }
                     >
-                      {isStorageEditable ? (
-                        <LockOpenOutlinedIcon fontSize="small" />
-                      ) : (
-                        <LockOutlinedIcon fontSize="small" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                  <Typography variant="body2" color="warning.main">
-                    {isStorageEditable
-                      ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
-                      : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
-                  </Typography>
-                </Box>
-              </Grid>
+                      <IconButton
+                        size="small"
+                        color="warning"
+                        onClick={() =>
+                          setIsStorageEditable((editable) => !editable)
+                        }
+                      >
+                        {isStorageEditable ? (
+                          <LockOpenOutlinedIcon fontSize="small" />
+                        ) : (
+                          <LockOutlinedIcon fontSize="small" />
+                        )}
+                      </IconButton>
+                    </Tooltip>
+                    <Typography variant="body2" color="warning.main">
+                      {isStorageEditable
+                        ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
+                        : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
+                    </Typography>
+                  </Box>
+                </Grid>
 
-              <CommonEditableField<string | null>
-                name="Storage"
-                canEdit={canEditStorage && isStorageEditable}
-                value={resource.storage?.id ?? null}
-                ariaLabel="Edit storage"
-                disabledTooltip="Unlock the storage field first"
-                display={
-                  resource.storage ? (
-                    <GetReferenceUrlValue {...resource.storage} />
-                  ) : null
-                }
-                onSave={(value) => saveField({ storageId: value })}
-                renderEditor={({ value, onChange }) => (
-                  <ReferenceInput
-                    ikApi={ikApi}
-                    entity_name="storages"
-                    buffer={buffer}
-                    bufferKey="storages"
-                    showFields={["name", "storage_provider"]}
-                    setBuffer={setBuffer}
-                    filter={storageFilter}
-                    value={value}
-                    onChange={onChange}
-                    label="Select Storage for storing TF state"
-                    required
-                    helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
-                  />
-                )}
-              />
-
-              {resource.storage && (
                 <CommonEditableField<string | null>
-                  name="Storage Path"
+                  name="Storage"
                   canEdit={canEditStorage && isStorageEditable}
-                  value={resource.storage_path}
-                  ariaLabel="Edit storage path"
+                  value={resource.storage?.id ?? null}
+                  ariaLabel="Edit storage"
                   disabledTooltip="Unlock the storage field first"
                   display={
-                    resource.storage_path ? (
-                      <span>{resource.storage_path}</span>
+                    resource.storage ? (
+                      <GetReferenceUrlValue {...resource.storage} />
                     ) : null
                   }
-                  onSave={(value) => saveField({ storagePath: value })}
+                  onSave={(value) => saveField({ storageId: value })}
                   renderEditor={({ value, onChange }) => (
-                    <TextField
-                      value={value ?? ""}
-                      onChange={(e) => onChange(e.target.value || null)}
-                      label="Storage Path"
-                      fullWidth
-                      margin="normal"
-                      autoFocus
-                      helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
+                    <ReferenceInput
+                      ikApi={ikApi}
+                      entity_name="storages"
+                      buffer={buffer}
+                      bufferKey="storages"
+                      showFields={["name", "storage_provider"]}
+                      setBuffer={setBuffer}
+                      filter={storageFilter}
+                      value={value}
+                      onChange={onChange}
+                      label="Select Storage for storing TF state"
+                      required
+                      helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
                     />
                   )}
                 />
-              )}
-            </>
-          )}
+
+                {resource.storage && (
+                  <CommonEditableField<string | null>
+                    name="Storage Path"
+                    canEdit={canEditStorage && isStorageEditable}
+                    value={resource.storagePath ?? null}
+                    ariaLabel="Edit storage path"
+                    disabledTooltip="Unlock the storage field first"
+                    display={
+                      resource.storagePath ? (
+                        <span>{resource.storagePath}</span>
+                      ) : null
+                    }
+                    onSave={(value) => saveField({ storagePath: value })}
+                    renderEditor={({ value, onChange }) => (
+                      <TextField
+                        value={value ?? ""}
+                        onChange={(e) => onChange(e.target.value || null)}
+                        label="Storage Path"
+                        fullWidth
+                        margin="normal"
+                        autoFocus
+                        helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
+                      />
+                    )}
+                  />
+                )}
+              </>
+            )}
 
           {!canEditStorage && (
             <>
@@ -354,7 +361,7 @@ export const TemplateConfiguration = ({
                   ) : null
                 }
               />
-              <CommonField name="Storage Path" value={resource.storage_path} />
+              <CommonField name="Storage Path" value={resource.storagePath} />
             </>
           )}
 
@@ -412,7 +419,7 @@ export const TemplateConfiguration = ({
               </Box>
             }
           >
-            {getSourceCodeVariables(resource.variables)}
+            {getSourceCodeVariables(resource.variables as VariableInput[])}
           </OverviewCard>
           <ResourceVariablesEditDialog
             open={variablesDialogOpen}
@@ -421,7 +428,7 @@ export const TemplateConfiguration = ({
             onSave={(variables) => saveField({ variables })}
           />
           <OverviewCard name="Output Values">
-            {getSourceCodeVariables(resource.outputs)}
+            {getSourceCodeVariables(resource.outputs as VariableOutput[])}
           </OverviewCard>
         </>
       )}
