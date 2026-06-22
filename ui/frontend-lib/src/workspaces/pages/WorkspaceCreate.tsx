@@ -65,7 +65,10 @@ const WorkspaceCreatePageInner = () => {
         workspaceProvider: data.workspaceProvider,
         integrationId: data.integrationId,
         labels: data.labels,
-        configuration: data.configuration,
+        configuration: {
+          ...data.configuration,
+          workspace_provider: data.workspaceProvider,
+        },
       };
 
       ikApi

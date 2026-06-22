@@ -36,6 +36,8 @@ async def get_context(
     # Wrap the session so concurrent GraphQL resolvers serialise their
     # execute() calls through an asyncio.Lock.
     session_lock = asyncio.Lock()
+    if hasattr(connection, "state"):
+        connection.state.graphql_session_lock = session_lock
     locked = LockedSession(session, session_lock)
 
     return {

@@ -80,6 +80,11 @@ def evaluate_sqlalchemy_sorting(
 
     field_name, direction = sort
 
+    if direction.lower() not in ["asc", "desc"]:
+        raise ValueError(f"Unsupported sorting direction: {direction}")
+
+    field_name = _camel_to_snake(field_name)
+
     # Handle dot-notation for relationship sorting (e.g. "template.name")
     if "." in field_name:
         rel_name, rel_field = field_name.split(".", 1)
@@ -105,7 +110,6 @@ def evaluate_sqlalchemy_sorting(
             column = related_column
     else:
         column = getattr(model, field_name, None)
-
         if column is None:
             return statement
 
