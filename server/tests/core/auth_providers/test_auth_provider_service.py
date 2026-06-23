@@ -255,7 +255,7 @@ class TestUpdate:
             "enabled": True,
             "configuration": {
                 "tenant_id": "tenant123",
-                "client_id": "client123",
+                "client_id": "client1234",
                 "client_secret": "******",
                 "auth_provider": "microsoft",
                 "redirect_uri": "http://localhost/callback",
@@ -286,7 +286,7 @@ class TestUpdate:
         assert auth_call_body["enabled"] is True
         assert auth_call_body["description"] == "AuthProvider description updated"
         assert auth_call_body["configuration"]["tenant_id"] == "tenant123"
-        assert auth_call_body["configuration"]["client_id"] == "client123"
+        assert auth_call_body["configuration"]["client_id"] == "client1234"
         # need to skip secret value in test if its not updated
         assert EncryptedSecretStr(auth_call_body["configuration"]["client_secret"]).get_decrypted_value() == "secret123"
 

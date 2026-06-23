@@ -55,6 +55,16 @@ class IKServiceAccountProviderConfig(BaseModel):
         return []
 
 
+type AuthProviderConfig = Annotated[
+    MicrosoftProviderConfig
+    | GithubProviderConfig
+    | BackstageProviderConfig
+    | GuestProviderConfig
+    | IKServiceAccountProviderConfig,
+    Field(discriminator="auth_provider"),
+]
+
+
 class AuthProviderResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
@@ -69,14 +79,7 @@ class AuthProviderResponse(BaseModel):
     description: str = Field(default="")
     enabled: bool = Field(default=True)
     auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
-    configuration: Annotated[
-        MicrosoftProviderConfig
-        | GithubProviderConfig
-        | BackstageProviderConfig
-        | GuestProviderConfig
-        | IKServiceAccountProviderConfig,
-        Field(discriminator="auth_provider"),
-    ] = Field(...)
+    configuration: AuthProviderConfig = Field(...)
 
     filter_by_domain: list[str] = Field(default=[])
 
@@ -94,14 +97,7 @@ class AuthProviderCreate(BaseModel):
     description: str = Field(default="")
     enabled: bool = Field(default=True)
     auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
-    configuration: Annotated[
-        MicrosoftProviderConfig
-        | GithubProviderConfig
-        | BackstageProviderConfig
-        | GuestProviderConfig
-        | IKServiceAccountProviderConfig,
-        Field(discriminator="auth_provider"),
-    ] = Field(...)
+    configuration: AuthProviderConfig = Field(...)
     filter_by_domain: list[str] = Field(default=[])
 
 
@@ -112,17 +108,7 @@ class AuthProviderUpdate(BaseModel):
     description: str | None = Field(default=None)
     enabled: bool | None = Field(default=None)
     filter_by_domain: list[str] | None = Field(default=None)
-    configuration: (
-        None
-        | Annotated[
-            MicrosoftProviderConfig
-            | GithubProviderConfig
-            | BackstageProviderConfig
-            | GuestProviderConfig
-            | IKServiceAccountProviderConfig,
-            Field(discriminator="auth_provider"),
-        ]
-    ) = Field(default=None)
+    configuration: AuthProviderConfig | None = Field(default=None)
 
     @model_validator(mode="before")
     @classmethod

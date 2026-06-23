@@ -132,6 +132,9 @@ class AuthProviderService:
         validate_configuration(auth_provider, auth_provider_pydantic)
         body = model_db_dump(auth_provider, exclude_defaults=True, exclude_none=True)
 
+        if auth_provider.configuration is not None:
+            body["configuration"] = model_db_dump(auth_provider.configuration)
+
         if not has_field_changes(body, auth_provider_from_db):
             raise ValueError("No changes detected; the provider is already up to date.")
 

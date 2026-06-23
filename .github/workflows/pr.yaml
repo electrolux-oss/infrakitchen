@@ -21,7 +21,7 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend_any_changed }}
       charts: ${{ steps.filter.outputs.charts_any_changed }}
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@v7.0.0
       - uses: tj-actions/changed-files@v47
         id: filter
         with:
@@ -40,7 +40,7 @@ jobs:
     needs:
       - changes
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@v7.0.0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -64,6 +64,6 @@ jobs:
     needs:
       - changes
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@v7.0.0
       - name: Run ESLint
         run: ./scripts/check_typescript.sh

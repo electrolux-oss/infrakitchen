@@ -8,8 +8,9 @@ export type AuthProviderUpdateFieldInput = Partial<{
   name: string;
   description: string;
   enabled: boolean;
+  auth_provider: string;
   filterByDomain: string[];
-  configuration: object;
+  configuration: Record<string, any>;
 }>;
 
 export const CREATE_AUTH_PROVIDER_MUTATION = `
