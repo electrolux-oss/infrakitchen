@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -182,7 +182,7 @@ class TestCreate:
         mock_storage_crud.create.return_value = mocked_storage
         mock_storage_crud.get_by_id.return_value = mocked_storage
 
-        result = await mock_storage_service.create(storage_create, mocked_user)
+        result = await mock_storage_service.create_storage(storage_create, mocked_user)
 
         mock_storage_crud.create.assert_awaited_once_with(expected_storage_body)
 
@@ -216,7 +216,7 @@ class TestCreate:
         mock_integration_crud.get_by_id.return_value = mocked_integration
 
         with pytest.raises(DependencyError, match="Integration must be enabled to create a storage"):
-            await mock_storage_service.create(storage_create, mocked_user)
+            await mock_storage_service.create_storage(storage_create, mocked_user)
 
     @pytest.mark.asyncio
     async def test_create_error(
@@ -240,7 +240,7 @@ class TestCreate:
         mock_storage_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_storage_service.create(storage_create, mocked_user)
+            await mock_storage_service.create_storage(storage_create, mocked_user)
 
         assert exc.value is error
         mock_storage_crud.create.assert_awaited_once()
@@ -283,7 +283,9 @@ class TestUpdate:
 
         monkeypatch.setattr(StorageResponse, "model_validate", Mock(return_value=storage_response))
 
-        result = await mock_storage_service.update(storage_id=storage_id, storage=storage_update, requester=requester)
+        result = await mock_storage_service.update_storage(
+            storage_id=storage_id, storage=storage_update, requester=requester
+        )
 
         mock_storage_crud.get_by_id.assert_awaited_once_with(storage_id)
         mock_storage_crud.update.assert_awaited_once_with(
@@ -309,7 +311,9 @@ class TestUpdate:
         mock_storage_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Storage not found"):
-            await mock_storage_service.update(storage_id=STORAGE_ID, storage=storage_update, requester=requester)
+            await mock_storage_service.update_storage(
+                storage_id=STORAGE_ID, storage=storage_update, requester=requester
+            )
 
     @pytest.mark.asyncio
     async def test_update_storage_has_status_queued(self, mock_storage_service, mock_storage_crud):
@@ -326,7 +330,9 @@ class TestUpdate:
         mock_storage_crud.get_by_id.return_value = existing_storage
 
         with pytest.raises(ValueError):
-            await mock_storage_service.update(storage_id=STORAGE_ID, storage=storage_update, requester=requester)
+            await mock_storage_service.update_storage(
+                storage_id=STORAGE_ID, storage=storage_update, requester=requester
+            )
 
     @pytest.mark.asyncio
     async def test_update_storage_has_invalid_status(self, mock_storage_service, mock_storage_crud):
@@ -338,7 +344,9 @@ class TestUpdate:
         mock_storage_crud.get_by_id.return_value = existing_storage
 
         with pytest.raises(ValueError):
-            await mock_storage_service.update(storage_id=STORAGE_ID, storage=storage_update, requester=requester)
+            await mock_storage_service.update_storage(
+                storage_id=STORAGE_ID, storage=storage_update, requester=requester
+            )
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_storage_service, mock_storage_crud):
@@ -351,7 +359,9 @@ class TestUpdate:
         mock_storage_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_storage_service.update(storage_id=STORAGE_ID, storage=storage_update, requester=requester)
+            await mock_storage_service.update_storage(
+                storage_id=STORAGE_ID, storage=storage_update, requester=requester
+            )
 
         assert exc.value is error
 
@@ -404,7 +414,7 @@ class TestPatch:
         mock_audit_log_handler.create_log.assert_awaited_once_with(
             storage_id, mocked_user.id, action, revision_number=existing_storage.revision_number
         )
-        mock_event_sender.send_event.assert_awaited_once_with(result, action)
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, action)
 
         assert result.status == expected_status
         assert result.state == expected_state

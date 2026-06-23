@@ -275,26 +275,3 @@ class IntegrationValidationResponse(BaseModel):
     @computed_field
     def _entity_name(self) -> str:
         return "integration_validation_response"
-
-
-class RoleIntegrationsResponse(BaseModel):
-    id: uuid.UUID
-    integration_id: uuid.UUID
-    integration_name: str
-    role: str
-    action: str
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserIntegrationResponse(BaseModel):
-    id: uuid.UUID
-    integration_id: uuid.UUID
-    integration_name: str
-    action: str
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)

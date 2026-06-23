@@ -12,7 +12,7 @@ from core.database import FieldSpec
 from core.constants.model import ModelActions
 from core.database import to_dict
 from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, EntityWrongState
-from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
@@ -27,8 +27,6 @@ from .schema import (
     IntegrationResponse,
     IntegrationUpdate,
     IntegrationValidationResponse,
-    RoleIntegrationsResponse,
-    UserIntegrationResponse,
 )
 from ..utils.constants import MASKED_VALUE
 
@@ -151,16 +149,6 @@ class IntegrationService:
         await self.permission_service.casbin_enforcer.send_reload_event()
         return result
 
-    async def create(self, integration: IntegrationCreate, requester: UserDTO) -> IntegrationResponse:
-        """
-        Create a new integration.
-        :param integration: IntegrationCreate to create
-        :param requester: User who creates the integration
-        :return: Created integration
-        """
-        result = await self.create_integration(integration=integration, requester=requester)
-        return IntegrationResponse.model_validate(result)
-
     async def update_integration(
         self, integration_id: str, integration: IntegrationUpdate, requester: UserDTO
     ) -> Integration:
@@ -206,21 +194,6 @@ class IntegrationService:
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_integration
 
-    async def update(
-        self, integration_id: str, integration: IntegrationUpdate, requester: UserDTO
-    ) -> IntegrationResponse:
-        """
-        Update an existing integration.
-        :param integration_id: ID of the integration to update
-        :param integration: Integration to update
-        :param requester: User who updates the integration
-        :return: Updated integration
-        """
-        existing_integration = await self.update_integration(
-            integration_id=integration_id, integration=integration, requester=requester
-        )
-        return IntegrationResponse.model_validate(existing_integration)
-
     async def patch_action(self, integration_id: str, body: PatchBodyModel, requester: UserDTO) -> Integration:
         """
         Patch an existing integration and return the ORM model.
@@ -250,17 +223,6 @@ class IntegrationService:
         response = IntegrationResponse.model_validate(existing_integration)
         await self.event_sender.send_event(response, body.action)
         return existing_integration
-
-    async def patch(self, integration_id: str, body: PatchBodyModel, requester: UserDTO) -> IntegrationResponse:
-        """
-        Patch an existing integration.
-        :param integration_id: ID of the integration to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the integration
-        :return: Patched integration
-        """
-        existing_integration = await self.patch_action(integration_id=integration_id, body=body, requester=requester)
-        return IntegrationResponse.model_validate(existing_integration)
 
     async def delete(self, integration_id: str, requester: UserDTO) -> None:
         existing_integration = await self.crud.get_by_id(integration_id)
@@ -340,34 +302,3 @@ class IntegrationService:
             integration_is_valid = False
             message = f"Unexpected error: {str(e)}"
         return IntegrationValidationResponse(is_valid=integration_is_valid, message=message)
-
-    # Permissions
-    async def get_user_integration_policies(self, user_id: str) -> list[UserIntegrationResponse]:
-        policies = await self.crud.get_user_integration_policies(user_id)
-        return [UserIntegrationResponse.model_validate(policy) for policy in policies]
-
-    async def get_role_permissions(
-        self,
-        role_name: str,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[RoleIntegrationsResponse]:
-        policies = await self.crud.get_integration_policies_by_role(role_name, range=range, sort=sort)
-        return [RoleIntegrationsResponse.model_validate(policy) for policy in policies]
-
-    async def create_integration_policy(
-        self,
-        integration_policy: EntityPolicyCreate,
-        requester: UserDTO,
-    ) -> list[PermissionResponse]:
-        integration = await self.get_by_id(integration_policy.entity_id)
-        if not integration:
-            raise EntityNotFound(f"Integration {integration_policy.entity_id} not found")
-
-        policies: list[PermissionResponse] = []
-        policy = await self.permission_service.create_entity_policy(
-            integration_policy, requester, reload_permission=False
-        )
-        policies.append(PermissionResponse.model_validate(policy))
-        await self.permission_service.casbin_enforcer.send_reload_event()
-        return policies

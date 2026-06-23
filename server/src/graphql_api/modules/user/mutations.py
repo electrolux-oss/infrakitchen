@@ -45,7 +45,7 @@ class UserMutation:
         session = info.context["session"]
         service = get_user_service(session=session)
         user_update = body.to_pydantic()
-        return await service.update_entity(user_id=id, user=user_update, requester=requester)
+        return await service.update_user(user_id=id, user=user_update, requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def link_user_account(self, info: Info, primary_user_id: uuid.UUID, secondary_user_id: uuid.UUID) -> UserType:

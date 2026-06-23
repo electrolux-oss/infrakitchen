@@ -48,7 +48,7 @@ async def init_app():
                 description="Guest provider enabled by default to configure the system. "
                 "Disable it after configuring the system.",
             )
-            _ = await auth_provider_service.create(auth_provider, UserDTO.model_validate(user))
+            _ = await auth_provider_service.create_auth_provider(auth_provider, UserDTO.model_validate(user))
             await session.commit()
 
         await init_feature_flags(session=session)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import HttpUrl
 import pytest
 from unittest.mock import AsyncMock, Mock
@@ -8,6 +9,7 @@ from application.workspaces.crud import WorkspaceCRUD
 from application.workspaces.model import Workspace
 from application.workspaces.schema import WorkspaceMeta, WorkspaceResponse
 from application.workspaces.service import WorkspaceService
+from core.constants.model import ModelStatus
 
 
 @pytest.fixture
@@ -66,7 +68,7 @@ def workspace_response(mocked_user_response, mocked_integration_response):
 
 
 @pytest.fixture
-def workspace():
+def workspace(mocked_user, mocked_integration):
     return Workspace(
         id=uuid4(),
         name="TestWorkspace",
@@ -81,4 +83,11 @@ def workspace():
         },
         description="Test description",
         labels=["label1", "label2"],
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+        creator=mocked_user,
+        created_by=mocked_user.id,
+        integration=mocked_integration,
+        integration_id=mocked_integration.id,
+        status=ModelStatus.DONE,
     )

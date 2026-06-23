@@ -29,5 +29,5 @@ async def insert_batch_operations(session: AsyncSession, envs: list[str], user: 
             entity_ids=[resource.id for resource in resources],
             entity_type="resource",
         )
-        await batch_operation_service.create(create_batch_operation, user)
+        await batch_operation_service.create_batch_operation(create_batch_operation, user)
         await session.commit()

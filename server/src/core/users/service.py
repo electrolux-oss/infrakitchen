@@ -115,7 +115,7 @@ class UserService:
             await self.audit_log_handler.create_log(new_user.id, requester.id, ModelActions.CREATE)
         return result
 
-    async def update_entity(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> User:
+    async def update_user(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> User:
         """
         Update an existing user.
         :param user_id: ID of the user to update
@@ -146,10 +146,6 @@ class UserService:
 
         await self.crud.refresh(existing_user)
         return existing_user
-
-    async def update(self, user_id: UUID | str, user: UserUpdate, requester: UserDTO) -> UserResponse:
-        existing_user = await self.update_entity(user_id=user_id, user=user, requester=requester)
-        return UserResponse.model_validate(existing_user)
 
     async def update_user_meta(self, user_id: UUID, meta: UserMetadata) -> User:
         """

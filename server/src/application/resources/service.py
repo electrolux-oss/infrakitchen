@@ -572,17 +572,6 @@ class ResourceService:
 
         return existing_resource
 
-    async def patch(self, resource_id: str, resource: ResourceUpdate, requester: UserDTO) -> ResourceResponse:
-        """
-        Update an existing resource.
-        :param resource_id: ID of the resource to update
-        :param resource: Resource to update
-        :param requester: User who updates the resource
-        :return: Updated resource
-        """
-        result = await self.update_resource(resource_id=resource_id, resource=resource, requester=requester)
-        return ResourceResponse.model_validate(result)
-
     async def action_reject(
         self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO
     ) -> None:

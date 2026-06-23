@@ -605,7 +605,7 @@ async def insert_source_code_version(session: AsyncSession, user: UserDTO):
             source_code_folder=folder_name,
             description=get_sentence(),
         )
-        current_code_version = await source_code_version_service.create(version, user)
+        current_code_version = await source_code_version_service.create_source_code_version(version, user)
         await session.commit()
         scv_from_db = await source_code_version_service.crud.get_by_id(current_code_version.id)
         assert scv_from_db is not None

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import ANY, AsyncMock, Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -153,7 +153,6 @@ class TestCreate:
         mock_workspace_crud,
         mock_audit_log_handler,
         mock_event_sender,
-        monkeypatch,
         workspace,
         workspace_response,
     ):
@@ -212,17 +211,14 @@ class TestCreate:
         mock_workspace_service.permission_service.create_entity_policy = AsyncMock()
         mock_workspace_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
 
-        monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
-
-        result = await mock_workspace_service.create(workspace_create, requester)
+        result = await mock_workspace_service.create_workspace(workspace_create, requester)
 
         mock_workspace_crud.create.assert_awaited_once_with(expected_workspace_body)
 
-        mock_audit_log_handler.create_log.assert_awaited_once_with(new_workspace.id, requester.id, "create")
-        response = WorkspaceResponse.model_validate(new_workspace)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "create")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_workspace.id, requester.id, ModelActions.CREATE)
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.CREATE)
 
-        assert result.id == workspace_response.id
+        assert result.id == workspace.id
 
     @pytest.mark.asyncio
     async def test_create_success_with_bitbucket(
@@ -231,9 +227,7 @@ class TestCreate:
         mock_workspace_crud,
         mock_audit_log_handler,
         mock_event_sender,
-        monkeypatch,
         workspace,
-        workspace_response,
     ):
         workspace_body = {
             "description": "New description",
@@ -294,7 +288,7 @@ class TestCreate:
         requester.id = requester_id
 
         new_workspace = Workspace(
-            id=uuid4(),
+            id=workspace.id,
             name="Test Workspace",
             workspace_provider="github",
             configuration=expected_workspace_configuration,
@@ -304,17 +298,14 @@ class TestCreate:
         mock_workspace_service.permission_service.create_entity_policy = AsyncMock()
         mock_workspace_service.permission_service.casbin_enforcer.send_reload_event = AsyncMock()
 
-        monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
-
-        result = await mock_workspace_service.create(workspace_create, requester)
+        result = await mock_workspace_service.create_workspace(workspace_create, requester)
 
         mock_workspace_crud.create.assert_awaited_once_with(expected_workspace_body)
 
-        mock_audit_log_handler.create_log.assert_awaited_once_with(new_workspace.id, requester.id, "create")
-        response = WorkspaceResponse.model_validate(new_workspace)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "create")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(new_workspace.id, requester.id, ModelActions.CREATE)
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.CREATE)
 
-        assert result.id == workspace_response.id
+        assert result.id == new_workspace.id
 
     @pytest.mark.asyncio
     async def test_create_error(self, mock_workspace_service, mock_workspace_crud):
@@ -352,7 +343,7 @@ class TestCreate:
         mock_workspace_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_workspace_service.create(workspace_create, requester)
+            await mock_workspace_service.create_workspace(workspace_create, requester)
 
         assert exc.value is error
         mock_workspace_crud.create.assert_awaited_once()
@@ -392,7 +383,7 @@ class TestUpdate:
 
         monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
 
-        result = await mock_workspace_service.update(
+        result = await mock_workspace_service.update_workspace(
             workspace_id=workspace_id, workspace=workspace_update, requester=requester
         )
         assert result.id == workspace_response_with_update.id
@@ -421,7 +412,7 @@ class TestUpdate:
         mock_workspace_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_workspace_service.update(
+            await mock_workspace_service.update_workspace(
                 workspace_id=WORKSPACE_ID, workspace=workspace_update, requester=requester
             )
 

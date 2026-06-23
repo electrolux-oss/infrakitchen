@@ -87,6 +87,6 @@ class IntegrationWithStorageService:
                     created_by=requester.id,
                 )
             )
-            new_storage = await self.storage_service.create(storage, requester=requester)
+            new_storage = await self.storage_service.create_storage(storage, requester=requester)
             await self.storage_event_sender.send_task(new_storage.id, requester=requester)
         return new_integration

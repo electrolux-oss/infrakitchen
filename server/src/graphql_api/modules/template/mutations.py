@@ -78,7 +78,7 @@ class TemplateMutation:
         if input.action not in await service.get_actions(template_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {input.action}")
 
-        return await service.patch(
+        return await service.patch_action(
             template_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,

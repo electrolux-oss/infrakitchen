@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, cast, func, literal, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import union_all
 
@@ -9,7 +9,6 @@ from application.executors.model import Executor
 from application.resources.model import Resource
 from application.source_codes.model import SourceCode
 from application.storages.model import Storage
-from core.permissions.model import Permission
 
 from core.database import (
     FieldSpec,
@@ -104,66 +103,3 @@ class IntegrationCRUD:
 
     async def refresh(self, integration: Integration) -> None:
         await self.session.refresh(integration)
-
-    async def get_integration_policies_by_role(
-        self,
-        role_name: str,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[Any]:
-        integration_id_expr = func.split_part(Permission.v1, ":", 2)
-        statement = (
-            select(
-                Integration.id.label("integration_id"),
-                Integration.name.label("integration_name"),
-                Permission.v0.label("role"),
-                Permission.v2.label("action"),
-                Permission.id.label("id"),
-                Permission.created_at.label("created_at"),
-                Permission.updated_at.label("updated_at"),
-            )
-            .join(
-                Permission,
-                cast(Integration.id, String) == integration_id_expr,
-            )
-            .where(
-                Permission.ptype == "p",
-                Permission.v1.like("integration:%"),
-                Permission.v0 == role_name,
-            )
-        )
-        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
-        statement = evaluate_sqlalchemy_pagination(statement, range)
-        result = await self.session.execute(statement)
-        return list(result.fetchall())
-
-    async def get_user_integration_policies(
-        self,
-        user_id: str | UUID,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[Any]:
-        integration_id_expr = func.split_part(Permission.v1, ":", 2)
-        statement = (
-            select(
-                Integration.id.label("integration_id"),
-                Integration.name.label("integration_name"),
-                Permission.v2.label("action"),
-                Permission.id.label("id"),
-                Permission.created_at.label("created_at"),
-                Permission.updated_at.label("updated_at"),
-            )
-            .join(
-                Permission,
-                cast(Integration.id, String) == integration_id_expr,
-            )
-            .where(
-                Permission.ptype == "p",
-                Permission.v1.like("integration:%"),
-                Permission.v0 == f"user:{user_id}",
-            )
-        )
-        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
-        statement = evaluate_sqlalchemy_pagination(statement, range)
-        result = await self.session.execute(statement)
-        return list(result.fetchall())

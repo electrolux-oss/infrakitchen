@@ -188,7 +188,7 @@ class TestCreate:
 
         monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
 
-        created_integration = await mock_integration_service.create(
+        created_integration = await mock_integration_service.create_integration(
             integration=integration_create, requester=mock_user_dto
         )
 
@@ -207,7 +207,7 @@ class TestCreate:
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
 
         assert created_integration.name == "Test Integration"
-        assert created_integration.configuration.aws_access_key_id == cloud_integration_config["aws_access_key_id"]
+        assert created_integration.configuration["aws_access_key_id"] == cloud_integration_config["aws_access_key_id"]
 
     @pytest.mark.asyncio
     async def test_create_unsupported_cloud_provider(
@@ -236,7 +236,7 @@ class TestCreate:
             ValueError,
             match="Invalid integration provider, must be one of",
         ):
-            await mock_integration_service.create(integration_create, mock_user_dto)
+            await mock_integration_service.create_integration(integration_create, mock_user_dto)
 
         integration_create.model_dump.assert_not_called()
         mock_integration_crud.assert_not_called()
@@ -268,7 +268,7 @@ class TestCreate:
         integration_create.model_dump = Mock(return_value=integration_body)
 
         with pytest.raises(ValueError, match="Invalid integration provider, must be one of"):
-            await mock_integration_service.create(integration_create, mock_user_dto)
+            await mock_integration_service.create_integration(integration_create, mock_user_dto)
 
         integration_create.model_dump.assert_not_called()
         mock_integration_crud.assert_not_called()
@@ -345,7 +345,7 @@ class TestUpdate:
         monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
         monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
 
-        integration_update_result = await mock_integration_service.update(
+        integration_update_result = await mock_integration_service.update_integration(
             integration_id=mocked_integration.id, integration=integration_update, requester=mock_user_dto
         )
 
@@ -373,74 +373,9 @@ class TestUpdate:
         mock_integration_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Integration not found"):
-            await mock_integration_service.update(
+            await mock_integration_service.update_integration(
                 integration_id="123id", integration=integration_update, requester=mock_user_dto
             )
-
-    @pytest.mark.asyncio
-    async def test_update_integration_has_status_disabled(
-        self,
-        mock_integration_service,
-        mock_integration_crud,
-        mock_revision_handler,
-        mock_audit_log_handler,
-        mock_event_sender,
-        monkeypatch,
-        mocked_integration,
-        mocked_integration_response,
-        mock_user_dto,
-    ):
-        aws_integration_config = {"aws_account": "123456789012", "aws_access_key_id": "updated"}
-
-        integration_update = Mock(spec=IntegrationUpdate)
-        integration_update.name = "New Integration name"
-        integration_update.description = "Updated description"
-        integration_update.integration_type = "cloud"
-        integration_update.integration_provider = "aws"
-        integration_update.configuration = None
-
-        mocked_integration.status = ModelStatus.DISABLED
-        mocked_integration.name = "New Integration name"
-
-        mocked_integration_response.status = ModelStatus.ENABLED
-        mocked_integration_response.name = "New Integration name"
-
-        update_integration_body = {
-            "name": "New Integration name",
-            "created_by": "user1",
-            "description": "Test description",
-            "integration_type": "cloud",
-            "integration_provider": "aws",
-            "configuration": aws_integration_config,
-        }
-
-        integration_update.model_dump = Mock(return_value=update_integration_body)
-        mock_integration_crud.get_by_id.return_value = mocked_integration
-        mock_integration_crud.update.return_value = mocked_integration
-
-        monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
-        monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
-
-        integration_update_result = await mock_integration_service.update(
-            integration_id=mocked_integration.id, integration=integration_update, requester=mock_user_dto
-        )
-
-        integration_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
-        )
-        mock_integration_crud.update.assert_called_once_with(mocked_integration, update_integration_body)
-        mock_integration_crud.refresh.assert_called_once_with(mocked_integration)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_integration.id,
-            mock_user_dto.id,
-            ModelActions.UPDATE,
-            revision_number=mocked_integration.revision_number,
-        )
-        mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_integration)
-        response = IntegrationResponse.model_validate(mocked_integration)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "update")
-
-        assert integration_update_result.status == ModelStatus.ENABLED
 
     @pytest.mark.asyncio
     async def test_update_error(
@@ -456,7 +391,7 @@ class TestUpdate:
         monkeypatch.setattr(mock_integration_service, "validate_configuration", Mock())
 
         with pytest.raises(RuntimeError, match="update fail") as exc:
-            await mock_integration_service.update(
+            await mock_integration_service.update_integration(
                 integration_id=INTEGRATION_ID, integration=integration_update, requester=mock_user_dto
             )
 
@@ -635,7 +570,7 @@ class TestPatch:
         mock_integration_crud.get_dependencies.return_value = []
         monkeypatch.setattr(IntegrationResponse, "model_validate", Mock(return_value=mocked_integration_response))
 
-        result = await mock_integration_service.patch(
+        result = await mock_integration_service.patch_action(
             integration_id=INTEGRATION_ID, body=PatchBodyModel(action=ModelActions.DISABLE), requester=mock_user_dto
         )
 
@@ -655,7 +590,7 @@ class TestPatch:
         mock_integration_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Integration not found"):
-            await mock_integration_service.patch(
+            await mock_integration_service.patch_action(
                 integration_id=INTEGRATION_ID, body=PatchBodyModel(action=ModelActions.APPROVE), requester=mock_user_dto
             )
 

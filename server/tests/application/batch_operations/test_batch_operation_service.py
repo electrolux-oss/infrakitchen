@@ -108,7 +108,7 @@ class TestCreate:
         expected_body["created_by"] = mocked_user_response.id
         mock_batch_operation_crud.create.return_value = mocked_batch_operation
 
-        result = await mock_batch_operation_service.create(batch_operation_create, mocked_user_response)
+        result = await mock_batch_operation_service.create_batch_operation(batch_operation_create, mocked_user_response)
 
         mock_batch_operation_crud.create.assert_awaited_once_with(body=expected_body)
         assert result.id == mocked_batch_operation.id

@@ -122,16 +122,6 @@ class SecretService:
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return result
 
-    async def create(self, secret: SecretCreate, requester: UserDTO) -> SecretResponse:
-        """
-        Create a new secret.
-        :param secret: SecretCreate to create
-        :param requester: User who creates the secret
-        :return: Created secret
-        """
-        result = await self.create_secret(secret=secret, requester=requester)
-        return SecretResponse.model_validate(result)
-
     async def update_secret(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> Secret:
         """
         Update an existing secret and return the ORM model.
@@ -165,17 +155,6 @@ class SecretService:
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_secret
 
-    async def update(self, secret_id: str, secret: SecretUpdate, requester: UserDTO) -> SecretResponse:
-        """
-        Update an existing secret.
-        :param secret_id: ID of the secret to update
-        :param secret: Secret to update
-        :param requester: User who updates the secret
-        :return: Updated secret
-        """
-        result = await self.update_secret(secret_id=secret_id, secret=secret, requester=requester)
-        return SecretResponse.model_validate(result)
-
     async def patch_action_secret(self, secret_id: str, body: PatchBodyModel, requester: UserDTO) -> Secret:
         """
         Patch an existing secret and return the ORM model.
@@ -205,17 +184,6 @@ class SecretService:
         response = SecretResponse.model_validate(existing_secret)
         await self.event_sender.send_event(response, body.action)
         return existing_secret
-
-    async def patch_action(self, secret_id: str, body: PatchBodyModel, requester: UserDTO) -> SecretResponse:
-        """
-        Patch an existing secret.
-        :param secret_id: ID of the secret to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the secret
-        :return: Patched secret
-        """
-        result = await self.patch_action_secret(secret_id=secret_id, body=body, requester=requester)
-        return SecretResponse.model_validate(result)
 
     async def delete(self, secret_id: str, requester: UserDTO) -> None:
         existing_secret = await self.crud.get_by_id(secret_id)

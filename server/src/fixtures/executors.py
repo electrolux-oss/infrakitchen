@@ -35,6 +35,6 @@ async def insert_executors(session: AsyncSession, user: UserDTO):
             storage_path=f"/executors/{integration.id}/" if storage else None,
             command_args="-var=env=dev -var=region=us-east-1 -var-file=vars.tfvars",
         )
-        await executor_service.create(executor=executor, requester=user)
+        await executor_service.create_executor(executor=executor, requester=user)
 
     await session.commit()

@@ -128,7 +128,7 @@ async def insert_templates(session: AsyncSession, user: UserDTO):
             parent_ids.append(parent_template.id)
 
         template_body.parents = parent_ids
-        current_template = await template_service.create(template_body, user)
+        current_template = await template_service.create_template(template_body, user)
         await session.commit()
         templates_by_key[template["template"]] = current_template
 

@@ -41,7 +41,7 @@ async def insert_source_code(session: AsyncSession, user: UserDTO):
             labels=["opentofu", "aws"],
         )
 
-        await source_code_service.create(src, user)
+        await source_code_service.create_source_code(src, user)
         await session.commit()
         # Add git tags and branches that can be added only through automation
         statement = update(SourceCode).values(

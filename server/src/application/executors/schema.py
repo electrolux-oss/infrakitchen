@@ -157,30 +157,3 @@ class ExecutorUpdate(BaseModel):
         if not any(values.get(field) not in (None, [], "") for field in ExecutorUpdate.model_fields):
             raise ValueError("At least one field must be provided in Executor update.")
         return values
-
-
-class RoleExecutorsResponse(BaseModel):
-    id: uuid.UUID
-    executor_id: uuid.UUID
-    executor_name: str
-    role: str
-    action: str
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
-
-
-class UserExecutorResponse(BaseModel):
-    id: uuid.UUID
-    executor_id: uuid.UUID
-    executor_name: str
-    action: str
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True,
-    )

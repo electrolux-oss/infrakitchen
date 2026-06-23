@@ -15,7 +15,6 @@ from core.constants.model import ModelActions
 from core.database import FieldSpec, to_dict
 from core.errors import EntityNotFound, EntityWrongState
 from core.logs.service import LogService
-from core.permissions.schema import EntityPolicyCreate, PermissionResponse
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
@@ -34,8 +33,6 @@ from .schema import (
     ExecutorCreate,
     ExecutorResponse,
     ExecutorUpdate,
-    RoleExecutorsResponse,
-    UserExecutorResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -174,16 +171,6 @@ class ExecutorService:
         await self.permission_service.casbin_enforcer.send_reload_event()
         return result
 
-    async def create(self, executor: ExecutorCreate, requester: UserDTO) -> ExecutorResponse:
-        """
-        Create a new executor.
-        :param executor: ExecutorCreate to create
-        :param requester: User who creates the executor
-        :return: Created executor
-        """
-        new_executor = await self.create_executor(executor, requester)
-        return ExecutorResponse.model_validate(new_executor)
-
     async def update_executor(self, executor_id: str, executor: ExecutorUpdate, requester: UserDTO) -> Executor:
         """
         Update an existing executor.
@@ -261,17 +248,6 @@ class ExecutorService:
         await self.event_sender.send_event(response, ModelActions.UPDATE)
 
         return existing_executor
-
-    async def update(self, executor_id: str, executor: ExecutorUpdate, requester: UserDTO) -> ExecutorResponse:
-        """
-        Update an existing executor.
-        :param executor_id: ID of the executor to update
-        :param executor: Executor to update
-        :param requester: User who updates the executor
-        :return: Updated executor
-        """
-        updated_executor = await self.update_executor(executor_id, executor, requester)
-        return ExecutorResponse.model_validate(updated_executor)
 
     async def action_destroy(self, existing_executor: Executor, pydantic_executor: ExecutorDTO, requester: UserDTO):
         if pydantic_executor.state in [ModelState.DESTROY, ModelState.DESTROYED]:
@@ -355,17 +331,6 @@ class ExecutorService:
         await self.event_sender.send_event(response, body.action)
         return existing_executor
 
-    async def patch_action(self, executor_id: str, body: PatchBodyModel, requester: UserDTO) -> ExecutorResponse:
-        """
-        Patch an existing executor.
-        :param executor_id: ID of the executor to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the executor
-        :return: Patched executor
-        """
-        patched_executor = await self.patch_action_executor(executor_id, body, requester)
-        return ExecutorResponse.model_validate(patched_executor)
-
     async def delete(self, executor_id: str, requester: UserDTO) -> None:
         existing_executor = await self.crud.get_by_id(executor_id)
         if not existing_executor:
@@ -380,36 +345,3 @@ class ExecutorService:
         await self.task_service.delete_by_entity_id(executor_id)
         await delete_executor_policies(executor_id, self.permission_service)
         await self.crud.delete(existing_executor)
-
-    # Permissions
-    async def get_user_executor_policies(
-        self,
-        user_id: str,
-    ) -> list[UserExecutorResponse]:
-        policies = await self.crud.get_user_executor_policies(user_id)
-        return [UserExecutorResponse.model_validate(policy) for policy in policies]
-
-    async def get_role_permissions(
-        self,
-        role_name: str,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[RoleExecutorsResponse]:
-        policies = await self.crud.get_executor_policies_by_role(role_name, range=range, sort=sort)
-        return [RoleExecutorsResponse.model_validate(policy) for policy in policies]
-
-    async def create_executor_policy(
-        self,
-        executor_policy: EntityPolicyCreate,
-        requester: UserDTO,
-    ) -> list[PermissionResponse]:
-        executor = await self.get_by_id(executor_policy.entity_id)
-        if not executor:
-            raise EntityNotFound(f"Executor {executor_policy.entity_id} not found")
-
-        # create policy
-        policies: list[PermissionResponse] = []
-        policy = await self.permission_service.create_entity_policy(executor_policy, requester, reload_permission=False)
-        policies.append(PermissionResponse.model_validate(policy))
-        await self.permission_service.casbin_enforcer.send_reload_event()
-        return policies

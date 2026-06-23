@@ -275,7 +275,7 @@ class TestStorageMutations:
     ):
         storage_id = uuid4()
         mock_storage_service.get_actions = AsyncMock(return_value=[ModelActions.DESTROY.value])
-        mock_storage_service.patch_action_storage = AsyncMock(return_value=mocked_storage)
+        mock_storage_service.patch_action = AsyncMock(return_value=mocked_storage)
         mock_get_service.return_value = mock_storage_service
 
         result = await schema.execute(
@@ -295,9 +295,9 @@ class TestStorageMutations:
         assert result.data["storageAction"]["name"] == mocked_storage.name
         assert result.data["storageAction"]["state"] is not None
         mock_storage_service.get_actions.assert_awaited_once_with(storage_id=storage_id, requester=mocked_user)
-        mock_storage_service.patch_action_storage.assert_awaited_once()
-        assert mock_storage_service.patch_action_storage.await_args
-        call_kwargs = mock_storage_service.patch_action_storage.await_args.kwargs
+        mock_storage_service.patch_action.assert_awaited_once()
+        assert mock_storage_service.patch_action.await_args
+        call_kwargs = mock_storage_service.patch_action.await_args.kwargs
         assert call_kwargs["storage_id"] == str(storage_id)
         assert call_kwargs["requester"] == mocked_user
         assert call_kwargs["body"].action == ModelActions.DESTROY.value

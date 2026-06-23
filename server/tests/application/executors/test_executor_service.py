@@ -215,7 +215,7 @@ class TestCreate:
         mock_executor_crud.create.return_value = new_executor
         mock_executor_crud.get_by_id.return_value = new_executor
 
-        result = await mock_executor_service.create(executor_create, requester)
+        result = await mock_executor_service.create_executor(executor_create, requester)
 
         mock_executor_crud.create.assert_awaited_once_with(expected_executor_body)
 
@@ -270,7 +270,7 @@ class TestCreate:
         mock_executor_crud.create.return_value = new_executor
         mock_executor_crud.get_by_id.return_value = new_executor
 
-        result = await mock_executor_service.create(executor_create, requester)
+        result = await mock_executor_service.create_executor(executor_create, requester)
 
         assert result.name == mocked_executor.name
 
@@ -295,7 +295,7 @@ class TestCreate:
         requester = mocked_user_response
 
         with pytest.raises(ValueError, match="One of source code tag or branch is required"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_both_version_and_branch_error(
@@ -320,7 +320,7 @@ class TestCreate:
         requester = mocked_user_response
 
         with pytest.raises(ValueError, match="Only one of source code tag or branch is allowed"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_source_code_not_found(
@@ -345,7 +345,7 @@ class TestCreate:
         mock_source_code_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Source code not found"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_source_code_disabled(
@@ -372,7 +372,7 @@ class TestCreate:
         mock_source_code_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(EntityWrongState, match="SourceCode is not enabled"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_missing_storage_for_opentofu(
@@ -395,7 +395,7 @@ class TestCreate:
         mock_source_code_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(ValueError, match="Storage is required for opentofu executors"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_storage_not_found(
@@ -422,7 +422,7 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Storage not found"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_missing_storage_path(
@@ -450,7 +450,7 @@ class TestCreate:
         mock_storage_crud.get_by_id.return_value = mocked_storage
 
         with pytest.raises(ValueError, match="Storage path is required for executors with storage"):
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
     async def test_create_error(
@@ -483,7 +483,7 @@ class TestCreate:
         mock_executor_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_executor_service.create(executor_create, requester)
+            await mock_executor_service.create_executor(executor_create, requester)
 
         assert exc.value is error
         mock_executor_crud.create.assert_awaited_once()
@@ -736,7 +736,7 @@ class TestPatchAction:
 
         mock_executor_crud.get_by_id.return_value = existing_executor
 
-        result = await mock_executor_service.patch_action(
+        result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user
         )
 
@@ -764,7 +764,9 @@ class TestPatchAction:
         mock_executor_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Executor not found"):
-            await mock_executor_service.patch_action(executor_id=EXECUTOR_ID, body=patch_body, requester=requester)
+            await mock_executor_service.patch_action_executor(
+                executor_id=EXECUTOR_ID, body=patch_body, requester=requester
+            )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -786,7 +788,7 @@ class TestPatchAction:
         mock_executor_crud.get_by_id.return_value = existing_executor
 
         with pytest.raises(ValueError, match="Executor is already in"):
-            await mock_executor_service.patch_action(
+            await mock_executor_service.patch_action_executor(
                 executor_id=existing_executor.id, body=patch_body, requester=mocked_user
             )
 
@@ -810,7 +812,7 @@ class TestPatchAction:
         mock_executor_crud.get_by_id.return_value = existing_executor
 
         with pytest.raises(ValueError, match="Cannot destroy a executor in"):
-            await mock_executor_service.patch_action(
+            await mock_executor_service.patch_action_executor(
                 executor_id=existing_executor.id, body=patch_body, requester=mocked_user
             )
 
@@ -847,7 +849,7 @@ class TestPatchAction:
 
         mock_executor_crud.get_by_id.return_value = existing_executor
 
-        result = await mock_executor_service.patch_action(
+        result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user
         )
 
@@ -903,7 +905,7 @@ class TestPatchAction:
 
         mock_executor_crud.get_by_id.return_value = existing_executor
 
-        result = await mock_executor_service.patch_action(
+        result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user
         )
 
@@ -956,7 +958,7 @@ class TestPatchAction:
 
         mock_executor_crud.get_by_id.return_value = existing_executor
 
-        result = await mock_executor_service.patch_action(
+        result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user
         )
 
@@ -994,7 +996,7 @@ class TestPatchAction:
         mock_executor_crud.get_by_id.return_value = existing_executor
 
         with pytest.raises(EntityWrongState, match="Dry run is only allowed for executors in"):
-            await mock_executor_service.patch_action(
+            await mock_executor_service.patch_action_executor(
                 executor_id=existing_executor.id, body=patch_body, requester=mocked_user
             )
 
@@ -1018,7 +1020,7 @@ class TestPatchAction:
         existing_executor.state = ModelState.PROVISIONED
         mock_executor_crud.get_by_id.return_value = existing_executor
 
-        result = await mock_executor_service.patch_action(
+        result = await mock_executor_service.patch_action_executor(
             executor_id=executor_id, body=patch_body, requester=mocked_user
         )
 
@@ -1056,6 +1058,6 @@ class TestPatchAction:
         mock_executor_crud.get_by_id.return_value = existing_executor
 
         with pytest.raises(EntityWrongState, match="Only executors in QUEUED status can be retried"):
-            await mock_executor_service.patch_action(
+            await mock_executor_service.patch_action_executor(
                 executor_id=existing_executor.id, body=patch_body, requester=mocked_user
             )

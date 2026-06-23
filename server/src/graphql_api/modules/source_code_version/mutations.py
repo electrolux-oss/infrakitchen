@@ -118,7 +118,7 @@ class SourceCodeVersionMutation:
         if not configs:
             return []
 
-        return await service.update_configs_orm(
+        return await service.update_configs(
             source_code_version_id=str(id),
             configs=[config.to_pydantic() for config in configs],
         )

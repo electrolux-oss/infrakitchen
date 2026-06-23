@@ -153,7 +153,7 @@ async def insert_integrations(session: AsyncSession, user: UserDTO):
         ):
             continue
 
-        await integration_service.create(integration, user)
+        await integration_service.create_integration(integration, user)
     await session.commit()
 
 
@@ -172,5 +172,5 @@ async def insert_env_integrations(session: AsyncSession, env: str, user: UserDTO
         if intg:
             continue
 
-        await integration_service.create(integration, user)
+        await integration_service.create_integration(integration, user)
     await session.commit()

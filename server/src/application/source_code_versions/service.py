@@ -34,7 +34,6 @@ from .schema import (
     SourceConfigResponse,
     SourceConfigTemplateReferenceCreate,
     SourceConfigTemplateReferenceResponse,
-    SourceConfigUpdate,
     SourceConfigUpdateWithId,
     SourceOutputConfigCreate,
     SourceOutputConfigResponse,
@@ -217,20 +216,6 @@ class SourceCodeVersionService:
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return result
 
-    async def create(
-        self, source_code_version: SourceCodeVersionCreate, requester: UserDTO
-    ) -> SourceCodeVersionResponse:
-        """
-        Create a new source_code_version.
-        :param source_code_version: SourceCodeVersionCreate to create
-        :param requester: User who creates the source_code_version
-        :return: Created source_code_version
-        """
-        new_source_code_version = await self.create_source_code_version(
-            source_code_version=source_code_version, requester=requester
-        )
-        return SourceCodeVersionResponse.model_validate(new_source_code_version)
-
     async def update_source_code_version(
         self,
         source_code_version_id: str,
@@ -269,6 +254,7 @@ class SourceCodeVersionService:
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code_version)
 
+        existing_source_code_version.status = ModelStatus.READY
         await self.crud.update(existing_source_code_version, body)
 
         await self.revision_handler.handle_revision(existing_source_code_version)
@@ -282,26 +268,6 @@ class SourceCodeVersionService:
         response = SourceCodeVersionResponse.model_validate(existing_source_code_version)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_source_code_version
-
-    async def update(
-        self,
-        source_code_version_id: str,
-        source_code_version: SourceCodeVersionUpdate,
-        requester: UserDTO,
-    ) -> SourceCodeVersionResponse:
-        """
-        Update an existing source_code_version.
-        :param source_code_version_id: ID of the source_code_version to update
-        :param source_code_version: SourceCodeVersion to update
-        :param requester: User who updates the source_code_version
-        :return: Updated source_code_version
-        """
-        existing_source_code_version = await self.update_source_code_version(
-            source_code_version_id=source_code_version_id,
-            source_code_version=source_code_version,
-            requester=requester,
-        )
-        return SourceCodeVersionResponse.model_validate(existing_source_code_version)
 
     async def patch_action(
         self, source_code_version_id: str, body: PatchBodyModel, requester: UserDTO
@@ -350,19 +316,6 @@ class SourceCodeVersionService:
         await self.event_sender.send_event(response, body.action)
         return existing_source_code_version
 
-    async def patch(
-        self, source_code_version_id: str, body: PatchBodyModel, requester: UserDTO
-    ) -> SourceCodeVersionResponse:
-        """
-        Patch an existing source_code_version.
-        :param source_code_version_id: ID of the source_code_version to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the source_code_version
-        :return: Patched source_code_version
-        """
-        result = await self.patch_action(source_code_version_id=source_code_version_id, body=body, requester=requester)
-        return SourceCodeVersionResponse.model_validate(result)
-
     async def delete(self, source_code_version_id: str, requester: UserDTO) -> None:
         existing_source_code_version = await self.crud.get_by_id(source_code_version_id)
         if not existing_source_code_version:
@@ -400,32 +353,6 @@ class SourceCodeVersionService:
         configs = await self.crud.get_configs_by_scv_id(source_code_version_id)
         return [SourceConfigResponse.model_validate(config) for config in configs]
 
-    async def get_configs_by_template_id(self, template_id: str | UUID) -> list[SourceConfigResponse]:
-        """
-        Get all configs for all source code versions of a template.
-        :param template_id: ID of the template
-        :return: List of SourceConfigResponse (deduplicated by name)
-        """
-        configs = await self.crud.get_configs_by_template_id(template_id)
-        seen_names: set[str] = set()
-        unique_configs: list[SourceConfigResponse] = []
-        for config in configs:
-            if config.name not in seen_names:
-                seen_names.add(config.name)
-                unique_configs.append(SourceConfigResponse.model_validate(config))
-        return unique_configs
-
-    async def get_config_by_id(self, config_id: str) -> SourceConfigResponse | None:
-        """
-        Get a config by its ID.
-        :param config_id: ID of the config
-        :return: SourceConfigResponse or None
-        """
-        config = await self.crud.get_config_by_id(config_id)
-        if not config:
-            raise EntityNotFound("SourceCodeVersionConfig not found")
-        return SourceConfigResponse.model_validate(config)
-
     async def create_configs(self, configs: list[SourceConfigCreate]) -> list[SourceConfigResponse]:
         """
         Create new source code version configs.
@@ -437,21 +364,6 @@ class SourceCodeVersionService:
             config = await self.crud.create_config(c.model_dump(exclude_unset=True))
             result.append(config)
         return [SourceConfigResponse.model_validate(config) for config in result]
-
-    async def update_config(self, config_id: str, config: SourceConfigUpdate) -> SourceConfigResponse:
-        """
-        Update an existing source code version config.
-        :param config_id: ID of the source code version config to update
-        :param config: SourceConfigUpdate to update
-        :return: Updated source code version config
-        """
-        existing_config = await self.crud.get_config_by_id(config_id)
-        if not existing_config:
-            raise EntityNotFound("SourceCodeVersionConfig not found")
-
-        body = config.model_dump(exclude_unset=True)
-        await self.crud.update_config(existing_config, body)
-        return SourceConfigResponse.model_validate(existing_config)
 
     async def update_template_references(self, template_references: list[SourceConfigTemplateReferenceCreate]) -> None:
         """
@@ -512,7 +424,7 @@ class SourceCodeVersionService:
 
                 await self.crud.create_template_references(tr.model_dump(exclude_unset=True))
 
-    async def update_configs_orm(
+    async def update_configs(
         self, source_code_version_id: str | UUID, configs: list[SourceConfigUpdateWithId]
     ) -> list[SourceConfig]:
         """
@@ -562,30 +474,6 @@ class SourceCodeVersionService:
 
         return updated_configs
 
-    async def update_configs(
-        self, source_code_version_id: str | UUID, configs: list[SourceConfigUpdateWithId]
-    ) -> list[SourceConfigResponse]:
-        """
-        Update existing source code version configs.
-        :param source_code_version_id: ID of the source code version
-        :param configs: List of SourceConfigUpdate to update
-        :return: List of updated source code version configs
-        """
-        updated_configs = await self.update_configs_orm(
-            source_code_version_id=source_code_version_id,
-            configs=configs,
-        )
-        return [SourceConfigResponse.model_validate(config) for config in updated_configs]
-
-    async def get_output_configs_by_scv_id(self, source_code_version_id: str) -> list[SourceOutputConfigResponse]:
-        """
-        Get all output configs for a source code version.
-        :param source_code_version_id: ID of the source code version
-        :return: List of SourceOutputConfigResponse
-        """
-        configs = await self.crud.get_output_by_scv_id(source_code_version_id)
-        return [SourceOutputConfigResponse.model_validate(config) for config in configs]
-
     async def get_output_configs_by_template_id(self, template_id: str | UUID) -> list[SourceOutputConfigResponse]:
         """
         Get all output configs for a template.
@@ -594,17 +482,6 @@ class SourceCodeVersionService:
         """
         configs = await self.crud.get_output_by_template_id(template_id)
         return [SourceOutputConfigResponse.model_validate(config) for config in configs]
-
-    async def get_template_config_references_by_template_id(
-        self, template_id: str | UUID
-    ) -> list[SourceConfigTemplateReferenceResponse]:
-        """
-        Get all output configs for a template.
-        :param template_id: ID of the template
-        :return: List of SourceConfigTemplateAssociationResponse
-        """
-        references = await self.crud.get_reference_output_configs_by_template_id(template_id)
-        return [SourceConfigTemplateReferenceResponse.model_validate(reference) for reference in references]
 
     async def get_batch_template_ports(self, template_ids: list[UUID]) -> BatchTemplatePortsResponse:
         """

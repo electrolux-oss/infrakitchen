@@ -111,11 +111,6 @@ class SourceCodeVersionCRUD:
         result = await self.session.execute(statement)
         return list(result.unique().scalars().all())
 
-    async def get_config_by_id(self, source_code_config_id: str | UUID) -> SourceConfig | None:
-        statement = select(SourceConfig).where(SourceConfig.id == source_code_config_id)
-        result = await self.session.execute(statement)
-        return result.unique().scalar_one_or_none()
-
     async def create_config(self, body: dict[str, Any]) -> SourceConfig:
         db_source_code_config = SourceConfig(**body)
         self.session.add(db_source_code_config)
@@ -126,27 +121,6 @@ class SourceCodeVersionCRUD:
         for key, value in body.items():
             setattr(existing_source_code_config, key, value)
         return existing_source_code_config
-
-    async def get_configs_by_template_id(self, template_id: str | UUID) -> list[SourceConfig]:
-        if not is_valid_uuid(template_id):
-            raise ValueError(f"Invalid UUID: {template_id}")
-        statement = (
-            select(SourceConfig)
-            .join(SourceCodeVersion, SourceConfig.source_code_version_id == SourceCodeVersion.id)
-            .where(SourceCodeVersion.template_id == template_id)
-            .order_by(SourceConfig.index.asc())
-        )
-        result = await self.session.execute(statement)
-        return list(result.unique().scalars().all())
-
-    async def get_output_by_scv_id(self, source_code_version_id: str | UUID) -> list[SourceOutputConfig]:
-        if not is_valid_uuid(source_code_version_id):
-            raise ValueError(f"Invalid UUID: {source_code_version_id}")
-        statement = select(SourceOutputConfig).where(
-            SourceOutputConfig.source_code_version_id == source_code_version_id
-        )
-        result = await self.session.execute(statement)
-        return list(result.unique().scalars().all())
 
     # Get config references
     async def get_output_by_template_id(self, template_id: str | UUID) -> list[SourceOutputConfig]:

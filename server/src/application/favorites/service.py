@@ -35,24 +35,7 @@ class FavoriteService:
         """Count favorites with optional filter."""
         return await self.crud.count(filter=filter)
 
-    async def create(self, favorite: FavoriteCreate, user_id: UUID | str) -> FavoriteDTO:
-        """Create a new favorite (or return existing if already favorited)."""
-        existing = await self.crud.get_by_id(
-            user_id=user_id,
-            component_type=favorite.component_type,
-            component_id=favorite.component_id,
-        )
-
-        if existing:
-            return FavoriteDTO.model_validate(existing)
-
-        body = favorite.model_dump()
-        body["user_id"] = user_id
-        db_favorite = await self.crud.create(body)
-        await self.crud.refresh(db_favorite)
-        return FavoriteDTO.model_validate(db_favorite)
-
-    async def create_entity(self, favorite: FavoriteCreate, user_id: UUID | str) -> Favorite:
+    async def create_favorite(self, favorite: FavoriteCreate, user_id: UUID | str) -> Favorite:
         """Create a new favorite and return the ORM object (for GraphQL)."""
         existing = await self.crud.get_by_id(
             user_id=user_id,

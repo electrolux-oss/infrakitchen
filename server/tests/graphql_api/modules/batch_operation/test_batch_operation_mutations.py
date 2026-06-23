@@ -116,7 +116,7 @@ class TestBatchOperationMutations:
         mocked_user,
     ):
         mock_batch_operation_service.get_actions = AsyncMock()
-        mock_batch_operation_service.patch_entity_ids_orm = AsyncMock()
+        mock_batch_operation_service.patch_entity_ids = AsyncMock()
         mock_get_service.return_value = mock_batch_operation_service
 
         result = await schema.execute(
@@ -132,7 +132,7 @@ class TestBatchOperationMutations:
         assert result.errors is not None
         assert any("Invalid action" in error.message for error in result.errors)
         mock_batch_operation_service.get_actions.assert_not_awaited()
-        mock_batch_operation_service.patch_entity_ids_orm.assert_not_awaited()
+        mock_batch_operation_service.patch_entity_ids.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.batch_operation.mutations.get_batch_operation_service")
@@ -144,7 +144,7 @@ class TestBatchOperationMutations:
     ):
         batch_operation_id = uuid4()
         mock_batch_operation_service.get_actions = AsyncMock(return_value=[])
-        mock_batch_operation_service.patch_entity_ids_orm = AsyncMock()
+        mock_batch_operation_service.patch_entity_ids = AsyncMock()
         mock_get_service.return_value = mock_batch_operation_service
 
         result = await schema.execute(
@@ -162,7 +162,7 @@ class TestBatchOperationMutations:
         mock_batch_operation_service.get_actions.assert_awaited_once_with(
             batch_operation_id=batch_operation_id, requester=mocked_user
         )
-        mock_batch_operation_service.patch_entity_ids_orm.assert_not_awaited()
+        mock_batch_operation_service.patch_entity_ids.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.batch_operation.mutations.get_batch_operation_service")
@@ -175,7 +175,7 @@ class TestBatchOperationMutations:
     ):
         batch_operation_id = uuid4()
         mock_batch_operation_service.get_actions = AsyncMock(return_value=["add", "remove"])
-        mock_batch_operation_service.patch_entity_ids_orm = AsyncMock(return_value=mocked_batch_operation)
+        mock_batch_operation_service.patch_entity_ids = AsyncMock(return_value=mocked_batch_operation)
         mock_get_service.return_value = mock_batch_operation_service
 
         result = await schema.execute(
@@ -194,9 +194,9 @@ class TestBatchOperationMutations:
         mock_batch_operation_service.get_actions.assert_awaited_once_with(
             batch_operation_id=batch_operation_id, requester=mocked_user
         )
-        mock_batch_operation_service.patch_entity_ids_orm.assert_awaited_once()
-        assert mock_batch_operation_service.patch_entity_ids_orm.await_args
-        call_kwargs = mock_batch_operation_service.patch_entity_ids_orm.await_args.kwargs
+        mock_batch_operation_service.patch_entity_ids.assert_awaited_once()
+        assert mock_batch_operation_service.patch_entity_ids.await_args
+        call_kwargs = mock_batch_operation_service.patch_entity_ids.await_args.kwargs
         assert call_kwargs["batch_operation_id"] == batch_operation_id
         assert call_kwargs["requester"] == mocked_user
         assert call_kwargs["body"].action == "add"

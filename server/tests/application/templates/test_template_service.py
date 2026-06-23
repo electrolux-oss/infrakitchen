@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 
 from pydantic import PydanticUserError
 from uuid import uuid4
@@ -171,7 +171,7 @@ class TestCreate:
         mock_template_crud.create.return_value = expected_created_template
         mock_template_crud.get_by_id.return_value = expected_created_template
 
-        result = await mock_template_service.create(template_create, requester)
+        result = await mock_template_service.create_template(template_create, requester)
 
         mock_template_crud.create.assert_awaited_once_with(
             {
@@ -189,7 +189,7 @@ class TestCreate:
             ModelActions.CREATE,
             revision_number=expected_created_template.revision_number,
         )
-        mock_event_sender.send_event.assert_awaited_once_with(result, ModelActions.CREATE)
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.CREATE)
 
         assert result.template == "template1"
         assert result.description == "Short description"
@@ -205,7 +205,7 @@ class TestCreate:
         mock_template_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_template_service.create(template_create, mocked_user)
+            await mock_template_service.create_template(template_create, mocked_user)
 
         assert exc.value is error
         template_create.model_dump.assert_called_once_with(exclude_unset=True)
@@ -227,7 +227,7 @@ class TestCreate:
         mock_template_crud.get_all.return_value = [parent_template]
 
         with pytest.raises(DependencyError) as exc:
-            await mock_template_service.create(template_create, mocked_user)
+            await mock_template_service.create_template(template_create, mocked_user)
 
         assert str(exc.value) == "A template cannot have a disabled parent template"
         assert len(exc.value.metadata) == 1
@@ -248,7 +248,7 @@ class TestCreate:
         mock_template_crud.get_all.return_value = [child_template]
 
         with pytest.raises(DependencyError) as exc:
-            await mock_template_service.create(template_create, mocked_user)
+            await mock_template_service.create_template(template_create, mocked_user)
 
         assert str(exc.value) == "A template cannot have a disabled child template"
         assert len(exc.value.metadata) == 1
@@ -270,7 +270,7 @@ class TestCreate:
         mock_template_crud.get_all.return_value = [child_template]
 
         with pytest.raises(ValueError) as exc:
-            await mock_template_service.create(template_create, mocked_user)
+            await mock_template_service.create_template(template_create, mocked_user)
 
         assert str(exc.value) == "A template cannot be both a parent and a child of another template"
 
@@ -281,10 +281,9 @@ class TestUpdate:
         self,
         mock_template_service,
         mock_template_crud,
-        mock_revision_handler,
         mock_audit_log_handler,
         mock_event_sender,
-        monkeypatch,
+        mocked_template,
     ):
         template_update = Mock(spec=TemplateUpdate)
         template_update_body = {
@@ -292,21 +291,10 @@ class TestUpdate:
             "description": "Template description",
             "documentation": "# Updated docs",
         }
-        template_id = uuid4()
-        existing_template = Template(id=template_id, name="Test Template", template="template1")
-        updated_template = Template(
-            id=template_id,
-            name="Test Template",
-            template="template1",
-            status=ModelStatus.ENABLED,
-        )
-        template_response = TemplateResponse(
-            id=template_id,
-            name="Test Template",
-            documentation="# Updated docs",
-            template="template1",
-            status=ModelStatus.ENABLED,
-        )
+        template_id = mocked_template.id
+        existing_template = mocked_template
+        updated_template = mocked_template
+        updated_template.documentation = "# Updated docs"
 
         template_update.model_dump = Mock(return_value=template_update_body)
         mock_template_crud.get_by_id.return_value = existing_template
@@ -314,9 +302,7 @@ class TestUpdate:
         requester = Mock(spec=UserDTO)
         requester.id = uuid4()
 
-        monkeypatch.setattr(TemplateResponse, "model_validate", Mock(return_value=template_response))
-
-        result = await mock_template_service.update(
+        result = await mock_template_service.update_template(
             template_id=template_id, template=template_update, requester=requester
         )
 
@@ -327,10 +313,9 @@ class TestUpdate:
         mock_template_crud.update.assert_awaited_once_with(existing_template, template_update_body)
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(
-            updated_template.id, requester.id, "update", revision_number=updated_template.revision_number
+            updated_template.id, requester.id, ModelActions.UPDATE, revision_number=existing_template.revision_number
         )
-        response = TemplateResponse.model_validate(updated_template)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "update")
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.UPDATE)
 
         assert result.status == ModelStatus.ENABLED
         assert result.documentation == "# Updated docs"
@@ -343,7 +328,9 @@ class TestUpdate:
         mock_template_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Template not found"):
-            await mock_template_service.update(template_id=TEMPLATE_ID, template=template_update, requester=requester)
+            await mock_template_service.update_template(
+                template_id=TEMPLATE_ID, template=template_update, requester=requester
+            )
 
     @pytest.mark.asyncio
     async def test_update_template_has_invalid_status(
@@ -363,7 +350,7 @@ class TestUpdate:
         mock_template_crud.get_by_id.return_value = existing_template
 
         with pytest.raises(ValueError):
-            await mock_template_service.update(
+            await mock_template_service.update_template(
                 template_id=existing_template.id, template=template_update, requester=mocked_user
             )
 
@@ -378,7 +365,7 @@ class TestUpdate:
         mock_template_crud.get_by_id.return_value = mocked_template
 
         with pytest.raises(ValueError, match="No changes detected"):
-            await mock_template_service.update(
+            await mock_template_service.update_template(
                 template_id=mocked_template.id, template=template_update, requester=mocked_user
             )
 
@@ -403,7 +390,7 @@ class TestUpdate:
         mock_template_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_template_service.update(
+            await mock_template_service.update_template(
                 template_id=existing_template.id, template=template_update, requester=requester
             )
 
@@ -429,7 +416,7 @@ class TestUpdate:
         mock_template_crud.get_by_id.return_value = existing_template
 
         with pytest.raises(ValueError) as exc:
-            await mock_template_service.update(
+            await mock_template_service.update_template(
                 template_id=existing_template.id, template=template_update, requester=requester
             )
 
@@ -459,7 +446,7 @@ class TestPatch:
 
         monkeypatch.setattr(TemplateResponse, "model_validate", Mock(return_value=template_response))
 
-        result = await mock_template_service.patch(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
+        result = await mock_template_service.patch_action(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
 
         mock_template_crud.get_by_id.assert_awaited_once_with(TEMPLATE_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -491,7 +478,7 @@ class TestPatch:
 
         monkeypatch.setattr(TemplateResponse, "model_validate", Mock(return_value=template_response))
 
-        result = await mock_template_service.patch(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
+        result = await mock_template_service.patch_action(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
 
         mock_template_crud.get_by_id.assert_awaited_once_with(TEMPLATE_ID)
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -510,7 +497,7 @@ class TestPatch:
         mock_template_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Template not found"):
-            await mock_template_service.patch(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
+            await mock_template_service.patch_action(template_id=TEMPLATE_ID, body=patch_body, requester=requester)
 
 
 class TestDelete:

@@ -98,16 +98,6 @@ class AuthProviderService:
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return result
 
-    async def create(self, auth_provider: AuthProviderCreate, requester: UserDTO) -> AuthProviderResponse:
-        """
-        Create a new auth_provider.
-        :param auth_provider: AuthProviderCreate to create
-        :param requester: User who creates the auth_provider
-        :return: Created auth_provider
-        """
-        result = await self.create_auth_provider(auth_provider=auth_provider, requester=requester)
-        return AuthProviderResponse.model_validate(result)
-
     async def update_auth_provider(
         self, auth_provider_id: str, auth_provider: AuthProviderUpdate, requester: UserDTO
     ) -> AuthProvider:
@@ -145,21 +135,6 @@ class AuthProviderService:
         response = AuthProviderResponse.model_validate(auth_provider_from_db)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return auth_provider_from_db
-
-    async def update(
-        self, auth_provider_id: str, auth_provider: AuthProviderUpdate, requester: UserDTO
-    ) -> AuthProviderResponse:
-        """
-        Update an existing auth_provider.
-        :param auth_provider_id: ID of the auth_provider to update
-        :param auth_provider: AuthProvider to update
-        :param requester: User who updates the auth_provider
-        :return: Updated auth_provider
-        """
-        result = await self.update_auth_provider(
-            auth_provider_id=auth_provider_id, auth_provider=auth_provider, requester=requester
-        )
-        return AuthProviderResponse.model_validate(result)
 
     async def delete(self, auth_provider_id: str, requester: UserDTO) -> None:
         existing_auth_provider = await self.crud.get_by_id(auth_provider_id)

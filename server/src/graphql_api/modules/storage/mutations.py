@@ -69,7 +69,7 @@ class StorageMutation:
         if input.action not in await service.get_actions(storage_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {input.action}")
 
-        return await service.patch_action_storage(
+        return await service.patch_action(
             storage_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,

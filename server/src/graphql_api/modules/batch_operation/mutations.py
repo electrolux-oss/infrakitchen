@@ -63,7 +63,7 @@ class BatchOperationMutation:
             action=cast(Literal["add", "remove"], input.action),
             entity_ids=input.entity_ids,
         )
-        return await service.patch_entity_ids_orm(batch_operation_id=id, body=body, requester=requester)
+        return await service.patch_entity_ids(batch_operation_id=id, body=body, requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_batch_operation(self, info: Info, id: uuid.UUID) -> bool:
