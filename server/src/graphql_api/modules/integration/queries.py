@@ -13,6 +13,7 @@ from core.errors import EntityNotFound
 from graphql_api.helpers import (
     IsAuthenticated,
     build_field_spec,
+    check_api_permission,
     get_entity_selection,
     parse_range,
     parse_sort,
@@ -29,6 +30,7 @@ def _build_service(info: Info) -> IntegrationService:
 class IntegrationQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def integration(self, info: Info, id: uuid.UUID) -> IntegrationType | None:
+        await check_api_permission(info, "integration", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "integration")
         fields = build_field_spec(entity_fields)
@@ -42,6 +44,7 @@ class IntegrationQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[IntegrationType]:
+        await check_api_permission(info, "integration", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "integrations")
         fields = build_field_spec(entity_fields)
@@ -58,6 +61,7 @@ class IntegrationQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "integration", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -65,6 +69,7 @@ class IntegrationQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def integration_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "integration", ["read"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         crud = IntegrationCRUD(session=session)

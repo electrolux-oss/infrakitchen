@@ -50,7 +50,7 @@ def make_context(user):
 
 class TestAdministrationGraphql:
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.administration.queries.user_is_super_admin")
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.administration.queries.get_feature_flag_service")
     async def test_feature_flags_returns_flags(
         self,
@@ -84,15 +84,18 @@ class TestAdministrationGraphql:
         "graphql_api.modules.administration.mutations.FeatureFlagEnforcer.send_reload_configs_event",
         new_callable=AsyncMock,
     )
-    @patch("graphql_api.modules.administration.mutations.user_is_super_admin")
+    @patch("graphql_api.modules.administration.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.administration.mutations.get_feature_flag_service")
     async def test_update_feature_flag_returns_updated(
         self,
         mock_get_service,
+        mock_permission_is_super_admin,
         mock_is_super_admin,
         mock_reload,
         mocked_user,
     ):
+        mock_permission_is_super_admin.return_value = True
         mock_is_super_admin.return_value = True
         service = Mock()
         service.update_config = AsyncMock(
@@ -122,13 +125,16 @@ class TestAdministrationGraphql:
         "graphql_api.modules.administration.mutations.FeatureFlagEnforcer.send_reload_configs_event",
         new_callable=AsyncMock,
     )
-    @patch("graphql_api.modules.administration.mutations.user_is_super_admin")
+    @patch("graphql_api.modules.administration.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     async def test_reload_feature_flags_returns_status(
         self,
+        mock_permission_is_super_admin,
         mock_is_super_admin,
         mock_reload,
         mocked_user,
     ):
+        mock_permission_is_super_admin.return_value = True
         mock_is_super_admin.return_value = True
 
         result = await schema.execute(
@@ -142,13 +148,16 @@ class TestAdministrationGraphql:
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.administration.mutations.CasbinEnforcer.send_reload_event", new_callable=AsyncMock)
-    @patch("graphql_api.modules.administration.mutations.user_is_super_admin")
+    @patch("graphql_api.modules.administration.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     async def test_reload_permissions_returns_status(
         self,
+        mock_permission_is_super_admin,
         mock_is_super_admin,
         mock_reload,
         mocked_user,
     ):
+        mock_permission_is_super_admin.return_value = True
         mock_is_super_admin.return_value = True
 
         result = await schema.execute(

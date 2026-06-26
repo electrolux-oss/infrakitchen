@@ -7,7 +7,14 @@ from strawberry.types import Info
 
 from application.batch_operations.dependencies import get_batch_operation_service
 from application.batch_operations.service import BatchOperationService
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.batch_operation.types import BatchOperationType
 
 
@@ -24,6 +31,7 @@ class BatchOperationQuery:
         info: Info,
         id: uuid.UUID,
     ) -> BatchOperationType | None:
+        await check_api_permission(info, "batch_operation", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "batchOperation")
         fields = build_field_spec(entity_fields)
@@ -37,6 +45,7 @@ class BatchOperationQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[BatchOperationType]:
+        await check_api_permission(info, "batch_operation", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "batchOperations")
         fields = build_field_spec(entity_fields)
@@ -53,6 +62,7 @@ class BatchOperationQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "batch_operation", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -60,6 +70,7 @@ class BatchOperationQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def batch_operation_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "batch_operation", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(batch_operation_id=id, requester=requester)

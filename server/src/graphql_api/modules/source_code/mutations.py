@@ -9,7 +9,7 @@ from application.source_codes.schema import SourceCodeCreate, SourceCodeUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.source_code.types import SourceCodeType
 
 
@@ -39,6 +39,7 @@ class SourceCodeActionInput:
 class SourceCodeMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_source_code(self, info: Info, input: SourceCodeCreateInput) -> SourceCodeType:
+        await check_api_permission(info, "source_code", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_source_code_service(session=session)

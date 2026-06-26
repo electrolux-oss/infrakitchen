@@ -7,7 +7,14 @@ from strawberry.types import Info
 
 from core.auth_providers.dependencies import get_auth_provider_service
 from core.auth_providers.service import AuthProviderService
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.auth_provider.types import AuthProviderType
 
 
@@ -20,6 +27,7 @@ def _build_service(info: Info) -> AuthProviderService:
 class AuthProviderQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def auth_provider(self, info: Info, id: uuid.UUID) -> AuthProviderType | None:
+        await check_api_permission(info, "auth_provider", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "authProvider")
         fields = build_field_spec(entity_fields)
@@ -33,6 +41,7 @@ class AuthProviderQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[AuthProviderType]:
+        await check_api_permission(info, "auth_provider", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "authProviders")
         fields = build_field_spec(entity_fields)
@@ -49,6 +58,7 @@ class AuthProviderQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "auth_provider", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -56,6 +66,7 @@ class AuthProviderQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def auth_provider_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "auth_provider", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(auth_provider_id=id, requester=requester)

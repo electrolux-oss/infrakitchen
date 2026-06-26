@@ -10,7 +10,7 @@ from application.templates.schema import TemplateCreate, TemplateUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.template.types import TemplateType
 
 
@@ -49,6 +49,7 @@ class TemplateActionInput:
 class TemplateMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_template(self, info: Info, input: TemplateCreateInput) -> TemplateType:
+        await check_api_permission(info, "template", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_template_service(session)

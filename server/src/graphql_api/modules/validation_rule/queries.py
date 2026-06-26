@@ -6,7 +6,7 @@ from sqlalchemy import select
 from strawberry.types import Info
 
 from application.validation_rules.model import ValidationRule, ValidationRuleTemplateReference
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.validation_rule.types import ValidationRulesByVariableType, ValidationRuleType
 
 
@@ -14,6 +14,7 @@ from graphql_api.modules.validation_rule.types import ValidationRulesByVariableT
 class ValidationRuleQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def predefined_validation_rules(self, info: Info) -> list[ValidationRuleType]:
+        await check_api_permission(info, "validation_rule", ["read"])
         session = info.context["session"]
         stmt = select(ValidationRule).where(ValidationRule.description.isnot(None))
         result = await session.execute(stmt)
@@ -26,6 +27,7 @@ class ValidationRuleQuery:
         template_id: uuid.UUID,
         variable_name: str | None = None,
     ) -> list[ValidationRulesByVariableType]:
+        await check_api_permission(info, "validation_rule", ["read"])
         session = info.context["session"]
         stmt = select(ValidationRuleTemplateReference).where(ValidationRuleTemplateReference.template_id == template_id)
         if variable_name:

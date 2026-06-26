@@ -80,7 +80,7 @@ class TestSchedulerGraphql:
         assert result.data["schedulers"][0]["type"] == "SQL"
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.scheduler.mutations.user_is_super_admin")
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.scheduler.mutations.get_scheduler_job_service")
     async def test_create_scheduler_returns_job(self, mock_get_service, mock_is_super_admin, mocked_user):
         mock_is_super_admin.return_value = True
@@ -116,7 +116,7 @@ class TestSchedulerGraphql:
         }
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.scheduler.mutations.user_is_super_admin")
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.scheduler.mutations.get_scheduler_job_service")
     async def test_update_scheduler_returns_job(self, mock_get_service, mock_is_super_admin, mocked_user):
         mock_is_super_admin.return_value = True
@@ -152,7 +152,7 @@ class TestSchedulerGraphql:
         }
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.scheduler.mutations.user_is_super_admin")
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.scheduler.mutations.get_scheduler_job_service")
     async def test_delete_scheduler_returns_true(self, mock_get_service, mock_is_super_admin, mocked_user):
         mock_is_super_admin.return_value = True

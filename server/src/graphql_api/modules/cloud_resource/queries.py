@@ -5,7 +5,7 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from core.cloud_resources.controller import get_cloud_resource, get_cloud_resources
-from graphql_api.helpers import IsAuthenticated, parse_range, parse_sort
+from graphql_api.helpers import IsAuthenticated, check_api_permission, parse_range, parse_sort
 from graphql_api.modules.cloud_resource.types import CloudResourceType, to_graphql_type
 
 
@@ -47,7 +47,7 @@ def _apply_range(resources: list[CloudResourceType], range_value: tuple[int, int
 class CloudResourceQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def cloud_resource(self, info: Info, id: str) -> CloudResourceType | None:
-        _ = info
+        await check_api_permission(info, "cloud_resource", ["read"])
         resource = await get_cloud_resource(resource_name=id)
         return to_graphql_type(resource)
 
@@ -59,7 +59,7 @@ class CloudResourceQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[CloudResourceType]:
-        _ = info
+        await check_api_permission(info, "cloud_resource", ["read"])
         resources = [to_graphql_type(resource) for resource in await get_cloud_resources()]
         resources = _apply_filter(resources, cast(dict[str, Any], cast(object, filter)) if filter else None)
         resources = _apply_sort(resources, parse_sort(sort))
@@ -72,7 +72,7 @@ class CloudResourceQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
-        _ = info
+        await check_api_permission(info, "cloud_resource", ["read"])
         resources = [to_graphql_type(resource) for resource in await get_cloud_resources()]
         resources = _apply_filter(resources, cast(dict[str, Any], cast(object, filter)) if filter else None)
         return len(resources)

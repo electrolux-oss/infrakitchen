@@ -8,7 +8,14 @@ from strawberry.types import Info
 from application.executors.dependencies import get_executor_service
 from application.executors.service import ExecutorService
 from application.favorites.dependencies import get_favorite_service
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.executor.types import ExecutorType
 
 
@@ -21,6 +28,7 @@ def _build_service(info: Info) -> ExecutorService:
 class ExecutorQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def executor(self, info: Info, id: uuid.UUID) -> ExecutorType | None:
+        await check_api_permission(info, "executor", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "executor")
         fields = build_field_spec(entity_fields)
@@ -34,6 +42,7 @@ class ExecutorQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[ExecutorType]:
+        await check_api_permission(info, "executor", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "executors")
         fields = build_field_spec(entity_fields)
@@ -50,6 +59,7 @@ class ExecutorQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "executor", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -57,6 +67,7 @@ class ExecutorQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def executor_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "executor", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(executor_id=id, requester=requester)

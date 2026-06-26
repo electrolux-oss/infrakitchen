@@ -15,7 +15,7 @@ from application.source_code_versions.schema import (
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType, SourceConfigType
 
 
@@ -79,6 +79,7 @@ class SourceCodeVersionMutation:
     async def create_source_code_version(
         self, info: Info, input: SourceCodeVersionCreateInput
     ) -> SourceCodeVersionType:
+        await check_api_permission(info, "source_code_version", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_source_code_version_service(session=session)

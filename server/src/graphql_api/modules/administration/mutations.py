@@ -6,7 +6,7 @@ from core.feature_flags.dependencies import get_feature_flag_service
 from core.feature_flags.enforcer import FeatureFlagEnforcer
 from core.feature_flags.model import FeatureFlagDTO
 from core.users.functions import user_is_super_admin
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsSuperAdmin
 from graphql_api.modules.administration.types import FeatureFlagType, SimpleStatusType
 
 
@@ -19,7 +19,7 @@ class FeatureFlagUpdateInput:
 
 @strawberry.type
 class AdministrationMutation:
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    @strawberry.mutation(permission_classes=[IsSuperAdmin])
     async def update_feature_flag(self, info: Info, input: FeatureFlagUpdateInput) -> FeatureFlagType:
         requester = info.context["request"].state.user
         if not await user_is_super_admin(requester):
@@ -38,7 +38,7 @@ class AdministrationMutation:
         await FeatureFlagEnforcer().send_reload_configs_event()
         return FeatureFlagType(**updated.model_dump())
 
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    @strawberry.mutation(permission_classes=[IsSuperAdmin])
     async def reload_feature_flags(self, info: Info) -> SimpleStatusType:
         requester = info.context["request"].state.user
         if not await user_is_super_admin(requester):
@@ -47,7 +47,7 @@ class AdministrationMutation:
         await FeatureFlagEnforcer().send_reload_configs_event()
         return SimpleStatusType(status="ok")
 
-    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    @strawberry.mutation(permission_classes=[IsSuperAdmin])
     async def reload_permissions(self, info: Info) -> SimpleStatusType:
         requester = info.context["request"].state.user
         if not await user_is_super_admin(requester):

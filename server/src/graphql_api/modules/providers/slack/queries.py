@@ -4,7 +4,7 @@ import strawberry
 from strawberry.types import Info
 
 from application.providers.slack.slack_provider import get_slack_client
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from .types import SlackChannelType, SlackUserType
 
 
@@ -16,6 +16,7 @@ class SlackQuery:
         info: Info,
         integration_id: uuid.UUID | None = None,
     ) -> list[SlackChannelType]:
+        await check_api_permission(info, "integration", ["read"])
         slack_client = await get_slack_client(integration_id, info.context["session"])
         channels = await slack_client.list_channels()
         return [
@@ -37,6 +38,7 @@ class SlackQuery:
         email: str,
         integration_id: uuid.UUID | None = None,
     ) -> SlackUserType:
+        await check_api_permission(info, "integration", ["read"])
         slack_client = await get_slack_client(integration_id, info.context["session"])
         user = await slack_client.users_lookup_by_email(email=email)
         return SlackUserType(

@@ -45,7 +45,7 @@ def make_context(user):
 
 class TestCreateUserMutation:
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_create_user_returns_created_user(
         self,
@@ -83,7 +83,7 @@ class TestCreateUserMutation:
         assert mock_user_service.create_user.await_args.kwargs["requester"] == mocked_user_response
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_create_user_denies_non_super_admin(
         self,
@@ -140,13 +140,13 @@ class TestCreateUserMutation:
 
         assert result.data is None or result.data["createUser"] is None
         assert result.errors is not None
-        assert any("Not authenticated" in error.message for error in result.errors)
+        assert any("Access denied. You must be a super admin" in error.message for error in result.errors)
         mock_user_service.create_user.assert_not_awaited()
 
 
 class TestLinkUserAccountMutation:
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_link_user_account_returns_user(
         self,
@@ -181,7 +181,7 @@ class TestLinkUserAccountMutation:
         )
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_link_user_account_denies_non_super_admin(
         self,
@@ -211,7 +211,7 @@ class TestLinkUserAccountMutation:
 
 class TestUnlinkUserAccountMutation:
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_unlink_user_account_returns_user(
         self,
@@ -246,7 +246,7 @@ class TestUnlinkUserAccountMutation:
         )
 
     @pytest.mark.asyncio
-    @patch("graphql_api.modules.user.mutations.user_is_super_admin", new_callable=AsyncMock)
+    @patch("graphql_api.helpers.user_is_super_admin", new_callable=AsyncMock)
     @patch("graphql_api.modules.user.mutations.get_user_service")
     async def test_unlink_user_account_denies_non_super_admin(
         self,

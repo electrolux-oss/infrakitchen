@@ -7,7 +7,14 @@ from strawberry.types import Info
 
 from application.storages.service import StorageService
 from application.storages.dependencies import get_storage_service
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.storage.types import StorageType
 
 
@@ -20,6 +27,7 @@ def _build_service(info: Info) -> StorageService:
 class StorageQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def storage(self, info: Info, id: uuid.UUID) -> StorageType | None:
+        await check_api_permission(info, "storage", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "storage")
         fields = build_field_spec(entity_fields)
@@ -33,6 +41,7 @@ class StorageQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[StorageType]:
+        await check_api_permission(info, "storage", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "storages")
         fields = build_field_spec(entity_fields)
@@ -49,6 +58,7 @@ class StorageQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "storage", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -56,6 +66,7 @@ class StorageQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def storage_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "storage", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(id, requester)

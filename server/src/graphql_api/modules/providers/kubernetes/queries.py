@@ -27,6 +27,7 @@ class KubernetesQuery:
         k8s_service: str,
         resource_id: str,
     ) -> list[JSON]:
+        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaces())
 
@@ -38,6 +39,7 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
+        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_deployment(namespace=namespace))
 
@@ -49,6 +51,7 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
+        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_pods(namespace=namespace))
 
@@ -60,6 +63,7 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
+        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_services(namespace=namespace))
 
@@ -72,6 +76,7 @@ class KubernetesQuery:
         namespace: str,
         deployment_name: str,
     ) -> list[JSON]:
+        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         pods = await client.list_deployment_pods(deployment_name=deployment_name, namespace=namespace, raw=True)
 

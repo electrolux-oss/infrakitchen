@@ -16,7 +16,14 @@ from application.source_code_versions.model import (
 )
 from application.source_code_versions.schema import SourceOutputConfigResponse
 from application.source_code_versions.service import SourceCodeVersionService
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.source_code_version.converters import (
     source_config_options,
     source_config_template_reference_options,
@@ -46,6 +53,7 @@ def _build_service(info: Info) -> SourceCodeVersionService:
 class SourceCodeVersionQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code_version(self, info: Info, id: uuid.UUID) -> SourceCodeVersionType | None:
+        await check_api_permission(info, "source_code_version", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersion")
         fields = build_field_spec(entity_fields)
@@ -59,6 +67,7 @@ class SourceCodeVersionQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[SourceCodeVersionType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersions")
         fields = build_field_spec(entity_fields)
@@ -75,6 +84,7 @@ class SourceCodeVersionQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "source_code_version", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -82,6 +92,7 @@ class SourceCodeVersionQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def source_code_version_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "source_code_version", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(source_code_version_id=id, requester=requester)
@@ -92,6 +103,7 @@ class SourceCodeVersionQuery:
         info: Info,
         source_code_version_id: uuid.UUID,
     ) -> list[SourceConfigType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         session = info.context["session"]
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersionConfigs")
         stmt = (
@@ -109,6 +121,7 @@ class SourceCodeVersionQuery:
         info: Info,
         template_id: uuid.UUID,
     ) -> list[SourceConfigTemplateReferenceType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         session = info.context["session"]
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersionTemplateReferences")
         stmt = (
@@ -125,6 +138,7 @@ class SourceCodeVersionQuery:
         info: Info,
         template_id: uuid.UUID,
     ) -> list[SourceConfigType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         session = info.context["session"]
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersionTemplateConfigs")
         stmt = (
@@ -151,6 +165,7 @@ class SourceCodeVersionQuery:
         info: Info,
         source_code_version_id: uuid.UUID,
     ) -> list[SourceOutputConfigType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         session = info.context["session"]
         entity_fields = get_entity_selection(info.selected_fields, "sourceCodeVersionOutputs")
         stmt = (
@@ -168,6 +183,7 @@ class SourceCodeVersionQuery:
         info: Info,
         template_id: uuid.UUID,
     ) -> list[SourceOutputConfigTemplateType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         session = info.context["session"]
         stmt = (
             select(SourceOutputConfig)
@@ -195,6 +211,7 @@ class SourceCodeVersionQuery:
         info: Info,
         template_ids: list[uuid.UUID],
     ) -> list[TemplatePortsItemType]:
+        await check_api_permission(info, "source_code_version", ["read"])
         service = _build_service(info)
         response = await service.get_batch_template_ports(template_ids=template_ids)
         return [

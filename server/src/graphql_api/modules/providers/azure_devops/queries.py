@@ -6,7 +6,7 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from application.providers.azurerm.azure_devops_integration import get_azure_devops_client
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 
 
 @strawberry.type
@@ -17,6 +17,7 @@ class AzureDevopsQuery:
         info: Info,
         integration_id: uuid.UUID | None = None,
     ) -> list[JSON]:
+        await check_api_permission(info, "integration", ["read"])
         client = await get_azure_devops_client(integration_id, info.context["session"])
         return cast(list[JSON], [project.model_dump(mode="json") for project in await client.get_projects()])
 
@@ -27,6 +28,7 @@ class AzureDevopsQuery:
         project: str,
         integration_id: uuid.UUID | None = None,
     ) -> list[JSON]:
+        await check_api_permission(info, "integration", ["read"])
         client = await get_azure_devops_client(integration_id, info.context["session"])
         repos = await client.get_all_repos_for_project(project=project)
         return cast(
@@ -42,6 +44,7 @@ class AzureDevopsQuery:
         repo: str,
         integration_id: uuid.UUID | None = None,
     ) -> JSON:
+        await check_api_permission(info, "integration", ["read"])
         client = await get_azure_devops_client(integration_id, info.context["session"])
         return cast(
             JSON,
@@ -59,6 +62,7 @@ class AzureDevopsQuery:
         repo: str,
         integration_id: uuid.UUID | None = None,
     ) -> list[JSON]:
+        await check_api_permission(info, "integration", ["read"])
         client = await get_azure_devops_client(integration_id, info.context["session"])
         return cast(
             list[JSON],

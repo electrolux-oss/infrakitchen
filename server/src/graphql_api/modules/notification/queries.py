@@ -12,6 +12,7 @@ from core.notifications.dependencies import (
 from graphql_api.helpers import (
     IsAuthenticated,
     build_field_spec,
+    check_api_permission,
     get_entity_selection,
     parse_range,
     parse_sort,
@@ -23,6 +24,7 @@ from graphql_api.modules.notification.types import SubscriptionType, Notificatio
 class NotificationQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def subscription(self, info: Info, id: uuid.UUID) -> SubscriptionType | None:
+        await check_api_permission(info, "subscription", ["read"])
         session = info.context["session"]
         service = get_subscription_service(session)
         entity_fields = get_entity_selection(info.selected_fields, "subscription")
@@ -37,6 +39,7 @@ class NotificationQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[SubscriptionType]:
+        await check_api_permission(info, "subscription", ["read"])
         session = info.context["session"]
         service = get_subscription_service(session)
         entity_fields = get_entity_selection(info.selected_fields, "subscriptions")
@@ -54,6 +57,7 @@ class NotificationQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "subscription", ["read"])
         session = info.context["session"]
         service = get_subscription_service(session)
         return await service.count(
@@ -62,6 +66,7 @@ class NotificationQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def notification_preference(self, info: Info, id: uuid.UUID) -> NotificationPreferenceType | None:
+        await check_api_permission(info, "notification_preference", ["read"])
         session = info.context["session"]
         service = get_notification_preference_service(session)
         entity_fields = get_entity_selection(info.selected_fields, "notificationPreference")
@@ -76,6 +81,7 @@ class NotificationQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[NotificationPreferenceType]:
+        await check_api_permission(info, "notification_preference", ["read"])
         session = info.context["session"]
         service = get_notification_preference_service(session)
         entity_fields = get_entity_selection(info.selected_fields, "notificationPreferences")
@@ -93,6 +99,7 @@ class NotificationQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "notification_preference", ["read"])
         session = info.context["session"]
         service = get_notification_preference_service(session)
         return await service.count(

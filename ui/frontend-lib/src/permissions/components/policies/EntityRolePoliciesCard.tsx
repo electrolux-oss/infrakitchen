@@ -37,6 +37,9 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
+          if (params.row.v1 && params.row.v1.includes("*")) {
+            return <span>{params.row.v1}</span>;
+          }
           return <GetEntityLink {...params.row.entityData} />;
         },
       },

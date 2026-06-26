@@ -1,10 +1,15 @@
 from typing import Any
 
+from core.casbin.enforcer import CasbinEnforcer
 from core.database import FieldSpec
+from core.errors import AccessDenied, AccessUnauthorized
 from core.models.encrypted_secret import EncryptedSecretStr
 from strawberry.permission import BasePermission
 from strawberry.types import Info
 from strawberry.types.nodes import SelectedField, Selection
+
+from core.users.functions import user_has_access_to_api, user_is_super_admin
+from core.users.model import UserDTO
 
 
 # --- Auth permission ---
@@ -13,8 +18,51 @@ from strawberry.types.nodes import SelectedField, Selection
 class IsAuthenticated(BasePermission):
     message = "Not authenticated. Please provide a valid bearer token in the Authorization header."
 
-    def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+    async def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
         return info.context.get("user") is not None
+
+
+class IsSuperAdmin(BasePermission):
+    message = "Access denied. You must be a super admin to perform this action."
+
+    async def has_permission(self, source: Any, info: Info, **kwargs: Any) -> bool:
+        user = info.context.get("user")
+        return user is not None and await user_is_super_admin(user)
+
+
+async def check_api_permission(info: Info, entity_name: str, policies: list[str]) -> None:
+    user: UserDTO | None = info.context.get("user")
+    if user is None:
+        raise AccessUnauthorized("Not authenticated.")
+
+    casbin_enforcer = CasbinEnforcer()
+    if casbin_enforcer.enforcer is None:
+        _ = await casbin_enforcer.get_enforcer()
+    if casbin_enforcer.enforcer is None:
+        raise RuntimeError("Casbin enforcer is not initialized")
+
+    if user.deactivated is True:
+        raise AccessUnauthorized("Not authenticated.")
+
+    entity = entity_name.removesuffix("s")
+
+    if entity in (
+        "resource",
+        "resource_temp_state",
+        "executor",
+        "favorite",
+        "integration",
+        "workspace",
+    ):
+        # Some entities have their own permission control system using the `user_has_access_to_entity` function
+        if await user_has_access_to_api(user, entity, "read"):
+            return
+
+    for method in policies:
+        if await user_has_access_to_api(user, entity, method):
+            return
+
+    raise AccessDenied(f"Access denied. You do not have permission to {', '.join(policies)} {entity_name}.")
 
 
 # --- Field introspection ---
