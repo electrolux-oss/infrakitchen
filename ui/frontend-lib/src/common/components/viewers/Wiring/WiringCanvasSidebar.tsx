@@ -93,7 +93,7 @@ export function WiringCanvasSidebar({
       JSON.stringify({
         id: template.id,
         name: template.name,
-        _entity_name: template.entityName,
+        entityName: template.entityName,
       }),
     );
     e.dataTransfer.effectAllowed = "copy";

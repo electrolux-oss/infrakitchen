@@ -15,13 +15,27 @@ import { useEventProvider } from "./EventContext";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
 
-const snakeToCamel = (s: string): string =>
-  s.replace(SNAKE_TO_CAMEL_RE, (_, c: string) => c.toUpperCase());
+const snakeToCamel = (s: string): string => {
+  const camel = s.replace(SNAKE_TO_CAMEL_RE, (_, c: string) => c.toUpperCase());
+  return camel.charAt(0).toLowerCase() + camel.slice(1);
+};
 
-const camelizeKeys = (obj: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [snakeToCamel(key), value]),
-  );
+export const camelizeKeys = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(camelizeKeys);
+  }
+
+  if (obj !== null && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        snakeToCamel(key),
+        camelizeKeys(value),
+      ]),
+    );
+  }
+
+  return obj;
+};
 
 interface EntityContextType {
   actions: string[];
