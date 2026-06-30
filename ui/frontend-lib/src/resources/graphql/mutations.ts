@@ -72,5 +72,6 @@ export const SYNC_WORKSPACE_MUTATION = `
       id
       name
       entityName
+    }
   }
 `;

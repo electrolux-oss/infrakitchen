@@ -4,7 +4,6 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoIcon from "@mui/icons-material/Info";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import SyncIcon from "@mui/icons-material/Sync";
 import {
   Box,
   Button,
@@ -20,7 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PermissionWrapper, useConfig } from "../../common";
+import { useConfig } from "../../common";
 import {
   CommonField,
   GetEntityLink,
@@ -37,7 +36,6 @@ import { IkEntity } from "../../types";
 import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
-  SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
 import { VariableInput, VariableOutput } from "../types";
@@ -121,7 +119,6 @@ export const TemplateConfiguration = ({
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
   const canEditStorage = checkActionPermission("api:storage", "admin");
-  const [isSyncing, setIsSyncing] = useState(false);
   const [isStorageEditable, setIsStorageEditable] = useState(false);
   const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
 
@@ -163,21 +160,6 @@ export const TemplateConfiguration = ({
     },
     [saveField],
   );
-
-  const handleSync = () => {
-    setIsSyncing(true);
-    ikApi
-      .graphqlRequest(SYNC_WORKSPACE_MUTATION, { id: resource.id })
-      .then(() => {
-        notify("Sent sync workspace request", "success");
-      })
-      .catch((error) => {
-        notifyError(error);
-      })
-      .finally(() => {
-        setIsSyncing(false);
-      });
-  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -221,39 +203,6 @@ export const TemplateConfiguration = ({
                 )}
               </Box>
             }
-          />
-          <CommonField
-            name="Integrations"
-            value={
-              resource.integrationIds && resource.integrationIds.length > 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.integrationIds.map((parent) => (
-                    <span key={parent.id}>
-                      <GetReferenceUrlValue
-                        {...parent}
-                        urlProvider={parent.integrationProvider}
-                      />
-                    </span>
-                  ))}
-                </Box>
-              ) : null
-            }
-            size={6}
-          />
-          <CommonField
-            name="Secrets"
-            value={
-              resource.secretIds && resource.secretIds.length > 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.secretIds.map((parent) => (
-                    <span key={parent.id}>
-                      <GetReferenceUrlValue {...parent} />
-                    </span>
-                  ))}
-                </Box>
-              ) : null
-            }
-            size={6}
           />
 
           {canEditStorage &&
@@ -370,34 +319,6 @@ export const TemplateConfiguration = ({
               <CommonField name="Storage Path" value={resource.storagePath} />
             </>
           )}
-
-          <CommonField
-            name="Workspace"
-            value={
-              resource.workspace ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <GetReferenceUrlValue {...resource.workspace} />
-                  <PermissionWrapper
-                    requiredPermission="api:resource"
-                    permissionAction="admin"
-                  >
-                    <Tooltip title="Sync workspace">
-                      <span>
-                        <IconButton
-                          size="small"
-                          onClick={handleSync}
-                          disabled={isSyncing}
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
-                        >
-                          <SyncIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </PermissionWrapper>
-                </Box>
-              ) : null
-            }
-          />
         </Grid>
       </OverviewCard>
 

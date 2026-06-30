@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { Box, Divider, TextField } from "@mui/material";
+import SyncIcon from "@mui/icons-material/Sync";
+import { Box, Divider, IconButton, TextField, Tooltip } from "@mui/material";
 
+import { PermissionWrapper } from "../../common";
 import {
   CommonField,
   GetReferenceUrlValue,
@@ -25,6 +27,7 @@ import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
+  SYNC_WORKSPACE_MUTATION,
 } from "../graphql/mutations";
 
 export interface ResourceAboutProps {
@@ -36,6 +39,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   const { refreshEntity } = useEntityProvider();
   const { checkActionPermission, permissions } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -70,6 +74,21 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
     },
     [existingWorkspaceId, permissions],
   );
+
+  const handleSync = () => {
+    setIsSyncing(true);
+    ikApi
+      .graphqlRequest(SYNC_WORKSPACE_MUTATION, { id: resource.id })
+      .then(() => {
+        notify("Sent sync workspace request", "success");
+      })
+      .catch((error) => {
+        notifyError(error);
+      })
+      .finally(() => {
+        setIsSyncing(false);
+      });
+  };
 
   const saveField = useCallback(
     async (input: ResourceUpdateFieldInput) => {
@@ -265,7 +284,26 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             ariaLabel="Edit workspace"
             display={
               resource.workspace ? (
-                <GetReferenceUrlValue {...resource.workspace} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <GetReferenceUrlValue {...resource.workspace} />
+                  <PermissionWrapper
+                    requiredPermission="api:resource"
+                    permissionAction="admin"
+                  >
+                    <Tooltip title="Sync workspace">
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={handleSync}
+                          disabled={isSyncing}
+                          sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
+                        >
+                          <SyncIcon />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </PermissionWrapper>
+                </Box>
               ) : null
             }
             onSave={(value) => saveField({ workspaceId: value })}

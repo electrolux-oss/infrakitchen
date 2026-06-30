@@ -1591,15 +1591,11 @@ class TestSyncWorkspace:
         mock_resource_crud,
         mock_event_sender,
         mocked_resource,
-        resource_response,
-        monkeypatch,
         mock_user_dto,
     ):
         mocked_resource.state = state
         mocked_resource.workspace_id = uuid4()
         mock_resource_crud.get_by_id.return_value = mocked_resource
-        mocked_validate = Mock(return_value=resource_response)
-        monkeypatch.setattr(ResourceResponse, "model_validate", mocked_validate)
 
         result = await mock_resource_service.sync_workspace(
             resource_id=str(mocked_resource.id), requester=mock_user_dto
@@ -1609,5 +1605,4 @@ class TestSyncWorkspace:
         mock_event_sender.send_task.assert_awaited_once_with(
             mocked_resource.id, requester=mock_user_dto, action=ModelActions.SYNC
         )
-        mocked_validate.assert_called_once_with(mocked_resource)
-        assert result == resource_response
+        assert result == mocked_resource

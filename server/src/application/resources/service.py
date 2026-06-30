@@ -1220,7 +1220,7 @@ class ResourceService:
             await self.subscription_service.delete(subscription_id=subscription.id)
         return True
 
-    async def sync_workspace(self, resource_id: str, requester: UserDTO) -> ResourceResponse:
+    async def sync_workspace(self, resource_id: str, requester: UserDTO) -> Resource:
         """
         Sync existing resource with a workspace.
         :param resource_id: ID of the resource to sync
@@ -1240,7 +1240,7 @@ class ResourceService:
 
         await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
 
-        return ResourceResponse.model_validate(existing_resource)
+        return existing_resource
 
     async def publish_notification_event(
         self,
