@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoIcon from "@mui/icons-material/Info";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -128,12 +129,6 @@ export const TemplateConfiguration = ({
     {},
   );
 
-  const scvFilter = useMemo(
-    () =>
-      resource.template?.id ? { template_id: resource.template.id } : undefined,
-    [resource.template?.id],
-  );
-
   const storageFilter = useMemo(
     () => ({
       integration_id: resource.integrationIds?.map((i) => i.id),
@@ -156,6 +151,17 @@ export const TemplateConfiguration = ({
       }
     },
     [ikApi, resource.id, refreshEntity],
+  );
+
+  const handleVariablesSave = useCallback(
+    async (variables: VariableInput[], sourceCodeVersionId?: string | null) => {
+      const input: ResourceUpdateFieldInput = { variables };
+      if (sourceCodeVersionId !== undefined) {
+        input.sourceCodeVersionId = sourceCodeVersionId;
+      }
+      await saveField(input);
+    },
+    [saveField],
   );
 
   const handleSync = () => {
@@ -183,38 +189,38 @@ export const TemplateConfiguration = ({
               value={<GetReferenceUrlValue {...resource.template} />}
             />
           )}
-          <CommonEditableField<string | null>
+          <CommonField
             name="Template Version"
-            canEdit={canEdit}
-            value={resource.sourceCodeVersion?.id ?? null}
-            ariaLabel="Edit template version"
-            display={
-              resource.sourceCodeVersion?.sourceCode ? (
-                <GetEntityLink
-                  {...resource.sourceCodeVersion}
-                  name={
-                    resource.sourceCodeVersion?.sourceCodeVersion ||
-                    resource.sourceCodeVersion?.sourceCodeBranch ||
-                    "Unnamed Version"
-                  }
-                />
-              ) : null
+            value={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {resource.sourceCodeVersion?.sourceCode ? (
+                  <GetEntityLink
+                    {...resource.sourceCodeVersion}
+                    name={
+                      resource.sourceCodeVersion?.sourceCodeVersion ||
+                      resource.sourceCodeVersion?.sourceCodeBranch ||
+                      "Unnamed Version"
+                    }
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Not set
+                  </Typography>
+                )}
+                {canEdit && (
+                  <Tooltip title="Change template version">
+                    <IconButton
+                      size="small"
+                      onClick={() => setVariablesDialogOpen(true)}
+                      aria-label="Change template version"
+                      sx={{ "& .MuiSvgIcon-root": { fontSize: "1.1rem" } }}
+                    >
+                      <EditOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
             }
-            onSave={(value) => saveField({ sourceCodeVersionId: value })}
-            renderEditor={({ value, onChange }) => (
-              <ReferenceInput
-                ikApi={ikApi}
-                entity_name="source_code_versions"
-                showFields={["identifier"]}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                getOptionDisabled={(option: any) => option.status !== "done"}
-                filter={scvFilter}
-                value={value}
-                onChange={onChange}
-                label="Source Code Version"
-              />
-            )}
           />
           <CommonField
             name="Integrations"
@@ -425,7 +431,7 @@ export const TemplateConfiguration = ({
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
-            onSave={(variables) => saveField({ variables })}
+            onSave={handleVariablesSave}
           />
           <OverviewCard name="Output Values">
             {getSourceCodeVariables(resource.outputs as VariableOutput[])}
