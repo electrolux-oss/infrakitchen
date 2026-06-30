@@ -167,7 +167,6 @@ async def get_resource_task(
     crud_resource = ResourceCRUD(session=session)
     crud_resource_temp_state = ResourceTempStateCrud(session=session)
     event_sender = EventSender(entity_name="resource")
-    workspace_event_sender = EventSender(entity_name="workspace")
     source_code_version_service = get_source_code_version_service(session=session)
 
     resource_instance = await crud_resource.get_by_id(obj_id)
@@ -207,7 +206,6 @@ async def get_resource_task(
         secret_manager=secret_manager,
         user=user,
         event_sender=event_sender,
-        workspace_event_sender=workspace_event_sender,
         action=action,
     )
 

@@ -1,6 +1,8 @@
 import uuid
+from typing import Any
 
 import strawberry
+from strawberry import Maybe
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
@@ -37,20 +39,28 @@ class ResourceCreateInput:
     workspace_id: uuid.UUID | None = None
 
 
-@strawberry_pydantic.input(model=ResourceUpdate, all_fields=False)
+@strawberry.input
 class ResourceUpdateInput:
-    name: str | None = strawberry.UNSET
-    description: str | None = strawberry.UNSET
-    source_code_version_id: uuid.UUID | None = strawberry.UNSET
-    integration_ids: list[uuid.UUID] | None = strawberry.UNSET
-    secret_ids: list[uuid.UUID] | None = strawberry.UNSET
-    storage_id: uuid.UUID | None = strawberry.UNSET
-    storage_path: str | None = strawberry.UNSET
-    variables: JSON | None = strawberry.UNSET
-    dependency_tags: JSON | None = strawberry.UNSET
-    dependency_config: JSON | None = strawberry.UNSET
-    labels: list[str] | None = strawberry.UNSET
-    workspace_id: uuid.UUID | None = strawberry.UNSET
+    name: Maybe[str | None] = None
+    description: Maybe[str | None] = None
+    source_code_version_id: Maybe[uuid.UUID | None] = None
+    integration_ids: Maybe[list[uuid.UUID] | None] = None
+    secret_ids: Maybe[list[uuid.UUID] | None] = None
+    storage_id: Maybe[uuid.UUID | None] = None
+    storage_path: Maybe[str | None] = None
+    variables: Maybe[JSON | None] = None
+    dependency_tags: Maybe[JSON | None] = None
+    dependency_config: Maybe[JSON | None] = None
+    labels: Maybe[list[str] | None] = None
+    workspace_id: Maybe[uuid.UUID | None] = None
+
+    def to_pydantic(self) -> ResourceUpdate:
+        data: dict[str, Any] = {}
+        for field_name, value in vars(self).items():
+            if value is not None:
+                data[field_name] = value.value
+
+        return ResourceUpdate(**data)
 
 
 @strawberry.input
