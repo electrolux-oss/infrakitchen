@@ -45,6 +45,7 @@ interface EntityContextType {
   loading: boolean;
   error?: string | null;
   refreshEntity?: (entity?: IkEntity) => void;
+  refreshActions?: () => void;
 }
 
 export const EntityContext = createContext<EntityContextType | undefined>(
@@ -138,6 +139,25 @@ export const EntityProvider = ({
     }
   }, []);
 
+  const refreshActions = useCallback(async () => {
+    await ikApi
+      .graphqlRequest(
+        `
+        query EntityActions($id: UUID!) {
+          ${entity_name}Actions: ${entity_name}Actions(id: $id)
+        }
+      `,
+        { id: entity_id },
+      )
+      .then((response: any) => {
+        const actionsData = response?.[`${entity_name}Actions`] || [];
+        setActions(actionsData);
+      })
+      .catch((e: any) => {
+        notifyError(e);
+      });
+  }, [ikApi, entity_name, entity_id]);
+
   const contextValue: EntityContextType = {
     actions,
     entity,
@@ -146,6 +166,7 @@ export const EntityProvider = ({
     loading,
     error,
     refreshEntity,
+    refreshActions,
   };
   return (
     <EntityContext.Provider value={contextValue}>

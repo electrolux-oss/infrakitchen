@@ -23,6 +23,7 @@ interface EntityUserPolicyCreateCardProps {
   entityName?: string;
   entityId?: string;
   onClose?: () => void;
+  onSuccess?: () => void;
   formId?: string;
 }
 
@@ -35,7 +36,14 @@ const actions = [
 export const EntityUserPolicyCreateCard = (
   props: EntityUserPolicyCreateCardProps,
 ) => {
-  const { userId, entityName = "resource", entityId, onClose, formId } = props;
+  const {
+    userId,
+    entityName = "resource",
+    entityId,
+    onClose,
+    onSuccess,
+    formId,
+  } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -76,13 +84,14 @@ export const EntityUserPolicyCreateCard = (
             `Resource policy created successfully: ${response.createEntityPolicy.v1} - ${response.createEntityPolicy.v2}`,
             "success",
           );
+          onSuccess?.();
           onClose?.();
         }
       } catch (error: any) {
         notifyError(error);
       }
     },
-    [ikApi, onClose],
+    [ikApi, onClose, onSuccess],
   );
 
   return (

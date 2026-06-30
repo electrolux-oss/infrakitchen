@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
 import { Button } from "@mui/material";
@@ -9,7 +9,10 @@ import {
   GetEntityLink,
   GetReferenceUrlValue,
 } from "../../../common/components/CommonField";
-import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
+import {
+  EntityFetchTable,
+  EntityFetchTableRef,
+} from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
@@ -21,6 +24,11 @@ export const UserPoliciesCard = (props: { userId: string }) => {
   const { userId } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const tableRef = useRef<EntityFetchTableRef>(null);
+
+  const refreshPoliciesTable = useCallback(() => {
+    void tableRef.current?.refresh();
+  }, []);
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
@@ -93,12 +101,15 @@ export const UserPoliciesCard = (props: { userId: string }) => {
             requiredPermission="api:permission"
             permissionAction="admin"
           >
-            <DeletePermissionButton permission_id={params.value} />
+            <DeletePermissionButton
+              permission_id={params.value}
+              onDelete={refreshPoliciesTable}
+            />
           </PermissionWrapper>
         ),
       },
     ],
-    [],
+    [refreshPoliciesTable],
   );
 
   return (
@@ -118,9 +129,11 @@ export const UserPoliciesCard = (props: { userId: string }) => {
           userId={userId}
           open={isDialogOpen}
           onClose={handleCloseDialog}
+          onSuccess={refreshPoliciesTable}
         />
       </PermissionWrapper>
       <EntityFetchTable
+        ref={tableRef}
         title="User Policies"
         entityName="permission"
         defaultFilter={{ ptype: "p", v0: `user:${userId}` }}

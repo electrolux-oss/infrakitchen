@@ -12,6 +12,7 @@ interface EntityPolicyRoleCreateDialogProps {
   entityName: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const EntityPolicyRoleCreateDialog = (
@@ -39,12 +40,13 @@ interface RolePolicyEntityCreateDialogProps {
   roleName: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const RolePolicyEntityCreateDialog = (
   props: RolePolicyEntityCreateDialogProps,
 ) => {
-  const { roleName, onClose, open } = props;
+  const { roleName, onClose, onSuccess, open } = props;
   const formId = useId();
 
   return (
@@ -61,6 +63,7 @@ export const RolePolicyEntityCreateDialog = (
         <EntityRolePolicyCreateCard
           roleName={roleName}
           onClose={onClose}
+          onSuccess={onSuccess}
           formId={formId}
         />
       }
@@ -72,12 +75,13 @@ interface EntityPolicyUserCreateDialogProps {
   userId: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const EntityPolicyUserCreateDialog = (
   props: EntityPolicyUserCreateDialogProps,
 ) => {
-  const { userId, onClose, open } = props;
+  const { userId, onClose, onSuccess, open } = props;
   const formId = useId();
 
   return (
@@ -94,6 +98,7 @@ export const EntityPolicyUserCreateDialog = (
         <EntityUserPolicyCreateCard
           userId={userId}
           onClose={onClose}
+          onSuccess={onSuccess}
           formId={formId}
         />
       }
@@ -106,12 +111,13 @@ interface UserPolicyEntityCreateDialogProps {
   entityName: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const UserPolicyEntityCreateDialog = (
   props: UserPolicyEntityCreateDialogProps,
 ) => {
-  const { entityName, entityId, onClose, open } = props;
+  const { entityName, entityId, onClose, onSuccess, open } = props;
   const formId = useId();
 
   return (
@@ -129,6 +135,7 @@ export const UserPolicyEntityCreateDialog = (
           entityId={entityId}
           entityName={entityName}
           onClose={onClose}
+          onSuccess={onSuccess}
           formId={formId}
         />
       }

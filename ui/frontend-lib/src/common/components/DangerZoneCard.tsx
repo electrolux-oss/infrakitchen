@@ -29,7 +29,7 @@ import { ConfirmNameField } from "./ConfirmNameField";
 
 export const DangerZoneCard = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const { actions, entity } = useEntityProvider();
+  const { actions, entity, refreshActions } = useEntityProvider();
   const [destroyConfirm, setDestroyConfirm] = useState("");
   const [dialogValues, setDialogValues] = useState<{
     [key: string]: boolean;
@@ -48,6 +48,11 @@ export const DangerZoneCard = () => {
     setDialogValues((dialogValues) => {
       return { ...dialogValues, [dialog]: !dialogValues[dialog] as boolean };
     });
+  };
+
+  const changeDialogWithRefresh = async (dialog: string) => {
+    changeDialog(dialog);
+    if (refreshActions) refreshActions();
   };
 
   if (actions.length === 0) {
@@ -155,7 +160,7 @@ export const DangerZoneCard = () => {
         actions={
           <ActionButton
             action={ENTITY_ACTION.DESTROY}
-            onSubmit={() => changeDialog("destroy")}
+            onSubmit={() => changeDialogWithRefresh("destroy")}
             disabled={destroyConfirm !== (entity.name || entity.identifier)}
             color="error"
             variant="contained"
@@ -223,7 +228,7 @@ export const DangerZoneCard = () => {
             action={ENTITY_ACTION.DISABLE}
             variant="contained"
             color="error"
-            onSubmit={() => changeDialog("disable")}
+            onSubmit={() => changeDialogWithRefresh("disable")}
           >
             Disable
           </ActionButton>

@@ -23,6 +23,7 @@ import { ApiPolicyCreate } from "../../types";
 interface PolicyApiCreateProps {
   role_name: string;
   onClose?: () => void;
+  onSuccess?: () => void;
 }
 
 const actions = [
@@ -32,7 +33,7 @@ const actions = [
 ];
 
 export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
-  const { role_name, onClose } = props;
+  const { role_name, onClose, onSuccess } = props;
   const { ikApi, globalConfig } = useConfig();
   const { control, handleSubmit } = useForm<ApiPolicyCreate>({
     mode: "onChange",
@@ -82,12 +83,13 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
           `API policies created successfully for role: ${data.role}`,
           "success",
         );
+        onSuccess?.();
         onClose?.();
       } catch (error: any) {
         notifyError(error);
       }
     },
-    [ikApi, onClose],
+    [ikApi, onClose, onSuccess],
   );
 
   return (
@@ -223,17 +225,24 @@ interface PolicyApiCreateDialogProps {
   role_name: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const PolicyApiCreateDialog = (props: PolicyApiCreateDialogProps) => {
-  const { role_name, onClose, open } = props;
+  const { role_name, onClose, onSuccess, open } = props;
 
   return (
     <CommonDialog
       open={open}
       onClose={onClose}
       title="Assign Resource Policy"
-      content={<PolicyApiCreate role_name={role_name} onClose={onClose} />}
+      content={
+        <PolicyApiCreate
+          role_name={role_name}
+          onClose={onClose}
+          onSuccess={onSuccess}
+        />
+      }
       actions={
         <Button
           type="submit"

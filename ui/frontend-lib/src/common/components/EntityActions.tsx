@@ -29,7 +29,7 @@ export function EntityActions(props: EntityActionsProps) {
   const { entity_id, entity_name, showEditAction } = props;
 
   const { linkPrefix, ikApi } = useConfig();
-  const { actions } = useEntityProvider();
+  const { actions, refreshActions } = useEntityProvider();
   const navigate = useNavigate();
 
   const [dialogValues, setDialogValues] = useState<{
@@ -51,6 +51,11 @@ export function EntityActions(props: EntityActionsProps) {
     setDialogValues((dialogValues) => {
       return { ...dialogValues, [dialog]: !dialogValues[dialog] as boolean };
     });
+  };
+
+  const changeDialogWithRefresh = async (dialog: string) => {
+    changeDialog(dialog);
+    if (refreshActions) refreshActions();
   };
 
   const handleDownloadClick = async () => {
@@ -277,7 +282,7 @@ export function EntityActions(props: EntityActionsProps) {
         actions={
           <ActionButton
             action={ENTITY_ACTION.RECREATE}
-            onSubmit={() => changeDialog("recreate")}
+            onSubmit={() => changeDialogWithRefresh("recreate")}
           >
             Recreate
           </ActionButton>
@@ -292,7 +297,7 @@ export function EntityActions(props: EntityActionsProps) {
         actions={
           <ActionButton
             action={ENTITY_ACTION.ENABLE}
-            onSubmit={() => changeDialog("enable")}
+            onSubmit={() => changeDialogWithRefresh("enable")}
           >
             Enable
           </ActionButton>

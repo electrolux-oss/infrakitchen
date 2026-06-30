@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  forwardRef,
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+} from "react";
 
 import { useEffectOnce } from "react-use";
 
@@ -40,6 +47,10 @@ interface EntityFetchTableProps {
   transformFn?: (data: any) => any;
 }
 
+export interface EntityFetchTableRef {
+  refresh: () => Promise<void>;
+}
+
 interface DataGridState {
   sortModel: GridSortModel;
   paginationModel: GridPaginationModel;
@@ -78,7 +89,10 @@ function buildDefaultApiFilters(
   return apiFilters;
 }
 
-export const EntityFetchTable = (props: EntityFetchTableProps) => {
+export const EntityFetchTable = forwardRef<
+  EntityFetchTableRef,
+  EntityFetchTableProps
+>((props, ref) => {
   const {
     title,
     subtitle,
@@ -294,6 +308,14 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
     entityFieldMap,
   ]);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      refresh: fetchFilteredData,
+    }),
+    [fetchFilteredData],
+  );
+
   useEffect(() => {
     fetchFilteredData();
   }, [fetchFilteredData]);
@@ -338,4 +360,6 @@ export const EntityFetchTable = (props: EntityFetchTableProps) => {
       </Box>
     </>
   );
-};
+});
+
+EntityFetchTable.displayName = "EntityFetchTable";
