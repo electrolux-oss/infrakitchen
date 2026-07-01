@@ -45,7 +45,7 @@ class TestWorkflowMutations:
         mocked_user,
     ):
         mock_workflow_service.get_actions = AsyncMock(return_value=["edit"])
-        mock_workflow_service.update_with_steps_orm = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_service.update_with_steps = AsyncMock(return_value=mocked_workflow)
         mock_get_service.return_value = mock_workflow_service
 
         result = await schema.execute(
@@ -72,9 +72,9 @@ class TestWorkflowMutations:
         mock_workflow_service.get_actions.assert_awaited_once_with(
             workflow_id=mocked_workflow.id, requester=mocked_user
         )
-        mock_workflow_service.update_with_steps_orm.assert_awaited_once()
-        assert mock_workflow_service.update_with_steps_orm.await_args
-        call_kwargs = mock_workflow_service.update_with_steps_orm.await_args.kwargs
+        mock_workflow_service.update_with_steps.assert_awaited_once()
+        assert mock_workflow_service.update_with_steps.await_args
+        call_kwargs = mock_workflow_service.update_with_steps.await_args.kwargs
         assert call_kwargs["workflow_id"] == mocked_workflow.id
         assert call_kwargs["requester"] == mocked_user
         request = call_kwargs["request"]
@@ -92,7 +92,7 @@ class TestWorkflowMutations:
         mocked_user,
     ):
         mock_workflow_service.get_actions = AsyncMock()
-        mock_workflow_service.update_with_steps_orm = AsyncMock()
+        mock_workflow_service.update_with_steps = AsyncMock()
         mock_get_service.return_value = mock_workflow_service
 
         request = Mock()
@@ -111,7 +111,7 @@ class TestWorkflowMutations:
         assert result.errors is not None
         assert any("Not authenticated" in error.message for error in result.errors)
         mock_workflow_service.get_actions.assert_not_awaited()
-        mock_workflow_service.update_with_steps_orm.assert_not_awaited()
+        mock_workflow_service.update_with_steps.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.workflow.mutations.get_workflow_service")
@@ -123,7 +123,7 @@ class TestWorkflowMutations:
     ):
         workflow_id = uuid4()
         mock_workflow_service.get_actions = AsyncMock(return_value=[])
-        mock_workflow_service.update_with_steps_orm = AsyncMock()
+        mock_workflow_service.update_with_steps = AsyncMock()
         mock_get_service.return_value = mock_workflow_service
 
         result = await schema.execute(
@@ -139,7 +139,7 @@ class TestWorkflowMutations:
         assert result.errors is not None
         assert any("Access denied for action edit" in error.message for error in result.errors)
         mock_workflow_service.get_actions.assert_awaited_once_with(workflow_id=workflow_id, requester=mocked_user)
-        mock_workflow_service.update_with_steps_orm.assert_not_awaited()
+        mock_workflow_service.update_with_steps.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.workflow.mutations.get_workflow_service")
