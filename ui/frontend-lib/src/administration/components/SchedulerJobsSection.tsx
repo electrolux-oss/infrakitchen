@@ -32,19 +32,17 @@ const DEFAULT_SQL_EXAMPLES = [
   {
     description: "Cleanup expired logs older than 1 day",
     script:
-      "DELETE from logs WHERE expire_at IS NOT NULL AND expire_at <= CURRENT_DATE - INTERVAL '1 days'",
+      "DELETE from logs WHERE expire_at IS NOT NULL AND expire_at <= NOW() - INTERVAL '1 days'",
     cron: "*/30 * * * *",
   },
   {
     description: "Cleanup stale workers older than 1 hour",
-    script:
-      "DELETE FROM workers WHERE updated_at <= CURRENT_DATE - INTERVAL '1 hour'",
+    script: "DELETE FROM workers WHERE updated_at <= NOW() - INTERVAL '1 hour'",
     cron: "*/10 * * * *",
   },
   {
     description: "Cleanup expired caches older than 1 minute",
-    script:
-      "DELETE from caches WHERE expire_at <= CURRENT_DATE - INTERVAL '1 mins'",
+    script: "DELETE from caches WHERE expire_at <= NOW() - INTERVAL '1 mins'",
     cron: "*/5 * * * *",
   },
 ];

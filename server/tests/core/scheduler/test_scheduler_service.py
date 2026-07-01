@@ -10,6 +10,7 @@ from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import SchedulerJob, JobType
 from core.scheduler.schema import SchedulerJobResponse, SchedulerJobCreate, SchedulerJobUpdate
 from core.scheduler.service import SchedulerJobService
+from core.utils.event_sender import EventSender
 
 SQL_SCRIPT = "DELETE from logs"
 BASH_SCRIPT = "#!/bin/bash echo hi"
@@ -28,8 +29,15 @@ def mock_scheduler_job_crud():
 
 
 @pytest.fixture
-def mock_scheduler_job_service(mock_scheduler_job_crud):
-    return SchedulerJobService(crud=mock_scheduler_job_crud)
+def mock_event_sender():
+    event_sender = Mock(spec=EventSender)
+    event_sender.send_reload_event = AsyncMock()
+    return event_sender
+
+
+@pytest.fixture
+def mock_scheduler_job_service(mock_scheduler_job_crud, mock_event_sender):
+    return SchedulerJobService(crud=mock_scheduler_job_crud, event_sender=mock_event_sender)
 
 
 class TestGetAll:
@@ -80,7 +88,9 @@ class TestGetAll:
 
 class TestCreate:
     @pytest.mark.asyncio
-    async def test_create_success(self, mock_scheduler_job_service, mock_scheduler_job_crud, monkeypatch):
+    async def test_create_success(
+        self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender, monkeypatch
+    ):
         job_create = Mock(spec=SchedulerJobCreate)
         job_create_body = {"type": "SQL", "script": SQL_SCRIPT, "cron": CRON}
         job_create.model_dump = Mock(return_value=job_create_body)
@@ -95,11 +105,12 @@ class TestCreate:
 
         job_create.model_dump.assert_called_once()
         mock_scheduler_job_crud.create.assert_awaited_once()
+        mock_event_sender.send_reload_event.assert_awaited_once()
 
         assert result == scheduler_job_response
 
     @pytest.mark.asyncio
-    async def test_create_error(self, mock_scheduler_job_service, mock_scheduler_job_crud):
+    async def test_create_error(self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender):
         job_create = Mock(spec=SchedulerJobCreate)
         job_create_body = {"type": "SQL", "script": SQL_SCRIPT, "cron": CRON}
         job_create.model_dump = Mock(return_value=job_create_body)
@@ -113,11 +124,12 @@ class TestCreate:
         assert exc.value is error
         job_create.model_dump.assert_called_once()
         mock_scheduler_job_crud.create.assert_awaited_once()
+        mock_event_sender.send_reload_event.assert_not_awaited()
 
 
 class TestUpdate:
     @pytest.mark.asyncio
-    async def test_update_not_found(self, mock_scheduler_job_service, mock_scheduler_job_crud):
+    async def test_update_not_found(self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender):
         job_id = uuid4()
         job_update = SchedulerJobUpdate(script=SQL_SCRIPT)
         mock_scheduler_job_crud.get_by_id.return_value = None
@@ -127,10 +139,11 @@ class TestUpdate:
         assert result is None
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.update.assert_not_awaited()
+        mock_event_sender.send_reload_event.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_update_empty_body_returns_existing(
-        self, mock_scheduler_job_service, mock_scheduler_job_crud, monkeypatch
+        self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender, monkeypatch
     ):
         job_id = uuid4()
         existing_job = SchedulerJob(
@@ -156,9 +169,12 @@ class TestUpdate:
         assert result == scheduler_job_response
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.update.assert_not_awaited()
+        mock_event_sender.send_reload_event.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_update_success(self, mock_scheduler_job_service, mock_scheduler_job_crud, monkeypatch):
+    async def test_update_success(
+        self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender, monkeypatch
+    ):
         job_id = uuid4()
         existing_job = SchedulerJob(
             id=job_id,
@@ -191,9 +207,12 @@ class TestUpdate:
         assert result == scheduler_job_response
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.update.assert_awaited_once()
+        mock_event_sender.send_reload_event.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_update_validation_error(self, mock_scheduler_job_service, mock_scheduler_job_crud, monkeypatch):
+    async def test_update_validation_error(
+        self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender, monkeypatch
+    ):
         job_id = uuid4()
         existing_job = SchedulerJob(
             id=job_id,
@@ -217,11 +236,12 @@ class TestUpdate:
         assert str(exc.value) == "validate fail"
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.update.assert_not_awaited()
+        mock_event_sender.send_reload_event.assert_not_awaited()
 
 
 class TestDelete:
     @pytest.mark.asyncio
-    async def test_delete_not_found(self, mock_scheduler_job_service, mock_scheduler_job_crud):
+    async def test_delete_not_found(self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender):
         job_id = uuid4()
         mock_scheduler_job_crud.get_by_id.return_value = None
 
@@ -230,9 +250,10 @@ class TestDelete:
         assert result is False
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.delete.assert_not_awaited()
+        mock_event_sender.send_reload_event.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_delete_success(self, mock_scheduler_job_service, mock_scheduler_job_crud):
+    async def test_delete_success(self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender):
         job_id = uuid4()
         existing_job = SchedulerJob(
             id=job_id,
@@ -248,9 +269,10 @@ class TestDelete:
         assert result is True
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.delete.assert_awaited_once_with(existing_job)
+        mock_event_sender.send_reload_event.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_delete_error(self, mock_scheduler_job_service, mock_scheduler_job_crud):
+    async def test_delete_error(self, mock_scheduler_job_service, mock_scheduler_job_crud, mock_event_sender):
         job_id = uuid4()
         existing_job = SchedulerJob(
             id=job_id,
@@ -270,3 +292,4 @@ class TestDelete:
         assert exc.value is error
         mock_scheduler_job_crud.get_by_id.assert_awaited_once_with(job_id)
         mock_scheduler_job_crud.delete.assert_awaited_once_with(existing_job)
+        mock_event_sender.send_reload_event.assert_not_awaited()
