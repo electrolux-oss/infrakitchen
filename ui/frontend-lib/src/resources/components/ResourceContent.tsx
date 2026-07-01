@@ -24,7 +24,7 @@ interface ResourceContentProps {
 export const ResourceContent = ({
   subscribersRefreshKey = 0,
 }: ResourceContentProps) => {
-  const { entity } = useEntityProvider();
+  const { entity, userEntityPermissions } = useEntityProvider();
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
@@ -106,7 +106,10 @@ export const ResourceContent = ({
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
       <ResourceOverview resource={entity} />
-      <TabbedContent tabs={tabs} />
+      <TabbedContent
+        tabs={tabs}
+        userEntityPermissions={userEntityPermissions}
+      />
     </Box>
   );
 };

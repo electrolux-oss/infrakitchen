@@ -79,3 +79,9 @@ class UserQuery:
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(user_id=id, requester=requester)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def user_entity_permissions(self, info: Info, entity_id: uuid.UUID, entity_name: str) -> list[str]:
+        service = _build_service(info)
+        requester = info.context["request"].state.user
+        return await service.get_user_entity_permissions(requester, entity_id, entity_name)

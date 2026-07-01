@@ -46,6 +46,7 @@ interface EntityContextType {
   error?: string | null;
   refreshEntity?: (entity?: IkEntity) => void;
   refreshActions?: () => void;
+  userEntityPermissions: string[];
 }
 
 export const EntityContext = createContext<EntityContextType | undefined>(
@@ -67,6 +68,9 @@ export const EntityProvider = ({
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
+  const [userEntityPermissions, setUserEntityPermissions] = useState<string[]>(
+    [],
+  );
   const [refresh, refreshNumber] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +97,7 @@ export const EntityProvider = ({
                   ${entityFields}
                 }
                 ${entity_name}Actions: ${entity_name}Actions(id: $id)
+                userEntityPermissions: userEntityPermissions(entityName: "${entity_name}", entityId: $id)
               }
             `,
             { id: entity_id },
@@ -103,6 +108,8 @@ export const EntityProvider = ({
               throw new Error(`${entity_name} not found`);
             }
             const actionsData = response?.[`${entity_name}Actions`] || [];
+            const userEntityPermissions = response?.userEntityPermissions || [];
+            setUserEntityPermissions(userEntityPermissions);
             setActions(actionsData);
             return transformFn ? transformFn(data) : data;
           })
@@ -167,6 +174,7 @@ export const EntityProvider = ({
     error,
     refreshEntity,
     refreshActions,
+    userEntityPermissions,
   };
   return (
     <EntityContext.Provider value={contextValue}>
