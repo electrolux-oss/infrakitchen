@@ -88,9 +88,11 @@ export default function DashboardHeader({
           <Stack direction="row" alignItems="center">
             <Box sx={{ mr: 1 }}>{getMenuIcon(menuOpen)}</Box>
             <Link to="/" style={{ textDecoration: "none" }}>
-              <Stack direction="row" alignItems="center">
-                {logo ? <LogoContainer>{logo}</LogoContainer> : null}
-                {title ? (
+              {logo ? <LogoContainer>{logo}</LogoContainer> : null}
+            </Link>
+            <Stack direction="row" alignItems="baseline">
+              {title ? (
+                <Link to="/" style={{ textDecoration: "none" }}>
                   <Typography
                     variant="h5"
                     sx={{
@@ -103,9 +105,20 @@ export default function DashboardHeader({
                   >
                     {title}
                   </Typography>
-                ) : null}
-              </Stack>
-            </Link>
+                </Link>
+              ) : null}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.disabled",
+                  fontSize: "0.6rem",
+                  ml: 2,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
+              </Typography>
+            </Stack>
           </Stack>
           <Stack
             direction="row"

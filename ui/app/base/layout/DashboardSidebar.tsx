@@ -342,28 +342,6 @@ export default function DashboardSidebar({
               <OptionsMenu />
             </Stack>
           )}
-
-          <DashboardSidebarDividerItem />
-          <Box
-            sx={{
-              px: 2,
-              py: 1,
-              opacity: isFullyExpanded ? 1 : 0,
-              transition: "opacity 0.2s",
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.disabled",
-                display: "block",
-                fontSize: "0.65rem",
-                lineHeight: 1.4,
-              }}
-            >
-              v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
-            </Typography>
-          </Box>
         </List>
       </Box>
     ),
