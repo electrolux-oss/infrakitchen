@@ -142,7 +142,7 @@ class TestCreate:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         user_dto = UserDTO.model_validate(mocked_user)
-        result = await mock_blueprint_service.create(blueprint_create, user_dto)
+        result = await mock_blueprint_service.create_blueprint(blueprint_create, user_dto)
 
         assert result.id == mocked_blueprint.id
         assert result.name == mocked_blueprint.name
@@ -181,7 +181,7 @@ class TestCreate:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         user_dto = UserDTO.model_validate(mocked_user)
-        result = await mock_blueprint_service.create(blueprint_create, user_dto)
+        result = await mock_blueprint_service.create_blueprint(blueprint_create, user_dto)
 
         assert result.id == mocked_blueprint.id
         mock_blueprint_crud.create.assert_awaited_once()
@@ -197,7 +197,7 @@ class TestCreate:
 
         user_dto = UserDTO.model_validate(mocked_user)
         with pytest.raises(RuntimeError) as exc:
-            await mock_blueprint_service.create(blueprint_create, user_dto)
+            await mock_blueprint_service.create_blueprint(blueprint_create, user_dto)
 
         assert exc.value is error
         mock_blueprint_crud.create.assert_awaited_once()
@@ -218,7 +218,7 @@ class TestUpdate:
         mock_blueprint_crud.update.return_value = mocked_blueprint
 
         user_dto = UserDTO.model_validate(mocked_user)
-        result = await mock_blueprint_service.update(mocked_blueprint.id, blueprint_update, user_dto)
+        result = await mock_blueprint_service.update_blueprint(mocked_blueprint.id, blueprint_update, user_dto)
 
         assert result.id == mocked_blueprint.id
         mock_blueprint_crud.update.assert_awaited_once_with(
@@ -236,7 +236,7 @@ class TestUpdate:
 
         user_dto = UserDTO.model_validate(mocked_user)
         with pytest.raises(EntityNotFound, match="Blueprint not found"):
-            await mock_blueprint_service.update(BLUEPRINT_ID, blueprint_update, user_dto)
+            await mock_blueprint_service.update_blueprint(BLUEPRINT_ID, blueprint_update, user_dto)
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_blueprint_service, mock_blueprint_crud, mocked_user):
@@ -246,7 +246,7 @@ class TestUpdate:
 
         user_dto = UserDTO.model_validate(mocked_user)
         with pytest.raises(RuntimeError) as exc:
-            await mock_blueprint_service.update(BLUEPRINT_ID, blueprint_update, user_dto)
+            await mock_blueprint_service.update_blueprint(BLUEPRINT_ID, blueprint_update, user_dto)
 
         assert exc.value is error
 
@@ -266,7 +266,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action=ModelActions.DISABLE)
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
-        result = await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
+        result = await mock_blueprint_service.patch_action(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
         assert result.status == ModelStatus.DISABLED
         mock_audit_log_handler.create_log.assert_awaited_once_with(
@@ -288,7 +288,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action=ModelActions.ENABLE)
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
-        result = await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
+        result = await mock_blueprint_service.patch_action(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
         assert result.status == ModelStatus.ENABLED
         mock_event_sender.send_event.assert_awaited_once()
@@ -306,7 +306,7 @@ class TestPatch:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         with pytest.raises(EntityWrongState, match="Blueprint is already enabled"):
-            await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
+            await mock_blueprint_service.patch_action(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_patch_not_found(self, mock_blueprint_service, mock_blueprint_crud, mock_user_dto):
@@ -314,7 +314,7 @@ class TestPatch:
         mock_blueprint_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Blueprint not found"):
-            await mock_blueprint_service.patch(BLUEPRINT_ID, patch_body, mock_user_dto)
+            await mock_blueprint_service.patch_action(BLUEPRINT_ID, patch_body, mock_user_dto)
 
     @pytest.mark.asyncio
     async def test_patch_unsupported_action(
@@ -324,7 +324,7 @@ class TestPatch:
         mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
 
         with pytest.raises(ValueError, match="Action unsupported_action is not supported"):
-            await mock_blueprint_service.patch(str(mocked_blueprint.id), patch_body, mock_user_dto)
+            await mock_blueprint_service.patch_action(str(mocked_blueprint.id), patch_body, mock_user_dto)
 
 
 class TestDelete:

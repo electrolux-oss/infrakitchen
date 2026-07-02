@@ -122,48 +122,42 @@ class TestCount:
 
 class TestCreate:
     @pytest.mark.asyncio
-    async def test_create_success(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
+    async def test_create_success(self, mock_favorite_service, mocked_favorite):
         user_id = uuid4()
         component_id = uuid4()
         favorite_create = FavoriteCreate(component_type="executor", component_id=component_id)
 
         mock_favorite_service.crud.get_by_id.return_value = None
         mock_favorite_service.crud.create.return_value = mocked_favorite
-        mocked_validate = Mock(return_value=favorite_dto)
-        monkeypatch.setattr(FavoriteDTO, "model_validate", mocked_validate)
 
-        result = await mock_favorite_service.create(favorite_create, user_id)
+        result = await mock_favorite_service.create_favorite(favorite_create, user_id)
 
-        assert result.user_id == favorite_dto.user_id
-        assert result.component_type == favorite_dto.component_type
-        assert result.component_id == favorite_dto.component_id
+        assert result.user_id == mocked_favorite.user_id
+        assert result.component_type == mocked_favorite.component_type
+        assert result.component_id == mocked_favorite.component_id
 
         mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
             user_id=user_id, component_type="executor", component_id=component_id
         )
         mock_favorite_service.crud.create.assert_awaited_once()
         mock_favorite_service.crud.refresh.assert_awaited_once_with(mocked_favorite)
-        mocked_validate.assert_called_once_with(mocked_favorite)
 
     @pytest.mark.asyncio
-    async def test_create_already_exists(self, monkeypatch, mock_favorite_service, favorite_dto, mocked_favorite):
+    async def test_create_already_exists(self, mock_favorite_service, mocked_favorite):
         user_id = uuid4()
         component_id = uuid4()
         favorite_create = FavoriteCreate(component_type="executor", component_id=component_id)
 
         mock_favorite_service.crud.get_by_id.return_value = mocked_favorite
-        mocked_validate = Mock(return_value=favorite_dto)
-        monkeypatch.setattr(FavoriteDTO, "model_validate", mocked_validate)
 
-        result = await mock_favorite_service.create(favorite_create, user_id)
+        result = await mock_favorite_service.create_favorite(favorite_create, user_id)
 
-        assert result.user_id == favorite_dto.user_id
+        assert result.user_id == mocked_favorite.user_id
         mock_favorite_service.crud.get_by_id.assert_awaited_once_with(
             user_id=user_id, component_type="executor", component_id=component_id
         )
         mock_favorite_service.crud.create.assert_not_awaited()
         mock_favorite_service.crud.refresh.assert_not_awaited()
-        mocked_validate.assert_called_once_with(mocked_favorite)
 
     @pytest.mark.asyncio
     async def test_create_error(self, mock_favorite_service):
@@ -176,7 +170,7 @@ class TestCreate:
         mock_favorite_service.crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_favorite_service.create(favorite_create, user_id)
+            await mock_favorite_service.create_favorite(favorite_create, user_id)
 
         assert exc.value is error
         mock_favorite_service.crud.create.assert_awaited_once()

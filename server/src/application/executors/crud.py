@@ -1,12 +1,11 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import String, func, select, cast
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.secrets.model import Secret
-from core.permissions.model import Permission
 
 from core.database import (
     FieldSpec,
@@ -115,68 +114,3 @@ class ExecutorCRUD:
 
     async def refresh(self, executor: Executor) -> None:
         await self.session.refresh(executor)
-
-    async def get_executor_policies_by_role(
-        self,
-        role_name: str,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[Any]:
-        executor_id_expr = func.split_part(Permission.v1, ":", 2)
-        statement = (
-            select(
-                Executor.id.label("executor_id"),
-                Executor.name.label("executor_name"),
-                Permission.v0.label("role"),
-                Permission.v2.label("action"),
-                Permission.id.label("id"),
-                Permission.created_at.label("created_at"),
-                Permission.updated_at.label("updated_at"),
-            )
-            .join(
-                Permission,
-                cast(Executor.id, String) == executor_id_expr,
-            )
-            .where(
-                Permission.ptype == "p",
-                Permission.v1.like("executor:%"),
-                Permission.v0 == role_name,
-            )
-        )
-
-        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
-        statement = evaluate_sqlalchemy_pagination(statement, range)
-        result = await self.session.execute(statement)
-        return list(result.fetchall())
-
-    async def get_user_executor_policies(
-        self,
-        user_id: str | UUID,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[Any]:
-        executor_id_expr = func.split_part(Permission.v1, ":", 2)
-        statement = (
-            select(
-                Executor.id.label("executor_id"),
-                Executor.name.label("executor_name"),
-                Permission.v2.label("action"),
-                Permission.id.label("id"),
-                Permission.created_at.label("created_at"),
-                Permission.updated_at.label("updated_at"),
-            )
-            .join(
-                Permission,
-                cast(Executor.id, String) == executor_id_expr,
-            )
-            .where(
-                Permission.ptype == "p",
-                Permission.v1.like("executor:%"),
-                Permission.v0 == f"user:{user_id}",
-            )
-        )
-
-        statement = evaluate_sqlalchemy_sorting(Permission, statement, sort)
-        statement = evaluate_sqlalchemy_pagination(statement, range)
-        result = await self.session.execute(statement)
-        return list(result.fetchall())

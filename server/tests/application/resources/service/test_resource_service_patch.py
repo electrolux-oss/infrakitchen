@@ -61,7 +61,7 @@ class TestPatch:
         mock_resource_crud.get_by_id.return_value = existing_resource
         requester = mocked_user_response
 
-        result = await mock_resource_service.patch(
+        result = await mock_resource_service.update_resource(
             resource_id=resource_id, resource=resource_patch, requester=requester
         )
 
@@ -87,7 +87,7 @@ class TestPatch:
         mock_resource_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Resource not found"):
-            await mock_resource_service.patch(
+            await mock_resource_service.update_resource(
                 resource_id=RESOURCE_ID, resource=resource_update, requester=mock_user_dto
             )
 
@@ -115,7 +115,7 @@ class TestPatch:
         mock_resource_crud.get_by_id.return_value = existing_resource
 
         with pytest.raises(ValueError):
-            await mock_resource_service.patch(
+            await mock_resource_service.update_resource(
                 resource_id=existing_resource.id, resource=resource_update, requester=mock_user_dto
             )
 
@@ -178,7 +178,7 @@ class TestPatch:
             ["read", "write", "admin"], monkeypatch, "application.resources.service.user_entity_permissions"
         )
 
-        result = await mock_resource_service.patch(
+        result = await mock_resource_service.update_resource(
             resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
         )
 
@@ -200,7 +200,7 @@ class TestPatch:
         mock_resource_crud.get_by_id.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_resource_service.patch(
+            await mock_resource_service.update_resource(
                 resource_id=RESOURCE_ID, resource=resource_update, requester=mocked_user_response
             )
 
@@ -237,7 +237,7 @@ class TestPatch:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_resource_crud.patch.return_value = mocked_resource
 
-        await mock_resource_service.patch(
+        await mock_resource_service.update_resource(
             resource_id=mocked_resource.id, resource=resource_patch, requester=mocked_user
         )
         mock_integration_crud.get_all.assert_awaited_once()
@@ -279,7 +279,7 @@ class TestPatch:
             match=f"Integration {mocked_integration.id} has provider {mocked_integration.integration_provider} "
             "which is not allowed for the template",
         ):
-            await mock_resource_service.patch(
+            await mock_resource_service.update_resource(
                 resource_id=mocked_resource.id, resource=resource_patch, requester=mocked_user
             )
 

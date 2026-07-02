@@ -850,7 +850,7 @@ class TestPatch:
             AccessDenied,
             match=f"You don't have write access to integration {new_integration_id}",
         ):
-            await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
+            await mock_resource_service.update_resource(mocked_resource.id, resource_patch, mocked_user)
 
     @pytest.mark.asyncio
     async def test_patch_parent_inherited_integration_is_exempt(
@@ -897,7 +897,7 @@ class TestPatch:
             ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
-        await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+        await mock_resource_service.update_resource(existing_resource.id, resource_patch, mocked_user)
 
         for call in permissions_mock.await_args_list:
             assert call.args[1] != mocked_integration.id, (
@@ -939,7 +939,7 @@ class TestPatch:
             ["read"], monkeypatch, "application.resources.functions.user_entity_permissions"
         )
 
-        await mock_resource_service.patch(mocked_resource.id, resource_patch, mocked_user)
+        await mock_resource_service.update_resource(mocked_resource.id, resource_patch, mocked_user)
 
         for call in permissions_mock.await_args_list:
             assert call.args[1] != existing_integration_id, (
@@ -989,7 +989,7 @@ class TestPatch:
             AccessDenied,
             match=f"You don't have write access to workspace {new_workspace_id}",
         ):
-            await mock_resource_service.patch(existing_resource.id, resource_patch, mocked_user)
+            await mock_resource_service.update_resource(existing_resource.id, resource_patch, mocked_user)
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("scv_status", [ModelStatus.IN_PROGRESS, ModelStatus.ERROR, ModelStatus.READY])
@@ -1025,7 +1025,7 @@ class TestPatch:
         resource_patch = ResourceUpdate(source_code_version_id=source_code_version.id)
 
         with pytest.raises(EntityWrongState, match="Source code version is not in DONE state"):
-            await mock_resource_service.patch(str(resource_id), resource_patch, mocked_user)
+            await mock_resource_service.update_resource(str(resource_id), resource_patch, mocked_user)
 
 
 class TestDelete:
@@ -1591,15 +1591,11 @@ class TestSyncWorkspace:
         mock_resource_crud,
         mock_event_sender,
         mocked_resource,
-        resource_response,
-        monkeypatch,
         mock_user_dto,
     ):
         mocked_resource.state = state
         mocked_resource.workspace_id = uuid4()
         mock_resource_crud.get_by_id.return_value = mocked_resource
-        mocked_validate = Mock(return_value=resource_response)
-        monkeypatch.setattr(ResourceResponse, "model_validate", mocked_validate)
 
         result = await mock_resource_service.sync_workspace(
             resource_id=str(mocked_resource.id), requester=mock_user_dto
@@ -1609,5 +1605,4 @@ class TestSyncWorkspace:
         mock_event_sender.send_task.assert_awaited_once_with(
             mocked_resource.id, requester=mock_user_dto, action=ModelActions.SYNC
         )
-        mocked_validate.assert_called_once_with(mocked_resource)
-        assert result == resource_response
+        assert result == mocked_resource

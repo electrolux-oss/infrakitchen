@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
 
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoIcon from "@mui/icons-material/Info";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import SyncIcon from "@mui/icons-material/Sync";
 import {
   Box,
   Button,
@@ -19,7 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PermissionWrapper, useConfig } from "../../common";
+import { useConfig } from "../../common";
 import {
   CommonField,
   GetEntityLink,
@@ -36,7 +36,6 @@ import { IkEntity } from "../../types";
 import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
-  SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
 import { VariableInput, VariableOutput } from "../types";
@@ -120,18 +119,11 @@ export const TemplateConfiguration = ({
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
   const canEditStorage = checkActionPermission("api:storage", "admin");
-  const [isSyncing, setIsSyncing] = useState(false);
   const [isStorageEditable, setIsStorageEditable] = useState(false);
   const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
-  );
-
-  const scvFilter = useMemo(
-    () =>
-      resource.template?.id ? { template_id: resource.template.id } : undefined,
-    [resource.template?.id],
   );
 
   const storageFilter = useMemo(
@@ -158,20 +150,16 @@ export const TemplateConfiguration = ({
     [ikApi, resource.id, refreshEntity],
   );
 
-  const handleSync = () => {
-    setIsSyncing(true);
-    ikApi
-      .graphqlRequest(SYNC_WORKSPACE_MUTATION, { id: resource.id })
-      .then(() => {
-        notify("Sent sync workspace request", "success");
-      })
-      .catch((error) => {
-        notifyError(error);
-      })
-      .finally(() => {
-        setIsSyncing(false);
-      });
-  };
+  const handleVariablesSave = useCallback(
+    async (variables: VariableInput[], sourceCodeVersionId?: string | null) => {
+      const input: ResourceUpdateFieldInput = { variables };
+      if (sourceCodeVersionId !== undefined) {
+        input.sourceCodeVersionId = sourceCodeVersionId;
+      }
+      await saveField(input);
+    },
+    [saveField],
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -183,71 +171,38 @@ export const TemplateConfiguration = ({
               value={<GetReferenceUrlValue {...resource.template} />}
             />
           )}
-          <CommonEditableField<string | null>
+          <CommonField
             name="Template Version"
-            canEdit={canEdit}
-            value={resource.sourceCodeVersion?.id ?? null}
-            ariaLabel="Edit template version"
-            display={
-              resource.sourceCodeVersion?.sourceCode ? (
-                <GetEntityLink
-                  {...resource.sourceCodeVersion}
-                  name={
-                    resource.sourceCodeVersion?.sourceCodeVersion ||
-                    resource.sourceCodeVersion?.sourceCodeBranch ||
-                    "Unnamed Version"
-                  }
-                />
-              ) : null
-            }
-            onSave={(value) => saveField({ sourceCodeVersionId: value })}
-            renderEditor={({ value, onChange }) => (
-              <ReferenceInput
-                ikApi={ikApi}
-                entity_name="source_code_versions"
-                showFields={["identifier"]}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                getOptionDisabled={(option: any) => option.status !== "done"}
-                filter={scvFilter}
-                value={value}
-                onChange={onChange}
-                label="Source Code Version"
-              />
-            )}
-          />
-          <CommonField
-            name="Integrations"
             value={
-              resource.integrationIds && resource.integrationIds.length > 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.integrationIds.map((parent) => (
-                    <span key={parent.id}>
-                      <GetReferenceUrlValue
-                        {...parent}
-                        urlProvider={parent.integrationProvider}
-                      />
-                    </span>
-                  ))}
-                </Box>
-              ) : null
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {resource.sourceCodeVersion?.sourceCode ? (
+                  <GetEntityLink
+                    {...resource.sourceCodeVersion}
+                    name={
+                      resource.sourceCodeVersion?.sourceCodeVersion ||
+                      resource.sourceCodeVersion?.sourceCodeBranch ||
+                      "Unnamed Version"
+                    }
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Not set
+                  </Typography>
+                )}
+                {canEdit && (
+                  <Tooltip title="Change template version">
+                    <IconButton
+                      size="small"
+                      onClick={() => setVariablesDialogOpen(true)}
+                      aria-label="Change template version"
+                      sx={{ "& .MuiSvgIcon-root": { fontSize: "1.1rem" } }}
+                    >
+                      <EditOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
             }
-            size={6}
-          />
-          <CommonField
-            name="Secrets"
-            value={
-              resource.secretIds && resource.secretIds.length > 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {resource.secretIds.map((parent) => (
-                    <span key={parent.id}>
-                      <GetReferenceUrlValue {...parent} />
-                    </span>
-                  ))}
-                </Box>
-              ) : null
-            }
-            size={6}
           />
 
           {canEditStorage &&
@@ -364,34 +319,6 @@ export const TemplateConfiguration = ({
               <CommonField name="Storage Path" value={resource.storagePath} />
             </>
           )}
-
-          <CommonField
-            name="Workspace"
-            value={
-              resource.workspace ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <GetReferenceUrlValue {...resource.workspace} />
-                  <PermissionWrapper
-                    requiredPermission="api:resource"
-                    permissionAction="admin"
-                  >
-                    <Tooltip title="Sync workspace">
-                      <span>
-                        <IconButton
-                          size="small"
-                          onClick={handleSync}
-                          disabled={isSyncing}
-                          sx={{ "& .MuiSvgIcon-root": { fontSize: "1.2rem" } }}
-                        >
-                          <SyncIcon />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </PermissionWrapper>
-                </Box>
-              ) : null
-            }
-          />
         </Grid>
       </OverviewCard>
 
@@ -425,7 +352,7 @@ export const TemplateConfiguration = ({
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
-            onSave={(variables) => saveField({ variables })}
+            onSave={handleVariablesSave}
           />
           <OverviewCard name="Output Values">
             {getSourceCodeVariables(resource.outputs as VariableOutput[])}

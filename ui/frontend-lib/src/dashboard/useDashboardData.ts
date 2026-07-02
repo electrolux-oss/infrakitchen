@@ -48,7 +48,7 @@ function transformFavoriteToResource(
     updatedAt: gql.componentData.updatedAt,
     _component_type: gql.componentType as "resource" | "executor",
     _component_id: gql.componentId,
-    _entity_name: gql.componentData._entity_name,
+    entityName: gql.componentData.entityName,
   };
 }
 

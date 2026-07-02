@@ -15,6 +15,7 @@ interface RoleCreateProps {
   userId?: string;
   roleName?: string;
   onClose?: () => void;
+  onSuccess?: () => void;
   formId?: string;
 }
 
@@ -24,7 +25,7 @@ interface FormValues {
 }
 
 export const AssignUserToRole = (props: RoleCreateProps) => {
-  const { userId, roleName, onClose, formId } = props;
+  const { userId, roleName, onClose, onSuccess, formId } = props;
   const { ikApi } = useConfig();
   const {
     control,
@@ -59,6 +60,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
         .then((response) => {
           if (response.assignUserToRole.id) {
             notify(`Role assigned successfully`, "success");
+            onSuccess?.();
             onClose?.();
 
             return response;
@@ -68,7 +70,7 @@ export const AssignUserToRole = (props: RoleCreateProps) => {
           notifyError(error);
         });
     },
-    [ikApi, onClose],
+    [ikApi, onClose, onSuccess],
   );
 
   const generatedFormId = useId();
@@ -129,10 +131,11 @@ interface UserRoleCreateProps {
   roleName?: string;
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
-  const { userId, roleName, onClose, open } = props;
+  const { userId, roleName, onClose, onSuccess, open } = props;
   const formId = useId();
 
   return (
@@ -150,6 +153,7 @@ export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
           userId={userId}
           roleName={roleName}
           onClose={onClose}
+          onSuccess={onSuccess}
           formId={formId}
         />
       }

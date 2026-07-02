@@ -34,7 +34,7 @@ async def insert_custom_secrets(session: AsyncSession, envs: list[str], user: Us
         }
         secret = SecretCreate.model_validate(body)
 
-        await secret_service.create(secret, user)
+        await secret_service.create_secret(secret, user)
         await session.commit()
 
 
@@ -63,5 +63,5 @@ async def insert_cloud_secrets(session: AsyncSession, envs: list[str], provider:
         }
         secret = SecretCreate.model_validate(body)
 
-        await secret_service.create(secret, user)
+        await secret_service.create_secret(secret, user)
         await session.commit()

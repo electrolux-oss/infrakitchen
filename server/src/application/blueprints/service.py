@@ -110,10 +110,6 @@ class BlueprintService:
         await self.event_sender.send_event(BlueprintResponse.model_validate(result), ModelActions.CREATE)
         return result
 
-    async def create(self, blueprint: BlueprintCreate, requester: UserDTO) -> BlueprintResponse:
-        result = await self.create_blueprint(blueprint=blueprint, requester=requester)
-        return BlueprintResponse.model_validate(result)
-
     async def update_blueprint(
         self, blueprint_id: str | UUID, blueprint: BlueprintUpdate, requester: UserDTO
     ) -> Blueprint:
@@ -133,12 +129,6 @@ class BlueprintService:
         await self.audit_log_handler.create_log(updated.id, requester.id, ModelActions.UPDATE)
         await self.event_sender.send_event(BlueprintResponse.model_validate(updated), ModelActions.UPDATE)
         return updated
-
-    async def update(
-        self, blueprint_id: str | UUID, blueprint: BlueprintUpdate, requester: UserDTO
-    ) -> BlueprintResponse:
-        updated = await self.update_blueprint(blueprint_id=blueprint_id, blueprint=blueprint, requester=requester)
-        return BlueprintResponse.model_validate(updated)
 
     async def patch_action(self, blueprint_id: str, body: PatchBodyModel, requester: UserDTO) -> Blueprint:
         """
@@ -166,17 +156,6 @@ class BlueprintService:
 
         await self.event_sender.send_event(BlueprintResponse.model_validate(existing_blueprint), body.action)
         return existing_blueprint
-
-    async def patch(self, blueprint_id: str, body: PatchBodyModel, requester: UserDTO) -> BlueprintResponse:
-        """
-        Patch an existing blueprint.
-        :param blueprint_id: ID of the blueprint to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the blueprint (for audit logging)
-        :return: Patched blueprint response
-        """
-        existing_blueprint = await self.patch_action(blueprint_id=blueprint_id, body=body, requester=requester)
-        return BlueprintResponse.model_validate(existing_blueprint)
 
     async def delete(self, blueprint_id: str | UUID, requester: UserDTO) -> None:
         await self.crud.delete(blueprint_id)

@@ -25,6 +25,7 @@ interface EntityRolePolicyCreateProps {
   entityName?: string;
   roleName?: string;
   onClose?: () => void;
+  onSuccess?: () => void;
   formId?: string;
 }
 
@@ -42,6 +43,7 @@ export const EntityRolePolicyCreateCard = (
     entityId,
     entityName = "resource",
     onClose,
+    onSuccess,
     formId,
   } = props;
   const { ikApi } = useConfig();
@@ -94,13 +96,14 @@ export const EntityRolePolicyCreateCard = (
         const responseData = response.createEntityPolicy;
         if (responseData.id) {
           notify(`Resource policy created successfully`, "success");
+          onSuccess?.();
           onClose?.();
         }
       } catch (error: any) {
         notifyError(error);
       }
     },
-    [ikApi, onClose, roleName, selectedRole],
+    [ikApi, onClose, onSuccess, roleName, selectedRole],
   );
 
   return (

@@ -119,16 +119,6 @@ class StorageService:
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return result
 
-    async def create(self, storage: StorageCreate, requester: UserDTO) -> StorageResponse:
-        """
-        Create a new storage.
-        :param storage: StorageCreate to create
-        :param requester: User who creates the storage
-        :return: Created storage
-        """
-        result = await self.create_storage(storage=storage, requester=requester)
-        return StorageResponse.model_validate(result)
-
     async def update_storage(self, storage_id: str, storage: StorageUpdate, requester: UserDTO) -> Storage:
         """
         Update an existing storage and return the ORM model.
@@ -167,18 +157,7 @@ class StorageService:
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return existing_storage
 
-    async def update(self, storage_id: str, storage: StorageUpdate, requester: UserDTO) -> StorageResponse:
-        """
-        Update an existing storage.
-        :param storage_id: ID of the storage to update
-        :param storage: Storage to update
-        :param requester: User who updates the storage
-        :return: Updated storage
-        """
-        result = await self.update_storage(storage_id=storage_id, storage=storage, requester=requester)
-        return StorageResponse.model_validate(result)
-
-    async def patch_action_storage(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> Storage:
+    async def patch_action(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> Storage:
         """
         Patch an existing storage and return the ORM model.
         :param storage_id: ID of the storage to patch
@@ -253,17 +232,6 @@ class StorageService:
         response = StorageResponse.model_validate(existing_storage)
         await self.event_sender.send_event(response, body.action)
         return existing_storage
-
-    async def patch_action(self, storage_id, body: PatchBodyModel, requester: UserDTO) -> StorageResponse:
-        """
-        Patch an existing storage.
-        :param storage_id: ID of the storage to patch
-        :param body: PatchBodyModel to patch
-        :param requester: User who patches the storage
-        :return: Patched storage
-        """
-        result = await self.patch_action_storage(storage_id=storage_id, body=body, requester=requester)
-        return StorageResponse.model_validate(result)
 
     async def delete(self, storage_id: str, requester: UserDTO) -> None:
         existing_storage = await self.crud.get_by_id(storage_id)

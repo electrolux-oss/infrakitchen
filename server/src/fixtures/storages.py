@@ -56,7 +56,7 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
             configuration=config,
             labels=[provider, "storage", "tofu"],
         )
-        _ = await storage_service.create(storage, user)
+        _ = await storage_service.create_storage(storage, user)
         await session.commit()
 
     await change_state(

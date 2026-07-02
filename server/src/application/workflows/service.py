@@ -82,7 +82,7 @@ class WorkflowService:
         await self.crud.delete(workflow_id)
         await self.audit_log_handler.create_log(workflow_id, requester.id, ModelActions.DELETE)
 
-    async def patch_action(self, workflow_id: str | UUID, body: PatchBodyModel, requester: UserDTO) -> WorkflowResponse:
+    async def patch_action(self, workflow_id: str | UUID, body: PatchBodyModel, requester: UserDTO) -> Workflow:
         workflow = await self.crud.get_by_id(workflow_id)
         if not workflow:
             raise EntityNotFound("Execution not found")
@@ -98,9 +98,9 @@ class WorkflowService:
             case _:
                 raise ValueError(f"Action {body.action} is not supported")
 
-        return WorkflowResponse.model_validate(workflow)
+        return workflow
 
-    async def update_with_steps_orm(
+    async def update_with_steps(
         self,
         workflow_id: str | UUID,
         request: WorkflowUpdate,
@@ -136,16 +136,6 @@ class WorkflowService:
         response = WorkflowResponse.model_validate(refreshed)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
         return refreshed
-
-    async def update_with_steps(
-        self,
-        workflow_id: str | UUID,
-        request: WorkflowUpdate,
-        requester: UserDTO,
-    ) -> WorkflowResponse:
-        """Update a pending workflow and its steps, returning the response schema."""
-        refreshed = await self.update_with_steps_orm(workflow_id=workflow_id, request=request, requester=requester)
-        return WorkflowResponse.model_validate(refreshed)
 
     async def update_step(self, step_id: UUID, update_data: dict[str, Any]) -> WorkflowStepResponse:
         step = await self.crud.update_step(step_id, update_data)

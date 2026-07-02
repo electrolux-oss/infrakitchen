@@ -88,6 +88,6 @@ async def create_auth_provider(session: AsyncSession, user: UserDTO):
     for provider in provider_fixtures:
         if provider["auth_provider"] not in [p.auth_provider for p in providers]:
             auth_provider = AuthProviderCreate(**provider)
-            _ = await auth_provider_service.create(auth_provider, user)
+            _ = await auth_provider_service.create_auth_provider(auth_provider, user)
 
     await session.commit()

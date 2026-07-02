@@ -11,7 +11,7 @@ from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied, EntityNotFound
 from core.users.functions import user_has_access_to_api
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.secret.types import SecretType, SecretValidationType
 
 
@@ -43,6 +43,7 @@ class SecretActionInput:
 class SecretMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_secret(self, info: Info, input: SecretCreateInput) -> SecretType:
+        await check_api_permission(info, "secret", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_secret_service(session)

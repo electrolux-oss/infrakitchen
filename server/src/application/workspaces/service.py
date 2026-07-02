@@ -87,16 +87,6 @@ class WorkspaceService:
             raise EntityNotFound("Workspace not found")
         return await get_workspace_actions(requester, workspace.id)
 
-    async def create(self, workspace: WorkspaceCreate, requester: UserDTO) -> WorkspaceResponse:
-        """
-        Create a new workspace.
-        :param workspace: WorkspaceCreate to create
-        :param requester: User who creates the workspace
-        :return: Created workspace
-        """
-        result = await self.create_workspace(workspace=workspace, requester=requester)
-        return WorkspaceResponse.model_validate(result)
-
     async def create_workspace(self, workspace: WorkspaceCreate, requester: UserDTO) -> Workspace:
         """
         Create a new workspace and return the ORM model.
@@ -145,19 +135,6 @@ class WorkspaceService:
         )
         await self.permission_service.casbin_enforcer.send_reload_event()
         return result
-
-    async def update(self, workspace_id: str, workspace: WorkspaceUpdate, requester: UserDTO) -> WorkspaceResponse:
-        """
-        Update an existing workspace.
-        :param workspace_id: ID of the workspace to update
-        :param workspace: Workspace to update
-        :param requester: User who updates the workspace
-        :return: Updated workspace
-        """
-        existing_workspace = await self.update_workspace(
-            workspace_id=workspace_id, workspace=workspace, requester=requester
-        )
-        return WorkspaceResponse.model_validate(existing_workspace)
 
     async def update_workspace(self, workspace_id: str, workspace: WorkspaceUpdate, requester: UserDTO) -> Workspace:
         """

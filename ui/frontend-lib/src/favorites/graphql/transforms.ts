@@ -4,7 +4,7 @@ export interface GqlComponentData {
   status?: string;
   state?: string;
   updatedAt?: string;
-  _entity_name: string;
+  entityName: string;
 }
 
 export interface GqlFavorite {

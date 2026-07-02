@@ -72,7 +72,7 @@ class WorkflowMutation:
 
         steps = [step.to_step_update() for step in input.steps] if input.steps else None
         request = WorkflowUpdate(steps=steps)
-        return await service.update_with_steps_orm(workflow_id=id, request=request, requester=requester)
+        return await service.update_with_steps(workflow_id=id, request=request, requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_workflow(self, info: Info, id: uuid.UUID) -> bool:

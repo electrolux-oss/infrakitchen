@@ -17,12 +17,14 @@ export interface TabDefinition {
 interface TabbedContentProps {
   tabs: TabDefinition[];
   defaultTab?: string;
+  userEntityPermissions?: string[];
   onChange?: (label: string) => void;
 }
 
 export const TabbedContent = ({
   tabs,
   defaultTab,
+  userEntityPermissions,
   onChange,
 }: TabbedContentProps) => {
   const { permissions } = usePermissionProvider();
@@ -34,6 +36,7 @@ export const TabbedContent = ({
     ({ requiredPermission, permissionAction }) => {
       if (!requiredPermission || !permissionAction) return true;
       if (permissions["*"] === "admin") return true;
+      if (userEntityPermissions?.includes(permissionAction)) return true;
       const p = permissions[requiredPermission];
       if (!p) return false;
       if (permissionAction === "read") return true;

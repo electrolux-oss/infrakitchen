@@ -7,7 +7,14 @@ from strawberry.types import Info
 
 from application.workflows.dependencies import get_workflow_service
 from application.workflows.service import WorkflowService
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.workflow.types import WorkflowType
 
 
@@ -20,6 +27,7 @@ def _build_service(info: Info) -> WorkflowService:
 class WorkflowQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def workflow(self, info: Info, id: uuid.UUID) -> WorkflowType | None:
+        await check_api_permission(info, "workflow", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "workflow")
         fields = build_field_spec(entity_fields)
@@ -33,6 +41,7 @@ class WorkflowQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[WorkflowType]:
+        await check_api_permission(info, "workflow", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "workflows")
         fields = build_field_spec(entity_fields)
@@ -49,6 +58,7 @@ class WorkflowQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "workflow", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -56,6 +66,7 @@ class WorkflowQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def workflow_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "workflow", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(workflow_id=id, requester=requester)

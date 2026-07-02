@@ -15,7 +15,7 @@ from application.logger import change_logger, get_uvicorn_log_config
 from core.config import setup_service_environment
 from core.rabbitmq import RabbitMQConnection
 from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job
+from scheduler import schedule_jobs, schedule_polling_job, start_reload_consumer
 from worker import run_task_worker
 
 from src.app import app
@@ -61,8 +61,12 @@ async def start_task_worker():
     await run_task_worker(rabbitmq)
 
 
-async def setup_scheduler():
-    """Initializes and configures the AsyncIOScheduler."""
+async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
+    """Initializes and configures the AsyncIOScheduler.
+
+    Returns the scheduler and the background task running its reload consumer so
+    they can both be torn down on shutdown.
+    """
     scheduler = AsyncIOScheduler()
 
     event_sender = EventSender("scheduler_job")
@@ -72,7 +76,9 @@ async def setup_scheduler():
 
     scheduler.start()
 
-    return scheduler
+    reload_task = asyncio.create_task(start_reload_consumer(scheduler=scheduler, event_sender=event_sender))
+
+    return scheduler, reload_task
 
 
 async def run_server_and_worker():
@@ -82,7 +88,7 @@ async def run_server_and_worker():
     setup_service_environment()
     change_logger()
 
-    scheduler = await setup_scheduler()
+    scheduler, reload_task = await setup_scheduler()
     worker_task = asyncio.create_task(start_task_worker())
 
     uvicorn_log_config = get_uvicorn_log_config()
@@ -93,11 +99,13 @@ async def run_server_and_worker():
 
     await server.serve()
     scheduler.shutdown(wait=False)
+    reload_task.cancel()
     worker_task.cancel()
-    try:
-        await worker_task
-    except asyncio.CancelledError:
-        pass
+    for task in (reload_task, worker_task):
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":

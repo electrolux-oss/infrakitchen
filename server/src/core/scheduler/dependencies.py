@@ -1,6 +1,7 @@
 from fastapi import Depends
 
 from core.dependencies import get_db_session
+from core.utils.event_sender import EventSender
 
 from .crud import SchedulerJobCRUD
 from .service import SchedulerJobService
@@ -13,4 +14,5 @@ def get_scheduler_job_service(
 ) -> SchedulerJobService:
     return SchedulerJobService(
         crud=SchedulerJobCRUD(session=session),
+        event_sender=EventSender("scheduler_job"),
     )

@@ -165,7 +165,10 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   datadog: "Datadog",
 };
 
-export const getProviderDisplayName = (provider: string): string => {
+export const getProviderDisplayName = (
+  provider: string | undefined,
+): string => {
+  if (!provider) return "Unknown";
   const lowerProvider = provider.toLowerCase();
   return (
     PROVIDER_DISPLAY_NAMES[lowerProvider] ||

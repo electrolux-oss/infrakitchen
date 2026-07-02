@@ -218,7 +218,7 @@ class TestSourceCodeVersionMutations:
         scv_id = uuid4()
         mock_service = Mock()
         mock_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
-        mock_service.update_configs_orm = AsyncMock(return_value=[mocked_source_config])
+        mock_service.update_configs = AsyncMock(return_value=[mocked_source_config])
         mock_get_service.return_value = mock_service
 
         result = await schema.execute(
@@ -254,8 +254,8 @@ class TestSourceCodeVersionMutations:
             }
         ]
         mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
-        mock_service.update_configs_orm.assert_awaited_once()
-        await_kwargs = mock_service.update_configs_orm.await_args.kwargs
+        mock_service.update_configs.assert_awaited_once()
+        await_kwargs = mock_service.update_configs.await_args.kwargs
         assert await_kwargs["source_code_version_id"] == str(scv_id)
         payload = await_kwargs["configs"][0]
         assert str(payload.id) == str(mocked_source_config.id)
@@ -273,7 +273,7 @@ class TestSourceCodeVersionMutations:
         scv_id = uuid4()
         mock_service = Mock()
         mock_service.get_actions = AsyncMock(return_value=[])
-        mock_service.update_configs_orm = AsyncMock()
+        mock_service.update_configs = AsyncMock()
         mock_get_service.return_value = mock_service
 
         result = await schema.execute(
@@ -294,7 +294,7 @@ class TestSourceCodeVersionMutations:
         assert result.data is None or result.data["updateSourceCodeVersionConfigs"] is None
         assert result.errors is not None
         assert any("Access denied for action edit" in error.message for error in result.errors)
-        mock_service.update_configs_orm.assert_not_awaited()
+        mock_service.update_configs.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")
@@ -306,7 +306,7 @@ class TestSourceCodeVersionMutations:
         scv_id = uuid4()
         mock_service = Mock()
         mock_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
-        mock_service.update_configs_orm = AsyncMock()
+        mock_service.update_configs = AsyncMock()
         mock_get_service.return_value = mock_service
 
         result = await schema.execute(
@@ -320,7 +320,7 @@ class TestSourceCodeVersionMutations:
 
         assert result.errors is None
         assert result.data == {"updateSourceCodeVersionConfigs": []}
-        mock_service.update_configs_orm.assert_not_awaited()
+        mock_service.update_configs.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")

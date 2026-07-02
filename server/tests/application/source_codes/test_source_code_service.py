@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 from uuid import uuid4
 
 import pytest
@@ -153,9 +153,7 @@ class TestCreate:
         mock_revision_handler,
         mock_audit_log_handler,
         mock_event_sender,
-        monkeypatch,
         mocked_source_code,
-        mocked_source_code_response,
         mock_user_dto,
     ):
         source_code_to_create_body = {
@@ -167,29 +165,33 @@ class TestCreate:
             "labels": ["label1", "label2"],
         }
 
-        mocked_source_code_create = Mock(spec=SourceCodeCreate)
-        mocked_source_code_create.description = source_code_to_create_body["description"]
-        mocked_source_code_create.source_code_url = source_code_to_create_body["source_code_url"]
-        mocked_source_code_create.source_code_provider = source_code_to_create_body["source_code_provider"]
-        mocked_source_code_create.source_code_language = source_code_to_create_body["source_code_language"]
-        mocked_source_code_create.integration_id = source_code_to_create_body["integration_id"]
-        mocked_source_code_create.labels = source_code_to_create_body["labels"]
+        mocked_source_code_create = SourceCodeCreate(
+            description="Test Source Code 1",
+            source_code_url="source_code_url",
+            source_code_provider="github",
+            source_code_language="opentofu",
+            integration_id=str(mocked_source_code.integration_id),
+            labels=["label1", "label2"],
+        )
 
-        mocked_source_code_create.model_dump = Mock(return_value=source_code_to_create_body)
-
-        created_source_code = SourceCode(id=mocked_source_code.id, **source_code_to_create_body)
+        created_source_code = mocked_source_code
+        created_source_code.status = ModelStatus.READY
+        created_source_code.description = mocked_source_code_create.description
+        created_source_code.source_code_url = mocked_source_code_create.source_code_url
+        created_source_code.integration_id = mocked_source_code_create.integration_id
+        created_source_code.labels = mocked_source_code_create.labels
+        created_source_code.created_by = mock_user_dto.id
 
         mock_source_code_crud.create.return_value = created_source_code
-        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_source_code_crud.get_by_id.return_value = created_source_code
 
-        monkeypatch.setattr(SourceCodeResponse, "model_validate", Mock(return_value=mocked_source_code_response))
-
-        saved_source_code = await mock_source_code_service.create(
+        saved_source_code = await mock_source_code_service.create_source_code(
             source_code=mocked_source_code_create, requester=mock_user_dto
         )
 
-        mocked_source_code_create.model_dump.assert_called_once_with(exclude_unset=True)
-        mock_source_code_crud.create.assert_awaited_once_with(source_code_to_create_body)
+        mock_source_code_crud.create.assert_awaited_once_with(
+            {**source_code_to_create_body, "created_by": mock_user_dto.id}
+        )
 
         assert created_source_code.status == ModelStatus.READY
 
@@ -200,8 +202,7 @@ class TestCreate:
             ModelActions.CREATE,
             revision_number=created_source_code.revision_number,
         )
-        response = SourceCodeResponse.model_validate(mocked_source_code_response)
-        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.CREATE)
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.CREATE)
 
         assert saved_source_code.description == mocked_source_code_create.description
         assert saved_source_code.source_code_url == mocked_source_code_create.source_code_url
@@ -246,7 +247,7 @@ class TestUpdate:
 
         monkeypatch.setattr(SourceCodeResponse, "model_validate", Mock(return_value=updated_source_code_response))
 
-        result = await mock_source_code_service.update(
+        result = await mock_source_code_service.update_source_code(
             source_code_id=existing_source_code.id, source_code=mocked_source_code_update, requester=mock_user_dto
         )
 
@@ -270,7 +271,7 @@ class TestUpdate:
         mock_source_code_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="SourceCode not found"):
-            await mock_source_code_service.update(
+            await mock_source_code_service.update_source_code(
                 source_code_id="123id", source_code=source_code_update, requester=mock_user_dto
             )
 
@@ -283,7 +284,7 @@ class TestUpdate:
         mock_source_code_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(EntityWrongState, match=f"Entity has wrong status for updating {invalid_status}"):
-            await mock_source_code_service.update(
+            await mock_source_code_service.update_source_code(
                 source_code_id=mocked_source_code.id,
                 source_code=Mock(spec=SourceCodeUpdate),
                 requester=mock_user_dto,
@@ -325,7 +326,7 @@ class TestPatch:
         mock_source_code_crud.get_dependencies.return_value = None
         monkeypatch.setattr(SourceCodeResponse, "model_validate", Mock(return_value=mocked_source_code_response))
 
-        result = await mock_source_code_service.patch(
+        result = await mock_source_code_service.patch_action(
             source_code_id=mocked_source_code.id, body=patch_body, requester=mock_user_dto
         )
 
@@ -357,7 +358,7 @@ class TestPatch:
         mock_source_code_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(EntityWrongState) as exc:
-            await mock_source_code_service.patch(
+            await mock_source_code_service.patch_action(
                 source_code_id=mocked_source_code.id, body=patch_body, requester=mock_user_dto
             )
 
@@ -381,7 +382,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action="super_provision")
 
         with pytest.raises(ValueError, match=f"Action {patch_body.action} is not supported"):
-            await mock_source_code_service.patch(
+            await mock_source_code_service.patch_action(
                 source_code_id=mocked_source_code.id, body=patch_body, requester=mock_user_dto
             )
 

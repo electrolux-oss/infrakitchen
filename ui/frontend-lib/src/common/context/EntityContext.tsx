@@ -15,13 +15,27 @@ import { useEventProvider } from "./EventContext";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
 
-const snakeToCamel = (s: string): string =>
-  s.replace(SNAKE_TO_CAMEL_RE, (_, c: string) => c.toUpperCase());
+const snakeToCamel = (s: string): string => {
+  const camel = s.replace(SNAKE_TO_CAMEL_RE, (_, c: string) => c.toUpperCase());
+  return camel.charAt(0).toLowerCase() + camel.slice(1);
+};
 
-const camelizeKeys = (obj: Record<string, unknown>): Record<string, unknown> =>
-  Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => [snakeToCamel(key), value]),
-  );
+export const camelizeKeys = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(camelizeKeys);
+  }
+
+  if (obj !== null && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        snakeToCamel(key),
+        camelizeKeys(value),
+      ]),
+    );
+  }
+
+  return obj;
+};
 
 interface EntityContextType {
   actions: string[];
@@ -31,6 +45,8 @@ interface EntityContextType {
   loading: boolean;
   error?: string | null;
   refreshEntity?: (entity?: IkEntity) => void;
+  refreshActions?: () => void;
+  userEntityPermissions: string[];
 }
 
 export const EntityContext = createContext<EntityContextType | undefined>(
@@ -52,6 +68,9 @@ export const EntityProvider = ({
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
+  const [userEntityPermissions, setUserEntityPermissions] = useState<string[]>(
+    [],
+  );
   const [refresh, refreshNumber] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +97,7 @@ export const EntityProvider = ({
                   ${entityFields}
                 }
                 ${entity_name}Actions: ${entity_name}Actions(id: $id)
+                userEntityPermissions: userEntityPermissions(entityName: "${entity_name}", entityId: $id)
               }
             `,
             { id: entity_id },
@@ -88,6 +108,8 @@ export const EntityProvider = ({
               throw new Error(`${entity_name} not found`);
             }
             const actionsData = response?.[`${entity_name}Actions`] || [];
+            const userEntityPermissions = response?.userEntityPermissions || [];
+            setUserEntityPermissions(userEntityPermissions);
             setActions(actionsData);
             return transformFn ? transformFn(data) : data;
           })
@@ -124,6 +146,25 @@ export const EntityProvider = ({
     }
   }, []);
 
+  const refreshActions = useCallback(async () => {
+    await ikApi
+      .graphqlRequest(
+        `
+        query EntityActions($id: UUID!) {
+          ${entity_name}Actions: ${entity_name}Actions(id: $id)
+        }
+      `,
+        { id: entity_id },
+      )
+      .then((response: any) => {
+        const actionsData = response?.[`${entity_name}Actions`] || [];
+        setActions(actionsData);
+      })
+      .catch((e: any) => {
+        notifyError(e);
+      });
+  }, [ikApi, entity_name, entity_id]);
+
   const contextValue: EntityContextType = {
     actions,
     entity,
@@ -132,6 +173,8 @@ export const EntityProvider = ({
     loading,
     error,
     refreshEntity,
+    refreshActions,
+    userEntityPermissions,
   };
   return (
     <EntityContext.Provider value={contextValue}>

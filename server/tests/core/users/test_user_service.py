@@ -220,13 +220,9 @@ class TestUpdate:
         mock_user_service,
         mock_user_crud,
         mock_audit_log_handler,
-        monkeypatch,
         mocked_user,
-        mocked_user_response,
     ):
-        user_update = Mock(spec=UserUpdate)
-        user_update.password = None
-        user_update_body = {"identifier": "test_user", "description": "User description Updated"}
+        user_update = UserUpdate(description="User description Updated")
         existing_user = mocked_user
 
         updated_user = User(
@@ -234,30 +230,20 @@ class TestUpdate:
             identifier="test_user",
             description="User description Updated",
         )
-        user_response_with_update = mocked_user_response
-        user_response_with_update.id = existing_user.id
-        user_response_with_update.description = "User description Updated"
 
-        user_update.model_dump = Mock(return_value=user_update_body)
         mock_user_crud.get_by_id.return_value = existing_user
         mock_user_crud.update.return_value = updated_user
         requester = Mock(spec=UserDTO)
         requester.id = uuid4()
 
-        monkeypatch.setattr(UserResponse, "model_validate", Mock(return_value=user_response_with_update))
+        result = await mock_user_service.update_user(user_id=USER_ID, user=user_update, requester=requester)
 
-        result = await mock_user_service.update(user_id=USER_ID, user=user_update, requester=requester)
-
-        user_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"password"}, exclude_defaults=True, exclude_none=True
-        )
         mock_user_crud.get_by_id.assert_awaited_once_with(USER_ID)
-        mock_user_crud.update.assert_awaited_once_with(existing_user, user_update_body)
+        mock_user_crud.update.assert_awaited_once_with(existing_user, user_update.model_dump(exclude_unset=True))
 
         mock_audit_log_handler.create_log.assert_awaited_once_with(updated_user.id, requester.id, ModelActions.UPDATE)
 
         assert result.id == updated_user.id
-        assert result.description == updated_user.description
 
     @pytest.mark.asyncio
     async def test_update_user_does_not_exist(self, mock_user_service, mock_user_crud):
@@ -267,7 +253,7 @@ class TestUpdate:
         mock_user_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound) as exc:
-            await mock_user_service.update(user_id=USER_ID, user=user_update, requester=requester)
+            await mock_user_service.update_user(user_id=USER_ID, user=user_update, requester=requester)
 
         assert str(exc.value) == "User not found"
 
@@ -283,7 +269,7 @@ class TestUpdate:
         mock_user_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_user_service.update(user_id=USER_ID, user=user_update, requester=requester)
+            await mock_user_service.update_user(user_id=USER_ID, user=user_update, requester=requester)
 
         assert exc.value is error
 

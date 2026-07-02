@@ -12,7 +12,14 @@ from application.resources.service import ResourceService
 from application.workers.utils import get_resource_task
 from core.constants.model import ModelActions
 from core.errors import EntityNotFound
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.resource.types import (
     ResourceDownloadType,
     ResourceType,
@@ -41,6 +48,7 @@ class ResourceTreeNodeType:
 class ResourceQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource(self, info: Info, id: uuid.UUID) -> ResourceType | None:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "resource")
         fields = build_field_spec(entity_fields)
@@ -54,6 +62,7 @@ class ResourceQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[ResourceType]:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "resources")
         fields = build_field_spec(entity_fields)
@@ -70,6 +79,7 @@ class ResourceQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -77,6 +87,7 @@ class ResourceQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(resource_id=id, requester=requester)
@@ -88,6 +99,7 @@ class ResourceQuery:
         id: uuid.UUID,
         direction: str = "parents",
     ) -> ResourceTreeNodeType | None:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         tree = await service.get_tree(
             resource_id=str(id),
@@ -99,12 +111,14 @@ class ResourceQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource_metadata(self, info: Info, id: uuid.UUID) -> JSON:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         metadata = await service.metadata(resource_id=str(id))
         return cast(JSON, cast(object, metadata))
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def resource_download(self, info: Info, id: uuid.UUID) -> ResourceDownloadType:
+        await check_api_permission(info, "resource", ["read"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         resource = await _build_service(info).query_by_id(id)
@@ -132,6 +146,7 @@ class ResourceQuery:
         source_code_version_id: uuid.UUID,
         parent_resource_ids: list[uuid.UUID] | None = None,
     ) -> list[ResourceVariableSchemaType]:
+        await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         schema = await service.get_variable_schema(
             source_code_version_id=str(source_code_version_id),

@@ -50,7 +50,6 @@ class ResourceTask:
         secret_manager: SecretManager,
         user: UserDTO,
         event_sender: EventSender,
-        workspace_event_sender: EventSender,
         action: ModelActions,
         resource_temp_state_instance: ResourceTempStateDTO | None = None,
         workspace_root: str | None = None,
@@ -58,7 +57,6 @@ class ResourceTask:
         self.session: AsyncSession = session
         self.crud_resource: ResourceCRUD = crud_resource
         self.event_sender: EventSender = event_sender
-        self.workspace_event_sender: EventSender = workspace_event_sender
         self.logger: EntityLogger = logger
         self.resource_instance: Resource = resource_instance
         self.resource_temp_state_dto: ResourceTempStateDTO | None = resource_temp_state_instance

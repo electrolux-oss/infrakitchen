@@ -112,10 +112,6 @@ class TemplateService:
         await self.event_sender.send_event(response, ModelActions.CREATE)
         return result
 
-    async def create(self, template: TemplateCreate, requester: UserDTO) -> TemplateResponse:
-        new_template = await self.create_template(template=template, requester=requester)
-        return TemplateResponse.model_validate(new_template)
-
     async def update_template(self, template_id: str, template: TemplateUpdate, requester: UserDTO) -> Template:
         """
         Update an existing template.
@@ -158,11 +154,7 @@ class TemplateService:
         await self.event_sender.send_event(TemplateResponse.model_validate(existing_template), ModelActions.UPDATE)
         return existing_template
 
-    async def update(self, template_id: str, template: TemplateUpdate, requester: UserDTO) -> TemplateResponse:
-        existing_template = await self.update_template(template_id=template_id, template=template, requester=requester)
-        return TemplateResponse.model_validate(existing_template)
-
-    async def patch(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> Template:
+    async def patch_action(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> Template:
         """
         Patch an existing template.
         :param template_id: ID of the template to patch
@@ -191,10 +183,6 @@ class TemplateService:
         response = TemplateResponse.model_validate(existing_template)
         await self.event_sender.send_event(response, body.action)
         return existing_template
-
-    async def template_action(self, template_id: str, body: PatchBodyModel, requester: UserDTO) -> TemplateResponse:
-        result = await self.patch(template_id=template_id, body=body, requester=requester)
-        return TemplateResponse.model_validate(result)
 
     async def delete(self, template_id: str, requester: UserDTO) -> None:
         existing_template = await self.crud.get_by_id(template_id)

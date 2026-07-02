@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
 import { Button } from "@mui/material";
@@ -6,7 +6,10 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
 import { GetEntityLink } from "../../../common/components/CommonField";
-import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
+import {
+  EntityFetchTable,
+  EntityFetchTableRef,
+} from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
@@ -18,6 +21,11 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
   const { role } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const tableRef = useRef<EntityFetchTableRef>(null);
+
+  const refreshPoliciesTable = useCallback(() => {
+    void tableRef.current?.refresh();
+  }, []);
 
   const handleOpenDialog = () => {
     setIsDialogOpen(true);
@@ -37,6 +45,9 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
+          if (params.row.v1 && params.row.v1.includes("*")) {
+            return <span>{params.row.v1}</span>;
+          }
           return <GetEntityLink {...params.row.entityData} />;
         },
       },
@@ -85,12 +96,15 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
             requiredPermission="api:permission"
             permissionAction="admin"
           >
-            <DeletePermissionButton permission_id={params.value} />
+            <DeletePermissionButton
+              permission_id={params.value}
+              onDelete={refreshPoliciesTable}
+            />
           </PermissionWrapper>
         ),
       },
     ],
-    [],
+    [refreshPoliciesTable],
   );
 
   return (
@@ -114,9 +128,11 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           roleName={role}
           open={isDialogOpen}
           onClose={handleCloseDialog}
+          onSuccess={refreshPoliciesTable}
         />
       </PermissionWrapper>
       <EntityFetchTable
+        ref={tableRef}
         title="Role Policies"
         entityName="permission"
         defaultFilter={{ v0: role, ptype: "p", v1__not_like: "api:%" }}

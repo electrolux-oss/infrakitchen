@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -41,10 +41,12 @@ def make_context(user):
 
 class TestCloudResourceQueries:
     @pytest.mark.asyncio
+    @patch("graphql_api.helpers.user_has_access_to_api", new_callable=AsyncMock, return_value=True)
     @patch("graphql_api.modules.cloud_resource.queries.get_cloud_resources")
     async def test_cloud_resources_returns_filtered_sorted_paginated_resources(
         self,
         mock_get_cloud_resources,
+        mock_user_has_access_to_api,
         mocked_user,
     ):
         mock_get_cloud_resources.return_value = [
@@ -77,6 +79,7 @@ class TestCloudResourceQueries:
             "cloudResourcesCount": 2,
         }
         mock_get_cloud_resources.assert_awaited()
+        mock_user_has_access_to_api.assert_awaited()
 
     @pytest.mark.asyncio
     async def test_cloud_resources_requires_authentication(self, mocked_user):
@@ -93,8 +96,14 @@ class TestCloudResourceQueries:
         assert any("Not authenticated" in error.message for error in result.errors)
 
     @pytest.mark.asyncio
+    @patch("graphql_api.helpers.user_has_access_to_api", new_callable=AsyncMock, return_value=True)
     @patch("graphql_api.modules.cloud_resource.queries.get_cloud_resource")
-    async def test_cloud_resource_returns_single_resource(self, mock_get_cloud_resource, mocked_user):
+    async def test_cloud_resource_returns_single_resource(
+        self,
+        mock_get_cloud_resource,
+        mock_user_has_access_to_api,
+        mocked_user,
+    ):
         mock_get_cloud_resource.return_value = CloudResourceModel(
             id="aws_eks",
             provider="aws",
@@ -117,10 +126,17 @@ class TestCloudResourceQueries:
                 "entityName": "cloud_resource",
             }
         }
+        mock_user_has_access_to_api.assert_awaited()
 
     @pytest.mark.asyncio
+    @patch("graphql_api.helpers.user_has_access_to_api", new_callable=AsyncMock, return_value=True)
     @patch("graphql_api.modules.cloud_resource.queries.get_cloud_resource")
-    async def test_cloud_resource_propagates_not_found(self, mock_get_cloud_resource, mocked_user):
+    async def test_cloud_resource_propagates_not_found(
+        self,
+        mock_get_cloud_resource,
+        mock_user_has_access_to_api,
+        mocked_user,
+    ):
         mock_get_cloud_resource.side_effect = EntityNotFound("Resource missing")
 
         result = await schema.execute(
@@ -132,3 +148,4 @@ class TestCloudResourceQueries:
         assert result.data is None or result.data["cloudResource"] is None
         assert result.errors is not None
         assert any("Resource missing" in error.message for error in result.errors)
+        mock_user_has_access_to_api.assert_awaited()

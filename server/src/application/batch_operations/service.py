@@ -95,16 +95,7 @@ class BatchOperationService:
         body["created_by"] = requester.id
         return await self.crud.create(body=body)
 
-    async def create(
-        self,
-        batch_operation: BatchOperationCreate,
-        requester: UserDTO,
-    ) -> BatchOperationResponse:
-        """Create a batch operation and dispatch tasks to workers"""
-        entity = await self.create_batch_operation(batch_operation=batch_operation, requester=requester)
-        return BatchOperationResponse.model_validate(entity)
-
-    async def patch_entity_ids_orm(
+    async def patch_entity_ids(
         self,
         batch_operation_id: str | UUID,
         body: BatchOperationEntityIdsPatch,
@@ -131,18 +122,6 @@ class BatchOperationService:
 
         entity.entity_ids = existing_ids
         return await self.crud.update(entity)
-
-    async def patch_entity_ids(
-        self,
-        batch_operation_id: str | UUID,
-        body: BatchOperationEntityIdsPatch,
-        requester: UserDTO,
-    ) -> BatchOperationResponse:
-        """Patch entity_ids list on a batch operation"""
-        updated_entity = await self.patch_entity_ids_orm(
-            batch_operation_id=batch_operation_id, body=body, requester=requester
-        )
-        return BatchOperationResponse.model_validate(updated_entity)
 
     async def delete(
         self,

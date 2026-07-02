@@ -200,7 +200,7 @@ class TestCreate:
 
         monkeypatch.setattr(SourceCodeVersionResponse, "model_validate", Mock(return_value=scv_response))
 
-        saved_source_code_version = await mock_source_code_version_service.create(
+        saved_source_code_version = await mock_source_code_version_service.create_source_code_version(
             source_code_version=mocked_source_code_version_create, requester=mock_user_dto
         )
 
@@ -250,7 +250,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = source_code_version_to_create_body["labels"]
 
         with pytest.raises(EntityWrongState, match="Template is not enabled"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -288,7 +288,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = source_code_version_to_create_body["labels"]
 
         with pytest.raises(EntityWrongState, match="SourceCode is not enabled"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -316,7 +316,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = []
 
         with pytest.raises(ValueError, match="Source code branch not found in source code"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -344,7 +344,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = []
 
         with pytest.raises(ValueError, match="Source code folder not found in source code for the specified branch"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -374,7 +374,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = []
 
         with pytest.raises(ValueError, match="Source code branch not found in source code"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -402,7 +402,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = []
 
         with pytest.raises(ValueError, match="Source code version tag not found in source code"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -432,7 +432,7 @@ class TestCreate:
         with pytest.raises(
             ValueError, match="Source code folder not found in source code for the specified version tag"
         ):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -462,7 +462,7 @@ class TestCreate:
         mocked_source_code_version_create.labels = []
 
         with pytest.raises(ValueError, match="Source code version tag not found in folder map of source code"):
-            await mock_source_code_version_service.create(
+            await mock_source_code_version_service.create_source_code_version(
                 source_code_version=mocked_source_code_version_create, requester=mock_user_dto
             )
 
@@ -507,7 +507,7 @@ class TestUpdate:
             SourceCodeVersionResponse, "model_validate", Mock(return_value=updated_source_code_response)
         )
 
-        result = await mock_source_code_version_service.update(
+        result = await mock_source_code_version_service.update_source_code_version(
             source_code_version_id=existing_source_code.id,
             source_code_version=mocked_source_code_update,
             requester=mock_user_dto,
@@ -526,7 +526,7 @@ class TestUpdate:
         )
         mock_revision_handler.handle_revision.assert_called_once_with(existing_source_code)
         response = SourceCodeVersionResponse.model_validate(updated_source_code_response)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "update")
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
 
         assert result.status == ModelStatus.READY
 
@@ -538,7 +538,7 @@ class TestUpdate:
         mock_source_code_version_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="SourceCodeVersion not found"):
-            await mock_source_code_version_service.update(
+            await mock_source_code_version_service.update_source_code_version(
                 source_code_version_id="123id", source_code_version=source_code_update, requester=mock_user_dto
             )
 
@@ -550,7 +550,7 @@ class TestUpdate:
         mock_source_code_version_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(ValueError, match=r"Entity has wrong status for updating in_progress"):
-            await mock_source_code_version_service.update(
+            await mock_source_code_version_service.update_source_code_version(
                 source_code_version_id=mocked_source_code.id,
                 source_code_version=Mock(spec=SourceCodeVersionUpdate),
                 requester=mock_user_dto,
@@ -587,7 +587,7 @@ class TestPatch:
         mock_source_code_version_crud.get_by_id.return_value = source_code_version
         mock_source_code_version_crud.get_dependencies.return_value = None
 
-        result = await mock_source_code_version_service.patch(
+        result = await mock_source_code_version_service.patch_action(
             source_code_version_id=source_code_version.id, body=patch_body, requester=mock_user_dto
         )
 
@@ -617,7 +617,7 @@ class TestPatch:
         mock_source_code_version_crud.get_by_id.return_value = mocked_source_code
 
         with pytest.raises(EntityWrongState) as exc:
-            await mock_source_code_version_service.patch(
+            await mock_source_code_version_service.patch_action(
                 source_code_version_id=mocked_source_code.id, body=patch_body, requester=mock_user_dto
             )
 
@@ -641,7 +641,7 @@ class TestPatch:
         patch_body = PatchBodyModel(action="super_provision")
 
         with pytest.raises(ValueError, match=f"Action {patch_body.action} is not supported"):
-            await mock_source_code_version_service.patch(
+            await mock_source_code_version_service.patch_action(
                 source_code_version_id=mocked_source_code.id, body=patch_body, requester=mock_user_dto
             )
 

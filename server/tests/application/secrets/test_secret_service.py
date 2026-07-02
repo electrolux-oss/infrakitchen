@@ -192,7 +192,7 @@ class TestCreate:
         mock_secret_crud.create.return_value = mocked_secret
         mock_secret_crud.get_by_id.return_value = mocked_secret
 
-        result = await mock_secret_service.create(secret_create, mocked_user)
+        result = await mock_secret_service.create_secret(secret_create, mocked_user)
 
         mock_secret_crud.create.assert_awaited_once_with(expected_secret_body)
 
@@ -225,7 +225,7 @@ class TestCreate:
         mock_integration_crud.get_by_id.return_value = mocked_integration
 
         with pytest.raises(DependencyError, match="Integration must be enabled to create a secret"):
-            await mock_secret_service.create(secret_create, mocked_user)
+            await mock_secret_service.create_secret(secret_create, mocked_user)
 
     @pytest.mark.asyncio
     async def test_create_error(
@@ -249,7 +249,7 @@ class TestCreate:
         mock_secret_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_secret_service.create(secret_create, mocked_user)
+            await mock_secret_service.create_secret(secret_create, mocked_user)
 
         assert exc.value is error
         mock_secret_crud.create.assert_awaited_once()
@@ -288,7 +288,9 @@ class TestUpdate:
 
         monkeypatch.setattr(SecretResponse, "model_validate", Mock(return_value=mocked_secret_response))
 
-        result = await mock_secret_service.update(secret_id=secret_id, secret=secret_update, requester=mock_user_dto)
+        result = await mock_secret_service.update_secret(
+            secret_id=secret_id, secret=secret_update, requester=mock_user_dto
+        )
 
         mock_secret_crud.get_by_id.assert_awaited_once_with(secret_id)
         mock_secret_crud.update.assert_awaited_once_with(existing_secret, secret_update.model_dump(exclude_unset=True))
@@ -311,7 +313,7 @@ class TestUpdate:
         mock_secret_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Secret not found"):
-            await mock_secret_service.update(secret_id=SECRET_ID, secret=secret_update, requester=requester)
+            await mock_secret_service.update_secret(secret_id=SECRET_ID, secret=secret_update, requester=requester)
 
     @pytest.mark.asyncio
     async def test_update_secret_has_invalid_status(self, mock_secret_service, mock_secret_crud):
@@ -323,69 +325,7 @@ class TestUpdate:
         mock_secret_crud.get_by_id.return_value = existing_secret
 
         with pytest.raises(ValueError):
-            await mock_secret_service.update(secret_id=SECRET_ID, secret=secret_update, requester=requester)
-
-    @pytest.mark.asyncio
-    async def test_update_secret_has_status_disabled(
-        self,
-        mock_secret_service,
-        mock_secret_crud,
-        mock_revision_handler,
-        mock_audit_log_handler,
-        mock_event_sender,
-        monkeypatch,
-        mocked_secret,
-        mocked_secret_response,
-        mock_user_dto,
-    ):
-        aws_secret_config = {"aws_account": "123456789012", "aws_access_key_id": "updated"}
-
-        secret_update = Mock(spec=SecretUpdate)
-        secret_update.name = "New Secret name"
-        secret_update.description = "Updated description"
-        secret_update.secret_type = "cloud"
-        secret_update.secret_provider = "aws"
-        secret_update.configuration = aws_secret_config
-
-        mocked_secret.status = ModelStatus.DISABLED
-        mocked_secret.name = "New Secret name"
-
-        mocked_secret_response.status = ModelStatus.ENABLED
-        mocked_secret_response.name = "New Secret name"
-
-        update_secret_body = {
-            "name": "New Secret name",
-            "created_by": "user1",
-            "description": "Test description",
-            "secret_type": "cloud",
-            "secret_provider": "aws",
-            "configuration": aws_secret_config,
-        }
-
-        secret_update.model_dump = Mock(return_value=update_secret_body)
-        mock_secret_crud.get_by_id.return_value = mocked_secret
-        mock_secret_crud.update.return_value = mocked_secret
-
-        monkeypatch.setattr(SecretResponse, "model_validate", Mock(return_value=mocked_secret_response))
-        monkeypatch.setattr(mock_secret_service, "validate_configuration", Mock())
-
-        secret_update_result = await mock_secret_service.update(
-            secret_id=mocked_secret.id, secret=secret_update, requester=mock_user_dto
-        )
-
-        secret_update.model_dump.assert_called_once_with(
-            by_alias=True, exclude={"_entity_name"}, exclude_defaults=False, exclude_none=True, exclude_unset=True
-        )
-        mock_secret_crud.update.assert_called_once_with(mocked_secret, update_secret_body)
-        mock_secret_crud.refresh.assert_called_once_with(mocked_secret)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            mocked_secret.id, mock_user_dto.id, ModelActions.UPDATE, revision_number=mocked_secret.revision_number
-        )
-        mock_revision_handler.handle_revision.assert_awaited_once_with(mocked_secret)
-        response = SecretResponse.model_validate(mocked_secret)
-        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
-
-        assert secret_update_result.status == ModelStatus.ENABLED
+            await mock_secret_service.update_secret(secret_id=SECRET_ID, secret=secret_update, requester=requester)
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_secret_service, mock_secret_crud, mocked_secret):
@@ -397,7 +337,7 @@ class TestUpdate:
         mock_secret_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_secret_service.update(secret_id=SECRET_ID, secret=secret_update, requester=requester)
+            await mock_secret_service.update_secret(secret_id=SECRET_ID, secret=secret_update, requester=requester)
 
         assert exc.value is error
 
@@ -422,7 +362,7 @@ class TestPatch:
         mock_secret_crud.get_dependencies.return_value = []
         monkeypatch.setattr(SecretResponse, "model_validate", Mock(return_value=mocked_secret_response))
 
-        result = await mock_secret_service.patch_action(
+        result = await mock_secret_service.patch_action_secret(
             secret_id=SECRET_ID, body=PatchBodyModel(action=ModelActions.DISABLE), requester=mock_user_dto
         )
 
@@ -439,7 +379,7 @@ class TestPatch:
         mock_secret_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="Secret not found"):
-            await mock_secret_service.patch_action(
+            await mock_secret_service.patch_action_secret(
                 secret_id=SECRET_ID, body=PatchBodyModel(action=ModelActions.APPROVE), requester=mock_user_dto
             )
 

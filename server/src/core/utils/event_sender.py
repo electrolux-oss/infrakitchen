@@ -80,6 +80,20 @@ class EventSender:
         self._buffer.append(event_message)
         self._register_pending()
 
+    async def send_reload_event(self, event: str):
+        """Broadcast a bodyless reload signal on the FANOUT event exchange.
+
+        Used to tell other processes to reload some state (e.g. the scheduler
+        re-reading its jobs from the DB). Buffered and flushed after commit.
+        """
+        event_message = MessageModel()
+        event_message.message_type = "event"
+        event_message.metadata["event"] = event
+        event_message.exchange = "ik_event_messages"
+        event_message.exchange_type = ExchangeType.FANOUT
+        self._buffer.append(event_message)
+        self._register_pending()
+
     async def send_scheduler_job(self, job_id: UUID, job_type: JobType, job_script: str):
         message = MessageModel()
         message.routing_key = "ik_tasks"

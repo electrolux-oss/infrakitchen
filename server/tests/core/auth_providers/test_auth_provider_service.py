@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import ANY, Mock
 from uuid import uuid4
 
 import pytest
@@ -14,6 +14,7 @@ from core.auth_providers.schema import (
     MicrosoftProviderConfig,
 )
 from core.auth_providers.service import AuthProviderService
+from core.constants.model import ModelActions
 from core.errors import EntityNotFound
 from core.models.encrypted_secret import EncryptedSecretStr
 
@@ -188,9 +189,7 @@ class TestCreate:
         mock_auth_provider_crud.create.return_value = new_auth_provider
         mock_auth_provider_crud.get_by_id.return_value = auth_provider
 
-        monkeypatch.setattr(AuthProviderResponse, "model_validate", Mock(return_value=auth_provider_response))
-
-        result = await mock_auth_provider_service.create(auth_provider_create, requester)
+        result = await mock_auth_provider_service.create_auth_provider(auth_provider_create, requester)
         args, kwargs = mock_auth_provider_crud.create.call_args
         auth_call_body = args[0]
         assert auth_call_body["name"] == "Test AuthProvider"
@@ -200,14 +199,18 @@ class TestCreate:
         assert auth_call_body["configuration"]["client_id"] == "client123"
         assert auth_call_body["configuration"]["client_secret"].startswith("EncryptedSecretStr:")
 
-        mock_audit_log_handler.create_log.assert_awaited_once_with(new_auth_provider.id, requester.id, "create")
-        response = AuthProviderResponse.model_validate(new_auth_provider)
-        mock_event_sender.send_event.assert_awaited_once_with(response, "create")
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            new_auth_provider.id, requester.id, ModelActions.CREATE
+        )
+        mock_event_sender.send_event.assert_awaited_once_with(ANY, ModelActions.CREATE)
+
+        result_pydantic = AuthProviderResponse.model_validate(result)
 
         assert result.auth_provider == "microsoft"
         assert result.name == "Test AuthProvider"
-        assert result.configuration.tenant_id == "tenant123"
-        assert result.configuration.client_secret.get_decrypted_value() == "secret123"
+        assert result.configuration["tenant_id"] == "tenant123"
+        assert isinstance(result_pydantic.configuration, MicrosoftProviderConfig)
+        assert result_pydantic.configuration.client_secret.get_decrypted_value() == "secret123"
 
     @pytest.mark.asyncio
     async def test_create_error(self, mock_auth_provider_service, mock_auth_provider_crud, mocked_user_response):
@@ -230,7 +233,7 @@ class TestCreate:
         mock_auth_provider_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_auth_provider_service.create(auth_provider_create, requester)
+            await mock_auth_provider_service.create_auth_provider(auth_provider_create, requester)
 
         assert exc.value is error
         mock_auth_provider_crud.create.assert_awaited_once()
@@ -273,7 +276,7 @@ class TestUpdate:
 
         monkeypatch.setattr(AuthProviderResponse, "model_validate", Mock(return_value=auth_provider_response))
 
-        result = await mock_auth_provider_service.update(
+        result = await mock_auth_provider_service.update_auth_provider(
             auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=requester
         )
         assert result.name == "Test AuthProvider"
@@ -304,7 +307,7 @@ class TestUpdate:
         mock_auth_provider_crud.get_by_id.return_value = None
 
         with pytest.raises(EntityNotFound, match="AuthProvider not found"):
-            await mock_auth_provider_service.update(
+            await mock_auth_provider_service.update_auth_provider(
                 auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=requester
             )
 
@@ -318,7 +321,7 @@ class TestUpdate:
         mock_auth_provider_crud.count.return_value = 1
 
         with pytest.raises(ValueError) as exc:
-            await mock_auth_provider_service.update(
+            await mock_auth_provider_service.update_auth_provider(
                 auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=mocked_user_response
             )
 
@@ -347,7 +350,7 @@ class TestUpdate:
         mock_auth_provider_crud.update.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_auth_provider_service.update(
+            await mock_auth_provider_service.update_auth_provider(
                 auth_provider_id=auth_provider_ID, auth_provider=auth_provider_update, requester=mocked_user_response
             )
 

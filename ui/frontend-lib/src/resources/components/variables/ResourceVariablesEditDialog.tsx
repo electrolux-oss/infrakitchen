@@ -1,20 +1,24 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 
 import {
+  Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Table,
   TableBody,
+  Typography,
 } from "@mui/material";
 
+import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
 import { notifyError } from "../../../common/hooks/useNotification";
-import { ValidationRule } from "../../../types";
+import { IkEntity, ValidationRule } from "../../../types";
 import { ENTITY_STATE } from "../../../utils/constants";
 import {
   GqlValidationRulesByVariable,
@@ -37,7 +41,10 @@ export interface ResourceVariablesEditDialogProps {
   open: boolean;
   onClose: () => void;
   resource: GqlResource;
-  onSave: (variables: VariableInput[]) => Promise<void>;
+  onSave: (
+    variables: VariableInput[],
+    sourceCodeVersionId?: string | null,
+  ) => Promise<void>;
 }
 
 export const ResourceVariablesEditDialog = ({
@@ -49,6 +56,7 @@ export const ResourceVariablesEditDialog = ({
   const { ikApi } = useConfig();
   const [schema, setSchema] = useState<ResourceVariableSchema[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loadingSchema, setLoadingSchema] = useState(false);
   const [variableStatusByName, setVariableStatusByName] = useState<
     Record<string, VariableStatus>
   >({});
@@ -58,7 +66,27 @@ export const ResourceVariablesEditDialog = ({
     Record<string, ValidationRule | null>
   >({});
 
+  // Template version selection state
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
+    null,
+  );
+  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
+    {},
+  );
+
+  const scvFilter = useMemo(
+    () =>
+      resource.template?.id ? { template_id: resource.template.id } : undefined,
+    [resource.template?.id],
+  );
+
   const allowFrozenVariableChanges = resource.state === ENTITY_STATE.PROVISION;
+
+  const effectiveVersionId = selectedVersionId;
+
+  const versionChanged =
+    selectedVersionId !== null &&
+    selectedVersionId !== resource.sourceCodeVersion?.id;
 
   const methods = useForm<VariablesFormData>({
     mode: "onChange",
@@ -130,86 +158,94 @@ export const ResourceVariablesEditDialog = ({
     [getSchemaObject, resource.variables],
   );
 
-  const loadSchema = useCallback(async () => {
-    if (!resource.sourceCodeVersion?.id) return;
+  const loadSchema = useCallback(
+    async (versionId: string | null) => {
+      if (!versionId) return;
 
-    try {
-      const { resourceVariableSchema } = await ikApi.graphqlRequest<{
-        resourceVariableSchema: ResourceVariableSchema[];
-      }>(RESOURCE_VARIABLE_SCHEMA_QUERY, {
-        sourceCodeVersionId: resource.sourceCodeVersion.id,
-        parentResourceIds: resource.parents?.map((p) => p.id) || [],
-      });
-      const schemaResponse = resourceVariableSchema.map((variable) => ({
-        ...variable,
-        description: variable.description || "",
-      }));
-      setSchema(schemaResponse);
+      setLoadingSchema(true);
+      try {
+        const { resourceVariableSchema } = await ikApi.graphqlRequest<{
+          resourceVariableSchema: ResourceVariableSchema[];
+        }>(RESOURCE_VARIABLE_SCHEMA_QUERY, {
+          sourceCodeVersionId: versionId,
+          parentResourceIds: resource.parents?.map((p) => p.id) || [],
+        });
+        const schemaResponse = resourceVariableSchema.map((variable) => ({
+          ...variable,
+          description: variable.description || "",
+        }));
+        setSchema(schemaResponse);
 
-      const { mergedVariables, statusByName } =
-        reconcileVariables(schemaResponse);
-      reset({ variables: mergedVariables });
-      setVariableStatusByName(statusByName);
+        const { mergedVariables, statusByName } =
+          reconcileVariables(schemaResponse);
+        reset({ variables: mergedVariables });
+        setVariableStatusByName(statusByName);
 
-      // Load validation rules
-      const templateId = resource.template?.id;
-      if (templateId) {
-        const response = await ikApi.graphqlRequest<{
-          validationRulesByTemplate: GqlValidationRulesByVariable[];
-        }>(
-          `query ValidationRulesForVariables($templateId: UUID!) {
-            validationRulesByTemplate(templateId: $templateId) {
-              ${VALIDATION_RULES_BY_VARIABLE_FIELDS}
-            }
-          }`,
-          { templateId },
-        );
+        // Load validation rules
+        const templateId = resource.template?.id;
+        if (templateId) {
+          const response = await ikApi.graphqlRequest<{
+            validationRulesByTemplate: GqlValidationRulesByVariable[];
+          }>(
+            `query ValidationRulesForVariables($templateId: UUID!) {
+              validationRulesByTemplate(templateId: $templateId) {
+                ${VALIDATION_RULES_BY_VARIABLE_FIELDS}
+              }
+            }`,
+            { templateId },
+          );
 
-        const validationData = response.validationRulesByTemplate.map((vr) =>
-          transformValidationRulesByVariable(vr),
-        );
-        const { summaryByVariable, ruleByVariable } =
-          buildValidationRuleMaps(validationData);
-        setValidationRuleSummaryByVariable(summaryByVariable);
-        setValidationRuleByVariable(ruleByVariable);
-      } else {
-        setValidationRuleSummaryByVariable({});
-        setValidationRuleByVariable({});
+          const validationData = response.validationRulesByTemplate.map((vr) =>
+            transformValidationRulesByVariable(vr),
+          );
+          const { summaryByVariable, ruleByVariable } =
+            buildValidationRuleMaps(validationData);
+          setValidationRuleSummaryByVariable(summaryByVariable);
+          setValidationRuleByVariable(ruleByVariable);
+        } else {
+          setValidationRuleSummaryByVariable({});
+          setValidationRuleByVariable({});
+        }
+      } catch (error) {
+        notifyError(error);
+      } finally {
+        setLoadingSchema(false);
       }
-    } catch (error) {
-      notifyError(error);
-    }
-  }, [
-    ikApi,
-    reconcileVariables,
-    resource.sourceCodeVersion?.id,
-    resource.parents,
-    resource.template?.id,
-    reset,
-  ]);
+    },
+    [ikApi, reconcileVariables, resource.parents, resource.template?.id, reset],
+  );
 
   useEffect(() => {
     if (open) {
-      loadSchema();
+      setSelectedVersionId(resource.sourceCodeVersion?.id ?? null);
     }
-  }, [open, loadSchema]);
+  }, [open, resource.sourceCodeVersion?.id]);
+
+  useEffect(() => {
+    if (open && effectiveVersionId) {
+      loadSchema(effectiveVersionId);
+    }
+  }, [open, effectiveVersionId, loadSchema]);
 
   const handleSave = useCallback(
     async (data: VariablesFormData) => {
       setSaving(true);
       try {
+        const filteredVariables = data.variables
+          .filter(
+            (variable) => variableStatusByName[variable.name] !== "deleted",
+          )
+          .map((variable) => ({
+            name: variable.name,
+            value: variable.value,
+            sensitive: variable.sensitive,
+            type: variable.type,
+            description: variable.description,
+          }));
+
         await onSave(
-          data.variables
-            .filter(
-              (variable) => variableStatusByName[variable.name] !== "deleted",
-            )
-            .map((variable) => ({
-              name: variable.name,
-              value: variable.value,
-              sensitive: variable.sensitive,
-              type: variable.type,
-              description: variable.description,
-            })),
+          filteredVariables,
+          versionChanged ? selectedVersionId : undefined,
         );
         onClose();
       } catch {
@@ -218,7 +254,7 @@ export const ResourceVariablesEditDialog = ({
         setSaving(false);
       }
     },
-    [onSave, onClose, variableStatusByName],
+    [onSave, onClose, variableStatusByName, versionChanged, selectedVersionId],
   );
 
   const handleInvalid = useCallback(() => {
@@ -229,53 +265,92 @@ export const ResourceVariablesEditDialog = ({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Edit Input Variables</DialogTitle>
       <DialogContent>
-        <FormProvider {...methods}>
-          {(schema.length > 0 || fields.length > 0) && (
-            <Table>
-              <TableBody>
-                {fields.map((field, index) =>
-                  (() => {
-                    const variableStatus = variableStatusByName[field.name];
-                    const schemaVariable = schemaObject[field.name] || {
-                      name: field.name,
-                      type: field.type || "string",
-                      description: field.description || "",
-                      options: [],
-                      required: false,
-                      restricted: false,
-                      sensitive: field.sensitive || false,
-                      frozen: false,
-                      unique: false,
-                      value: field.value ?? null,
-                      index,
-                    };
+        <Box sx={{ mb: 3, mt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Select a template version. Variables will be reconfigured based on
+            the selected version&apos;s schema.
+          </Typography>
+          <ReferenceInput
+            ikApi={ikApi}
+            entity_name="source_code_versions"
+            showFields={["identifier"]}
+            buffer={buffer}
+            setBuffer={setBuffer}
+            getOptionDisabled={(option: any) => option.status !== "done"}
+            filter={scvFilter}
+            value={selectedVersionId}
+            onChange={(value: string | null) => setSelectedVersionId(value)}
+            label="Template Version"
+          />
+        </Box>
 
-                    return (
-                      <ResourceVariableForm
-                        key={field.id}
-                        index={index}
-                        edit_mode={!allowFrozenVariableChanges}
-                        variable={schemaVariable}
-                        status={variableStatus}
-                        validationSummary={
-                          variableStatus === "deleted"
-                            ? null
-                            : validationRuleSummaryByVariable[field.name] ||
-                              null
-                        }
-                        validationRule={
-                          variableStatus === "deleted"
-                            ? null
-                            : validationRuleByVariable[field.name] || null
-                        }
-                      />
-                    );
-                  })(),
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </FormProvider>
+        {loadingSchema && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {!loadingSchema && (
+          <FormProvider {...methods}>
+            {(schema.length > 0 || fields.length > 0) && (
+              <Table>
+                <TableBody>
+                  {fields.map((field, index) =>
+                    (() => {
+                      const variableStatus = variableStatusByName[field.name];
+                      const schemaVariable = schemaObject[field.name] || {
+                        name: field.name,
+                        type: field.type || "string",
+                        description: field.description || "",
+                        options: [],
+                        required: false,
+                        restricted: false,
+                        sensitive: field.sensitive || false,
+                        frozen: false,
+                        unique: false,
+                        value: field.value ?? null,
+                        index,
+                      };
+
+                      return (
+                        <ResourceVariableForm
+                          key={field.id}
+                          index={index}
+                          edit_mode={!allowFrozenVariableChanges}
+                          variable={schemaVariable}
+                          status={variableStatus}
+                          validationSummary={
+                            variableStatus === "deleted"
+                              ? null
+                              : validationRuleSummaryByVariable[field.name] ||
+                                null
+                          }
+                          validationRule={
+                            variableStatus === "deleted"
+                              ? null
+                              : validationRuleByVariable[field.name] || null
+                          }
+                        />
+                      );
+                    })(),
+                  )}
+                </TableBody>
+              </Table>
+            )}
+            {!loadingSchema &&
+              schema.length === 0 &&
+              fields.length === 0 &&
+              effectiveVersionId && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ py: 2 }}
+                >
+                  No configurable variables for this template version.
+                </Typography>
+              )}
+          </FormProvider>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
@@ -284,7 +359,7 @@ export const ResourceVariablesEditDialog = ({
         <Button
           variant="contained"
           onClick={handleSubmit(handleSave, handleInvalid)}
-          disabled={saving}
+          disabled={saving || loadingSchema || !effectiveVersionId}
         >
           Save
         </Button>

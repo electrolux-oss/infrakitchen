@@ -1,9 +1,10 @@
 from datetime import datetime, UTC
-from typing import Annotated, Any, Literal, TypeVar
+from typing import Annotated, Any, Literal, TypeVar, cast
 import re
 import uuid
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
+from pydantic_core import MISSING
 
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
@@ -234,7 +235,7 @@ class ResourceUpdate(BaseModel):
     dependency_config: list[DependencyConfig] | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
     workspace_id: OptionalUUID = Field(
-        default=None,
+        default=cast(Any, MISSING),
     )
 
     # critical change, as changing storage may cause issues with existing resources
@@ -244,15 +245,6 @@ class ResourceUpdate(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def at_least_one_field_present(cls, values):
-        if not isinstance(values, dict):
-            return values
-        if not any(values.get(field) not in (None, [], "") for field in ResourceUpdate.model_fields):
-            raise ValueError("At least one field must be provided in Resource update.")
-        return values
 
 
 class ResourceWithConfigs(BaseModel):

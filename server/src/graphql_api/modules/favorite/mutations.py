@@ -31,7 +31,7 @@ class FavoriteMutation:
         requester = info.context["request"].state.user
         service = get_favorite_service(session)
 
-        return await service.create_entity(
+        return await service.create_favorite(
             favorite=FavoriteCreate(
                 component_type=cast(FavoriteComponentType, input.component_type),
                 component_id=input.component_id,

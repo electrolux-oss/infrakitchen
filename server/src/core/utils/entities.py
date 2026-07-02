@@ -14,10 +14,12 @@ DEFAULT_ENTITIES = [
     "log",
     "audit_log",
     "task",
+    "revision",
     "constant",
     "cloud_resource",
     "worker",
     "workspace",
+    "scheduler_job",
     "entitie",
     "user",
     "permission",
@@ -27,6 +29,8 @@ DEFAULT_ENTITIES = [
     "tree",
     "schema",
     "favorite",
+    "subscription",
+    "notification_preference",
 ]
 
 ADMIN_ENTITIES = [

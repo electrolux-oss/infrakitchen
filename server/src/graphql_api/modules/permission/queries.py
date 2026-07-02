@@ -8,7 +8,14 @@ from strawberry.types import Info
 from core.permissions.service import PermissionService
 from core.permissions.dependencies import get_permission_service
 from core.users.functions import user_apis_permissions
-from graphql_api.helpers import IsAuthenticated, build_field_spec, get_entity_selection, parse_range, parse_sort
+from graphql_api.helpers import (
+    IsAuthenticated,
+    build_field_spec,
+    check_api_permission,
+    get_entity_selection,
+    parse_range,
+    parse_sort,
+)
 from graphql_api.modules.permission.types import PermissionType, RoleType
 
 
@@ -21,6 +28,7 @@ def _build_service(info: Info) -> PermissionService:
 class PermissionQuery:
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def permission(self, info: Info, id: uuid.UUID) -> PermissionType | None:
+        await check_api_permission(info, "permission", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "permission")
         fields = build_field_spec(entity_fields)
@@ -34,6 +42,7 @@ class PermissionQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[PermissionType]:
+        await check_api_permission(info, "permission", ["read"])
         service = _build_service(info)
         entity_fields = get_entity_selection(info.selected_fields, "permissions")
         fields = build_field_spec(entity_fields)
@@ -50,6 +59,7 @@ class PermissionQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "permission", ["read"])
         service = _build_service(info)
         return await service.count(
             filter=cast(dict[str, Any], cast(object, filter)) if filter else None,
@@ -63,6 +73,7 @@ class PermissionQuery:
         sort: list[str] | None = None,
         range: list[int] | None = None,
     ) -> list[RoleType]:
+        await check_api_permission(info, "permission", ["read"])
         service = _build_service(info)
 
         base_filter: dict[str, Any] = {"ptype": "g"}
@@ -88,6 +99,7 @@ class PermissionQuery:
         info: Info,
         filter: JSON | None = None,
     ) -> int:
+        await check_api_permission(info, "permission", ["read"])
         service = _build_service(info)
 
         base_filter: dict[str, Any] = {"ptype": "g"}
@@ -98,6 +110,7 @@ class PermissionQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def user_api_policies(self, info: Info) -> JSON:
+        await check_api_permission(info, "permission", ["read"])
         requester = info.context["request"].state.user
         if not requester:
             return JSON({})
@@ -106,6 +119,7 @@ class PermissionQuery:
 
     @strawberry.field(permission_classes=[IsAuthenticated])
     async def permission_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        await check_api_permission(info, "permission", ["read"])
         requester = info.context["request"].state.user
         service = _build_service(info)
         return await service.get_actions(permission_id=id, requester=requester)

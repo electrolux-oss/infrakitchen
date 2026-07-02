@@ -10,7 +10,7 @@ from application.storages.schema import StorageCreate, StorageUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.storage.types import StorageType
 
 
@@ -40,6 +40,7 @@ class StorageActionInput:
 class StorageMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_storage(self, info: Info, input: StorageCreateInput) -> StorageType:
+        await check_api_permission(info, "storage", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_storage_service(session)
@@ -69,7 +70,7 @@ class StorageMutation:
         if input.action not in await service.get_actions(storage_id=id, requester=requester):
             raise AccessDenied(f"Access denied for action {input.action}")
 
-        return await service.patch_action_storage(
+        return await service.patch_action(
             storage_id=str(id),
             body=PatchBodyModel(action=input.action),
             requester=requester,

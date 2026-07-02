@@ -427,6 +427,15 @@ class ResourceService:
                     return True
             return False
 
+        body = model_db_dump(
+            resource,
+            exclude_unset=True,
+            exclude_defaults=True,
+        )
+
+        if not body:
+            raise ValueError("At least one field must be provided in Resource update.")
+
         existing_resource = await self.crud.get_by_id(resource_id)
 
         if not existing_resource:
@@ -534,14 +543,14 @@ class ResourceService:
                 else:
                     raise EntityNotFound("Template not found")
 
-            if resource.workspace_id is not None and str(resource.workspace_id) != str(
-                existing_resource.workspace_id or ""
+            if (
+                "workspace_id" in resource.model_fields_set
+                and resource.workspace_id is not None
+                and str(resource.workspace_id) != str(existing_resource.workspace_id or "")
             ):
                 workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:
                     raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
-
-        body = model_db_dump(resource, exclude_unset=True, exclude_none=True)
 
         if not has_field_changes(body, existing_resource):
             raise ValueError("No changes detected; the resource is already up to date.")
@@ -571,17 +580,6 @@ class ResourceService:
             )
 
         return existing_resource
-
-    async def patch(self, resource_id: str, resource: ResourceUpdate, requester: UserDTO) -> ResourceResponse:
-        """
-        Update an existing resource.
-        :param resource_id: ID of the resource to update
-        :param resource: Resource to update
-        :param requester: User who updates the resource
-        :return: Updated resource
-        """
-        result = await self.update_resource(resource_id=resource_id, resource=resource, requester=requester)
-        return ResourceResponse.model_validate(result)
 
     async def action_reject(
         self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO
@@ -1222,7 +1220,7 @@ class ResourceService:
             await self.subscription_service.delete(subscription_id=subscription.id)
         return True
 
-    async def sync_workspace(self, resource_id: str, requester: UserDTO) -> ResourceResponse:
+    async def sync_workspace(self, resource_id: str, requester: UserDTO) -> Resource:
         """
         Sync existing resource with a workspace.
         :param resource_id: ID of the resource to sync
@@ -1242,7 +1240,7 @@ class ResourceService:
 
         await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
 
-        return ResourceResponse.model_validate(existing_resource)
+        return existing_resource
 
     async def publish_notification_event(
         self,

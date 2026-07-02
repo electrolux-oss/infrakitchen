@@ -48,13 +48,13 @@ export const ExecutorContent = () => {
       label: "Revisions",
       content: <Revision resourceId={entity.id} resourceRevision={0} />,
       requiredPermission: `executor:${entity.id}`,
-      permissionAction: "write" as const,
+      permissionAction: "write",
     },
     {
       label: "Settings",
       content: <DangerZoneCard />,
       requiredPermission: `executor:${entity.id}`,
-      permissionAction: "write" as const,
+      permissionAction: "write",
     },
   ];
 

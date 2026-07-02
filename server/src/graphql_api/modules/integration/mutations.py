@@ -11,7 +11,7 @@ from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied, EntityNotFound
 from core.users.functions import user_has_access_to_api, user_has_access_to_entity
-from graphql_api.helpers import IsAuthenticated
+from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.integration.types import IntegrationType, IntegrationValidationType
 
 
@@ -42,6 +42,7 @@ class IntegrationActionInput:
 class IntegrationMutation:
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_integration(self, info: Info, input: IntegrationCreateInput) -> IntegrationType:
+        await check_api_permission(info, "integration", ["admin"])
         session = info.context["session"]
         requester = info.context["request"].state.user
         service = get_integration_service(session)

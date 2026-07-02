@@ -258,7 +258,7 @@ class TestTemplateMutations:
     ):
         template_id = uuid4()
         mock_template_service.get_actions = AsyncMock(return_value=[ModelActions.DISABLE.value])
-        mock_template_service.patch = AsyncMock(return_value=mocked_template)
+        mock_template_service.patch_action = AsyncMock(return_value=mocked_template)
         mock_get_service.return_value = mock_template_service
 
         result = await schema.execute(
@@ -281,9 +281,9 @@ class TestTemplateMutations:
             "entityName": "template",
         }
         mock_template_service.get_actions.assert_awaited_once_with(template_id=template_id, requester=mocked_user)
-        mock_template_service.patch.assert_awaited_once()
-        assert mock_template_service.patch.await_args
-        call_kwargs = mock_template_service.patch.await_args.kwargs
+        mock_template_service.patch_action.assert_awaited_once()
+        assert mock_template_service.patch_action.await_args
+        call_kwargs = mock_template_service.patch_action.await_args.kwargs
         assert call_kwargs["template_id"] == str(template_id)
         assert call_kwargs["requester"] == mocked_user
         assert call_kwargs["body"].action == ModelActions.DISABLE.value
