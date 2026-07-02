@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
 
 import ThemeSwitcher from "../base/layout/ThemeSwitcher";
 import AppTheme from "../theme/AppTheme";
@@ -78,6 +79,19 @@ export default function SignInSide(props: { disableCustomTheme?: boolean }) {
             <SignInCard />
           </Stack>
         </Stack>
+        <Typography
+          variant="caption"
+          sx={{
+            position: "absolute",
+            bottom: "1rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "text.disabled",
+            whiteSpace: "nowrap",
+          }}
+        >
+          v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
+        </Typography>
       </Stack>
     </AppTheme>
   );
