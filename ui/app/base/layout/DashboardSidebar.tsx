@@ -128,7 +128,6 @@ export default function DashboardSidebar({
           dense
           sx={{
             padding: mini ? 0 : 0.5,
-            mb: 4,
             width: mini ? MINI_DRAWER_WIDTH : "auto",
             pt: !mini ? 0 : 2,
           }}
@@ -277,6 +276,7 @@ export default function DashboardSidebar({
           />
           <DashboardAdminSidebar />
 
+          <DashboardSidebarDividerItem />
           {user && (
             <Stack
               direction="row"
@@ -284,8 +284,6 @@ export default function DashboardSidebar({
                 p: 2,
                 gap: 1,
                 alignItems: "center",
-                borderTop: "1px solid",
-                borderColor: "divider",
               }}
             >
               <Avatar
@@ -344,6 +342,28 @@ export default function DashboardSidebar({
               <OptionsMenu />
             </Stack>
           )}
+
+          <DashboardSidebarDividerItem />
+          <Box
+            sx={{
+              px: 2,
+              py: 1,
+              opacity: isFullyExpanded ? 1 : 0,
+              transition: "opacity 0.2s",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.disabled",
+                display: "block",
+                fontSize: "0.65rem",
+                lineHeight: 1.4,
+              }}
+            >
+              v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
+            </Typography>
+          </Box>
         </List>
       </Box>
     ),
