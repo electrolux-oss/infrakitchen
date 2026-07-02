@@ -51,7 +51,8 @@ async def get_microsoft_sso(service: SSOService) -> MicrosoftSSO:
 @router.get("/microsoft/login")
 async def microsoft_login(service: SSOService = Depends(get_sso_service)):
     microsoft_sso = await get_microsoft_sso(service)
-    return await microsoft_sso.get_login_redirect()
+    async with microsoft_sso:
+        return await microsoft_sso.get_login_redirect()
 
 
 async def microsoft_refresh_token(service: SSOService, request: Request, response: Response, cookie: str | None = None):
@@ -121,7 +122,9 @@ async def microsoft_callback(
     microsoft_sso: MicrosoftSSO = await get_microsoft_sso(service)
 
     try:
-        openid = await microsoft_sso.verify_and_process(request)
+        async with microsoft_sso:
+            openid = await microsoft_sso.verify_and_process(request)
+            refresh_token = microsoft_sso.refresh_token
     except InvalidGrantError as e:
         raise AccessUnauthorized(f"Authentication failed. {e}") from e
 
@@ -160,13 +163,13 @@ async def microsoft_callback(
     except EntityExistsError:
         pass  # User is already assigned to the role
 
-    if not microsoft_sso.refresh_token:
+    if not refresh_token:
         raise Exception("Refresh token is required. Check your app configuration.")
 
     response = RedirectResponse(url="/")
     response.set_cookie(
         key="microsoft-refresh-token",
-        value=microsoft_sso.refresh_token,
+        value=refresh_token,
         httponly=True,
         secure=True,
         expires=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30),

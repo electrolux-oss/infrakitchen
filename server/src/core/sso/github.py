@@ -49,7 +49,8 @@ async def get_github_sso(service: SSOService) -> GithubSSO:
 @router.get("/github/login")
 async def github_login(service: SSOService = Depends(get_sso_service)):
     github_sso = await get_github_sso(service)
-    return await github_sso.get_login_redirect()
+    async with github_sso:
+        return await github_sso.get_login_redirect()
 
 
 async def github_refresh_token(
@@ -126,7 +127,9 @@ async def github_refresh_token(
 async def github_callback(request: Request, service: SSOService = Depends(get_sso_service)):
     github_sso = await get_github_sso(service)
     try:
-        openid = await github_sso.verify_and_process(request)
+        async with github_sso:
+            openid = await github_sso.verify_and_process(request)
+            refresh_token = github_sso.refresh_token
     except InvalidGrantError as e:
         raise AccessUnauthorized(f"Authentication failed. {e}") from e
     except CustomOAuth2Error as e:
@@ -154,7 +157,7 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
         if not any(user_from_provider["email"].endswith(f"@{domain}") for domain in github_provider.filter_by_domain):
             raise AccessUnauthorized("Authentication failed")
 
-    if not github_sso.refresh_token:
+    if not refresh_token:
         raise Exception("Refresh token is required. Check your app configuration.")
 
     user = await service.user_service.create_user_if_not_exists(
@@ -173,7 +176,7 @@ async def github_callback(request: Request, service: SSOService = Depends(get_ss
     response = RedirectResponse(url="/")
     response.set_cookie(
         key="github-refresh-token",
-        value=github_sso.refresh_token,
+        value=refresh_token,
         httponly=True,
         secure=True,
         expires=datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30),
