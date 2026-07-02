@@ -10,8 +10,8 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SecretContent } from "../components/SecretContent";
-import { SECRET_DETAIL_FIELDS, transformSecret } from "../graphql";
-import { SecretValidateResponse } from "../types";
+import { SECRET_DETAIL_FIELDS, VALIDATE_SECRET_MUTATION } from "../graphql";
+import { SecretValidationResult } from "../types";
 
 export const SecretPage = () => {
   const { secret_id } = useParams();
@@ -26,35 +26,36 @@ export const SecretPage = () => {
     }
 
     setLoading(true);
-    ikApi
-      .get(`secrets/${secret_id}/validate`)
-      .then((response: SecretValidateResponse) => {
-        if (response.is_valid) {
-          notify(response.message, "success");
-        } else {
-          notifyError(
-            new Error(
-              `Validation failed: ${response.message || "No message provided."}`,
-            ),
-          );
-        }
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const response = await ikApi.graphqlRequest<{
+        validateSecret: SecretValidationResult;
+      }>(VALIDATE_SECRET_MUTATION, { id: secret_id });
+
+      const result = response.validateSecret;
+      if (result.isValid) {
+        notify(result.message, "success");
+      } else {
+        notifyError(
+          new Error(
+            `Validation failed: ${result.message || "No message provided."}`,
+          ),
+        );
+      }
+    } catch (error: any) {
+      notifyError(error);
+    } finally {
+      setLoading(false);
+    }
   }, [ikApi, secret_id]);
 
   return (
     <EntityProvider
       entity_name="secret"
       entity_id={secret_id || ""}
-      transformFn={transformSecret}
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
         title={"Secret Overview"}
-        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"

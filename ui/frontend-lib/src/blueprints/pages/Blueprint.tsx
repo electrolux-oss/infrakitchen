@@ -7,7 +7,7 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { BlueprintContent } from "../components/BlueprintContent";
-import { BLUEPRINT_FIELDS, transformBlueprint } from "../graphql";
+import { BLUEPRINT_FIELDS } from "../graphql";
 
 export const BlueprintPage = () => {
   const { blueprint_id } = useParams();
@@ -18,7 +18,6 @@ export const BlueprintPage = () => {
     <EntityProvider
       entity_name="blueprint"
       entity_id={blueprint_id || ""}
-      transformFn={transformBlueprint}
       entityFields={BLUEPRINT_FIELDS}
     >
       <EntityContainer

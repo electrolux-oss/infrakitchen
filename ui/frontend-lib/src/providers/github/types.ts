@@ -102,9 +102,9 @@ export interface GithubPullRequest {
   requested_reviewers: any[];
   requested_teams: any[];
   labels: any[];
-  milestone: any;
+  milestone?: any;
   draft: boolean;
-  changed_files: number;
+  changed_files?: number;
   head: {
     label: string;
     ref: string;

@@ -19,7 +19,6 @@ import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformExecutorOptional } from "../graphql";
 import { EXECUTOR_FIELD_MAP } from "../graphql/fragments";
 
 export const ExecutorsPage = () => {
@@ -28,10 +27,15 @@ export const ExecutorsPage = () => {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    // Load labels
-    ikApi.get("labels/executor").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query ExecutorLabels {
+          labels: labels(entity: "executor")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   const columns = useMemo(
@@ -59,6 +63,7 @@ export const ExecutorsPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -66,18 +71,18 @@ export const ExecutorsPage = () => {
         },
       },
       {
-        field: "source_code",
+        field: "sourceCode",
         headerName: "Code Repository",
         flex: 1,
         sortField: "source_code.source_code_url",
         valueGetter: (_value: any, row: any) =>
-          row.source_code?.identifier || "",
+          row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.source_code;
+          const sourceCodeVersion = params.row.sourceCode;
           return (
             <GetEntityLink
               {...sourceCodeVersion}
-              name={getRepoNameFromUrl(params.row.source_code?.source_code_url)}
+              name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
             />
           );
         },
@@ -96,7 +101,7 @@ export const ExecutorsPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -107,7 +112,7 @@ export const ExecutorsPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -200,7 +205,6 @@ export const ExecutorsPage = () => {
         entityName="executor"
         columns={columns}
         entityFieldMap={EXECUTOR_FIELD_MAP}
-        transformFn={transformExecutorOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
       />

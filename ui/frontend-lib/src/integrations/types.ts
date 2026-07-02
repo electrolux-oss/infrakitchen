@@ -1,54 +1,19 @@
 import React from "react";
 
 import { IconProps } from "../icons/Icons";
-import { UserShort } from "../users";
-import { INTEGRATION_STATUS } from "../utils/constants";
 
-export interface IntegrationShort {
+export interface IntegrationCreate {
   id: string;
   name: string;
-  _entity_name: string;
-  integration_provider: string;
-}
-
-export interface IntegrationResponse extends IntegrationShort {
-  created_at: Date;
-  updated_at: Date;
-  status: INTEGRATION_STATUS;
-  state: string;
-  revision_number: number;
-  labels: string[];
-  integration_type: string;
-  integration_provider: string;
   description: string;
-  configuration: object;
-  creator: UserShort;
-  resource_count?: number;
-  source_code_count?: number;
-  workspace_count?: number;
-  executor_count?: number;
-}
-
-export type IntegrationResponseOptional = Partial<IntegrationResponse>;
-
-export interface IntegrationCreate extends IntegrationShort {
-  name: string;
-  description: string;
-  integration_type: string;
-  integration_provider: string;
+  integrationType: string;
+  integrationProvider: string;
   labels: string[];
   configuration: object;
 }
 
 export interface IntegrationWithStorageCreate extends IntegrationCreate {
-  create_storage: boolean;
-}
-
-export interface IntegrationUpdate extends IntegrationShort {
-  name: string;
-  description: string;
-  labels: string[];
-  configuration: object;
+  createStorage: boolean;
 }
 
 export enum IntegrationType {
@@ -72,13 +37,7 @@ export interface Provider {
   tokenLink: string;
 }
 
-export interface IntegrationValidateRequest {
-  integration_type: string;
-  integration_provider: string;
-  configuration: object;
-}
-
-export interface IntegrationValidateResponse {
-  is_valid: boolean;
+export interface IntegrationValidationResult {
+  isValid: boolean;
   message: string | null;
 }

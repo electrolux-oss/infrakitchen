@@ -7,7 +7,6 @@ import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { transformExecutorOptional } from "../graphql";
 import { EXECUTOR_FIELD_MAP } from "../graphql/fragments";
 
 interface EntityExecutorsProps {
@@ -18,6 +17,7 @@ interface EntityExecutorsProps {
 const columns = [
   {
     field: "name",
+    fetchFields: ["name", "id", "entityName"],
     headerName: "Name",
     flex: 1,
     hideable: false,
@@ -26,18 +26,18 @@ const columns = [
     },
   },
   {
-    field: "source_code",
+    field: "sourceCode",
     headerName: "Code Repository",
     flex: 1,
     sortField: "source_code.source_code_url",
-    valueGetter: (_value: any, row: any) => row.source_code?.identifier || "",
+    valueGetter: (_value: any, row: any) => row.sourceCode?.identifier || "",
     renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row.source_code;
+      const sourceCode = params.row.sourceCode;
       if (!sourceCode) return null;
       return (
         <GetEntityLink
           {...sourceCode}
-          name={getRepoNameFromUrl(sourceCode.source_code_url)}
+          name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}
         />
       );
     },
@@ -56,7 +56,7 @@ const columns = [
     ),
   },
   {
-    field: "created_at",
+    field: "createdAt",
     headerName: "Created",
     flex: 1,
     renderCell: (params: GridRenderCellParams) => (
@@ -100,7 +100,6 @@ export const EntityExecutors = ({
     <EntityFetchTable
       title="Executors"
       entityName="executor"
-      transformFn={transformExecutorOptional}
       entityFieldMap={EXECUTOR_FIELD_MAP}
       columns={columns}
       filterStorageKey={filterStorageKey}

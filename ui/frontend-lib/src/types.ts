@@ -1,16 +1,13 @@
-export * from "./revision/types";
-import { UserResponse } from "./users/types";
+import { GqlUser } from "./users/graphql";
 
 export interface IkEntity extends Record<string, any> {
   id: string;
   name: string;
   state: string;
   status: string;
-  creator?: UserResponse;
+  creator?: GqlUser;
   created_at: Date;
   updated_at: Date;
-
-  _entity_name: string;
 }
 
 export interface SortPayload {
@@ -43,27 +40,9 @@ export interface GetListResult<RecordType extends IkEntity = any> {
   };
 }
 
-export interface LogEntity {
-  id: string;
-  data: string;
-  entity_id: string;
-  entity: string;
-  revision: number;
-  audit_log_id?: string;
-  trace_id?: string;
-  level: string;
-  created_at: Date;
-  execution_start: number;
-  expire_at?: Date;
-  _entity_name: "log";
-}
+export type { GqlLog as LogEntity } from "./logs/graphql";
 
-export interface AuditLogEntity extends IkEntity {
-  model: string;
-  entity_id: string;
-  action: string;
-  revision_number?: number;
-}
+export type { GqlAuditLog as AuditLogEntity } from "./audit_logs/graphql";
 
 export type ValidationRuleTargetType = "string" | "number";
 

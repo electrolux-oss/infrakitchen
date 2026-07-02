@@ -17,18 +17,15 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
+import { GqlSourceCodeVersion } from "../graphql";
 import {
   SourceCodeVersionUpdateFieldInput,
   UPDATE_SOURCE_CODE_VERSION_MUTATION,
 } from "../graphql/mutations";
-import { SourceCodeVersionResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface SourceCodeVersionAboutProps {
-  source_code_version: SourceCodeVersionResponse;
+  source_code_version: GqlSourceCodeVersion;
 }
 
 export const SourceCodeVersionOverview = ({
@@ -71,29 +68,29 @@ export const SourceCodeVersionOverview = ({
       />
       <CommonField
         name={"Source Code"}
-        value={<GetReferenceUrlValue {...source_code_version.source_code} />}
+        value={<GetReferenceUrlValue {...source_code_version.sourceCode} />}
       />
       <CommonField
         name={"Source Code Directory"}
         value={getTextValue(
-          source_code_version.source_code_folder
-            ? source_code_version.source_code_folder
+          source_code_version.sourceCodeFolder
+            ? source_code_version.sourceCodeFolder
             : "No Source Code Folder",
         )}
       />
       <CommonField
         name={"Branch"}
         value={getTextValue(
-          source_code_version.source_code_branch
-            ? source_code_version.source_code_branch
+          source_code_version.sourceCodeBranch
+            ? source_code_version.sourceCodeBranch
             : "No Branch",
         )}
       />
       <CommonField
         name={"Source Code Tag"}
         value={getTextValue(
-          source_code_version.source_code_version
-            ? source_code_version.source_code_version
+          source_code_version.sourceCodeVersion
+            ? source_code_version.sourceCodeVersion
             : "No Version",
         )}
       />
@@ -101,14 +98,14 @@ export const SourceCodeVersionOverview = ({
         name={"Created"}
         value={
           <RelativeTime
-            date={source_code_version.created_at}
+            date={source_code_version.createdAt}
             user={source_code_version.creator}
           />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={source_code_version.updated_at} />}
+        value={<RelativeTime date={source_code_version.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}
@@ -134,10 +131,10 @@ export const SourceCodeVersionOverview = ({
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={source_code_version.labels}
+        value={source_code_version.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={source_code_version.labels} />}
+        display={<Labels labels={source_code_version.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

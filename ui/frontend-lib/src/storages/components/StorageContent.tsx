@@ -31,7 +31,7 @@ export const StorageContent = () => {
     },
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resources_count ?? 0})`,
+      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -41,7 +41,7 @@ export const StorageContent = () => {
     },
     {
       label: "Executors",
-      tabLabel: `Executors (${entity.executors_count ?? 0})`,
+      tabLabel: `Executors (${entity.executorsCount ?? 0})`,
       content: (
         <EntityExecutors
           fixedFilters={fixedFilters}

@@ -3,6 +3,7 @@ export const CREATE_STORAGE_MUTATION = `
     createStorage(input: $input) {
       id
       name
+      entityName
     }
   }
 `;
@@ -21,6 +22,7 @@ export const UPDATE_STORAGE_MUTATION = `
     updateStorage(id: $id, input: $input) {
       id
       name
+      entityName
     }
   }
 `;

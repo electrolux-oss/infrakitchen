@@ -24,20 +24,11 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
-import {
-  buildAuditLogsQuery,
-  GqlAuditLog,
-  transformAuditLogs,
-} from "../../../audit_logs/graphql";
+import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
 import { useHashParams } from "../../../common/hooks/useHashParams";
-import {
-  REVISION_FIELDS,
-  GqlRevision,
-  transformRevision,
-} from "../../../revision/graphql";
-import { RevisionResponse } from "../../../revision/types";
+import { REVISION_FIELDS, GqlRevision } from "../../../revision/graphql";
 import { AuditLogEntity } from "../../../types";
 import {
   LogActionButtons,
@@ -126,9 +117,9 @@ export const Audit = ({
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
 
   const [revisionDialogLeft, setRevisionDialogLeft] =
-    useState<RevisionResponse | null>(null);
+    useState<GqlRevision | null>(null);
   const [revisionDialogRight, setRevisionDialogRight] =
-    useState<RevisionResponse | null>(null);
+    useState<GqlRevision | null>(null);
   const [revisionDialogRev, setRevisionDialogRev] = useState<number | null>(
     null,
   );
@@ -163,8 +154,8 @@ export const Audit = ({
             : { entityId: resourceId, leftNum: rev - 1, rightNum: rev },
         )
         .then((res) => {
-          setRevisionDialogLeft(res.left ? transformRevision(res.left) : null);
-          setRevisionDialogRight(transformRevision(res.right));
+          setRevisionDialogLeft(res.left ? res.left : null);
+          setRevisionDialogRight(res.right);
           setRevisionDialogLoading(false);
         })
         .catch(() => {
@@ -188,7 +179,7 @@ export const Audit = ({
   });
 
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "created_at", sort: "desc" },
+    { field: "createdAt", sort: "desc" },
   ]);
 
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -234,7 +225,7 @@ export const Audit = ({
         },
       )
       .then((response) => {
-        setAuditLogs(transformAuditLogs(response.auditLogs || []));
+        setAuditLogs(response.auditLogs || []);
       });
   }, [ikApi, entityId]);
 
@@ -256,11 +247,11 @@ export const Audit = ({
       ...(showRevisionColumn
         ? [
             {
-              field: "revision_number",
+              field: "revisionNumber",
               headerName: "",
               flex: 0.25,
               renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
-                const rev = params.row.revision_number;
+                const rev = params.row.revisionNumber;
                 if (!rev) return null;
                 return (
                   <Chip
@@ -297,7 +288,7 @@ export const Audit = ({
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Time",
         flex: 1,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (

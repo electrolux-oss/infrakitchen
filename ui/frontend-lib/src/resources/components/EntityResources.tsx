@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 
 import { FilterConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { RESOURCE_FIELD_MAP, transformResource } from "../graphql";
+import { RESOURCE_FIELD_MAP } from "../graphql";
 
 import {
   buildResourceApiFilters,
@@ -36,7 +36,6 @@ export const EntityResources = ({
     <EntityFetchTable
       title="Resources"
       entityName="resource"
-      transformFn={transformResource}
       entityFieldMap={RESOURCE_FIELD_MAP}
       columns={resourceColumns}
       defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}

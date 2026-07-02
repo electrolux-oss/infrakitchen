@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { GqlAuditLog, transformAuditLogs } from "../audit_logs/graphql";
+import { GqlAuditLog } from "../audit_logs/graphql";
 import { useConfig } from "../common";
 import { notifyError } from "../common/hooks/useNotification";
 import { GqlFavorite } from "../favorites/graphql";
@@ -45,7 +45,7 @@ function transformFavoriteToResource(
     name: gql.componentData.name ?? "",
     status: gql.componentData.status ?? "",
     state: gql.componentData.state ?? "",
-    updated_at: gql.componentData.updated_at,
+    updatedAt: gql.componentData.updatedAt,
     _component_type: gql.componentType as "resource" | "executor",
     _component_id: gql.componentId,
     _entity_name: gql.componentData._entity_name,
@@ -90,9 +90,7 @@ export const useDashboardData = () => {
       setFavorites(favoriteDetails);
 
       setActivities(
-        Array.isArray(response?.auditLogs)
-          ? transformAuditLogs(response.auditLogs)
-          : [],
+        Array.isArray(response?.auditLogs) ? response.auditLogs : [],
       );
     } catch (err) {
       notifyError(err);

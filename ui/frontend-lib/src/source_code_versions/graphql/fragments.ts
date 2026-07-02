@@ -15,6 +15,7 @@ export const SCV_GRAPHQL_FIELDS = {
     "sourceCodeBranch",
     "sourceCodeFolder",
     "status",
+    "entityName",
   ] as const,
   detail: [
     "id",
@@ -31,6 +32,7 @@ export const SCV_GRAPHQL_FIELDS = {
     "resourcesCount",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     template: "template",
@@ -54,6 +56,7 @@ export const SCV_SHORT_FIELDS = `
 export const SCV_REFERENCE_LIST_FIELDS = `
   id
   identifier
+  entityName
   ${buildNestedSelection(SCV_GRAPHQL_FIELDS.relations.template, TEMPLATE_SHORT_FIELDS)}
   ${buildNestedSelection(SCV_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_SHORT_FIELDS)}
   sourceCodeVersion
@@ -67,7 +70,7 @@ export const SCV_FIELD_MAP: GraphqlFieldMap = {
     SCV_GRAPHQL_FIELDS.relations.template,
     TEMPLATE_SHORT_FIELDS,
   ),
-  source_code: buildNestedSelection(
+  sourceCode: buildNestedSelection(
     SCV_GRAPHQL_FIELDS.relations.sourceCode,
     SOURCE_CODE_SHORT_FIELDS,
   ),
@@ -109,6 +112,31 @@ export const SCV_TEMPLATE_OUTPUT_FIELDS = `
   createdAt
   updatedAt
   status
+`;
+
+export const TEMPLATE_PORTS_FIELDS = `
+  template {
+    id
+    name
+    abstract
+    parents {
+      id
+      name
+      abstract
+    }
+  }
+  configs {
+    name
+  }
+  outputs {
+    name
+  }
+  references {
+    referenceTemplateId
+    templateId
+    inputConfigName
+    outputConfigName
+  }
 `;
 
 export const SCV_DETAIL_FIELDS = `

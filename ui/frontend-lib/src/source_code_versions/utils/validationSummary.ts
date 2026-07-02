@@ -6,13 +6,13 @@ export function getValidationSummary(
   variable: Partial<
     Pick<
       SourceConfigResponse,
-      "validation_regex" | "validation_min_value" | "validation_max_value"
+      "validationRegex" | "validationMinValue" | "validationMaxValue"
     >
   >,
 ) {
   const regex =
-    typeof variable.validation_regex === "string"
-      ? variable.validation_regex.trim()
+    typeof variable.validationRegex === "string"
+      ? variable.validationRegex.trim()
       : "";
   if (regex) {
     const truncatedRegex =
@@ -21,23 +21,23 @@ export function getValidationSummary(
   }
 
   const hasMin =
-    variable.validation_min_value !== null &&
-    variable.validation_min_value !== undefined &&
-    variable.validation_min_value !== "";
+    variable.validationMinValue !== null &&
+    variable.validationMinValue !== undefined &&
+    variable.validationMinValue !== "";
   const hasMax =
-    variable.validation_max_value !== null &&
-    variable.validation_max_value !== undefined &&
-    variable.validation_max_value !== "";
+    variable.validationMaxValue !== null &&
+    variable.validationMaxValue !== undefined &&
+    variable.validationMaxValue !== "";
 
   if (!hasMin && !hasMax) {
     return null;
   }
 
   const formattedMin = hasMin
-    ? formatNumericDisplayValue(variable.validation_min_value)
+    ? formatNumericDisplayValue(variable.validationMinValue)
     : "";
   const formattedMax = hasMax
-    ? formatNumericDisplayValue(variable.validation_max_value)
+    ? formatNumericDisplayValue(variable.validationMaxValue)
     : "";
 
   if (hasMin && hasMax) {

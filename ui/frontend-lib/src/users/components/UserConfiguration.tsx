@@ -9,13 +9,13 @@ import {
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { UserResponse, UserShort } from "../types";
+import { GqlUser, GqlUserShort } from "../graphql";
 
 import { LinkUserDialog } from "./LinkAccountDialog";
 import { UnlinkAccountButton } from "./UnlinkAccountDialog";
 
 export interface TemplateConfigurationProps {
-  user: UserResponse;
+  user: GqlUser;
 }
 
 export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
@@ -33,13 +33,13 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
 
   return (
     <OverviewCard name="User Configuration">
-      {user.primary_account?.length === 0 && (
+      {user.primaryAccount?.length === 0 && (
         <CommonField
           name="Secondary Accounts"
           value={
             <>
               <Box>
-                {user.secondary_accounts?.map((ent: UserShort) => (
+                {user.secondaryAccounts?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
                     value={<GetReferenceUrlValue {...ent} />}
@@ -47,7 +47,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                   />
                 ))}
               </Box>
-              {user.secondary_accounts?.length === 0 && (
+              {user.secondaryAccounts?.length === 0 && (
                 <Box sx={{ color: "text.secondary" }}>
                   No secondary accounts
                 </Box>
@@ -69,13 +69,13 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           }
         />
       )}
-      {user.is_primary !== true && (
+      {user.isPrimary !== true && (
         <CommonField
           name="Primary Account"
           value={
             <>
               <Box>
-                {user.primary_account?.map((ent: UserShort) => (
+                {user.primaryAccount?.map((ent: GqlUserShort) => (
                   <CommonField
                     name={ent.identifier}
                     value={<GetReferenceUrlValue {...ent} />}
@@ -83,12 +83,12 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                   />
                 ))}
               </Box>
-              {user.primary_account?.length === 0 && (
+              {user.primaryAccount?.length === 0 && (
                 <Box sx={{ color: "text.secondary" }}>No primary account</Box>
               )}
-              {user.primary_account?.length === 1 && (
+              {user.primaryAccount?.length === 1 && (
                 <UnlinkAccountButton
-                  primary_account={user.primary_account?.[0]?.id}
+                  primary_account={user.primaryAccount?.[0]?.id}
                   secondary_account={user.id}
                   onUnlink={() => refreshEntity?.()}
                 />

@@ -87,9 +87,9 @@ export const ValidationRegexControls = ({
 }: ValidationRegexControlsProps) => {
   const { setValue } = useFormContext();
   const { validationRulesCatalog } = useSourceCodeVersionConfigContext();
-  const fieldName = useMemo(() => `configs.${index}.validation_regex`, [index]);
+  const fieldName = useMemo(() => `configs.${index}.validationRegex`, [index]);
   const ruleIdFieldName = useMemo(
-    () => `configs.${index}.validation_rule_id`,
+    () => `configs.${index}.validationRuleId`,
     [index],
   );
   const regexValue = useWatch({

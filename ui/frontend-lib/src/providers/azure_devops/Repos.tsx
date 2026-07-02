@@ -7,6 +7,7 @@ import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { AZURE_DEVOPS_REPOS_QUERY } from "./graphql";
 import { AzureDevopsRepo } from "./types";
 
 interface AzureDevopsReposProps {
@@ -61,13 +62,18 @@ const AzureDevopsRepos = forwardRef<any, AzureDevopsReposProps>(
       ) {
         setIsLoading(true);
         try {
-          const response: AzureDevopsRepo[] = await ikApi.get(
-            `provider/azure_devops/${project}/repos`,
-            queryParams,
-          );
+          const response = (await ikApi.graphqlRequest(
+            AZURE_DEVOPS_REPOS_QUERY,
+            {
+              integrationId: queryParams?.integration_id,
+              project,
+            },
+          )) as {
+            azureDevopsRepos: AzureDevopsRepo[];
+          };
           setBuffer((prev: Record<string, AzureDevopsRepo[]>) => ({
             ...prev,
-            ["azure_devops_repos"]: response,
+            ["azure_devops_repos"]: response.azureDevopsRepos,
           }));
         } catch (error: any) {
           notifyError(error);

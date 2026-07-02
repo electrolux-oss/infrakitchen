@@ -398,7 +398,9 @@ class TestUpdate:
         assert result.id == workspace_response_with_update.id
         assert result.name == workspace_response_with_update.name
 
-        workspace_update.model_dump.assert_called_once_with(exclude_unset=True)
+        workspace_update.model_dump.assert_called_once_with(
+            by_alias=True, exclude={"_entity_name"}, exclude_defaults=True, exclude_none=True
+        )
         mock_workspace_crud.get_by_id.assert_awaited_once_with(workspace_id)
         mock_workspace_crud.update.assert_awaited_once_with(existing_workspace, workspace_update_body)
 
@@ -410,7 +412,7 @@ class TestUpdate:
 
     @pytest.mark.asyncio
     async def test_update_error(self, mock_workspace_service, mock_workspace_crud):
-        workspace_update = Mock(spec=WorkspaceUpdate)
+        workspace_update = WorkspaceUpdate(name="Test Workspace Updated", description="Workspace description")
         requester = Mock(spec=UserDTO)
         existing_workspace = Workspace(id=uuid4(), name="Test Workspace")
         mock_workspace_crud.get_by_id.return_value = existing_workspace

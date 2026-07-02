@@ -1,19 +1,28 @@
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { AzureDevopsRepoMetadata } from "../../providers/azure_devops/RepoMetadata";
 import { BitbucketRepoMetadata } from "../../providers/bitbucket/RepoMetadata";
 import { GithubRepoMetadata } from "../../providers/github/RepoMetadata";
-import { WorkspaceResponse } from "../types";
+import { GqlWorkspace } from "../graphql";
 
 interface WorkspaceRepositoryProps {
-  workspace: WorkspaceResponse;
+  workspace: GqlWorkspace;
 }
 
 export const WorkspaceRepository = ({
   workspace,
 }: WorkspaceRepositoryProps) => {
-  const provider = workspace.workspace_provider;
-  const queryParams = { integration_id: workspace.integration.id };
-  const organization = workspace.configuration.organization;
+  const provider = workspace.workspaceProvider;
+  const organization = workspace.configuration?.organization;
   const name = workspace.name;
+
+  if (!provider || !organization || !name || !workspace.integration?.id) {
+    return (
+      <OverviewCard name="Repository Metadata">
+        <p>Missing required information to display pull requests.</p>
+      </OverviewCard>
+    );
+  }
+  const queryParams = { integration_id: workspace.integration.id };
 
   return (
     <>

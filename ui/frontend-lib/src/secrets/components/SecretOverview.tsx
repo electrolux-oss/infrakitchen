@@ -13,18 +13,15 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
+import { GqlSecret } from "../graphql";
 import {
   SecretUpdateFieldInput,
   UPDATE_SECRET_MUTATION,
 } from "../graphql/mutations";
-import { SecretResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface SecretAboutProps {
-  secret: SecretResponse;
+  secret: GqlSecret;
 }
 
 export const SecretOverview = ({ secret }: SecretAboutProps) => {
@@ -58,11 +55,11 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={<RelativeTime date={secret.created_at} user={secret.creator} />}
+        value={<RelativeTime date={secret.createdAt} user={secret.creator} />}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={secret.updated_at} />}
+        value={<RelativeTime date={secret.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}
@@ -88,10 +85,10 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       <CommonEditableField<string[]>
         name={"Secret Tags"}
         canEdit={canEdit}
-        value={secret.labels}
+        value={secret.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={secret.labels} />}
+        display={<Labels labels={secret.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

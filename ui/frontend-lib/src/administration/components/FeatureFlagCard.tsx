@@ -4,8 +4,9 @@ import { Box, Switch, Typography, Card, CardContent } from "@mui/material";
 
 export interface FeatureFlagDTO {
   name: string;
-  config_name: string;
+  configName: string;
   enabled: boolean;
+  updatedBy?: string | null;
 }
 
 interface FeatureFlagCardProps {

@@ -13,6 +13,16 @@ import { notifyError } from "../hooks/useNotification";
 import { useConfig } from "./ConfigContext";
 import { useEventProvider } from "./EventContext";
 
+const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
+
+const snakeToCamel = (s: string): string =>
+  s.replace(SNAKE_TO_CAMEL_RE, (_, c: string) => c.toUpperCase());
+
+const camelizeKeys = (obj: Record<string, unknown>): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [snakeToCamel(key), value]),
+  );
+
 interface EntityContextType {
   actions: string[];
   entity: any | undefined;
@@ -51,7 +61,7 @@ export const EntityProvider = ({
 
   useEffect(() => {
     if (event && event.id === entity_id) {
-      setEntity(event);
+      setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
     }
   }, [event, entity_id]);
 

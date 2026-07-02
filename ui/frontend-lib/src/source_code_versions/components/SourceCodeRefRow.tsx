@@ -34,8 +34,9 @@ import { notify } from "../../common/hooks/useNotification";
 import { Revision } from "../../revision/Revision";
 import { ENTITY_STATUS } from "../../utils";
 import { SourceCodeVersionConfigProvider } from "../context/SourceCodeVersionConfigContext";
+import { GqlSourceCodeVersion } from "../graphql";
 import { useVersionActions } from "../hooks/useVersionActions";
-import { RefType, SourceCodeVersionResponse } from "../types";
+import { RefType } from "../types";
 
 import { InputTab } from "./InputTab";
 import { MetadataTab } from "./MetadataTab";
@@ -54,14 +55,14 @@ type GitRefRow = {
   type: RefType;
   gitFolders: string[];
   sourceCodeId: string;
-  entity?: SourceCodeVersionResponse;
+  entity?: GqlSourceCodeVersion;
   defaultOpen?: boolean;
   defaultTab?: TabValue;
   onRefresh: () => void;
 };
 
 type ConfigurationTabContentProps = {
-  entity?: SourceCodeVersionResponse;
+  entity?: GqlSourceCodeVersion;
 };
 
 export const ConfigurationTabContent = ({
@@ -197,9 +198,9 @@ export const SourceCodeRefRow = ({
             {entry}
           </Typography>
           {hasVersion &&
-            !!entity.resources_count && ( // Render only when the SCV has resources
+            !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Chip
-                label={`${entity.resources_count}`}
+                label={`${entity.resourcesCount}`}
                 size="small"
                 variant="outlined"
                 onClick={handleResourcesClick}
@@ -320,7 +321,13 @@ export const SourceCodeRefRow = ({
               {loading ? (
                 <CircularProgress size={16} />
               ) : (
-                <HclItemList items={entity?.outputs} type="outputs" />
+                <>
+                  {entity?.outputs ? (
+                    <HclItemList items={entity?.outputs} type="outputs" />
+                  ) : (
+                    "No outputs defined."
+                  )}
+                </>
               )}
             </Box>
           )}
@@ -329,7 +336,7 @@ export const SourceCodeRefRow = ({
             <Audit
               entityId={entity.id}
               useVersionId
-              sourceCodeLanguage={entity?.source_code?.source_code_language}
+              sourceCodeLanguage={entity?.sourceCode?.sourceCodeLanguage}
               showRevisionColumn
             />
           )}

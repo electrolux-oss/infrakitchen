@@ -1,5 +1,3 @@
-import { UserShort } from "../users";
-
 import { TEMPLATE_STATUS } from "./constants";
 
 export type IntegrationProviderType =
@@ -19,44 +17,12 @@ export interface TemplateConfig {
   required_configuration_variables: string[];
 }
 
-export interface TemplateShort {
-  id: string;
-  name: string;
-  abstract: boolean;
-  cloud_resource_types?: string[];
-  _entity_name: string;
-}
-
-export interface TemplateResponse {
-  id: string;
-  created_at: string;
-  updated_at: string;
-  status: TemplateStatus;
-  abstract: boolean;
-  revision_number: number;
-  creator: UserShort | null;
-  name: string;
-  description: string;
-  documentation?: string;
-  template: string;
-  parents: TemplateShort[];
-  children: TemplateShort[];
-  cloud_resource_types: string[];
-  configuration: TemplateConfig;
-  labels: string[];
-  resources_count?: number;
-  source_code_versions_count?: number;
-  _entity_name: string;
-}
-
-export type TemplateResponseOptional = Partial<TemplateResponse>;
-
 export interface TemplateImportRequest {
-  source_code_language: string;
-  integration_id: string;
-  source_code_url: string;
-  source_code_folder: string;
-  source_code_branch: string;
+  sourceCodeLanguage: string;
+  integrationId: string;
+  sourceCodeUrl: string;
+  sourceCodeFolder: string;
+  sourceCodeBranch: string;
   name: string;
   description?: string;
   documentation: string;
@@ -72,18 +38,7 @@ export interface TemplateCreateRequest {
   parents: string[];
   children: string[];
   labels: string[];
-  cloud_resource_types: string[];
-  configuration: TemplateConfig;
-  abstract: boolean;
-}
-
-export interface TemplateUpdate extends TemplateShort {
-  description: string;
-  documentation: string;
-  parents: string[];
-  children: string[];
-  labels: string[];
-  cloud_resource_types: string[];
+  cloudResourceTypes: string[];
   configuration: TemplateConfig;
   abstract: boolean;
 }

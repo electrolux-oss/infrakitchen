@@ -61,15 +61,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/auth_providers/:auth_provider_id/edit",
-    Component: lz(
-      () => import("./auth_providers/pages/AuthProviderEdit"),
-      "AuthProviderEditPage",
-    ),
-    requiredPermission: "api:auth_provider",
-    permissionAction: "write",
-  },
-  {
     path: "/auth_providers/:auth_provider_id/:tab?",
     Component: lz(
       () => import("./auth_providers/pages/AuthProvider"),
@@ -94,15 +85,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./blueprints/pages/BlueprintCreate"),
       "BlueprintCreatePage",
-    ),
-    requiredPermission: "api:blueprint",
-    permissionAction: "write",
-  },
-  {
-    path: "/blueprints/:blueprint_id/edit",
-    Component: lz(
-      () => import("./blueprints/pages/BlueprintEdit"),
-      "BlueprintEditPage",
     ),
     requiredPermission: "api:blueprint",
     permissionAction: "write",
@@ -167,15 +149,6 @@ const allRoutes: LazyRouteDefinition[] = [
     Component: lz(
       () => import("./executors/pages/ExecutorCreate"),
       "ExecutorCreatePage",
-    ),
-    requiredPermission: "api:executor",
-    permissionAction: "read",
-  },
-  {
-    path: "/executors/:executor_id/edit",
-    Component: lz(
-      () => import("./executors/pages/ExecutorEdit"),
-      "ExecutorEditPage",
     ),
     requiredPermission: "api:executor",
     permissionAction: "read",
@@ -436,12 +409,6 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "write",
   },
   {
-    path: "/users/:user_id/edit",
-    Component: lz(() => import("./users/pages/UserEdit"), "UserEditPage"),
-    requiredPermission: "api:user",
-    permissionAction: "write",
-  },
-  {
     path: "/users/:user_id/:tab?",
     Component: lz(() => import("./users/pages/User"), "UserPage"),
     requiredPermission: "api:user",
@@ -497,15 +464,6 @@ const allRoutes: LazyRouteDefinition[] = [
     ),
     requiredPermission: "api:workspace",
     permissionAction: "write",
-  },
-  {
-    path: "/workspaces/:workspace_id/edit",
-    Component: lz(
-      () => import("./workspaces/pages/WorkspaceEdit"),
-      "WorkspaceEditPage",
-    ),
-    requiredPermission: "api:workspace",
-    permissionAction: "read",
   },
   {
     path: "/workspaces/:workspace_id/:tab?",

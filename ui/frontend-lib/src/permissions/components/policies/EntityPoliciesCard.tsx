@@ -4,11 +4,11 @@ import { PropertyCollapseCard } from "../../../common/components/PropertyCollaps
 import { EntityPoliciesBase } from "./EntityPoliciesBase";
 
 export const EntityPoliciesCard = (props: {
-  entity_id: string;
-  entity_name: string;
+  entityId: string;
+  entityName: string;
 }) => (
   <PropertyCollapseCard
-    title={`${capitalizeFirstLetter(props.entity_name)} Policy List`}
+    title={`${capitalizeFirstLetter(props.entityName)} Policy List`}
     expanded={true}
     id="role-policies"
   >

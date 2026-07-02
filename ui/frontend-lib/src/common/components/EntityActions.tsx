@@ -11,6 +11,7 @@ import SyncIcon from "@mui/icons-material/Sync";
 import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
 
+import { RESOURCE_DOWNLOAD_QUERY } from "../../resources/graphql/queries";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
@@ -22,11 +23,10 @@ import { CommonDialog } from "./CommonDialog";
 export interface EntityActionsProps {
   entity_name: string;
   entity_id: string;
-  /** When true the legacy "Edit" navigation button is hidden (entity uses inline editing). */
-  hideEditAction?: boolean;
+  showEditAction?: boolean;
 }
 export function EntityActions(props: EntityActionsProps) {
-  const { entity_id, entity_name, hideEditAction } = props;
+  const { entity_id, entity_name, showEditAction } = props;
 
   const { linkPrefix, ikApi } = useConfig();
   const { actions } = useEntityProvider();
@@ -58,14 +58,27 @@ export function EntityActions(props: EntityActionsProps) {
     setIsLoading(true);
 
     await ikApi
-      .downloadFile(`resources/${entity_id}/download`)
+      .graphqlRequest<{
+        resourceDownload: {
+          filename: string;
+          contentType: string;
+          contentBase64: string;
+        };
+      }>(RESOURCE_DOWNLOAD_QUERY, { id: entity_id })
       .then((response) => {
-        const blob = new Blob([response], { type: "application/zip" });
+        const bytes = Uint8Array.from(
+          atob(response.resourceDownload.contentBase64),
+          (char) => char.charCodeAt(0),
+        );
+        const blob = new Blob([bytes], {
+          type: response.resourceDownload.contentType,
+        });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.download = `debug.zip`;
+        link.download = response.resourceDownload.filename;
         link.href = url;
         link.click();
+        URL.revokeObjectURL(url);
       })
       .catch((e) => {
         notifyError(e);
@@ -143,7 +156,7 @@ export function EntityActions(props: EntityActionsProps) {
           Enable
         </Button>
       )}
-      {actions.includes("edit") && !hideEditAction && (
+      {actions.includes("edit") && showEditAction && (
         <Tooltip title="Edit configuration">
           <Button
             variant="outlined"

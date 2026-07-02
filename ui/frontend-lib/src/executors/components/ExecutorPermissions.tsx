@@ -1,15 +1,15 @@
 import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
-import { ExecutorResponse } from "../types";
+import { GqlExecutor } from "../graphql";
 
 export interface AdvancedSettingsProps {
-  executor: ExecutorResponse;
+  executor: GqlExecutor;
 }
 
 export const ExecutorPermissions = ({ executor }: AdvancedSettingsProps) => {
   return (
     <EntityPoliciesTab
-      entity_id={executor.id}
-      entity_name={executor._entity_name}
+      entityId={executor.id}
+      entityName={executor.entityName}
     />
   );
 };

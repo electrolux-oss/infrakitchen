@@ -2,7 +2,7 @@ import React from "react";
 
 import { Tooltip, Typography, TypographyProps } from "@mui/material";
 
-import { UserShort } from "../../users/types";
+import { GqlUserShort } from "../../users/graphql";
 import { formatTimeAgo } from "../utils";
 
 import { getDateValue } from "./CommonField";
@@ -10,7 +10,7 @@ import { UserAvatar } from "./UserAvatar";
 
 interface RelativeTimeProps {
   date: string | Date;
-  user?: UserShort | null;
+  user?: GqlUserShort | null;
   component?: React.ElementType;
   variant?: TypographyProps["variant"];
   sx?: any;

@@ -103,3 +103,9 @@ class PermissionQuery:
             return JSON({})
         policies = await user_apis_permissions(requester)
         return JSON({k: v for k, v in policies.items() if k.startswith("api:") or k == "*"})
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def permission_actions(self, info: Info, id: uuid.UUID) -> list[str]:
+        requester = info.context["request"].state.user
+        service = _build_service(info)
+        return await service.get_actions(permission_id=id, requester=requester)

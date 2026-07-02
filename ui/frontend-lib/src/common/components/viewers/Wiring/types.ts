@@ -1,5 +1,3 @@
-import { ENTITY_STATUS } from "../../../../utils";
-
 export interface WiringRule {
   source_template_id: string;
   source_output: string;
@@ -11,20 +9,20 @@ export interface GenericTemplate {
   id: string;
   name: string;
   abstract: boolean;
-  cloud_resource_types?: string[];
-  _entity_name: string;
+  entityName: string;
+  cloudResourceTypes: string[] | null;
 }
 
 export interface GenericStep {
   id: string;
-  template_id: string;
+  template_id?: string;
   template: GenericTemplate | null;
-  resource_id: string | null;
+  resource_id?: string | null;
   resource: Record<string, any> | null;
   position: number;
-  status: ENTITY_STATUS;
+  status: string;
   error_message: string | null;
-  resolved_variables: Record<string, any>;
+  resolved_variables?: Record<string, any> | null;
   started_at: string | null;
   completed_at: string | null;
 }

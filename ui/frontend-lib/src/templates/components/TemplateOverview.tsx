@@ -20,28 +20,21 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getProviderDisplayName } from "../../common/utils";
+import { getProviderDisplayName, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
 import { INTEGRATION_PROVIDER_OPTIONS } from "../constants";
+import { GqlTemplate } from "../graphql";
 import {
   TemplateUpdateFieldInput,
   UPDATE_TEMPLATE_MUTATION,
 } from "../graphql/mutations";
-import {
-  IntegrationProviderType,
-  TemplateConfig,
-  TemplateResponse,
-} from "../types";
+import { IntegrationProviderType, TemplateConfig } from "../types";
 
 import { NamingConventionInput } from "./NamingConventionInput";
 import { TemplateDocumentationField } from "./TemplateDocumentationField";
 
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
-
 export interface TemplateAboutProps {
-  template: TemplateResponse;
+  template: GqlTemplate;
 }
 
 export const TemplateOverview = ({ template }: TemplateAboutProps) => {
@@ -71,7 +64,12 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
 
   const saveConfiguration = useCallback(
     (partial: Partial<TemplateConfig>) =>
-      saveField({ configuration: { ...template.configuration, ...partial } }),
+      saveField({
+        configuration: {
+          ...template.configuration,
+          ...partial,
+        },
+      }),
     [saveField, template.configuration],
   );
 
@@ -140,8 +138,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         renderEditor={({ value, onChange }) => (
           <Box sx={{ width: "100%" }}>
             <NamingConventionInput
-              template_id={template.id}
-              parents={template.parents}
+              templateId={template.id}
+              parents={template.parents || []}
               value={value}
               onChange={onChange}
             />
@@ -158,22 +156,22 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonField
         name={"Created"}
         value={
-          <RelativeTime date={template.created_at} user={template.creator} />
+          <RelativeTime date={template.createdAt} user={template.creator} />
         }
         size={6}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={template.updated_at} />}
+        value={<RelativeTime date={template.updatedAt} />}
         size={6}
       />
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={template.labels}
+        value={template.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={template.labels} />}
+        display={<Labels labels={template.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor
@@ -193,11 +191,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Parents"}
         canEdit={canEdit}
-        value={template.parents.map((parent) => parent.id)}
+        value={template.parents?.map((parent) => parent.id) || []}
         ariaLabel="Edit parents"
         isEqual={sameStringSet}
         display={
-          template.parents.length > 0 ? (
+          template.parents && template.parents.length > 0 ? (
             <Box display="flex" gap={1} flexWrap="wrap">
               {template.parents.map((parent, idx) => (
                 <span key={parent.id || idx}>
@@ -225,11 +223,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Children"}
         canEdit={canEdit}
-        value={template.children.map((child) => child.id)}
+        value={template.children?.map((child) => child.id) || []}
         ariaLabel="Edit children"
         isEqual={sameStringSet}
         display={
-          template.children.length > 0 ? (
+          template.children && template.children.length > 0 ? (
             <Box display="flex" gap={1} flexWrap="wrap">
               {template.children.map((child, idx) => (
                 <span key={child.id || idx}>
@@ -258,10 +256,10 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       <CommonEditableField<string[]>
         name={"Cloud Resource Types"}
         canEdit={canEdit}
-        value={template.cloud_resource_types}
+        value={template.cloudResourceTypes || []}
         ariaLabel="Edit cloud resource types"
         isEqual={sameStringSet}
-        display={<StringChips values={template.cloud_resource_types} />}
+        display={<StringChips values={template.cloudResourceTypes || []} />}
         onSave={(value) => saveField({ cloudResourceTypes: value })}
         renderEditor={({ value, onChange }) => (
           <ArrayReferenceInput

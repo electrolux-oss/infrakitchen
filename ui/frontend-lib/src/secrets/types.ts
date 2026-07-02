@@ -1,6 +1,3 @@
-import { IntegrationShort } from "../integrations/types";
-import { UserShort } from "../users";
-
 export interface CustomSecret {
   name: string;
   value: string;
@@ -11,39 +8,13 @@ export interface CustomSecretConfig {
   secret_provider: string;
 }
 
-export interface SecretShort {
-  id: string;
-  name: string;
-  secret_provider: string;
-  _entity_name: string;
-}
-
-export interface SecretResponse extends SecretShort {
-  created_at: Date;
-  updated_at: Date;
-  status: string;
-  state: string;
-  description: string;
-  revision_number: number;
-  labels: string[];
-  integration: IntegrationShort | null;
-  creator: UserShort;
-  secret_type: string;
-  secret_provider: string;
-  configuration: CustomSecretConfig;
-  resources_count: number;
-  executors_count: number;
-}
-
-export type SecretResponseOptional = Partial<SecretResponse>;
-
 export interface SecretCreate {
   name: string;
   description: string;
-  integration_id: string | null;
+  integrationId: string | null;
   labels: string[];
-  secret_type: string;
-  secret_provider: string;
+  secretType: string;
+  secretProvider: string;
   configuration: object | CustomSecretConfig;
 }
 
@@ -53,7 +24,7 @@ export interface SecretUpdate {
   configuration: object | CustomSecretConfig;
 }
 
-export interface SecretValidateResponse {
-  is_valid: boolean;
+export interface SecretValidationResult {
+  isValid: boolean;
   message: string | null;
 }

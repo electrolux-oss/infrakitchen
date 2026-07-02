@@ -1,27 +1,24 @@
-"""Thin wrapper around ``AsyncSession`` that serialises ``execute()`` calls
-through an ``asyncio.Lock``.
+"""Thin wrapper around ``AsyncSession`` that serialises async DB calls through
+an ``asyncio.Lock``.
 
-GraphQL (Strawberry) resolves fields concurrently via ``asyncio``.  All
+GraphQL (Strawberry) resolves fields concurrently via ``asyncio``. All
 resolvers within one request share the same ``AsyncSession``, which is **not**
-safe for concurrent use.  Wrapping the session with a lock ensures only one
+safe for concurrent use. Wrapping the session with a lock ensures only one
 coroutine touches the underlying connection at a time, while remaining
-completely transparent to the existing resolver / data-loader code (they
-just call ``session.execute(…)`` as before).
+transparent to the existing resolver / service / data-loader code.
 
 REST endpoints run sequentially, so the lock is never contended there.
 """
 
 import asyncio
-from contextlib import suppress
 from typing import Any
 
-from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class LockedSession:
     """Proxy that forwards attribute access to the real ``AsyncSession`` but
-    wraps ``execute()`` in an ``asyncio.Lock``."""
+    wraps async DB methods in an ``asyncio.Lock``."""
 
     __slots__ = ("_session", "_lock")
 
@@ -29,25 +26,43 @@ class LockedSession:
         self._session = session
         self._lock = lock
 
-    async def execute(self, *args: Any, **kwargs: Any) -> Any:
+    async def _run_locked(self, method_name: str, *args: Any, **kwargs: Any) -> Any:
         async with self._lock:
-            try:
-                return await self._session.execute(*args, **kwargs)
-            except DBAPIError as exc:
-                # Broken DBAPI connections must be invalidated so the pool
-                # does not hand out the same bad connection again.
-                if exc.connection_invalidated:
-                    with suppress(Exception):
-                        await self._session.invalidate()
-                elif self._session.in_transaction():
-                    with suppress(Exception):
-                        await self._session.rollback()
-                raise
-            except Exception:
-                if self._session.in_transaction():
-                    with suppress(Exception):
-                        await self._session.rollback()
-                raise
+            method = getattr(self._session, method_name)
+            return await method(*args, **kwargs)
+
+    async def execute(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("execute", *args, **kwargs)
+
+    async def get(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("get", *args, **kwargs)
+
+    async def flush(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("flush", *args, **kwargs)
+
+    async def refresh(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("refresh", *args, **kwargs)
+
+    async def delete(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("delete", *args, **kwargs)
+
+    async def commit(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("commit", *args, **kwargs)
+
+    async def rollback(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("rollback", *args, **kwargs)
+
+    async def invalidate(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("invalidate", *args, **kwargs)
+
+    async def close(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("close", *args, **kwargs)
+
+    async def scalar(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("scalar", *args, **kwargs)
+
+    async def scalars(self, *args: Any, **kwargs: Any) -> Any:
+        return await self._run_locked("scalars", *args, **kwargs)
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._session, name)

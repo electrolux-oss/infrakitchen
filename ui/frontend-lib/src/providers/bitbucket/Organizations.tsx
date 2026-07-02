@@ -13,6 +13,7 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
 
+import { BITBUCKET_ORGANIZATIONS_QUERY } from "./graphql";
 import { BitbucketOrganization } from "./types";
 
 interface BitbucketOrganizationsProps {
@@ -55,13 +56,17 @@ const BitbucketOrganizations = forwardRef<any, BitbucketOrganizationsProps>(
         buffer["bitbucket_organizations"].length === 0
       ) {
         try {
-          const response: BitbucketOrganization[] = await ikApi.get(
-            `provider/bitbucket/organizations`,
-            queryParams,
-          );
+          const response = (await ikApi.graphqlRequest(
+            BITBUCKET_ORGANIZATIONS_QUERY,
+            {
+              integrationId: queryParams?.integration_id,
+            },
+          )) as {
+            bitbucketOrganizations: BitbucketOrganization[];
+          };
           setBuffer((prev: Record<string, BitbucketOrganization[]>) => ({
             ...prev,
-            ["bitbucket_organizations"]: response,
+            ["bitbucket_organizations"]: response.bitbucketOrganizations,
           }));
         } catch (error: any) {
           notifyError(error);

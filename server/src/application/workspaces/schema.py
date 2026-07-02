@@ -3,7 +3,7 @@ import re
 from typing import Annotated, Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, computed_field
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, computed_field, model_validator
 
 from application.integrations.schema import IntegrationShort
 
@@ -195,8 +195,18 @@ class WorkspaceCreate(BaseModel):
 
 
 class WorkspaceUpdate(BaseModel):
+    name: str | None = Field(default=None)
     description: str | None = Field(default=None)
-    labels: list[str] = Field(default_factory=list)
+    labels: list[str] | None = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in WorkspaceUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Workspace update.")
+        return values
 
 
 class WorkspaceShort(BaseModel):

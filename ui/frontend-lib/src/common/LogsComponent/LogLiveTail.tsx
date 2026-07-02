@@ -133,7 +133,7 @@ export const LogLiveTail = () => {
 
   useLogStreamSubscription({
     ikApi,
-    entityName: entity._entity_name,
+    entityName: entity.entityName,
     entityId: entity.id,
     enabled: subscriptionEnabled,
     onMessage: handleLogMessage,

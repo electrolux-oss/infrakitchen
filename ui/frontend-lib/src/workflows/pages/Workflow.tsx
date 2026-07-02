@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { WorkflowContent } from "../components/WorkflowContent";
-import { WORKFLOW_FIELDS, transformWorkflow } from "../graphql";
+import { WORKFLOW_FIELDS } from "../graphql";
 
 export const WorkflowPage = () => {
   const { workflow_id } = useParams();
@@ -12,10 +12,9 @@ export const WorkflowPage = () => {
     <EntityProvider
       entity_name="workflow"
       entity_id={workflow_id || ""}
-      transformFn={transformWorkflow}
       entityFields={WORKFLOW_FIELDS}
     >
-      <EntityContainer title="Workflow">
+      <EntityContainer title="Workflow" showEditAction>
         <WorkflowContent />
       </EntityContainer>
     </EntityProvider>

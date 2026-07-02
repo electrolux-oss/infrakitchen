@@ -17,6 +17,7 @@ import {
 import { CommonDialog } from "../../../common";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
+import { CREATE_API_POLICY_MUTATION } from "../../graphql/mutations";
 import { ApiPolicyCreate } from "../../types";
 
 interface PolicyApiCreateProps {
@@ -64,11 +65,16 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
           }
           const action = apiPerm.actions[0];
           promises.push(
-            ikApi.postRaw("permissions/policy/api", {
-              role: data.role,
-              api: apiPerm.api,
-              action: action,
-            }),
+            ikApi.graphqlRequest<{ createApiPolicy: { id: string } }>(
+              CREATE_API_POLICY_MUTATION,
+              {
+                input: {
+                  role: data.role,
+                  api: apiPerm.api,
+                  action: action,
+                },
+              },
+            ),
           );
         }
         await Promise.all(promises);

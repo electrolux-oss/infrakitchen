@@ -82,6 +82,7 @@ class GitHubRepository(BaseModel):
     ssh_url: str
     clone_url: HttpUrl
     svn_url: HttpUrl
+    homepage: str | None = None
     size: int
     stargazers_count: int
     watchers_count: int

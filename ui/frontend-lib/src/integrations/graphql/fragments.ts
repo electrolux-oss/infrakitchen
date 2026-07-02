@@ -6,7 +6,7 @@ import {
 import { USER_SHORT_FIELDS } from "../../users/graphql/fragments";
 
 export const INTEGRATION_GRAPHQL_FIELDS = {
-  short: ["id", "name", "integrationProvider"] as const,
+  short: ["id", "name", "integrationProvider", "entityName"] as const,
   base: [
     "id",
     "name",
@@ -19,6 +19,7 @@ export const INTEGRATION_GRAPHQL_FIELDS = {
     "revisionNumber",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     creator: "creator",

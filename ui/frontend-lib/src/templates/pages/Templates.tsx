@@ -21,16 +21,11 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import {
-  GqlTemplate,
-  TEMPLATE_LIST_FIELDS,
-  transformTemplate,
-} from "../graphql";
-import { TemplateResponse } from "../types";
+import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
 
 export const TemplatesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const [templates, setTemplates] = useState<TemplateResponse[]>([]);
+  const [templates, setTemplates] = useState<GqlTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
@@ -68,7 +63,7 @@ export const TemplatesPage = () => {
           range: [0, 1000],
         },
       );
-      setTemplates((response.templates || []).map(transformTemplate));
+      setTemplates(response.templates || []);
       setLabels(response.labels || []);
       setIsInitialLoad(false);
     } catch (error: any) {
@@ -97,7 +92,7 @@ export const TemplatesPage = () => {
         return (
           !s ||
           t.name.toLowerCase().includes(s) ||
-          t.description.toLowerCase().includes(s)
+          t.description?.toLowerCase().includes(s)
         );
       }),
     [templates, filterValues.name],
@@ -148,7 +143,7 @@ export const TemplatesPage = () => {
     </Box>
   );
 
-  const templateCardFields = (template: TemplateResponse) => {
+  const templateCardFields = (template: GqlTemplate) => {
     return (
       <>
         <Box>
@@ -162,7 +157,7 @@ export const TemplatesPage = () => {
             Last Updated
           </Typography>
           <RelativeTime
-            date={template.updated_at}
+            date={template.updatedAt}
             variant="caption"
             sx={{ fontWeight: 500 }}
           />
@@ -249,7 +244,7 @@ export const TemplatesPage = () => {
                   key={template.id}
                   entity_name="template"
                   name={template.name}
-                  description={template.description}
+                  description={template.description || "No description"}
                   status={template.status}
                   detailsUrl={`${linkPrefix}templates/${template.id}`}
                   {...(enabled && {
@@ -259,9 +254,9 @@ export const TemplatesPage = () => {
                       }),
                   })}
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
-                  labels={template.labels}
+                  labels={template.labels || []}
                   chip={template.abstract ? "Abstract" : undefined}
-                  lastUpdated={template.updated_at}
+                  lastUpdated={template.updatedAt}
                   entityFields={templateCardFields(template)}
                 />
               );

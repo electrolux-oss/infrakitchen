@@ -19,6 +19,10 @@ class TemplateShortType:
     abstract: bool
     cloud_resource_types: list[str]
 
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "template"
+
 
 @template_mapper.type(Template)
 class TemplateType:
@@ -28,6 +32,10 @@ class TemplateType:
     children: list[TemplateShortType] | None = None
     parents: list[TemplateShortType] | None = None
     creator: UserType | None = None
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "template"
 
     @strawberry.field
     async def resources_count(self, info: Info) -> int:

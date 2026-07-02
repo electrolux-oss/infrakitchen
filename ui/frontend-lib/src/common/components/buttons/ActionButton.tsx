@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import { Button } from "@mui/material";
 
-import { IkEntity } from "../../../types";
 import { useConfig, useEntityProvider } from "../../context";
+import { buildEntityActionMutation } from "../../graphql/entityActionMutation";
 import { notify, notifyError } from "../../hooks/useNotification";
 
 export const ActionButton = (props: {
@@ -28,19 +28,25 @@ export const ActionButton = (props: {
   const [loading, setLoading] = useState(false);
 
   const handleClick = () => {
-    if (entity.id || entity._entity_name) {
+    if (entity.id && entity.entityName) {
       setLoading(true);
+      const mutation = buildEntityActionMutation(entity.entityName);
       ikApi
-        .patchRaw(`${entity._entity_name}s/${entity.id}/actions`, {
-          action: action,
-        })
-        .then((response: IkEntity) => {
+        .graphqlRequest<{
+          [key: string]: { id: string; status: string; entityName: string };
+        }>(mutation, { id: entity.id, input: { action } })
+        .then((response) => {
+          const result = Object.values(response)[0];
           const entityType =
-            (response._entity_name || "Resource").charAt(0).toUpperCase() +
-            (response._entity_name || "Resource").slice(1);
+            (result.entityName || "Resource").charAt(0).toUpperCase() +
+            (result.entityName || "Resource").slice(1);
           notify(`${entityType} ${action} task sent successfully`, "success");
           if (refreshEntity) {
-            refreshEntity(response);
+            refreshEntity({
+              ...entity,
+              ...result,
+              entityName: entity.entityName,
+            });
           }
           onClose();
         })
@@ -52,8 +58,8 @@ export const ActionButton = (props: {
         });
     } else {
       const entityType =
-        (entity._entity_name || "Resource").charAt(0).toUpperCase() +
-        (entity._entity_name || "Resource").slice(1);
+        (entity.entityName || "Resource").charAt(0).toUpperCase() +
+        (entity.entityName || "Resource").slice(1);
       notifyError(new Error(`${entityType} ${action} error: no record id`));
     }
   };

@@ -1,11 +1,11 @@
 import logging
 
+from application.integrations.model import Integration
 from application.integrations.schema import (
     AWSIntegrationConfig,
     AzureRMIntegrationConfig,
     GCPIntegrationConfig,
     IntegrationCreate,
-    IntegrationResponse,
 )
 from application.integrations.service import IntegrationService
 from application.storages.schema import StorageCreate
@@ -35,9 +35,7 @@ class IntegrationWithStorageService:
         self.storage_event_sender: EventSender = storage_event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
 
-    async def create(
-        self, integration_with_storage: IntegrationCreateWithStorage, requester: UserDTO
-    ) -> IntegrationResponse:
+    async def create(self, integration_with_storage: IntegrationCreateWithStorage, requester: UserDTO) -> Integration:
         """
         Create a new template.
         :param template: TemplateCreate to create
@@ -48,7 +46,7 @@ class IntegrationWithStorageService:
         body["created_by"] = requester.id
 
         integration = IntegrationCreate.model_validate(body)
-        new_integration = await self.integration_service.create(integration, requester=requester)
+        new_integration = await self.integration_service.create_integration(integration, requester=requester)
 
         # Create Storage if required. Currently only AWS, GCP, and AzureRM are supported.
         if integration_with_storage.create_storage and integration_with_storage.integration_provider in [

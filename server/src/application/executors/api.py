@@ -45,12 +45,10 @@ async def get_by_id(executor_id: str, service: ExecutorService = Depends(get_exe
     deprecated=True,
 )
 async def get_all(
-    request: Request,
     response: Response,
     service: ExecutorService = Depends(get_executor_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    requester: UserDTO | None = getattr(request.state, "user", None)
     filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
@@ -62,7 +60,6 @@ async def get_all(
                 filter=filter,
                 range=range_,
                 sort=sort,
-                requester_id=requester.id if requester else None,
             )
         )
     headers = {"Content-Range": f"executors 0-{len(result)}/{total}"}
@@ -77,6 +74,7 @@ async def get_all(
     "/executors",
     response_model=ExecutorResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: ExecutorCreate, service: ExecutorService = Depends(get_executor_service)):
     requester: UserDTO | None = request.state.user
@@ -93,6 +91,7 @@ async def post(request: Request, body: ExecutorCreate, service: ExecutorService 
     "/executors/{executor_id}",
     response_model=ExecutorResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -107,7 +106,12 @@ async def update(
     return entity
 
 
-@router.patch("/executors/{executor_id}/actions", response_model=ExecutorResponse, status_code=http_status.HTTP_200_OK)
+@router.patch(
+    "/executors/{executor_id}/actions",
+    response_model=ExecutorResponse,
+    status_code=http_status.HTTP_200_OK,
+    deprecated=True,
+)
 async def patch_action(
     request: Request,
     executor_id: str,
@@ -127,7 +131,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/executors/{executor_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/executors/{executor_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, executor_id: str, service: ExecutorService = Depends(get_executor_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(executor_id=executor_id, requester=requester):
@@ -193,6 +197,7 @@ async def get_executor_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Sync role permissions with executors",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_executor_permissions(
     request: Request,

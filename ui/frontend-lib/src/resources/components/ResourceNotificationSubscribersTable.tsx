@@ -5,10 +5,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import {
-  NOTIFICATION_SUBSCRIPTION_FIELD_MAP,
-  transformNotificationSubscription,
-} from "../../notifications";
+import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 
 interface ResourceNotificationSubscribersTableProps {
   resourceId: string;
@@ -31,7 +28,7 @@ export const ResourceNotificationSubscribersTable = ({
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Subscribed",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -55,7 +52,6 @@ export const ResourceNotificationSubscribersTable = ({
         entity_id: resourceId,
       }}
       entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
-      transformFn={transformNotificationSubscription}
     />
   );
 };

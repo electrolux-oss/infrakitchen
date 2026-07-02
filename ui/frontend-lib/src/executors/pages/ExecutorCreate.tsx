@@ -19,7 +19,8 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
-import { ExecutorCreate, ExecutorResponse } from "../types";
+import { EXECUTOR_CREATE_MUTATION } from "../graphql";
+import { ExecutorCreate } from "../types";
 
 const ExecutorCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -50,9 +51,9 @@ const ExecutorCreatePageInner = () => {
 
   const handleBack = () => navigate(`${linkPrefix}executors`);
 
-  const watchedSourceCode = watch("source_code_id");
-  const watchedVersion = watch("source_code_version");
-  const watchedBranch = watch("source_code_branch");
+  const watchedSourceCode = watch("sourceCodeId");
+  const watchedVersion = watch("sourceCodeVersion");
+  const watchedBranch = watch("sourceCodeBranch");
 
   useEffect(() => {
     if (watchedSourceCode) {
@@ -61,10 +62,10 @@ const ExecutorCreatePageInner = () => {
           (code: IkEntity) => code.id === watchedSourceCode,
         );
         if (sourceCode) {
-          setGitTags(sourceCode.git_tags || []);
-          setGitBranches(sourceCode.git_branches || []);
-          setGitTagMessages(sourceCode.git_tag_messages || {});
-          setGitBranchMessages(sourceCode.git_branch_messages || {});
+          setGitTags(sourceCode.gitTags || []);
+          setGitBranches(sourceCode.gitBranches || []);
+          setGitTagMessages(sourceCode.gitTagMessages || {});
+          setGitBranchMessages(sourceCode.gitBranchMessages || {});
         }
       }
     }
@@ -80,13 +81,13 @@ const ExecutorCreatePageInner = () => {
   // Clear one when the other is selected
   useEffect(() => {
     if (watchedVersion) {
-      setValue("source_code_branch", undefined);
+      setValue("sourceCodeBranch", undefined);
     }
   }, [watchedVersion, setValue]);
 
   useEffect(() => {
     if (watchedBranch) {
-      setValue("source_code_version", undefined);
+      setValue("sourceCodeVersion", undefined);
     }
   }, [watchedBranch, setValue]);
 
@@ -96,11 +97,11 @@ const ExecutorCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const version = sourceCode.git_tags.find(
+        const version = sourceCode.gitTags.find(
           (tag: string) => tag === watchedVersion,
         );
         if (version) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === version,
           );
           if (gitFolders) {
@@ -117,11 +118,11 @@ const ExecutorCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const branch = sourceCode.git_branches.find(
+        const branch = sourceCode.gitBranches.find(
           (branch: string) => branch === watchedBranch,
         );
         if (branch) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === branch,
           );
           if (gitFolders) {
@@ -142,11 +143,15 @@ const ExecutorCreatePageInner = () => {
         return;
       }
       ikApi
-        .postRaw("executors", data)
-        .then((response: ExecutorResponse) => {
-          if (response.id) {
+        .graphqlRequest<{ createExecutor: { id: string; name: string } }>(
+          EXECUTOR_CREATE_MUTATION,
+          { input: data },
+        )
+        .then((response) => {
+          const created = response.createExecutor;
+          if (created?.id) {
             notify("Executor created successfully", "success");
-            navigate(`${linkPrefix}executors/${response.id}`);
+            navigate(`${linkPrefix}executors/${created.id}`);
           }
         })
         .catch((error: any) => {
@@ -159,8 +164,8 @@ const ExecutorCreatePageInner = () => {
     [ikApi, navigate, trigger, setSaving, linkPrefix],
   );
 
-  const watchedIntegrationIds = watch("integration_ids");
-  const watchedStorage = watch("storage_id");
+  const watchedIntegrationIds = watch("integrationIds");
+  const watchedStorage = watch("storageId");
 
   const filter_storage = useMemo(
     () => ({
@@ -173,7 +178,7 @@ const ExecutorCreatePageInner = () => {
 
   useEffect(() => {
     setValue(
-      "storage_path",
+      "storagePath",
       `service-catalog/executor/${watchedName}/terraform.tfstate`.replaceAll(
         " ",
         "_",
@@ -255,7 +260,7 @@ const ExecutorCreatePageInner = () => {
         <PropertyCard title="Code Repo Configuration">
           <Box>
             <Controller
-              name="source_code_id"
+              name="sourceCodeId"
               control={control}
               rules={{
                 required: "Source code is required",
@@ -265,12 +270,20 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   ikApi={ikApi}
                   entity_name="source_codes"
+                  fields={[
+                    "identifier",
+                    "gitTags",
+                    "gitBranches",
+                    "gitFoldersMap",
+                    "gitTagMessages",
+                    "gitBranchMessages",
+                  ]}
                   buffer={buffer}
                   setBuffer={setBuffer}
-                  error={!!errors.source_code_id}
+                  error={!!errors.sourceCodeId}
                   helpertext={
-                    errors.source_code_id
-                      ? errors.source_code_id.message
+                    errors.sourceCodeId
+                      ? errors.sourceCodeId.message
                       : "Select code repository"
                   }
                   value={field.value}
@@ -282,7 +295,7 @@ const ExecutorCreatePageInner = () => {
 
             {gitTags.length > 0 && (
               <Controller
-                name="source_code_version"
+                name="sourceCodeVersion"
                 control={control}
                 render={({ field }) => (
                   <Autocomplete
@@ -298,10 +311,10 @@ const ExecutorCreatePageInner = () => {
                         label="Select Git Tag"
                         fullWidth
                         margin="normal"
-                        error={!!errors.source_code_version}
+                        error={!!errors.sourceCodeVersion}
                         helperText={
-                          errors.source_code_version
-                            ? errors.source_code_version.message
+                          errors.sourceCodeVersion
+                            ? errors.sourceCodeVersion.message
                             : "Select git tag"
                         }
                         inputProps={{
@@ -315,7 +328,7 @@ const ExecutorCreatePageInner = () => {
               />
             )}
             <Controller
-              name="source_code_branch"
+              name="sourceCodeBranch"
               control={control}
               render={({ field }) => (
                 <Autocomplete
@@ -331,10 +344,10 @@ const ExecutorCreatePageInner = () => {
                       label="Select Git Branch"
                       fullWidth
                       margin="normal"
-                      error={!!errors.source_code_branch}
+                      error={!!errors.sourceCodeBranch}
                       helperText={
-                        errors.source_code_branch
-                          ? errors.source_code_branch.message
+                        errors.sourceCodeBranch
+                          ? errors.sourceCodeBranch.message
                           : "Select git branch"
                       }
                       inputProps={{
@@ -347,7 +360,7 @@ const ExecutorCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_folder"
+              name="sourceCodeFolder"
               control={control}
               rules={{
                 required: "Source code folder is required",
@@ -359,10 +372,10 @@ const ExecutorCreatePageInner = () => {
                   label="Select Directory Path"
                   fullWidth
                   margin="normal"
-                  error={!!errors.source_code_folder}
+                  error={!!errors.sourceCodeFolder}
                   helperText={
-                    errors.source_code_folder
-                      ? errors.source_code_folder.message
+                    errors.sourceCodeFolder
+                      ? errors.sourceCodeFolder.message
                       : "Select directory path"
                   }
                   slotProps={{
@@ -387,7 +400,7 @@ const ExecutorCreatePageInner = () => {
         <PropertyCard title="Executor Configuration">
           <Box>
             <Controller
-              name="command_args"
+              name="commandArgs"
               control={control}
               render={({ field }) => (
                 <TextField
@@ -395,14 +408,14 @@ const ExecutorCreatePageInner = () => {
                   label="Command arguments"
                   helperText="Enter command arguments (e.g., -var-file=prod.tfvars)"
                   variant="outlined"
-                  error={!!errors.command_args}
+                  error={!!errors.commandArgs}
                   fullWidth
                   margin="normal"
                 />
               )}
             />
             <Controller
-              name="integration_ids"
+              name="integrationIds"
               control={control}
               rules={{
                 validate: {
@@ -417,13 +430,13 @@ const ExecutorCreatePageInner = () => {
                   ikApi={ikApi}
                   entity_name="integrations"
                   filter={{ integration_type: "cloud" }}
-                  showFields={["integration_provider", "name"]}
+                  showFields={["integrationProvider", "name"]}
                   buffer={buffer}
                   setBuffer={setBuffer}
-                  error={!!errors.integration_ids}
+                  error={!!errors.integrationIds}
                   helpertext={
-                    errors.integration_ids
-                      ? (errors.integration_ids as any).message
+                    errors.integrationIds
+                      ? (errors.integrationIds as any).message
                       : ""
                   }
                   value={field.value}
@@ -436,7 +449,7 @@ const ExecutorCreatePageInner = () => {
             />
 
             <Controller
-              name="secret_ids"
+              name="secretIds"
               control={control}
               render={({ field }) => (
                 <ArrayReferenceInput
@@ -446,10 +459,10 @@ const ExecutorCreatePageInner = () => {
                   showFields={["name", "secret_provider"]}
                   buffer={buffer}
                   setBuffer={setBuffer}
-                  error={!!errors.secret_ids}
+                  error={!!errors.secretIds}
                   helpertext={
-                    errors.secret_ids
-                      ? (errors.secret_ids as any).message
+                    errors.secretIds
+                      ? (errors.secretIds as any).message
                       : "Select Secrets"
                   }
                   value={field.value}
@@ -462,7 +475,7 @@ const ExecutorCreatePageInner = () => {
 
             {watchedIntegrationIds.length > 0 && (
               <Controller
-                name="storage_id"
+                name="storageId"
                 control={control}
                 rules={{ required: "*Required" }}
                 render={({ field }) => (
@@ -473,9 +486,9 @@ const ExecutorCreatePageInner = () => {
                     buffer={buffer}
                     showFields={["name", "storage_provider"]}
                     setBuffer={setBuffer}
-                    error={!!errors.storage_id}
+                    error={!!errors.storageId}
                     helpertext={
-                      errors.storage_id ? errors.storage_id.message : ""
+                      errors.storageId ? errors.storageId.message : ""
                     }
                     filter={filter_storage}
                     value={field.value}
@@ -488,7 +501,7 @@ const ExecutorCreatePageInner = () => {
 
             {watchedStorage && (
               <Controller
-                name="storage_path"
+                name="storagePath"
                 control={control}
                 rules={{
                   validate: {
@@ -500,13 +513,13 @@ const ExecutorCreatePageInner = () => {
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    error={!!errors.storage_path}
+                    error={!!errors.storagePath}
                     fullWidth
                     margin="normal"
                     label="Storage Path"
                     helperText={
-                      errors.storage_path
-                        ? errors.storage_path.message
+                      errors.storagePath
+                        ? errors.storagePath.message
                         : "By default InfraKitchen uses `service-catalog/{template}/{executor_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
                     }
                   />
@@ -525,13 +538,13 @@ const ExecutorCreatePage = () => {
     defaultValues: {
       name: "",
       runtime: "tofu",
-      command_args: "",
+      commandArgs: "",
       labels: [],
       description: "",
-      integration_ids: [],
-      source_code_id: "",
-      storage_id: "",
-      storage_path: "",
+      integrationIds: [],
+      sourceCodeId: "",
+      storageId: "",
+      storagePath: "",
     },
     mode: "onChange",
   });

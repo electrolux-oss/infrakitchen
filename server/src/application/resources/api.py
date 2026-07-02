@@ -50,12 +50,10 @@ async def get_by_id(resource_id: str, service: ResourceService = Depends(get_res
     deprecated=True,
 )
 async def get_all(
-    request: Request,
     response: Response,
     service: ResourceService = Depends(get_resource_service),
     query_parts: QueryParamsType = Depends(parse_query_params),
 ):
-    requester: UserDTO | None = getattr(request.state, "user", None)
     filter, range_, sort, fields = query_parts
     total = await service.count(filter=filter)
 
@@ -67,7 +65,6 @@ async def get_all(
                 filter=filter,
                 range=range_,
                 sort=sort,
-                requester_id=requester.id if requester else None,
             )
         )
     headers = {"Content-Range": f"resources 0-{len(result)}/{total}"}
@@ -166,6 +163,7 @@ async def get_actions(request: Request, resource_id: str, service: ResourceServi
     response_description=(
         "Cascade destroy a resource and all its descendants. Creates and immediately triggers a destroy workflow."
     ),
+    deprecated=True,
 )
 async def cascade_destroy(
     request: Request,
@@ -222,6 +220,7 @@ async def get_metadata(
     "/resources/{resource_id}/sync",
     response_model=ResourceResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def sync_workspace(
     request: Request,
@@ -283,6 +282,7 @@ async def get_resource_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Sync role permissions with resources",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_resource_permissions(
     request: Request,

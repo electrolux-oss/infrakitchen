@@ -24,12 +24,9 @@ import GradientCircularProgress from "../common/GradientCircularProgress";
 import {
   REVISIONS_QUERY,
   REVISION_FIELDS,
-  transformRevisionShort,
-  transformRevision,
   GqlRevisionShort,
   GqlRevision,
 } from "./graphql";
-import { RevisionResponse, RevisionShort } from "./types";
 
 export interface RevisionProps {
   resourceId: string;
@@ -39,15 +36,15 @@ export interface RevisionProps {
 export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   const { ikApi } = useConfig();
 
-  const [revisions, setRevisions] = useState<RevisionShort[]>([]);
+  const [revisions, setRevisions] = useState<GqlRevisionShort[]>([]);
   const [selectedRevisionLeft, setSelectedRevisionLeft] = useState<number | "">(
     "",
   );
   const [selectedRevisionRight, setSelectedRevisionRight] = useState<
     number | ""
   >("");
-  const [leftRevision, setLeftRevision] = useState<RevisionResponse>();
-  const [rightRevision, setRightRevision] = useState<RevisionResponse>();
+  const [leftRevision, setLeftRevision] = useState<GqlRevision>();
+  const [rightRevision, setRightRevision] = useState<GqlRevision>();
   const [initialLoading, setInitialLoading] = useState(true);
   const [diffLoading, setDiffLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -73,7 +70,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
         entityId: resourceId,
       })
       .then((response) => {
-        setRevisions(response.revisions.map(transformRevisionShort));
+        setRevisions(response.revisions);
       })
       .catch((error) => {
         setError(error);
@@ -86,7 +83,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       setInitialLoading(false);
       return;
     }
-    const nums = revisions.map((r) => r.revision_number).sort((a, b) => a - b);
+    const nums = revisions.map((r) => r.revisionNumber).sort((a, b) => a - b);
 
     if (
       resourceRevision > 1 &&
@@ -128,8 +125,8 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
         rightNum: selectedRevisionRight,
       })
       .then((res) => {
-        setLeftRevision(transformRevision(res.left));
-        setRightRevision(transformRevision(res.right));
+        setLeftRevision(res.left);
+        setRightRevision(res.right);
         setDiffLoading(false);
       })
       .catch((err) => {
@@ -183,21 +180,21 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
-                      (r) => String(r.revision_number) === v,
+                      (r) => String(r.revisionNumber) === v,
                     );
                     return r
-                      ? `v${r.revision_number} - ${getDateValue(r.created_at)}`
+                      ? `v${r.revisionNumber} - ${getDateValue(r.createdAt)}`
                       : v;
                   }}
                 >
                   {revisions.map((r) => (
-                    <MenuItem key={r.id} value={String(r.revision_number)}>
+                    <MenuItem key={r.id} value={String(r.revisionNumber)}>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          v{r.revision_number}
+                          v{r.revisionNumber}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {getDateValue(r.created_at)}
+                          {getDateValue(r.createdAt)}
                         </Typography>
                       </Box>
                     </MenuItem>
@@ -222,21 +219,21 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
-                      (r) => String(r.revision_number) === v,
+                      (r) => String(r.revisionNumber) === v,
                     );
                     return r
-                      ? `v${r.revision_number} - ${getDateValue(r.created_at)}`
+                      ? `v${r.revisionNumber} - ${getDateValue(r.createdAt)}`
                       : v;
                   }}
                 >
                   {revisions.map((r) => (
-                    <MenuItem key={r.id} value={String(r.revision_number)}>
+                    <MenuItem key={r.id} value={String(r.revisionNumber)}>
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          v{r.revision_number}
+                          v{r.revisionNumber}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {getDateValue(r.created_at)}
+                          {getDateValue(r.createdAt)}
                         </Typography>
                       </Box>
                     </MenuItem>

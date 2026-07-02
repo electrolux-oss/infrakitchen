@@ -16,6 +16,7 @@ export interface ResourceVariableRowProps {
   fieldState?: Record<string, any>;
   isDisabled?: boolean;
   validationSummary?: string | null;
+  status?: "existing" | "new" | "deleted";
   /** When true, applies a subtle highlight to indicate the value comes from a default */
   hasDefault?: boolean;
   /** Optional content to render instead of the default ResourceVariableInput */
@@ -28,10 +29,13 @@ export const ResourceVariableRow = ({
   fieldState = {},
   isDisabled = false,
   validationSummary,
+  status = "existing",
   hasDefault = false,
   children,
 }: ResourceVariableRowProps) => {
   const theme = useTheme();
+  const isDeleted = status === "deleted";
+  const isNew = status === "new";
 
   return (
     <TableRow
@@ -73,6 +77,12 @@ export const ResourceVariableRow = ({
             letterSpacing: 0.5,
           }}
         />
+        {isNew && (
+          <Chip label="Added" size="small" color="info" sx={{ ml: 1 }} />
+        )}
+        {isDeleted && (
+          <Chip label="Deleted" size="small" color="warning" sx={{ ml: 1 }} />
+        )}
         {validationSummary && (
           <Chip
             label={validationSummary}
@@ -84,6 +94,11 @@ export const ResourceVariableRow = ({
         )}
       </TableCell>
       <TableCell sx={{ width: "300px" }}>
+        {isDeleted && (
+          <Typography variant="body2" color="warning.main" sx={{ mb: 1 }}>
+            This variable was deleted from the current schema.
+          </Typography>
+        )}
         {children ?? (
           <ResourceVariableInput
             isDisabled={isDisabled}
@@ -101,6 +116,7 @@ export const ResourceVariableForm = (props: {
   index: number;
   variable: ResourceVariableSchema;
   edit_mode?: boolean;
+  status?: "existing" | "new" | "deleted";
   validationSummary?: string | null;
   validationRule?: ValidationRule | null;
 }) => {
@@ -108,10 +124,12 @@ export const ResourceVariableForm = (props: {
     index,
     variable,
     edit_mode = false,
+    status = "existing",
     validationSummary,
     validationRule,
   } = props;
   const { control } = useFormContext();
+  const isDeleted = status === "deleted";
 
   if (variable.restricted) return null;
   if (variable.sensitive) return null;
@@ -120,7 +138,9 @@ export const ResourceVariableForm = (props: {
     <Controller
       rules={{
         validate: (value) =>
-          validateResourceVariableValue(value, variable, validationRule),
+          isDeleted
+            ? true
+            : validateResourceVariableValue(value, variable, validationRule),
       }}
       name={`variables.${index}.value`}
       control={control}
@@ -129,7 +149,8 @@ export const ResourceVariableForm = (props: {
           variable={variable}
           field={field}
           fieldState={fieldState}
-          isDisabled={edit_mode && variable.frozen}
+          isDisabled={isDeleted || (edit_mode && variable.frozen)}
+          status={status}
           validationSummary={validationSummary}
         />
       )}

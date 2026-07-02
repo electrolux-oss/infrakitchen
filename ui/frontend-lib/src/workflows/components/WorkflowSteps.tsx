@@ -1,11 +1,11 @@
 import { Box, Typography } from "@mui/material";
 
-import { WorkflowStepResponse } from "../types";
+import { GqlWorkflowStep } from "../graphql";
 
 import { WorkflowStep } from "./WorkflowStep";
 
 interface WorkflowStepsProps {
-  steps: WorkflowStepResponse[];
+  steps: GqlWorkflowStep[];
   workflowAction?: "create" | "destroy";
 }
 

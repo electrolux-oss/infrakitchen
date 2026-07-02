@@ -16,7 +16,6 @@ import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformStorageOptional } from "../graphql";
 import { STORAGE_FIELD_MAP } from "../graphql/fragments";
 
 export const StoragesPage = () => {
@@ -79,6 +78,7 @@ export const StoragesPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -86,12 +86,12 @@ export const StoragesPage = () => {
         },
       },
       {
-        field: "storage_type",
+        field: "storageType",
         headerName: "Type",
         flex: 1,
       },
       {
-        field: "storage_provider",
+        field: "storageProvider",
         headerName: "Provider",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -113,7 +113,7 @@ export const StoragesPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -124,7 +124,7 @@ export const StoragesPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -191,13 +191,12 @@ export const StoragesPage = () => {
         entityName="storage"
         columns={columns}
         entityFieldMap={STORAGE_FIELD_MAP}
-        transformFn={transformStorageOptional}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{
-          updated_at: false,
+          updatedAt: false,
           description: false,
-          revision_number: false,
+          revisionNumber: false,
           creator: false,
           integration: false,
           labels: false,

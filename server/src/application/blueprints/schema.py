@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from application.templates.schema import TemplateShort
 from application.workflows.schema import WiringRule
@@ -61,6 +61,15 @@ class BlueprintUpdate(BaseModel):
     labels: list[str] | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in BlueprintUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Blueprint update.")
+        return values
 
 
 class BlueprintShort(BaseModel):

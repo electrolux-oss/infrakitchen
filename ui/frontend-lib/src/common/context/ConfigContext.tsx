@@ -9,8 +9,7 @@ import {
 import { useEffectOnce } from "react-use";
 
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
-import { UserShort } from "../../users";
-import { transformUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
+import { GqlUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
 import { notifyError } from "../hooks/useNotification";
 
 interface ConfigContextType {
@@ -58,7 +57,7 @@ export const ConfigProvider = ({
         globalConfig: GlobalConfigType;
         entities: string[];
         userApiPolicies: Record<string, string>;
-        currentUser: UserShort | null;
+        currentUser: GqlUserShort | null;
       }>(
         `{
           globalConfig {
@@ -98,7 +97,7 @@ export const ConfigProvider = ({
         bootstrapPermissions: response.userApiPolicies || {},
         bootstrapLoading: false,
         bootstrapError: null,
-        currentUser: transformUserShort(response.currentUser),
+        currentUser: response.currentUser,
       }));
     } catch (error: any) {
       notifyError(error);

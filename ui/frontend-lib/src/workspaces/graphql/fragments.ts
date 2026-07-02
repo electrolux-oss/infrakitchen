@@ -7,7 +7,7 @@ import { INTEGRATION_SHORT_FIELDS } from "../../integrations/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const WORKSPACE_GRAPHQL_FIELDS = {
-  short: ["id", "name", "workspaceProvider"] as const,
+  short: ["id", "name", "workspaceProvider", "entityName"] as const,
   list: [
     "id",
     "name",
@@ -17,6 +17,7 @@ export const WORKSPACE_GRAPHQL_FIELDS = {
     "labels",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   detail: [
     "id",
@@ -29,6 +30,7 @@ export const WORKSPACE_GRAPHQL_FIELDS = {
     "resourcesCount",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     integration: "integration",

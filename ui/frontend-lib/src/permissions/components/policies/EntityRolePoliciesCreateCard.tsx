@@ -17,12 +17,13 @@ import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSea
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
 import { IkEntity } from "../../../types";
+import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
 
 interface EntityRolePolicyCreateProps {
-  entity_id?: string;
-  entity_name?: string;
-  role_name?: string;
+  entityId?: string;
+  entityName?: string;
+  roleName?: string;
   onClose?: () => void;
   formId?: string;
 }
@@ -37,9 +38,9 @@ export const EntityRolePolicyCreateCard = (
   props: EntityRolePolicyCreateProps,
 ) => {
   const {
-    role_name,
-    entity_id,
-    entity_name = "resource",
+    roleName,
+    entityId,
+    entityName = "resource",
     onClose,
     formId,
   } = props;
@@ -51,11 +52,11 @@ export const EntityRolePolicyCreateCard = (
   } = useForm<EntityPolicyCreate>({
     mode: "onChange",
     defaultValues: {
-      role: role_name,
-      entity_id: entity_id,
-      entity_name: entity_name,
+      role: roleName,
+      entityId: entityId,
+      entityName: entityName,
       action: "read",
-      inherits_children: false,
+      inheritsChildren: false,
     },
   });
 
@@ -72,7 +73,7 @@ export const EntityRolePolicyCreateCard = (
   const onSubmit = useCallback(
     async (data: EntityPolicyCreate) => {
       try {
-        if (!data.entity_id) {
+        if (!data.entityId) {
           notifyError(new Error("Resource is required for resource policy."));
           return;
         }
@@ -81,40 +82,31 @@ export const EntityRolePolicyCreateCard = (
           return;
         }
 
-        if (!role_name && !entity_id) {
-          notifyError(
-            new Error("Either role_name or entity_id must be undefined."),
-          );
-          return;
-        }
-
         // Build payload, using selectedRole.v1 if role was selected from dropdown
-        const payload: EntityPolicyCreate = {
-          ...data,
-          role: role_name || selectedRole?.v1 || data.role,
-        };
-
-        const response = await ikApi.postRaw(
-          `${entity_name}s/permissions`,
-          payload,
-        );
-        if (response.length > 0) {
+        const response = await ikApi.graphqlRequest<{
+          createEntityPolicy: { id: string; v1: string; v2: string };
+        }>(CREATE_ENTITY_POLICY_MUTATION, {
+          input: {
+            ...data,
+            role: roleName || selectedRole?.v1 || data.role,
+          },
+        });
+        const responseData = response.createEntityPolicy;
+        if (responseData.id) {
           notify(`Resource policy created successfully`, "success");
           onClose?.();
-        } else {
-          notify("Nothing to create.", "info");
         }
       } catch (error: any) {
         notifyError(error);
       }
     },
-    [ikApi, onClose, role_name, entity_id, entity_name, selectedRole],
+    [ikApi, onClose, roleName, selectedRole],
   );
 
   return (
     <Box sx={{ width: "100%", maxWidth: 600, mx: "auto" }}>
       <form id={resolvedFormId} onSubmit={handleSubmit(onSubmit)}>
-        {!role_name && (
+        {!roleName && (
           <Controller
             name="role"
             control={control}
@@ -149,11 +141,11 @@ export const EntityRolePolicyCreateCard = (
             )}
           />
         )}
-        {!entity_id && (
+        {!entityId && (
           <Controller
-            name="entity_id"
+            name="entityId"
             control={control}
-            rules={{ required: `${entity_name} is required.` }}
+            rules={{ required: `${entityName} is required.` }}
             render={({ field }) => (
               <ReferenceSearchInput
                 {...field}
@@ -163,8 +155,8 @@ export const EntityRolePolicyCreateCard = (
                 showFields={["template.name", "name"]}
                 buffer={buffer}
                 setBuffer={setBuffer}
-                error={!!errors.entity_id}
-                helpertext={errors.entity_id ? errors.entity_id.message : ""}
+                error={!!errors.entityId}
+                helpertext={errors.entityId ? errors.entityId.message : ""}
                 value={field.value}
                 label="Select Resource"
                 sx={{ mb: 3 }}
@@ -200,9 +192,9 @@ export const EntityRolePolicyCreateCard = (
             </FormControl>
           )}
         />
-        {entity_id && !role_name && entity_name !== "integration" && (
+        {entityId && !roleName && entityName !== "integration" && (
           <Controller
-            name="inherits_children"
+            name="inheritsChildren"
             control={control}
             render={({ field }) => (
               <FormControlLabel

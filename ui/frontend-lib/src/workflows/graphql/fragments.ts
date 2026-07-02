@@ -42,6 +42,7 @@ export const WORKFLOW_STEP_FIELDS = `
 export const WORKFLOW_LIST_FIELDS = `
   id
   action
+  entityName
   status
   errorMessage
   ${buildNestedSelection("creator", USER_SHORT_FIELDS)}
@@ -56,6 +57,7 @@ export const WORKFLOW_LIST_FIELDS = `
 export const WORKFLOW_FIELDS = `
   id
   action
+  entityName
   wiringSnapshot
   status
   errorMessage

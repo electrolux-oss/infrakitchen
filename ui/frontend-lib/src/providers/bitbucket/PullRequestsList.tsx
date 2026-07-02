@@ -19,6 +19,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { BITBUCKET_PULL_REQUESTS_QUERY } from "./graphql";
 import { BitbucketPullRequest } from "./types";
 
 interface BitbucketPullRequestsListProps {
@@ -39,15 +40,20 @@ export function BitbucketPullRequestsList(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const link = `provider/bitbucket/repos/${organization}/${repoName}/pulls`;
-
   useEffect(() => {
     setLoading(true);
     setError(null); // Reset error on new fetch
     ikApi
-      .get(link, queryParams)
-      .then((response: BitbucketPullRequest[]) => {
-        setPullRequests(response);
+      .graphqlRequest(BITBUCKET_PULL_REQUESTS_QUERY, {
+        integrationId: queryParams?.integration_id,
+        org: organization,
+        repo: repoName,
+      })
+      .then((response) => {
+        const typedResponse = response as {
+          bitbucketPullRequests: BitbucketPullRequest[];
+        };
+        setPullRequests(typedResponse.bitbucketPullRequests);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -56,7 +62,7 @@ export function BitbucketPullRequestsList(
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, organization, repoName, link, queryParams]);
+  }, [ikApi, organization, repoName, queryParams]);
 
   if (loading) {
     return (

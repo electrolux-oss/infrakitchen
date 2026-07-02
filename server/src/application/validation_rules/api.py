@@ -60,6 +60,7 @@ async def get_template_rules(
     response_model=ValidationRuleTemplateReference,
     response_description="The created validation rule reference",
     status_code=status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_template_rule(
     request: Request,
@@ -90,6 +91,7 @@ async def create_template_rule(
     response_model=list[ValidationRuleTemplateReference],
     response_description="Replaced validation rule references for the variable",
     status_code=status.HTTP_200_OK,
+    deprecated=True,
 )
 async def replace_template_rules(
     request: Request,
@@ -116,6 +118,7 @@ async def replace_template_rules(
 @router.delete(
     "/validation_rules/template/{template_id}/{variable_name}/{reference_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete_template_rule(
     request: Request,

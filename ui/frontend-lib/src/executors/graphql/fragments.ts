@@ -42,6 +42,7 @@ export const EXECUTOR_GRAPHQL_FIELDS = {
     "createdAt",
     "updatedAt",
     "isFavorite",
+    "entityName",
   ] as const,
   relations: {
     sourceCode: "sourceCode",
@@ -69,15 +70,15 @@ export const EXECUTOR_LIST_FIELDS = `
 `;
 
 export const EXECUTOR_FIELD_MAP: GraphqlFieldMap = {
-  source_code: buildNestedSelection(
+  sourceCode: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.sourceCode,
     SOURCE_CODE_SHORT_FIELDS,
   ),
-  integration_ids: buildNestedSelection(
+  integrationIds: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.integrationIds,
     EXECUTOR_INTEGRATION_SHORT_FIELDS,
   ),
-  secret_ids: buildNestedSelection(
+  secretIds: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.secretIds,
     EXECUTOR_SECRET_SHORT_FIELDS,
   ),

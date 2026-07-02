@@ -15,6 +15,7 @@ export const TASK_GRAPHQL_FIELDS = {
     "createdAt",
     "updatedAt",
     "entityData",
+    "entityName",
   ] as const,
   relations: {
     creator: "creator",

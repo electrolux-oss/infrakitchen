@@ -9,7 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
@@ -29,23 +29,23 @@ export const RoleUsersCard = (props: { role: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "user_data",
-        fetchFields: ["user_data"],
+        field: "userData",
+        fetchFields: ["userData"],
         headerName: "Identifier",
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              {...params.row.user_data}
-              id={params.row.user_data?.id}
-              _entity_name={"user"}
+              {...params.row.userData}
+              id={params.row.userData?.id}
+              entityName={"user"}
             />
           );
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -67,7 +67,7 @@ export const RoleUsersCard = (props: { role: string }) => {
             <GetEntityLink
               {...creator}
               name={creator.identifier}
-              _entity_name="user"
+              entityName="user"
             />
           );
         },
@@ -105,7 +105,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         </Button>
 
         <UserRoleCreateDialog
-          role_name={role}
+          roleName={role}
           open={isDialogOpen}
           onClose={handleCloseDialog}
         />
@@ -117,7 +117,6 @@ export const RoleUsersCard = (props: { role: string }) => {
         defaultFilter={{ ptype: "g", v1: role, v0__like: "user:%" }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </PropertyCollapseCard>
   );

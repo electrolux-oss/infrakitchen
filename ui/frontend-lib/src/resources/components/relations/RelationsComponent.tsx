@@ -39,11 +39,11 @@ export const RelationsComponent = () => {
           {error}
         </Alert>
       )}
-      {entity?.template?.cloud_resource_types?.includes("aws_eks") ? (
+      {entity?.template?.cloudResourceTypes?.includes("aws_eks") ? (
         <KubernetesRelations entity={entity} />
       ) : (
         <>
-          {entity?.template?.cloud_resource_types?.length > 0 ? (
+          {entity?.template?.cloudResourceTypes?.length > 0 ? (
             <MetadataComponent entity={entity} />
           ) : (
             <Alert severity="info">

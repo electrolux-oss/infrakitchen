@@ -11,13 +11,14 @@ import {
 
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { RELOAD_PERMISSIONS_MUTATION } from "../graphql";
 
 export const PermissionsSection = () => {
   const { ikApi } = useConfig();
 
   const handlePermissionReload = useCallback(() => {
     ikApi
-      .postRaw("administration/reload_permissions", {})
+      .graphqlRequest(RELOAD_PERMISSIONS_MUTATION)
       .then(() => {
         notify("Permissions reloaded successfully", "info");
       })

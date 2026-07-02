@@ -1,11 +1,5 @@
 import { GraphqlFieldMap } from "../../common/graphql/buildGraphqlFields";
-
-export const PERMISSION_CREATOR_FIELDS = `
-  id
-  identifier
-  displayName
-  provider
-`;
+import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const PERMISSION_FIELDS = `
   id
@@ -18,12 +12,13 @@ export const PERMISSION_FIELDS = `
   v5
   createdAt
   updatedAt
+  entityName
   creator {
-    ${PERMISSION_CREATOR_FIELDS}
+    ${USER_SHORT_FIELDS}
   }
 `;
 
 export const PERMISSION_FIELD_MAP: GraphqlFieldMap = {
-  creator: `creator { ${PERMISSION_CREATOR_FIELDS} }`,
-  user_data: `userData { ${PERMISSION_CREATOR_FIELDS} }`,
+  creator: `creator { ${USER_SHORT_FIELDS} }`,
+  userData: `userData { ${USER_SHORT_FIELDS} }`,
 };

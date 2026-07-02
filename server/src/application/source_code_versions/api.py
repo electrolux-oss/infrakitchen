@@ -219,6 +219,7 @@ async def get_config_by_id(
     response_model=SourceConfigResponse,
     response_description="Update a config by id",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update_config_by_id(
     request: Request,
@@ -243,6 +244,7 @@ async def update_config_by_id(
     response_model=list[SourceConfigResponse],
     response_description="Update a configs",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update_configs(
     request: Request,
@@ -324,6 +326,7 @@ async def get_reference_outputs_by_template(
     response_model=BatchTemplatePortsResponse,
     response_description="Get configs, outputs, references and parents for multiple templates in one call",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_batch_template_ports(
     body: BatchTemplatePortsRequest,

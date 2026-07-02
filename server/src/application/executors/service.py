@@ -28,7 +28,7 @@ from core.utils.entity_state_handler import (
     recreate_entity,
 )
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import is_valid_uuid
+from core.utils.model_tools import has_field_changes, is_valid_uuid, model_db_dump
 from .crud import ExecutorCRUD
 from .schema import (
     ExecutorCreate,
@@ -118,16 +118,16 @@ class ExecutorService:
             raise EntityNotFound("Executor not found")
         return await get_executor_actions(requester, executor.id, executor.status, executor.state)
 
-    async def create(
+    async def create_executor(
         self,
         executor: ExecutorCreate,
         requester: UserDTO,
-    ) -> ExecutorResponse:
+    ) -> Executor:
         """
         Create a new executor.
         :param executor: ExecutorCreate to create
         :param requester: User who creates the executor
-        :return: Created executor
+        :return: ORM model of the created executor
         """
 
         if not (executor.source_code_version or executor.source_code_branch):
@@ -154,12 +154,16 @@ class ExecutorService:
                 raise ValueError("Storage path is required for executors with storage")
 
         body = executor.model_dump(exclude_unset=True)
+
         body["created_by"] = requester.id
         new_executor = await self.crud.create(body)
         new_executor.state = ModelState.PROVISION
         new_executor.status = ModelStatus.READY
 
         result = await self.crud.get_by_id(new_executor.id)
+
+        if not result:
+            raise EntityNotFound("Failed to retrieve the created executor")
 
         await self.revision_handler.handle_revision(new_executor)
         await self.audit_log_handler.create_log(
@@ -168,15 +172,25 @@ class ExecutorService:
         response = ExecutorResponse.model_validate(result)
         await self.event_sender.send_event(response, ModelActions.CREATE)
         await self.permission_service.casbin_enforcer.send_reload_event()
-        return response
+        return result
 
-    async def update(self, executor_id: str, executor: ExecutorUpdate, requester: UserDTO) -> ExecutorResponse:
+    async def create(self, executor: ExecutorCreate, requester: UserDTO) -> ExecutorResponse:
+        """
+        Create a new executor.
+        :param executor: ExecutorCreate to create
+        :param requester: User who creates the executor
+        :return: Created executor
+        """
+        new_executor = await self.create_executor(executor, requester)
+        return ExecutorResponse.model_validate(new_executor)
+
+    async def update_executor(self, executor_id: str, executor: ExecutorUpdate, requester: UserDTO) -> Executor:
         """
         Update an existing executor.
         :param executor_id: ID of the executor to update
         :param executor: Executor to update
         :param requester: User who updates the executor
-        :return: Updated executor
+        :return: ORM model of the updated executor
         """
 
         def check_critical_fields_changed(existing: Executor, patched: ExecutorUpdate) -> bool:
@@ -199,21 +213,34 @@ class ExecutorService:
         if existing_executor.state in [ModelState.DESTROY, ModelState.DESTROYED]:
             raise ValueError(f"Entity cannot be updated, has wrong state {existing_executor.state}")
 
-        if existing_executor.source_code_folder != executor.source_code_folder:
+        if (
+            executor.source_code_folder is not None
+            and existing_executor.source_code_folder != executor.source_code_folder
+        ):
             raise ValueError("Source code folder cannot be changed once set")
 
-        if existing_executor.source_code_id != executor.source_code_id:
+        if executor.source_code_id is not None and existing_executor.source_code_id != executor.source_code_id:
             raise ValueError("Source code ID cannot be changed once set")
 
-        source_code = await self.service_source_code.get_by_id(executor.source_code_id)
-        if source_code is None:
-            raise EntityNotFound("Source code not found")
+        if executor.source_code_id is not None:
+            source_code = await self.service_source_code.get_by_id(executor.source_code_id)
+            if source_code is None:
+                raise EntityNotFound("Source code not found")
 
         existing_executor_pydantic = ExecutorResponse.model_validate(existing_executor)
 
-        body = executor.model_dump(exclude_unset=True)
+        body = model_db_dump(executor, exclude_defaults=True, exclude_none=True)
         if not body:
             raise ValueError("No fields to update")
+
+        if not has_field_changes(body, existing_executor):
+            raise ValueError("No changes detected; the executor is already up to date.")
+
+        # Source code tag and branch are mutually exclusive; setting one clears the other.
+        if body.get("source_code_version"):
+            body["source_code_branch"] = None
+        elif body.get("source_code_branch"):
+            body["source_code_version"] = None
 
         if check_critical_fields_changed(existing_executor, executor):
             requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
@@ -233,7 +260,18 @@ class ExecutorService:
         response = ExecutorResponse.model_validate(existing_executor)
         await self.event_sender.send_event(response, ModelActions.UPDATE)
 
-        return response
+        return existing_executor
+
+    async def update(self, executor_id: str, executor: ExecutorUpdate, requester: UserDTO) -> ExecutorResponse:
+        """
+        Update an existing executor.
+        :param executor_id: ID of the executor to update
+        :param executor: Executor to update
+        :param requester: User who updates the executor
+        :return: Updated executor
+        """
+        updated_executor = await self.update_executor(executor_id, executor, requester)
+        return ExecutorResponse.model_validate(updated_executor)
 
     async def action_destroy(self, existing_executor: Executor, pydantic_executor: ExecutorDTO, requester: UserDTO):
         if pydantic_executor.state in [ModelState.DESTROY, ModelState.DESTROYED]:
@@ -247,15 +285,15 @@ class ExecutorService:
     async def action_recreate(self, existing_executor: Executor, requester: UserDTO):
         await recreate_entity(existing_executor, is_resource=False)
 
-    async def patch_action(
+    async def patch_action_executor(
         self, executor_id, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
-    ) -> ExecutorResponse:
+    ) -> Executor:
         """
         Patch an existing executor.
         :param executor_id: ID of the executor to patch
         :param body: PatchBodyModel to patch
         :param requester: User who patches the executor
-        :return: Patched executor
+        :return: ORM model of the patched executor
         """
         existing_executor = await self.crud.get_by_id(executor_id)
         if not existing_executor:
@@ -315,7 +353,18 @@ class ExecutorService:
 
         response = ExecutorResponse.model_validate(existing_executor)
         await self.event_sender.send_event(response, body.action)
-        return response
+        return existing_executor
+
+    async def patch_action(self, executor_id: str, body: PatchBodyModel, requester: UserDTO) -> ExecutorResponse:
+        """
+        Patch an existing executor.
+        :param executor_id: ID of the executor to patch
+        :param body: PatchBodyModel to patch
+        :param requester: User who patches the executor
+        :return: Patched executor
+        """
+        patched_executor = await self.patch_action_executor(executor_id, body, requester)
+        return ExecutorResponse.model_validate(patched_executor)
 
     async def delete(self, executor_id: str, requester: UserDTO) -> None:
         existing_executor = await self.crud.get_by_id(executor_id)

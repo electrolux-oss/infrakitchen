@@ -13,19 +13,16 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import { IconField } from "../../icons/Icons";
+import { GqlIntegration } from "../graphql";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
-import { IntegrationResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface IntegrationAboutProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
 }
 
 export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
@@ -55,8 +52,8 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
     <OverviewCard
       name={integration.name}
       description={integration.description || "No description"}
-      icon={IconField(integration.integration_provider)}
-      chip={integration.integration_type}
+      icon={IconField(integration.integrationProvider)}
+      chip={integration.integrationType}
     >
       <CommonEditableField<string>
         name={"Name"}
@@ -107,22 +104,22 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
         name={"Created"}
         value={
           <RelativeTime
-            date={integration.created_at}
+            date={integration.createdAt}
             user={integration.creator}
           />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={integration.updated_at} />}
+        value={<RelativeTime date={integration.updatedAt} />}
       />
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={integration.labels}
+        value={integration.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={integration.labels} />}
+        display={<Labels labels={integration.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

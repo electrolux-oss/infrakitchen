@@ -10,8 +10,11 @@ import { EntityContainer } from "../../common/components/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IntegrationContent } from "../components/IntegrationContent";
-import { INTEGRATION_DETAILS_FIELDS, transformIntegration } from "../graphql";
-import { IntegrationValidateResponse } from "../types";
+import {
+  INTEGRATION_DETAILS_FIELDS,
+  VALIDATE_INTEGRATION_MUTATION,
+} from "../graphql";
+import { IntegrationValidationResult } from "../types";
 
 export const IntegrationPage = () => {
   const { integration_id } = useParams();
@@ -25,35 +28,36 @@ export const IntegrationPage = () => {
     }
 
     setLoading(true);
-    ikApi
-      .get(`integrations/${integration_id}/validate`)
-      .then((response: IntegrationValidateResponse) => {
-        if (response.is_valid) {
-          notify("Validation successful!", "success");
-        } else {
-          notifyError(
-            new Error(
-              `Validation failed: ${response.message || "No message provided."}`,
-            ),
-          );
-        }
-      })
-      .catch((error: any) => {
-        notifyError(error);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const response = await ikApi.graphqlRequest<{
+        validateIntegration: IntegrationValidationResult;
+      }>(VALIDATE_INTEGRATION_MUTATION, { id: integration_id });
+
+      const result = response.validateIntegration;
+      if (result.isValid) {
+        notify("Validation successful!", "success");
+      } else {
+        notifyError(
+          new Error(
+            `Validation failed: ${result.message || "No message provided."}`,
+          ),
+        );
+      }
+    } catch (error: any) {
+      notifyError(error);
+    } finally {
+      setLoading(false);
+    }
   }, [ikApi, integration_id]);
 
   return (
     <EntityProvider
       entity_name="integration"
       entity_id={integration_id || ""}
-      transformFn={transformIntegration}
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
         title={"Integration Overview"}
-        hideEditAction
         actions={
           <PermissionWrapper
             requiredPermission={"api:integration"}

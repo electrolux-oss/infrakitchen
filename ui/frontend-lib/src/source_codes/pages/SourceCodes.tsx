@@ -20,16 +20,11 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
-import {
-  GqlSourceCode,
-  SOURCE_CODES_QUERY,
-  transformSourceCode,
-} from "../graphql";
-import { SourceCodeResponse } from "../types";
+import { GqlSourceCode, SOURCE_CODES_QUERY } from "../graphql";
 
 export const SourceCodesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const [repositories, setRepositories] = useState<SourceCodeResponse[]>([]);
+  const [repositories, setRepositories] = useState<GqlSourceCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [labels, setLabels] = useState<string[]>([]);
@@ -66,7 +61,7 @@ export const SourceCodesPage = () => {
         range: [0, 1000],
       })
       .then((response) => {
-        setRepositories((response.sourceCodes || []).map(transformSourceCode));
+        setRepositories(response.sourceCodes || []);
         setLabels(response.labels || []);
         setIsInitialLoad(false);
       })
@@ -91,7 +86,7 @@ export const SourceCodesPage = () => {
         return (
           !s ||
           repository.identifier.toLowerCase().includes(s) ||
-          repository.description.toLowerCase().includes(s)
+          repository.description?.toLowerCase().includes(s)
         );
       }),
     [repositories, filterValues.name],
@@ -133,7 +128,7 @@ export const SourceCodesPage = () => {
     </PermissionWrapper>
   );
 
-  const repositoryCardFields = (repository: SourceCodeResponse) => {
+  const repositoryCardFields = (repository: GqlSourceCode) => {
     return (
       <>
         <Box>
@@ -147,7 +142,7 @@ export const SourceCodesPage = () => {
             Last Updated
           </Typography>
           <RelativeTime
-            date={repository.updated_at}
+            date={repository.updatedAt}
             variant="caption"
             sx={{ fontWeight: 500 }}
           />
@@ -224,14 +219,14 @@ export const SourceCodesPage = () => {
                 entity_name="source_code"
                 icon={
                   <Box sx={{ fontSize: 32 }}>
-                    {IconField(repository.source_code_provider)}
+                    {IconField(repository.sourceCodeProvider)}
                   </Box>
                 }
-                name={getRepoNameFromUrl(repository.source_code_url)}
-                description={repository.description}
+                name={getRepoNameFromUrl(repository.sourceCodeUrl)}
+                description={repository.description || "No description"}
                 detailsUrl={`${linkPrefix}source_codes/${repository.id}`}
-                labels={repository.labels}
-                lastUpdated={repository.updated_at}
+                labels={repository.labels || []}
+                lastUpdated={repository.updatedAt}
                 entityFields={repositoryCardFields(repository)}
               />
             ))}

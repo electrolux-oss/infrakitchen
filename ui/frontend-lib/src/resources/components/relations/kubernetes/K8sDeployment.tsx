@@ -15,6 +15,7 @@ import {
 
 import { useConfig, GradientCircularProgress } from "../../../../common";
 import { notifyError } from "../../../../common/hooks/useNotification";
+import { KUBERNETES_DEPLOYMENTS_QUERY } from "../../../../providers/kubernetes/graphql";
 
 import { PodDetailsDialog } from "./PodDetailsDialog";
 
@@ -58,11 +59,16 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
       setLoadingDeployments(true);
       setErrorDeployments(null);
       ikApi
-        .get(
-          `provider/kubernetes/${kubernetesResourceType}/${entityId}/deployments/${namespace}`,
+        .graphqlRequest<{ kubernetesDeployments: string[] }>(
+          KUBERNETES_DEPLOYMENTS_QUERY,
+          {
+            k8sService: kubernetesResourceType,
+            resourceId: entityId,
+            namespace,
+          },
         )
         .then((response) => {
-          setDeployments(response);
+          setDeployments(response.kubernetesDeployments);
           setLoadingDeployments(false);
         })
         .catch((error) => {

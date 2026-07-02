@@ -9,13 +9,13 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { UserRoleCreateDialog } from "./AssignUserToRoleDialog";
 
-export const UserRolesCard = (props: { user_id: string }) => {
-  const { user_id } = props;
+export const UserRolesCard = (props: { userId: string }) => {
+  const { userId } = props;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleOpenDialog = () => {
@@ -38,13 +38,13 @@ export const UserRolesCard = (props: { user_id: string }) => {
             <GetEntityLink
               name={params.row.v1}
               id={params.row.v1}
-              _entity_name={"role"}
+              entityName={"role"}
             />
           );
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -98,7 +98,7 @@ export const UserRolesCard = (props: { user_id: string }) => {
         </Button>
 
         <UserRoleCreateDialog
-          user_id={user_id}
+          userId={userId}
           open={isDialogOpen}
           onClose={handleCloseDialog}
         />
@@ -108,9 +108,8 @@ export const UserRolesCard = (props: { user_id: string }) => {
         title="User Roles"
         entityName="permission"
         columns={columns}
-        defaultFilter={{ ptype: "g", v0: `user:${user_id}` }}
+        defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </OverviewCard>
   );

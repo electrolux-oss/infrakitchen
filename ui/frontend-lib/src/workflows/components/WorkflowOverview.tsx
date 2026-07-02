@@ -9,7 +9,7 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import StatusChip from "../../common/StatusChip";
-import { WorkflowResponse } from "../types";
+import { GqlWorkflow } from "../graphql";
 
 export const WorkflowOverview = () => {
   const { entity } = useEntityProvider();
@@ -17,7 +17,7 @@ export const WorkflowOverview = () => {
   const navigate = useNavigate();
 
   if (!entity) return null;
-  const workflow = entity as WorkflowResponse;
+  const workflow = entity as GqlWorkflow;
 
   // Derive unique templates from steps
   const templates = workflow.steps
@@ -44,42 +44,42 @@ export const WorkflowOverview = () => {
       <CommonField
         name="Created"
         value={
-          <RelativeTime date={workflow.created_at} user={workflow.creator} />
+          <RelativeTime date={workflow.createdAt} user={workflow.creator} />
         }
         size={4}
       />
 
-      {workflow.started_at && (
+      {workflow.startedAt && (
         <CommonField
           name="Started"
-          value={<RelativeTime date={workflow.started_at} />}
+          value={<RelativeTime date={workflow.startedAt} />}
           size={4}
         />
       )}
 
-      {workflow.completed_at && (
+      {workflow.completedAt && (
         <CommonField
           name="Completed"
-          value={<RelativeTime date={workflow.completed_at} />}
+          value={<RelativeTime date={workflow.completedAt} />}
           size={4}
         />
       )}
-      {workflow.started_at && workflow.completed_at && (
+      {workflow.startedAt && workflow.completedAt && (
         <CommonField
           name="Duration"
           value={
-            <Duration start={workflow.started_at} end={workflow.completed_at} />
+            <Duration start={workflow.startedAt} end={workflow.completedAt} />
           }
           size={4}
         />
       )}
 
-      {workflow.error_message && (
+      {workflow.errorMessage && (
         <CommonField
           name="Error"
           value={
             <Chip
-              label={workflow.error_message}
+              label={workflow.errorMessage}
               color="error"
               size="small"
               variant="outlined"

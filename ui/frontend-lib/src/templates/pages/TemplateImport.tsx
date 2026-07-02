@@ -20,7 +20,9 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
-import { TemplateImportRequest, TemplateResponse } from "../types";
+import { CREATE_TEMPLATE_WITH_SCV_MUTATION } from "../../use_cases/graphql";
+import { GqlTemplate } from "../graphql";
+import { TemplateImportRequest } from "../types";
 
 export const TemplateImportPage = () => {
   const {
@@ -33,12 +35,12 @@ export const TemplateImportPage = () => {
       name: "",
       description: "",
       documentation: "",
-      source_code_folder: "/",
-      source_code_branch: "main",
-      source_code_url: "",
-      source_code_language: "opentofu",
+      sourceCodeFolder: "/",
+      sourceCodeBranch: "main",
+      sourceCodeUrl: "",
+      sourceCodeLanguage: "opentofu",
       labels: [],
-      integration_id: "",
+      integrationId: "",
       parents: [],
     },
   });
@@ -52,24 +54,39 @@ export const TemplateImportPage = () => {
   );
 
   const onSubmit = useCallback(
-    (data: TemplateImportRequest) => {
+    async (data: TemplateImportRequest) => {
       setIsSubmitting(true);
-      ikApi
-        .postRaw("use_cases/create_template_with_scv", data)
-        .then((response: TemplateResponse) => {
-          setIsSubmitting(false);
-          if (response.id) {
-            notify(
-              "Template import initiated. It may take a few minutes to complete.",
-              "info",
-            );
-            navigate(`${linkPrefix}templates/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-          setIsSubmitting(false);
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createTemplateWithScv: GqlTemplate;
+        }>(CREATE_TEMPLATE_WITH_SCV_MUTATION, {
+          input: {
+            name: data.name,
+            description: data.description,
+            labels: data.labels,
+            parents: data.parents,
+            sourceCodeLanguage: data.sourceCodeLanguage,
+            integrationId: data.integrationId,
+            sourceCodeUrl: data.sourceCodeUrl,
+            sourceCodeFolder: data.sourceCodeFolder,
+            sourceCodeBranch: data.sourceCodeBranch,
+          },
         });
+
+        if (response.createTemplateWithScv.id) {
+          notify(
+            "Template import initiated. It may take a few minutes to complete.",
+            "info",
+          );
+          navigate(
+            `${linkPrefix}templates/${response.createTemplateWithScv.id}`,
+          );
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
     [ikApi, navigate, linkPrefix],
   );
@@ -100,25 +117,25 @@ export const TemplateImportPage = () => {
       <PropertyCard title="Template Source Configuration">
         <Box>
           <Controller
-            name="source_code_language"
+            name="sourceCodeLanguage"
             control={control}
             render={({ field }) => (
               <TextField
                 {...field}
-                id="source_code_language"
+                id="sourceCodeLanguage"
                 label="Template Type"
                 required
                 select
                 fullWidth
                 disabled
                 margin="normal"
-                error={!!errors.source_code_language}
-                helperText={errors.source_code_language?.message}
+                error={!!errors.sourceCodeLanguage}
+                helperText={errors.sourceCodeLanguage?.message}
                 slotProps={{
                   select: {
                     inputProps: {
                       "aria-label": "Template Type",
-                      id: "source_code_language",
+                      id: "sourceCodeLanguage",
                     },
                   },
                 }}
@@ -132,7 +149,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="integration_id"
+            name="integrationId"
             control={control}
             render={({ field }) => (
               <ReferenceInput
@@ -144,11 +161,11 @@ export const TemplateImportPage = () => {
                 {...field}
                 entity_name="integrations"
                 filter={{ integration_type: "git" }}
-                showFields={["integration_provider", "name"]}
-                error={!!errors.integration_id}
+                showFields={["integrationProvider", "name"]}
+                error={!!errors.integrationId}
                 helpertext={
-                  errors.integration_id
-                    ? errors.integration_id.message
+                  errors.integrationId
+                    ? errors.integrationId.message
                     : "Select Git Integration"
                 }
                 value={field.value}
@@ -156,7 +173,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_url"
+            name="sourceCodeUrl"
             control={control}
             rules={{
               required: "Repository URL is required",
@@ -171,11 +188,11 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Repository URL"
                 required
-                error={!!errors.source_code_url}
+                error={!!errors.sourceCodeUrl}
                 placeholder="Enter repository URL"
                 type="url"
                 helperText={
-                  errors.source_code_url ? errors.source_code_url.message : ""
+                  errors.sourceCodeUrl ? errors.sourceCodeUrl.message : ""
                 }
                 fullWidth
                 margin="normal"
@@ -183,7 +200,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_folder"
+            name="sourceCodeFolder"
             control={control}
             rules={{ required: "Directory path is required" }}
             render={({ field }) => (
@@ -191,12 +208,10 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Directory Path"
                 required
-                error={!!errors.source_code_folder}
+                error={!!errors.sourceCodeFolder}
                 placeholder="Enter directory path"
                 helperText={
-                  errors.source_code_folder
-                    ? errors.source_code_folder.message
-                    : ""
+                  errors.sourceCodeFolder ? errors.sourceCodeFolder.message : ""
                 }
                 fullWidth
                 margin="normal"
@@ -204,7 +219,7 @@ export const TemplateImportPage = () => {
             )}
           />
           <Controller
-            name="source_code_branch"
+            name="sourceCodeBranch"
             control={control}
             rules={{ required: "Branch name is required" }}
             render={({ field }) => (
@@ -212,12 +227,10 @@ export const TemplateImportPage = () => {
                 {...field}
                 label="Branch"
                 required
-                error={!!errors.source_code_branch}
+                error={!!errors.sourceCodeBranch}
                 placeholder="Enter branch name"
                 helperText={
-                  errors.source_code_branch
-                    ? errors.source_code_branch.message
-                    : ""
+                  errors.sourceCodeBranch ? errors.sourceCodeBranch.message : ""
                 }
                 fullWidth
                 margin="normal"

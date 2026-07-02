@@ -9,7 +9,6 @@ import {
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import StatusChip from "../../common/StatusChip";
-import { transformSourceCodeVersionOptional } from "../graphql";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 interface EntitySourceCodeVersionsProps {
@@ -20,6 +19,7 @@ interface EntitySourceCodeVersionsProps {
 const columns = [
   {
     field: "identifier",
+    fetchFields: ["id", "identifier", "entityName"],
     headerName: "Name",
     flex: 1,
     hideable: false,
@@ -28,19 +28,16 @@ const columns = [
     },
   },
   {
-    field: "source_code",
+    field: "sourceCode",
     headerName: "Code Repository",
     flex: 1,
     sortField: "source_code.source_code_url",
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row.source_code;
+      const sourceCode = params.row.sourceCode;
       if (!sourceCode) return null;
       return (
-        <GetEntityLink
-          {...sourceCode}
-          identifier={sourceCode.source_code_url}
-        />
+        <GetEntityLink {...sourceCode} identifier={sourceCode.sourceCodeUrl} />
       );
     },
   },
@@ -53,10 +50,11 @@ const columns = [
     ),
   },
   {
-    field: "created_at",
+    field: "createdAt",
     headerName: "Created At",
     flex: 1,
-    renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
+    renderCell: (params: GridRenderCellParams) =>
+      getDateValue(params.row.createdAt),
   },
   {
     field: "creator",
@@ -67,7 +65,7 @@ const columns = [
     renderCell: (params: GridRenderCellParams) => {
       const creator = params.row.creator;
       if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
+      return <GetEntityLink {...creator} />;
     },
   },
 ];
@@ -105,7 +103,6 @@ export const EntitySourceCodeVersions = ({
       entityName="sourceCodeVersion"
       columns={columns}
       entityFieldMap={SCV_FIELD_MAP}
-      transformFn={transformSourceCodeVersionOptional}
       filterStorageKey={filterStorageKey}
       filterConfigs={filterConfigs}
       buildApiFilters={buildApiFilters}

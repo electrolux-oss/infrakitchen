@@ -155,9 +155,6 @@ class TestCreate:
         mock_user_service,
         mock_user_crud,
         mock_audit_log_handler,
-        monkeypatch,
-        mocked_user,
-        mocked_user_response,
     ):
         # Only ik_service_account provider is allowed to be created
         user_body = {
@@ -184,7 +181,7 @@ class TestCreate:
 
         # monkeypatch.setattr(UserResponse, "model_validate", Mock(return_value=mocked_user_response))
 
-        result = await mock_user_service.create(user_create, requester)
+        result = await mock_user_service.create_user(user_create, requester)
 
         # mock_user_crud.create.assert_awaited_once_with(expected_user_body)
 
@@ -193,7 +190,6 @@ class TestCreate:
         assert result.id == new_user.id
         assert result.identifier == new_user.identifier
         assert result.provider == "ik_service_account"
-        assert hasattr(result, "password") is False  # Password should not be in the response
 
     @pytest.mark.asyncio
     async def test_create_error(self, mock_user_service, mock_user_crud):
@@ -211,7 +207,7 @@ class TestCreate:
         mock_user_crud.create.side_effect = error
 
         with pytest.raises(RuntimeError) as exc:
-            await mock_user_service.create(user_create, requester)
+            await mock_user_service.create_user(user_create, requester)
 
         assert exc.value is error
         mock_user_crud.create.assert_awaited_once()

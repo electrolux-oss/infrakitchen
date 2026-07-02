@@ -29,13 +29,10 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_NOTIFICATION_PREFERENCE_MUTATION,
   DELETE_NOTIFICATION_PREFERENCE_MUTATION,
+  GqlNotificationPreference,
   NOTIFICATION_PREFERENCE_FIELD_MAP,
-  transformNotificationPreference,
 } from "../../notifications";
-import {
-  NotificationChannel,
-  NotificationPreferenceRow,
-} from "../../notifications/types";
+import { NotificationChannel } from "../../notifications/types";
 import { EVENT_TYPE } from "../../utils";
 
 const CHANNEL_OPTIONS: NotificationChannel[] = ["IN_APP", "SLACK"];
@@ -43,7 +40,7 @@ const CHANNEL_OPTIONS: NotificationChannel[] = ["IN_APP", "SLACK"];
 interface NotificationPreferenceDialogProps {
   userId: string;
   open: boolean;
-  initialPreference: NotificationPreferenceRow | null;
+  initialPreference: GqlNotificationPreference | null;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -58,7 +55,7 @@ const NotificationPreferenceDialog = ({
   const { ikApi } = useConfig();
   const [isLoading, setIsLoading] = useState(false);
   const [eventType, setEventType] = useState(
-    initialPreference?.event_type ?? "execute",
+    initialPreference?.eventType ?? "execute",
   );
   const [channels, setChannels] = useState<NotificationChannel[]>(
     initialPreference?.channels ?? ["IN_APP"],
@@ -69,7 +66,7 @@ const NotificationPreferenceDialog = ({
       return;
     }
 
-    setEventType(initialPreference?.event_type ?? "execute");
+    setEventType(initialPreference?.eventType ?? "execute");
     setChannels(initialPreference?.channels ?? ["IN_APP"]);
   }, [initialPreference, open]);
 
@@ -254,8 +251,8 @@ const EditNotificationPreferenceButton = ({
   preference,
   onEdit,
 }: {
-  preference: NotificationPreferenceRow;
-  onEdit: (preference: NotificationPreferenceRow) => void;
+  preference: GqlNotificationPreference;
+  onEdit: (preference: GqlNotificationPreference) => void;
 }) => {
   return (
     <Button
@@ -274,7 +271,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPreference, setSelectedPreference] =
-    useState<NotificationPreferenceRow | null>(null);
+    useState<GqlNotificationPreference | null>(null);
 
   const handleOpenCreate = useCallback(() => {
     setSelectedPreference(null);
@@ -282,7 +279,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
   }, []);
 
   const handleOpenEdit = useCallback(
-    (preference: NotificationPreferenceRow) => {
+    (preference: GqlNotificationPreference) => {
       setSelectedPreference(preference);
       setDialogOpen(true);
     },
@@ -296,7 +293,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "event_type",
+        field: "eventType",
         headerName: "Event Type",
         flex: 1,
       },
@@ -309,7 +306,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
           (params.row.channels || []).join(", "),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -371,7 +368,6 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
           columns={columns}
           defaultFilter={{ user_id }}
           entityFieldMap={NOTIFICATION_PREFERENCE_FIELD_MAP}
-          transformFn={transformNotificationPreference}
         />
       </OverviewCard>
       <NotificationPreferenceDialog

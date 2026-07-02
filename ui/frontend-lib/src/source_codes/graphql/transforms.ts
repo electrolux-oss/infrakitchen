@@ -1,13 +1,5 @@
-import {
-  GqlIntegrationShort,
-  transformIntegrationShort,
-} from "../../integrations/graphql";
-import { GqlUserShort, transformUserShort } from "../../users/graphql";
-import {
-  SourceCodeResponse,
-  SourceCodeResponseOptional,
-  SourceCodeShort,
-} from "../types";
+import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlUserShort } from "../../users/graphql";
 
 import type {
   SourceCodeGraphqlShortField,
@@ -27,6 +19,7 @@ type GqlSourceCodeShortFieldTypes = {
   sourceCodeProvider: string;
   sourceCodeLanguage: string;
   status: string;
+  entityName: string;
 };
 
 export type GqlSourceCodeShort = Pick<
@@ -52,6 +45,7 @@ type GqlSourceCodeDetailFieldTypes = {
   revisionNumber: number;
   createdAt: string;
   updatedAt: string;
+  entityName: string;
 };
 
 type GqlSourceCodeRelationFieldTypes = {
@@ -68,71 +62,4 @@ export type GqlSourceCode = Pick<
 >;
 
 export type GqlSourceCodeOptional = Partial<GqlSourceCode> &
-  Pick<GqlSourceCodeShortFieldTypes, "id" | "sourceCodeUrl">;
-
-export function transformSourceCode(gql: GqlSourceCode): SourceCodeResponse {
-  return {
-    id: gql.id,
-    identifier: gql.identifier,
-    source_code_url: gql.sourceCodeUrl,
-    source_code_provider: gql.sourceCodeProvider,
-    source_code_language: gql.sourceCodeLanguage,
-    _entity_name: "source_code",
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
-    status: gql.status,
-    revision_number: gql.revisionNumber,
-    labels: gql.labels ?? [],
-    integration: transformIntegrationShort(gql.integration)!,
-    creator: transformUserShort(gql.creator)!,
-    git_tags: gql.gitTags ?? [],
-    git_tag_messages: gql.gitTagMessages ?? {},
-    git_branches: gql.gitBranches ?? [],
-    git_branch_messages: gql.gitBranchMessages ?? {},
-    git_folders_map: gql.gitFoldersMap ?? [],
-    description: gql.description ?? "",
-  };
-}
-
-export function transformSourceCodeShort(
-  gql: GqlSourceCodeShort,
-): SourceCodeShort {
-  return {
-    id: gql.id,
-    identifier: gql.identifier,
-    source_code_url: gql.sourceCodeUrl,
-    source_code_provider: gql.sourceCodeProvider,
-    source_code_language: gql.sourceCodeLanguage,
-    _entity_name: "source_code",
-  };
-}
-
-export function transformSourceCodeOptional(
-  gql: GqlSourceCodeOptional,
-): SourceCodeResponseOptional {
-  return {
-    id: gql.id,
-    identifier: gql.identifier,
-    source_code_url: gql.sourceCodeUrl,
-    source_code_provider: gql.sourceCodeProvider,
-    source_code_language: gql.sourceCodeLanguage,
-    _entity_name: "source_code",
-    created_at: gql.createdAt,
-    updated_at: gql.updatedAt,
-    status: gql.status,
-    revision_number: gql.revisionNumber,
-    labels: gql.labels ?? undefined,
-    integration:
-      gql.integration !== undefined
-        ? transformIntegrationShort(gql.integration)!
-        : undefined,
-    creator:
-      gql.creator !== undefined ? transformUserShort(gql.creator)! : undefined,
-    git_tags: gql.gitTags ?? undefined,
-    git_tag_messages: gql.gitTagMessages ?? undefined,
-    git_branches: gql.gitBranches ?? undefined,
-    git_branch_messages: gql.gitBranchMessages ?? undefined,
-    git_folders_map: gql.gitFoldersMap ?? undefined,
-    description: gql.description ?? undefined,
-  };
-}
+  Pick<GqlSourceCodeShortFieldTypes, "id" | "sourceCodeUrl" | "entityName">;

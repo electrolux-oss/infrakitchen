@@ -17,6 +17,10 @@ class TaskType:
     entity_id: str = ""
 
     @strawberry.field
+    def entity_name(self) -> str:
+        return "task"
+
+    @strawberry.field
     async def entity_data(self, info: Info) -> JSON | None:
         loader = info.context["loaders"].get(self.entity)
         if loader is None:

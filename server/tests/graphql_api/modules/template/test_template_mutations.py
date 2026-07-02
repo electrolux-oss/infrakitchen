@@ -13,6 +13,7 @@ CREATE_TEMPLATE_MUTATION = """
             id
             name
             template
+            entityName
         }
     }
 """
@@ -23,6 +24,7 @@ UPDATE_TEMPLATE_MUTATION = """
             id
             name
             template
+            entityName
         }
     }
 """
@@ -33,6 +35,7 @@ TEMPLATE_ACTION_MUTATION = """
             id
             name
             template
+            entityName
         }
     }
 """
@@ -80,6 +83,7 @@ class TestTemplateMutations:
             "id": str(mocked_template.id),
             "name": mocked_template.name,
             "template": mocked_template.template,
+            "entityName": "template",
         }
         mock_template_service.create_template.assert_awaited_once_with(template=ANY, requester=mocked_user)
 
@@ -174,6 +178,7 @@ class TestTemplateMutations:
             "id": str(mocked_template.id),
             "name": mocked_template.name,
             "template": mocked_template.template,
+            "entityName": "template",
         }
         mock_template_service.get_actions.assert_awaited_once_with(template_id=template_id, requester=mocked_user)
         mock_template_service.update_template.assert_awaited_once_with(
@@ -273,6 +278,7 @@ class TestTemplateMutations:
             "id": str(mocked_template.id),
             "name": mocked_template.name,
             "template": mocked_template.template,
+            "entityName": "template",
         }
         mock_template_service.get_actions.assert_awaited_once_with(template_id=template_id, requester=mocked_user)
         mock_template_service.patch.assert_awaited_once()

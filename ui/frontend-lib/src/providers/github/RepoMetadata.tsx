@@ -21,6 +21,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { GITHUB_REPO_QUERY } from "./graphql";
 import { GithubRepo } from "./types";
 
 interface GithubRepoMetadataProps {
@@ -36,16 +37,19 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
   const [metadata, setMetadata] = useState<GithubRepo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const link = `provider/github/repos/${organization}/${name}`;
 
   useEffect(() => {
     setLoading(true);
     setError(null); // Clear previous errors
     ikApi
-      .get(link, queryParams)
-      .then((response: GithubRepo) => {
-        // Cast response to GithubRepo
-        setMetadata(response);
+      .graphqlRequest(GITHUB_REPO_QUERY, {
+        integrationId: queryParams?.integration_id,
+        org: organization,
+        repo: name,
+      })
+      .then((response) => {
+        const typedResponse = response as { githubRepo: GithubRepo };
+        setMetadata(typedResponse.githubRepo);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -54,7 +58,7 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, name, organization, link, queryParams]);
+  }, [ikApi, name, organization, queryParams]);
 
   if (loading) {
     return (

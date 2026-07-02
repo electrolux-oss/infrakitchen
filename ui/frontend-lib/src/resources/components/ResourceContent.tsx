@@ -41,7 +41,7 @@ export const ResourceContent = ({
       content: (
         <EntityTreeViewTab
           entity_id={entity.id}
-          entity_name={entity._entity_name}
+          entity_name={entity.entityName}
         />
       ),
     },
@@ -64,7 +64,7 @@ export const ResourceContent = ({
         <EntityLogs
           entityId={entity.id}
           sourceCodeLanguage={
-            entity.source_code_version?.source_code?.source_code_language
+            entity.sourceCodeVersion?.sourceCode?.sourceCodeLanguage
           }
         />
       ),
@@ -75,7 +75,7 @@ export const ResourceContent = ({
         <Audit
           entityId={entity.id}
           sourceCodeLanguage={
-            entity.source_code_version?.source_code?.source_code_language
+            entity.sourceCodeVersion?.sourceCode?.sourceCodeLanguage
           }
           showRevisionColumn
           showTimelineView

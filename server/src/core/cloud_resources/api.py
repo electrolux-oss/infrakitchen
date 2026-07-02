@@ -13,6 +13,7 @@ router = APIRouter()
     response_description="Get one cloud resource by id",
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_one(resource_name: str, entities: CloudResourcesCRUD = Depends(get_entities_crud)):
     entity = await entities.get_one(resource_name)
@@ -25,6 +26,7 @@ async def get_one(resource_name: str, entities: CloudResourcesCRUD = Depends(get
     response_description="Get all cloud resources",
     response_model_by_alias=False,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(
     response: Response,

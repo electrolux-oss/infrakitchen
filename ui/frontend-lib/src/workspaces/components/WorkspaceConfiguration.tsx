@@ -5,31 +5,33 @@ import {
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
-import { WorkspaceResponse } from "../types";
+import { GqlWorkspace } from "../graphql";
 
-export interface TemplateConfigurationProps {
-  workspace: WorkspaceResponse;
+export interface WorkspaceConfigurationProps {
+  workspace: GqlWorkspace;
 }
 
 export const WorkspaceConfiguration = ({
   workspace,
-}: TemplateConfigurationProps) => {
+}: WorkspaceConfigurationProps) => {
   return (
     <OverviewCard name="Workspace Configuration">
-      <CommonField
-        name={"Integration"}
-        value={
-          <GetReferenceUrlValue
-            {...workspace.integration}
-            urlProvider={workspace.integration.integration_provider}
-          />
-        }
-      />
+      {workspace.integration && (
+        <CommonField
+          name={"Integration"}
+          value={
+            <GetReferenceUrlValue
+              {...workspace.integration}
+              urlProvider={workspace.integration.integrationProvider}
+            />
+          }
+        />
+      )}
       <CommonField
         name={"Workspace Provider"}
-        value={getProviderValue(workspace.workspace_provider)}
+        value={getProviderValue(workspace.workspaceProvider)}
       />
-      {Object.entries(workspace.configuration).map(([k, v]) => {
+      {Object.entries(workspace.configuration || []).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
       })}
     </OverviewCard>

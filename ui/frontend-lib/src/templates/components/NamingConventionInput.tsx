@@ -12,14 +12,20 @@ import {
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
+  GqlSourceConfig,
+  GqlSourceOutputConfigTemplate,
+  SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY,
+  SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
+} from "../../source_code_versions/graphql";
+import {
   SourceOutputConfigTemplateResponse,
   SourceConfigResponse,
 } from "../../source_code_versions/types";
-import { TemplateShort } from "../types";
+import { GqlTemplateShort } from "../graphql";
 
 interface NamingConventionInputProps {
-  template_id: string;
-  parents?: TemplateShort[];
+  templateId: string;
+  parents?: GqlTemplateShort[];
   value: string | null;
   onChange: (value: string | null) => void;
   error?: boolean;
@@ -32,7 +38,7 @@ interface ParentOutputGroup {
 }
 
 export const NamingConventionInput = ({
-  template_id,
+  templateId,
   parents = [],
   value,
   onChange,
@@ -48,20 +54,28 @@ export const NamingConventionInput = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchConfigs = useCallback(async () => {
-    if (!template_id) return;
+    if (!templateId) return;
     setLoading(true);
     try {
       const [configsResponse, ...parentOutputResponses] = await Promise.all([
-        ikApi.get(
-          `source_code_versions/template/${template_id}/configs`,
-        ) as Promise<SourceConfigResponse[]>,
+        ikApi
+          .graphqlRequest<{
+            sourceCodeVersionTemplateConfigs: GqlSourceConfig[];
+          }>(SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY, {
+            templateId,
+          })
+          .then((response) => response.sourceCodeVersionTemplateConfigs),
         ...parents.map((p) =>
-          (
-            ikApi.get(
-              `source_code_versions/template/${p.id}/outputs`,
-            ) as Promise<SourceOutputConfigTemplateResponse[]>
-          )
-            .then((outputs) => ({ parentName: p.name, outputs }))
+          ikApi
+            .graphqlRequest<{
+              sourceCodeVersionTemplateOutputs: GqlSourceOutputConfigTemplate[];
+            }>(SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY, {
+              templateId: p.id,
+            })
+            .then((response) => ({
+              parentName: p.name,
+              outputs: response.sourceCodeVersionTemplateOutputs,
+            }))
             .catch(() => ({
               parentName: p.name,
               outputs: [] as SourceOutputConfigTemplateResponse[],
@@ -75,7 +89,7 @@ export const NamingConventionInput = ({
     } finally {
       setLoading(false);
     }
-  }, [ikApi, template_id, parents]);
+  }, [ikApi, templateId, parents]);
 
   useEffect(() => {
     fetchConfigs();

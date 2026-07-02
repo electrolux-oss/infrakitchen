@@ -5,11 +5,12 @@ import { Box } from "@mui/material";
 import { useConfig } from "../../context";
 import { OverviewCard } from "../OverviewCard";
 
+import { fetchEntityTree } from "./fetchEntityTree";
 import { EntityTreeViewItems } from "./TreeViewItems";
 import { TreeResponse } from "./types";
 
 const getAllNodeIds = (node: TreeResponse): string[] => [
-  node.node_id,
+  node.nodeId,
   ...(node.children?.flatMap(getAllNodeIds) ?? []),
 ];
 
@@ -29,9 +30,9 @@ export const EntityTreeViewTab = ({
   const [tree, setTree] = useState<TreeResponse>();
 
   useEffect(() => {
-    ikApi.getTree(`${entity_name}s`, entity_id, "children").then((tree) => {
+    fetchEntityTree(ikApi, entity_name, entity_id, "children").then((tree) => {
       setTree(tree);
-      setSelected([tree.node_id]);
+      setSelected([tree.nodeId]);
       setTreeExpanded(getAllNodeIds(tree));
     });
   }, [entity_id, entity_name, ikApi]);

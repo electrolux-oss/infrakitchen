@@ -28,3 +28,5 @@ class SchedulerExecutor:
 
         except Exception as e:
             logger.error(f"Failed to execute SQL script {script}. Error: {e}")
+            await self.session.rollback()
+            raise

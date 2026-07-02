@@ -27,7 +27,7 @@ export const WorkspaceContent = () => {
   );
   if (!entity) return null;
 
-  const hasMetadata = METADATA_PROVIDERS.includes(entity.workspace_provider);
+  const hasMetadata = METADATA_PROVIDERS.includes(entity.workspaceProvider);
 
   const tabs: TabDefinition[] = [
     {
@@ -36,7 +36,7 @@ export const WorkspaceContent = () => {
     },
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resources_count ?? 0})`,
+      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}

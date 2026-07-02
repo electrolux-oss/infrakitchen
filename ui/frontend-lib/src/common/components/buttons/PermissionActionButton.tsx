@@ -5,6 +5,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import { Button, IconButton, Stack } from "@mui/material";
 
+import { DELETE_PERMISSION_MUTATION } from "../../../permissions/graphql/mutations";
 import { useConfig } from "../../context";
 import { notifyError } from "../../hooks/useNotification";
 
@@ -36,7 +37,10 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
 
     setIsLoading(true);
     ikApi
-      .deleteRaw(`permissions/${permission_id}`, {})
+      .graphqlRequest<{ deletePermission: boolean }>(
+        DELETE_PERMISSION_MUTATION,
+        { id: permission_id },
+      )
       .then(() => {
         if (onDelete) {
           onDelete();

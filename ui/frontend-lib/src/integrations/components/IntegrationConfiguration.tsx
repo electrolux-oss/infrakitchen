@@ -7,12 +7,12 @@ import {
 } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { IntegrationResponse } from "../types";
+import { GqlIntegration } from "../graphql";
 
 import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";
 
 export interface TemplateConfigurationProps {
-  integration: IntegrationResponse;
+  integration: GqlIntegration;
 }
 
 export const IntegrationConfiguration = ({
@@ -27,15 +27,15 @@ export const IntegrationConfiguration = ({
         name={"Integration Provider"}
         value={
           <Box height="auto">
-            {getProviderValue(integration.integration_provider)}
+            {getProviderValue(integration.integrationProvider)}
           </Box>
         }
       />
       <CommonField
         name={"Integration Type"}
-        value={integration.integration_type}
+        value={integration.integrationType}
       />
-      {Object.entries(integration.configuration).map(([k, v]) => {
+      {Object.entries(integration.configuration || {}).map(([k, v]) => {
         if (k !== "integration_provider" && v !== null && v !== "") {
           return (
             <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />

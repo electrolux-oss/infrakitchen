@@ -33,6 +33,7 @@ async def get_all(request: Request, service: FavoriteService = Depends(get_favor
     "/favorites",
     response_model=FavoriteDTO,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(
     request: Request,
@@ -50,6 +51,7 @@ async def post(
 @router.delete(
     "/favorites/{component_type}/{component_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(
     request: Request,

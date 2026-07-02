@@ -18,6 +18,7 @@ def get_parents_resource_list(parent_resources: str = Query(default=[])) -> list
     "/source_code_versions/{source_code_version_id}/variables",
     response_description="Get resource variables schema",
     response_model=list[ResourceVariableSchema],
+    deprecated=True,
 )
 async def get_resource_variables_schema(
     source_code_version_id: str,

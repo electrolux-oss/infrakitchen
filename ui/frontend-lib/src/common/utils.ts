@@ -215,3 +215,16 @@ export const formatLabel = (key: string): string => {
     })
     .join(" ");
 };
+
+/** Order-independent equality check for string arrays. */
+export const sameStringSet = (
+  a: string[] | undefined,
+  b: string[] | undefined,
+) => {
+  const x = a ?? [];
+  const y = b ?? [];
+  return (
+    x.length === y.length &&
+    [...x].sort().join("\u0000") === [...y].sort().join("\u0000")
+  );
+};

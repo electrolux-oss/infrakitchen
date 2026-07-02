@@ -44,7 +44,7 @@ class MockUserService:
     async def get_all(self, *args, **kwargs):
         return self._items
 
-    async def create(self, user: UserCreate, requester: UserDTO):
+    async def create_user(self, user: UserCreate, requester: UserDTO):
         return self._created_user
 
     async def update(self, user_id: str, user: UserUpdate, requester: UserDTO):
@@ -204,7 +204,7 @@ class TestCreate:
 
 class TestUpdate:
     def test_update_forbidden(self, client_with_user, monkeypatch):
-        user_update = {"identifier": "test_user", "email": "test@example.com"}
+        user_update = {"deactivated": True}
 
         async def mock_user_is_super_admin(user_id: str) -> bool:
             return False
@@ -217,7 +217,7 @@ class TestUpdate:
         assert response.json() == {"detail": "Access denied"}
 
     def test_update_success(self, client_with_user, override_service, monkeypatch, mocked_user_response):
-        user_update = {"identifier": "test_user", "email": "test@example.com"}
+        user_update = {"deactivated": True}
 
         async def mock_user_is_super_admin(user_id: str) -> bool:
             return True
@@ -231,8 +231,7 @@ class TestUpdate:
         json_response = response.json()
 
         assert response.status_code == HTTPStatus.OK
-        assert json_response["identifier"] == mocked_user_response.identifier
-        assert json_response["provider"] == mocked_user_response.provider
+        assert json_response["deactivated"] == mocked_user_response.deactivated
 
 
 class TestGetPermissions:

@@ -4,8 +4,9 @@ import strawberry
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
-from application.resources.dependencies import get_resource_service
+from application.resources.dependencies import get_cascade_destroy_service, get_resource_service
 from application.resources.schema import ResourceCreate, ResourceUpdate
+from application.workflows.model import Workflow
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
@@ -13,6 +14,7 @@ from core.users.functions import user_is_super_admin
 from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.notification.types import SubscriptionType
 from graphql_api.modules.resource.types import ResourceType
+from graphql_api.modules.workflow.types import WorkflowType
 from strawberry.experimental import pydantic as strawberry_pydantic
 
 
@@ -91,6 +93,17 @@ class ResourceMutation:
         return await service.update_resource(resource_id=str(id), resource=input.to_pydantic(), requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def sync_workspace(self, info: Info, id: uuid.UUID) -> ResourceType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_resource_service(session)
+
+        if ModelActions.EDIT not in await service.get_actions(resource_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
+
+        return await service.sync_workspace(resource_id=str(id), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def resource_action(self, info: Info, id: uuid.UUID, input: ResourceActionInput) -> ResourceType:
         session = info.context["session"]
         requester = info.context["request"].state.user
@@ -120,6 +133,27 @@ class ResourceMutation:
 
         await service.delete(resource_id=str(id), requester=requester)
         return True
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def cascade_destroy_resource(self, info: Info, id: uuid.UUID) -> WorkflowType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        resource_service = get_resource_service(session)
+
+        if ModelActions.CASCADE_DESTROY not in await resource_service.get_actions(resource_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.CASCADE_DESTROY.value}")
+
+        cascade_destroy_service = get_cascade_destroy_service(session=session)
+        workflow = await cascade_destroy_service.create_cascade_destroy_workflow(
+            resource_id=id,
+            requester=requester,
+        )
+
+        workflow_orm = await session.get(Workflow, workflow.id)
+        if workflow_orm is None:
+            raise ValueError("Cascade destroy workflow was not persisted")
+
+        return workflow_orm
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_resource_subscription(

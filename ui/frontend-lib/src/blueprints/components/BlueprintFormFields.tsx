@@ -9,13 +9,13 @@ import {
   TemplatePorts,
   WiringCanvas,
 } from "../../common/components/viewers/Wiring/WiringCanvas";
-import { TemplateShort } from "../../templates/types";
+import { GqlTemplateShort } from "../../templates/graphql";
 import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
 
 interface BlueprintFormFieldsProps {
   control: Control<any>;
   errors: FieldErrors;
-  selectedTemplates: TemplateShort[];
+  selectedTemplates: GqlTemplateShort[];
   templatePorts: Record<string, TemplatePorts>;
   currentWiring: WiringRule[];
   missingParentTemplates: ExternalTemplate[];
@@ -30,7 +30,7 @@ interface BlueprintFormFieldsProps {
     constantId: string,
     defaultValue: string,
   ) => void;
-  onTemplateAdd: (template: TemplateShort) => void;
+  onTemplateAdd: (template: GqlTemplateShort) => void;
   onTemplateRemove: (templateId: string) => void;
   onWiringChange: (wiring: WiringRule[]) => void;
 }

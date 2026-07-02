@@ -19,14 +19,15 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
-import { DependencyVariable, ResourceResponse } from "../types";
+import { DependencyVariable } from "../types";
 
 export interface DependencyConfigurationProps {
-  resource: ResourceResponse;
+  resource: GqlResource;
 }
 
 interface DependencyTag {
@@ -224,7 +225,9 @@ export const DependencyConfiguration = ({
               }}
             >
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                {getDependencyVariables(resource.dependency_tags)}
+                {getDependencyVariables(
+                  resource.dependencyTags as DependencyTag[],
+                )}
               </Box>
               <Button
                 size="small"
@@ -241,7 +244,7 @@ export const DependencyConfiguration = ({
           open={tagsDialogOpen}
           onClose={() => setTagsDialogOpen(false)}
           title="Dependency Tags"
-          initialValue={resource.dependency_tags as DependencyTag[]}
+          initialValue={resource.dependencyTags as DependencyTag[]}
           onSave={(value) => saveField({ dependencyTags: value })}
         />
       </OverviewCard>
@@ -265,7 +268,9 @@ export const DependencyConfiguration = ({
               }}
             >
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                {getDependencyVariables(resource.dependency_config)}
+                {getDependencyVariables(
+                  resource.dependencyConfig as DependencyTag[],
+                )}
               </Box>
               <Button
                 size="small"
@@ -282,7 +287,7 @@ export const DependencyConfiguration = ({
           open={configsDialogOpen}
           onClose={() => setConfigsDialogOpen(false)}
           title="Dependency Configs"
-          initialValue={resource.dependency_config as DependencyTag[]}
+          initialValue={resource.dependencyConfig as DependencyTag[]}
           onSave={(value) => saveField({ dependencyConfig: value })}
         />
       </OverviewCard>

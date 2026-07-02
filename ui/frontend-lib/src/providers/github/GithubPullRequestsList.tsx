@@ -19,6 +19,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { GITHUB_PULL_REQUESTS_QUERY } from "./graphql";
 import { GithubPullRequest } from "./types";
 
 interface GithubPullRequestsListProps {
@@ -37,15 +38,20 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const link = `provider/github/repos/${organization}/${repoName}/pulls`;
-
   useEffect(() => {
     setLoading(true);
     setError(null); // Reset error on new fetch
     ikApi
-      .get(link, queryParams)
-      .then((response: GithubPullRequest[]) => {
-        setPullRequests(response);
+      .graphqlRequest(GITHUB_PULL_REQUESTS_QUERY, {
+        integrationId: queryParams?.integration_id,
+        org: organization,
+        repo: repoName,
+      })
+      .then((response) => {
+        const typedResponse = response as {
+          githubPullRequests: GithubPullRequest[];
+        };
+        setPullRequests(typedResponse.githubPullRequests);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -54,7 +60,7 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, organization, repoName, link, queryParams]);
+  }, [ikApi, organization, repoName, queryParams]);
 
   if (loading) {
     return (

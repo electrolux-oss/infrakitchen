@@ -19,19 +19,16 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
+import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
-import { ResourceResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface ResourceAboutProps {
-  resource: ResourceResponse;
+  resource: GqlResource;
 }
 
 export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
@@ -45,8 +42,8 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   );
 
   const existingIntegrationIds = useMemo(
-    () => new Set(resource.integration_ids.map((i) => String(i.id))),
-    [resource.integration_ids],
+    () => new Set(resource.integrationIds?.map((i) => String(i.id))),
+    [resource.integrationIds],
   );
 
   const integrationOptionFilter = useMemo(
@@ -155,24 +152,24 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       <CommonField
         name="Created"
         value={
-          <RelativeTime date={resource.created_at} user={resource.creator} />
+          <RelativeTime date={resource.createdAt} user={resource.creator!} />
         }
         size={4}
       />
       <CommonField
         name="Last Updated"
-        value={<RelativeTime date={resource.updated_at} />}
+        value={<RelativeTime date={resource.updatedAt} />}
         size={4}
       />
-      <CommonField name="Revision" value={resource.revision_number} size={4} />
+      <CommonField name="Revision" value={resource.revisionNumber} size={4} />
 
       <CommonEditableField<string[]>
         name="Labels"
         canEdit={canEdit}
-        value={resource.labels}
+        value={resource.labels ?? []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={resource.labels} />}
+        display={<Labels labels={resource.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor
@@ -194,13 +191,13 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
           <CommonEditableField<string[]>
             name="Cloud Integrations"
             canEdit={canEdit}
-            value={resource.integration_ids.map((i) => i.id)}
+            value={resource.integrationIds?.map((i) => i.id) || []}
             ariaLabel="Edit cloud integrations"
             isEqual={sameStringSet}
             display={
-              resource.integration_ids.length > 0 ? (
+              resource.integrationIds && resource.integrationIds.length > 0 ? (
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  {resource.integration_ids.map((integration) => (
+                  {resource.integrationIds.map((integration) => (
                     <span key={integration.id}>
                       <GetReferenceUrlValue {...integration} />
                     </span>
@@ -216,7 +213,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                 setBuffer={setBuffer}
                 entity_name="integrations"
                 filter={{ integration_type: "cloud" }}
-                showFields={["integration_provider", "name"]}
+                showFields={["integrationProvider", "name"]}
                 optionFilter={integrationOptionFilter}
                 value={value}
                 onChange={onChange}
@@ -231,13 +228,13 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
           <CommonEditableField<string[]>
             name="Secrets"
             canEdit={canEdit}
-            value={resource.secret_ids.map((s) => s.id)}
+            value={resource.secretIds?.map((s) => s.id) || []}
             ariaLabel="Edit secrets"
             isEqual={sameStringSet}
             display={
-              resource.secret_ids.length > 0 ? (
+              resource.secretIds && resource.secretIds.length > 0 ? (
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  {resource.secret_ids.map((secret) => (
+                  {resource.secretIds.map((secret) => (
                     <span key={secret.id}>
                       <GetReferenceUrlValue {...secret} />
                     </span>
@@ -295,7 +292,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         name="Parents"
         size={6}
         value={
-          resource.parents.length > 0 ? (
+          resource.parents && resource.parents.length > 0 ? (
             <Box
               sx={(theme) => ({
                 display: "flex",
@@ -324,7 +321,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         name="Children"
         size={6}
         value={
-          resource.children.length > 0 ? (
+          resource.children && resource.children.length > 0 ? (
             <Box
               sx={(theme) => ({
                 display: "flex",

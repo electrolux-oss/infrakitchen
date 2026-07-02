@@ -130,6 +130,7 @@ class TemplateService:
             raise EntityNotFound("Template not found")
 
         body = model_db_dump(template, exclude_defaults=True, exclude_none=True)
+
         parents = body.get("parents") or []
         children = body.get("children") or []
         if set(parents) & set(children):

@@ -25,10 +25,10 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { renderFieldsForProvider } from "../components/AuthProviderForms";
+import { CREATE_AUTH_PROVIDER_MUTATION } from "../graphql";
 import { AuthProviderCreate } from "../types";
-import { AuthProviderResponse } from "../types";
 
-const auth_providers = [
+const authProviders = [
   "microsoft",
   "guest",
   "github",
@@ -50,7 +50,7 @@ const AuthProviderCreatePageInner = () => {
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}auth_providers`);
 
-  const selectedProvider = watch("auth_provider");
+  const selectedProvider = watch("authProvider");
 
   const handleSave = useCallback(
     async (data: AuthProviderCreate) => {
@@ -61,28 +61,28 @@ const AuthProviderCreatePageInner = () => {
         notifyError(new Error("Please fix the errors in the form"));
         return;
       }
-      const updatedData = {
+      const input = {
         ...data,
         configuration: {
           ...data.configuration,
-          auth_provider: data.auth_provider,
+          auth_provider: data.authProvider,
         },
       };
 
-      ikApi
-        .postRaw("auth_providers", updatedData)
-        .then((response: AuthProviderResponse) => {
-          if (response.id) {
-            notify("AuthProvider created successfully", "success");
-            navigate(`${linkPrefix}auth_providers/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        })
-        .finally(() => {
-          setSaving(false);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createAuthProvider: { id: string };
+        }>(CREATE_AUTH_PROVIDER_MUTATION, { input });
+        const created = response.createAuthProvider;
+        if (created?.id) {
+          notify("AuthProvider created successfully", "success");
+          navigate(`${linkPrefix}auth_providers/${created.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
     [ikApi, navigate, trigger, setSaving, linkPrefix],
   );
@@ -158,7 +158,7 @@ const AuthProviderCreatePageInner = () => {
               )}
             />
             <Controller
-              name="auth_provider"
+              name="authProvider"
               control={control}
               rules={{ required: "Auth provider is required" }}
               render={({ field }) => (
@@ -168,16 +168,16 @@ const AuthProviderCreatePageInner = () => {
                   label="Auth Provider"
                   required={true}
                   variant="outlined"
-                  error={!!errors.auth_provider}
+                  error={!!errors.authProvider}
                   helperText={
-                    errors.auth_provider
-                      ? errors.auth_provider.message
+                    errors.authProvider
+                      ? errors.authProvider.message
                       : "Select the auth provider"
                   }
                   fullWidth
                   margin="normal"
                 >
-                  {auth_providers.map((option) => (
+                  {authProviders.map((option) => (
                     <MenuItem key={option} value={option}>
                       {option}
                     </MenuItem>
@@ -186,7 +186,7 @@ const AuthProviderCreatePageInner = () => {
               )}
             />
             <Controller
-              name="filter_by_domain"
+              name="filterByDomain"
               control={control}
               defaultValue={[]}
               render={({ field }) => (
@@ -214,10 +214,10 @@ const AuthProviderCreatePageInner = () => {
                       {...params}
                       label="Filter By Domain"
                       variant="outlined"
-                      error={!!errors.filter_by_domain}
+                      error={!!errors.filterByDomain}
                       helperText={
-                        errors.filter_by_domain
-                          ? errors.filter_by_domain.message
+                        errors.filterByDomain
+                          ? errors.filterByDomain.message
                           : "Add filter by domain and press Enter"
                       }
                       fullWidth
@@ -261,9 +261,9 @@ export const AuthProviderCreatePage = () => {
     defaultValues: {
       name: "",
       description: "",
-      auth_provider: "",
+      authProvider: "",
       configuration: {},
-      filter_by_domain: [],
+      filterByDomain: [],
       enabled: true,
     },
     mode: "onChange",

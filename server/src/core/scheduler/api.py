@@ -15,6 +15,7 @@ router = APIRouter()
     response_model=list[SchedulerJobResponse],
     response_description="Get all scheduler jobs",
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def get_all(service: SchedulerJobService = Depends(get_scheduler_job_service)):
     return list(await service.get_all())
@@ -24,6 +25,7 @@ async def get_all(service: SchedulerJobService = Depends(get_scheduler_job_servi
     "/schedulers",
     response_model=SchedulerJobResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create(
     request: Request, body: SchedulerJobCreate, service: SchedulerJobService = Depends(get_scheduler_job_service)
@@ -39,6 +41,7 @@ async def create(
     "/schedulers/{job_id}",
     response_model=SchedulerJobResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -60,6 +63,7 @@ async def update(
 @router.delete(
     "/schedulers/{job_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(request: Request, job_id: UUID, service: SchedulerJobService = Depends(get_scheduler_job_service)):
     requester = request.state.user

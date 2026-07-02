@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from application.integrations.schema import IntegrationValidationResponse
 from core.constants.model import ModelActions
 from graphql_api.schema import schema
 
@@ -13,6 +14,7 @@ CREATE_INTEGRATION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -23,6 +25,7 @@ UPDATE_INTEGRATION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -33,6 +36,7 @@ INTEGRATION_ACTION_MUTATION = """
             id
             name
             integrationProvider
+            entityName
         }
     }
 """
@@ -40,6 +44,25 @@ INTEGRATION_ACTION_MUTATION = """
 DELETE_INTEGRATION_MUTATION = """
     mutation DeleteIntegration($id: UUID!) {
         deleteIntegration(id: $id)
+    }
+"""
+
+
+VALIDATE_INTEGRATION_MUTATION = """
+    mutation ValidateIntegration($id: UUID!) {
+        validateIntegration(id: $id) {
+            isValid
+            message
+        }
+    }
+"""
+
+VALIDATE_INTEGRATION_CONFIG_MUTATION = """
+    mutation ValidateIntegrationConfig($input: IntegrationCreateInput!) {
+        validateIntegrationConfig(input: $input) {
+            isValid
+            message
+        }
     }
 """
 
@@ -87,6 +110,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.create_integration.assert_awaited_once_with(integration=ANY, requester=mocked_user)
 
@@ -190,6 +214,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.get_actions.assert_awaited_once_with(
             integration_id=str(integration_id), requester=mocked_user
@@ -293,6 +318,7 @@ class TestIntegrationMutations:
             "id": str(mocked_integration.id),
             "name": mocked_integration.name,
             "integrationProvider": mocked_integration.integration_provider,
+            "entityName": "integration",
         }
         mock_integration_service.get_actions.assert_awaited_once_with(
             integration_id=str(integration_id), requester=mocked_user
@@ -516,3 +542,172 @@ class TestIntegrationPartialUpdate:
         assert pydantic_model.name is None
         assert pydantic_model.description is None
         assert pydantic_model.configuration is None
+
+
+class TestIntegrationValidationMutations:
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.integration.mutations.user_has_access_to_entity", new_callable=AsyncMock)
+    @patch("graphql_api.modules.integration.mutations.get_integration_service")
+    async def test_validate_integration_returns_validation_result(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_integration_service,
+        mocked_integration_response,
+        mocked_user,
+    ):
+        integration_id = uuid4()
+        mock_has_access.return_value = True
+        mock_integration_service.get_by_id = AsyncMock(return_value=mocked_integration_response)
+        mock_integration_service.validate = AsyncMock(
+            return_value=IntegrationValidationResponse(is_valid=True, message="Validation successful")
+        )
+        mock_get_service.return_value = mock_integration_service
+
+        result = await schema.execute(
+            VALIDATE_INTEGRATION_MUTATION,
+            variable_values={"id": str(integration_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"validateIntegration": {"isValid": True, "message": "Validation successful"}}
+        mock_has_access.assert_awaited_once_with(
+            mocked_user, str(integration_id), action="write", entity_name="integration"
+        )
+        mock_integration_service.get_by_id.assert_awaited_once_with(integration_id=str(integration_id))
+        mock_integration_service.validate.assert_awaited_once_with(
+            integration_config=mocked_integration_response.configuration,
+            integration_provider=mocked_integration_response.integration_provider,
+        )
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.integration.mutations.user_has_access_to_entity", new_callable=AsyncMock)
+    @patch("graphql_api.modules.integration.mutations.get_integration_service")
+    async def test_validate_integration_denies_without_write_access(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_integration_service,
+        mocked_user,
+    ):
+        integration_id = uuid4()
+        mock_has_access.return_value = False
+        mock_integration_service.get_by_id = AsyncMock()
+        mock_integration_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_integration_service
+
+        result = await schema.execute(
+            VALIDATE_INTEGRATION_MUTATION,
+            variable_values={"id": str(integration_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateIntegration"] is None
+        assert result.errors is not None
+        assert any("Access denied" in error.message for error in result.errors)
+        mock_integration_service.get_by_id.assert_not_awaited()
+        mock_integration_service.validate.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.integration.mutations.user_has_access_to_entity", new_callable=AsyncMock)
+    @patch("graphql_api.modules.integration.mutations.get_integration_service")
+    async def test_validate_integration_raises_when_not_found(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_integration_service,
+        mocked_user,
+    ):
+        integration_id = uuid4()
+        mock_has_access.return_value = True
+        mock_integration_service.get_by_id = AsyncMock(return_value=None)
+        mock_integration_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_integration_service
+
+        result = await schema.execute(
+            VALIDATE_INTEGRATION_MUTATION,
+            variable_values={"id": str(integration_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateIntegration"] is None
+        assert result.errors is not None
+        assert any("Integration not found" in error.message for error in result.errors)
+        mock_integration_service.validate.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.integration.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.integration.mutations.get_integration_service")
+    async def test_validate_integration_config_returns_validation_result(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_integration_service,
+        mocked_user,
+    ):
+        mock_has_access.return_value = True
+        mock_integration_service.validate = AsyncMock(
+            return_value=IntegrationValidationResponse(is_valid=True, message="Validation successful")
+        )
+        mock_get_service.return_value = mock_integration_service
+
+        result = await schema.execute(
+            VALIDATE_INTEGRATION_CONFIG_MUTATION,
+            variable_values={
+                "input": {
+                    "name": "Test Integration",
+                    "integrationType": "cloud",
+                    "integrationProvider": "aws",
+                    "configuration": {
+                        "aws_account": "123456789012",
+                        "aws_access_key_id": "test_key",
+                        "aws_secret_access_key": "test_secret",
+                        "integration_provider": "aws",
+                    },
+                }
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"validateIntegrationConfig": {"isValid": True, "message": "Validation successful"}}
+        mock_has_access.assert_awaited_once_with(mocked_user, "integration", action="write")
+        mock_integration_service.validate.assert_awaited_once_with(integration_config=ANY, integration_provider="aws")
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.integration.mutations.user_has_access_to_api", new_callable=AsyncMock)
+    @patch("graphql_api.modules.integration.mutations.get_integration_service")
+    async def test_validate_integration_config_denies_without_write_access(
+        self,
+        mock_get_service,
+        mock_has_access,
+        mock_integration_service,
+        mocked_user,
+    ):
+        mock_has_access.return_value = False
+        mock_integration_service.validate = AsyncMock()
+        mock_get_service.return_value = mock_integration_service
+
+        result = await schema.execute(
+            VALIDATE_INTEGRATION_CONFIG_MUTATION,
+            variable_values={
+                "input": {
+                    "name": "Test Integration",
+                    "integrationType": "cloud",
+                    "integrationProvider": "aws",
+                    "configuration": {
+                        "aws_account": "123456789012",
+                        "aws_access_key_id": "test_key",
+                        "aws_secret_access_key": "test_secret",
+                        "integration_provider": "aws",
+                    },
+                }
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["validateIntegrationConfig"] is None
+        assert result.errors is not None
+        assert any("Access denied" in error.message for error in result.errors)
+        mock_integration_service.validate.assert_not_awaited()

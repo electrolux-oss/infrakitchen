@@ -13,16 +13,17 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { GqlSecret } from "../graphql";
 import {
   SecretUpdateFieldInput,
   UPDATE_SECRET_MUTATION,
 } from "../graphql/mutations";
-import { CustomSecret, SecretResponse, SecretUpdate } from "../types";
+import { CustomSecret, SecretUpdate } from "../types";
 
 import { SecretConfigurationField } from "./SecretConfigurationField";
 
 export interface SecretConfigurationProps {
-  secret: SecretResponse;
+  secret: GqlSecret;
 }
 
 const getCustomSecrets = (secrets: CustomSecret[]) => {
@@ -62,7 +63,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         configuration,
         // secret_provider is the Pydantic discriminator for the configuration
         // union type; the backend needs it to deserialize the correct variant.
-        secretProvider: secret.secret_provider,
+        secretProvider: secret.secretProvider,
       };
       try {
         await ikApi.graphqlRequest(UPDATE_SECRET_MUTATION, {
@@ -76,7 +77,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         throw error;
       }
     },
-    [ikApi, secret.id, secret.secret_provider, refreshEntity],
+    [ikApi, secret.id, secret.secretProvider, refreshEntity],
   );
 
   return (
@@ -87,26 +88,26 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
           secret.integration ? (
             <GetReferenceUrlValue
               {...secret.integration}
-              urlProvider={secret.integration.integration_provider}
+              urlProvider={secret.integration.integrationProvider}
             />
           ) : null
         }
       />
       <CommonField
         name={"Secret Provider"}
-        value={getProviderValue(secret.secret_provider)}
+        value={getProviderValue(secret.secretProvider)}
       />
-      <CommonField name={"Secret Type"} value={secret.secret_type} />
-      {secret.secret_provider !== "custom" &&
-        Object.entries(secret.configuration).map(([k, v]) => {
+      <CommonField name={"Secret Type"} value={secret.secretType} />
+      {secret.secretProvider !== "custom" &&
+        Object.entries(secret.configuration || {}).map(([k, v]) => {
           return (
             <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />
           );
         })}
-      {secret.secret_provider === "custom" && (
+      {secret.secretProvider === "custom" && (
         <CommonField
           name={"Secret List"}
-          value={getCustomSecrets(secret.configuration.secrets)}
+          value={getCustomSecrets(secret.configuration?.secrets)}
         />
       )}
       <SecretConfigurationField

@@ -14,11 +14,10 @@ import {
 import { GradientCircularProgress, useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { useSourceCodeVersionConfigContext } from "../../source_code_versions/context/SourceCodeVersionConfigContext";
-import { TemplateShort } from "../../templates/types";
+import { GqlTemplateShort } from "../../templates/graphql";
 import {
   SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY,
   GqlSourceOutputConfigTemplate,
-  transformSourceOutputConfigTemplate,
 } from "../graphql";
 import {
   SourceConfigUpdateWithId,
@@ -38,7 +37,7 @@ export const ConfigReferenceInput = ({
   control,
   index,
 }: ConfigReferenceInputProps) => {
-  const [template, setTemplate] = useState<TemplateShort | null>(null);
+  const [template, setTemplate] = useState<GqlTemplateShort | null>(null);
   const [sourceOutputs, setSourceOutputs] = useState<
     SourceOutputConfigTemplateResponse[]
   >([]);
@@ -50,19 +49,19 @@ export const ConfigReferenceInput = ({
   const { templates } = useSourceCodeVersionConfigContext();
   const selectedTemplateId = useWatch({
     control,
-    name: `configs.${index}.reference_template_id`,
+    name: `configs.${index}.referenceTemplateId`,
   });
 
   const handleDeleteTemplateSelection = () => {
-    setValue(`configs.${index}.reference_template_id`, null);
-    setValue(`configs.${index}.output_config_name`, null);
+    setValue(`configs.${index}.referenceTemplateId`, null);
+    setValue(`configs.${index}.outputConfigName`, null);
     setTemplate(null);
     setSourceOutputs([]);
   };
   useEffect(() => {
     if (selectedTemplateId) {
       const selectedItem =
-        templates?.find((e: TemplateShort) => e.id === selectedTemplateId) ||
+        templates?.find((e: GqlTemplateShort) => e.id === selectedTemplateId) ||
         null;
       setTemplate(selectedItem);
     }
@@ -78,9 +77,7 @@ export const ConfigReferenceInput = ({
           }>(SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY, {
             templateId: template.id,
           });
-          const response = gqlResponse.sourceCodeVersionTemplateOutputs.map(
-            transformSourceOutputConfigTemplate,
-          );
+          const response = gqlResponse.sourceCodeVersionTemplateOutputs;
           if (response.length > 0) {
             setSourceOutputs(response);
           } else {
@@ -103,7 +100,7 @@ export const ConfigReferenceInput = ({
   return (
     <>
       <Controller
-        name={`configs.${index}.reference_template_id`}
+        name={`configs.${index}.referenceTemplateId`}
         control={control}
         render={({ field }) => (
           <FormControl fullWidth margin="normal">
@@ -115,7 +112,7 @@ export const ConfigReferenceInput = ({
               onChange={field.onChange}
             >
               {templates &&
-                templates.map((e: TemplateShort) => (
+                templates.map((e: GqlTemplateShort) => (
                   <MenuItem key={e.id} value={e.id}>
                     {e.name}
                   </MenuItem>
@@ -131,7 +128,7 @@ export const ConfigReferenceInput = ({
       {loadingOutputs && <GradientCircularProgress />}
       {sourceOutputs.length > 0 && selectedTemplateId && (
         <Controller
-          name={`configs.${index}.output_config_name`}
+          name={`configs.${index}.outputConfigName`}
           control={control}
           render={({ field }) => (
             <FormControl fullWidth margin="normal">

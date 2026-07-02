@@ -11,7 +11,6 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { transformSourceCodeOptional } from "../../source_codes/graphql";
 
 interface IntegrationSourceCodeDependenciesProps {
   integration_id: string;
@@ -25,15 +24,22 @@ export const IntegrationSourceCodeDependencies = (
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    ikApi.get("labels/source_code").then((response: string[]) => {
-      setLabels(response);
-    });
+    ikApi
+      .graphqlRequest<{ labels: string[] }>(
+        `query SourceCodeLabels {
+          labels: labels(entity: "source_code")
+        }`,
+      )
+      .then((response) => {
+        setLabels(response.labels || []);
+      });
   }, [ikApi]);
 
   const columns = useMemo(
     () => [
       {
-        field: "source_code_url",
+        field: "sourceCodeUrl",
+        fetchFields: ["id", "sourceCodeUrl", "entityName"],
         headerName: "URL",
         flex: 2,
         hideable: false,
@@ -50,7 +56,7 @@ export const IntegrationSourceCodeDependencies = (
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -61,7 +67,7 @@ export const IntegrationSourceCodeDependencies = (
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -77,14 +83,14 @@ export const IntegrationSourceCodeDependencies = (
         flex: 2,
       },
       {
-        field: "source_code_provider",
+        field: "sourceCodeProvider",
         headerName: "Provider",
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
           params.value ? getProviderValue(params.value) : null,
       },
       {
-        field: "source_code_language",
+        field: "sourceCodeLanguage",
         headerName: "Language",
         flex: 1,
       },
@@ -106,8 +112,8 @@ export const IntegrationSourceCodeDependencies = (
 
   const defaultColumnVisibilityModel = {
     description: false,
-    source_code_provider: false,
-    source_code_language: false,
+    sourceCodeProvider: false,
+    sourceCodeLanguage: false,
   };
 
   const filterConfigs: FilterConfig[] = useMemo(
@@ -150,7 +156,6 @@ export const IntegrationSourceCodeDependencies = (
       filterConfigs={filterConfigs}
       filterStorageKey={`filter_integration_code_repos`}
       buildApiFilters={buildApiFilters}
-      transformFn={transformSourceCodeOptional}
     />
   );
 };

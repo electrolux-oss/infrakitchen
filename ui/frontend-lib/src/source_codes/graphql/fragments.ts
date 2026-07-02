@@ -13,6 +13,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "sourceCodeProvider",
     "sourceCodeLanguage",
     "status",
+    "entityName",
   ] as const,
   list: [
     "id",
@@ -23,6 +24,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "status",
     "labels",
     "updatedAt",
+    "entityName",
   ] as const,
   detail: [
     "id",
@@ -42,6 +44,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "revisionNumber",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     integration: "integration",

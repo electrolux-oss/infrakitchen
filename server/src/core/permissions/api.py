@@ -182,6 +182,7 @@ async def get_entity_permissions(
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role(request: Request, body: RoleCreate, service: PermissionService = Depends(get_permission_service)):
     requester: UserDTO = request.state.user
@@ -198,6 +199,7 @@ async def create_role(request: Request, body: RoleCreate, service: PermissionSer
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def assign_user_to_role(
     request: Request, role_id: UUID | str, user_id: UUID, service: PermissionService = Depends(get_permission_service)
@@ -234,6 +236,7 @@ async def assign_user_to_role(
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_api_policy(
     request: Request, body: ApiPolicyCreate, service: PermissionService = Depends(get_permission_service)
@@ -253,6 +256,7 @@ async def create_api_policy(
     response_model=PermissionResponse,
     response_model_by_alias=False,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_entity_policy(
     request: Request, body: EntityPolicyCreate, service: PermissionService = Depends(get_permission_service)
@@ -266,7 +270,7 @@ async def create_entity_policy(
     return entity
 
 
-@router.delete("/permissions/{permission_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/permissions/{permission_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, permission_id: str, service: PermissionService = Depends(get_permission_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(permission_id=permission_id, requester=requester):

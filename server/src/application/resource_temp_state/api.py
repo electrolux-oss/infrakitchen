@@ -41,6 +41,7 @@ async def get_by_resource_id(
 @router.delete(
     "/resource_temp_states/resource/{resource_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete_by_resource_id(
     resource_id: str, service: ResourceTempStateService = Depends(get_resource_temp_state_service)

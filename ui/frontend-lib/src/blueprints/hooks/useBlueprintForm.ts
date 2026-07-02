@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConfig } from "../../common";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { TemplatePorts } from "../../common/components/viewers/Wiring/WiringCanvas.types";
-import { TemplateResponse, TemplateShort } from "../../templates/types";
+import { TEMPLATE_PORTS_QUERY } from "../../source_code_versions/graphql";
+import { GqlTemplate, GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
 import { ConstantBlock, ConstantType, ExternalTemplate } from "../types";
 
@@ -18,21 +19,21 @@ interface SourceConfigItem {
 }
 
 interface SourceConfigTemplateReferenceItem {
-  reference_template_id: string;
-  template_id: string;
-  input_config_name: string;
-  output_config_name: string;
+  referenceTemplateId: string;
+  templateId: string;
+  inputConfigName: string;
+  outputConfigName: string;
 }
 
 interface BatchTemplatePortsItem {
-  template: TemplateResponse;
+  template: GqlTemplate;
   configs: SourceConfigItem[];
   outputs: Array<{ name: string }>;
   references: SourceConfigTemplateReferenceItem[];
 }
 
 interface BatchTemplatePortsResponse {
-  templates: BatchTemplatePortsItem[];
+  templatePorts: BatchTemplatePortsItem[];
 }
 
 interface UseBlueprintFormOptions {
@@ -45,16 +46,16 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
-  const [selectedTemplates, setSelectedTemplates] = useState<TemplateShort[]>(
-    [],
-  );
+  const [selectedTemplates, setSelectedTemplates] = useState<
+    GqlTemplateShort[]
+  >([]);
   const [templatePorts, setTemplatePorts] = useState<
     Record<string, TemplatePorts>
   >({});
 
   // Parent info per template (fetched from full template details)
   const [templateParents, setTemplateParents] = useState<
-    Record<string, TemplateShort[]>
+    Record<string, GqlTemplateShort[]>
   >({});
 
   // External (input) templates pinned as parents on the canvas
@@ -95,14 +96,13 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
       ];
 
       try {
-        const resp = (await ikApi.postRaw(
-          "source_code_versions/templates/ports",
-          { template_ids: allIds },
-        )) as BatchTemplatePortsResponse;
+        const resp = (await ikApi.graphqlRequest(TEMPLATE_PORTS_QUERY, {
+          templateIds: allIds,
+        })) as BatchTemplatePortsResponse;
 
         // Update ports
         const newPorts: Record<string, TemplatePorts> = {};
-        for (const item of resp.templates) {
+        for (const item of resp.templatePorts) {
           newPorts[item.template.id] = {
             inputs: item.configs.map((c) => c.name),
             outputs: item.outputs.map((o) => o.name),
@@ -111,8 +111,8 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
         setTemplatePorts((prev) => ({ ...prev, ...newPorts }));
 
         // Update parents
-        const newParents: Record<string, TemplateShort[]> = {};
-        for (const item of resp.templates) {
+        const newParents: Record<string, GqlTemplateShort[]> = {};
+        for (const item of resp.templatePorts) {
           newParents[item.template.id] = item.template.parents || [];
         }
         setTemplateParents((prev) => ({ ...prev, ...newParents }));
@@ -127,26 +127,26 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
           const unique: WiringRule[] = [];
           const uniqueKeys = new Set<string>();
-          for (const item of resp.templates) {
+          for (const item of resp.templatePorts) {
             for (const ref of item.references) {
               if (
-                !validSourceIds.has(ref.reference_template_id) ||
-                !selectedIds.has(ref.template_id)
+                !validSourceIds.has(ref.referenceTemplateId) ||
+                !selectedIds.has(ref.templateId)
               ) {
                 continue;
               }
 
-              const key = `${ref.reference_template_id}|${ref.output_config_name}|${ref.template_id}|${ref.input_config_name}`;
+              const key = `${ref.referenceTemplateId}|${ref.outputConfigName}|${ref.templateId}|${ref.inputConfigName}`;
               if (uniqueKeys.has(key)) {
                 continue;
               }
               uniqueKeys.add(key);
 
               unique.push({
-                source_template_id: ref.reference_template_id,
-                source_output: ref.output_config_name,
-                target_template_id: ref.template_id,
-                target_variable: ref.input_config_name,
+                source_template_id: ref.referenceTemplateId,
+                source_output: ref.outputConfigName,
+                target_template_id: ref.templateId,
+                target_variable: ref.inputConfigName,
               });
             }
           }
@@ -185,7 +185,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
   const refreshAutoWiring = useCallback(
     (
-      templates: TemplateShort[],
+      templates: GqlTemplateShort[],
       externals: ExternalTemplate[],
       clearWhenNotApplicable = false,
     ) => {
@@ -328,11 +328,11 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
       const selectedById = new Map(selectedTemplates.map((t) => [t.id, t]));
       const entityById = new Map(templateEntities.map((t) => [t.id, t]));
 
-      const selected: TemplateShort[] = [];
+      const selected: GqlTemplateShort[] = [];
       for (const id of ids) {
         const candidate = selectedById.get(id) || entityById.get(id);
         if (candidate) {
-          selected.push(candidate as TemplateShort);
+          selected.push(candidate as GqlTemplateShort);
         }
       }
 
@@ -371,7 +371,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
     // Kahn's algorithm
     const queue = ids.filter((id) => (inDegree.get(id) || 0) === 0);
-    const sorted: TemplateShort[] = [];
+    const sorted: GqlTemplateShort[] = [];
 
     while (queue.length > 0) {
       const id = queue.shift()!;
@@ -396,7 +396,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
     if (!isSameOrder) {
       setSelectedTemplates(sorted);
       setValue(
-        "template_ids",
+        "templateIds",
         sorted.map((t) => t.id),
       );
     }
@@ -413,13 +413,13 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
   // Add a single template (from canvas sidebar / drop)
   const handleTemplateAdd = useCallback(
-    (template: TemplateShort) => {
+    (template: GqlTemplateShort) => {
       if (selectedTemplates.some((t) => t.id === template.id)) return;
 
       const newSelected = [...selectedTemplates, template];
       setSelectedTemplates(newSelected);
       setValue(
-        "template_ids",
+        "templateIds",
         newSelected.map((t) => t.id),
       );
 
@@ -430,9 +430,9 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
 
   const handleTemplateRemove = useCallback(
     (templateId: string) => {
-      const currentIds: string[] = watch("template_ids") || [];
+      const currentIds: string[] = watch("templateIds") || [];
       const newIds = currentIds.filter((id) => id !== templateId);
-      setValue("template_ids", newIds);
+      setValue("templateIds", newIds);
 
       const wiring: WiringRule[] = watch("wiring") || [];
       const newWiring = wiring.filter(

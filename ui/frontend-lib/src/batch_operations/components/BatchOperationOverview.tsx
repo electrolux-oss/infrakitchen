@@ -1,10 +1,10 @@
 import { CommonField } from "../../common/components/CommonField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import { BatchOperation } from "../types";
+import { GqlBatchOperation } from "../graphql";
 
 interface BatchOperationOverviewProps {
-  batchOperation: BatchOperation;
+  batchOperation: GqlBatchOperation;
 }
 
 export const BatchOperationOverview = ({
@@ -18,25 +18,25 @@ export const BatchOperationOverview = ({
       <CommonField
         name={"Entity Type"}
         value={
-          batchOperation.entity_type === "resource" ? "Resources" : "Executors"
+          batchOperation.entityType === "resource" ? "Resources" : "Executors"
         }
       />
       <CommonField
         name={"Total Entities"}
-        value={batchOperation?.entity_ids?.length || 0}
+        value={batchOperation?.entityIds?.length || 0}
       />
       <CommonField
         name={"Created"}
         value={
           <RelativeTime
-            date={batchOperation.created_at}
+            date={batchOperation.createdAt}
             user={batchOperation.creator}
           />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={batchOperation.updated_at} />}
+        value={<RelativeTime date={batchOperation.updatedAt} />}
       />
     </OverviewCard>
   );

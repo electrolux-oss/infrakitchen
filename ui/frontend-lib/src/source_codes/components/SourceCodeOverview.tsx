@@ -19,20 +19,16 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getRepoNameFromUrl } from "../../common/utils";
+import { getRepoNameFromUrl, sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
+import { GqlSourceCode } from "../graphql";
 import {
   SourceCodeUpdateFieldInput,
   UPDATE_SOURCE_CODE_MUTATION,
 } from "../graphql/mutations";
-import { SourceCodeResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface SourceCodeOverviewProps {
-  sourceCode: SourceCodeResponse;
+  sourceCode: GqlSourceCode;
 }
 
 export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
@@ -64,15 +60,15 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
 
   return (
     <OverviewCard
-      name={getRepoNameFromUrl(sourceCode.source_code_url)}
+      name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}
       description={sourceCode.description}
     >
       <CommonField
         name={"URL"}
         value={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {IconField(sourceCode.source_code_provider)}
-            {getRemoteUrlValue(sourceCode.source_code_url)}
+            {IconField(sourceCode.sourceCodeProvider)}
+            {getRemoteUrlValue(sourceCode.sourceCodeUrl)}
           </Box>
         }
       />
@@ -80,8 +76,8 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         name={"Type"}
         value={
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {IconField(sourceCode.source_code_language)}
-            {sourceCode.source_code_language}
+            {IconField(sourceCode.sourceCodeLanguage)}
+            {sourceCode.sourceCodeLanguage}
           </Box>
         }
       />
@@ -97,10 +93,10 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         display={
           sourceCode.integration ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {IconField(sourceCode.source_code_provider)}
+              {IconField(sourceCode.sourceCodeProvider)}
               <GetReferenceUrlValue
                 {...sourceCode.integration}
-                urlProvider={sourceCode.integration.integration_provider}
+                urlProvider={sourceCode.integration.integrationProvider}
               />
             </Box>
           ) : null
@@ -123,15 +119,12 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       <CommonField
         name={"Created"}
         value={
-          <RelativeTime
-            date={sourceCode.created_at}
-            user={sourceCode.creator}
-          />
+          <RelativeTime date={sourceCode.createdAt} user={sourceCode.creator} />
         }
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={sourceCode.updated_at} />}
+        value={<RelativeTime date={sourceCode.updatedAt} />}
       />
       <CommonEditableField<string>
         name={"Description"}
@@ -155,10 +148,10 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       <CommonEditableField<string[]>
         name={"Labels"}
         canEdit={canEdit}
-        value={sourceCode.labels}
+        value={sourceCode.labels || []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={sourceCode.labels} />}
+        display={<Labels labels={sourceCode.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 import uuid
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, model_validator
 
 from ..models.encrypted_secret import EncryptedSecretStr
 
@@ -65,9 +65,18 @@ class UserResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    password: EncryptedSecretStr | None = Field(default=None, title="Password")
-    deactivated: bool | None = Field(default=None, title="Deactivated")
-    description: str | None = Field(default="", title="Description")
+    password: EncryptedSecretStr | None = Field(default=None)
+    deactivated: bool | None = Field(default=None)
+    description: str | None = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in UserUpdate.model_fields):
+            raise ValueError("At least one field must be provided in User update.")
+        return values
 
 
 class UserShort(BaseModel):

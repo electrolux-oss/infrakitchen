@@ -14,10 +14,11 @@ import { LabelInput } from "../../common";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
-import { notifyError } from "../../common/hooks/useNotification";
+import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
-import { SourceCodeCreate, SourceCodeResponse } from "../types";
+import { CREATE_SOURCE_CODE_MUTATION } from "../graphql";
+import { SourceCodeCreate } from "../types";
 
 const SOURCE_CODE_LANGUAGES = ["opentofu"];
 
@@ -36,11 +37,11 @@ const SourceCodeCreatePageInner = () => {
     {},
   );
 
-  const watched_source_code_provider = watch("source_code_provider");
+  const watchedSourceCodeProvider = watch("sourceCodeProvider");
   const navigate = useNavigate();
 
   const handleSave = useCallback(
-    async (data: any) => {
+    async (data: SourceCodeCreate) => {
       setSaving(true);
       const isValid = await trigger();
       if (!isValid) {
@@ -49,17 +50,20 @@ const SourceCodeCreatePageInner = () => {
         return;
       }
 
-      ikApi
-        .postRaw("source_codes", data)
-        .then((response: SourceCodeResponse) => {
-          if (response.id) {
-            navigate(`${linkPrefix}source_codes/${response.id}`);
-            return response;
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        });
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createSourceCode: { id: string };
+        }>(CREATE_SOURCE_CODE_MUTATION, { input: data });
+        const createdSourceCode = response.createSourceCode;
+        if (createdSourceCode?.id) {
+          notify("Code repository imported successfully", "success");
+          navigate(`${linkPrefix}source_codes/${createdSourceCode.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
     [ikApi, linkPrefix, trigger, navigate],
   );
@@ -123,7 +127,7 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_url"
+              name="sourceCodeUrl"
               control={control}
               rules={{
                 required: "Source code URL is required",
@@ -138,10 +142,10 @@ const SourceCodeCreatePageInner = () => {
                   label="Repository URL"
                   required
                   variant="outlined"
-                  error={!!errors.source_code_url}
+                  error={!!errors.sourceCodeUrl}
                   helperText={
-                    errors.source_code_url
-                      ? errors.source_code_url.message
+                    errors.sourceCodeUrl
+                      ? errors.sourceCodeUrl.message
                       : "The URL of the repository, e.g., https://github.com/user/repo"
                   }
                   fullWidth
@@ -155,7 +159,7 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_provider"
+              name="sourceCodeProvider"
               control={control}
               rules={{
                 required: "Repository provider is required",
@@ -168,8 +172,8 @@ const SourceCodeCreatePageInner = () => {
                   required
                   fullWidth
                   margin="normal"
-                  error={!!errors.source_code_provider}
-                  helperText={errors.source_code_provider?.message}
+                  error={!!errors.sourceCodeProvider}
+                  helperText={errors.sourceCodeProvider?.message}
                   slotProps={{
                     select: {
                       inputProps: {
@@ -187,7 +191,7 @@ const SourceCodeCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_language"
+              name="sourceCodeLanguage"
               control={control}
               render={({ field }) => (
                 <TextField
@@ -197,8 +201,8 @@ const SourceCodeCreatePageInner = () => {
                   fullWidth
                   disabled
                   margin="normal"
-                  error={!!errors.source_code_language}
-                  helperText={errors.source_code_language?.message}
+                  error={!!errors.sourceCodeLanguage}
+                  helperText={errors.sourceCodeLanguage?.message}
                   slotProps={{
                     select: {
                       inputProps: {
@@ -215,9 +219,9 @@ const SourceCodeCreatePageInner = () => {
                 </TextField>
               )}
             />
-            {watched_source_code_provider && (
+            {watchedSourceCodeProvider && (
               <Controller
-                name="integration_id"
+                name="integrationId"
                 control={control}
                 render={({ field }) => (
                   <ReferenceInput
@@ -229,14 +233,14 @@ const SourceCodeCreatePageInner = () => {
                     filter={{
                       integration_type: "git",
                       integration_provider: [
-                        watched_source_code_provider,
-                        `${watched_source_code_provider}_ssh`,
+                        watchedSourceCodeProvider,
+                        `${watchedSourceCodeProvider}_ssh`,
                       ],
                     }}
-                    error={!!errors.integration_id}
+                    error={!!errors.integrationId}
                     helpertext={
-                      errors.integration_id
-                        ? errors.integration_id.message
+                      errors.integrationId
+                        ? errors.integrationId.message
                         : "Select integration for the repository"
                     }
                     value={field.value}
@@ -262,10 +266,10 @@ export const SourceCodeCreatePage = () => {
   const methods = useForm<SourceCodeCreate>({
     defaultValues: {
       description: "",
-      source_code_url: "",
-      source_code_provider: "",
-      source_code_language: "opentofu",
-      integration_id: null,
+      sourceCodeUrl: "",
+      sourceCodeProvider: "",
+      sourceCodeLanguage: "opentofu",
+      integrationId: null,
       labels: [],
     },
     mode: "onChange",

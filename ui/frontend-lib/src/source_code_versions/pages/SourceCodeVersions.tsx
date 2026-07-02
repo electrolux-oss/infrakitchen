@@ -13,7 +13,6 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { transformSourceCodeVersionOptional } from "../graphql";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 export const SourceCodeVersionsPage = () => {
@@ -58,6 +57,7 @@ export const SourceCodeVersionsPage = () => {
       {
         field: "identifier",
         headerName: "Name",
+        fetchFields: ["identifier", "id", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -76,17 +76,17 @@ export const SourceCodeVersionsPage = () => {
         },
       },
       {
-        field: "source_code",
+        field: "sourceCode",
         headerName: "Code Repository",
         flex: 1,
         sortField: "source_code.source_code_url",
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCode = params.row.source_code;
+          const sourceCode = params.row.sourceCode;
           return (
             <GetEntityLink
               {...sourceCode}
-              identifier={sourceCode.source_code_url}
+              identifier={sourceCode.sourceCodeUrl}
             />
           );
         },
@@ -100,11 +100,11 @@ export const SourceCodeVersionsPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created At",
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
-          getDateValue(params.value),
+          getDateValue(params.row.createdAt),
       },
       {
         field: "creator",
@@ -215,7 +215,6 @@ export const SourceCodeVersionsPage = () => {
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         entityFieldMap={SCV_FIELD_MAP}
-        transformFn={transformSourceCodeVersionOptional}
       />
     </PageContainer>
   );

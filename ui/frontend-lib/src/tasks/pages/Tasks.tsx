@@ -11,7 +11,7 @@ import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { TASK_FIELD_MAP, transformTask } from "../graphql";
+import { TASK_FIELD_MAP } from "../graphql";
 
 export const TasksPage = () => {
   const { linkPrefix, globalConfig } = useConfig();
@@ -48,7 +48,7 @@ export const TasksPage = () => {
     () => [
       {
         field: "entity",
-        fetchFields: ["entity", "entity_id", "entity_data"],
+        fetchFields: ["entity", "entityId", "entityData"],
         headerName: "Entity",
         flex: 1,
         hideable: false,
@@ -57,13 +57,13 @@ export const TasksPage = () => {
             <Link
               onClick={() => {
                 navigate(
-                  `${linkPrefix}${params.row.entity}s/${params.row.entity_id}`,
+                  `${linkPrefix}${params.row.entity}s/${params.row.entityId}`,
                 );
               }}
               rel="noopener"
               style={{ cursor: "pointer" }}
             >
-              {params.row.entity_data?.name ?? params.row.entity}
+              {params.row.entityData?.name ?? params.row.entity}
             </Link>
           );
         },
@@ -78,8 +78,9 @@ export const TasksPage = () => {
         ),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
+        sortField: "created_at",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
@@ -89,8 +90,9 @@ export const TasksPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
+        sortField: "updated_at",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
@@ -119,7 +121,6 @@ export const TasksPage = () => {
         entityName="task"
         columns={columns}
         entityFieldMap={TASK_FIELD_MAP}
-        transformFn={transformTask}
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         defaultColumnVisibilityModel={{

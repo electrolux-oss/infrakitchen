@@ -3269,13 +3269,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"decode-uri-component@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "decode-uri-component@npm:0.4.1"
-  checksum: 10/74eec26f7bec3767164e37d526ef19bc1214cb0bbeeeea1c4f0ceb79299e5c38d3ba734e7243d829842aa140f24e5d020f54cc25b17c7082461c8eead8a72ce3
-  languageName: node
-  linkType: hard
-
 "dedent@npm:^1.5.3":
   version: 1.7.2
   resolution: "dedent@npm:1.7.2"
@@ -4038,13 +4031,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"filter-obj@npm:^5.1.0":
-  version: 5.1.0
-  resolution: "filter-obj@npm:5.1.0"
-  checksum: 10/8f6dab6d8d8855f686e8cc6be289bbbd64a80be52c660124e36e982f78017cf5dae7de95f79ec167fbf62101d6aab93067a3105ae8f56251785a721e678d6b07
-  languageName: node
-  linkType: hard
-
 "find-root@npm:^1.1.0":
   version: 1.1.0
   resolution: "find-root@npm:1.1.0"
@@ -4651,7 +4637,6 @@ __metadata:
     jwt-decode: "npm:^4.0.0"
     material-ui-popup-state: "npm:5.3.7"
     prettier: "npm:~3.6.2"
-    query-string: "npm:^9.4.0"
     react: "npm:^19.2.7"
     react-diff-viewer-continued: "npm:^3.4.0"
     react-dom: "npm:^19.2.7"
@@ -6370,17 +6355,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"query-string@npm:^9.4.0":
-  version: 9.4.0
-  resolution: "query-string@npm:9.4.0"
-  dependencies:
-    decode-uri-component: "npm:^0.4.1"
-    filter-obj: "npm:^5.1.0"
-    split-on-first: "npm:^3.0.0"
-  checksum: 10/42f44eda9ad5e1d8551d9332dba53b19ebdeadd270316185bb65b2891518971b71c03f95a404da22cc7286c6ff29816a32c6b0b7a46b73df639ea2bb73ac210b
-  languageName: node
-  linkType: hard
-
 "react-diff-viewer-continued@npm:^3.4.0":
   version: 3.4.0
   resolution: "react-diff-viewer-continued@npm:3.4.0"
@@ -7218,13 +7192,6 @@ __metadata:
   version: 2.0.2
   resolution: "space-separated-tokens@npm:2.0.2"
   checksum: 10/202e97d7ca1ba0758a0aa4fe226ff98142073bcceeff2da3aad037968878552c3bbce3b3231970025375bbba5aee00c5b8206eda408da837ab2dc9c0f26be990
-  languageName: node
-  linkType: hard
-
-"split-on-first@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "split-on-first@npm:3.0.0"
-  checksum: 10/75dc27ecbac65cfbeab9a3b90cf046307220192d3d7a30e46aa0f19571cc9b4802aac813f3de2cc9b16f2e46aae72f275659b5d2614bb5369c77724d739e5f73
   languageName: node
   linkType: hard
 

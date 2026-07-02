@@ -39,7 +39,7 @@ Without a token, queries return a GraphQL error:
 
 !!! tip "Obtaining a token"
     Use one of the authentication providers (GitHub, Microsoft, Service Account, etc.) to obtain a JWT token.
-    For service accounts, use the `POST /api/auth/service_account/token` endpoint.
+    For service accounts, use the `serviceAccountToken` GraphQL mutation.
 
 ---
 

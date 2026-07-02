@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from typing import Annotated, Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from core.users.schema import UserShort
 from ..models.encrypted_secret import EncryptedSecretStr
@@ -55,6 +55,16 @@ class IKServiceAccountProviderConfig(BaseModel):
         return []
 
 
+type AuthProviderConfig = Annotated[
+    MicrosoftProviderConfig
+    | GithubProviderConfig
+    | BackstageProviderConfig
+    | GuestProviderConfig
+    | IKServiceAccountProviderConfig,
+    Field(discriminator="auth_provider"),
+]
+
+
 class AuthProviderResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
@@ -69,14 +79,7 @@ class AuthProviderResponse(BaseModel):
     description: str = Field(default="")
     enabled: bool = Field(default=True)
     auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
-    configuration: Annotated[
-        MicrosoftProviderConfig
-        | GithubProviderConfig
-        | BackstageProviderConfig
-        | GuestProviderConfig
-        | IKServiceAccountProviderConfig,
-        Field(discriminator="auth_provider"),
-    ] = Field(...)
+    configuration: AuthProviderConfig = Field(...)
 
     filter_by_domain: list[str] = Field(default=[])
 
@@ -94,14 +97,7 @@ class AuthProviderCreate(BaseModel):
     description: str = Field(default="")
     enabled: bool = Field(default=True)
     auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
-    configuration: Annotated[
-        MicrosoftProviderConfig
-        | GithubProviderConfig
-        | BackstageProviderConfig
-        | GuestProviderConfig
-        | IKServiceAccountProviderConfig,
-        Field(discriminator="auth_provider"),
-    ] = Field(...)
+    configuration: AuthProviderConfig = Field(...)
     filter_by_domain: list[str] = Field(default=[])
 
 
@@ -112,14 +108,13 @@ class AuthProviderUpdate(BaseModel):
     description: str | None = Field(default=None)
     enabled: bool | None = Field(default=None)
     filter_by_domain: list[str] | None = Field(default=None)
-    configuration: (
-        None
-        | Annotated[
-            MicrosoftProviderConfig
-            | GithubProviderConfig
-            | BackstageProviderConfig
-            | GuestProviderConfig
-            | IKServiceAccountProviderConfig,
-            Field(discriminator="auth_provider"),
-        ]
-    ) = Field(default=None)
+    configuration: AuthProviderConfig | None = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def at_least_one_field_present(cls, values):
+        if not isinstance(values, dict):
+            return values
+        if not any(values.get(field) not in (None, [], "") for field in AuthProviderUpdate.model_fields):
+            raise ValueError("At least one field must be provided in Workspace update.")
+        return values

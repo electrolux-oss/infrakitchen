@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 
 import { InfraKitchenApi } from "../../../api";
+import { buildEntityDeleteMutation } from "../../graphql/entityActionMutation";
 import { notify, notifyError } from "../../hooks/useNotification";
 
 export const DeleteButton = (props: {
@@ -15,8 +16,9 @@ export const DeleteButton = (props: {
 
   const handleClick = () => {
     if (entity_id) {
+      const mutation = buildEntityDeleteMutation(entity_name);
       ikApi
-        .deleteRaw(`${entity_name}s/${entity_id}`, {})
+        .graphqlRequest<{ [key: string]: boolean }>(mutation, { id: entity_id })
         .then(() => {
           notify(
             `${entity_name.charAt(0).toUpperCase() + entity_name.slice(1)} delete completed successfully`,

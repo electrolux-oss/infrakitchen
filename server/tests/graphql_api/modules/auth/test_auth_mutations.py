@@ -17,6 +17,15 @@ REFRESH_AUTH_TOKEN_MUTATION = """
     }
 """
 
+SERVICE_ACCOUNT_TOKEN_MUTATION = """
+    mutation ServiceAccountToken($identifier: String!, $password: String!) {
+        serviceAccountToken(identifier: $identifier, password: $password) {
+            token
+            expiresAt
+        }
+    }
+"""
+
 LOGOUT_MUTATION = """
     mutation Logout {
         logout {
@@ -40,6 +49,75 @@ def make_context(cookies: dict[str, str]):
 
 
 class TestAuthMutations:
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.auth.mutations.create_user_token")
+    @patch("graphql_api.modules.auth.mutations.is_correct_password")
+    async def test_service_account_token_returns_token(
+        self,
+        mock_is_correct_password,
+        mock_create_user_token,
+    ):
+        mock_service = Mock()
+        mock_service.auth_provider_service.get_all = AsyncMock(return_value=[SimpleNamespace(enabled=True)])
+        mock_user = SimpleNamespace(password=Mock())
+        mock_user.password.get_decrypted_value.return_value = "salt$hashed-password"
+        mock_service.user_service.get_user_by_identifier = AsyncMock(return_value=mock_user)
+        mock_is_correct_password.return_value = True
+        mock_create_user_token.return_value = "service-account-token"
+
+        context = make_context({})
+        context["sso_service"] = mock_service
+
+        result = await schema.execute(
+            SERVICE_ACCOUNT_TOKEN_MUTATION,
+            variable_values={"identifier": "svc-user", "password": "svc-password"},
+            context_value=context,
+        )
+
+        assert result.errors is None
+        assert result.data is not None
+        assert result.data["serviceAccountToken"]["token"] == "service-account-token"
+        assert result.data["serviceAccountToken"]["expiresAt"]
+        mock_service.user_service.get_user_by_identifier.assert_awaited_once_with("svc-user")
+        mock_is_correct_password.assert_called_once_with("salt", "hashed-password", "svc-password")
+
+    @pytest.mark.asyncio
+    async def test_service_account_token_returns_error_when_provider_disabled(self):
+        mock_service = Mock()
+        mock_service.auth_provider_service.get_all = AsyncMock(return_value=[SimpleNamespace(enabled=False)])
+
+        context = make_context({})
+        context["sso_service"] = mock_service
+
+        result = await schema.execute(
+            SERVICE_ACCOUNT_TOKEN_MUTATION,
+            variable_values={"identifier": "svc-user", "password": "svc-password"},
+            context_value=context,
+        )
+
+        assert result.data is None or result.data["serviceAccountToken"] is None
+        assert result.errors is not None
+        assert any("Service Account login is disabled" in error.message for error in result.errors)
+
+    @pytest.mark.asyncio
+    async def test_service_account_token_returns_error_for_invalid_credentials(self):
+        mock_service = Mock()
+        mock_service.auth_provider_service.get_all = AsyncMock(return_value=[SimpleNamespace(enabled=True)])
+        mock_service.user_service.get_user_by_identifier = AsyncMock(return_value=None)
+
+        context = make_context({})
+        context["sso_service"] = mock_service
+
+        result = await schema.execute(
+            SERVICE_ACCOUNT_TOKEN_MUTATION,
+            variable_values={"identifier": "svc-user", "password": "svc-password"},
+            context_value=context,
+        )
+
+        assert result.data is None or result.data["serviceAccountToken"] is None
+        assert result.errors is not None
+        assert any("Invalid password or username" in error.message for error in result.errors)
+
     @pytest.mark.asyncio
     @patch("graphql_api.modules.auth.mutations.github_refresh_token", new_callable=AsyncMock)
     @patch("graphql_api.modules.auth.mutations.guest_refresh_token", new_callable=AsyncMock)

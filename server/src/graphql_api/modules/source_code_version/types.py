@@ -37,7 +37,7 @@ class SourceConfigTemplateReferenceType:
 class SourceCodeVersionType:
     __exclude__ = ["variable_configs", "output_configs", "created_by", "template_id", "source_code_id"]
 
-    id: uuid.UUID = strawberry.UNSET  # type: ignore[assignment]
+    id: uuid.UUID = strawberry.UNSET
     source_code_folder: str | None = None
     source_code_version: str | None = None
     source_code_branch: str | None = None
@@ -46,6 +46,11 @@ class SourceCodeVersionType:
     variable_configs: list[SourceConfigType] | None = None
     output_configs: list[SourceOutputConfigType] | None = None
     creator: UserType | None = None
+    status: str | None = None
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "source_code_version"
 
     @strawberry.field
     def identifier(self) -> str:
@@ -66,3 +71,44 @@ class SourceOutputConfigTemplateType:
     created_at: datetime
     updated_at: datetime
     status: str
+
+
+@strawberry.type
+class TemplatePortsParentType:
+    id: uuid.UUID
+    name: str
+    abstract: bool
+
+
+@strawberry.type
+class TemplatePortsTemplateType:
+    id: uuid.UUID
+    name: str
+    abstract: bool
+    parents: list[TemplatePortsParentType]
+
+
+@strawberry.type
+class TemplatePortsConfigType:
+    name: str
+
+
+@strawberry.type
+class TemplatePortsOutputType:
+    name: str
+
+
+@strawberry.type
+class TemplatePortsReferenceType:
+    reference_template_id: uuid.UUID
+    template_id: uuid.UUID
+    input_config_name: str
+    output_config_name: str
+
+
+@strawberry.type
+class TemplatePortsItemType:
+    template: TemplatePortsTemplateType
+    configs: list[TemplatePortsConfigType]
+    outputs: list[TemplatePortsOutputType]
+    references: list[TemplatePortsReferenceType]

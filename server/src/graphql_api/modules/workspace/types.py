@@ -20,6 +20,10 @@ class WorkspaceType:
     integration: IntegrationType | None = None
 
     @strawberry.field
+    def entity_name(self) -> str:
+        return "workspace"
+
+    @strawberry.field
     async def resources_count(self, info: Info) -> int:
         return await info.context["loaders"]["workspace_resource_count"].load(str(self.id))
 

@@ -13,18 +13,15 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { sameStringSet } from "../../common/utils";
+import { GqlStorage } from "../graphql";
 import {
   StorageUpdateFieldInput,
   UPDATE_STORAGE_MUTATION,
 } from "../graphql/mutations";
-import { StorageResponse } from "../types";
-
-const sameStringSet = (a: string[], b: string[]) =>
-  a.length === b.length &&
-  [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 
 export interface StorageAboutProps {
-  storage: StorageResponse;
+  storage: GqlStorage;
 }
 
 export const StorageOverview = ({ storage }: StorageAboutProps) => {
@@ -79,21 +76,19 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={storage.created_at} user={storage.creator} />
-        }
+        value={<RelativeTime date={storage.createdAt} user={storage.creator} />}
       />
       <CommonField
         name={"Last Updated"}
-        value={<RelativeTime date={storage.updated_at} />}
+        value={<RelativeTime date={storage.updatedAt} />}
       />
       <CommonEditableField<string[]>
         name={"Storage Tags"}
         canEdit={canEdit}
-        value={storage.labels}
+        value={storage.labels || []}
         ariaLabel="Edit storage tags"
         isEqual={sameStringSet}
-        display={<Labels labels={storage.labels} />}
+        display={<Labels labels={storage.labels || []} />}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor

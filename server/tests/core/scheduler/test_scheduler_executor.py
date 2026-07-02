@@ -37,9 +37,11 @@ class TestExecute:
         error = RuntimeError("Something went wrong")
         mock_session.execute.side_effect = error
 
-        await scheduler_executor.execute(JobType.SQL, SQL_SCRIPT)
+        with pytest.raises(RuntimeError, match="Something went wrong"):
+            await scheduler_executor.execute(JobType.SQL, SQL_SCRIPT)
 
         mock_session.execute.assert_awaited_once()
+        mock_session.rollback.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_execute_unsupported_job(self, mock_session, scheduler_executor):

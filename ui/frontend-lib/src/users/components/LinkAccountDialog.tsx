@@ -8,7 +8,7 @@ import { CommonDialog, useConfig } from "../../common";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IkEntity } from "../../types";
-import { UserResponse } from "../types";
+import { LINK_USER_ACCOUNT_MUTATION } from "../graphql";
 
 interface PolicyCreateProps {
   primary_account?: string;
@@ -91,12 +91,15 @@ export const LinkUserDialog = (props: AddPrimaryAccountProps) => {
   const onSubmit = useCallback(
     (data: any) => {
       ikApi
-        .postRaw(
-          `users/${data.primary_account}/link/${data.secondary_account}`,
-          {},
+        .graphqlRequest<{ linkUserAccount: { id: string } }>(
+          LINK_USER_ACCOUNT_MUTATION,
+          {
+            primaryUserId: data.primary_account,
+            secondaryUserId: data.secondary_account,
+          },
         )
-        .then((response: UserResponse) => {
-          if (response.id) {
+        .then((response) => {
+          if (response.linkUserAccount?.id) {
             notify("User accounts linked successfully", "success");
             onClose?.();
 

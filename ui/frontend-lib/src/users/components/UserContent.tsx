@@ -26,11 +26,11 @@ export const UserContent = () => {
     },
     {
       label: "Roles",
-      content: <UserRolesCard user_id={entity.id} />,
+      content: <UserRolesCard userId={entity.id} />,
     },
     {
       label: "Policies",
-      content: <UserPoliciesCard user_id={entity.id} />,
+      content: <UserPoliciesCard userId={entity.id} />,
     },
     {
       label: "Notifications",

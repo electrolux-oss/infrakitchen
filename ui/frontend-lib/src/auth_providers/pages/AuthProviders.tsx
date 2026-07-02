@@ -15,10 +15,7 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
-import {
-  AUTH_PROVIDER_FIELD_MAP,
-  transformAuthProviderOptional,
-} from "../graphql";
+import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
 
 export const AuthProvidersPage = () => {
   const { linkPrefix } = useConfig();
@@ -30,6 +27,7 @@ export const AuthProvidersPage = () => {
       {
         field: "name",
         headerName: "Name",
+        fetchFields: ["name", "entityName"],
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
@@ -42,9 +40,10 @@ export const AuthProvidersPage = () => {
         flex: 1,
       },
       {
-        field: "auth_provider",
+        field: "authProvider",
         headerName: "Provider",
         flex: 1,
+        sortField: "auth_provider",
         renderCell: (params: GridRenderCellParams) => (
           <Box display="flex" alignItems="center" height="100%">
             {getProviderValue(params.value)}
@@ -59,9 +58,10 @@ export const AuthProvidersPage = () => {
           getBooleanLabel(params.row.enabled),
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
+        sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
@@ -78,7 +78,7 @@ export const AuthProvidersPage = () => {
         renderCell: (params: GridRenderCellParams) => {
           const creator = params.row.creator;
           if (!creator) return null;
-          return <GetEntityLink {...creator} name={creator.identifier} />;
+          return <GetEntityLink {...creator} />;
         },
       },
     ],
@@ -109,7 +109,6 @@ export const AuthProvidersPage = () => {
         entityName="authProvider"
         columns={columns}
         entityFieldMap={AUTH_PROVIDER_FIELD_MAP}
-        transformFn={transformAuthProviderOptional}
       />
     </PageContainer>
   );

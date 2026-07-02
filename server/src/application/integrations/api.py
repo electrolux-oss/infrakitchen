@@ -150,6 +150,7 @@ async def get_actions(
     "/integrations/validate",
     response_model=IntegrationValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate_on_create(
     request: Request, body: IntegrationValidationRequest, service: IntegrationService = Depends(get_integration_service)
@@ -227,6 +228,7 @@ async def get_integration_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Create integration policy",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_integration_permissions(
     request: Request,

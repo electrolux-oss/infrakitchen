@@ -9,7 +9,7 @@ from core.constants.model import ModelActions
 from core.errors import EntityNotFound
 from core.auth_providers.functions import get_auth_provider_actions
 from core.utils.event_sender import EventSender
-from core.utils.model_tools import model_db_dump
+from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import AuthProviderCRUD
 from .schema import AuthProviderCreate, AuthProviderResponse, AuthProviderUpdate
 from core.users.model import UserDTO
@@ -78,6 +78,26 @@ class AuthProviderService:
         """Return ORM models directly, with optimized loading based on requested fields."""
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
+    async def create_auth_provider(self, auth_provider: AuthProviderCreate, requester: UserDTO) -> AuthProvider:
+        """
+        Create a new auth_provider and return the ORM model.
+        :param auth_provider: AuthProviderCreate to create
+        :param requester: User who creates the auth_provider
+        :return: Created auth_provider ORM instance
+        """
+        body = model_db_dump(auth_provider)
+        body["created_by"] = requester.id
+        new_auth_provider = await self.crud.create(body)
+        result = await self.crud.get_by_id(new_auth_provider.id)
+
+        if not result:
+            raise EntityNotFound("AuthProvider not found after creation")
+
+        await self.audit_log_handler.create_log(new_auth_provider.id, requester.id, ModelActions.CREATE)
+        response = AuthProviderResponse.model_validate(result)
+        await self.event_sender.send_event(response, ModelActions.CREATE)
+        return result
+
     async def create(self, auth_provider: AuthProviderCreate, requester: UserDTO) -> AuthProviderResponse:
         """
         Create a new auth_provider.
@@ -85,16 +105,46 @@ class AuthProviderService:
         :param requester: User who creates the auth_provider
         :return: Created auth_provider
         """
+        result = await self.create_auth_provider(auth_provider=auth_provider, requester=requester)
+        return AuthProviderResponse.model_validate(result)
 
-        body = model_db_dump(auth_provider)
-        body["created_by"] = requester.id
-        new_auth_provider = await self.crud.create(body)
-        result = await self.crud.get_by_id(new_auth_provider.id)
+    async def update_auth_provider(
+        self, auth_provider_id: str, auth_provider: AuthProviderUpdate, requester: UserDTO
+    ) -> AuthProvider:
+        """
+        Update an existing auth_provider and return the ORM model.
+        :param auth_provider_id: ID of the auth_provider to update
+        :param auth_provider: AuthProvider to update
+        :param requester: User who updates the auth_provider
+        :return: Updated auth_provider ORM instance
+        """
+        auth_provider_from_db = await self.crud.get_by_id(auth_provider_id)
 
-        await self.audit_log_handler.create_log(new_auth_provider.id, requester.id, ModelActions.CREATE)
-        response = AuthProviderResponse.model_validate(result)
-        await self.event_sender.send_event(response, ModelActions.CREATE)
-        return response
+        if not auth_provider_from_db:
+            raise EntityNotFound("AuthProvider not found")
+
+        if auth_provider.enabled is False:
+            dependencies = await self.crud.count(filter={"enabled": True})
+            if dependencies <= 1:
+                raise ValueError("Cannot disable single provider")
+
+        auth_provider_pydantic = AuthProviderDTO.model_validate(auth_provider_from_db)
+        validate_configuration(auth_provider, auth_provider_pydantic)
+        body = model_db_dump(auth_provider, exclude_defaults=True, exclude_none=True)
+
+        if auth_provider.configuration is not None:
+            body["configuration"] = model_db_dump(auth_provider.configuration)
+
+        if not has_field_changes(body, auth_provider_from_db):
+            raise ValueError("No changes detected; the provider is already up to date.")
+
+        await self.crud.update(auth_provider_from_db, body)
+        await self.audit_log_handler.create_log(auth_provider_from_db.id, requester.id, ModelActions.UPDATE)
+        await self.crud.refresh(auth_provider_from_db)
+
+        response = AuthProviderResponse.model_validate(auth_provider_from_db)
+        await self.event_sender.send_event(response, ModelActions.UPDATE)
+        return auth_provider_from_db
 
     async def update(
         self, auth_provider_id: str, auth_provider: AuthProviderUpdate, requester: UserDTO
@@ -106,27 +156,10 @@ class AuthProviderService:
         :param requester: User who updates the auth_provider
         :return: Updated auth_provider
         """
-
-        auth_provider_from_db = await self.crud.get_by_id(auth_provider_id)
-
-        if not auth_provider_from_db:
-            raise EntityNotFound("AuthProvider not found")
-
-        await self.audit_log_handler.create_log(auth_provider_from_db.id, requester.id, ModelActions.UPDATE)
-        if auth_provider.enabled is False:
-            dependencies = await self.crud.count(filter={"enabled": True})
-            if dependencies <= 1:
-                raise ValueError("Cannot disable single provider")
-
-        auth_provider_pydantic = AuthProviderDTO.model_validate(auth_provider_from_db)
-        validate_configuration(auth_provider, auth_provider_pydantic)
-        body = model_db_dump(auth_provider)
-
-        updated_auth_provider = await self.crud.update(auth_provider_from_db, body)
-
-        response = AuthProviderResponse.model_validate(updated_auth_provider)
-        await self.event_sender.send_event(response, ModelActions.UPDATE)
-        return response
+        result = await self.update_auth_provider(
+            auth_provider_id=auth_provider_id, auth_provider=auth_provider, requester=requester
+        )
+        return AuthProviderResponse.model_validate(result)
 
     async def delete(self, auth_provider_id: str, requester: UserDTO) -> None:
         existing_auth_provider = await self.crud.get_by_id(auth_provider_id)

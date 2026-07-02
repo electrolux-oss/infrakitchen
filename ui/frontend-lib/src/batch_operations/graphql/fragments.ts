@@ -14,6 +14,7 @@ export const BATCH_OPERATION_GRAPHQL_FIELDS = {
     "entityIds",
     "createdAt",
     "updatedAt",
+    "entityName",
   ] as const,
   relations: {
     creator: "creator",

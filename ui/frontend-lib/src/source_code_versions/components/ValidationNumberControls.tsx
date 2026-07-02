@@ -17,15 +17,15 @@ export const ValidationNumberControls = ({
 }: ValidationNumberControlsProps) => {
   const { getValues, setValue } = useFormContext();
   const minFieldName = useMemo(
-    () => `configs.${index}.validation_min_value`,
+    () => `configs.${index}.validationMinValue`,
     [index],
   );
   const maxFieldName = useMemo(
-    () => `configs.${index}.validation_max_value`,
+    () => `configs.${index}.validationMaxValue`,
     [index],
   );
   const ruleIdFieldName = useMemo(
-    () => `configs.${index}.validation_rule_id`,
+    () => `configs.${index}.validationRuleId`,
     [index],
   );
 

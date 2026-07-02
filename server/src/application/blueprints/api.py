@@ -66,6 +66,7 @@ async def get_all(
     "/blueprints",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: BlueprintCreate, service: BlueprintService = Depends(get_blueprint_service)):
     requester: UserDTO | None = request.state.user
@@ -81,6 +82,7 @@ async def post(request: Request, body: BlueprintCreate, service: BlueprintServic
     "/blueprints/{blueprint_id}",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -97,6 +99,7 @@ async def update(
     "/blueprints/{blueprint_id}/actions",
     response_model=BlueprintResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def perform_action(
     request: Request,
@@ -120,6 +123,7 @@ async def perform_action(
 @router.delete(
     "/blueprints/{blueprint_id}",
     status_code=http_status.HTTP_204_NO_CONTENT,
+    deprecated=True,
 )
 async def delete(request: Request, blueprint_id: str, service: BlueprintService = Depends(get_blueprint_service)):
     requester: UserDTO = request.state.user
@@ -149,6 +153,7 @@ async def get_actions(request: Request, blueprint_id: str, service: BlueprintSer
     response_model=WorkflowResponse,
     status_code=http_status.HTTP_201_CREATED,
     response_description="Create workflows - creates resources in dependency order",
+    deprecated=True,
 )
 async def create_workflow_from_blueprint(
     request: Request,

@@ -10,13 +10,8 @@ import {
 import { useEffectOnce } from "react-use";
 
 import { InfraKitchenApi } from "../../api";
-import { TreeResponse } from "../../common/components/tree/types";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import {
-  GqlTemplateTreeNode,
-  transformTemplateTreeNode,
-} from "../../templates/graphql";
-import { TemplateShort } from "../../templates/types";
+import { GqlTemplateShort, GqlTemplateTreeNode } from "../../templates/graphql";
 import { ValidationRule } from "../../types";
 import {
   GqlValidationRulesByVariable,
@@ -30,22 +25,18 @@ import {
   GqlSourceConfig,
   GqlSourceCodeVersion,
   GqlSourceConfigTemplateReference,
-  transformSourceConfig,
-  transformSourceConfigTemplateReference,
-  transformSourceCodeVersion,
 } from "../graphql";
 import {
   SourceConfigResponse,
-  SourceCodeVersionResponse,
   SourceConfigTemplateReferenceResponse,
 } from "../types";
 
 interface SourceCodeVersionConfigContextType {
-  references: SourceCodeVersionResponse[];
+  references: GqlSourceCodeVersion[];
   selectedReferenceId: string;
-  sourceCodeVersion: SourceCodeVersionResponse;
+  sourceCodeVersion: GqlSourceCodeVersion;
   sourceConfigs: SourceConfigResponse[];
-  templates: TemplateShort[];
+  templates: GqlTemplateShort[];
   templateReferences: SourceConfigTemplateReferenceResponse[];
   validationRulesCatalog: ValidationRule[];
   refetchConfigs: () => void;
@@ -60,13 +51,13 @@ export const SourceCodeVersionConfigContext = createContext<
 interface SourceCodeVersionConfigProviderProps {
   children: ReactNode;
   ikApi: InfraKitchenApi;
-  sourceCodeVersion: SourceCodeVersionResponse;
+  sourceCodeVersion: GqlSourceCodeVersion;
 }
 
 function flattenTemplates(
-  tree: TreeResponse,
-  templates: TemplateShort[] = [],
-): TemplateShort[] {
+  tree: GqlTemplateTreeNode,
+  templates: GqlTemplateShort[] = [],
+): GqlTemplateShort[] {
   if (!tree) {
     return templates;
   }
@@ -75,7 +66,8 @@ function flattenTemplates(
       id: tree.id,
       name: tree.name,
       abstract: false, // Not provided in the tree response, assuming false as default
-      _entity_name: "template",
+      cloudResourceTypes: [], // Not provided in the tree response, using empty array as default
+      entityName: "template",
     });
   }
   if (tree.children && tree.children.length > 0) {
@@ -91,10 +83,10 @@ export const SourceCodeVersionConfigProvider = ({
   ikApi,
   sourceCodeVersion,
 }: SourceCodeVersionConfigProviderProps) => {
-  const [references, setReferences] = useState<SourceCodeVersionResponse[]>([]);
+  const [references, setReferences] = useState<GqlSourceCodeVersion[]>([]);
   const [selectedReferenceId, setSelectedReferenceId] = useState<string>("");
-  const [templates, setTemplates] = useState<TemplateShort[]>([]);
-  const [tree, setTree] = useState<TreeResponse>();
+  const [templates, setTemplates] = useState<GqlTemplateShort[]>([]);
+  const [tree, setTree] = useState<GqlTemplateTreeNode>();
   const [templateReferences, setTemplateReferences] = useState<
     SourceConfigTemplateReferenceResponse[]
   >([]);
@@ -158,10 +150,10 @@ export const SourceCodeVersionConfigProvider = ({
         const validationRule = validationRulesMap.get(config.name);
         return {
           ...config,
-          validation_rule_id: validationRule?.id ?? null,
-          validation_regex: validationRule?.regex_pattern || "",
-          validation_min_value: validationRule?.min_value ?? null,
-          validation_max_value: validationRule?.max_value ?? null,
+          validationRuleId: validationRule?.id ?? null,
+          validationRegex: validationRule?.regex_pattern || "",
+          validationMinValue: validationRule?.min_value ?? null,
+          validationMaxValue: validationRule?.max_value ?? null,
         };
       });
     },
@@ -187,9 +179,7 @@ export const SourceCodeVersionConfigProvider = ({
       });
 
       // Configs + validation rules
-      const configsResponse = gqlResponse.sourceCodeVersionConfigs.map(
-        transformSourceConfig,
-      );
+      const configsResponse = gqlResponse.sourceCodeVersionConfigs;
       if (configsResponse.length > 0) {
         const validationRulesResponse =
           gqlResponse.validationRulesByTemplate.map(
@@ -218,21 +208,17 @@ export const SourceCodeVersionConfigProvider = ({
 
       // Template tree
       if (gqlResponse.templateTree) {
-        setTree(transformTemplateTreeNode(gqlResponse.templateTree));
+        setTree(gqlResponse.templateTree);
       }
 
       // Template references
-      const refs = gqlResponse.sourceCodeVersionTemplateReferences.map(
-        transformSourceConfigTemplateReference,
-      );
+      const refs = gqlResponse.sourceCodeVersionTemplateReferences;
       if (refs.length > 0) {
         setTemplateReferences(refs);
       }
 
       // SCV references
-      const scvRefs = gqlResponse.sourceCodeVersions.map(
-        transformSourceCodeVersion,
-      );
+      const scvRefs = gqlResponse.sourceCodeVersions;
       setReferences(scvRefs.filter((ref) => ref.id !== sourceCodeVersion.id));
     } catch (error: any) {
       notifyError(error);
@@ -257,9 +243,7 @@ export const SourceCodeVersionConfigProvider = ({
         templateId: sourceCodeVersion.template.id,
       });
 
-      const configsResponse = configsGqlResponse.sourceCodeVersionConfigs.map(
-        transformSourceConfig,
-      );
+      const configsResponse = configsGqlResponse.sourceCodeVersionConfigs;
       if (configsResponse.length > 0) {
         const validationRulesResponse =
           configsGqlResponse.validationRulesByTemplate.map(
@@ -322,9 +306,7 @@ export const SourceCodeVersionConfigProvider = ({
           sourceCodeVersionId: scv_id,
         })
         .then((gqlResponse) => {
-          const response = gqlResponse.sourceCodeVersionConfigs.map(
-            transformSourceConfig,
-          );
+          const response = gqlResponse.sourceCodeVersionConfigs;
           if (response.length > 0) {
             setSourceConfigs((currentSourceConfigs) => {
               return updateConfigsValuesWithReference(

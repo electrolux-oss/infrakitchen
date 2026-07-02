@@ -26,7 +26,7 @@ import {
 } from "@mui/material";
 import Ansi from "ansi-to-react";
 
-import { GqlLog, transformLog, buildLogsQuery } from "../../logs/graphql";
+import { GqlLog, buildLogsQuery } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { RelativeTime } from "../components/RelativeTime";
@@ -442,7 +442,7 @@ export const SummaryView = (props: {
         },
       );
 
-      const chunk = (response.logs || []).map(transformLog);
+      const chunk = response.logs || [];
       if (chunk.length === 0) {
         break;
       }
@@ -558,7 +558,7 @@ export const SummaryView = (props: {
                 )}
                 {allLogs.length > 0 && (
                   <RelativeTime
-                    date={allLogs[allLogs.length - 1].created_at}
+                    date={allLogs[allLogs.length - 1].createdAt}
                     sx={{
                       color: "text.secondary",
                       ml: 1.5,

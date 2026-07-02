@@ -5,7 +5,7 @@ import {
 } from "../../common/graphql/buildGraphqlFields";
 
 export const USER_GRAPHQL_FIELDS = {
-  short: ["id", "identifier", "provider"] as const,
+  short: ["id", "identifier", "provider", "entityName"] as const,
   base: [
     "id",
     "identifier",
@@ -19,6 +19,7 @@ export const USER_GRAPHQL_FIELDS = {
     "lastName",
     "deactivated",
     "isPrimary",
+    "entityName",
   ] as const,
   nested: {
     meta: "meta { slackId }",
@@ -46,13 +47,13 @@ export const USER_FIELDS = `
   ${buildNestedSelection(USER_GRAPHQL_FIELDS.relations.primaryAccount, USER_SHORT_FIELDS)}
 `;
 
-/** Maps snake_case table column fields to their GraphQL selection strings. */
+/** Maps table column fields to their GraphQL selection strings. */
 export const USER_FIELD_MAP: GraphqlFieldMap = {
-  secondary_accounts: buildNestedSelection(
+  secondaryAccounts: buildNestedSelection(
     USER_GRAPHQL_FIELDS.relations.secondaryAccounts,
     USER_SHORT_FIELDS,
   ),
-  primary_account: buildNestedSelection(
+  primaryAccount: buildNestedSelection(
     USER_GRAPHQL_FIELDS.relations.primaryAccount,
     USER_SHORT_FIELDS,
   ),

@@ -23,6 +23,7 @@ export const BLUEPRINT_LIST_FIELDS = `
   id
   name
   description
+  entityName
   ${buildNestedSelection(BLUEPRINT_GRAPHQL_FIELDS.relations.templates, TEMPLATE_SHORT_FIELDS)}
   labels
   status
@@ -33,6 +34,7 @@ export const BLUEPRINT_FIELDS = `
   id
   name
   description
+  entityName
   ${buildNestedSelection(BLUEPRINT_GRAPHQL_FIELDS.relations.templates, TEMPLATE_SHORT_FIELDS)}
   ${buildNestedSelection(BLUEPRINT_GRAPHQL_FIELDS.relations.externalTemplates, TEMPLATE_SHORT_FIELDS)}
   wiring

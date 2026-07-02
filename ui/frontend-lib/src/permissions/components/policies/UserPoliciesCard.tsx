@@ -12,13 +12,13 @@ import {
 import { EntityFetchTable } from "../../../common/components/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
-import { PERMISSION_FIELD_MAP, transformPermission } from "../../graphql";
+import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
 import { EntityPolicyUserCreateDialog } from "./EntityPoliciesDialogs";
 
-export const UserPoliciesCard = (props: { user_id: string }) => {
-  const { user_id } = props;
+export const UserPoliciesCard = (props: { userId: string }) => {
+  const { userId } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -33,8 +33,8 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
   const columns = useMemo(
     () => [
       {
-        field: "resource_name",
-        fetchFields: ["entity_data"],
+        field: "resourceName",
+        fetchFields: ["entityData"],
         headerName: "Resource Name",
         flex: 1,
         sortable: false,
@@ -42,9 +42,9 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         renderCell: (params: GridRenderCellParams) => {
           return (
             <GetEntityLink
-              id={params.row.entity_data?.id}
-              _entity_name={params.row.entity_data?._entity_name}
-              name={params.row.entity_data?.name || "Unknown Entity"}
+              id={params.row.entityData?.id}
+              entityName={params.row.entityData?.entityName}
+              name={params.row.entityData?.name || "Unknown Entity"}
             />
           );
         },
@@ -63,7 +63,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
         },
       },
       {
-        field: "created_at",
+        field: "createdAt",
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
@@ -115,7 +115,7 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
           Add Resource Policy
         </Button>
         <EntityPolicyUserCreateDialog
-          user_id={user_id}
+          userId={userId}
           open={isDialogOpen}
           onClose={handleCloseDialog}
         />
@@ -123,10 +123,9 @@ export const UserPoliciesCard = (props: { user_id: string }) => {
       <EntityFetchTable
         title="User Policies"
         entityName="permission"
-        defaultFilter={{ ptype: "p", v0: `user:${user_id}` }}
+        defaultFilter={{ ptype: "p", v0: `user:${userId}` }}
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
-        transformFn={transformPermission}
       />
     </OverviewCard>
   );

@@ -7,6 +7,7 @@ import { Button, Stack } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
+import { UNLINK_USER_ACCOUNT_MUTATION } from "../graphql";
 
 interface UnlinkAccountButtonProps {
   primary_account: string;
@@ -37,7 +38,10 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
 
     setIsLoading(true);
     ikApi
-      .deleteRaw(`users/${primary_account}/link/${secondary_account}`, {})
+      .graphqlRequest(UNLINK_USER_ACCOUNT_MUTATION, {
+        primaryUserId: primary_account,
+        secondaryUserId: secondary_account,
+      })
       .then(() => {
         if (onUnlink) {
           onUnlink();

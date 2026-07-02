@@ -357,5 +357,7 @@ class TaskWorker(BaseMessagesWorker):
             await self.handle_generic_exception(e, task_controller, "AssertionError", action=action)
         elif isinstance(e, IntegrityError):
             await self.handle_generic_exception(e, task_controller, "IntegrityError", action=action)
+        elif isinstance(e, FileNotFoundError):
+            await self.handle_generic_exception(e, task_controller, "FileNotFoundError", action=action)
         else:
             await self.handle_unexpected_exception(e, task_controller, action=action)

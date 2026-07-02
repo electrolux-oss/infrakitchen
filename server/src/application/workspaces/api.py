@@ -66,6 +66,7 @@ async def get_all(
     "/workspaces",
     response_model=WorkspaceResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: WorkspaceCreate, service: WorkspaceService = Depends(get_workspace_service)):
     requester: UserDTO | None = request.state.user
@@ -82,6 +83,7 @@ async def post(request: Request, body: WorkspaceCreate, service: WorkspaceServic
     "/workspaces/{workspace_id}",
     response_model=WorkspaceResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -97,7 +99,7 @@ async def update(
     return entity
 
 
-@router.delete("/workspaces/{workspace_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/workspaces/{workspace_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, workspace_id: str, service: WorkspaceService = Depends(get_workspace_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(workspace_id=workspace_id, requester=requester):
@@ -162,6 +164,7 @@ async def get_workspace_role_permissions(
     response_model=list[PermissionResponse],
     response_description="Create workspace policy",
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def create_role_workspace_permissions(
     request: Request,

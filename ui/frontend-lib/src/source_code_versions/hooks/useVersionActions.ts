@@ -4,35 +4,38 @@ import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils";
 import {
-  RefType,
-  SourceCodeVersionCreate,
-  SourceCodeVersionResponse,
-} from "../types";
+  CREATE_SOURCE_CODE_VERSION_MUTATION,
+  DELETE_SOURCE_CODE_VERSION_MUTATION,
+  GqlSourceCodeVersion,
+  SOURCE_CODE_VERSION_ACTION_MUTATION,
+} from "../graphql";
+import { RefType, SourceCodeVersionCreate } from "../types";
 
 export function useVersionActions(
   sourceCodeId: string,
-  entity: SourceCodeVersionResponse | undefined,
+  entity: GqlSourceCodeVersion | undefined,
   onRefresh: () => void,
 ) {
   const { ikApi } = useConfig();
   const [localInProgress, setLocalInProgress] = useState(false);
+
+  const dispatchAction = async (id: string, action: string) => {
+    await ikApi.graphqlRequest(SOURCE_CODE_VERSION_ACTION_MUTATION, {
+      id,
+      input: { action },
+    });
+  };
 
   const toggleEnabled = async () => {
     if (!entity) return;
 
     try {
       if (entity.status === ENTITY_STATUS.DONE) {
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.DISABLE,
-        });
+        await dispatchAction(entity.id, ENTITY_ACTION.DISABLE);
         notify("Version disabled successfully", "success");
       } else if (entity.status === ENTITY_STATUS.DISABLED) {
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.ENABLE,
-        });
-        await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-          action: ENTITY_ACTION.SYNC,
-        });
+        await dispatchAction(entity.id, ENTITY_ACTION.ENABLE);
+        await dispatchAction(entity.id, ENTITY_ACTION.SYNC);
         notify("Version enabled and sync task created", "success");
       }
     } catch {
@@ -49,22 +52,23 @@ export function useVersionActions(
     setLocalInProgress(true);
 
     const payload: SourceCodeVersionCreate = {
-      source_code_id: sourceCodeId,
+      sourceCodeId: sourceCodeId,
       ...(type === RefType.BRANCH
-        ? { source_code_branch: entry }
-        : { source_code_version: entry }),
-      template_id: templateId,
-      source_code_folder: folder,
+        ? { sourceCodeBranch: entry }
+        : { sourceCodeVersion: entry }),
+      templateId: templateId,
+      sourceCodeFolder: folder,
       description: "",
       labels: [],
     };
 
     try {
-      const response = await ikApi.postRaw("source_code_versions", payload);
+      const response = await ikApi.graphqlRequest<{
+        createSourceCodeVersion: { id: string };
+      }>(CREATE_SOURCE_CODE_VERSION_MUTATION, { input: payload });
       onRefresh();
-      await ikApi.patchRaw(`source_code_versions/${response.id}/actions`, {
-        action: ENTITY_ACTION.SYNC,
-      });
+      const created = response.createSourceCodeVersion;
+      await dispatchAction(created.id, ENTITY_ACTION.SYNC);
       notify("Version created. Sync task created.", "success");
     } catch (error) {
       notifyError(error);
@@ -77,7 +81,9 @@ export function useVersionActions(
   const deleteVersion = async () => {
     if (!entity) return;
     try {
-      await ikApi.deleteRaw(`source_code_versions/${entity.id}`, {});
+      await ikApi.graphqlRequest(DELETE_SOURCE_CODE_VERSION_MUTATION, {
+        id: entity.id,
+      });
       onRefresh();
     } catch (error) {
       notifyError(error);
@@ -86,9 +92,7 @@ export function useVersionActions(
 
   const triggerSync = async () => {
     if (!entity) return;
-    await ikApi.patchRaw(`source_code_versions/${entity.id}/actions`, {
-      action: ENTITY_ACTION.SYNC,
-    });
+    await dispatchAction(entity.id, ENTITY_ACTION.SYNC);
     notify("Sync task created.", "success");
   };
 

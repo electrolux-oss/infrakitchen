@@ -18,6 +18,7 @@ import { useConfig } from "../../common";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
 
+import { AZURE_DEVOPS_REPO_QUERY } from "./graphql";
 import { AzureDevopsRepo } from "./types";
 
 interface AzureDevopsRepoMetadataProps {
@@ -33,16 +34,19 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
   const [metadata, setMetadata] = useState<AzureDevopsRepo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const link = `provider/azure_devops/repos/${organization}/${name}`;
 
   useEffect(() => {
     setLoading(true);
     setError(null); // Clear previous errors
     ikApi
-      .get(link, queryParams)
-      .then((response: AzureDevopsRepo) => {
-        // Cast response to AzureDevopsRepo
-        setMetadata(response);
+      .graphqlRequest(AZURE_DEVOPS_REPO_QUERY, {
+        integrationId: queryParams?.integration_id,
+        project: organization,
+        repo: name,
+      })
+      .then((response) => {
+        const typedResponse = response as { azureDevopsRepo: AzureDevopsRepo };
+        setMetadata(typedResponse.azureDevopsRepo);
       })
       .catch((err: { message: string }) => {
         notifyError(err);
@@ -51,7 +55,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, name, organization, link, queryParams]);
+  }, [ikApi, name, organization, queryParams]);
 
   if (loading) {
     return (
@@ -112,7 +116,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           label={`Default Branch: ${metadata.default_branch}`}
           variant="outlined"
         />
-        {metadata.isDisabled && (
+        {metadata.is_disabled && (
           <Chip label="Archived" variant="outlined" color="info" />
         )}
         {metadata.url && (

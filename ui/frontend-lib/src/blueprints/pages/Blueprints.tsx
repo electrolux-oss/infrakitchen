@@ -15,7 +15,6 @@ import { useConfig } from "../../common/context/ConfigContext";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { BLUEPRINT_FIELD_MAP } from "../graphql";
-import { transformBlueprintOptional } from "../graphql/transforms";
 
 export const BlueprintsPage = () => {
   const { linkPrefix } = useConfig();
@@ -25,15 +24,12 @@ export const BlueprintsPage = () => {
     () => [
       {
         field: "name",
+        fetchFields: ["name", "entityName"],
         headerName: "Name",
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <GetEntityLink
-            id={params.row.id}
-            _entity_name="blueprint"
-            name={params.row.name}
-          />
+          <GetEntityLink {...params.row} />
         ),
       },
       {
@@ -78,7 +74,7 @@ export const BlueprintsPage = () => {
         ),
       },
       {
-        field: "updated_at",
+        field: "updatedAt",
         headerName: "Last Updated",
         flex: 1,
         renderCell: (params: GridRenderCellParams) =>
@@ -158,7 +154,6 @@ export const BlueprintsPage = () => {
         filterConfigs={filterConfigs}
         buildApiFilters={buildApiFilters}
         entityFieldMap={BLUEPRINT_FIELD_MAP}
-        transformFn={transformBlueprintOptional}
       />
     </PageContainer>
   );

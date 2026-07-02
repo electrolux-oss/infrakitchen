@@ -60,6 +60,7 @@ async def get_all(
     "/secrets",
     response_model=SecretResponse,
     status_code=http_status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def post(request: Request, body: SecretCreate, service: SecretService = Depends(get_secret_service)):
     requester: UserDTO | None = request.state.user
@@ -76,6 +77,7 @@ async def post(request: Request, body: SecretCreate, service: SecretService = De
     "/secrets/{secret_id}",
     response_model=SecretResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def update(
     request: Request,
@@ -91,7 +93,9 @@ async def update(
     return entity
 
 
-@router.patch("/secrets/{secret_id}/actions", response_model=SecretResponse, status_code=http_status.HTTP_200_OK)
+@router.patch(
+    "/secrets/{secret_id}/actions", response_model=SecretResponse, status_code=http_status.HTTP_200_OK, deprecated=True
+)
 async def patch_action(
     request: Request,
     secret_id: str,
@@ -112,7 +116,7 @@ async def patch_action(
     return entity
 
 
-@router.delete("/secrets/{secret_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+@router.delete("/secrets/{secret_id}", status_code=http_status.HTTP_204_NO_CONTENT, deprecated=True)
 async def delete(request: Request, secret_id: str, service: SecretService = Depends(get_secret_service)):
     requester: UserDTO = request.state.user
     if ModelActions.DELETE not in await service.get_actions(secret_id=secret_id, requester=requester):
@@ -136,6 +140,7 @@ async def get_actions(request: Request, secret_id: str, service: SecretService =
     "/secrets/validate",
     response_model=SecretValidationResponse,
     status_code=http_status.HTTP_200_OK,
+    deprecated=True,
 )
 async def validate_on_create(
     request: Request, body: SecretCreate, service: SecretService = Depends(get_secret_service)

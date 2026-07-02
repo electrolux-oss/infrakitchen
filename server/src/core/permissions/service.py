@@ -94,7 +94,7 @@ class PermissionService:
 
     async def create_role(
         self, role_name: str, user_id: UUID | str, requester: UserDTO | None = None, reload_permission: bool = True
-    ) -> PermissionResponse:
+    ) -> Permission:
         if not re.match(r"^[a-z_]+$", role_name):
             raise ValueError("Role name must be a string of lowercase letters and (_)")
 
@@ -124,7 +124,10 @@ class PermissionService:
 
         if reload_permission:
             await self.casbin_enforcer.send_reload_event()
-        return PermissionResponse.model_validate(result)
+
+        if not result:
+            raise EntityNotFound("Failed to create role")
+        return result
 
     async def assign_user_to_role(
         self,
@@ -132,7 +135,7 @@ class PermissionService:
         user_id: UUID | str,
         requester: UserDTO | None = None,
         reload_permission: bool = True,
-    ) -> PermissionResponse:
+    ) -> Permission:
         if not re.match(r"^[a-z_]+$", role_name):
             raise ValueError("Role name must be a string of lowercase letters and (_)")
 
@@ -167,7 +170,10 @@ class PermissionService:
 
         if reload_permission:
             await self.casbin_enforcer.send_reload_event()
-        return PermissionResponse.model_validate(result)
+
+        if not result:
+            raise EntityNotFound("Failed to assign user to role")
+        return result
 
     async def get_all_roles(
         self,
@@ -206,7 +212,7 @@ class PermissionService:
     async def delete_entity_permissions(self, entity_name: str, entity_id: str | UUID) -> None:
         await self.crud.delete_entity_permissions(entity_name, entity_id)
 
-    async def get_actions(self, permission_id: str, requester: UserDTO) -> list[str]:
+    async def get_actions(self, permission_id: str | UUID, requester: UserDTO) -> list[str]:
         role = await self.crud.get_by_id(permission_id)
         if not role:
             raise EntityNotFound("Role not found")
@@ -226,7 +232,7 @@ class PermissionService:
         body: ApiPolicyCreate,
         requester: UserDTO | None = None,
         reload_permission: bool = True,
-    ) -> PermissionResponse:
+    ) -> Permission:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
 
@@ -258,14 +264,16 @@ class PermissionService:
         if reload_permission:
             await self.casbin_enforcer.send_reload_event()
 
-        return PermissionResponse.model_validate(result)
+        if not result:
+            raise EntityNotFound("Failed to create policy")
+        return result
 
     async def create_entity_policy(
         self,
         body: EntityPolicyCreate,
         requester: UserDTO,
         reload_permission: bool = True,
-    ) -> PermissionResponse:
+    ) -> Permission:
         if self.casbin_enforcer.enforcer is None:
             _ = await self.casbin_enforcer.get_enforcer()
 
@@ -327,7 +335,10 @@ class PermissionService:
         await self.audit_log_handler.create_log(new_permission.id, requester.id, ModelActions.CREATE)
         if reload_permission:
             await self.casbin_enforcer.send_reload_event()
-        return PermissionResponse.model_validate(result)
+
+        if not result:
+            raise EntityNotFound("Failed to create policy")
+        return result
 
     async def commit(self) -> None:
         await self.crud.session.commit()

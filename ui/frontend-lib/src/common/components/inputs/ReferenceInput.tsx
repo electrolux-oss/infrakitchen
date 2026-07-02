@@ -9,15 +9,22 @@ import {
 
 import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
+import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
 import { getOptionLabel } from "./utils";
+
+const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
+
+const pluralEntityToGraphql = (entityName: string): string =>
+  entityName.replace(SNAKE_TO_CAMEL_RE, (_, c) => c.toUpperCase());
 
 interface ReferenceInputProps {
   ikApi: InfraKitchenApi;
   entity_name: string;
   onChange: (selectedEntity: any) => void;
   filter?: object;
+  fields?: Array<string>;
   value: any;
   label: string;
   error?: boolean;
@@ -41,6 +48,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     bufferKey,
     entity_name,
     filter = {},
+    fields,
     showFields = ["name"],
     value,
     optionFilter,
@@ -49,6 +57,8 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ...otherProps
   } = props;
 
+  const graphqlEntityName = pluralEntityToGraphql(entity_name);
+  const graphqlCountName = `${graphqlEntityName}Count`;
   const resolvedBufferKey = bufferKey || entity_name;
   const allOptions: IkEntity[] = buffer[resolvedBufferKey] || [];
   const options: IkEntity[] = optionFilter
@@ -89,13 +99,22 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
       return;
     }
     ikApi
-      .getList(entity_name, {
-        pagination: { page: 1, perPage: 100 },
-        sort: { field: "name", order: "ASC" },
-        filter: filter,
-      })
-      .then((response: { data: IkEntity[] }) => {
-        if (response.data.length === 0 && otherProps.required === true) {
+      .graphqlRequest(
+        `query ReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
+          ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+            ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+          }
+          ${graphqlCountName}(filter: $filter)
+        }`,
+        {
+          filter,
+          sort: ["name", "ASC"],
+          range: [0, 100],
+        },
+      )
+      .then((response: { [key: string]: IkEntity[] | number }) => {
+        const data = (response[graphqlEntityName] as IkEntity[]) || [];
+        if (data.length === 0 && otherProps.required === true) {
           setWarning(
             `No available options for the required field "${props.label}". You need to create them first.`,
           );
@@ -103,7 +122,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
 
         setBuffer((prev: Record<string, IkEntity[]>) => ({
           ...prev,
-          [resolvedBufferKey]: response.data,
+          [resolvedBufferKey]: data,
         }));
       })
       .catch((error: { message: string }) => {

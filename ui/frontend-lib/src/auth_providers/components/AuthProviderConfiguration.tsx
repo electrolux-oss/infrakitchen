@@ -1,29 +1,47 @@
 import { formatLabel } from "../../common";
 import { CommonField } from "../../common/components/CommonField";
-import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
-import { AuthProviderResponse } from "../types";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { GqlAuthProvider } from "../graphql";
+
+import { AuthProviderConfigurationEditor } from "./AuthProviderConfigurationEditor";
 
 export interface AuthProviderConfigurationProps {
-  auth_provider: AuthProviderResponse;
+  authProvider: GqlAuthProvider;
 }
 
 export const AuthProviderConfiguration = ({
-  auth_provider,
+  authProvider,
 }: AuthProviderConfigurationProps) => {
+  const { checkActionPermission } = usePermissionProvider();
+  const canEdit = checkActionPermission("api:auth_provider", "write");
+
   return (
     <OverviewCard name="Auth Provider Configuration">
+      <AuthProviderConfigurationEditor
+        authProvider={authProvider}
+        canEdit={canEdit}
+      />
       <CommonField
         name={"Auth Provider Type"}
-        value={auth_provider.auth_provider}
+        value={authProvider.authProvider}
       />
-      <CommonField
-        name={"Filter By Domain"}
-        value={<Labels labels={auth_provider.filter_by_domain} />}
-      />
-      {Object.entries(auth_provider.configuration).map(([k, v]) => {
-        return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
-      })}
+      {Object.entries(authProvider.configuration || {})
+        .filter(([k]) => k !== "auth_provider")
+        .map(([k, v]) => {
+          // Mask secret values
+          const displayValue =
+            typeof v === "string" && k.toLowerCase().includes("secret")
+              ? "********"
+              : v;
+          return (
+            <CommonField
+              key={`${k}${v}`}
+              name={formatLabel(k)}
+              value={displayValue}
+            />
+          );
+        })}
     </OverviewCard>
   );
 };

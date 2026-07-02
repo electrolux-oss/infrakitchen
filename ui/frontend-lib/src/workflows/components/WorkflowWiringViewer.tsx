@@ -1,14 +1,38 @@
 import { useMemo } from "react";
 
-import { WiringRule } from "../../common/components/viewers/Wiring/types";
+import {
+  GenericStep,
+  WiringRule,
+} from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
-import { TemplateShort } from "../../templates/types";
-import { WorkflowStepResponse } from "../types";
+import { GqlTemplateShort } from "../../templates/graphql";
+import { GqlWorkflowStep } from "../graphql";
 
 export interface WorkflowWiringViewerProps {
   wiring: WiringRule[];
-  steps: WorkflowStepResponse[];
+  steps: GqlWorkflowStep[];
   height?: number;
+}
+
+/**
+ * The shared WiringDiagram consumes the snake_case GenericStep shape. Map the
+ * camelCase workflow steps to that shape at this boundary so the shared viewer
+ * (also used by blueprints) stays unchanged.
+ */
+function toGenericStep(step: GqlWorkflowStep): GenericStep {
+  return {
+    id: step.id,
+    template_id: step.template?.id,
+    template: step.template,
+    resource_id: step.resource?.id,
+    resource: step.resource,
+    position: step.position,
+    status: step.status,
+    error_message: step.errorMessage,
+    resolved_variables: step.resolvedVariables,
+    started_at: step.startedAt,
+    completed_at: step.completedAt,
+  };
 }
 
 export const WorkflowWiringViewer = ({
@@ -16,11 +40,13 @@ export const WorkflowWiringViewer = ({
   steps,
   height = 500,
 }: WorkflowWiringViewerProps) => {
+  const genericSteps = useMemo(() => steps.map(toGenericStep), [steps]);
+
   const templates = useMemo(
     () =>
       steps
         .map((s) => s.template)
-        .filter((t): t is TemplateShort => t !== null),
+        .filter((t): t is GqlTemplateShort => t !== null),
     [steps],
   );
 
@@ -30,11 +56,11 @@ export const WorkflowWiringViewer = ({
       {
         id: string;
         name: string;
-        resource: WorkflowStepResponse["parent_resource_ids"][number];
+        resource: NonNullable<GqlWorkflowStep["parentResourceIds"]>[number];
       }
     >();
 
-    for (const resource of steps.flatMap((s) => s.parent_resource_ids ?? [])) {
+    for (const resource of steps.flatMap((s) => s.parentResourceIds ?? [])) {
       const template = resource.template!;
       if (!byTemplateId.has(template.id)) {
         byTemplateId.set(template.id, {
@@ -53,7 +79,7 @@ export const WorkflowWiringViewer = ({
       templates={templates}
       externalTemplates={externalTemplates}
       wiring={wiring}
-      steps={steps}
+      steps={genericSteps}
       height={height}
       allowFullscreen
     />

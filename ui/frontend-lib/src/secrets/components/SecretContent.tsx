@@ -33,7 +33,7 @@ export const SecretContent = () => {
     },
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resources_count ?? 0})`,
+      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -43,7 +43,7 @@ export const SecretContent = () => {
     },
     {
       label: "Executors",
-      tabLabel: `Executors (${entity.executors_count ?? 0})`,
+      tabLabel: `Executors (${entity.executorsCount ?? 0})`,
       content: (
         <EntityExecutors
           fixedFilters={{ secret_ids__any: [entity.id] }}

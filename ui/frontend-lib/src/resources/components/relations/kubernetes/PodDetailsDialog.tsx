@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { useConfig, CommonDialog } from "../../../../common";
+import { KUBERNETES_DEPLOYMENT_PODS_QUERY } from "../../../../providers/kubernetes/graphql";
+import { K8sPod } from "../../../../providers/kubernetes/types";
 
 import { PodDetails } from "./PodDetails";
 
@@ -26,7 +28,7 @@ export const PodDetailsDialog = (props: PodDetailsDialogProps) => {
   } = props;
   const { ikApi } = useConfig();
 
-  const [pods, setPods] = useState<any[]>([]);
+  const [pods, setPods] = useState<K8sPod[]>([]);
   const [loadingPods, setLoadingPods] = useState(false);
   const [errorPods, setErrorPods] = useState<Error | null>(null);
 
@@ -35,12 +37,17 @@ export const PodDetailsDialog = (props: PodDetailsDialogProps) => {
       setLoadingPods(true);
       setErrorPods(null);
       ikApi
-        .get(
-          `provider/kubernetes/${kubernetesResourceType}/${entityId}/namespaces/${namespace}/deployments/${deploymentName}/pods`,
-          { raw: true },
+        .graphqlRequest<{ kubernetesDeploymentPods: K8sPod[] }>(
+          KUBERNETES_DEPLOYMENT_PODS_QUERY,
+          {
+            k8sService: kubernetesResourceType,
+            resourceId: entityId,
+            namespace,
+            deploymentName,
+          },
         )
         .then((response) => {
-          setPods(response);
+          setPods(response.kubernetesDeploymentPods);
           setLoadingPods(false);
         })
         .catch((error) => {

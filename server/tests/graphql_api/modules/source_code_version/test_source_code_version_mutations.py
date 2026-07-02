@@ -14,6 +14,7 @@ CREATE_SOURCE_CODE_VERSION_MUTATION = """
             sourceCodeFolder
             sourceCodeVersion
             description
+            entityName
         }
     }
 """
@@ -25,6 +26,7 @@ UPDATE_SOURCE_CODE_VERSION_MUTATION = """
             sourceCodeFolder
             sourceCodeVersion
             description
+            entityName
         }
     }
 """
@@ -35,6 +37,7 @@ SOURCE_CODE_VERSION_ACTION_MUTATION = """
             id
             sourceCodeFolder
             sourceCodeVersion
+            entityName
         }
     }
 """
@@ -42,6 +45,17 @@ SOURCE_CODE_VERSION_ACTION_MUTATION = """
 DELETE_SOURCE_CODE_VERSION_MUTATION = """
     mutation DeleteSourceCodeVersion($id: UUID!) {
         deleteSourceCodeVersion(id: $id)
+    }
+"""
+
+UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION = """
+    mutation UpdateSourceCodeVersionConfigs($id: UUID!, $configs: [SourceConfigUpdateItemInput!]!) {
+        updateSourceCodeVersionConfigs(id: $id, configs: $configs) {
+            id
+            name
+            required
+            default
+        }
     }
 """
 
@@ -86,6 +100,7 @@ class TestSourceCodeVersionMutations:
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
             "description": source_code_version.description,
+            "entityName": "source_code_version",
         }
         mock_service.create_source_code_version.assert_awaited_once_with(source_code_version=ANY, requester=mocked_user)
 
@@ -183,6 +198,7 @@ class TestSourceCodeVersionMutations:
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
             "description": source_code_version.description,
+            "entityName": "source_code_version",
         }
         mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
         mock_service.update_source_code_version.assert_awaited_once_with(
@@ -190,6 +206,121 @@ class TestSourceCodeVersionMutations:
             source_code_version=ANY,
             requester=mocked_user,
         )
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")
+    async def test_update_source_code_version_configs_returns_updated(
+        self,
+        mock_get_service,
+        mocked_source_config,
+        mocked_user,
+    ):
+        scv_id = uuid4()
+        mock_service = Mock()
+        mock_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
+        mock_service.update_configs_orm = AsyncMock(return_value=[mocked_source_config])
+        mock_get_service.return_value = mock_service
+
+        result = await schema.execute(
+            UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION,
+            variable_values={
+                "id": str(scv_id),
+                "configs": [
+                    {
+                        "id": str(mocked_source_config.id),
+                        "required": True,
+                        "default": "updated_value",
+                        "frozen": False,
+                        "unique": False,
+                        "restricted": False,
+                        "options": [],
+                        "templateId": str(uuid4()),
+                        "referenceTemplateId": str(uuid4()),
+                        "outputConfigName": "output_one",
+                    }
+                ],
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data is not None
+        assert result.data["updateSourceCodeVersionConfigs"] == [
+            {
+                "id": str(mocked_source_config.id),
+                "name": mocked_source_config.name,
+                "required": mocked_source_config.required,
+                "default": mocked_source_config.default,
+            }
+        ]
+        mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
+        mock_service.update_configs_orm.assert_awaited_once()
+        await_kwargs = mock_service.update_configs_orm.await_args.kwargs
+        assert await_kwargs["source_code_version_id"] == str(scv_id)
+        payload = await_kwargs["configs"][0]
+        assert str(payload.id) == str(mocked_source_config.id)
+        assert payload.template_id is not None
+        assert payload.reference_template_id is not None
+        assert payload.output_config_name == "output_one"
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")
+    async def test_update_source_code_version_configs_denies_without_edit_action(
+        self,
+        mock_get_service,
+        mocked_user,
+    ):
+        scv_id = uuid4()
+        mock_service = Mock()
+        mock_service.get_actions = AsyncMock(return_value=[])
+        mock_service.update_configs_orm = AsyncMock()
+        mock_get_service.return_value = mock_service
+
+        result = await schema.execute(
+            UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION,
+            variable_values={
+                "id": str(scv_id),
+                "configs": [
+                    {
+                        "id": str(uuid4()),
+                        "required": True,
+                        "templateId": str(uuid4()),
+                    }
+                ],
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["updateSourceCodeVersionConfigs"] is None
+        assert result.errors is not None
+        assert any("Access denied for action edit" in error.message for error in result.errors)
+        mock_service.update_configs_orm.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")
+    async def test_update_source_code_version_configs_empty_returns_empty_list(
+        self,
+        mock_get_service,
+        mocked_user,
+    ):
+        scv_id = uuid4()
+        mock_service = Mock()
+        mock_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
+        mock_service.update_configs_orm = AsyncMock()
+        mock_get_service.return_value = mock_service
+
+        result = await schema.execute(
+            UPDATE_SOURCE_CODE_VERSION_CONFIGS_MUTATION,
+            variable_values={
+                "id": str(scv_id),
+                "configs": [],
+            },
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"updateSourceCodeVersionConfigs": []}
+        mock_service.update_configs_orm.assert_not_awaited()
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.source_code_version.mutations.get_source_code_version_service")
@@ -282,6 +413,7 @@ class TestSourceCodeVersionMutations:
             "id": str(source_code_version.id),
             "sourceCodeFolder": source_code_version.source_code_folder,
             "sourceCodeVersion": source_code_version.source_code_version,
+            "entityName": "source_code_version",
         }
         mock_service.get_actions.assert_awaited_once_with(source_code_version_id=scv_id, requester=mocked_user)
         mock_service.patch_action.assert_awaited_once()

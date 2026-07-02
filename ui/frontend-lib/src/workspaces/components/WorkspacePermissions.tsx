@@ -1,8 +1,8 @@
 import { EntityPoliciesTab } from "../../permissions/components/policies/EntityPoliciesTab";
-import { WorkspaceResponse } from "../types";
+import { GqlWorkspace } from "../graphql";
 
 export interface WorkspacePermissionsProps {
-  workspace: WorkspaceResponse;
+  workspace: GqlWorkspace;
 }
 
 export const WorkspacePermissions = ({
@@ -10,8 +10,8 @@ export const WorkspacePermissions = ({
 }: WorkspacePermissionsProps) => {
   return (
     <EntityPoliciesTab
-      entity_id={workspace.id}
-      entity_name={workspace._entity_name}
+      entityId={workspace.id}
+      entityName={workspace.entityName}
     />
   );
 };

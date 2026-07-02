@@ -1,90 +1,33 @@
-import { SourceCodeShort } from "../source_codes/types";
-import { TemplateShort } from "../templates/types";
-import { UserShort } from "../users";
-
 export enum RefType {
   BRANCH = "branch",
   TAG = "tag",
 }
 
-export interface SourceCodeVersionShort {
-  id: string;
-  identifier: string;
-  source_code_version: string;
-  source_code_branch: string;
-  source_code_folder: string;
-  template: TemplateShort;
-  source_code: SourceCodeShort;
-  _entity_name: string;
-}
-
-export interface SourceCodeVersionResponse extends SourceCodeVersionShort {
-  created_at: Date;
-  updated_at: Date;
-  status: string;
-  revision_number: number;
-  labels: string[];
-  creator: UserShort;
-  template: TemplateShort;
-  source_code: SourceCodeShort;
-  source_code_version: string;
-  source_code_branch: string;
-  source_code_folder: string;
-  variables: VariableInput[];
-  outputs: VariableOutput[];
-  description: string;
-  resources_count: number;
-  code_snapshot: string | null;
-}
-
-export type SourceCodeVersionResponseOptional =
-  Partial<SourceCodeVersionResponse>;
-
 export interface SourceCodeVersionCreate {
   description: string;
   labels: string[];
-  source_code_id: string;
-  source_code_version?: string;
-  source_code_branch?: string;
-  source_code_folder: string;
-  template_id: string;
-}
-
-export interface SourceCodeVersionUpdate {
-  description: string;
-  labels: string[];
+  sourceCodeId: string;
+  sourceCodeVersion?: string;
+  sourceCodeBranch?: string;
+  sourceCodeFolder: string;
+  templateId: string;
 }
 
 // Configs
-export interface VariableInput {
-  name: string;
-  type: string;
-  original_type: string;
-  description: string;
-  required: boolean;
-  default: any;
-  sensitive: boolean;
-}
-
-export interface VariableOutput {
-  name: string;
-  value: any;
-  description: string;
-}
-
 export interface SourceOutputConfigShort {
   id: string;
   index: number;
   name: string;
   description: string;
-  source_code_version_id: string;
+  sourceCodeVersionId: string;
 }
 
 export interface SourceConfigResponse extends Record<string, any> {
-  created_at: Date;
-  updated_at: Date;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
   index: number;
-  source_code_version_id: string;
+  sourceCodeVersionId: string;
   required: boolean;
   default: any;
   frozen: boolean;
@@ -95,10 +38,10 @@ export interface SourceConfigResponse extends Record<string, any> {
   description: string;
   type: string;
   options: string[];
-  validation_rule_id?: string | null;
-  validation_regex?: string;
-  validation_min_value?: string | number | null;
-  validation_max_value?: string | number | null;
+  validationRuleId?: string | null;
+  validationRegex?: string;
+  validationMinValue?: string | number | null;
+  validationMaxValue?: string | number | null;
 }
 
 export interface SourceConfigUpdate extends Record<string, any> {
@@ -112,36 +55,28 @@ export interface SourceConfigUpdate extends Record<string, any> {
 
 export interface SourceConfigUpdateWithId extends SourceConfigUpdate {
   id: string;
-  template_id: string;
-  reference_template_id: string | null;
-  output_config_name?: string | null;
-  validation_rule_id?: string | null;
-  validation_regex?: string;
-  validation_min_value?: string | number | null;
-  validation_max_value?: string | number | null;
-  validation_enabled: boolean;
-}
-
-export interface SourceOutputConfigResponse extends Record<string, any> {
-  id: string;
-  index: number;
-  name: string;
-  description: string;
-  source_code_version_id: string;
+  templateId: string;
+  referenceTemplateId: string | null;
+  outputConfigName?: string | null;
+  validationRuleId?: string | null;
+  validationRegex?: string;
+  validationMinValue?: string | number | null;
+  validationMaxValue?: string | number | null;
+  validationEnabled: boolean;
 }
 
 export interface SourceOutputConfigTemplateResponse {
   name: string;
   description: string;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: string;
+  updatedAt: string;
   status: string;
 }
 
 export interface SourceConfigTemplateReferenceResponse {
   id: string;
-  template_id: string;
-  reference_template_id: string;
-  input_config_name: string;
-  output_config_name: string;
+  templateId: string;
+  referenceTemplateId: string;
+  inputConfigName: string;
+  outputConfigName: string;
 }

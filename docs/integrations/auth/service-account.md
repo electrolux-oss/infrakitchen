@@ -11,16 +11,21 @@ They provide a mechanism for external tools, scripts, and CI/CD pipelines to int
 
 ## Generate Token
 
-To generate the token, make a call to:
+To generate the token, call the GraphQL API:
 
 ```bash
-curl --location 'https://INFRA_KITCHEN_URL/api/auth/service_account/token' \
+curl --location 'https://INFRA_KITCHEN_URL/api/graphql' \
 --header 'Content-Type: application/json' \
 --data '{
- "identifier": "username",
- "password": "password"
+  "query": "mutation ServiceAccountToken($identifier: String!, $password: String!) { serviceAccountToken(identifier: $identifier, password: $password) { token expiresAt } }",
+  "variables": {
+    "identifier": "username",
+    "password": "password"
+  }
 }'
 ```
+
+The legacy `POST /api/auth/service_account/token` endpoint remains available but is deprecated.
 
 ## Using the Token
 

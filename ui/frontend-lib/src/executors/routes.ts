@@ -1,6 +1,5 @@
 import { ExecutorPage } from "./pages/Executor";
 import { ExecutorCreatePage } from "./pages/ExecutorCreate";
-import { ExecutorEditPage } from "./pages/ExecutorEdit";
 import { ExecutorsPage } from "./pages/Executors";
 
 export const executorRoutes = [
@@ -19,12 +18,6 @@ export const executorRoutes = [
   {
     path: ExecutorCreatePage.path,
     Component: ExecutorCreatePage,
-    requiredPermission: "api:executor",
-    permissionAction: "read",
-  },
-  {
-    path: ExecutorEditPage.path,
-    Component: ExecutorEditPage,
     requiredPermission: "api:executor",
     permissionAction: "read",
   },

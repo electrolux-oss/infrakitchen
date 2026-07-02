@@ -104,7 +104,7 @@ export function buildNodes(params: {
         outputs: ports.outputs,
         kind: "template",
         onRemove: onTemplateRemove,
-        status: step?.status,
+        status: step?.status as ENTITY_STATUS | undefined,
         errorMessage: step?.error_message,
         resourceId: step?.resource_id,
         resourceName: step?.resource?.name,

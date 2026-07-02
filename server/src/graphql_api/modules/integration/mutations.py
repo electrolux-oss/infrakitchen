@@ -9,9 +9,10 @@ from application.integrations.dependencies import get_integration_service
 from application.integrations.schema import IntegrationCreate, IntegrationUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
-from core.errors import AccessDenied
+from core.errors import AccessDenied, EntityNotFound
+from core.users.functions import user_has_access_to_api, user_has_access_to_entity
 from graphql_api.helpers import IsAuthenticated
-from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.integration.types import IntegrationType, IntegrationValidationType
 
 
 @strawberry_pydantic.input(model=IntegrationCreate, all_fields=False)
@@ -89,3 +90,38 @@ class IntegrationMutation:
 
         await service.delete(integration_id=str(id), requester=requester)
         return True
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def validate_integration(self, info: Info, id: uuid.UUID) -> IntegrationValidationType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_integration_service(session)
+
+        if not await user_has_access_to_entity(requester, str(id), action="write", entity_name="integration"):
+            raise AccessDenied("Access denied")
+
+        integration = await service.get_by_id(integration_id=str(id))
+        if not integration:
+            raise EntityNotFound("Integration not found")
+
+        result = await service.validate(
+            integration_config=integration.configuration,
+            integration_provider=integration.integration_provider,
+        )
+        return IntegrationValidationType(is_valid=result.is_valid, message=result.message)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def validate_integration_config(self, info: Info, input: IntegrationCreateInput) -> IntegrationValidationType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_integration_service(session)
+
+        if not await user_has_access_to_api(requester, "integration", action="write"):
+            raise AccessDenied("Access denied")
+
+        integration = input.to_pydantic()
+        result = await service.validate(
+            integration_config=integration.configuration,
+            integration_provider=integration.integration_provider,
+        )
+        return IntegrationValidationType(is_valid=result.is_valid, message=result.message)

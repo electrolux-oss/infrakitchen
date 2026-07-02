@@ -8,6 +8,7 @@ import {
   SCV_CONFIG_FIELDS,
   SCV_DETAIL_FIELDS,
   SCV_REFERENCE_LIST_FIELDS,
+  TEMPLATE_PORTS_FIELDS,
   SCV_TEMPLATE_OUTPUT_FIELDS,
   SCV_TEMPLATE_REFERENCE_FIELDS,
 } from "./fragments";
@@ -43,6 +44,22 @@ export const SOURCE_CODE_VERSION_TEMPLATE_OUTPUTS_QUERY = `
   query SourceCodeVersionTemplateOutputs($templateId: UUID!) {
     sourceCodeVersionTemplateOutputs(templateId: $templateId) {
       ${SCV_TEMPLATE_OUTPUT_FIELDS}
+    }
+  }
+`;
+
+export const SOURCE_CODE_VERSION_TEMPLATE_CONFIGS_QUERY = `
+  query SourceCodeVersionTemplateConfigs($templateId: UUID!) {
+    sourceCodeVersionTemplateConfigs(templateId: $templateId) {
+      ${SCV_CONFIG_FIELDS}
+    }
+  }
+`;
+
+export const TEMPLATE_PORTS_QUERY = `
+  query TemplatePorts($templateIds: [UUID!]!) {
+    templatePorts(templateIds: $templateIds) {
+      ${TEMPLATE_PORTS_FIELDS}
     }
   }
 `;

@@ -27,8 +27,8 @@ export const IntegrationContent = () => {
   );
   if (!entity) return null;
 
-  const isGit = entity.integration_type === "git";
-  const isCloud = entity.integration_type === "cloud";
+  const isGit = entity.integrationType === "git";
+  const isCloud = entity.integrationType === "cloud";
 
   const tabs: TabDefinition[] = [
     {
@@ -38,13 +38,13 @@ export const IntegrationContent = () => {
     ...(isGit
       ? [
           {
-            label: `Code Repositories (${entity.source_code_count ?? 0})`,
+            label: `Code Repositories (${entity.sourceCodeCount ?? 0})`,
             content: (
               <IntegrationSourceCodeDependencies integration_id={entity.id} />
             ),
           },
           {
-            label: `Workspaces (${entity.workspace_count ?? 0})`,
+            label: `Workspaces (${entity.workspaceCount ?? 0})`,
             content: (
               <IntegrationWorkspaceDependencies integration_id={entity.id} />
             ),
@@ -55,7 +55,7 @@ export const IntegrationContent = () => {
       ? [
           {
             label: `Resources`,
-            tabLabel: `Resources (${entity.resource_count ?? 0})`,
+            tabLabel: `Resources (${entity.resourceCount ?? 0})`,
             content: (
               <EntityResources
                 fixedFilters={fixedFilters}
@@ -67,7 +67,7 @@ export const IntegrationContent = () => {
       : []),
     {
       label: "Executors",
-      tabLabel: `Executors (${entity.executor_count ?? 0})`,
+      tabLabel: `Executors (${entity.executorCount ?? 0})`,
       content: (
         <EntityExecutors
           fixedFilters={{ integration_ids__any: [entity.id] }}

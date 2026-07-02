@@ -1,3 +1,4 @@
+import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.batch_operations.model import BatchOperation
@@ -13,6 +14,10 @@ class BatchOperationType:
     __exclude__ = ["created_by"]
 
     creator: UserType | None = None
+
+    @strawberry.field
+    def entity_name(self) -> str:
+        return "batch_operation"
 
 
 batch_operation_mapper.finalize()

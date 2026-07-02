@@ -18,7 +18,8 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
-import { SourceCodeVersionCreate, SourceCodeVersionResponse } from "../types";
+import { CREATE_SOURCE_CODE_VERSION_MUTATION } from "../graphql";
+import { SourceCodeVersionCreate } from "../types";
 
 const SourceCodeVersionCreatePageInner = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -46,9 +47,9 @@ const SourceCodeVersionCreatePageInner = () => {
   const navigate = useNavigate();
   const handleBack = () => navigate(`${linkPrefix}source_code_versions`);
 
-  const watchedSourceCode = watch("source_code_id");
-  const watchedVersion = watch("source_code_version");
-  const watchedBranch = watch("source_code_branch");
+  const watchedSourceCode = watch("sourceCodeId");
+  const watchedVersion = watch("sourceCodeVersion");
+  const watchedBranch = watch("sourceCodeBranch");
 
   useEffect(() => {
     if (watchedSourceCode) {
@@ -57,10 +58,10 @@ const SourceCodeVersionCreatePageInner = () => {
           (code: IkEntity) => code.id === watchedSourceCode,
         );
         if (sourceCode) {
-          setGitTags(sourceCode.git_tags || []);
-          setGitBranches(sourceCode.git_branches || []);
-          setGitTagMessages(sourceCode.git_tag_messages || {});
-          setGitBranchMessages(sourceCode.git_branch_messages || {});
+          setGitTags(sourceCode.gitTags || []);
+          setGitBranches(sourceCode.gitBranches || []);
+          setGitTagMessages(sourceCode.gitTagMessages || {});
+          setGitBranchMessages(sourceCode.gitBranchMessages || {});
         }
       }
     }
@@ -76,13 +77,13 @@ const SourceCodeVersionCreatePageInner = () => {
   // Clear one when the other is selected
   useEffect(() => {
     if (watchedVersion) {
-      setValue("source_code_branch", undefined);
+      setValue("sourceCodeBranch", undefined);
     }
   }, [watchedVersion, setValue]);
 
   useEffect(() => {
     if (watchedBranch) {
-      setValue("source_code_version", undefined);
+      setValue("sourceCodeVersion", undefined);
     }
   }, [watchedBranch, setValue]);
 
@@ -92,11 +93,11 @@ const SourceCodeVersionCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const version = sourceCode.git_tags.find(
+        const version = sourceCode.gitTags.find(
           (tag: string) => tag === watchedVersion,
         );
         if (version) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === version,
           );
           if (gitFolders) {
@@ -113,11 +114,11 @@ const SourceCodeVersionCreatePageInner = () => {
         (code: IkEntity) => code.id === watchedSourceCode,
       );
       if (sourceCode) {
-        const branch = sourceCode.git_branches.find(
+        const branch = sourceCode.gitBranches.find(
           (branch: string) => branch === watchedBranch,
         );
         if (branch) {
-          const gitFolders = sourceCode.git_folders_map.find(
+          const gitFolders = sourceCode.gitFoldersMap.find(
             (ref: RefFolders) => ref.ref === branch,
           );
           if (gitFolders) {
@@ -137,22 +138,23 @@ const SourceCodeVersionCreatePageInner = () => {
         notifyError(new Error("Please fix the errors in the form"));
         return;
       }
-      ikApi
-        .postRaw("source_code_versions", data)
-        .then((response: SourceCodeVersionResponse) => {
-          if (response.id) {
-            notify("SourceCodeVersion created successfully", "success");
-            navigate(`${linkPrefix}source_code_versions/${response.id}`);
-          }
-        })
-        .catch((error: any) => {
-          notifyError(error);
-        })
-        .finally(() => {
-          setSaving(false);
-        });
+
+      try {
+        const response = await ikApi.graphqlRequest<{
+          createSourceCodeVersion: { id: string };
+        }>(CREATE_SOURCE_CODE_VERSION_MUTATION, { input: data });
+        const created = response.createSourceCodeVersion;
+        if (created?.id) {
+          notify("Template version created successfully", "success");
+          navigate(`${linkPrefix}source_code_versions/${created.id}`);
+        }
+      } catch (error: any) {
+        notifyError(error);
+      } finally {
+        setSaving(false);
+      }
     },
-    [ikApi, navigate, trigger, setSaving, linkPrefix],
+    [ikApi, navigate, trigger, linkPrefix],
   );
 
   return (
@@ -188,7 +190,7 @@ const SourceCodeVersionCreatePageInner = () => {
         <PropertyCard title="Version Definition">
           <Box>
             <Controller
-              name="template_id"
+              name="templateId"
               control={control}
               rules={{
                 required: "Template is required",
@@ -200,10 +202,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   entity_name="templates"
                   buffer={buffer}
                   setBuffer={setBuffer}
-                  error={!!errors.template_id}
+                  error={!!errors.templateId}
                   helpertext={
-                    errors.template_id
-                      ? errors.template_id.message
+                    errors.templateId
+                      ? errors.templateId.message
                       : "Select template"
                   }
                   value={field.value}
@@ -238,7 +240,7 @@ const SourceCodeVersionCreatePageInner = () => {
               render={({ field }) => <LabelInput {...field} errors={errors} />}
             />
             <Controller
-              name="source_code_id"
+              name="sourceCodeId"
               control={control}
               rules={{
                 required: "Source code is required",
@@ -250,10 +252,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   entity_name="source_codes"
                   buffer={buffer}
                   setBuffer={setBuffer}
-                  error={!!errors.source_code_id}
+                  error={!!errors.sourceCodeId}
                   helpertext={
-                    errors.source_code_id
-                      ? errors.source_code_id.message
+                    errors.sourceCodeId
+                      ? errors.sourceCodeId.message
                       : "Select code repository"
                   }
                   value={field.value}
@@ -268,7 +270,7 @@ const SourceCodeVersionCreatePageInner = () => {
         <PropertyCard title="Configuration">
           <Box>
             <Controller
-              name="source_code_version"
+              name="sourceCodeVersion"
               control={control}
               render={({ field }) => (
                 <TextField
@@ -277,10 +279,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   label="Select Git Tag"
                   fullWidth
                   margin="normal"
-                  error={!!errors.source_code_version}
+                  error={!!errors.sourceCodeVersion}
                   helperText={
-                    errors.source_code_version
-                      ? errors.source_code_version.message
+                    errors.sourceCodeVersion
+                      ? errors.sourceCodeVersion.message
                       : "Select git tag"
                   }
                   slotProps={{
@@ -300,7 +302,7 @@ const SourceCodeVersionCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_branch"
+              name="sourceCodeBranch"
               control={control}
               render={({ field }) => (
                 <TextField
@@ -309,10 +311,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   label="Select Git Branch"
                   fullWidth
                   margin="normal"
-                  error={!!errors.source_code_branch}
+                  error={!!errors.sourceCodeBranch}
                   helperText={
-                    errors.source_code_branch
-                      ? errors.source_code_branch.message
+                    errors.sourceCodeBranch
+                      ? errors.sourceCodeBranch.message
                       : "Select git branch"
                   }
                   slotProps={{
@@ -332,7 +334,7 @@ const SourceCodeVersionCreatePageInner = () => {
               )}
             />
             <Controller
-              name="source_code_folder"
+              name="sourceCodeFolder"
               control={control}
               rules={{
                 required: "Source code folder is required",
@@ -344,10 +346,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   label="Select Directory Path"
                   fullWidth
                   margin="normal"
-                  error={!!errors.source_code_folder}
+                  error={!!errors.sourceCodeFolder}
                   helperText={
-                    errors.source_code_folder
-                      ? errors.source_code_folder.message
+                    errors.sourceCodeFolder
+                      ? errors.sourceCodeFolder.message
                       : "Select directory path"
                   }
                   slotProps={{
@@ -378,11 +380,11 @@ const SourceCodeVersionCreatePage = () => {
     defaultValues: {
       description: "",
       labels: [],
-      source_code_id: "",
-      source_code_version: "",
-      source_code_branch: "",
-      source_code_folder: "",
-      template_id: "",
+      sourceCodeId: "",
+      sourceCodeVersion: "",
+      sourceCodeBranch: "",
+      sourceCodeFolder: "",
+      templateId: "",
     },
     mode: "onChange",
   });

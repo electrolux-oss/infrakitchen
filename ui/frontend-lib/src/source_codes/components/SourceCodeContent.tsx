@@ -19,18 +19,17 @@ export const SourceCodeContent = () => {
   if (!entity) return null;
 
   const getFolders = (ref: string): string[] =>
-    entity.git_folders_map.find((r: RefFolders) => r.ref === ref)?.folders ??
-    [];
+    entity.gitFoldersMap.find((r: RefFolders) => r.ref === ref)?.folders ?? [];
 
   const tabs: TabDefinition[] = [
-    ...(entity.git_tags?.length
+    ...(entity.gitTags?.length
       ? [
           {
             label: `Tags`,
-            tabLabel: `Tags (${entity.git_tags.length})`,
+            tabLabel: `Tags (${entity.gitTags.length})`,
             content: (
               <SourceCodeRefSection
-                refs={entity.git_tags}
+                refs={entity.gitTags}
                 type={RefType.TAG}
                 sourceCodeId={entity.id}
                 getFolders={getFolders}
@@ -39,14 +38,14 @@ export const SourceCodeContent = () => {
           },
         ]
       : []),
-    ...(entity.git_branches?.length
+    ...(entity.gitBranches?.length
       ? [
           {
             label: `Branches`,
-            tabLabel: `Branches (${entity.git_branches.length})`,
+            tabLabel: `Branches (${entity.gitBranches.length})`,
             content: (
               <SourceCodeRefSection
-                refs={entity.git_branches}
+                refs={entity.gitBranches}
                 type={RefType.BRANCH}
                 sourceCodeId={entity.id}
                 getFolders={getFolders}
@@ -60,7 +59,7 @@ export const SourceCodeContent = () => {
       content: (
         <Audit
           entityId={entity.id}
-          sourceCodeLanguage={entity.source_code_language}
+          sourceCodeLanguage={entity.sourceCodeLanguage}
           showRevisionColumn
         />
       ),

@@ -14,6 +14,7 @@ CREATE_STORAGE_MUTATION = """
             name
             storageType
             storageProvider
+            entityName
         }
     }
 """
@@ -24,6 +25,7 @@ UPDATE_STORAGE_MUTATION = """
             id
             name
             description
+            entityName
         }
     }
 """
@@ -34,6 +36,7 @@ STORAGE_ACTION_MUTATION = """
             id
             name
             state
+            entityName
         }
     }
 """
@@ -89,6 +92,7 @@ class TestStorageMutations:
             "name": mocked_storage.name,
             "storageType": mocked_storage.storage_type,
             "storageProvider": mocked_storage.storage_provider,
+            "entityName": "storage",
         }
         mock_storage_service.create_storage.assert_awaited_once_with(storage=ANY, requester=mocked_user)
 
@@ -191,6 +195,7 @@ class TestStorageMutations:
             "id": str(mocked_storage.id),
             "name": mocked_storage.name,
             "description": mocked_storage.description,
+            "entityName": "storage",
         }
         mock_storage_service.get_actions.assert_awaited_once_with(storage_id=storage_id, requester=mocked_user)
         mock_storage_service.update_storage.assert_awaited_once_with(

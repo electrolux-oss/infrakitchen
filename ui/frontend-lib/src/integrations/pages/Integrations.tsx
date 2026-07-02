@@ -25,18 +25,14 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { providers } from "../constants";
-import {
-  GqlIntegration,
-  INTEGRATIONS_QUERY,
-  transformIntegration,
-} from "../graphql";
-import { ConnectionType, IntegrationResponse, IntegrationType } from "../types";
+import { GqlIntegration, INTEGRATIONS_QUERY } from "../graphql";
+import { ConnectionType, IntegrationType } from "../types";
 
 const IntegrationsPage = () => {
   const { ikApi, linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const [integrations, setIntegrations] = useState<IntegrationResponse[]>([]);
+  const [integrations, setIntegrations] = useState<GqlIntegration[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
@@ -53,7 +49,7 @@ const IntegrationsPage = () => {
         range: [0, 1000],
       })
       .then((response) => {
-        setIntegrations(response.integrations.map(transformIntegration));
+        setIntegrations(response.integrations);
         setLoading(false);
       })
       .catch((err: any) => {
@@ -145,7 +141,7 @@ const IntegrationsPage = () => {
       : null;
 
     return integrations
-      .filter((i) => !selectedType || i.integration_type === selectedType)
+      .filter((i) => !selectedType || i.integrationType === selectedType)
       .filter(
         (i) =>
           !searchTerm ||
@@ -155,13 +151,13 @@ const IntegrationsPage = () => {
       .filter((i) => {
         if (!selectedProviderSlug) return true;
         return (
-          i.integration_provider === selectedProviderSlug ||
-          i.integration_provider === `${selectedProviderSlug}_ssh`
+          i.integrationProvider === selectedProviderSlug ||
+          i.integrationProvider === `${selectedProviderSlug}_ssh`
         );
       });
   }, [integrations, filterValues]);
 
-  const integrationEntityFields = (integration: IntegrationResponse) => (
+  const integrationEntityFields = (integration: GqlIntegration) => (
     <>
       <Box>
         <Typography variant="caption" sx={{ display: "block" }}>
@@ -174,7 +170,7 @@ const IntegrationsPage = () => {
           Last Updated
         </Typography>
         <RelativeTime
-          date={integration.updated_at}
+          date={integration.updatedAt}
           variant="caption"
           sx={{ fontWeight: 500 }}
         />
@@ -376,8 +372,8 @@ const IntegrationsPage = () => {
             {filtered.map((integration) => {
               const provider = providers.find(
                 (p) =>
-                  integration.integration_provider === p.slug ||
-                  integration.integration_provider === `${p.slug}_ssh`,
+                  integration.integrationProvider === p.slug ||
+                  integration.integrationProvider === `${p.slug}_ssh`,
               );
               return (
                 <EntityCard
@@ -387,18 +383,18 @@ const IntegrationsPage = () => {
                   description={integration.description || ""}
                   status={integration.status}
                   detailsUrl={`${linkPrefix}integrations/${provider?.slug}/${integration.id}`}
-                  lastUpdated={integration.updated_at}
-                  labels={integration.labels}
+                  lastUpdated={integration.updatedAt}
+                  labels={integration.labels || []}
                   icon={
                     provider ? (
                       <provider.icon width="40" height="40" />
                     ) : undefined
                   }
-                  chip={integration.integration_type}
+                  chip={integration.integrationType}
                   chipColor={
-                    integration.integration_type === IntegrationType.CLOUD
+                    integration.integrationType === IntegrationType.CLOUD
                       ? "primary"
-                      : integration.integration_type ===
+                      : integration.integrationType ===
                           IntegrationType.NOTIFICATION
                         ? "warning"
                         : "secondary"
