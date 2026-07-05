@@ -130,7 +130,7 @@ class SourceCodeVersionService:
         return await get_source_code_version_actions(requester, scv.status)
 
     async def create_source_code_version(
-        self, source_code_version: SourceCodeVersionCreate, requester: UserDTO
+        self, source_code_version: SourceCodeVersionCreate, requester: UserDTO, allow_without_folder_map: bool = False
     ) -> SourceCodeVersion:
         """
         Create a new source_code_version and return the ORM model.
@@ -164,7 +164,10 @@ class SourceCodeVersionService:
 
         # Validate that branch or tag exists in source code
         if source_code_version.source_code_branch:
-            if source_code_version.source_code_branch not in source_code.git_branches:
+            if (
+                allow_without_folder_map is False
+                and source_code_version.source_code_branch not in source_code.git_branches
+            ):
                 raise ValueError("Source code branch not found in source code")
 
             if ref_folder := next(
@@ -177,10 +180,13 @@ class SourceCodeVersionService:
             ):
                 if source_code_version.source_code_folder not in ref_folder.folders:
                     raise ValueError("Source code folder not found in source code for the specified branch")
-            else:
+            elif allow_without_folder_map is False:
                 raise ValueError("Source code branch not found in source code")
         elif source_code_version.source_code_version:
-            if source_code_version.source_code_version not in source_code.git_tags:
+            if (
+                allow_without_folder_map is False
+                and source_code_version.source_code_version not in source_code.git_tags
+            ):
                 raise ValueError("Source code version tag not found in source code")
 
             if ref_folder := next(
