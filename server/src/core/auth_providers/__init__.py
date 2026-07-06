@@ -1,6 +1,7 @@
 from .schema import (
     BackstageProviderConfig,
     GithubProviderConfig,
+    GoogleProviderConfig,
     GuestProviderConfig,
     IKServiceAccountProviderConfig,
     MicrosoftProviderConfig,
@@ -12,6 +13,7 @@ __all__ = [
     "AuthProviderDTO",
     "BackstageProviderConfig",
     "GithubProviderConfig",
+    "GoogleProviderConfig",
     "GuestProviderConfig",
     "IKServiceAccountProviderConfig",
     "MicrosoftProviderConfig",

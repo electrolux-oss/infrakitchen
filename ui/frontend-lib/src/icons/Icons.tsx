@@ -23,6 +23,10 @@ export const GoogleCloudIcon: React.FC<IconProps> = (props) => (
   <Icon icon="logos:google-cloud" {...props} />
 );
 
+export const GoogleIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="logos:google-icon" {...props} />
+);
+
 export const GitHubIcon: React.FC<IconProps> = (props) => (
   <Icon icon="octicon:mark-github-24" {...props} />
 );
@@ -64,6 +68,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["microsoft", MicrosoftIcon],
   ["github", GitHubIcon],
   ["github_ssh", GitHubIcon],
+  ["google", GoogleIcon],
   ["gitlab", GitLabIcon],
   ["bitbucket", BitbucketIcon],
   ["bitbucket_ssh", BitbucketIcon],

@@ -199,8 +199,14 @@ class TestAuthMutations:
         assert result.errors is None
         assert result.data is not None
         assert result.data["logout"]["success"] is True
-        assert mock_response.delete_cookie.call_count == 4
-        expected_cookies = ["microsoft-refresh-token", "guest-token", "github-refresh-token", "token"]
+        assert mock_response.delete_cookie.call_count == 5
+        expected_cookies = [
+            "microsoft-refresh-token",
+            "guest-token",
+            "github-refresh-token",
+            "google-refresh-token",
+            "token",
+        ]
         for call, expected_cookie in zip(
             mock_response.delete_cookie.call_args_list,
             expected_cookies,

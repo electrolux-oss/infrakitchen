@@ -121,6 +121,23 @@ export default function SignInCard() {
             Log in with GitHub
           </Button>
         )}
+        {enabledProviders.includes("google") && (
+          <Button
+            variant="outlined"
+            type="submit"
+            disabled={loading}
+            fullWidth
+            sx={{
+              gap: "1rem",
+              justifyContent: "flex-start",
+            }}
+            onClick={() => handleSubmit("google")}
+          >
+            {loading && <CircularProgress size={25} thickness={2} />}
+            <Icon icon="logos:google-icon" width={24} height={24} />
+            Log in with Google
+          </Button>
+        )}
         {enabledProviders.includes("guest") && (
           <Button
             variant="outlined"

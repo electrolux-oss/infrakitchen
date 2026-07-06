@@ -32,6 +32,7 @@ const authProviders = [
   "microsoft",
   "guest",
   "github",
+  "google",
   "backstage",
   "ik_service_account",
 ];

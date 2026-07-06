@@ -29,6 +29,16 @@ class GithubProviderConfig(BaseModel):
         return [("client_secret", self.client_secret)]
 
 
+class GoogleProviderConfig(BaseModel):
+    auth_provider: Literal["google"] = Field(default="google", frozen=True)
+    client_id: str = Field(...)
+    client_secret: EncryptedSecretStr = Field(...)
+    redirect_uri: str = Field(...)
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("client_secret", self.client_secret)]
+
+
 class GuestProviderConfig(BaseModel):
     auth_provider: Literal["guest"] = Field(default="guest", frozen=True)
 
@@ -58,6 +68,7 @@ class IKServiceAccountProviderConfig(BaseModel):
 type AuthProviderConfig = Annotated[
     MicrosoftProviderConfig
     | GithubProviderConfig
+    | GoogleProviderConfig
     | BackstageProviderConfig
     | GuestProviderConfig
     | IKServiceAccountProviderConfig,
@@ -78,7 +89,9 @@ class AuthProviderResponse(BaseModel):
     )
     description: str = Field(default="")
     enabled: bool = Field(default=True)
-    auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
+    auth_provider: Literal["microsoft", "guest", "github", "google", "backstage", "ik_service_account"] = Field(
+        ..., frozen=True
+    )
     configuration: AuthProviderConfig = Field(...)
 
     filter_by_domain: list[str] = Field(default=[])
@@ -96,7 +109,9 @@ class AuthProviderCreate(BaseModel):
     )
     description: str = Field(default="")
     enabled: bool = Field(default=True)
-    auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"] = Field(..., frozen=True)
+    auth_provider: Literal["microsoft", "guest", "github", "google", "backstage", "ik_service_account"] = Field(
+        ..., frozen=True
+    )
     configuration: AuthProviderConfig = Field(...)
     filter_by_domain: list[str] = Field(default=[])
 

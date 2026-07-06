@@ -124,6 +124,55 @@ export const renderFieldsForProvider = (
         </>
       );
 
+    case "google":
+      return (
+        <>
+          <Controller
+            name="configuration.client_id"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Client ID"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.client_id}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.client_secret"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Client Secret"
+                type="password"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.client_secret}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.redirect_uri"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Redirect URI"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.redirect_uri}
+              />
+            )}
+          />
+        </>
+      );
+
     case "backstage":
       return (
         <>
