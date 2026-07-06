@@ -9,11 +9,24 @@ const DEFAULT_PORT = "7777";
 const port = process.env.VITE_PORT || DEFAULT_PORT;
 const backendHost = process.env.BACKEND_HOST || "localhost";
 
-const appVersion = readFileSync(
-  resolve(__dirname, "../VERSION"),
-  "utf-8",
-).trim();
-const gitCommitHash = execSync("git rev-parse --short HEAD").toString().trim();
+function getAppVersion() {
+  try {
+    return readFileSync(resolve(__dirname, "../VERSION"), "utf-8").trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+function getGitCommitHash() {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
+
+const appVersion = getAppVersion();
+const gitCommitHash = getGitCommitHash();
 
 export default defineConfig({
   plugins: [react()],

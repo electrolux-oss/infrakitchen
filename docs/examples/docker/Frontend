@@ -1,3 +1,5 @@
 FROM node:24.6.0-bookworm-slim
 
 WORKDIR /app
+
+COPY VERSION /VERSION
