@@ -207,6 +207,8 @@ export const SourceCodeRefSection = ({
           "id",
           "status",
           "resources_count",
+          "variables",
+          "outputs",
         ],
       };
     } else {
@@ -226,6 +228,8 @@ export const SourceCodeRefSection = ({
           "id",
           "status",
           "resources_count",
+          "variables",
+          "outputs",
         ],
       };
     }
