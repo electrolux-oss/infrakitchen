@@ -4,7 +4,8 @@ from application.source_code_versions.schema import SourceCodeVersionCreate
 from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.schema import SourceCodeCreate, SourceCodeResponse
 from application.source_codes.service import SourceCodeService
-from application.templates.schema import TemplateCreate, TemplateResponse
+from application.templates.model import Template
+from application.templates.schema import TemplateCreate
 from application.templates.service import TemplateService
 from application.use_cases.create_template_with_scv.schema import TemplateCreateWithSCV
 from core.audit_logs.handler import AuditLogHandler
@@ -36,7 +37,7 @@ class TemplateWithSCVService:
         self.source_code_version_event_sender: EventSender = source_code_version_event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
 
-    async def create(self, template_with_scv: TemplateCreateWithSCV, requester: UserDTO) -> TemplateResponse:
+    async def create(self, template_with_scv: TemplateCreateWithSCV, requester: UserDTO) -> Template:
         """
         Create a new template.
         :param template_with_scv: TemplateCreateWithSCV to create
@@ -54,7 +55,6 @@ class TemplateWithSCVService:
         template = TemplateCreate.model_validate(body)
         template.abstract = False
         created_template = await self.template_service.create_template(template, requester=requester)
-        new_template = TemplateResponse.model_validate(created_template)
 
         # Create SourceCode
         # FIXME Looking for provider is broken when working with GitLab with a custom host
@@ -79,13 +79,15 @@ class TemplateWithSCVService:
             new_sc = SourceCodeResponse.model_validate(created_source_code)
 
         # Create SourceCodeVersion
-        body["template_id"] = new_template.id
+        body["template_id"] = created_template.id
         body["source_code_id"] = new_sc.id
 
         scv = SourceCodeVersionCreate.model_validate(body)
-        new_scv = await self.source_code_version_service.create_source_code_version(scv, requester=requester)
+        new_scv = await self.source_code_version_service.create_source_code_version(
+            scv, requester=requester, allow_without_folder_map=True
+        )
 
         await self.source_code_event_sender.send_task(new_sc.id, requester=requester, action=ModelActions.SYNC)
         await self.source_code_version_event_sender.send_task(new_scv.id, requester=requester, action=ModelActions.SYNC)
 
-        return new_template
+        return created_template
