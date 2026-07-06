@@ -128,7 +128,6 @@ export default function DashboardSidebar({
           dense
           sx={{
             padding: mini ? 0 : 0.5,
-            mb: 4,
             width: mini ? MINI_DRAWER_WIDTH : "auto",
             pt: !mini ? 0 : 2,
           }}
@@ -277,6 +276,7 @@ export default function DashboardSidebar({
           />
           <DashboardAdminSidebar />
 
+          <DashboardSidebarDividerItem />
           {user && (
             <Stack
               direction="row"
@@ -284,8 +284,6 @@ export default function DashboardSidebar({
                 p: 2,
                 gap: 1,
                 alignItems: "center",
-                borderTop: "1px solid",
-                borderColor: "divider",
               }}
             >
               <Avatar
