@@ -5,6 +5,7 @@ from strawberry.types import Info
 
 from core.errors import AccessUnauthorized
 from core.sso.github import github_refresh_token
+from core.sso.google import google_refresh_token
 from core.sso.guest import guest_refresh_token
 from core.sso.microsoft import microsoft_refresh_token
 from core.sso.service import SSOService
@@ -69,13 +70,24 @@ class AuthMutation:
             result = await github_refresh_token(service, request, response, cookie=github_token)
             return _make_refresh_response(result, "github")
 
+        google_token = request.cookies.get("google-refresh-token")
+        if google_token:
+            result = await google_refresh_token(service, request, response, cookie=google_token)
+            return _make_refresh_response(result, "google")
+
         raise AccessUnauthorized("Authentication failed")
 
     @strawberry.mutation
     async def logout(self, info: Info) -> LogoutResponseType:
         response = info.context["response"]
 
-        cookie_names = ["microsoft-refresh-token", "guest-token", "github-refresh-token", "token"]
+        cookie_names = [
+            "microsoft-refresh-token",
+            "guest-token",
+            "github-refresh-token",
+            "google-refresh-token",
+            "token",
+        ]
         for cookie_name in cookie_names:
             response.delete_cookie(key=cookie_name, httponly=True, secure=True)
 

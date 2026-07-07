@@ -6,6 +6,7 @@ export interface AuthProviderCreate {
     | "microsoft"
     | "guest"
     | "github"
+    | "google"
     | "gitlab"
     | "backstage"
     | "ik_service_account"

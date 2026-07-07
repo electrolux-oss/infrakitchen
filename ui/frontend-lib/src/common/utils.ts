@@ -154,6 +154,7 @@ export const getCategoryFromLabels = (labels: string[]) => {
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   github: "GitHub",
   github_ssh: "GitHub",
+  google: "Google",
   bitbucket: "Bitbucket",
   bitbucket_ssh: "Bitbucket",
   aws: "AWS",

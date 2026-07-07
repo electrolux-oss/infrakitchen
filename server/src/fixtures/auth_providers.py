@@ -10,7 +10,7 @@ from core.users.model import UserDTO
 class ProviderFixture(TypedDict):
     """Fixture definition for auth providers."""
 
-    auth_provider: Literal["microsoft", "guest", "github", "backstage", "ik_service_account"]
+    auth_provider: Literal["microsoft", "guest", "github", "google", "backstage", "ik_service_account"]
     name: str
     enabled: bool
     filter_by_domain: list[str]
@@ -41,6 +41,19 @@ provider_fixtures: list[ProviderFixture] = [
             "auth_provider": "guest",
         },
         "description": "Guest provider enabled by default to configure the system. Disable it after configuring the system.",  # noqa: E501
+    },
+    {
+        "auth_provider": "google",
+        "name": "Google",
+        "enabled": True,
+        "filter_by_domain": ["example.com"],
+        "configuration": {
+            "auth_provider": "google",
+            "client_id": "fake_client_id",
+            "client_secret": "fake_client_secret",
+            "redirect_uri": "http://localhost:7007/api/auth/callback",
+        },
+        "description": "Google provider. Configure it to enable Google authentication.",
     },
     {
         "auth_provider": "microsoft",

@@ -90,6 +90,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else if (provider === "github") {
       loginRedirectUri = "/api/auth/github/callback";
       loginUrl = `/api/auth/github/login?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
+    } else if (provider === "google") {
+      loginRedirectUri = "/api/auth/google/callback";
+      loginUrl = `/api/auth/google/login?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     }
     if (loginUrl) {
       window.location.href = loginUrl;

@@ -43,7 +43,6 @@ async def get_microsoft_sso(service: SSOService) -> MicrosoftSSO:
         client_secret=MICROSOFT_CLIENT_SECRET,
         tenant=MICROSOFT_TENANT,
         redirect_uri=MICROSOFT_REDIRECT_URI,
-        allow_insecure_http=True,
         scope=["openid", "User.Read", "email", "offline_access"],
     )
 

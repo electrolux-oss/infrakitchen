@@ -83,6 +83,7 @@ Before deletion:
 ### Auth Providers
 
 - [GitHub OAuth Setup](./auth/github.md) - App registration and scopes
+- [Google OAuth Setup](./auth/google.md) - OAuth client registration and redirect URI
 - [Microsoft OAuth Setup](./auth/microsoft.md) - App registration and Azure AD
 - [Backstage Integration](./auth/backstage.md) - Plugin configuration
 - [Service Accounts](./auth/service-account.md) - API token management

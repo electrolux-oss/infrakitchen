@@ -13,6 +13,9 @@ We support a variety of authentication methods tailored to different use cases:
 - **[GitHub](github.md)**:
   Allows authentication using existing GitHub accounts.
 
+- **[Google](google.md)**:
+  Enables login via Google accounts.
+
 - **[Microsoft](microsoft.md)**:
   Enables login via Microsoft accounts (e.g., Azure AD, personal accounts).
 
