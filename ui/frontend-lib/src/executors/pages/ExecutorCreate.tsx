@@ -485,6 +485,7 @@ const ExecutorCreatePageInner = () => {
                     entity_name="storages"
                     buffer={buffer}
                     showFields={["name", "storage_provider"]}
+                    fields={["name", "storage_provider", "state"]}
                     setBuffer={setBuffer}
                     error={!!errors.storageId}
                     helpertext={
@@ -492,6 +493,9 @@ const ExecutorCreatePageInner = () => {
                     }
                     filter={filter_storage}
                     value={field.value}
+                    getOptionDisabled={(option: any) =>
+                      option.state !== "PROVISIONED"
+                    }
                     label="Select Storage for storing TF state"
                     required
                   />

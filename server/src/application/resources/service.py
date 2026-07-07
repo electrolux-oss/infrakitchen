@@ -339,6 +339,10 @@ class ResourceService:
                 storage = await self.storage_service.get_by_id(str(resource.storage_id))
                 if not storage:
                     raise EntityNotFound("Storage not found")
+
+                if storage.state != ModelState.PROVISIONED:
+                    raise EntityWrongState("Storage is not provisioned")
+
                 if resource.storage_path is None or resource.storage_path == "":
                     raise ValueError("Storage path is required for non-abstract resources with storage")
 
@@ -455,6 +459,18 @@ class ResourceService:
                 requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
                 if "admin" not in requester_permissions:
                     raise ValueError("Only admin can change storage or storage path of the resource")
+
+                if (
+                    existing_resource.source_code_version
+                    and existing_resource.source_code_version.source_code.source_code_language in ["opentofu"]
+                ):
+                    storage_id = resource.storage_id or existing_resource.storage_id
+                    storage = await self.storage_service.get_by_id(str(storage_id))
+                    if not storage:
+                        raise EntityNotFound("Storage not found")
+
+                    if storage.state != ModelState.PROVISIONED:
+                        raise EntityWrongState("Storage is not provisioned")
 
             # validate configuration variables
             if resource.source_code_version_id:

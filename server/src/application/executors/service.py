@@ -147,6 +147,9 @@ class ExecutorService:
             storage = await self.storage_service.get_by_id(executor.storage_id)
             if not storage:
                 raise EntityNotFound("Storage not found")
+
+            if storage.state != ModelState.PROVISIONED:
+                raise EntityWrongState("Storage is not provisioned")
             if executor.storage_path is None or executor.storage_path == "":
                 raise ValueError("Storage path is required for executors with storage")
 
@@ -233,6 +236,18 @@ class ExecutorService:
             requester_permissions = await user_entity_permissions(requester, executor_id, "executor")
             if "admin" not in requester_permissions:
                 raise ValueError("Only admin can change storage or storage path of the executor")
+
+            if existing_executor.runtime in ["tofu"]:
+                storage_id = executor.storage_id or existing_executor.storage_id
+                if not storage_id:
+                    raise ValueError("Storage is required for opentofu executors")
+
+                storage = await self.storage_service.get_by_id(storage_id)
+                if not storage:
+                    raise EntityNotFound("Storage not found")
+
+                if storage.state != ModelState.PROVISIONED:
+                    raise EntityWrongState("Storage is not provisioned")
 
         await self.crud.update(existing_executor, body)
         await self.revision_handler.handle_revision(existing_executor)

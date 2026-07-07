@@ -902,6 +902,10 @@ const ResourceCreatePageInner = () => {
                           entity_name="storages"
                           buffer={buffer}
                           showFields={["name", "storageProvider"]}
+                          fields={["name", "storageProvider", "state"]}
+                          getOptionDisabled={(option: any) =>
+                            option.state !== "PROVISIONED"
+                          }
                           setBuffer={setBuffer}
                           error={!!errors.storageId}
                           helpertext={

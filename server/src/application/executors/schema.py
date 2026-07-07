@@ -138,7 +138,7 @@ class ExecutorUpdate(BaseModel):
     labels: list[str] | None = Field(default=None)
 
     # critical change, as changing storage may cause issues with existing resources
-    storage_id: uuid.UUID | StorageShort | None = Field(
+    storage_id: uuid.UUID | None = Field(
         default=None,
     )
     storage_path: str | None = Field(
