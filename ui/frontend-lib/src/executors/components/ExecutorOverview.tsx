@@ -14,7 +14,6 @@ import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
@@ -32,9 +31,8 @@ export interface ExecutorAboutProps {
 
 export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
-  const { checkActionPermission } = usePermissionProvider();
-  const canEdit = checkActionPermission("api:executor", "write");
+  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const canEdit = userEntityPermissions.includes("admin");
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
