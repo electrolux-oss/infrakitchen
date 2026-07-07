@@ -6,6 +6,7 @@ from application.resources.model import Resource, resource_integrations, resourc
 from application.executors.model import Executor, executor_integrations, executor_secrets
 from application.source_codes.model import SourceCode
 from application.source_code_versions.model import SourceCodeVersion
+from application.storages.model import Storage
 from application.workspaces.model import Workspace
 
 
@@ -36,6 +37,17 @@ async def _count_workspaces_by_integration(keys: list[str], session: AsyncSessio
         select(Workspace.integration_id, func.count())
         .where(Workspace.integration_id.in_(keys))
         .group_by(Workspace.integration_id)
+    )
+    result = await session.execute(stmt)
+    mapping = {str(row[0]): row[1] for row in result}
+    return [mapping.get(key, 0) for key in keys]
+
+
+async def _count_storages_by_integration(keys: list[str], session: AsyncSession) -> list[int]:
+    stmt = (
+        select(Storage.integration_id, func.count())
+        .where(Storage.integration_id.in_(keys))
+        .group_by(Storage.integration_id)
     )
     result = await session.execute(stmt)
     mapping = {str(row[0]): row[1] for row in result}
@@ -141,6 +153,9 @@ def count_loaders(session: AsyncSession) -> dict[str, DataLoader[str, int]]:
         ),
         "integration_workspace_count": DataLoader[str, int](
             load_fn=lambda keys: _count_workspaces_by_integration(list(keys), session)
+        ),
+        "integration_storage_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_storages_by_integration(list(keys), session)
         ),
         "workspace_resource_count": DataLoader[str, int](
             load_fn=lambda keys: _count_resources_by_workspace(list(keys), session)

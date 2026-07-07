@@ -108,10 +108,6 @@ export const EntityTable = ({
           title={
             <Box display="flex" alignItems="center">
               {entityName}
-              <Box
-                component="span"
-                sx={{ ml: 1 }}
-              >{`(${entities.length})`}</Box>
               {subtitle && (
                 <Tooltip title={subtitle} arrow>
                   <Box
@@ -171,7 +167,6 @@ export const EntityTable = ({
               columns={columns}
               pagination
               disableColumnFilter
-              disableColumnMenu
               getRowHeight={() => "auto"}
               sortModel={sortModel}
               onSortModelChange={handleSortModelChange}

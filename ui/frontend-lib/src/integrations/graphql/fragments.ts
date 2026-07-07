@@ -28,6 +28,7 @@ export const INTEGRATION_GRAPHQL_FIELDS = {
     "resourceCount",
     "sourceCodeCount",
     "workspaceCount",
+    "storageCount",
     "executorCount",
   ] as const,
 };
