@@ -15,6 +15,7 @@ import {
 import { notifyError } from "../hooks/useNotification";
 
 import { useConfig } from "./ConfigContext";
+import { camelizeKeys } from "./EntityContext";
 import { useEventProvider } from "./EventContext";
 
 interface EntityListContextType {
@@ -54,11 +55,13 @@ export const EntityListProvider = ({
 
   useEffect(() => {
     if (event) {
+      const normalizedEvent = camelizeKeys(event);
+
       setEntities((prev) => {
-        const idx = prev.findIndex((e) => e.id === event.id);
+        const idx = prev.findIndex((e) => e.id === normalizedEvent.id);
         if (idx !== -1) {
           const updated = [...prev];
-          updated[idx] = event;
+          updated[idx] = { ...updated[idx], ...normalizedEvent };
           return updated;
         }
         return prev;

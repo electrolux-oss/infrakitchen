@@ -76,14 +76,24 @@ export const MetadataTab = ({
   );
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [rootPathDialogOpen, setRootPathDialogOpen] = useState(false);
 
   const { createVersion } = useVersionActions(sourceCodeId, entity, onRefresh);
 
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const saveVersion = () => {
     if (draftTemplate && draftFolder) {
       createVersion(entry, type, draftTemplate, draftFolder);
     }
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (draftFolder === "/") {
+      setRootPathDialogOpen(true);
+      return;
+    }
+
+    saveVersion();
   };
 
   return (
@@ -169,6 +179,28 @@ export const MetadataTab = ({
               Save
             </Button>
           )}
+          <CommonDialog
+            open={rootPathDialogOpen}
+            onClose={() => setRootPathDialogOpen(false)}
+            title="Save root path?"
+            content={
+              <Typography variant="body2">
+                The selected path is <code>/</code>. This will save the version
+                at the repository root. Do you want to continue?
+              </Typography>
+            }
+            actions={
+              <Button
+                variant="contained"
+                onClick={() => {
+                  saveVersion();
+                  setRootPathDialogOpen(false);
+                }}
+              >
+                Save Anyway
+              </Button>
+            }
+          />
         </PermissionWrapper>
 
         {entity?.status === "error" && (

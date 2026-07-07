@@ -250,6 +250,14 @@ const SourceCodeVersionCreatePageInner = () => {
                   {...field}
                   ikApi={ikApi}
                   entity_name="source_codes"
+                  fields={[
+                    "identifier",
+                    "gitTags",
+                    "gitBranches",
+                    "gitFoldersMap",
+                    "gitTagMessages",
+                    "gitBranchMessages",
+                  ]}
                   buffer={buffer}
                   setBuffer={setBuffer}
                   error={!!errors.sourceCodeId}

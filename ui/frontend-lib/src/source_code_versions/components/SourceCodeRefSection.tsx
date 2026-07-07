@@ -68,6 +68,20 @@ const SourceCodeGitRefRows = ({
     );
   }, [entities, type]);
 
+  const resolveEntityForRef = (ref: string) => {
+    if (type !== RefType.BRANCH) {
+      return versionMap.get(ref);
+    }
+
+    const normalizedRef = ref.replace(/^origin\//, "");
+
+    return (
+      versionMap.get(ref) ??
+      versionMap.get(normalizedRef) ??
+      versionMap.get(`origin/${normalizedRef}`)
+    );
+  };
+
   const displayRefs = useMemo(() => {
     if (enabledOnly) {
       return entities
@@ -87,8 +101,7 @@ const SourceCodeGitRefRows = ({
         </Box>
       ) : (
         displayRefs.map((ref: string) => {
-          const entity =
-            versionMap.get(ref) ?? versionMap.get(ref.replace(/^origin\//, "")); // Support imported SCVs that don't have origin/ at the start of the ref
+          const entity = resolveEntityForRef(ref);
           const logSharing = entity?.id === versionIdFromUrl;
 
           return (
