@@ -36,9 +36,9 @@ export interface ResourceAboutProps {
 
 export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
-  const { checkActionPermission, permissions } = usePermissionProvider();
-  const canEdit = checkActionPermission("api:resource", "write");
+  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { permissions } = usePermissionProvider();
+  const canEdit = userEntityPermissions.includes("write");
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
