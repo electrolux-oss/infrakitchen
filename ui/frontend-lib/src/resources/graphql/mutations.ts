@@ -58,6 +58,18 @@ export const UPDATE_RESOURCE_MUTATION = `
   }
 `;
 
+export const CREATE_RESOURCE_POLICY_MUTATION = `
+  mutation CreateResourcePolicy($input: EntityPolicyCreateInput!) {
+    createResourcePolicy(input: $input) {
+      id
+      ptype
+      v0
+      v1
+      v2
+    }
+  }
+`;
+
 export const CASCADE_DESTROY_RESOURCE_MUTATION = `
   mutation CascadeDestroyResource($id: UUID!) {
     cascadeDestroyResource(id: $id) {

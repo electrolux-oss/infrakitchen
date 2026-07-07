@@ -16,6 +16,7 @@ import {
 import ReferenceSearchInput from "../../../common/components/inputs/ReferenceSearchInput";
 import { useConfig } from "../../../common/context/ConfigContext";
 import { notify, notifyError } from "../../../common/hooks/useNotification";
+import { CREATE_RESOURCE_POLICY_MUTATION } from "../../../resources/graphql";
 import { IkEntity } from "../../../types";
 import { CREATE_ENTITY_POLICY_MUTATION } from "../../graphql";
 import { EntityPolicyCreate } from "../../types";
@@ -84,17 +85,27 @@ export const EntityRolePolicyCreateCard = (
           return;
         }
 
+        const mutationQuery =
+          entityName === "resource"
+            ? CREATE_RESOURCE_POLICY_MUTATION
+            : CREATE_ENTITY_POLICY_MUTATION;
+
         // Build payload, using selectedRole.v1 if role was selected from dropdown
         const response = await ikApi.graphqlRequest<{
           createEntityPolicy: { id: string; v1: string; v2: string };
-        }>(CREATE_ENTITY_POLICY_MUTATION, {
+          createResourcePolicy: { id: string; v1: string; v2: string }[];
+        }>(mutationQuery, {
           input: {
             ...data,
             role: roleName || selectedRole?.v1 || data.role,
           },
         });
-        const responseData = response.createEntityPolicy;
-        if (responseData.id) {
+        const responseData =
+          response.createEntityPolicy || response.createResourcePolicy;
+        if (
+          (Array.isArray(responseData) && responseData.length > 0) ||
+          (!Array.isArray(responseData) && responseData.id)
+        ) {
           notify(`Resource policy created successfully`, "success");
           onSuccess?.();
           onClose?.();
@@ -103,7 +114,7 @@ export const EntityRolePolicyCreateCard = (
         notifyError(error);
       }
     },
-    [ikApi, onClose, onSuccess, roleName, selectedRole],
+    [ikApi, onClose, onSuccess, roleName, selectedRole, entityName],
   );
 
   return (
