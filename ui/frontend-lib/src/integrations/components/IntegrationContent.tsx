@@ -12,6 +12,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { EntityStorages } from "../../storages/components/EntityStorages";
 
 import { IntegrationConfiguration } from "./IntegrationConfiguration";
 import { IntegrationOverview } from "./IntegrationOverview";
@@ -72,6 +73,16 @@ export const IntegrationContent = () => {
         <EntityExecutors
           fixedFilters={{ integration_ids__any: [entity.id] }}
           filterStorageKey="filter_integration_executors"
+        />
+      ),
+    },
+    {
+      label: "Storages",
+      tabLabel: `Storages (${entity.storageCount ?? 0})`,
+      content: (
+        <EntityStorages
+          fixedFilters={{ integration_id: entity.id }}
+          filterStorageKey="filter_integration_storages"
         />
       ),
     },

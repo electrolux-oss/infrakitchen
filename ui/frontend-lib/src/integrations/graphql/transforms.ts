@@ -42,6 +42,7 @@ type GqlIntegrationDetailsFieldTypes = {
   resourceCount: number | null;
   sourceCodeCount: number | null;
   workspaceCount: number | null;
+  storageCount: number | null;
   executorCount: number | null;
 };
 

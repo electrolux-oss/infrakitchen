@@ -34,6 +34,10 @@ class IntegrationType:
         return await info.context["loaders"]["integration_workspace_count"].load(str(self.id))
 
     @strawberry.field
+    async def storage_count(self, info: Info) -> int:
+        return await info.context["loaders"]["integration_storage_count"].load(str(self.id))
+
+    @strawberry.field
     async def executor_count(self, info: Info) -> int:
         return await info.context["loaders"]["integration_executor_count"].load(str(self.id))
 
