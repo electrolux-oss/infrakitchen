@@ -242,7 +242,7 @@ export const renderFieldsForProvider = (
           />
           {isCreateMode && (
             <Controller
-              name="create_storage"
+              name="createStorage"
               control={control}
               defaultValue={false}
               render={({ field }) => (

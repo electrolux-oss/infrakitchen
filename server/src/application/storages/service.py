@@ -11,7 +11,7 @@ from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
-from core.utils.entity_state_handler import delete_entity, execute_entity, recreate_entity
+from core.utils.entity_state_handler import execute_entity, recreate_entity
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
 from .crud import StorageCRUD
@@ -233,12 +233,29 @@ class StorageService:
         await self.event_sender.send_event(response, body.action)
         return existing_storage
 
+    async def delete_entity(self, storage_instance: Storage):
+        def can_be_deleted():
+            if storage_instance.status == ModelStatus.DONE and storage_instance.state == ModelState.DESTROYED:
+                return True
+
+            if (
+                storage_instance.status
+                in [ModelStatus.READY, ModelStatus.REJECTED, ModelStatus.APPROVAL_PENDING, ModelStatus.ERROR]
+                and storage_instance.state == ModelState.PROVISION
+            ):
+                return True
+
+            return False
+
+        if can_be_deleted() is False:
+            raise ValueError(f"Entity has wrong state for deletion {storage_instance.state}")
+
     async def delete(self, storage_id: str, requester: UserDTO) -> None:
         existing_storage = await self.crud.get_by_id(storage_id)
         if not existing_storage:
             raise EntityNotFound("Storage not found")
 
-        await delete_entity(existing_storage)
+        await self.delete_entity(existing_storage)
         await self.audit_log_handler.create_log(storage_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(storage_id)
         await self.log_service.delete_by_entity_id(storage_id)

@@ -73,7 +73,7 @@ def mocked_storage(mocked_user, mocked_integration):
         storage_type="tofu",
         storage_provider="aws",
         status="ready",
-        state="provision",
+        state="provisioned",
         configuration={
             "aws_bucket_name": "test-bucket",
             "aws_region": "us-west-2",

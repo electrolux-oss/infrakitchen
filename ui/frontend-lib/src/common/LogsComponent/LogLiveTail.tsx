@@ -25,6 +25,7 @@ export const LogLiveTail = () => {
     | undefined;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isMinimized, setIsMinimized] = useState<boolean>(
     isMinimizedSaved?.isMinimized ?? false,
   );
@@ -44,6 +45,26 @@ export const LogLiveTail = () => {
   useEffect(() => {
     setKey("log_live_tail_minimized", { isMinimized });
   }, [setKey, isMinimized]);
+
+  useEffect(() => {
+    if (isMinimized) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsMinimized(true);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMinimized]);
 
   const flushPendingMessages = useCallback(() => {
     if (pendingMessagesRef.current.length > 0) {
@@ -145,6 +166,7 @@ export const LogLiveTail = () => {
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         position: "fixed",
         bottom: 20,

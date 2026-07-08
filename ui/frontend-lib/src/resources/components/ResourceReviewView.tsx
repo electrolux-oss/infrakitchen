@@ -33,7 +33,9 @@ export const ResourceReviewView = () => {
           {actions.includes(ENTITY_ACTION.APPROVE) ? (
             <Typography>Review required before proceeding.</Typography>
           ) : (
-            <Typography>Temporary changes detected.</Typography>
+            <Typography>
+              Temporary changes detected. Awaiting owner confirmation.
+            </Typography>
           )}
         </Alert>
       )}

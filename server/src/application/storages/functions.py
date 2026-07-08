@@ -60,7 +60,7 @@ async def get_storage_actions(requester: UserDTO, status: ModelStatus, state: Mo
     elif state == ModelState.PROVISION:
         actions.append(ModelActions.EXECUTE)
         actions.append(ModelActions.EDIT)
-        if status == ModelStatus.READY:
+        if status == ModelStatus.READY or status == ModelStatus.ERROR:
             actions.append(ModelActions.DELETE)
     elif state == ModelState.DESTROYED:
         if status == ModelStatus.DONE:

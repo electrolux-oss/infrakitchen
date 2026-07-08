@@ -144,8 +144,12 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
               buffer={buffer}
               setBuffer={setBuffer}
               showFields={["name", "storage_provider"]}
+              fields={["name", "storage_provider", "state"]}
               filter={storageFilter}
               value={value}
+              getOptionDisabled={(option: any) =>
+                option.state !== "PROVISIONED"
+              }
               onChange={onChange}
               label="Select Storage for storing TF state"
               helpertext={STORAGE_DANGER_HELPER}

@@ -1,5 +1,5 @@
 import uuid
-from typing import Any
+from typing import Any, cast
 
 import strawberry
 from strawberry import Maybe
@@ -12,9 +12,11 @@ from application.workflows.model import Workflow
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from core.users.functions import user_is_super_admin
+from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from graphql_api.helpers import IsAuthenticated
 from graphql_api.modules.notification.types import SubscriptionType
+from graphql_api.modules.permission.mutations import EntityPolicyCreateInput
+from graphql_api.modules.permission.types import PermissionType
 from graphql_api.modules.resource.types import ResourceType
 from graphql_api.modules.workflow.types import WorkflowType
 from strawberry.experimental import pydantic as strawberry_pydantic
@@ -80,6 +82,15 @@ class ResourceSubscriptionDeleteInput:
     resource_id: str
     inherit_children: bool = False
     user_id: str | None = None
+
+
+@strawberry.input
+class ResourcePolicyCreateInput:
+    role: str | None = None
+    user_id: uuid.UUID | None = None
+    entity_id: uuid.UUID
+    action: str
+    inherits_children: bool = False
 
 
 @strawberry.type
@@ -166,6 +177,20 @@ class ResourceMutation:
         return workflow_orm
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def create_resource_policy(self, info: Info, input: EntityPolicyCreateInput) -> list[PermissionType]:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+
+        if not await user_has_access_to_entity(requester, input.entity_id, "admin", "resource"):  # pyright: ignore
+            raise AccessDenied("Access denied: admin access to resource required")
+
+        service = get_resource_service(session)
+        return await service.create_resource_policy(
+            resource_policy=input.to_pydantic(),
+            requester=requester,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def create_resource_subscription(
         self,
         info: Info,
@@ -186,7 +211,7 @@ class ResourceMutation:
             inherit_children=input.inherit_children,
             user_id=input.user_id,
         )
-        return subscriptions
+        return cast(list[SubscriptionType], subscriptions)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_resource_subscription(

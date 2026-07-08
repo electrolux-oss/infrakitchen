@@ -36,7 +36,8 @@ from core.constants.model import EventType, ModelActions
 from core.database import FieldSpec, to_dict
 from core.errors import AccessDenied, DependencyError, EntityExistsError, EntityNotFound, EntityWrongState
 from core.logs.service import LogService
-from core.permissions.schema import EntityPolicyCreate, PermissionResponse
+from core.permissions.model import Permission
+from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from application.favorites.service import FavoriteService
@@ -63,8 +64,6 @@ from .schema import (
     ResourceVariableSchema,
     ResourceWithConfigs,
     ResourceUpdate,
-    RoleResourcesResponse,
-    UserResourceResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -339,6 +338,10 @@ class ResourceService:
                 storage = await self.storage_service.get_by_id(str(resource.storage_id))
                 if not storage:
                     raise EntityNotFound("Storage not found")
+
+                if storage.state != ModelState.PROVISIONED:
+                    raise EntityWrongState("Storage is not provisioned")
+
                 if resource.storage_path is None or resource.storage_path == "":
                     raise ValueError("Storage path is required for non-abstract resources with storage")
 
@@ -455,6 +458,18 @@ class ResourceService:
                 requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
                 if "admin" not in requester_permissions:
                     raise ValueError("Only admin can change storage or storage path of the resource")
+
+                if (
+                    existing_resource.source_code_version
+                    and existing_resource.source_code_version.source_code.source_code_language in ["opentofu"]
+                ):
+                    storage_id = resource.storage_id or existing_resource.storage_id
+                    storage = await self.storage_service.get_by_id(str(storage_id))
+                    if not storage:
+                        raise EntityNotFound("Storage not found")
+
+                    if storage.state != ModelState.PROVISIONED:
+                        raise EntityWrongState("Storage is not provisioned")
 
             # validate configuration variables
             if resource.source_code_version_id:
@@ -1078,35 +1093,19 @@ class ResourceService:
         return resources_metadata
 
     # Permissions
-    async def get_user_resource_policies(
-        self,
-        user_id: str,
-    ) -> list[UserResourceResponse]:
-        policies = await self.crud.get_user_resource_policies(user_id)
-        return [UserResourceResponse.model_validate(policy) for policy in policies]
-
-    async def get_role_permissions(
-        self,
-        role_name: str,
-        range: tuple[int, int] | None = None,
-        sort: tuple[str, str] | None = None,
-    ) -> list[RoleResourcesResponse]:
-        policies = await self.crud.get_resource_policies_by_role(role_name, range=range, sort=sort)
-        return [RoleResourcesResponse.model_validate(policy) for policy in policies]
-
     async def create_resource_policy(
         self,
         resource_policy: EntityPolicyCreate,
         requester: UserDTO,
-    ) -> list[PermissionResponse]:
+    ) -> list[Permission]:
         inherit = resource_policy.inherits_children
         resource = await self.get_by_id(resource_policy.entity_id)
         if not resource:
             raise EntityNotFound(f"Resource {resource_policy.entity_id} not found")
 
+        policies: list[Permission] = []
         if inherit:
             # create policies for resource and all its children
-            policies: list[PermissionResponse] = []
             resource_tree = await self.crud.get_tree_to_children(str(resource.id))
             resource_ids = []
             for node in resource_tree:
@@ -1125,16 +1124,15 @@ class ResourceService:
                         requester,
                         reload_permission=False,
                     )
-                    policies.append(PermissionResponse.model_validate(policy))
+                    policies.append(policy)
                 except EntityExistsError:
                     # skip existing policies
                     continue
             await self.permission_service.casbin_enforcer.send_reload_event()
             return policies
         # create policy
-        policies: list[PermissionResponse] = []
         policy = await self.permission_service.create_entity_policy(resource_policy, requester, reload_permission=False)
-        policies.append(PermissionResponse.model_validate(policy))
+        policies.append(policy)
         await self.permission_service.casbin_enforcer.send_reload_event()
         return policies
 

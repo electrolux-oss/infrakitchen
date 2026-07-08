@@ -266,10 +266,14 @@ export const TemplateConfiguration = ({
                       buffer={buffer}
                       bufferKey="storages"
                       showFields={["name", "storage_provider"]}
+                      fields={["name", "storage_provider", "state"]}
                       setBuffer={setBuffer}
                       filter={storageFilter}
                       value={value}
                       onChange={onChange}
+                      getOptionDisabled={(option: any) =>
+                        option.state !== "PROVISIONED"
+                      }
                       label="Select Storage for storing TF state"
                       required
                       helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."

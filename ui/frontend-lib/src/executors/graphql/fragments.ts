@@ -3,26 +3,11 @@ import {
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
+import { INTEGRATION_SHORT_FIELDS } from "../../integrations/graphql";
+import { SECRET_SHORT_FIELDS } from "../../secrets/graphql";
 import { SOURCE_CODE_SHORT_FIELDS } from "../../source_codes/graphql";
+import { STORAGE_SHORT_FIELDS } from "../../storages/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
-
-export const EXECUTOR_INTEGRATION_SHORT_FIELDS = `
-  id
-  name
-  integrationProvider
-`;
-
-export const EXECUTOR_SECRET_SHORT_FIELDS = `
-  id
-  name
-  secretProvider
-`;
-
-export const EXECUTOR_STORAGE_SHORT_FIELDS = `
-  id
-  name
-  storageProvider
-`;
 
 export const EXECUTOR_GRAPHQL_FIELDS = {
   base: [
@@ -63,9 +48,9 @@ export type ExecutorGraphqlRelationField =
 export const EXECUTOR_LIST_FIELDS = `
   ${buildSelection(EXECUTOR_GRAPHQL_FIELDS.base)}
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_SHORT_FIELDS)}
-  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.integrationIds, EXECUTOR_INTEGRATION_SHORT_FIELDS)}
-  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.secretIds, EXECUTOR_SECRET_SHORT_FIELDS)}
-  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.storage, EXECUTOR_STORAGE_SHORT_FIELDS)}
+  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.integrationIds, INTEGRATION_SHORT_FIELDS)}
+  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
+  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
 `;
 
@@ -76,15 +61,15 @@ export const EXECUTOR_FIELD_MAP: GraphqlFieldMap = {
   ),
   integrationIds: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.integrationIds,
-    EXECUTOR_INTEGRATION_SHORT_FIELDS,
+    INTEGRATION_SHORT_FIELDS,
   ),
   secretIds: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.secretIds,
-    EXECUTOR_SECRET_SHORT_FIELDS,
+    SECRET_SHORT_FIELDS,
   ),
   storage: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.storage,
-    EXECUTOR_STORAGE_SHORT_FIELDS,
+    STORAGE_SHORT_FIELDS,
   ),
   creator: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.creator,
