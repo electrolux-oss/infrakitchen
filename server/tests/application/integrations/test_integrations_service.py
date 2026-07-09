@@ -1,4 +1,5 @@
 # pyright: reportAttributeAccessIssue=false, reportOptionalMemberAccess=false, reportAssignmentType=false
+import json
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
@@ -9,6 +10,7 @@ from pydantic import PydanticUserError, ValidationError
 from application.integrations.model import Integration
 from application.integrations.schema import (
     AWSIntegrationConfig,
+    GCPIntegrationConfig,
     IntegrationResponse,
     IntegrationCreate,
     IntegrationUpdate,
@@ -860,6 +862,48 @@ class TestValidateConfiguration:
         assert initial_secret_value.get_decrypted_value() == "new_secret_value"
         assert updated_secret_value.get_decrypted_value() == "new_secret_value"
 
+    def test_validate_configuration_allows_switching_gcp_auth_methods(self, mock_integration_service, monkeypatch):
+        monkeypatch.setenv("ENCRYPTION_KEY", ENCRYPTION_KEY)
+
+        integration_update = IntegrationUpdate(
+            configuration=GCPIntegrationConfig(
+                gcp_auth_method="workload_identity_federation_oidc",
+                gcp_wif_pool_provider_audience=(
+                    "//iam.googleapis.com/projects/123/locations/global/workloadIdentityPools/pool/providers/provider"
+                ),
+                gcp_project_id="demo-project",
+                integration_provider="gcp",
+            )
+        )
+
+        existing_integration = Integration(
+            id=uuid4(),
+            name="gcp_dev_account",
+            description="Initial_description",
+            integration_type="cloud",
+            integration_provider="gcp",
+            configuration={
+                "gcp_auth_method": "service_account_key",
+                "gcp_project_id": "demo-project",
+                "gcp_service_account_key": f"EncryptedSecretStr:${ENCRYPTED_SECRET}",
+                "integration_provider": "gcp",
+            },
+            labels=["gcp"],
+            creator=User(),
+            status=ModelStatus.ENABLED,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            created_by=uuid4(),
+            revision_number=1,
+        )
+
+        mock_integration_service.validate_configuration(
+            integration_update=integration_update, existing_integration=existing_integration
+        )
+
+        assert integration_update.configuration.gcp_service_account_key is None
+        assert integration_update.configuration.gcp_wif_pool_provider_audience is not None
+
 
 class TestValidateConnection:
     @pytest.mark.asyncio
@@ -944,3 +988,91 @@ class TestValidateConnection:
 
         assert result.is_valid == expected_response.is_valid
         assert result.message == expected_response.message
+
+
+class TestGcpOidcSigningMaterial:
+    def _oidc_config(
+        self,
+        private_key: EncryptedSecretStr | None = None,
+        public_jwk: str | None = None,
+        service_account_email: str | None = None,
+    ) -> GCPIntegrationConfig:
+        return GCPIntegrationConfig(
+            gcp_auth_method="workload_identity_federation_oidc",
+            gcp_wif_pool_provider_audience=(
+                "//iam.googleapis.com/projects/1/locations/global/workloadIdentityPools/p/providers/pr"
+            ),
+            gcp_wif_service_account_email=service_account_email,
+            gcp_oidc_signing_private_key=private_key,
+            gcp_oidc_signing_public_jwk=public_jwk,
+            gcp_project_id="demo-project",
+            integration_provider="gcp",
+        )
+
+    def test_ensure_generates_keypair_when_missing(self, mock_integration_service, monkeypatch):
+        monkeypatch.setenv("ENCRYPTION_KEY", ENCRYPTION_KEY)
+        config = self._oidc_config()
+        assert config.gcp_oidc_signing_private_key is None
+
+        mock_integration_service._ensure_gcp_oidc_signing_material(config)
+
+        assert config.gcp_oidc_signing_private_key is not None
+        assert "BEGIN PRIVATE KEY" in config.gcp_oidc_signing_private_key.get_decrypted_value()
+        assert config.gcp_oidc_signing_public_jwk
+        jwk = json.loads(config.gcp_oidc_signing_public_jwk)
+        assert jwk["kty"] == "RSA" and jwk["kid"]
+
+    def test_ensure_preserves_existing_keypair(self, mock_integration_service, monkeypatch):
+        monkeypatch.setenv("ENCRYPTION_KEY", ENCRYPTION_KEY)
+        config = self._oidc_config(
+            private_key=EncryptedSecretStr("-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----"),
+            public_jwk='{"kid":"stable-kid"}',
+        )
+        original = config.gcp_oidc_signing_public_jwk
+
+        mock_integration_service._ensure_gcp_oidc_signing_material(config)
+
+        assert config.gcp_oidc_signing_public_jwk == original
+
+    def test_ensure_noop_for_non_oidc(self, mock_integration_service):
+        config = GCPIntegrationConfig(
+            gcp_auth_method="service_account_key",
+            gcp_service_account_key=EncryptedSecretStr('{"type":"service_account"}'),
+            gcp_project_id="demo-project",
+            integration_provider="gcp",
+        )
+        mock_integration_service._ensure_gcp_oidc_signing_material(config)
+        assert config.gcp_oidc_signing_private_key is None
+        assert config.gcp_oidc_signing_public_jwk is None
+
+    def test_carry_over_copies_keypair_from_existing(self, mock_integration_service, monkeypatch):
+        monkeypatch.setenv("ENCRYPTION_KEY", ENCRYPTION_KEY)
+        existing_config = self._oidc_config(
+            private_key=EncryptedSecretStr("-----BEGIN PRIVATE KEY-----\nx\n-----END PRIVATE KEY-----"),
+            public_jwk='{"kid":"stable-kid"}',
+        )
+        existing_integration = Integration(
+            id=uuid4(),
+            name="gcp-oidc",
+            description="",
+            integration_type="cloud",
+            integration_provider="gcp",
+            configuration=existing_config.model_dump(),
+            labels=[],
+            creator=User(),
+            status=ModelStatus.ENABLED,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            created_by=uuid4(),
+            revision_number=1,
+        )
+        # incoming update stays in OIDC mode but has no signing key (FE never sends it)
+        update = IntegrationUpdate(
+            configuration=self._oidc_config(service_account_email="sa@proj.iam.gserviceaccount.com")
+        )
+        assert update.configuration.gcp_oidc_signing_private_key is None
+
+        mock_integration_service._carry_over_gcp_oidc_signing_material(update, existing_integration)
+
+        assert update.configuration.gcp_oidc_signing_public_jwk == '{"kid":"stable-kid"}'
+        assert update.configuration.gcp_oidc_signing_private_key is not None

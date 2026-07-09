@@ -3,7 +3,16 @@ import uuid
 from datetime import datetime, UTC
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from application.types import IntegrationProviderType, IntegrationType
 from core.models.encrypted_secret import EncryptedSecretStr
@@ -25,12 +34,99 @@ class AWSIntegrationConfig(BaseModel):
 
 
 class GCPIntegrationConfig(BaseModel):
-    gcp_service_account_key: EncryptedSecretStr = Field(...)
+    gcp_auth_method: Literal[
+        "service_account_key",
+        "workload_identity_federation_oidc",
+    ] = Field(default="service_account_key")
+    gcp_service_account_key: EncryptedSecretStr | None = Field(default=None)
+    # Workload Identity Federation via InfraKitchen-issued OIDC tokens.
+    # The full canonical provider resource name, used as the JWT `aud` and STS audience, e.g.
+    # //iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID
+    gcp_wif_pool_provider_audience: str | None = Field(default=None)
+    # Optional service account to impersonate after federation. When omitted the federated
+    # principal must be granted IAM roles directly.
+    gcp_wif_service_account_email: str | None = Field(default=None)
+    # Optional prebuilt IAMCredentials endpoint for service account impersonation. This keeps
+    # compatibility with generic external_account JSON that already uses this exact field name.
+    gcp_wif_service_account_impersonation_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "gcp_wif_service_account_impersonation_url",
+            "service_account_impersonation_url",
+        ),
+    )
+    # Optional JWT `sub` claim used for GCP attribute mapping. Defaults are derived at auth time.
+    gcp_oidc_subject: str | None = Field(default=None)
+    # Signing material generated server-side (never entered by the user). The private key signs the
+    # subject token JWT; the public JWK is published at the JWKS endpoint / uploaded to GCP.
+    gcp_oidc_signing_private_key: EncryptedSecretStr | None = Field(default=None)
+    gcp_oidc_signing_public_jwk: str | None = Field(default=None)
     gcp_project_id: str = Field(...)
     integration_provider: Literal["gcp"] = Field(default="gcp", frozen=True)
 
+    @field_validator("gcp_wif_pool_provider_audience")
+    @classmethod
+    def validate_gcp_wif_pool_provider_audience(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+
+        if not value.startswith("//iam.googleapis.com/projects/"):
+            raise ValueError(
+                "GCP WIF pool provider audience must be the full provider resource name, e.g. "
+                "//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/"
+                "workloadIdentityPools/POOL_ID/providers/PROVIDER_ID"
+            )
+
+        pattern = (
+            r"^//iam\.googleapis\.com/projects/\d+/locations/global/"
+            r"workloadIdentityPools/[^/]+/providers/[^/]+$"
+        )
+        if not re.fullmatch(pattern, value):
+            raise ValueError(
+                "GCP WIF pool provider audience must match "
+                "//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/"
+                "workloadIdentityPools/POOL_ID/providers/PROVIDER_ID"
+            )
+
+        return value
+
+    @field_validator("gcp_wif_service_account_impersonation_url")
+    @classmethod
+    def validate_gcp_wif_service_account_impersonation_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+
+        pattern = (
+            r"^https://iamcredentials\.googleapis\.com/v1/projects/-/serviceAccounts/"
+            r"[^/:]+@[^/:]+\.iam\.gserviceaccount\.com:generateAccessToken$"
+        )
+        if not re.fullmatch(pattern, value):
+            raise ValueError(
+                "GCP WIF service account impersonation URL must match "
+                "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
+                "SERVICE_ACCOUNT_EMAIL:generateAccessToken"
+            )
+
+        return value
+
     def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
-        return [("gcp_service_account_key", self.gcp_service_account_key)]
+        secrets = []
+        if self.gcp_service_account_key:
+            secrets.append(("gcp_service_account_key", self.gcp_service_account_key))
+        if self.gcp_oidc_signing_private_key:
+            secrets.append(("gcp_oidc_signing_private_key", self.gcp_oidc_signing_private_key))
+        return secrets
+
+    @model_validator(mode="after")
+    def validate_auth_method_configuration(self) -> "GCPIntegrationConfig":
+        if self.gcp_auth_method == "service_account_key" and not self.gcp_service_account_key:
+            raise ValueError("GCP service account key is required for service_account_key authentication")
+        if self.gcp_auth_method == "workload_identity_federation_oidc" and not self.gcp_wif_pool_provider_audience:
+            raise ValueError(
+                "GCP Workload Identity pool provider audience is required for "
+                "workload_identity_federation_oidc authentication"
+            )
+        return self
 
 
 class AzureRMIntegrationConfig(BaseModel):

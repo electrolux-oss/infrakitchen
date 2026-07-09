@@ -254,7 +254,9 @@ class SecretService:
                 raise EntityNotFound("Integration not found")
 
             integration_adapter_instance = await get_integration_adapter(
-                integration.integration_provider, integration.model_dump()["configuration"]
+                integration.integration_provider,
+                integration.model_dump()["configuration"],
+                integration_id=integration.id,
             )
             await integration_adapter_instance.authenticate()
             environment_variables = integration_adapter_instance.environment_variables

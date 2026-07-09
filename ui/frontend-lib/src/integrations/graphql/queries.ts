@@ -8,3 +8,15 @@ export const INTEGRATIONS_QUERY = `
     integrationsCount(filter: $filter)
   }
 `;
+
+export const INTEGRATION_OIDC_QUERY = `
+  query IntegrationOidc($id: UUID!) {
+    integrationOidc(id: $id) {
+      issuerUrl
+      jwksUrl
+      audience
+      jwksFilename
+      jwksContentBase64
+    }
+  }
+`;

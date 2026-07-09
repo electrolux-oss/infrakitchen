@@ -39,8 +39,13 @@ class StorageManager:
             raise CannotProceed(f"Provider {integration.integration_provider} is not supported")
         self.logger.info(f"Authenticating with provider {integration.integration_provider}")
         provider_adapter_instance: IntegrationProvider = provider_adapter(
-            **{"logger": self.logger, "configuration": integration.configuration}
+            **{
+                "logger": self.logger,
+                "configuration": integration.configuration,
+                "integration_id": integration.id,
+            }
         )
+        provider_adapter_instance.workspace_root = self.workspace_root
         await provider_adapter_instance.authenticate()
         environment_variables.update(**provider_adapter_instance.environment_variables)
 

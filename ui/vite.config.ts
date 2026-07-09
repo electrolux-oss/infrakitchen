@@ -44,6 +44,11 @@ export default defineConfig({
         secure: false,
         ws: true,
       },
+      "/oidc": {
+        target: `http://${backendHost}:8000`,
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
