@@ -24,6 +24,7 @@ from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import Settings, setup_service_environment
 from application.views import main_router
+from application.oidc import oidc_router
 from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
 from core.errors import (
@@ -147,6 +148,8 @@ async def mask_graphql_secrets(request: Request, call_next):
 
 
 app.include_router(main_router)
+# OIDC public metadata is served at the domain root under /oidc.
+app.include_router(oidc_router)
 
 
 @app.get("/zstatus")

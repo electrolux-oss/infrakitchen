@@ -1,8 +1,13 @@
-import { Control, Controller, FieldErrors } from "react-hook-form";
+import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
 import {
   Checkbox,
   FormControlLabel,
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@mui/material";
@@ -10,6 +15,253 @@ import {
 interface FormValues {
   configuration: object;
 }
+
+const GcpProviderFields = ({
+  control,
+  errors,
+  readonly,
+  isCreateMode,
+}: {
+  control: Control<any>;
+  errors: FieldErrors<FormValues>;
+  readonly: boolean;
+  isCreateMode: boolean;
+}) => {
+  const authMethod = useWatch({
+    control,
+    name: "configuration.gcp_auth_method",
+    defaultValue: "service_account_key",
+  });
+
+  return (
+    <>
+      <Controller
+        name="configuration.gcp_auth_method"
+        control={control}
+        defaultValue="service_account_key"
+        render={({ field }) => (
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="gcp-auth-method-label">
+              Authentication Method
+            </InputLabel>
+            <Select
+              {...field}
+              labelId="gcp-auth-method-label"
+              label="Authentication Method"
+              disabled={readonly}
+            >
+              <MenuItem value="service_account_key">
+                Service Account Key
+              </MenuItem>
+              <MenuItem value="workload_identity_federation_oidc">
+                Workload Identity Federation (OIDC)
+              </MenuItem>
+            </Select>
+            <FormHelperText>
+              Choose a service account key or Workload Identity Federation with
+              an InfraKitchen-issued OIDC identity.
+            </FormHelperText>
+          </FormControl>
+        )}
+      />
+      <Controller
+        name="configuration.gcp_project_id"
+        control={control}
+        defaultValue=""
+        rules={{
+          required: "GCP Project ID is required",
+        }}
+        render={({ field }) => (
+          <TextField
+            {...field}
+            label="GCP Project ID"
+            fullWidth
+            margin="normal"
+            error={!!(errors.configuration as FieldErrors)?.gcp_project_id}
+            helperText={
+              (errors.configuration as any)?.gcp_project_id?.message ||
+              "Your Google Cloud Project ID"
+            }
+            required
+            slotProps={{ input: { readOnly: readonly } }}
+          />
+        )}
+      />
+      {authMethod === "workload_identity_federation_oidc" && (
+        <>
+          <Controller
+            name="configuration.gcp_wif_pool_provider_audience"
+            control={control}
+            defaultValue=""
+            rules={{
+              required: "Workload Identity pool provider audience is required",
+              pattern: {
+                value:
+                  /^\/\/iam\.googleapis\.com\/projects\/\d+\/locations\/global\/workloadIdentityPools\/[^/]+\/providers\/[^/]+$/,
+                message:
+                  "Use the full provider resource name: //iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+              },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="GCP WIF Pool Provider Audience"
+                fullWidth
+                margin="normal"
+                multiline
+                minRows={2}
+                error={
+                  !!(errors.configuration as FieldErrors)
+                    ?.gcp_wif_pool_provider_audience
+                }
+                helperText={
+                  (errors.configuration as any)?.gcp_wif_pool_provider_audience
+                    ?.message ||
+                  "Full provider resource name, e.g. //iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID"
+                }
+                required
+                slotProps={{
+                  input: {
+                    readOnly: readonly,
+                    sx: {
+                      fontFamily: "monospace",
+                    },
+                  },
+                }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.gcp_wif_service_account_email"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="GCP Service Account Email (optional)"
+                fullWidth
+                margin="normal"
+                error={
+                  !!(errors.configuration as FieldErrors)
+                    ?.gcp_wif_service_account_email
+                }
+                helperText={
+                  (errors.configuration as any)?.gcp_wif_service_account_email
+                    ?.message ||
+                  "Optional. Service account to impersonate after federation. Leave empty to grant IAM roles directly to the federated principal."
+                }
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.gcp_wif_service_account_impersonation_url"
+            control={control}
+            defaultValue=""
+            rules={{
+              pattern: {
+                value:
+                  /^https:\/\/iamcredentials\.googleapis\.com\/v1\/projects\/-\/serviceAccounts\/[^/:]+@[^/:]+\.iam\.gserviceaccount\.com:generateAccessToken$/,
+                message:
+                  "Use https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/SERVICE_ACCOUNT_EMAIL:generateAccessToken",
+              },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Service Account Impersonation URL (optional)"
+                fullWidth
+                margin="normal"
+                multiline
+                minRows={2}
+                error={
+                  !!(errors.configuration as FieldErrors)
+                    ?.gcp_wif_service_account_impersonation_url
+                }
+                helperText={
+                  (errors.configuration as any)
+                    ?.gcp_wif_service_account_impersonation_url?.message ||
+                  "Optional. Overrides the generated IAMCredentials impersonation endpoint when you need to supply the exact service_account_impersonation_url value."
+                }
+                slotProps={{
+                  input: {
+                    readOnly: readonly,
+                    sx: {
+                      fontFamily: "monospace",
+                    },
+                  },
+                }}
+              />
+            )}
+          />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "block", mt: 1 }}
+          >
+            InfraKitchen issues a signed OIDC token for this integration. After
+            saving, open the integration page to copy the{" "}
+            <strong>Issuer URL</strong> for your GCP Workload Identity provider
+            and, if InfraKitchen is not publicly reachable by GCP, download the{" "}
+            <strong>JWKS</strong> to upload into the provider configuration.
+          </Typography>
+        </>
+      )}
+      {authMethod !== "workload_identity_federation_oidc" && (
+        <Controller
+          name="configuration.gcp_service_account_key"
+          control={control}
+          defaultValue=""
+          rules={{
+            required: "Service Account Key is required",
+          }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="GCP Service Account Key"
+              fullWidth
+              margin="normal"
+              type="password"
+              error={
+                !!(errors.configuration as FieldErrors)?.gcp_service_account_key
+              }
+              helperText={
+                (errors.configuration as any)?.gcp_service_account_key
+                  ?.message || "JSON key for your GCP Service Account"
+              }
+              required
+              slotProps={{ input: { readOnly: readonly } }}
+            />
+          )}
+        />
+      )}
+      {isCreateMode && (
+        <Controller
+          name="createStorage"
+          control={control}
+          defaultValue={false}
+          render={({ field }) => (
+            <>
+              <FormControlLabel
+                control={<Checkbox {...field} checked={field.value} />}
+                label="Automatically create storage for OpenTofu/Terraform remote state management"
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", ml: 4 }}
+              >
+                Google storage bucket named{" "}
+                <code>infrakitchen-{"{GCP Project ID}"}-bucket</code> will be
+                created in <code>us</code> region.
+              </Typography>
+            </>
+          )}
+        />
+      )}
+    </>
+  );
+};
 
 export const renderFieldsForProvider = (
   provider: string,
@@ -189,82 +441,12 @@ export const renderFieldsForProvider = (
 
     case "gcp":
       return (
-        <>
-          <Controller
-            name="configuration.gcp_project_id"
-            control={control}
-            defaultValue=""
-            rules={{
-              required: "GCP Project ID is required",
-            }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="GCP Project ID"
-                fullWidth
-                margin="normal"
-                error={!!(errors.configuration as FieldErrors)?.gcp_project_id}
-                helperText={
-                  (errors.configuration as any)?.gcp_project_id?.message ||
-                  "Your Google Cloud Project ID"
-                }
-                required
-                slotProps={{ input: { readOnly: readonly } }}
-              />
-            )}
-          />
-          <Controller
-            name="configuration.gcp_service_account_key"
-            control={control}
-            defaultValue=""
-            rules={{
-              required: "Service Account Key is required",
-            }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="GCP Service Account Key"
-                fullWidth
-                margin="normal"
-                type="password"
-                error={
-                  !!(errors.configuration as FieldErrors)
-                    ?.gcp_service_account_key
-                }
-                helperText={
-                  (errors.configuration as any)?.gcp_service_account_key
-                    ?.message || "JSON key for your GCP Service Account"
-                }
-                required
-                slotProps={{ input: { readOnly: readonly } }}
-              />
-            )}
-          />
-          {isCreateMode && (
-            <Controller
-              name="createStorage"
-              control={control}
-              defaultValue={false}
-              render={({ field }) => (
-                <>
-                  <FormControlLabel
-                    control={<Checkbox {...field} checked={field.value} />}
-                    label="Automatically create storage for OpenTofu/Terraform remote state management"
-                  />
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", ml: 4 }}
-                  >
-                    Google storage bucket named{" "}
-                    <code>infrakitchen-{"{GCP Project ID}"}-bucket</code> will
-                    be created in <code>us</code> region.
-                  </Typography>
-                </>
-              )}
-            />
-          )}
-        </>
+        <GcpProviderFields
+          control={control}
+          errors={errors}
+          readonly={readonly}
+          isCreateMode={isCreateMode}
+        />
       );
 
     case "azurerm":

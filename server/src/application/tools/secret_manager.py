@@ -56,7 +56,11 @@ class SecretManager:
                 raise CannotProceed(f"Integration provider {integration.integration_provider} is not supported")
 
             integration_provider_adapter_instance: IntegrationProvider = integration_provider_adapter(
-                **{"logger": self.logger, "configuration": integration.configuration}
+                **{
+                    "logger": self.logger,
+                    "configuration": integration.configuration,
+                    "integration_id": integration.id,
+                }
             )
             await integration_provider_adapter_instance.authenticate()
             ev.update(**integration_provider_adapter_instance.environment_variables)

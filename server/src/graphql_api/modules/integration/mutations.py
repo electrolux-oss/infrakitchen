@@ -108,6 +108,7 @@ class IntegrationMutation:
         result = await service.validate(
             integration_config=integration.configuration,
             integration_provider=integration.integration_provider,
+            integration_id=id,
         )
         return IntegrationValidationType(is_valid=result.is_valid, message=result.message)
 

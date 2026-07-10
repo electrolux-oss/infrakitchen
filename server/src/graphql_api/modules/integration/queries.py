@@ -1,4 +1,6 @@
+import json
 import uuid
+from base64 import b64encode
 from typing import Any, cast
 
 import strawberry
@@ -7,9 +9,12 @@ from strawberry.types import Info
 
 from application.integrations.crud import IntegrationCRUD
 from application.integrations.functions import get_integration_actions
+from application.integrations.model import IntegrationDTO
+from application.integrations.schema import GCPIntegrationConfig
 from application.integrations.service import IntegrationService
 from application.integrations.dependencies import get_integration_service
-from core.errors import EntityNotFound
+from application.providers.gcp import gcp_oidc
+from core.errors import EntityNotFound, EntityWrongState
 from graphql_api.helpers import (
     IsAuthenticated,
     build_field_spec,
@@ -18,7 +23,7 @@ from graphql_api.helpers import (
     parse_range,
     parse_sort,
 )
-from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.integration.types import IntegrationOidcType, IntegrationType
 
 
 def _build_service(info: Info) -> IntegrationService:
@@ -77,3 +82,30 @@ class IntegrationQuery:
         if integration is None:
             raise EntityNotFound("Integration not found")
         return await get_integration_actions(requester, id, integration.status)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def integration_oidc(self, info: Info, id: uuid.UUID) -> IntegrationOidcType:
+        """Return the OIDC issuer/JWKS details for a GCP WIF-OIDC integration (for the UI)."""
+        await check_api_permission(info, "integration", ["read"])
+        session = info.context["session"]
+        integration = await IntegrationCRUD(session=session).get_by_id(id)
+        if integration is None:
+            raise EntityNotFound("Integration not found")
+
+        config = IntegrationDTO.model_validate(integration).configuration
+        if (
+            not isinstance(config, GCPIntegrationConfig)
+            or config.gcp_auth_method != "workload_identity_federation_oidc"
+            or not config.gcp_oidc_signing_public_jwk
+        ):
+            raise EntityWrongState("Integration does not expose an OIDC provider")
+
+        public_jwk = json.loads(config.gcp_oidc_signing_public_jwk)
+        jwks_document = json.dumps(gcp_oidc.build_jwks(public_jwk), indent=2)
+        return IntegrationOidcType(
+            issuer_url=gcp_oidc.issuer_url_for(id),
+            jwks_url=gcp_oidc.jwks_url_for(id),
+            audience=config.gcp_wif_pool_provider_audience,
+            jwks_filename="gcp-oidc-jwks.json",
+            jwks_content_base64=b64encode(jwks_document.encode("utf-8")).decode("ascii"),
+        )

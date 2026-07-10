@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import tempfile
+import traceback
 
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -257,7 +258,7 @@ class ResourceTask:
 
         if self.resource_instance.variables:
             for v in ResourceDTO.model_validate(self.resource_instance).variables:
-                if v.name == "tags":
+                if v.name == "tags" and isinstance(v.value, dict):
                     variables.update(**{v.name: {**merged_tags, **v.value}})
                 else:
                     variables.update(**{v.name: v.value})
@@ -266,7 +267,7 @@ class ResourceTask:
             temp_state_variables = self.resource_temp_state_dto.value.get("variables", [])
             if temp_state_variables:
                 for v in temp_state_variables:
-                    if v.get("name") == "tags":
+                    if v.get("name") == "tags" and isinstance(v.get("value"), dict):
                         variables.update({"tags": {**merged_tags, **v.get("value", {})}})
                     else:
                         variables.update({v["name"]: v["value"]})
@@ -497,12 +498,15 @@ class ResourceTask:
 
             code_language = self.source_code_instance.source_code_language
             if code_language == "opentofu":
-                assert self.tf_client is not None
+                if self.tf_client is None:
+                    raise ExitWithoutSave("Tofu client is not defined")
+
                 await self.tf_client.init()
                 # if destroy is True, plan destroy
                 await self.tf_client.dry_run(destroy=self.resource_instance.state == ModelState.DESTROY)
                 await self.clean_workspace()
         except Exception as e:
+            self.logger.error(traceback.format_exc())
             await self.clean_workspace()
             raise ExitWithoutSave(e) from e
 

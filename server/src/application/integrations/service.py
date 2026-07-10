@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 from uuid import UUID
@@ -5,6 +6,8 @@ from uuid import UUID
 
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.adapters.functions import get_integration_adapter
+from application.providers.gcp import gcp_oidc
+from application.integrations.schema import GCPIntegrationConfig
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants import ModelStatus
@@ -121,6 +124,7 @@ class IntegrationService:
             if integration.integration_provider not in notification_providers:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(notification_providers)}")
 
+        self._ensure_gcp_oidc_signing_material(getattr(integration, "configuration", None))
         body = model_db_dump(integration)
         body["created_by"] = requester.id
         new_integration = await self.crud.create(body)
@@ -167,6 +171,8 @@ class IntegrationService:
         self.revision_handler.original_entity_instance_dump = to_dict(existing_integration)
 
         self.validate_configuration(integration_update=integration, existing_integration=existing_integration)
+        self._carry_over_gcp_oidc_signing_material(integration, existing_integration)
+        self._ensure_gcp_oidc_signing_material(integration.configuration)
         body = model_db_dump(integration, exclude_defaults=True, exclude_none=True)
 
         # configuration is a replacement JSON object – it must be serialized in
@@ -273,10 +279,14 @@ class IntegrationService:
 
         existing_integration_config = IntegrationDTO.model_validate(existing_integration)
         existing_secrets = existing_integration_config.configuration.get_secrets()
+        new_secret_names = {secret_name for secret_name, _ in integration_update.configuration.get_secrets()}
 
         for secret in existing_secrets:
             secret_name = secret[0]
             existing_secret_value = secret[1]
+
+            if secret_name not in new_secret_names:
+                continue
 
             new_secret_value: EncryptedSecretStr | None = getattr(integration_update.configuration, secret_name, None)
             if new_secret_value is None:
@@ -289,9 +299,13 @@ class IntegrationService:
                 # the existing secret shouldn't be updated
                 setattr(integration_update.configuration, secret_name, existing_secret_value)
 
-    async def validate(self, integration_config: Any, integration_provider: str) -> IntegrationValidationResponse:
+    async def validate(
+        self, integration_config: Any, integration_provider: str, integration_id: str | UUID | None = None
+    ) -> IntegrationValidationResponse:
         try:
-            provider_adapter_instance = await get_integration_adapter(integration_provider, integration_config)
+            provider_adapter_instance = await get_integration_adapter(
+                integration_provider, integration_config, integration_id=integration_id
+            )
             await provider_adapter_instance.authenticate()
             integration_is_valid = await provider_adapter_instance.is_valid()
             message = "Validation successful" if integration_is_valid else "Validation failed"
@@ -302,3 +316,49 @@ class IntegrationService:
             integration_is_valid = False
             message = f"Unexpected error: {str(e)}"
         return IntegrationValidationResponse(is_valid=integration_is_valid, message=message)
+
+    # GCP OIDC signing keypair handling: generate on creation, preserve on update
+    @staticmethod
+    def _ensure_gcp_oidc_signing_material(config: Any) -> None:
+        """Generate a per-integration OIDC signing keypair when needed.
+
+        For GCP integrations using the ``workload_identity_federation_oidc`` auth method, a private
+        signing key (encrypted) and its public JWK are required. When they are missing (new
+        integration, or switching into OIDC mode) a fresh RSA keypair is generated in place on the
+        config. Existing keys are preserved.
+        """
+        if not isinstance(config, GCPIntegrationConfig):
+            return
+        if config.gcp_auth_method != "workload_identity_federation_oidc":
+            return
+        if config.gcp_oidc_signing_private_key and config.gcp_oidc_signing_public_jwk:
+            return
+
+        private_pem, public_jwk = gcp_oidc.generate_signing_keypair()
+        config.gcp_oidc_signing_private_key = EncryptedSecretStr(private_pem)
+        config.gcp_oidc_signing_public_jwk = json.dumps(public_jwk)
+
+    @staticmethod
+    def _carry_over_gcp_oidc_signing_material(
+        integration_update: IntegrationUpdate, existing_integration: Integration
+    ) -> None:
+        """Preserve an existing GCP OIDC keypair across updates.
+
+        The private signing key is never sent back by the frontend, so when an integration stays in
+        (or is edited while in) OIDC mode we copy the previously generated keypair from the stored
+        config instead of regenerating it (which would invalidate the published JWKS).
+        """
+        new_config = integration_update.configuration
+        if not isinstance(new_config, GCPIntegrationConfig):
+            return
+        if new_config.gcp_auth_method != "workload_identity_federation_oidc":
+            return
+        if new_config.gcp_oidc_signing_private_key and new_config.gcp_oidc_signing_public_jwk:
+            return
+
+        existing_config = IntegrationDTO.model_validate(existing_integration).configuration
+        if not isinstance(existing_config, GCPIntegrationConfig):
+            return
+        if existing_config.gcp_oidc_signing_private_key and existing_config.gcp_oidc_signing_public_jwk:
+            new_config.gcp_oidc_signing_private_key = existing_config.gcp_oidc_signing_private_key
+            new_config.gcp_oidc_signing_public_jwk = existing_config.gcp_oidc_signing_public_jwk

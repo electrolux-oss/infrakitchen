@@ -1,12 +1,10 @@
-from json import JSONDecodeError
 from google.cloud.secretmanager import (
     AccessSecretVersionRequest,
     AccessSecretVersionResponse,
     SecretManagerServiceClient,
 )
-from google.oauth2 import service_account
 
-from application.providers.gcp.gcp_project_client import GcpProjectClient
+from application.providers.gcp.gcp_project_client import GcpProjectClient, load_gcp_credentials_from_file
 
 
 class GcpSecretManager:
@@ -14,14 +12,9 @@ class GcpSecretManager:
 
     def __init__(self, environment_variables: dict[str, str], region: str | None) -> None:
         self.environment_variables = environment_variables
-        try:
-            self.credentials: service_account.Credentials = service_account.Credentials.from_service_account_file(
-                self.environment_variables.get("GOOGLE_APPLICATION_CREDENTIALS", "")
-            )
-        except JSONDecodeError as e:
-            raise ValueError("Invalid GCP credentials provided. Credentials must be a valid JSON file.") from e
-        except Exception as e:
-            raise ValueError("Error loading GCP credentials.") from e
+        self.credentials = load_gcp_credentials_from_file(
+            self.environment_variables.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+        )
 
         self.project_id: str = self.environment_variables.get("GOOGLE_PROJECT", "")
         if not self.project_id or not self.credentials:

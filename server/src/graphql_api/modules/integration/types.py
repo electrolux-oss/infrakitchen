@@ -48,4 +48,13 @@ class IntegrationValidationType:
     message: str | None = None
 
 
+@strawberry.type
+class IntegrationOidcType:
+    issuer_url: str
+    jwks_url: str
+    audience: str | None
+    jwks_filename: str
+    jwks_content_base64: str
+
+
 integration_mapper.finalize()

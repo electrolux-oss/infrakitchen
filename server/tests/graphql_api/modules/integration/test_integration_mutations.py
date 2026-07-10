@@ -579,6 +579,7 @@ class TestIntegrationValidationMutations:
         mock_integration_service.validate.assert_awaited_once_with(
             integration_config=mocked_integration_response.configuration,
             integration_provider=mocked_integration_response.integration_provider,
+            integration_id=integration_id,
         )
 
     @pytest.mark.asyncio

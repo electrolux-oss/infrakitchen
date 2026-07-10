@@ -3,7 +3,8 @@ from google.cloud import storage
 from application.storages.schema import GCPStorageConfig
 from core import StorageProviderAdapter
 from core.custom_entity_log_controller import EntityLogger
-from google.oauth2 import service_account
+
+from application.providers.gcp.gcp_project_client import load_gcp_credentials_from_file
 
 
 class GcpStorage:
@@ -22,7 +23,7 @@ class GcpStorage:
         if not self.configuration.gcp_bucket_name:
             raise ValueError("No bucket name provided for GCP backend provider.")
 
-        self.credentials: service_account.Credentials = service_account.Credentials.from_service_account_file(
+        self.credentials = load_gcp_credentials_from_file(
             self.environment_variables.get("GOOGLE_APPLICATION_CREDENTIALS", "")
         )
         self.project_id: str = self.environment_variables.get("GOOGLE_PROJECT", "")

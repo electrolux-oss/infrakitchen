@@ -173,7 +173,14 @@ export const providers: Provider[] = [
     name: "Google Cloud",
     icon: GoogleCloudIcon,
     slug: "gcp",
-    instructions: [],
+    instructions: [
+      "Choose your <strong>Authentication Method</strong> below: <strong><a href='https://docs.cloud.google.com/iam/docs/keys-create-delete' target='_blank'>Service Account Key</a></strong> or <strong><a href='https://docs.cloud.google.com/iam/docs/workload-identity-federation' target='_blank'>Workload Identity Federation (OIDC)</a></strong> (InfraKitchen issues the OIDC token for you)",
+      "For <strong>Workload Identity Federation (OIDC)</strong>: in Google Cloud IAM create a <strong>Workload Identity Pool</strong>, then add an <strong>OIDC</strong> provider",
+      "Save the integration first, then open the integration page and copy the generated <strong>Issuer URL</strong> into the provider's <strong>Issuer (URL)</strong> field. If InfraKitchen is publicly reachable, GCP fetches the keys automatically; if not, download the <strong>JWKS</strong> from the integration page and upload it into the provider's JWK field",
+      "Set the provider <strong>Audience</strong> (or use the default audience) and paste the full provider resource name into <strong>GCP WIF Pool Provider Audience</strong> in the form below",
+      "Grant the federated principal direct IAM roles",
+      "InfraKitchen must have <code>INFRAKITCHEN_URL</code> configured for the OIDC method, otherwise <strong>Test Connection</strong> and OpenTofu runs will fail",
+    ],
     tokenLink: "",
   },
   {
