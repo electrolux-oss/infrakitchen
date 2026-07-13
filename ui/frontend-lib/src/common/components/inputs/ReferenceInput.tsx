@@ -102,7 +102,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
       .graphqlRequest(
         `query ReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
           ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-            ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+            ${buildGraphqlFields(["id", ...(fields || showFields)])}
           }
           ${graphqlCountName}(filter: $filter)
         }`,
