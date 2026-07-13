@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import {
   createBrowserRouter,
   Navigate,
@@ -14,6 +16,7 @@ import {
   LocalStorageProvider,
   RouterSnackbarWrapper,
   PermissionProvider,
+  usePermissionProvider,
   useFilteredProtectedRoutes,
 } from "@electrolux-oss/infrakitchen";
 import Box from "@mui/material/Box";
@@ -35,28 +38,48 @@ const unauthenticatedRouter = createBrowserRouter([
 ]);
 
 const PermissionFilteredRouter = () => {
+  const { loading } = usePermissionProvider();
   const accessibleRoutes = useFilteredProtectedRoutes();
 
-  const router = createBrowserRouter([
-    {
-      path: "/login",
-      Component: SignInSide,
-    },
-    {
-      element: <Outlet />,
-      children: [
+  const router = useMemo(
+    () =>
+      createBrowserRouter([
         {
-          element: <RouterSnackbarWrapper />,
+          path: "/login",
+          Component: SignInSide,
+        },
+        {
+          element: <Outlet />,
           children: [
             {
-              Component: DashboardLayout,
-              children: accessibleRoutes,
+              element: <RouterSnackbarWrapper />,
+              children: [
+                {
+                  Component: DashboardLayout,
+                  children: accessibleRoutes,
+                },
+              ],
             },
           ],
         },
-      ],
-    },
-  ]);
+      ]),
+    [accessibleRoutes],
+  );
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <GradientCircularProgress />
+      </Box>
+    );
+  }
 
   return <RouterProvider router={router} />;
 };
