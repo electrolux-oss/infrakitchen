@@ -274,6 +274,7 @@ export const ResourceVariablesEditDialog = ({
             ikApi={ikApi}
             entity_name="source_code_versions"
             showFields={["identifier"]}
+            fields={["id", "identifier", "status"]}
             buffer={buffer}
             setBuffer={setBuffer}
             getOptionDisabled={(option: any) => option.status !== "done"}

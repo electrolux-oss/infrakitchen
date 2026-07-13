@@ -45,6 +45,14 @@ export const LinkUserAccount = (props: PolicyCreateProps) => {
               {...field}
               ikApi={ikApi}
               entity_name="users"
+              fields={[
+                "id",
+                "identifier",
+                "display_name",
+                "email",
+                "is_primary",
+                "deactivated",
+              ]}
               buffer={buffer}
               setBuffer={setBuffer}
               filter={{
