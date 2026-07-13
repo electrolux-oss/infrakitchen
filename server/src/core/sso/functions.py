@@ -9,12 +9,16 @@ import jwt
 from fastapi import Depends, HTTPException, Request, Security
 from fastapi.security import APIKeyCookie, HTTPAuthorizationCredentials, HTTPBearer
 from jwt.algorithms import ECAlgorithm
+from sqlalchemy.exc import IntegrityError
 
 from core.casbin.enforcer import CasbinEnforcer
 from core.config import Settings
-from core.errors import EntityExistsError
+from core.dependencies import get_async_session
+from core.errors import AccessUnauthorized, EntityExistsError
+from core.permissions.dependencies import get_permission_service
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
+from core.users.dependencies import get_user_service
 from core.users.functions import user_has_access_to_api
 from core.users.schema import UserCreateWithProvider, UserResponse
 from core.utils.json_encoder import JsonEncoder
@@ -149,10 +153,11 @@ async def get_decoded_token(
     elif token_type == "vnd.backstage.user":
         backstage_providers = await service.auth_provider_service.get_all(filter={"auth_provider": "backstage"})
         if len(backstage_providers) == 0 or backstage_providers[0].enabled is False:
-            raise HTTPException(status_code=401, detail="Backstage authentication provider is not enabled")
+            raise AccessUnauthorized("Backstage authentication provider is not enabled")
         backstage_provider = backstage_providers[0]
 
-        assert isinstance(backstage_provider.configuration, BackstageProviderConfig)
+        if not isinstance(backstage_provider.configuration, BackstageProviderConfig):
+            raise AccessUnauthorized("Backstage authentication provider configuration is invalid")
         jwks_url = backstage_provider.configuration.backstage_jwks_url
         jwks_keys = await get_jwks(jwks_url)
         header = jwt.get_unverified_header(token)
@@ -169,7 +174,7 @@ async def get_decoded_token(
             return jwt.decode(token, algorithms=[alg], key=key, audience=audience)  # type: ignore [arg-type]
         except Exception as error:
             logger.error(f"Error decoding token: {error}")
-            raise HTTPException(status_code=401, detail=f"Invalid authentication credentials. {error}") from error
+            raise AccessUnauthorized(f"Invalid authentication credentials. {error}") from error
     else:
         raise NotImplementedError(f"Invalid token type: {token_type}")
 
@@ -198,7 +203,7 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
             - vnd.backstage.user: Creates/gets user based on subject claim
     """
     if token is None:
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise AccessUnauthorized("Invalid authentication credentials")
 
     try:
         # get audience of token to choose the right validation
@@ -209,34 +214,59 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
         audience = decoded_token.get("aud", "")
     except Exception as error:
         logger.error(f"Error decoding token: {error}")
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials") from error
+        raise AccessUnauthorized("Invalid authentication credentials") from error
 
     try:
         claims = await get_decoded_token(service, token, alg, token_type, audience)
         if token_type == "infrakitchen.auth.token":
             user_id = claims.get("pld", {}).get("id")
-            assert user_id is not None, "User ID not found in token claims"
+            if user_id is None:
+                raise AccessUnauthorized("User ID not found in token claims")
             # trusting JWT token, so no need to check if user exists in database
             user = UserDTO.model_validate(claims["pld"])
             return user
         elif token_type == "vnd.backstage.user":
             user_id = claims.get("sub")
             if not user_id:
-                raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+                raise AccessUnauthorized("Invalid authentication credentials")
 
-            user = await service.user_service.create_user_if_not_exists(
+            return await provision_backstage_user(service, user_id)
+    except Exception as error:
+        logger.error(f"Error decoding token: {error}")
+        raise AccessUnauthorized(f"Invalid authentication credentials. {error}") from error
+
+
+async def provision_backstage_user(service: SSOService, user_id: str) -> UserDTO:
+    async with get_async_session() as session:
+        user_service = get_user_service(session=session)
+        permission_service = get_permission_service(session=session)
+        permission_service.casbin_enforcer = service.casbin_enforcer
+
+        try:
+            user = await user_service.create_user_if_not_exists(
                 UserCreateWithProvider(identifier=user_id, provider="backstage")
             )
 
+            existing_roles = await service.casbin_enforcer.get_user_roles(user.id)
+            reload_permission = False
             try:
-                _ = await service.permission_service.assign_user_to_role("default", user.id)
+                if "default" not in existing_roles:
+                    reload_permission = True
+                    _ = await permission_service.assign_user_to_role("default", user.id, reload_permission=False)
+
             except EntityExistsError:
                 pass  # User is already assigned to the role
 
+            await session.commit()
+
+            if reload_permission:
+                await service.casbin_enforcer.send_reload_event()
+
             return user
-    except Exception as error:
-        logger.error(f"Error decoding token: {error}")
-        raise HTTPException(status_code=401, detail=f"Invalid authentication credentials. {error}") from error
+        except IntegrityError as e:
+            if session.in_transaction():
+                await session.rollback()
+            raise AccessUnauthorized("Invalid authentication credentials") from e
 
 
 async def get_logged_user(

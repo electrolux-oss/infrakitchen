@@ -29,6 +29,7 @@ from graphql_api.helpers import mask_sensitive_values
 from core.casbin.enforcer import CasbinEnforcer
 from core.errors import (
     AccessDenied,
+    AccessUnauthorized,
     ChildrenIsNotReady,
     CloudWrongCredentials,
     ConfigError,
@@ -283,6 +284,15 @@ async def access_denied_error_handler(request: Request, exc: AccessDenied):
     logger.error(f"AccessDenied: {exc}")
     return JSONResponse(
         status_code=403,
+        content={"message": f"{exc}"},
+    )
+
+
+@app.exception_handler(AccessUnauthorized)
+async def access_unauthorized_error_handler(request: Request, exc: AccessUnauthorized):
+    logger.error(f"AccessUnauthorized: {exc}")
+    return JSONResponse(
+        status_code=401,
         content={"message": f"{exc}"},
     )
 
