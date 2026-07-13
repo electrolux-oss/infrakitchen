@@ -32,8 +32,16 @@ Other write tools (`create_template`, `patch_template`, `create_source_code`,
 etc.) take effect immediately — there is no approval gate for these entities.
 Use caution when creating or modifying templates, source codes, and storages.
 
-Approve / reject / destroy / delete are intentionally not exposed — those
-stay with humans.
+For entities that support lifecycle actions, discover allowed actions first via
+their GraphQL `*Actions` query (for example `resourceActions`,
+`templateActions`, `sourceCodeActions`, `sourceCodeVersionActions`,
+`storageActions`, `integrationActions`, `executorActions`). The corresponding
+GraphQL `*Action` mutations exist in the API, and MCP exposes matching
+`patch_action_*` tools for supported entities.
+
+Use lifecycle action tools carefully: they can trigger immediate state changes
+such as approve, reject, destroy, recreate, or disable when those actions are
+allowed for the current entity.
 """
 
 

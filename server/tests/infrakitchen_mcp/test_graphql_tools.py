@@ -82,7 +82,7 @@ def _server_with_transport(handler):
 @pytest.mark.asyncio
 async def test_tools_registered(server):
     names = [t.name for t in await server.list_tools()]
-    assert {"list_schema_types", "get_schema", "graphql_query"} <= set(names)
+    assert {"list_schema_types", "get_schema", "graphql_query", "resource_tree"} <= set(names)
 
 
 @pytest.mark.asyncio
@@ -213,23 +213,59 @@ async def test_graphql_query_success_passthrough():
 
 @pytest.mark.asyncio
 async def test_resource_tree_happy_path():
-    tree = {"id": "r1", "name": "root", "children": [{"id": "r2", "name": "child", "children": []}]}
+    tree = {
+        "id": "r1",
+        "nodeId": "n1",
+        "name": "root",
+        "state": "provisioned",
+        "status": "active",
+        "templateName": "root-template",
+        "children": [
+            {
+                "id": "r2",
+                "nodeId": "n2",
+                "name": "child",
+                "state": "provisioned",
+                "status": "active",
+                "templateName": "child-template",
+                "children": [],
+            }
+        ],
+    }
 
     def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/api/resources/r1/tree/children"
-        return httpx.Response(200, json=tree)
+        assert request.url.path == "/api/graphql"
+        payload = json.loads(request.content.decode("utf-8"))
+        assert payload["variables"] == {"id": "r1", "direction": "children"}
+        assert "resourceTree(id: $id, direction: $direction)" in payload["query"]
+        return httpx.Response(200, json={"data": {"resourceTree": tree}})
 
     server = _server_with_transport(handler)
     result = await server.call_tool("resource_tree", {"resource_id": "r1"})
     payload = json.loads(_text(result))
     assert payload["id"] == "r1"
+    assert payload["node_id"] == "n1"
+    assert payload["template_name"] == "root-template"
     assert len(payload["children"]) == 1
+    assert payload["children"][0]["node_id"] == "n2"
 
 
 @pytest.mark.asyncio
 async def test_resource_tree_404():
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(404)
+        return httpx.Response(
+            200,
+            json={
+                "data": None,
+                "errors": [
+                    {
+                        "message": "Resource not found",
+                        "extensions": {"code": "NOT_FOUND"},
+                        "path": ["resourceTree"],
+                    }
+                ],
+            },
+        )
 
     server = _server_with_transport(handler)
     result = await server.call_tool("resource_tree", {"resource_id": "missing"})
@@ -248,10 +284,50 @@ async def test_resource_tree_invalid_direction():
 @pytest.mark.asyncio
 async def test_resource_tree_parents_direction():
     def handler(request: httpx.Request) -> httpx.Response:
-        assert request.url.path == "/api/resources/r1/tree/parents"
-        return httpx.Response(200, json={"id": "root", "name": "ancestor", "children": []})
+        payload = json.loads(request.content.decode("utf-8"))
+        assert payload["variables"] == {"id": "r1", "direction": "parents"}
+        return httpx.Response(
+            200,
+            json={
+                "data": {
+                    "resourceTree": {
+                        "id": "root",
+                        "nodeId": "n-root",
+                        "name": "ancestor",
+                        "state": "provisioned",
+                        "status": "active",
+                        "templateName": "ancestor-template",
+                        "children": [],
+                    }
+                }
+            },
+        )
 
     server = _server_with_transport(handler)
     result = await server.call_tool("resource_tree", {"resource_id": "r1", "direction": "parents"})
     payload = json.loads(_text(result))
     assert payload["id"] == "root"
+
+
+@pytest.mark.asyncio
+async def test_resource_tree_raises_on_non_not_found_graphql_errors():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "data": None,
+                "errors": [
+                    {
+                        "message": "Permission denied",
+                        "extensions": {"code": "ACCESS_DENIED"},
+                        "path": ["resourceTree"],
+                    }
+                ],
+            },
+        )
+
+    server = _server_with_transport(handler)
+    with pytest.raises(Exception) as exc:
+        await server.call_tool("resource_tree", {"resource_id": "r1"})
+    assert "GraphQL query failed" in str(exc.value)
+    assert "Permission denied" in str(exc.value)

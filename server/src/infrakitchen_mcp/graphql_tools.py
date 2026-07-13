@@ -11,6 +11,7 @@ from .context import request_auth_token
 
 
 GRAPHQL_PATH = "/api/graphql"
+RESOURCE_TREE_QUERY_DEPTH = 8
 
 
 QUERY_TOOL_DESCRIPTION = """Execute a GraphQL query against the InfraKitchen API.
@@ -139,6 +140,26 @@ def _format_field_signature(name: str, field: Any) -> str:
     return f"  {name}: {field.type}"
 
 
+def _build_resource_tree_selection(depth: int) -> str:
+    fields = "id nodeId name state status templateName"
+    if depth <= 0:
+        return fields
+    child_selection = _build_resource_tree_selection(depth - 1)
+    return f"{fields} children {{ {child_selection} }}"
+
+
+def _normalize_resource_tree_node(node: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": node["id"],
+        "node_id": node["nodeId"],
+        "name": node["name"],
+        "state": node["state"],
+        "status": node["status"],
+        "template_name": node["templateName"],
+        "children": [_normalize_resource_tree_node(child) for child in node.get("children", [])],
+    }
+
+
 def register_graphql_tools(mcp: FastMCP, client: httpx.AsyncClient, schema: GraphQLSchema) -> None:
     """Register the three GraphQL discovery + query tools on the MCP server."""
 
@@ -234,16 +255,12 @@ resource. For detailed fields on individual resources (integrations, variables,
 source code, etc.), follow up with `graphql_query` on specific resource IDs.
 """
 
-    # TODO: resource_tree currently proxies the deprecated REST endpoint
-    # GET /api/resources/{id}/tree/{direction} which uses a recursive CTE.
-    # Long-term, this should be replaced with a dedicated GraphQL query
-    # (similar to template_tree in graphql_api/modules/template/queries.py).
     @mcp.tool(description=RESOURCE_TREE_DESCRIPTION)
     async def resource_tree(
         resource_id: str,
         direction: str = "children",
     ) -> dict[str, Any]:
-        """Fetch a resource's hierarchy via the REST tree endpoint."""
+        """Fetch a resource's hierarchy via the GraphQL resourceTree query."""
         headers = {}
         auth = request_auth_token.get(None)
         if auth:
@@ -252,11 +269,48 @@ source code, etc.), follow up with `graphql_query` on specific resource IDs.
         if direction not in ("children", "parents"):
             raise ValueError(f"direction must be 'children' or 'parents', got '{direction}'")
 
-        resp = await client.get(
-            f"/api/resources/{resource_id}/tree/{direction}",
+        query = f"""
+        query ResourceTree($id: UUID!, $direction: String!) {{
+          resourceTree(id: $id, direction: $direction) {{
+            {_build_resource_tree_selection(RESOURCE_TREE_QUERY_DEPTH)}
+          }}
+        }}
+        """
+        resp = await client.post(
+            GRAPHQL_PATH,
+            json={"query": query, "variables": {"id": resource_id, "direction": direction}},
             headers=headers,
         )
-        if resp.status_code == 404:
-            return {"error": f"Resource {resource_id} not found"}
         resp.raise_for_status()
-        return resp.json()
+        body = resp.json()
+
+        errors = body.get("errors") if isinstance(body, dict) else None
+        if errors:
+            not_found = next(
+                (
+                    err.get("message")
+                    for err in errors
+                    if isinstance(err, dict) and err.get("extensions", {}).get("code") == "NOT_FOUND"
+                ),
+                None,
+            )
+            if not_found is not None:
+                return {"error": not_found}
+
+            messages = []
+            for err in errors:
+                if not isinstance(err, dict):
+                    continue
+                msg = err.get("message", "Unknown error")
+                path = err.get("path")
+                if path:
+                    msg = f"{msg} (path: {'.'.join(str(p) for p in path)})"
+                messages.append(msg)
+            detail = "; ".join(messages) if messages else "Unknown error"
+            raise ValueError(f"GraphQL query failed: {detail}")
+
+        tree = body.get("data", {}).get("resourceTree") if isinstance(body, dict) else None
+        if tree is None:
+            return {"error": f"Resource {resource_id} not found"}
+
+        return _normalize_resource_tree_node(tree)
