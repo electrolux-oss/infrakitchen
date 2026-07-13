@@ -417,7 +417,7 @@ const allRoutes: LazyRouteDefinition[] = [
 
   // ── Workers ───────────────────────────────────────────────────────────────────
   {
-    path: "workers",
+    path: "/workers",
     Component: lazy(() => import("./workers/pages/Workers")),
     requiredPermission: "api:worker",
     permissionAction: "read",
@@ -476,55 +476,59 @@ const allRoutes: LazyRouteDefinition[] = [
   },
 ];
 
+const DashboardPageLazy = lz(
+  () => import("./dashboard/pages/Dashboard"),
+  "DashboardPage",
+);
+
 export const useFilteredProtectedRoutes = (): RouteObject[] => {
   const { permissions } = usePermissionProvider();
 
-  const checkActionPermission = (resource: string, action: string): boolean => {
-    if (permissions["*"] === "admin") {
-      return true;
-    }
+  return React.useMemo(() => {
+    const checkActionPermission = (
+      resource: string,
+      action: string,
+    ): boolean => {
+      if (permissions["*"] === "admin") {
+        return true;
+      }
 
-    const userPermission = permissions[resource];
+      const userPermission = permissions[resource];
 
-    if (!userPermission) {
+      if (!userPermission) {
+        return false;
+      }
+
+      if (action === "read") {
+        return true;
+      }
+
+      if (action === "write") {
+        return userPermission === "write" || userPermission === "admin";
+      }
+
+      if (action === "admin") {
+        return userPermission === "admin";
+      }
+
       return false;
-    }
+    };
 
-    if (action === "read") {
-      return true;
-    }
+    const accessibleRoutes = allRoutes.filter((route) => {
+      if (route.requiredPermission && route.permissionAction) {
+        return checkActionPermission(
+          route.requiredPermission,
+          route.permissionAction,
+        );
+      }
+      return false;
+    });
 
-    if (action === "write") {
-      return userPermission === "write" || userPermission === "admin";
-    }
-
-    if (action === "admin") {
-      return userPermission === "admin";
-    }
-
-    return false;
-  };
-
-  const accessibleRoutes = allRoutes.filter((route) => {
-    if (route.requiredPermission && route.permissionAction) {
-      return checkActionPermission(
-        route.requiredPermission,
-        route.permissionAction,
-      );
-    }
-    return false;
-  });
-
-  accessibleRoutes.push(
-    {
-      path: "/",
-      Component: lz(
-        () => import("./dashboard/pages/Dashboard"),
-        "DashboardPage",
-      ),
-    },
-    { path: "*", Component: NotFoundPage },
-  );
-
-  return accessibleRoutes;
+    return [
+      ...accessibleRoutes,
+      { path: "/", Component: DashboardPageLazy },
+      { path: "*", Component: NotFoundPage },
+    ];
+    // `loading` is included so consumers re-run once permissions resolve.
+  }, [permissions]);
 };
