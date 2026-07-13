@@ -199,7 +199,7 @@ class StorageService:
                             {
                                 "id": dependency.id,
                                 "name": dependency.name,
-                                "_entity_name": dependency.type,
+                                "entityName": dependency.type,
                             }
                             for dependency in dependencies
                         ],
