@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "scripts": {
     "build": "tsc --emitDeclarationOnly && NODE_OPTIONS='--max-old-space-size=4096' vite build",
-    "prepublishOnly": "yarn build"
+    "prepublishOnly": "pnpm build"
   },
   "repository": {
     "type": "git",
@@ -25,12 +25,14 @@
     "src"
   ],
   "devDependencies": {
+    "@codemirror/lint": "^6.9.2",
     "@codemirror/lang-json": "^6.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@iconify/react": "^6.0.2",
     "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.11",
+    "@mui/system": "^7.3.11",
     "@mui/x-data-grid": "^8.29.2",
     "@mui/x-tree-view": "^8.29.2",
     "@types/node": "^24.13.3",

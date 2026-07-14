@@ -67,12 +67,10 @@
         initNodeModulesScript = pkgs.writeText "init-node-modules.sh" ''
           # Placeholder for any Node.js initialization commands
           echo "Initializing Node.js modules..."
-          if [ ! -d "ui/node_modules" ]; then
-            cd ui
-            echo "Installing Node.js dependencies..."
-            ${pkgs.yarn}/bin/yarn install
-            cd ..
-          fi
+          cd ui
+          echo "Installing Node.js dependencies..."
+          ${pkgs.pnpm}/bin/pnpm install
+          cd ..
           '';
 
       in
@@ -84,6 +82,7 @@
           packages = [
             pkgs.git
             pkgs.nodejs_24
+            pkgs.pnpm
             pkgs.opentofu
             pkgs.rabbitmq-server
           ];
@@ -131,7 +130,7 @@
             export RABBITMQ_NODENAME=rabbit@localhost
             export RABBITMQ_PID_FILE=$RABBITMQ_MNESIA_BASE/$RABBITMQ_NODENAME.pid
             echo "Starting RabbitMQ server..."
-            ${pkgs.erlang}/bin/epmd -daemon
+            ${pkgs.beamPackages.erlang}/bin/epmd -daemon
             ${pkgs.rabbitmq-server}/sbin/rabbitmq-server -detached
             ${pkgs.rabbitmq-server}/sbin/rabbitmqctl wait $RABBITMQ_PID_FILE --timeout 240
             ${pkgs.rabbitmq-server}/sbin/rabbitmq-plugins enable rabbitmq_management
@@ -147,7 +146,7 @@
             stop_rabbitmq() {
               echo "Stopping RabbitMQ server..."
               ${pkgs.rabbitmq-server}/sbin/rabbitmqctl stop
-              ${pkgs.erlang}/bin/epmd -kill
+              ${pkgs.beamPackages.erlang}/bin/epmd -kill
             }
 
 

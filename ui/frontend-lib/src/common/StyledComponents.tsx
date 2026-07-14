@@ -1,7 +1,9 @@
-import { Tab } from "@mui/material";
+import { forwardRef } from "react";
+
+import { Tab, type TabProps } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
-export const StyledTab = styled(Tab)(({ theme }) => ({
+const StyledTabRoot = styled(Tab)(({ theme }) => ({
   textTransform: "none",
   fontWeight: 500,
   color: theme.palette.primary.dark,
@@ -13,3 +15,9 @@ export const StyledTab = styled(Tab)(({ theme }) => ({
     border: `1px solid ${theme.palette.primary.dark}`,
   },
 }));
+
+export const StyledTab = forwardRef<HTMLButtonElement, TabProps>(
+  function StyledTab(props, ref) {
+    return <StyledTabRoot ref={ref as TabProps["ref"]} {...props} />;
+  },
+);

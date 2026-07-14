@@ -31,8 +31,9 @@ services:
       dockerfile: ./docs/examples/docker/Frontend
     environment:
       BACKEND_HOST: python-backend-server
+      CI: "true"
     command: >
-      bash -c "yarn install && yarn dev"
+      bash -c "corepack enable && pnpm install && pnpm dev"
     ports:
       - "7777:7777"
     networks:

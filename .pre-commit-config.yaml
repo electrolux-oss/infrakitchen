@@ -37,8 +37,8 @@ repos:
 
   - repo: local
     hooks:
-      - id: yarn-format-lint-type-check
-        name: Run yarn format, lint, and type-check
+      - id: pnpm-format-lint-type-check
+        name: Run pnpm format, lint, and type-check
         entry: ./scripts/run_typescript_linter.sh
         language: system
         verbose: true

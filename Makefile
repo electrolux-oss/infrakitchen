@@ -5,7 +5,7 @@ install: server-install ui-install
 server-install:
 	cd server && uv sync
 ui-install:
-	cd ui && yarn install
+	cd ui && pnpm install
 
 init:
 	uv sync --directory server

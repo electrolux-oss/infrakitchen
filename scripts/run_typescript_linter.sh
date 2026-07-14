@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 cd ui
-yarn install --immutable && yarn format-lib &&
-  yarn format && yarn lint && yarn tsc --noEmit && yarn lint-lib
+CI="true" pnpm install --frozen-lockfile && pnpm format-lib &&
+  pnpm format && pnpm lint && pnpm exec tsc --noEmit && pnpm lint-lib

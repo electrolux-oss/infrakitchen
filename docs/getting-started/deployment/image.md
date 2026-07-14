@@ -25,7 +25,7 @@ FROM node:24.6.0-bookworm-slim@sha256:9b741b28148b0195d62fa456ed84dd6c953c1f17a3
 
 WORKDIR /app
 COPY ./ui /app
-RUN yarn install && yarn build
+RUN corepack enable && CI=true pnpm install --frozen-lockfile && pnpm build
 
 
 FROM docker.io/library/python:3.14-trixie@sha256:dcf12835490de651661bfc30235de1233cf167435ea167c37ba9786affc5dbab

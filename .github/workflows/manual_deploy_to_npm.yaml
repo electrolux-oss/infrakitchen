@@ -21,6 +21,11 @@ jobs:
         with:
           node-version: "24.x"
           registry-url: https://registry.npmjs.org/ # Needed for auth
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
 
       - name: Run ESLint
         run: ./scripts/check_typescript.sh
@@ -42,16 +47,16 @@ jobs:
       # publish a release to npm
       #############################################################################
       - name: publish package
-        working-directory: ./ui/frontend-lib
         run: |
-          yarn install --immutable
-          yarn build
-          yarn config set -H 'npmAuthToken' "${{secrets.NPM_TOKEN}}"
+          cd ui
+          pnpm install --frozen-lockfile
+          pnpm --filter @electrolux-oss/infrakitchen build
+          cd frontend-lib
 
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            yarn npm publish --access public --tolerate-republish
+            pnpm publish --access public --no-git-checks
           else
-            yarn npm publish --access public --tolerate-republish --tag rc
+            pnpm publish --access public --no-git-checks --tag rc
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

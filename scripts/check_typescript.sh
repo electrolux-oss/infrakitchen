@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 cd ui
 echo "Checking typescript for frontend app"
-yarn install --immutable && yarn format-lib:check &&
-  yarn format:check && yarn lint && yarn tsc --noEmit && yarn lint-lib
+CI="true" pnpm install --frozen-lockfile && pnpm format-lib:check &&
+  pnpm format:check && pnpm lint && pnpm exec tsc --noEmit && pnpm lint-lib
 
 echo "Checking typescript for frontend-lib"
 cd frontend-lib
-yarn tsc --emitDeclarationOnly
+pnpm exec tsc --emitDeclarationOnly
