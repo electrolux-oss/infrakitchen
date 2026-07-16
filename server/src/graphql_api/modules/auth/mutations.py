@@ -1,9 +1,12 @@
 import datetime
+from uuid import UUID
 
 import strawberry
 from strawberry.types import Info
-
+from strawberry.experimental import pydantic as strawberry_pydantic
 from core.errors import AccessUnauthorized
+from core.personal_access_tokens.dependencies import get_personal_access_token_service
+from core.personal_access_tokens.schema import PersonalAccessTokenCreate
 from core.sso.github import github_refresh_token
 from core.sso.google import google_refresh_token
 from core.sso.guest import guest_refresh_token
@@ -11,7 +14,18 @@ from core.sso.microsoft import microsoft_refresh_token
 from core.sso.service import SSOService
 from core.sso.functions import create_user_token
 from core.utils.password_manager import is_correct_password
-from graphql_api.modules.auth.types import LogoutResponseType, RefreshAuthTokenType, ServiceAccountTokenType
+from graphql_api.helpers import IsAuthenticated
+from graphql_api.modules.auth.types import (
+    LogoutResponseType,
+    PersonalAccessTokenCreateType,
+    RefreshAuthTokenType,
+    ServiceAccountTokenType,
+)
+
+
+@strawberry_pydantic.input(model=PersonalAccessTokenCreate, all_fields=True)
+class PersonalAccessTokenCreateInput:
+    expires_at: datetime.datetime | None = None
 
 
 def _make_refresh_response(result: dict[str, str | datetime.datetime], provider: str) -> RefreshAuthTokenType:
@@ -24,6 +38,27 @@ def _make_refresh_response(result: dict[str, str | datetime.datetime], provider:
 
 @strawberry.type
 class AuthMutation:
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def create_personal_access_token(
+        self, info: Info, input: PersonalAccessTokenCreateInput
+    ) -> PersonalAccessTokenCreateType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_personal_access_token_service(session=session)
+        token = await service.create_token(
+            requester.id,
+            input.to_pydantic(),
+        )
+        return PersonalAccessTokenCreateType(**token.model_dump())
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def delete_personal_access_token(self, info: Info, id: UUID) -> bool:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_personal_access_token_service(session=session)
+        await service.delete_token(id, requester.id)
+        return True
+
     @strawberry.mutation
     async def service_account_token(self, info: Info, identifier: str, password: str) -> ServiceAccountTokenType:
         service: SSOService = info.context["sso_service"]

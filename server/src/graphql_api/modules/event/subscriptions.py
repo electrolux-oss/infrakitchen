@@ -32,7 +32,7 @@ class EventSubscription:
         if InfrakitchenConfig().websocket is False:
             raise PermissionError("WebSocket subscriptions are disabled")
 
-        _authenticate_subscription(info)
+        await _authenticate_subscription(info)
 
         async with RabbitMQConnection() as connection:
             channel = await connection.get_channel()

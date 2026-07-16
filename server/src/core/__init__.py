@@ -37,6 +37,7 @@ from .utils.message_handler import MessageHandler
 from .base_models import MessageModel
 from .models.encrypted_secret import EncryptedSecretStr
 from .notifications import SubscriptionDTO, NotificationPreferenceDTO
+from .personal_access_tokens import PersonalAccessToken, PersonalAccessTokenDTO
 
 
 __all__ = [
@@ -74,4 +75,6 @@ __all__ = [
     "FeatureFlag",
     "NotificationPreferenceDTO",
     "SubscriptionDTO",
+    "PersonalAccessToken",
+    "PersonalAccessTokenDTO",
 ]

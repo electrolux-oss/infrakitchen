@@ -5,6 +5,7 @@ from core.auth_providers.dependencies import get_auth_provider_service
 from core.casbin.enforcer import CasbinEnforcer
 
 from core.dependencies import get_db_session
+from core.personal_access_tokens.dependencies import get_personal_access_token_service
 from core.sso.service import SSOService
 from core.users.dependencies import get_user_service
 from core.permissions.dependencies import get_permission_service
@@ -24,4 +25,5 @@ def get_sso_service(
         audit_log_handler=audit_log_handler,
         permission_service=get_permission_service(session=session),
         casbin_enforcer=casbin_enforcer,
+        personal_access_token_service=get_personal_access_token_service(session=session),
     )

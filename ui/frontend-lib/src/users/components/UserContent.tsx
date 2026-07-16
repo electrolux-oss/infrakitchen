@@ -14,6 +14,7 @@ import { UserConfiguration } from "./UserConfiguration";
 import { UserNotificationPreferencesCard } from "./UserNotificationPreferencesCard";
 import { UserNotificationSubscriptionsCard } from "./UserNotificationSubscriptionsCard";
 import { UserOverview } from "./UserOverview";
+import { UserPersonalAccessTokensCard } from "./UserPersonalAccessTokensCard";
 
 export const UserContent = () => {
   const { entity } = useEntityProvider();
@@ -22,7 +23,12 @@ export const UserContent = () => {
   const tabs: TabDefinition[] = [
     {
       label: "Configuration",
-      content: <UserConfiguration user={entity} />,
+      content: (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <UserConfiguration user={entity} />
+          <UserPersonalAccessTokensCard user={entity} />
+        </Box>
+      ),
     },
     {
       label: "Roles",

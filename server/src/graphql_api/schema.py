@@ -62,6 +62,7 @@ from graphql_api.modules.log.queries import LogQuery
 from graphql_api.modules.validation_rule.mutations import ValidationRuleMutation
 from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 from graphql_api.modules.auth.mutations import AuthMutation
+from graphql_api.modules.auth.queries import AuthQuery
 
 
 @strawberry.type
@@ -100,6 +101,7 @@ class Query(
     LogQuery,
     ValidationRuleQuery,
     NotificationQuery,
+    AuthQuery,
 ):
     pass
 

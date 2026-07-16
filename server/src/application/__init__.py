@@ -19,6 +19,7 @@ from .tools.secret_manager import SecretManager
 from .batch_operations import BatchOperationDTO
 from .blueprints import BlueprintShort
 from .workflows import Workflow
+from .favorites import Favorite
 
 __all__ = [
     "ExecutorDTO",
@@ -44,4 +45,5 @@ __all__ = [
     "WorkspaceDTO",
     "BlueprintShort",
     "Workflow",
+    "Favorite",
 ]

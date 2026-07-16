@@ -22,6 +22,9 @@ We support a variety of authentication methods tailored to different use cases:
 - **[Backstage](backstage.md)**:
   Integration for users coming from a Backstage environment, ensuring seamless identity flow.
 
+- **[Personal Access Token](personal-access-token.md)**:
+  Used for API and CLI access on behalf of an existing InfraKitchen user, without an interactive browser login.
+
 - **[Service Account](service-account.md)**:
   Used for **non-interactive authentication**, typically for automated tasks, services, or machine-to-machine communication, using long-lived credentials.
 
