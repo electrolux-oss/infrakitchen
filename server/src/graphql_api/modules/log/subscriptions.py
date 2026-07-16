@@ -9,17 +9,18 @@ from strawberry.types import Info
 
 from core.config import InfrakitchenConfig
 from core.rabbitmq import RabbitMQConnection
-from core.sso.functions import validate_token
+from core.sso.functions import get_user_from_token
 from core.users.model import UserDTO
 
 logger = logging.getLogger(__name__)
 
 
-def _authenticate_subscription(info: Info) -> UserDTO:
-    """Validate the JWT from the graphql-ws ``connection_init`` payload.
+async def _authenticate_subscription(info: Info) -> UserDTO:
+    """Authenticate the GraphQL WS ``connection_init`` token.
 
-    Clients must send ``{"type": "connection_init", "payload": {"token": "<jwt>"}}``
-    when opening the WebSocket.
+    Clients must send ``{"type": "connection_init", "payload": {"token": "<token>"}}``
+    when opening the WebSocket. The token is resolved through the same shared
+    auth path as HTTP requests, so JWTs and personal access tokens behave the same.
 
     Raises:
         PermissionError: If the token is missing or invalid.
@@ -29,15 +30,21 @@ def _authenticate_subscription(info: Info) -> UserDTO:
     if not token:
         raise PermissionError("Authentication required: send token in connection_init payload")
 
-    decoded_token = validate_token(token, alg="HS256", audience="infrakitchen")
-    if not decoded_token:
-        raise PermissionError("Invalid authentication token")
+    service = info.context.get("sso_service")
+    if service is None:
+        raise PermissionError("Authentication service unavailable")
 
-    user_id = decoded_token.get("pld", {}).get("id")
-    if user_id is None:
-        raise PermissionError("User ID not found in token claims")
+    try:
+        user = await get_user_from_token(service, token)
+    except Exception as error:
+        raise PermissionError("Invalid authentication token") from error
 
-    return UserDTO.model_validate(decoded_token["pld"])
+    info.context["user"] = user
+    request = info.context.get("request")
+    if request is not None and hasattr(request, "state"):
+        request.state.user = user
+
+    return user
 
 
 @strawberry.type
@@ -74,7 +81,7 @@ class LogSubscription:
         if InfrakitchenConfig().websocket is False:
             raise PermissionError("WebSocket subscriptions are disabled")
 
-        _authenticate_subscription(info)
+        await _authenticate_subscription(info)
 
         if not entity_name or not entity_id:
             raise ValueError("entity_name and entity_id are required")

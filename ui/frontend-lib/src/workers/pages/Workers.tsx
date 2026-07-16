@@ -80,9 +80,10 @@ export default function WorkerList() {
   const columns = useMemo(
     () => [
       {
-        field: "name",
-        headerName: "Name",
+        field: "host",
+        headerName: "Host",
         flex: 1,
+        hideable: false,
       },
       {
         field: "status",
@@ -92,8 +93,6 @@ export default function WorkerList() {
           <StatusChip status={String(params.row.status).toLowerCase()} />
         ),
       },
-
-      { field: "host", headerName: "Host", flex: 1 },
       {
         field: "currentTask",
         headerName: "Last Task",

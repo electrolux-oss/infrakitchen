@@ -169,7 +169,7 @@ class WorkspaceService:
 
         if dependencies:
             raise DependencyError(
-                "Cannot delete a source_code that has dependencies",
+                "Cannot delete a workspace that has dependencies",
                 metadata=[
                     {
                         "id": dependency.id,

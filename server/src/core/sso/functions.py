@@ -179,7 +179,7 @@ async def get_decoded_token(
         raise NotImplementedError(f"Invalid token type: {token_type}")
 
 
-async def get_user_from_token(service: SSOService, token: str | None = Security(APIKeyCookie(name="token"))):
+async def get_user_from_token(service: SSOService, token: str | None = Security(APIKeyCookie(name="token"))) -> UserDTO:
     """
     Validates and decodes a JWT token to retrieve user information.
 
@@ -204,6 +204,17 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
     """
     if token is None:
         raise AccessUnauthorized("Invalid authentication credentials")
+
+    if token.startswith("ik_"):
+        personal_token = await service.personal_access_token_service.get_valid_token(token)
+        if personal_token is None:
+            raise AccessUnauthorized("Invalid authentication credentials")
+
+        user = await service.user_service.get_dto_by_id(personal_token.user_id)
+        if user is None:
+            raise AccessUnauthorized("Invalid authentication credentials")
+
+        return user
 
     try:
         # get audience of token to choose the right validation
@@ -234,6 +245,8 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
     except Exception as error:
         logger.error(f"Error decoding token: {error}")
         raise AccessUnauthorized(f"Invalid authentication credentials. {error}") from error
+
+    raise AccessUnauthorized("Invalid authentication credentials")
 
 
 async def provision_backstage_user(service: SSOService, user_id: str) -> UserDTO:
