@@ -640,6 +640,9 @@ class ResourceService:
                 return False
 
             input_variables = resource_temp_state.value.get("variables", [])
+            if not input_variables:
+                return False
+
             existing_variables = pydantic_resource.variables or []
             if len(input_variables) != len(existing_variables):
                 return True
