@@ -1,19 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
-import { Typography, Paper, Box } from "@mui/material";
+import { Typography, Paper, Box, CircularProgress } from "@mui/material";
 
-import { useConfig, useEntityProvider } from "../../common";
+import { useEntityProvider } from "../../common";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
 import { CommonDialog } from "../../common/components/CommonDialog";
 import { IkEntity } from "../../types";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
-import {
-  GqlResource,
-  GqlResourceTempState,
-  RESOURCE_TEMP_STATE_FIELDS,
-} from "../graphql";
+import { GqlResourceTempState } from "../graphql";
 
 interface JsonDiffViewerProps {
   originalText: string;
@@ -45,6 +41,9 @@ export interface ResourceStateReviewDialogProps {
   entity_id: string;
   title?: string;
   entity_name?: string;
+  resourceTempState?: GqlResourceTempState | null;
+  loading?: boolean;
+  error?: unknown;
 }
 
 export const ResourceStateReviewDialog: React.FC<
@@ -53,52 +52,13 @@ export const ResourceStateReviewDialog: React.FC<
   open,
   onClose,
   entity,
-  entity_id,
   actions,
   title = "State Difference",
+  resourceTempState = null,
+  loading = false,
+  error,
 }) => {
-  const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
-  const [resourceTempState, setResourceTempState] = useState<
-    GqlResourceTempState | undefined
-  >();
-  const [error, setError] = useState<any>();
-
-  useEffect(() => {
-    if (!open || !entity_id) return;
-
-    if (entity?.status === ENTITY_STATUS.APPROVAL_PENDING) {
-      // If the entity is already pending approval, no need to fetch temp state
-      return;
-    }
-    const fetchResourceTempState = async () => {
-      await ikApi
-        .graphqlRequest<{
-          resource: GqlResource | null;
-          resourceTempStateByResource: GqlResourceTempState | null;
-        }>(
-          `
-          query ResourceTempState($id: UUID!) {
-            resourceTempStateByResource(resourceId: $id) {
-              ${RESOURCE_TEMP_STATE_FIELDS}
-            }
-          }
-        `,
-          {
-            id: entity_id,
-          },
-        )
-        .then((response) => {
-          if (response.resourceTempStateByResource) {
-            setResourceTempState(response.resourceTempStateByResource);
-          }
-          setError(undefined);
-        })
-        .catch((e: any) => setError(e));
-    };
-
-    fetchResourceTempState();
-  }, [open, entity_id, ikApi, entity]);
 
   return (
     <CommonDialog
@@ -110,8 +70,14 @@ export const ResourceStateReviewDialog: React.FC<
         <>
           {error && (
             <Typography color="error">
-              Error loading resource state: {error.message || error.toString()}
+              Error loading resource state:{" "}
+              {String((error as Error)?.message || error)}
             </Typography>
+          )}
+          {loading && !resourceTempState && (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress />
+            </Box>
           )}
           {resourceTempState && (
             <Box sx={{ width: "100%", minWidth: "1200px" }}>
@@ -183,7 +149,7 @@ export const ResourceStateReviewDialog: React.FC<
                 }}
                 color="success"
                 variant="contained"
-                disabled={error}
+                disabled={error !== undefined || !resourceTempState}
               >
                 Approve
               </ActionButton>
@@ -195,7 +161,7 @@ export const ResourceStateReviewDialog: React.FC<
                 }}
                 color="error"
                 variant="contained"
-                disabled={error}
+                disabled={error !== undefined || !resourceTempState}
               >
                 Reject
               </ActionButton>
