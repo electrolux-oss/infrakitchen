@@ -39,6 +39,7 @@ class ResourceCreateInput:
     children: list[uuid.UUID] = strawberry.field(default_factory=list)
     labels: list[str] = strawberry.field(default_factory=list)
     workspace_id: uuid.UUID | None = None
+    project_id: uuid.UUID | None = None
 
 
 @strawberry.input
@@ -55,6 +56,7 @@ class ResourceUpdateInput:
     dependency_config: Maybe[JSON | None] = None
     labels: Maybe[list[str] | None] = None
     workspace_id: Maybe[uuid.UUID | None] = None
+    project_id: Maybe[uuid.UUID | None] = None
 
     def to_pydantic(self) -> ResourceUpdate:
         data: dict[str, Any] = {}

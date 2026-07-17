@@ -199,6 +199,7 @@ export const ResourceVariablesEditDialog = ({
         }>(RESOURCE_VARIABLE_SCHEMA_QUERY, {
           sourceCodeVersionId: versionId,
           parentResourceIds: resource.parents?.map((p) => p.id) || [],
+          projectId: resource.project?.id || null,
         });
         const schemaResponse = resourceVariableSchema.map((variable) => ({
           ...variable,
@@ -242,7 +243,14 @@ export const ResourceVariablesEditDialog = ({
         setLoadingSchema(false);
       }
     },
-    [ikApi, reconcileVariables, resource.parents, resource.template?.id, reset],
+    [
+      ikApi,
+      reconcileVariables,
+      resource.parents,
+      resource.project?.id,
+      resource.template?.id,
+      reset,
+    ],
   );
 
   useEffect(() => {

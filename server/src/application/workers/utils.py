@@ -313,10 +313,20 @@ async def get_workspace_task(
     if not resource_instance:
         raise CannotProceed(f"Resource {obj_id} not found")
 
-    if not resource_instance.workspace_id:
+    workspace_id = resource_instance.workspace_id
+    if not workspace_id:
+        # If the resource is associated with a project, get the workspace_id from the project
+        if (
+            resource_instance.project
+            and resource_instance.project.configuration.always_use_workspace is True
+            and resource_instance.project.workspace_id
+        ):
+            workspace_id = resource_instance.project.workspace_id
+
+    if not workspace_id:
         raise CannotProceed(f"Resource {obj_id} is not associated with a workspace")
 
-    workspace_instance = await crud_workspace.get_by_id(resource_instance.workspace_id)
+    workspace_instance = await crud_workspace.get_by_id(workspace_id)
     if not workspace_instance:
         raise CannotProceed(f"Workspace {obj_id} not found")
 

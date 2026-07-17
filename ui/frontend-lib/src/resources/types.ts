@@ -37,6 +37,7 @@ export interface ResourceCreate {
   labels: string[];
   parents: string[];
   workspaceId: string | null;
+  projectId: string | null;
 }
 
 export interface ResourceVariableSchema {

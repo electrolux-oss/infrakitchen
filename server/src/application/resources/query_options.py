@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy.orm import joinedload, noload, selectinload
 
 from application.integrations.query_options import build_integration_query_options
+from application.projects.query_options import build_project_query_options
 from application.resources.model import Resource
 from application.secrets.query_options import build_secret_query_options
 from application.source_code_versions.query_options import build_source_code_version_query_options
@@ -28,6 +29,7 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(Resource.source_code_version),
             joinedload(Resource.storage),
             joinedload(Resource.creator),
+            joinedload(Resource.project),
         ]
 
     opts: list[Any] = build_load_only(Resource, set(fields.keys()))
@@ -85,5 +87,11 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Resource.creator).options(*build_user_query_options(nested)))
     else:
         opts.append(noload(Resource.creator))
+
+    if "project" in fields:
+        nested = fields["project"]
+        opts.append(joinedload(Resource.project).options(*build_project_query_options(nested)))
+    else:
+        opts.append(noload(Resource.project))
 
     return opts

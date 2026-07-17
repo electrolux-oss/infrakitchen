@@ -1,4 +1,5 @@
 import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlProjectShort } from "../../projects/graphql";
 import { GqlSecret } from "../../secrets/graphql";
 import { GqlSourceCodeVersionShort } from "../../source_code_versions/graphql";
 import { GqlStorage } from "../../storages/graphql";
@@ -58,6 +59,7 @@ type GqlResourceRelationFieldTypes = {
   parents: GqlResourceShort[] | null;
   children: GqlResourceShort[] | null;
   workspace: GqlWorkspaceShort | null;
+  project: GqlProjectShort | null;
 };
 
 type GqlResourceFieldTypes = GqlResourceDetailFieldTypes &

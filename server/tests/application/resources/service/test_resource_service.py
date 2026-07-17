@@ -648,6 +648,59 @@ class TestCreate:
         mock_resource_crud.create.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_create_all_required_configuration_variables_present_via_project_inheritance(
+        self,
+        mock_resource_service,
+        mock_project_crud,
+        mock_resource_crud,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+        resource_response,
+        source_code_version,
+        mock_source_code_version_crud,
+        mocked_project,
+        mocked_storage,
+        mock_storage_crud,
+        storage_response,
+        monkeypatch,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.configuration["required_configuration_variables"] = ["env"]
+        mocked_template.abstract = False
+        mocked_project.dependency_config = [
+            DependencyConfig(name="env", value="prod", inherited_by_children=True),
+        ]
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            storage_id=storage_response.id,
+            storage_path="path/to/storage",
+            project_id=mocked_project.id,
+        )
+
+        requester = mocked_user
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_project_crud.get_by_id.return_value = mocked_project
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+
+        new_resource = Resource(
+            name=mocked_resource.name, template_id=mocked_template.id, created_by=requester.id, revision_number=1
+        )
+        mock_resource_crud.create.return_value = new_resource
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=resource_response))
+        monkeypatch.setattr(ResourceService, "get_variable_schema", AsyncMock(return_value=[]))
+
+        result = await mock_resource_service.create(resource_create, requester)
+
+        assert result is not None
+        mock_resource_crud.create.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_create_denies_integration_without_write_access(
         self,
         mock_resource_service,

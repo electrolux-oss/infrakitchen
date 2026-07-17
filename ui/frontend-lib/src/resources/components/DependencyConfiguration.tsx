@@ -19,7 +19,6 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
@@ -27,13 +26,14 @@ import {
 import { DependencyVariable } from "../types";
 
 export interface DependencyConfigurationProps {
-  resource: GqlResource;
-}
-
-interface DependencyTag {
-  name: string;
-  value: string;
-  inherited_by_children: boolean;
+  resource: {
+    id: string;
+    dependencyTags: DependencyVariable[] | null;
+    dependencyConfig: DependencyVariable[] | null;
+  };
+  updateMutation?: string;
+  toUpdateInput?: (input: ResourceUpdateFieldInput) => Record<string, any>;
+  permissionEntity?: string;
 }
 
 const getDependencyVariables = (variables: DependencyVariable[]) => {
@@ -101,8 +101,8 @@ interface DependencyEditDialogProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  initialValue: DependencyTag[];
-  onSave: (value: DependencyTag[]) => Promise<void>;
+  initialValue: DependencyVariable[];
+  onSave: (value: DependencyVariable[]) => Promise<void>;
 }
 
 const DependencyEditDialog = ({
@@ -112,7 +112,7 @@ const DependencyEditDialog = ({
   initialValue,
   onSave,
 }: DependencyEditDialogProps) => {
-  const [draft, setDraft] = useState<DependencyTag[]>(initialValue);
+  const [draft, setDraft] = useState<DependencyVariable[]>(initialValue);
   const [saving, setSaving] = useState(false);
   const [errors] = useState<Record<string, any>>({});
 
@@ -177,11 +177,14 @@ const DependencyEditDialog = ({
 
 export const DependencyConfiguration = ({
   resource,
+  updateMutation = UPDATE_RESOURCE_MUTATION,
+  toUpdateInput = (input) => input,
+  permissionEntity = "api:resource",
 }: DependencyConfigurationProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
-  const canEdit = checkActionPermission("api:resource", "write");
+  const canEdit = checkActionPermission(permissionEntity, "write");
 
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
   const [configsDialogOpen, setConfigsDialogOpen] = useState(false);
@@ -189,9 +192,9 @@ export const DependencyConfiguration = ({
   const saveField = useCallback(
     async (input: ResourceUpdateFieldInput) => {
       try {
-        await ikApi.graphqlRequest(UPDATE_RESOURCE_MUTATION, {
+        await ikApi.graphqlRequest(updateMutation, {
           id: resource.id,
-          input,
+          input: toUpdateInput(input),
         });
         notify("Resource updated successfully", "success");
         refreshEntity?.();
@@ -200,7 +203,7 @@ export const DependencyConfiguration = ({
         throw error;
       }
     },
-    [ikApi, resource.id, refreshEntity],
+    [ikApi, refreshEntity, resource.id, toUpdateInput, updateMutation],
   );
 
   return (
@@ -226,7 +229,7 @@ export const DependencyConfiguration = ({
             >
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 {getDependencyVariables(
-                  resource.dependencyTags as DependencyTag[],
+                  resource.dependencyTags as DependencyVariable[],
                 )}
               </Box>
               <Button
@@ -244,7 +247,7 @@ export const DependencyConfiguration = ({
           open={tagsDialogOpen}
           onClose={() => setTagsDialogOpen(false)}
           title="Dependency Tags"
-          initialValue={resource.dependencyTags as DependencyTag[]}
+          initialValue={resource.dependencyTags as DependencyVariable[]}
           onSave={(value) => saveField({ dependencyTags: value })}
         />
       </OverviewCard>
@@ -269,7 +272,7 @@ export const DependencyConfiguration = ({
             >
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 {getDependencyVariables(
-                  resource.dependencyConfig as DependencyTag[],
+                  resource.dependencyConfig as DependencyVariable[],
                 )}
               </Box>
               <Button
@@ -287,7 +290,7 @@ export const DependencyConfiguration = ({
           open={configsDialogOpen}
           onClose={() => setConfigsDialogOpen(false)}
           title="Dependency Configs"
-          initialValue={resource.dependencyConfig as DependencyTag[]}
+          initialValue={resource.dependencyConfig as DependencyVariable[]}
           onSave={(value) => saveField({ dependencyConfig: value })}
         />
       </OverviewCard>

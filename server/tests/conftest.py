@@ -7,6 +7,12 @@ from .fixtures.test_auth_provider_fixtures import (
     auth_provider,
 )
 from .fixtures.test_casbin_fixtures import mock_casbin
+from .fixtures.test_project_fixtures import (
+    mock_project_crud,
+    mock_project_service,
+    project_response,
+    mocked_project,
+)
 from .fixtures.test_template_fixtures import (
     mock_template_crud,
     mock_template_service,
@@ -204,6 +210,10 @@ __all__ = [
     "many_executor_response",
     "aws_integration_config",
     "mock_casbin",
+    "mock_project_crud",
+    "mock_project_service",
+    "project_response",
+    "mocked_project",
     "mock_permission_crud",
     "mock_permission_service",
     "mocked_permission_response",

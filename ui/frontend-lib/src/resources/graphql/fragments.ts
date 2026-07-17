@@ -4,6 +4,7 @@ import {
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
 import { INTEGRATION_SHORT_FIELDS } from "../../integrations/graphql";
+import { PROJECT_SHORT_FIELDS } from "../../projects/graphql";
 import { SECRET_SHORT_FIELDS } from "../../secrets/graphql";
 import { SCV_SHORT_FIELDS } from "../../source_code_versions/graphql";
 import { STORAGE_SHORT_FIELDS } from "../../storages/graphql";
@@ -42,6 +43,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     parents: "parents",
     children: "children",
     workspace: "workspace",
+    project: "project",
   } as const,
 };
 
@@ -70,6 +72,7 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workspace, WORKSPACE_SHORT_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
 `;
 
 export const RESOURCE_TEMP_STATE_FIELDS = `
@@ -109,6 +112,10 @@ export const RESOURCE_FIELD_MAP: GraphqlFieldMap = {
   workspace: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.workspace,
     WORKSPACE_SHORT_FIELDS,
+  ),
+  project: buildNestedSelection(
+    RESOURCE_GRAPHQL_FIELDS.relations.project,
+    PROJECT_SHORT_FIELDS,
   ),
   parents: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.parents,

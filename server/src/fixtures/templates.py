@@ -27,22 +27,13 @@ template_fixtures: list[TemplateFixture] = [
         "abstract": True,
     },
     {
-        "name": "Project",
-        "description": get_sentence(),
-        "template": "project",
-        "labels": ["project", "cloud"],
-        "configuration": TemplateConfig(),
-        "abstract": True,
-        "parent": ["organization"],
-    },
-    {
         "name": "Service",
         "description": get_sentence(),
         "template": "service",
         "labels": ["service", "cloud"],
         "configuration": TemplateConfig(),
         "abstract": True,
-        "parent": ["project"],
+        "parent": ["organization"],
     },
     {
         "name": "AWS Account",
@@ -53,7 +44,7 @@ template_fixtures: list[TemplateFixture] = [
             allowed_provider_integration_types=["aws"],
             naming_convention="aws-account-{environment_name}-{account}",
         ),
-        "parent": ["project"],
+        "parent": ["organization"],
     },
     {
         "name": "AWS Environment",

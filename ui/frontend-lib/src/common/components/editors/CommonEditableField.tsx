@@ -32,6 +32,8 @@ export interface CommonEditableFieldProps<T> {
   ariaLabel?: string;
   /** Placeholder shown when there is no value to display. */
   placeholder?: string;
+  /** Optional hook called when edit mode is opened. */
+  onEditStart?: () => void;
 }
 
 /**
@@ -51,6 +53,7 @@ export function CommonEditableField<T>({
   isEqual,
   ariaLabel,
   placeholder,
+  onEditStart,
 }: CommonEditableFieldProps<T>) {
   return (
     <CommonField
@@ -67,6 +70,7 @@ export function CommonEditableField<T>({
           isEqual={isEqual}
           ariaLabel={ariaLabel}
           placeholder={placeholder}
+          onEditStart={onEditStart}
         />
       }
     />

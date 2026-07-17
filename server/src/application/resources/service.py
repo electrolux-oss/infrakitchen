@@ -6,6 +6,7 @@ from typing import Any, Literal
 from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
+from application.projects.service import ProjectService
 from core.notifications.controller import NotificationEvent, publish_notification_event
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
@@ -93,6 +94,7 @@ class ResourceService:
         validation_rule_service: ValidationRuleService,
         favorite_service: FavoriteService,
         subscription_service: SubscriptionService,
+        project_service: ProjectService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -110,6 +112,7 @@ class ResourceService:
         self.validation_rule_service: ValidationRuleService = validation_rule_service
         self.favorite_service: FavoriteService = favorite_service
         self.subscription_service: SubscriptionService = subscription_service
+        self.project_service: ProjectService = project_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -151,12 +154,19 @@ class ResourceService:
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def get_actions(self, resource_id: str | UUID, requester: UserDTO) -> list[str]:
-        resource = await self.crud.get_by_id(resource_id, fields={"status": None, "state": None})
+        resource = await self.crud.get_by_id(
+            resource_id, fields={"status": None, "state": None, "project": {"id": None, "owners": {"id": None}}}
+        )
         if not resource:
             raise EntityNotFound("Resource not found")
         resource_temp_state = await self.resource_temp_state_handler.get_by_resource_id(resource_id)
         return await get_resource_actions(
-            requester, resource.id, resource.status, resource.state, resource_temp_state is not None
+            requester,
+            resource.id,
+            resource.status,
+            resource.state,
+            resource_temp_state is not None,
+            project=getattr(resource, "project", None),
         )
 
     async def create_resource(
@@ -171,6 +181,12 @@ class ResourceService:
         :param requester: User who creates the resource
         :return: ORM model of the created resource
         """
+
+        async def get_inherited_project_dependency_config_names(project_id: str | UUID | None) -> set[str]:
+            project = await self.project_service.get_by_id(project_id) if project_id else None
+            if project is None:
+                return set()
+            return {config.name for config in project.dependency_config if config.inherited_by_children}
 
         if allowed_parent_states is None:
             allowed_parent_states = [ModelState.PROVISIONED]
@@ -270,7 +286,9 @@ class ResourceService:
 
             # Validate required_configuration_variables
             if template.configuration.required_configuration_variables:
-                provided_config_names = {dc.name for dc in resource.dependency_config}
+                provided_config_names = await get_inherited_project_dependency_config_names(resource.project_id)
+
+                provided_config_names.update({dc.name for dc in resource.dependency_config})
                 missing = [
                     name
                     for name in template.configuration.required_configuration_variables
@@ -308,6 +326,7 @@ class ResourceService:
                 resource_varibles_schema = await self.get_variable_schema(
                     source_code_version_id=source_code_version_id,
                     resource_ids=resource.parents,
+                    project_id=resource.project_id,
                 )
                 # Validate that all variables are present in the request and have correct types
                 unique_variables = [v for v in resource_varibles_schema if v.unique]
@@ -390,15 +409,7 @@ class ResourceService:
             subscription_service=self.subscription_service,
             requester=requester,
         )
-
-        if response.workspace is not None:
-            await self.workspace_event_sender.send_task(
-                response.id,
-                requester=requester,
-                action=ModelActions.CREATE,
-                audit_log_id=self.audit_log_handler.audit_log_id,
-                trace_id=self.audit_log_handler.trace_id,
-            )
+        await self._trigger_workspace_sync(result, ModelActions.CREATE, requester=requester)
 
         await self.permission_service.casbin_enforcer.send_reload_event()
         return result
@@ -498,6 +509,9 @@ class ResourceService:
                 resource_variables_schema = await self.get_variable_schema(
                     source_code_version_id=source_code_version.id,
                     resource_ids=[p.id for p in existing_resource_pydantic.parents],
+                    project_id=resource.project_id
+                    if "project_id" in resource.model_fields_set
+                    else existing_resource.project_id,
                 )
 
                 await update_resource_variables_on_patch(
@@ -589,10 +603,7 @@ class ResourceService:
         await self.event_sender.send_event(response_pydantic, ModelActions.UPDATE)
         await self.publish_notification_event(existing_resource, ModelActions.UPDATE, status="info")
 
-        if existing_resource.workspace_id is not None:
-            await self.workspace_event_sender.send_task(
-                existing_resource.id, requester=requester, action=ModelActions.UPDATE
-            )
+        await self._trigger_workspace_sync(existing_resource, ModelActions.UPDATE, requester=requester)
 
         return existing_resource
 
@@ -628,10 +639,7 @@ class ResourceService:
                 f"Resource has wrong state for rejection {pydantic_resource.status} {pydantic_resource.state}"
             )
 
-        if pydantic_resource.workspace_id is not None:
-            await self.workspace_event_sender.send_task(
-                pydantic_resource.id, requester=requester, action=ModelActions.REJECT
-            )
+        await self._trigger_workspace_sync(existing_resource, ModelActions.REJECT, requester=requester)
 
     async def action_approve(self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO):
         def resource_variables_differ() -> bool:
@@ -707,11 +715,7 @@ class ResourceService:
                 """
             )
 
-        if pydantic_resource.workspace_id is not None:
-            if resource_variables_differ():
-                await self.workspace_event_sender.send_task(
-                    pydantic_resource.id, requester=requester, action=ModelActions.APPROVE
-                )
+        await self._trigger_workspace_sync(existing_resource, ModelActions.APPROVE, requester=requester)
 
     async def action_destroy(self, existing_resource: Resource, pydantic_resource: ResourceDTO, requester: UserDTO):
         if pydantic_resource.state in [ModelState.DESTROY, ModelState.DESTROYED]:
@@ -741,11 +745,7 @@ class ResourceService:
                 )
 
         await destroy_entity(existing_resource)
-
-        if pydantic_resource.workspace_id is not None:
-            await self.workspace_event_sender.send_task(
-                pydantic_resource.id, requester=requester, action=ModelActions.DESTROY
-            )
+        await self._trigger_workspace_sync(existing_resource, ModelActions.DESTROY, requester=requester)
 
     async def action_recreate(self, existing_resource: Resource, requester: UserDTO):
         await recreate_entity(existing_resource)
@@ -760,10 +760,7 @@ class ResourceService:
                     metadata=parents_in_wrong_state,
                 )
 
-        if existing_resource.workspace_id is not None:
-            await self.workspace_event_sender.send_task(
-                existing_resource.id, requester=requester, action=ModelActions.RECREATE
-            )
+        await self._trigger_workspace_sync(existing_resource, ModelActions.RECREATE, requester=requester)
 
     async def patch_action_resource(
         self, resource_id: str | UUID, body: PatchBodyModel, requester: UserDTO, trace_id: str | None = None
@@ -975,7 +972,10 @@ class ResourceService:
         return [ResourceWithConfigs.model_validate(parent) for parent in parents]
 
     async def get_variable_schema(
-        self, source_code_version_id: str | UUID, resource_ids: Sequence[str | UUID]
+        self,
+        source_code_version_id: str | UUID,
+        resource_ids: Sequence[str | UUID],
+        project_id: str | UUID | None = None,
     ) -> list[ResourceVariableSchema]:
         """
         Get the variable schema for a resource.
@@ -988,16 +988,28 @@ class ResourceService:
         if invalid_ids:
             raise ValueError(f"Invalid resource ID(s): {', '.join(str(i) for i in invalid_ids)}")
 
+        if project_id is not None and not is_valid_uuid(project_id):
+            raise ValueError(f"Invalid project ID: {project_id}")
+
         resource_scv = await self.service_source_code_version.get_by_id_with_configs(source_code_version_id)
         if not resource_scv:
             raise EntityNotFound("Source code version not found")
+
+        project = await self.project_service.crud.get_by_id(project_id) if project_id else None
+        project_dependency_config = project.dependency_config if project is not None else []
 
         validation_rules_map = await self.validation_rule_service.get_rules_map_for_template(
             template_id=resource_scv.template.id
         )
 
         if not resource_ids:
-            return get_resource_variable_schema(resource_scv, [], [], validation_rules_map)
+            return get_resource_variable_schema(
+                resource_scv,
+                [],
+                [],
+                validation_rules_map,
+                project_dependency_config=project_dependency_config,
+            )
 
         parents_lists: list[list[ResourceWithConfigs]] = await asyncio.gather(
             *[self.get_parents_with_configs(rid) for rid in resource_ids]
@@ -1017,7 +1029,13 @@ class ResourceService:
         else:
             parent_scvs = []
 
-        schema = get_resource_variable_schema(resource_scv, parents, parent_scvs, validation_rules_map)
+        schema = get_resource_variable_schema(
+            resource_scv,
+            parents,
+            parent_scvs,
+            validation_rules_map,
+            project_dependency_config=project_dependency_config,
+        )
         return sorted(schema, key=lambda item: item.index)
 
     @cache_decorator(avoid_args=True, ttl=300)  # Cache for 5 minutes
@@ -1265,6 +1283,26 @@ class ResourceService:
         for subscription in subscriptions:
             await self.subscription_service.delete(subscription_id=subscription.id)
         return True
+
+    async def _trigger_workspace_sync(self, resource: Resource, action: ModelActions, requester: UserDTO) -> None:
+        workspace_id = resource.workspace_id
+        if not workspace_id:
+            # If the resource is associated with a project, get the workspace_id from the project
+            if (
+                resource.project
+                and resource.project.configuration.get("always_use_workspace", False) is True
+                and resource.project.workspace_id
+            ):
+                workspace_id = resource.project.workspace_id
+
+        if workspace_id:
+            await self.workspace_event_sender.send_task(
+                resource.id,
+                requester=requester,
+                action=action,
+                audit_log_id=self.audit_log_handler.audit_log_id,
+                trace_id=self.audit_log_handler.trace_id,
+            )
 
     async def sync_workspace(self, resource_id: str, requester: UserDTO) -> Resource:
         """

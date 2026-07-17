@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import IntegrationDTO
 from application.resources.crud import ResourceCRUD
-from application.resources.functions import get_merged_tags
+from application.resources.functions import get_merged_dependency_config_with_project, get_merged_tags_with_project
 from application.resources.service import ResourceService
 from application.secrets.model import SecretDTO
 from application.source_code_versions.model import SourceCodeVersionDTO
@@ -251,8 +251,15 @@ class ResourceTask:
         code_language = self.source_code_instance.source_code_language
 
         parents = await self.resource_service.get_parents_with_configs(self.resource_instance.id)
-        variables = {}
-        merged_tags = get_merged_tags(parents)
+        project_dependency_tags = (
+            self.resource_instance.project.dependency_tags if self.resource_instance.project else None
+        )
+        project_dependency_config = (
+            self.resource_instance.project.dependency_config if self.resource_instance.project else None
+        )
+
+        variables = get_merged_dependency_config_with_project(parents, project_dependency_config)
+        merged_tags = get_merged_tags_with_project(parents, project_dependency_tags)
         if merged_tags:
             variables.update({"tags": merged_tags})
 

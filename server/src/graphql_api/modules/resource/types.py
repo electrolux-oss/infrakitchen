@@ -15,6 +15,7 @@ from graphql_api.modules.storage.types import StorageType
 from graphql_api.modules.template.types import TemplateType
 from graphql_api.modules.user.types import UserType
 from graphql_api.modules.workspace.types import WorkspaceType
+from graphql_api.modules.project.types import ProjectType
 
 
 resource_mapper = StrawberrySQLAlchemyMapper()
@@ -33,6 +34,8 @@ class ResourceType:
         "children",
         "created_by",
         "workspace_id",
+        "project_id",
+        "project",
         "source_code_version_id",
     ]
 
@@ -40,6 +43,7 @@ class ResourceType:
     template: TemplateType | None = None
     storage: StorageType | None = None
     workspace: WorkspaceType | None = None
+    project: ProjectType | None = None
     source_code_version: SourceCodeVersionType | None = None
     integration_ids: list[IntegrationType] | None = None
     secret_ids: list[SecretType] | None = None

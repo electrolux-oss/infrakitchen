@@ -14,6 +14,7 @@ export type ResourceCreateFieldInput = {
   labels: string[];
   parents: string[];
   workspaceId: string | null;
+  projectId: string | null;
 };
 
 export const CREATE_RESOURCE_MUTATION = `
@@ -46,6 +47,7 @@ export type ResourceUpdateFieldInput = Partial<{
   dependencyConfig: object[];
   labels: string[];
   workspaceId: string | null;
+  projectId: string | null;
 }>;
 
 export const UPDATE_RESOURCE_MUTATION = `

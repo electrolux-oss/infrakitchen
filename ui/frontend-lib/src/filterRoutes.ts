@@ -363,6 +363,29 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
 
+  // ── Projects ──────────────────────────────────────────────────────────────────
+  {
+    path: "/projects",
+    Component: lz(() => import("./projects/pages/Projects"), "ProjectsPage"),
+    requiredPermission: "api:project",
+    permissionAction: "read",
+  },
+  {
+    path: "/projects/create",
+    Component: lz(
+      () => import("./projects/pages/ProjectCreate"),
+      "ProjectCreatePage",
+    ),
+    requiredPermission: "api:project",
+    permissionAction: "write",
+  },
+  {
+    path: "/projects/:project_id/:tab?",
+    Component: lz(() => import("./projects/pages/Project"), "ProjectPage"),
+    requiredPermission: "api:project",
+    permissionAction: "read",
+  },
+
   // ── Templates ─────────────────────────────────────────────────────────────────
   {
     path: "/templates",

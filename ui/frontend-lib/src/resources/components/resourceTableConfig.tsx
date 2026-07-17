@@ -72,6 +72,19 @@ export const resourceColumns: EntityTableColumn[] = [
     },
   },
   {
+    field: "project",
+    headerName: "Project",
+    flex: 1,
+    fetchFields: ["project"],
+    sortField: "project.name",
+    valueGetter: (value: any) => value?.name || "",
+    renderCell: (params: GridRenderCellParams) => {
+      const project = params.row.project;
+      return <GetEntityLink {...project} />;
+    },
+  },
+
+  {
     field: "sourceCodeVersion",
     headerName: "Template Version",
     flex: 1,
