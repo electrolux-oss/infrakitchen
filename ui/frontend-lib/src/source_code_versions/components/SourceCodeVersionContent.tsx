@@ -16,6 +16,7 @@ import { GqlSourceCodeVersion } from "../graphql";
 
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
+import { ResourceGraphTab } from "./ResourceGraphTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
 import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
 
@@ -59,6 +60,15 @@ export const SourceCodeVersionContent = () => {
             source_code_version.sourceCodeBranch ||
             "N/A"
           }
+        />
+      ),
+    },
+    {
+      label: "Graph",
+      content: (
+        <ResourceGraphTab
+          codeSnapshot={source_code_version.code_snapshot}
+          sourceCodeFolder={source_code_version.source_code_folder}
         />
       ),
     },
