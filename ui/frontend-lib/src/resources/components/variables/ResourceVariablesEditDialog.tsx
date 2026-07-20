@@ -26,6 +26,7 @@ import {
   VALIDATION_RULES_BY_VARIABLE_FIELDS,
 } from "../../../validation_rules/graphql";
 import { GqlResource, RESOURCE_VARIABLE_SCHEMA_QUERY } from "../../graphql";
+import type { ResourcePendingChanges } from "../../hooks";
 import { ResourceVariableSchema, VariableInput } from "../../types";
 import { buildValidationRuleMaps } from "../../utils/validationRules";
 
@@ -41,6 +42,7 @@ export interface ResourceVariablesEditDialogProps {
   open: boolean;
   onClose: () => void;
   resource: GqlResource;
+  pendingChanges?: ResourcePendingChanges;
   onSave: (
     variables: VariableInput[],
     sourceCodeVersionId?: string | null,
@@ -51,6 +53,7 @@ export const ResourceVariablesEditDialog = ({
   open,
   onClose,
   resource,
+  pendingChanges = null,
   onSave,
 }: ResourceVariablesEditDialogProps) => {
   const { ikApi } = useConfig();
@@ -82,16 +85,45 @@ export const ResourceVariablesEditDialog = ({
 
   const allowFrozenVariableChanges = resource.state === ENTITY_STATE.PROVISION;
 
+  const hasPendingVariables =
+    pendingChanges !== null &&
+    Object.prototype.hasOwnProperty.call(pendingChanges, "variables");
+  const hasPendingSourceCodeVersion =
+    pendingChanges !== null &&
+    Object.prototype.hasOwnProperty.call(
+      pendingChanges,
+      "source_code_version_id",
+    );
+
+  const savedVariables = useMemo(
+    () =>
+      hasPendingVariables
+        ? (((pendingChanges?.variables as VariableInput[] | null) ??
+            []) as VariableInput[])
+        : ((resource.variables as VariableInput[] | null) ?? []),
+    [hasPendingVariables, pendingChanges, resource.variables],
+  );
+
+  const initialVersionId = useMemo(
+    () =>
+      hasPendingSourceCodeVersion
+        ? ((pendingChanges?.source_code_version_id as string | null) ?? null)
+        : (resource.sourceCodeVersion?.id ?? null),
+    [
+      hasPendingSourceCodeVersion,
+      pendingChanges,
+      resource.sourceCodeVersion?.id,
+    ],
+  );
+
   const effectiveVersionId = selectedVersionId;
 
-  const versionChanged =
-    selectedVersionId !== null &&
-    selectedVersionId !== resource.sourceCodeVersion?.id;
+  const versionChanged = selectedVersionId !== initialVersionId;
 
   const methods = useForm<VariablesFormData>({
     mode: "onChange",
     defaultValues: {
-      variables: resource.variables as unknown as VariableInput[],
+      variables: savedVariables,
     },
   });
 
@@ -114,8 +146,6 @@ export const ResourceVariablesEditDialog = ({
 
   const reconcileVariables = useCallback(
     (schemaList: ResourceVariableSchema[]) => {
-      const savedVariables =
-        (resource.variables as VariableInput[] | null) || [];
       const savedByName = savedVariables.reduce(
         (acc, variable) => {
           acc[variable.name] = variable;
@@ -155,7 +185,7 @@ export const ResourceVariablesEditDialog = ({
 
       return { mergedVariables, statusByName };
     },
-    [getSchemaObject, resource.variables],
+    [getSchemaObject, savedVariables],
   );
 
   const loadSchema = useCallback(
@@ -217,9 +247,10 @@ export const ResourceVariablesEditDialog = ({
 
   useEffect(() => {
     if (open) {
-      setSelectedVersionId(resource.sourceCodeVersion?.id ?? null);
+      setSelectedVersionId(initialVersionId);
+      reset({ variables: savedVariables });
     }
-  }, [open, resource.sourceCodeVersion?.id]);
+  }, [initialVersionId, open, reset, savedVariables]);
 
   useEffect(() => {
     if (open && effectiveVersionId) {

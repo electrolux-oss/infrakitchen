@@ -1,7 +1,14 @@
-import { useCallback, useMemo, useState } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 
 import SyncIcon from "@mui/icons-material/Sync";
-import { Box, Divider, IconButton, TextField, Tooltip } from "@mui/material";
+import {
+  Box,
+  Divider,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
 import {
@@ -15,6 +22,7 @@ import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceIn
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
@@ -23,18 +31,23 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { GqlResource } from "../graphql";
 import {
+  GqlResource,
   ResourceUpdateFieldInput,
-  UPDATE_RESOURCE_MUTATION,
   SYNC_WORKSPACE_MUTATION,
-} from "../graphql/mutations";
+  UPDATE_RESOURCE_MUTATION,
+} from "../graphql";
+import type { ResourcePendingChanges } from "../hooks";
 
 export interface ResourceAboutProps {
   resource: GqlResource;
+  pendingChanges?: ResourcePendingChanges;
 }
 
-export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
+export const ResourceOverview = ({
+  resource,
+  pendingChanges = null,
+}: ResourceAboutProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity, userEntityPermissions } = useEntityProvider();
   const { permissions } = usePermissionProvider();
@@ -107,6 +120,45 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
     [ikApi, resource.id, refreshEntity],
   );
 
+  const hasPendingChange = useCallback(
+    (key: string) =>
+      pendingChanges !== null &&
+      Object.prototype.hasOwnProperty.call(pendingChanges, key),
+    [pendingChanges],
+  );
+
+  const withPendingChange = useCallback(
+    (display: ReactNode, key: string) => {
+      if (!hasPendingChange(key)) {
+        return display;
+      }
+
+      const isEmptyDisplay =
+        display === null || display === undefined || display === "";
+
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 1,
+          }}
+        >
+          {isEmptyDisplay ? (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              None
+            </Typography>
+          ) : (
+            display
+          )}
+          <PendingChangeBadge />
+        </Box>
+      );
+    },
+    [hasPendingChange],
+  );
+
   return (
     <OverviewCard
       name={resource.name}
@@ -125,7 +177,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         canEdit={canEdit}
         value={resource.name}
         ariaLabel="Edit name"
-        display={<span>{resource.name}</span>}
+        display={withPendingChange(<span>{resource.name}</span>, "name")}
         onSave={(value) => saveField({ name: value })}
         renderEditor={({ value, onChange }) => (
           <TextField
@@ -151,7 +203,10 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         canEdit={canEdit}
         value={resource.description ?? ""}
         ariaLabel="Edit description"
-        display={<span>{resource.description || "No description"}</span>}
+        display={withPendingChange(
+          <span>{resource.description || "No description"}</span>,
+          "description",
+        )}
         onSave={(value) => saveField({ description: value })}
         renderEditor={({ value, onChange }) => (
           <TextField
@@ -188,7 +243,10 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
         value={resource.labels ?? []}
         ariaLabel="Edit labels"
         isEqual={sameStringSet}
-        display={<Labels labels={resource.labels || []} />}
+        display={withPendingChange(
+          <Labels labels={resource.labels || []} />,
+          "labels",
+        )}
         onSave={(value) => saveField({ labels: value })}
         renderEditor={({ value, onChange }) => (
           <StringTagEditor
@@ -213,7 +271,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             value={resource.integrationIds?.map((i) => i.id) || []}
             ariaLabel="Edit cloud integrations"
             isEqual={sameStringSet}
-            display={
+            display={withPendingChange(
               resource.integrationIds && resource.integrationIds.length > 0 ? (
                 <Box display="flex" gap={1} flexWrap="wrap">
                   {resource.integrationIds.map((integration) => (
@@ -222,8 +280,9 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                     </span>
                   ))}
                 </Box>
-              ) : null
-            }
+              ) : null,
+              "integration_ids",
+            )}
             onSave={(value) => saveField({ integrationIds: value })}
             renderEditor={({ value, onChange }) => (
               <ArrayReferenceInput
@@ -250,7 +309,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             value={resource.secretIds?.map((s) => s.id) || []}
             ariaLabel="Edit secrets"
             isEqual={sameStringSet}
-            display={
+            display={withPendingChange(
               resource.secretIds && resource.secretIds.length > 0 ? (
                 <Box display="flex" gap={1} flexWrap="wrap">
                   {resource.secretIds.map((secret) => (
@@ -259,8 +318,9 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                     </span>
                   ))}
                 </Box>
-              ) : null
-            }
+              ) : null,
+              "secret_ids",
+            )}
             onSave={(value) => saveField({ secretIds: value })}
             renderEditor={({ value, onChange }) => (
               <ArrayReferenceInput
@@ -282,7 +342,7 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             canEdit={canEdit}
             value={resource.workspace?.id ?? null}
             ariaLabel="Edit workspace"
-            display={
+            display={withPendingChange(
               resource.workspace ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <GetReferenceUrlValue {...resource.workspace} />
@@ -304,8 +364,9 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
                     </Tooltip>
                   </PermissionWrapper>
                 </Box>
-              ) : null
-            }
+              ) : null,
+              "workspace_id",
+            )}
             onSave={(value) => saveField({ workspaceId: value })}
             renderEditor={({ value, onChange }) => (
               <ReferenceInput

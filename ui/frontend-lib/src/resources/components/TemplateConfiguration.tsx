@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import InfoIcon from "@mui/icons-material/Info";
@@ -29,6 +29,7 @@ import {
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { OverviewCard } from "../../common/components/OverviewCard";
+import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -38,12 +39,14 @@ import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
+import type { ResourcePendingChanges } from "../hooks";
 import { VariableInput, VariableOutput } from "../types";
 
 import { ResourceVariablesEditDialog } from "./variables/ResourceVariablesEditDialog";
 
 export interface TemplateConfigurationProps {
   resource: GqlResource;
+  pendingChanges?: ResourcePendingChanges;
 }
 
 const getSourceCodeVariables = (
@@ -113,6 +116,7 @@ const getSourceCodeVariables = (
 
 export const TemplateConfiguration = ({
   resource,
+  pendingChanges = null,
 }: TemplateConfigurationProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
@@ -161,6 +165,45 @@ export const TemplateConfiguration = ({
     [saveField],
   );
 
+  const hasPendingChange = useCallback(
+    (key: string) =>
+      pendingChanges !== null &&
+      Object.prototype.hasOwnProperty.call(pendingChanges, key),
+    [pendingChanges],
+  );
+
+  const withPendingChange = useCallback(
+    (display: ReactNode, key: string) => {
+      if (!hasPendingChange(key)) {
+        return display;
+      }
+
+      const isEmptyDisplay =
+        display === null || display === undefined || display === "";
+
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 1,
+          }}
+        >
+          {isEmptyDisplay ? (
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              None
+            </Typography>
+          ) : (
+            display
+          )}
+          <PendingChangeBadge />
+        </Box>
+      );
+    },
+    [hasPendingChange],
+  );
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <OverviewCard name="Overview">
@@ -173,7 +216,7 @@ export const TemplateConfiguration = ({
           )}
           <CommonField
             name="Template Version"
-            value={
+            value={withPendingChange(
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {resource.sourceCodeVersion?.sourceCode ? (
                   <GetEntityLink
@@ -201,8 +244,9 @@ export const TemplateConfiguration = ({
                     </IconButton>
                   </Tooltip>
                 )}
-              </Box>
-            }
+              </Box>,
+              "source_code_version_id",
+            )}
           />
 
           {canEditStorage &&
@@ -253,11 +297,12 @@ export const TemplateConfiguration = ({
                   value={resource.storage?.id ?? null}
                   ariaLabel="Edit storage"
                   disabledTooltip="Unlock the storage field first"
-                  display={
+                  display={withPendingChange(
                     resource.storage ? (
                       <GetReferenceUrlValue {...resource.storage} />
-                    ) : null
-                  }
+                    ) : null,
+                    "storage_id",
+                  )}
                   onSave={(value) => saveField({ storageId: value })}
                   renderEditor={({ value, onChange }) => (
                     <ReferenceInput
@@ -288,11 +333,12 @@ export const TemplateConfiguration = ({
                     value={resource.storagePath ?? null}
                     ariaLabel="Edit storage path"
                     disabledTooltip="Unlock the storage field first"
-                    display={
+                    display={withPendingChange(
                       resource.storagePath ? (
                         <span>{resource.storagePath}</span>
-                      ) : null
-                    }
+                      ) : null,
+                      "storage_path",
+                    )}
                     onSave={(value) => saveField({ storagePath: value })}
                     renderEditor={({ value, onChange }) => (
                       <TextField
@@ -314,13 +360,17 @@ export const TemplateConfiguration = ({
             <>
               <CommonField
                 name="Storage"
-                value={
+                value={withPendingChange(
                   resource.storage ? (
                     <GetReferenceUrlValue {...resource.storage} />
-                  ) : null
-                }
+                  ) : null,
+                  "storage_id",
+                )}
               />
-              <CommonField name="Storage Path" value={resource.storagePath} />
+              <CommonField
+                name="Storage Path"
+                value={withPendingChange(resource.storagePath, "storage_path")}
+              />
             </>
           )}
         </Grid>
@@ -339,6 +389,7 @@ export const TemplateConfiguration = ({
                 }}
               >
                 <span>Input Variables</span>
+                {hasPendingChange("variables") && <PendingChangeBadge />}
                 <Button
                   size="small"
                   variant="outlined"
@@ -356,6 +407,7 @@ export const TemplateConfiguration = ({
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
+            pendingChanges={pendingChanges}
             onSave={handleVariablesSave}
           />
           <OverviewCard name="Output Values">

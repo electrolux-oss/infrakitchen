@@ -14,4 +14,5 @@ export * from "./inputs";
 export * from "./Labels";
 export * from "./MarkdownViewer";
 export * from "./notifications";
+export * from "./PendingChangeBadge";
 export * from "./UserAvatar";
