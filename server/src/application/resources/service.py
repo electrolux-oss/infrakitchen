@@ -1139,6 +1139,51 @@ class ResourceService:
         await self.permission_service.casbin_enforcer.send_reload_event()
         return policies
 
+    async def delete_resource_policy_cascade(self, permission_id: str, requester: UserDTO) -> int:
+        permission = await self.permission_service.query_by_id(permission_id)
+        if permission is None:
+            raise EntityNotFound("Permission not found")
+
+        if permission.ptype != "p" or permission.v0 is None or permission.v1 is None or permission.v2 is None:
+            raise ValueError("Only entity policies can be cascade deleted")
+
+        entity_name, _, entity_id = permission.v1.partition(":")
+        if entity_name != "resource" or not entity_id:
+            raise ValueError("Cascade delete is only supported for resource policies")
+
+        resource = await self.get_by_id(entity_id)
+        if not resource:
+            raise EntityNotFound(f"Resource {entity_id} not found")
+
+        resource_tree = await self.crud.get_tree_to_children(entity_id)
+        resource_ids: list[str] = []
+        seen: set[str] = set()
+        for node in resource_tree:
+            node_id = str(node["id"])
+            if node_id not in seen:
+                seen.add(node_id)
+                resource_ids.append(node_id)
+
+        policies_to_delete = await self.permission_service.query_all(
+            filter={
+                "ptype": "p",
+                "v0": permission.v0,
+                "v1__in": [f"resource:{resource_id}" for resource_id in resource_ids],
+                "v2": permission.v2,
+            }
+        )
+
+        deleted_count = 0
+        for policy in policies_to_delete:
+            await self.permission_service.crud.delete(policy)
+            deleted_count += 1
+
+        if deleted_count:
+            await self.permission_service.audit_log_handler.create_log(permission.id, requester.id, ModelActions.DELETE)
+            await self.permission_service.casbin_enforcer.send_reload_event()
+
+        return deleted_count
+
     async def create_resource_subscription(
         self,
         resource_id: str,

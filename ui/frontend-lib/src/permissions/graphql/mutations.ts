@@ -74,3 +74,9 @@ export const DELETE_PERMISSION_MUTATION = `
     deletePermission(id: $id)
   }
 `;
+
+export const CASCADE_DELETE_PERMISSION_MUTATION = `
+  mutation CascadeDeletePermission($id: UUID!) {
+    cascadeDeletePermission(id: $id)
+  }
+`;

@@ -149,7 +149,6 @@ export const ResourceStateReviewDialog: React.FC<
                 }}
                 color="success"
                 variant="contained"
-                disabled={error !== undefined || !resourceTempState}
               >
                 Approve
               </ActionButton>
@@ -161,7 +160,6 @@ export const ResourceStateReviewDialog: React.FC<
                 }}
                 color="error"
                 variant="contained"
-                disabled={error !== undefined || !resourceTempState}
               >
                 Reject
               </ActionButton>
