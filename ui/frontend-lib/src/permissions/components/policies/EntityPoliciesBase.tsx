@@ -114,12 +114,13 @@ export const EntityPoliciesBase = ({
             <DeletePermissionButton
               permission_id={params.value}
               onDelete={refreshPoliciesTable}
+              enableCascadeDelete={entityName === "resource"}
             />
           </PermissionWrapper>
         ),
       },
     ],
-    [refreshPoliciesTable],
+    [refreshPoliciesTable, entityName],
   );
 
   return (

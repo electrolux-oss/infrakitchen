@@ -21,9 +21,9 @@ export const RoleContent = (props: RoleContentProps) => {
         gap: 2,
       }}
     >
-      <EntityRolePoliciesCard role={role} />
-      <ApiPoliciesCard role={role} />
       <RoleUsersCard role={role} />
+      <ApiPoliciesCard role={role} />
+      <EntityRolePoliciesCard role={role} />
     </Box>
   );
 };

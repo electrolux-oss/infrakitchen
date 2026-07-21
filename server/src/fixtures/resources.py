@@ -11,6 +11,7 @@ from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
 
 from core.constants import ModelState, ModelStatus
+from core.permissions.schema import EntityPolicyCreate
 from core.users.model import UserDTO
 
 from application import (
@@ -19,6 +20,7 @@ from application import (
     Variables,
 )
 from application.integrations.model import Integration
+from fixtures.roles import create_role
 from fixtures.utils import change_state
 
 
@@ -200,6 +202,8 @@ async def insert_organization_resource(session: AsyncSession, user: UserDTO) -> 
     template = templates[0] if templates else None
     assert template is not None, "Organization template not found"
 
+    await create_role(session=session, role_name="organization_admin", user_ids=[user.id], requester=user)
+
     resource = ResourceCreate(
         template_id=template.id,
         name="myorganization",
@@ -220,6 +224,14 @@ async def insert_organization_resource(session: AsyncSession, user: UserDTO) -> 
         state=ModelState.PROVISIONED,
         status=ModelStatus.DONE,
     )
+    resource_policy = EntityPolicyCreate(
+        role="organization_admin",
+        entity_id=result.id,
+        entity_name="resource",
+        action="admin",
+        inherits_children=True,
+    )
+    _ = await resource_service.create_resource_policy(resource_policy, user)
     return result
 
 
@@ -232,6 +244,9 @@ async def insert_project_resource(
     templates = await template_service.get_all(filter={"template": "project"})
     template = templates[0] if templates else None
     assert template is not None, "Project template not found"
+
+    await create_role(session=session, role_name=f"{project_name}_admin", user_ids=[user.id], requester=user)
+    await create_role(session=session, role_name=f"{project_name}", user_ids=[user.id], requester=user)
 
     resource = ResourceCreate(
         template_id=template.id,
@@ -254,6 +269,20 @@ async def insert_project_resource(
         state=ModelState.PROVISIONED,
         status=ModelStatus.DONE,
     )
+    resource_policy = EntityPolicyCreate(
+        role=f"{project_name}_admin",
+        entity_id=result.id,
+        entity_name="resource",
+        action="admin",
+    )
+    _ = await resource_service.create_resource_policy(resource_policy, user)
+    resource_policy = EntityPolicyCreate(
+        role=f"{project_name}",
+        entity_id=result.id,
+        entity_name="resource",
+        action="write",
+    )
+    _ = await resource_service.create_resource_policy(resource_policy, user)
     return result
 
 

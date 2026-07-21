@@ -10,6 +10,7 @@ from core.permissions.schema import (
     RoleCreate,
 )
 from core.permissions.dependencies import get_permission_service
+from application.resources.dependencies import get_resource_service
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
 from core.users.functions import user_is_super_admin, user_has_access_to_entity
@@ -128,4 +129,17 @@ class PermissionMutation:
             raise AccessDenied(f"Access denied for action {ModelActions.DELETE.value}")
 
         await service.delete(str(id), requester=requester)
+        return True
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def cascade_delete_permission(self, info: Info, id: uuid.UUID) -> bool:
+        requester = info.context["request"].state.user
+        session = info.context["session"]
+        permission_service = get_permission_service(session)
+
+        if ModelActions.DELETE not in await permission_service.get_actions(str(id), requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.DELETE.value}")
+
+        resource_service = get_resource_service(session)
+        await resource_service.delete_resource_policy_cascade(str(id), requester=requester)
         return True
