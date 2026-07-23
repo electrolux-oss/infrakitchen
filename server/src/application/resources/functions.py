@@ -6,6 +6,8 @@ from typing import Any, cast
 from uuid import UUID
 
 
+from application.projects.functions import requester_is_project_owner
+from application.projects.model import Project
 from application.resources.schema import (
     DependencyType,
     ResourceCreate,
@@ -34,14 +36,33 @@ logger = logging.getLogger(__name__)
 
 
 async def get_resource_actions(
-    requester: UserDTO, resource_id: str | UUID, status: ModelStatus, state: ModelState, temp_state_exists: bool
+    requester: UserDTO,
+    resource_id: str | UUID,
+    status: ModelStatus,
+    state: ModelState,
+    temp_state_exists: bool,
+    project: Project | None = None,
 ) -> list[str]:
     """
     Get all actions available for the resource.
+    Permissions are calculated from both resource-level and project-level policies.
     :param resource_id: ID of the resource
+    :param project_id: ID of the project the resource belongs to (optional)
     :return: List of actions
     """
+
     requester_permissions = await user_entity_permissions(requester, resource_id, "resource")
+
+    # If resource has a project, also check project-level / owner permissions and merge
+    if project and ("write" not in requester_permissions and "admin" not in requester_permissions):
+        if await requester_is_project_owner(requester, project):
+            requester_permissions.append("admin")
+
+        project_permissions = await user_entity_permissions(requester, project.id, "project")
+        # Merge: use the highest permission level from either source
+        all_permissions = set(requester_permissions) | set(project_permissions)
+        requester_permissions = list(all_permissions)
+
     if "write" not in requester_permissions and "admin" not in requester_permissions:
         return []
 
@@ -123,24 +144,74 @@ def merge_tags_or_configs(tags: Sequence[DependencyType], *args: Sequence[Depend
     return result
 
 
-def get_merged_tags(parents: list[ResourceWithConfigs]) -> dict[str, str]:
+def get_merged_dependency_config(parents: list[ResourceWithConfigs]) -> dict[str, Any]:
+    parsed_config: dict[str, Any] = {}
+    for parent in parents:
+        if not parent.dependency_config:
+            continue
+        dependency_config = [config for config in parent.dependency_config if config.inherited_by_children is True]
+        parsed_config.update({config.name: config.value for config in dependency_config if config.value is not None})
+    return parsed_config
+
+
+def get_merged_tags_with_project(
+    parents: list[ResourceWithConfigs],
+    project_tags: list[Any] | None = None,
+) -> dict[str, str]:
     """
-    Retrieves and merges the tags from the parent dependencies and the current dependency.
+    Retrieves and merges tags from the project (lowest priority), then parent resources.
+    Project tags act as defaults that parent resource tags can override.
 
     Args:
-        parents (list[ResourceWithConfigs]): A list of parent resources with their configurations.
+        parents: A list of parent resources with their configurations.
+        project_tags: Tags from the project (list of DependencyTag-like dicts or objects).
 
     Returns:
         dict[str, str]: A dictionary containing the merged tags.
-
     """
     parsed_tags: dict[str, str] = {}
+
+    # Project tags as lowest-priority defaults
+    if project_tags:
+        for tag in project_tags:
+            if hasattr(tag, "inherited_by_children"):
+                if tag.inherited_by_children:
+                    parsed_tags[tag.name] = tag.value
+            elif isinstance(tag, dict):
+                if tag.get("inherited_by_children", False):
+                    parsed_tags[tag["name"]] = tag["value"]
+
+    # Parent resource tags override project tags
     for parent in parents:
         if not parent.dependency_tags:
             continue
         dependency_tags = [tag for tag in parent.dependency_tags if tag.inherited_by_children is True]
         parsed_tags.update({tag.name: tag.value for tag in dependency_tags})
+
     return parsed_tags
+
+
+def get_merged_dependency_config_with_project(
+    parents: list[ResourceWithConfigs],
+    project_dependency_config: list[Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Retrieves config from the project (lowest priority), then parent resources.
+    Project config acts as defaults that parent resource config can override.
+    """
+    parsed_config: dict[str, Any] = {}
+
+    if project_dependency_config:
+        for config in project_dependency_config:
+            if hasattr(config, "inherited_by_children"):
+                if config.inherited_by_children and config.value is not None:
+                    parsed_config[config.name] = config.value
+            elif isinstance(config, dict):
+                if config.get("inherited_by_children", False) and config.get("value") is not None:
+                    parsed_config[config["name"]] = config["value"]
+
+    parsed_config.update(get_merged_dependency_config(parents))
+    return parsed_config
 
 
 async def add_resource_parent_policy(
@@ -198,6 +269,7 @@ def get_resource_variable_schema(
     parents: list[ResourceWithConfigs],
     parent_scvs: list[SourceCodeVersionWithConfigs],
     validation_rules_map: dict[str, list[ValidationRuleResponse]] | None = None,
+    project_dependency_config: list[Any] | None = None,
 ) -> list[ResourceVariableSchema]:
     """
     Retrieves the schema for the resource variables.
@@ -263,17 +335,11 @@ def get_resource_variable_schema(
                         if variable is not None:
                             variable.value = output_value
 
-    # set default values from parent dependency configs
-    for parent in parents:
-        if not parent.dependency_config:
-            continue
-
-        config_map: dict[str, Any] = {
-            c.name: c.value for c in parent.dependency_config if c.inherited_by_children and c.value is not None
-        }
-        for variable in schema:
-            if variable.name in config_map:
-                variable.value = config_map[variable.name]
+    # set default values from project dependency config first, then parent dependency configs
+    config_map = get_merged_dependency_config_with_project(parents, project_dependency_config)
+    for variable in schema:
+        if variable.name in config_map:
+            variable.value = config_map[variable.name]
 
     return schema
 

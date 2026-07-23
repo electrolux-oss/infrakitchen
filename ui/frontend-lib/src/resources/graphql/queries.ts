@@ -62,10 +62,11 @@ export const RESOURCE_DOWNLOAD_QUERY = `
 `;
 
 export const RESOURCE_VARIABLE_SCHEMA_QUERY = `
-  query ResourceVariableSchema($sourceCodeVersionId: UUID!, $parentResourceIds: [UUID!]) {
+  query ResourceVariableSchema($sourceCodeVersionId: UUID!, $parentResourceIds: [UUID!], $projectId: UUID) {
     resourceVariableSchema(
       sourceCodeVersionId: $sourceCodeVersionId
       parentResourceIds: $parentResourceIds
+      projectId: $projectId
     ) {
       name
       type

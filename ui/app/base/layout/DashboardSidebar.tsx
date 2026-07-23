@@ -168,6 +168,14 @@ export default function DashboardSidebar({
             permissionKey="resource"
           />
           <DashboardSidebarPageItem
+            id="projects"
+            title="Projects"
+            icon={<WorkspacesIcon />}
+            href="/projects"
+            selected={!!matchPath("/projects/*", pathname)}
+            permissionKey="project"
+          />
+          <DashboardSidebarPageItem
             id="executors"
             title="Executors"
             icon={<Icon icon="emojione:package" width="22" height="24" />}

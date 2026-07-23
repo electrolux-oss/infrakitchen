@@ -38,9 +38,9 @@ import {
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
+import { DependencyConfigurationFields } from "../../common/components/DependencyConfigurationFields";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import TagInput from "../../common/components/inputs/TagInput";
 import { MarkdownViewer } from "../../common/components/MarkdownViewer";
 import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -166,6 +166,7 @@ const ResourceCreatePageInner = () => {
         ...data,
         storageId: data.storageId || null,
         workspaceId: data.workspaceId || null,
+        projectId: data.projectId || null,
         sourceCodeVersionId: data.sourceCodeVersionId || null,
       };
       ikApi
@@ -206,8 +207,19 @@ const ResourceCreatePageInner = () => {
     ) || null;
   const watchedStorage = watch("storageId");
   const watchedParentIds = watch("parents");
+  const watchedProjectId = watch("projectId");
+  const watchedWorkspaceId = watch("workspaceId");
   const watchedSourceCodeVersionId = watch("sourceCodeVersionId");
   const hasDocs = Boolean(watchedTemplate?.documentation);
+  const selectedProject = useMemo(
+    () =>
+      watchedProjectId && Array.isArray(buffer["projects"])
+        ? (buffer["projects"] as any[]).find(
+            (project) => project.id === watchedProjectId,
+          )
+        : null,
+    [buffer, watchedProjectId],
+  );
 
   const filter_storage = useMemo(
     () => ({
@@ -318,21 +330,38 @@ const ResourceCreatePageInner = () => {
           integrationIds?: Array<{ id: string }>;
           storage?: { id: string } | null;
           workspace?: { id: string } | null;
+          project?: {
+            id: string;
+            name?: string;
+            workspace?: { id: string; name?: string } | null;
+          } | null;
+          projectId?: string | null;
         })
       | null;
     const integrationIds =
       parent?.integrationIds?.map((i: { id: string }) => i.id) || [];
+    const project =
+      parent?.project?.id || parent?.projectId
+        ? {
+            id: parent?.project?.id || parent?.projectId || "",
+            name: parent?.project?.name,
+            workspace: parent?.project?.workspace || null,
+          }
+        : null;
     return {
       integration: integrationIds.length > 0,
       storage: Boolean(parent?.storage?.id),
       workspace: Boolean(parent?.workspace?.id),
+      project: project,
       integrationIds,
       storageId: parent?.storage?.id || null,
       workspaceId: parent?.workspace?.id || null,
+      projectId: project?.id || null,
     };
   }, [resolvedLastParent]);
 
   const lastAppliedParentIdRef = useRef<string | null>(null);
+  const lastAppliedProjectWorkspaceIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!resolvedLastParent) {
       lastAppliedParentIdRef.current = null;
@@ -350,7 +379,50 @@ const ResourceCreatePageInner = () => {
     if (inherited.workspace) {
       setValue("workspaceId", inherited.workspaceId);
     }
+    if (inherited.projectId) {
+      setValue("projectId", inherited.projectId);
+      setBuffer((prev: Record<string, IkEntity | IkEntity[]>) => {
+        const currentProjects = Array.isArray(prev.projects)
+          ? prev.projects
+          : [];
+        if (
+          currentProjects.some((project) => project.id === inherited.projectId)
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          projects: [
+            ...currentProjects,
+            inherited.project as unknown as IkEntity,
+          ],
+        };
+      });
+    }
   }, [resolvedLastParent, inherited, setValue]);
+
+  useEffect(() => {
+    const projectWorkspaceId =
+      selectedProject?.workspace?.id || selectedProject?.workspaceId || null;
+
+    if (inherited.workspace) {
+      lastAppliedProjectWorkspaceIdRef.current = null;
+      return;
+    }
+
+    if (!projectWorkspaceId) {
+      lastAppliedProjectWorkspaceIdRef.current = null;
+      return;
+    }
+
+    if (
+      !watchedWorkspaceId ||
+      watchedWorkspaceId === lastAppliedProjectWorkspaceIdRef.current
+    ) {
+      setValue("workspaceId", projectWorkspaceId);
+      lastAppliedProjectWorkspaceIdRef.current = projectWorkspaceId;
+    }
+  }, [inherited.workspace, selectedProject, setValue, watchedWorkspaceId]);
 
   useEffect(() => {
     if (watchedSourceCodeVersionId) {
@@ -361,6 +433,7 @@ const ResourceCreatePageInner = () => {
           {
             sourceCodeVersionId: watchedSourceCodeVersionId,
             parentResourceIds: watchedParentIds ? watchedParentIds : [],
+            projectId: watchedProjectId || null,
           },
         )
         .then(({ resourceVariableSchema }) => {
@@ -395,6 +468,7 @@ const ResourceCreatePageInner = () => {
     ikApi,
     watchedSourceCodeVersionId,
     watchedParentIds,
+    watchedProjectId,
     setSchema,
     setValue,
   ]);
@@ -595,66 +669,59 @@ const ResourceCreatePageInner = () => {
           </Box>
 
           <Box sx={{ width: "100%" }}>
-            <PropertyCard title="Dependency Configuration">
-              <Box>
-                <Box ref={dependencyTagsSectionRef}>
-                  <Controller
-                    name="dependencyTags"
-                    control={control}
-                    rules={{
-                      validate: {
-                        requiredFields: (value) => validateTagEntries(value),
-                      },
-                    }}
-                    render={({ field, formState }) => (
-                      <TagInput
-                        {...field}
-                        label="Dependency Tags"
-                        errors={errors}
-                        showErrors={formState.isSubmitted}
-                      />
-                    )}
-                  />
-                </Box>
-                <Box ref={dependencyConfigSectionRef}>
-                  <Controller
-                    name="dependencyConfig"
-                    control={control}
-                    rules={{
-                      validate: {
-                        requiredFields: (value) => validateTagEntries(value),
-                        requiredConfigVars: (value) => {
-                          const required =
-                            watchedTemplate?.configuration
-                              ?.requiredConfigurationVariables;
-                          if (!required || required.length === 0) return true;
-                          const provided = new Set(
-                            (value || []).map(
-                              (v) => (v as { name: string }).name,
-                            ),
-                          );
-                          const missing = required.filter(
-                            (name: string) => !provided.has(name),
-                          );
-                          if (missing.length > 0) {
-                            return `Missing required config variable(s): ${missing.join(", ")}`;
-                          }
-                          return true;
-                        },
-                      },
-                    }}
-                    render={({ field, formState }) => (
-                      <TagInput
-                        {...field}
-                        label="Dependency Configs"
-                        errors={errors}
-                        showErrors={formState.isSubmitted}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
-            </PropertyCard>
+            <DependencyConfigurationFields
+              control={control}
+              errors={errors}
+              dependencyTagsName="dependencyTags"
+              dependencyConfigName="dependencyConfig"
+              dependencyTagsRules={{
+                validate: {
+                  requiredFields: (value) => validateTagEntries(value),
+                },
+              }}
+              dependencyConfigRules={{
+                validate: {
+                  requiredFields: (value) => validateTagEntries(value),
+                  requiredConfigVars: (value) => {
+                    const required =
+                      watchedTemplate?.configuration
+                        ?.requiredConfigurationVariables;
+                    if (!required || required.length === 0) return true;
+                    const dependencyConfigValue = Array.isArray(value)
+                      ? (value as Array<{ name: string }>)
+                      : [];
+                    const inheritedProjectConfig = Array.isArray(
+                      selectedProject?.dependencyConfig,
+                    )
+                      ? selectedProject.dependencyConfig
+                          .filter(
+                            (entry: {
+                              inherited_by_children?: boolean;
+                              value?: unknown;
+                            }) =>
+                              entry.inherited_by_children &&
+                              entry.value !== null &&
+                              entry.value !== undefined,
+                          )
+                          .map((entry: { name: string }) => entry.name)
+                      : [];
+                    const provided = new Set([
+                      ...dependencyConfigValue.map((v) => v.name),
+                      ...inheritedProjectConfig,
+                    ]);
+                    const missing = required.filter(
+                      (name: string) => !provided.has(name),
+                    );
+                    if (missing.length > 0) {
+                      return `Missing required config variable(s): ${missing.join(", ")}`;
+                    }
+                    return true;
+                  },
+                },
+              }}
+              dependencyTagsSectionRef={dependencyTagsSectionRef}
+              dependencyConfigSectionRef={dependencyConfigSectionRef}
+            />
           </Box>
           {watchedTemplate?.abstract === true && (
             <Box ref={templateConfigSectionRef} sx={{ width: "100%" }}>
@@ -683,6 +750,8 @@ const ResourceCreatePageInner = () => {
                                   "storage.name",
                                   "workspace.id",
                                   "workspace.name",
+                                  "project.id",
+                                  "project.name",
                                   "secretIds.id",
                                   "secretIds.name",
                                   "id",
@@ -727,6 +796,32 @@ const ResourceCreatePageInner = () => {
                           <LabelInput errors={errors} {...field} />
                         )}
                       />
+
+                      <Controller
+                        name="projectId"
+                        control={control}
+                        render={({ field }) => (
+                          <ReferenceInput
+                            {...field}
+                            ikApi={ikApi}
+                            entity_name="projects"
+                            buffer={buffer}
+                            fields={[
+                              "name",
+                              "workspace.id",
+                              "workspace.name",
+                              "workspaceId",
+                            ]}
+                            showFields={["name"]}
+                            setBuffer={setBuffer}
+                            error={false}
+                            helpertext="Assign this resource to a project."
+                            value={field.value}
+                            label="Select Project"
+                            onChange={(value: any) => field.onChange(value)}
+                          />
+                        )}
+                      />
                     </>
                   )}
                 </Box>
@@ -760,6 +855,8 @@ const ResourceCreatePageInner = () => {
                                 "storage.name",
                                 "workspace.id",
                                 "workspace.name",
+                                "project.id",
+                                "project.name",
                                 "secretIds.id",
                                 "secretIds.name",
                                 "id",
@@ -949,6 +1046,32 @@ const ResourceCreatePageInner = () => {
                   )}
 
                   <Controller
+                    name="projectId"
+                    control={control}
+                    render={({ field }) => (
+                      <ReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="projects"
+                        buffer={buffer}
+                        fields={[
+                          "name",
+                          "workspace.id",
+                          "workspace.name",
+                          "workspaceId",
+                        ]}
+                        showFields={["name"]}
+                        setBuffer={setBuffer}
+                        error={false}
+                        helpertext="Assign this resource to a project. Workspace will be inherited from the project if not set."
+                        value={field.value}
+                        label="Select Project"
+                        onChange={(value: any) => field.onChange(value)}
+                      />
+                    )}
+                  />
+
+                  <Controller
                     name="workspaceId"
                     control={control}
                     render={({ field }) => (
@@ -1081,6 +1204,7 @@ const ResourceCreatePage = () => {
       sourceCodeVersionId: "",
       variables: [],
       workspaceId: "",
+      projectId: "",
       dependencyTags: [],
       dependencyConfig: [],
       storageId: "",

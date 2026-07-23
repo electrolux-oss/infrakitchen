@@ -7,10 +7,14 @@ from application.resources.functions import (
     check_required_variables,
     check_unique_variables,
     check_variable_type,
+    get_merged_dependency_config_with_project,
+    get_merged_tags_with_project,
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
 )
 from application.resources.schema import (
+    DependencyConfig,
+    DependencyTag,
     ResourceCreate,
     ResourceUpdate,
     ResourceVariableSchema,
@@ -18,6 +22,28 @@ from application.resources.schema import (
 )
 from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import ValidationRuleResponse
+
+
+def test_get_merged_tags_with_project_uses_project_as_default(many_resource_response):
+    merged_tags = get_merged_tags_with_project(
+        [many_resource_response[0], many_resource_response[1]],
+        [DependencyTag(name="shared", value="project", inherited_by_children=True)],
+    )
+
+    assert merged_tags["shared"] == "project"
+    assert merged_tags["DependencyTag0"] == "value0"
+    assert merged_tags["DependencyTagResTwo0"] == "value0"
+
+
+def test_get_merged_dependency_config_with_project_uses_project_as_default(many_resource_response):
+    merged_config = get_merged_dependency_config_with_project(
+        [many_resource_response[0], many_resource_response[1]],
+        [DependencyConfig(name="shared", value="project", inherited_by_children=True)],
+    )
+
+    assert merged_config["shared"] == "project"
+    assert merged_config["DependencyConfig0"] == "value0"
+    assert merged_config["DependencyConfigResTwo0"] == "value0"
 
 
 @pytest.mark.parametrize(

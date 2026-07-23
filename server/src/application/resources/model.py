@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
+from application.common.schema import DependencyTag, DependencyConfig
+from application.projects.model import Project
+from application.projects.schema import ProjectResponse
 from application.secrets.model import Secret, SecretDTO
 from application.templates.model import Template, TemplateDTO
 from application.integrations.model import Integration, IntegrationDTO
@@ -15,7 +18,7 @@ from core.base_models import Base, BaseEntity
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import User, UserDTO
 from ..storages.model import Storage, StorageDTO
-from .schema import Outputs, Variables, DependencyTag, DependencyConfig, ResourceShort
+from .schema import Outputs, Variables, ResourceShort
 
 from sqlalchemy import UUID, ForeignKey, Table
 from sqlalchemy import Column, Index, JSON
@@ -91,6 +94,12 @@ class Resource(BaseEntity):
         nullable=True,
     )
     workspace: Mapped[Workspace | None] = relationship("Workspace", lazy="joined")
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", name="fk_resource_project_id"),
+        nullable=True,
+    )
+    project: Mapped[Project | None] = relationship("Project", lazy="joined")
     state: Mapped[ModelState] = mapped_column(
         SQLAlchemyEnum(ModelState, name="model_state", native_enum=False), nullable=False, default=ModelState.PROVISION
     )
@@ -159,6 +168,8 @@ class ResourceDTO(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
+    project_id: uuid.UUID | None = Field(default=None)
+    project: ProjectResponse | None = Field(default=None)
     variables: list[Variables] = Field(default=[])
     outputs: list[Outputs] = Field(default=[])
     dependency_tags: list[DependencyTag] = Field(default_factory=list)

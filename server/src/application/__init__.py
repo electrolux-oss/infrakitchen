@@ -9,7 +9,8 @@ from .source_code_versions import (
     VariableModel,
     VariableReferenceModel,
 )
-from .resources import DependencyConfig, DependencyTag, Outputs, ResourceDTO, Variables
+from .resources import Outputs, ResourceDTO, Variables
+from .common import DependencyConfig, DependencyTag
 from .resource_temp_state.model import ResourceTempState
 from .storages import StorageDTO
 from .secrets import SecretDTO

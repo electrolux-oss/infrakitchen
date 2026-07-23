@@ -3,6 +3,7 @@ from lorem import get_sentence, get_word, random
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.projects.model import Project
 from application.resources.dependencies import get_resource_service
 from application.resources.model import Resource
 from application.resources.schema import ResourceCreate, ResourceResponse
@@ -21,7 +22,9 @@ from application import (
 )
 from application.integrations.model import Integration
 from fixtures.roles import create_role
+from fixtures.projects import insert_projects
 from fixtures.utils import change_state
+from fixtures.workspaces import insert_workspaces
 
 
 async def insert_regional_resources(
@@ -31,6 +34,7 @@ async def insert_regional_resources(
     user: UserDTO,
     integration: Integration,
     parent: ResourceResponse | None = None,
+    project: Project | None = None,
 ):
     default_values = {
         "name": get_word(count=3).replace(" ", "_"),
@@ -42,18 +46,6 @@ async def insert_regional_resources(
     }
 
     resource_fixtures = [
-        # {
-        #     "template": "organization",
-        #     "dependency_tags": [
-        #         DependencyTag(name="org", value=f"myorganization_{env}", inherited_by_children=True),
-        #     ],
-        # },
-        # {
-        #     "template": "project",
-        #     "dependency_tags": [
-        #         DependencyTag(name="project", value=f"myproject_{env}", inherited_by_children=True),
-        #     ],
-        # },
         {
             "template": "service",
             "dependency_config": [
@@ -113,6 +105,7 @@ async def insert_regional_resources(
                 dependency_tags=cast(list[DependencyTag], template_config.get("dependency_tags", [])),
                 dependency_config=cast(list[DependencyConfig], template_config.get("dependency_config", [])),
                 variables=[],
+                project_id=project.id if project else None,
             )
         else:
             scv = [sv for sv in source_code_versions if sv.template.id == template.id][0]
@@ -174,6 +167,7 @@ async def insert_regional_resources(
                 dependency_tags=cast(list[DependencyTag], template_config.get("dependency_tags", [])),
                 dependency_config=cast(list[DependencyConfig], template_config.get("dependency_config", [])),
                 variables=variables,
+                project_id=project.id if project else None,
             )
 
         allowed_parent_states = [state.value for state in ModelState]
@@ -286,7 +280,9 @@ async def insert_project_resource(
     return result
 
 
-async def insert_env_resources(session: AsyncSession, env: str, parent: ResourceResponse, user: UserDTO):
+async def insert_env_resources(
+    session: AsyncSession, env: str, parent: ResourceResponse, project: Project, user: UserDTO
+):
     query = select(Integration).where(
         Integration.integration_type == "cloud",
         Integration.integration_provider == "aws",
@@ -298,7 +294,7 @@ async def insert_env_resources(session: AsyncSession, env: str, parent: Resource
 
     for integration in integrations:
         for region in regions:
-            await insert_regional_resources(session, env, region, user, integration, parent)
+            await insert_regional_resources(session, env, region, user, integration, parent, project)
 
     await change_state(
         session=session,
@@ -311,9 +307,8 @@ async def insert_env_resources(session: AsyncSession, env: str, parent: Resource
 async def insert_resources(session: AsyncSession, envs: list[str], user: UserDTO):
     organization_resource = await insert_organization_resource(session=session, user=user)
     for proj_postfix in "abcd":
+        workspace = await insert_workspaces(session=session, env=f"workspace_{proj_postfix}", user=user)
         project = f"project_{proj_postfix}"
-        project_resource = await insert_project_resource(
-            session=session, user=user, project_name=project, organization_resource=organization_resource
-        )
+        proj = await insert_projects(session=session, env=project, workspace_id=workspace.id, user=user)
         for env in envs:
-            await insert_env_resources(session=session, env=env, parent=project_resource, user=user)
+            await insert_env_resources(session=session, env=env, parent=organization_resource, project=proj, user=user)

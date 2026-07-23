@@ -6,6 +6,8 @@ import uuid
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
 from pydantic_core import MISSING
 
+from application.common.schema import DependencyConfig, DependencyTag
+from application.projects.schema import ProjectShort
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
 from application.integrations.schema import IntegrationShort
@@ -42,26 +44,6 @@ def _validate_string_with_pattern(value: str) -> str:
 
 
 StringWithPattern = Annotated[str, AfterValidator(_validate_string_with_pattern)]
-
-
-class DependencyTag(BaseModel):
-    """
-    Used for tagging resources in cloud providers
-    """
-
-    name: str = Field(..., frozen=True)
-    value: str = Field(..., frozen=True)
-    inherited_by_children: bool = Field(default=False)
-
-
-class DependencyConfig(BaseModel):
-    """
-    Used for sharing configs to children
-    """
-
-    name: str = Field(..., frozen=True)
-    value: str = Field(..., frozen=True)
-    inherited_by_children: bool = Field(default=False)
 
 
 class Outputs(BaseModel):
@@ -171,6 +153,8 @@ class ResourceResponse(BaseModel):
     workspace_id: uuid.UUID | None = Field(
         default=None,
     )
+    project_id: uuid.UUID | None = Field(default=None)
+    project: ProjectShort | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -216,6 +200,9 @@ class ResourceCreate(BaseModel):
     workspace_id: OptionalUUID = Field(
         default=None,
     )
+    project_id: OptionalUUID = Field(
+        default=None,
+    )
 
 
 class ResourceUpdate(BaseModel):
@@ -235,6 +222,9 @@ class ResourceUpdate(BaseModel):
     dependency_config: list[DependencyConfig] | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
     workspace_id: OptionalUUID = Field(
+        default=cast(Any, MISSING),
+    )
+    project_id: OptionalUUID = Field(
         default=cast(Any, MISSING),
     )
 

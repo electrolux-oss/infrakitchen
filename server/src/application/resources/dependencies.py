@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.favorites.dependencies import get_favorite_service
 from application.integrations.dependencies import get_integration_service
+from application.projects.dependencies import get_project_service
 from application.resource_temp_state.handler import ResourceTempStateHandler
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
@@ -49,6 +50,7 @@ def get_resource_service(
         validation_rule_service=get_validation_rule_service(session=session),
         favorite_service=get_favorite_service(session=session),
         subscription_service=get_subscription_service(session=session),
+        project_service=get_project_service(session=session),
     )
 
 

@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PermissionWrapper } from "../../common";
+import { PermissionWrapper, UserAvatar } from "../../common";
 import {
   CommonField,
   GetReferenceUrlValue,
@@ -31,6 +31,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
+import { GqlUserShort } from "../../users/graphql";
 import {
   GqlResource,
   ResourceUpdateFieldInput,
@@ -49,9 +50,10 @@ export const ResourceOverview = ({
   pendingChanges = null,
 }: ResourceAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { refreshEntity, userEntityPermissions, actions } = useEntityProvider();
   const { permissions } = usePermissionProvider();
-  const canEdit = userEntityPermissions.includes("write");
+  const canEdit =
+    userEntityPermissions.includes("write") || actions.includes("edit");
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
@@ -76,6 +78,9 @@ export const ResourceOverview = ({
   const existingWorkspaceId = resource.workspace?.id
     ? String(resource.workspace.id)
     : null;
+  const existingProjectId = resource.project?.id
+    ? String(resource.project.id)
+    : null;
 
   const workspaceOptionFilter = useMemo(
     () => (option: IkEntity) => {
@@ -86,6 +91,17 @@ export const ResourceOverview = ({
       return p === "write" || p === "admin";
     },
     [existingWorkspaceId, permissions],
+  );
+
+  const projectOptionFilter = useMemo(
+    () => (option: IkEntity) => {
+      if (existingProjectId && String(option.id) === existingProjectId)
+        return true;
+      if (permissions["*"] === "admin") return true;
+      const p = permissions[`project:${option.id}`];
+      return p === "write" || p === "admin";
+    },
+    [existingProjectId, permissions],
   );
 
   const handleSync = () => {
@@ -158,6 +174,7 @@ export const ResourceOverview = ({
     },
     [hasPendingChange],
   );
+  const projectOwners = resource.project?.owners || null;
 
   return (
     <OverviewCard
@@ -336,6 +353,59 @@ export const ResourceOverview = ({
             )}
             size={6}
           />
+
+          <CommonEditableField<string | null>
+            name="Project"
+            canEdit={canEdit}
+            value={resource.project?.id ?? null}
+            ariaLabel="Edit project"
+            display={withPendingChange(
+              resource.project ? (
+                <GetReferenceUrlValue {...resource.project} />
+              ) : null,
+              "project_id",
+            )}
+            onSave={(value) => saveField({ projectId: value })}
+            renderEditor={({ value, onChange }) => (
+              <ReferenceInput
+                ikApi={ikApi}
+                buffer={buffer}
+                setBuffer={setBuffer}
+                entity_name="projects"
+                showFields={["name"]}
+                optionFilter={projectOptionFilter}
+                value={value}
+                onChange={onChange}
+                label="Project"
+                helpertext="Only projects you have write access to are shown"
+              />
+            )}
+            size={6}
+          />
+
+          {resource.project && (
+            <CommonField
+              name="Owners"
+              value={
+                !projectOwners || projectOwners.length === 0 ? (
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    None
+                  </Typography>
+                ) : (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {projectOwners.map((owner: GqlUserShort) => (
+                      <UserAvatar
+                        key={owner.id}
+                        id={owner.id}
+                        identifier={owner.identifier}
+                      />
+                    ))}
+                  </Box>
+                )
+              }
+              size={6}
+            />
+          )}
 
           <CommonEditableField<string | null>
             name="Workspace"

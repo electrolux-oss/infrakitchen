@@ -145,12 +145,14 @@ class ResourceQuery:
         info: Info,
         source_code_version_id: uuid.UUID,
         parent_resource_ids: list[uuid.UUID] | None = None,
+        project_id: uuid.UUID | None = None,
     ) -> list[ResourceVariableSchemaType]:
         await check_api_permission(info, "resource", ["read"])
         service = _build_service(info)
         schema = await service.get_variable_schema(
             source_code_version_id=str(source_code_version_id),
             resource_ids=[str(resource_id) for resource_id in (parent_resource_ids or [])],
+            project_id=str(project_id) if project_id is not None else None,
         )
         return [
             ResourceVariableSchemaType(

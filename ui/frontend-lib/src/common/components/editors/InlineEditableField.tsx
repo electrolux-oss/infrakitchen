@@ -33,6 +33,8 @@ export interface InlineEditableFieldProps<T> {
   isEqual?: (a: T, b: T) => boolean;
   /** Placeholder shown when there is no value to display. */
   placeholder?: string;
+  /** Optional hook called when edit mode is opened. */
+  onEditStart?: () => void;
 }
 
 /**
@@ -50,6 +52,7 @@ export function InlineEditableField<T>({
   ariaLabel = "Edit field",
   isEqual,
   placeholder = "Not set",
+  onEditStart,
 }: InlineEditableFieldProps<T>) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<T>(value);
@@ -57,6 +60,7 @@ export function InlineEditableField<T>({
 
   const startEdit = () => {
     setDraft(value);
+    onEditStart?.();
     setEditing(true);
   };
 

@@ -81,6 +81,13 @@ async def _count_resources_by_template(keys: list[str], session: AsyncSession) -
     return [mapping.get(key, 0) for key in keys]
 
 
+async def _count_resources_by_project(keys: list[str], session: AsyncSession) -> list[int]:
+    stmt = select(Resource.project_id, func.count()).where(Resource.project_id.in_(keys)).group_by(Resource.project_id)
+    result = await session.execute(stmt)
+    mapping = {str(row[0]): row[1] for row in result}
+    return [mapping.get(key, 0) for key in keys]
+
+
 async def _count_source_code_versions_by_template(keys: list[str], session: AsyncSession) -> list[int]:
     stmt = (
         select(SourceCodeVersion.template_id, func.count())
@@ -183,5 +190,8 @@ def count_loaders(session: AsyncSession) -> dict[str, DataLoader[str, int]]:
         ),
         "secret_executor_count": DataLoader[str, int](
             load_fn=lambda keys: _count_executors_by_secret(list(keys), session)
+        ),
+        "project_resource_count": DataLoader[str, int](
+            load_fn=lambda keys: _count_resources_by_project(list(keys), session)
         ),
     }

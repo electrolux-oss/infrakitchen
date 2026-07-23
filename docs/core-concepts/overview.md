@@ -40,6 +40,16 @@ AWS Account (abstract)
 
 ---
 
+## 🗂️ Project
+
+A **Project** groups related resources under shared ownership, access rules, inherited defaults, and an optional shared workspace.
+
+Projects are useful when you want to organize infrastructure by team, product, or environment without creating an abstract resource just for governance. They can provide shared dependency tags, dependency config defaults, and a common workspace boundary for resources in the project.
+
+**Learn more:** [Projects Documentation](projects/overview.md)
+
+---
+
 ## 📦 Source Code
 
 InfraKitchen embraces Infrastructure-as-Code (IaC). **Source Code** refers to a Git repository containing Terraform/OpenTofu modules.
