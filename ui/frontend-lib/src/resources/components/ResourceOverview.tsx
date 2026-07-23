@@ -280,6 +280,35 @@ export const ResourceOverview = ({
         <Divider />
       </Box>
 
+      <CommonEditableField<string | null>
+        name="Project"
+        canEdit={canEdit}
+        value={resource.project?.id ?? null}
+        ariaLabel="Edit project"
+        display={withPendingChange(
+          resource.project ? (
+            <GetReferenceUrlValue {...resource.project} />
+          ) : null,
+          "project_id",
+        )}
+        onSave={(value) => saveField({ projectId: value })}
+        renderEditor={({ value, onChange }) => (
+          <ReferenceInput
+            ikApi={ikApi}
+            buffer={buffer}
+            setBuffer={setBuffer}
+            entity_name="projects"
+            showFields={["name"]}
+            optionFilter={projectOptionFilter}
+            value={value}
+            onChange={onChange}
+            label="Project"
+            helpertext="Only projects you have write access to are shown"
+          />
+        )}
+        size={6}
+      />
+
       {resource.abstract === false && (
         <>
           <CommonEditableField<string[]>
@@ -349,35 +378,6 @@ export const ResourceOverview = ({
                 onChange={onChange}
                 label="Secrets"
                 multiple
-              />
-            )}
-            size={6}
-          />
-
-          <CommonEditableField<string | null>
-            name="Project"
-            canEdit={canEdit}
-            value={resource.project?.id ?? null}
-            ariaLabel="Edit project"
-            display={withPendingChange(
-              resource.project ? (
-                <GetReferenceUrlValue {...resource.project} />
-              ) : null,
-              "project_id",
-            )}
-            onSave={(value) => saveField({ projectId: value })}
-            renderEditor={({ value, onChange }) => (
-              <ReferenceInput
-                ikApi={ikApi}
-                buffer={buffer}
-                setBuffer={setBuffer}
-                entity_name="projects"
-                showFields={["name"]}
-                optionFilter={projectOptionFilter}
-                value={value}
-                onChange={onChange}
-                label="Project"
-                helpertext="Only projects you have write access to are shown"
               />
             )}
             size={6}
