@@ -4,8 +4,8 @@ import {
   GqlResourceTreeNode,
 } from "../../../resources/graphql";
 import {
+  buildTemplateTreeQuery,
   GqlTemplateTreeNode,
-  TEMPLATE_TREE_QUERY,
 } from "../../../templates/graphql";
 
 import { TreeResponse } from "./types";
@@ -15,6 +15,7 @@ export async function fetchEntityTree(
   entityName: string,
   entityId: string,
   direction: "parents" | "children",
+  depth: number = 5,
 ): Promise<TreeResponse> {
   if (entityName === "resource") {
     const response = await ikApi.graphqlRequest<{
@@ -32,6 +33,14 @@ export async function fetchEntityTree(
   }
 
   if (entityName === "template") {
+    const TEMPLATE_TREE_FIELDS = buildTemplateTreeQuery(depth);
+    const TEMPLATE_TREE_QUERY = `
+      query TemplateTree($id: UUID!, $direction: String!) {
+        templateTree(id: $id, direction: $direction) {
+          ${TEMPLATE_TREE_FIELDS}
+        }
+      }
+    `;
     const response = await ikApi.graphqlRequest<{
       templateTree: GqlTemplateTreeNode | null;
     }>(TEMPLATE_TREE_QUERY, {
