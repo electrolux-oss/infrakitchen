@@ -32,6 +32,7 @@ def mock_project_service(
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
+    mock_subscription_service,
 ):
     return ProjectService(
         crud=mock_project_crud,
@@ -39,6 +40,7 @@ def mock_project_service(
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
+        subscription_service=mock_subscription_service,
     )
 
 

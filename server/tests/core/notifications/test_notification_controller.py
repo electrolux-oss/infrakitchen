@@ -28,6 +28,8 @@ class TestRouteNotificationEvent:
         mocked_subscription,
         mocked_notification_preference,
         monkeypatch,
+        mock_resource_crud,
+        mocked_resource,
     ):
         mocked_subscription.entity_id = uuid4()
         mocked_notification_preference.user_id = mocked_subscription.user_id
@@ -35,7 +37,13 @@ class TestRouteNotificationEvent:
 
         mock_subscription_service.query_all = AsyncMock(side_effect=[[mocked_subscription], []])
         mock_notification_preference_service.query_all = AsyncMock(return_value=[mocked_notification_preference])
+        mock_resource_crud.get_by_id = AsyncMock(return_value=mocked_resource)
 
+        monkeypatch.setattr(
+            notification_manager_module,
+            "get_resource_service",
+            lambda session: mock_resource_crud,
+        )
         monkeypatch.setattr(
             notification_manager_module,
             "get_subscription_service",
@@ -120,10 +128,18 @@ class TestRouteNotificationEvent:
         mock_subscription_service,
         mock_notification_preference_service,
         monkeypatch,
+        mock_resource_crud,
+        mocked_resource,
     ):
         mock_subscription_service.query_all = AsyncMock(return_value=[])
         mock_notification_preference_service.query_all = AsyncMock(return_value=[])
+        mock_resource_crud.get_by_id = AsyncMock(return_value=mocked_resource)
 
+        monkeypatch.setattr(
+            notification_manager_module,
+            "get_resource_service",
+            lambda session: mock_resource_crud,
+        )
         monkeypatch.setattr(
             notification_manager_module,
             "get_subscription_service",
@@ -163,12 +179,20 @@ class TestRouteNotificationEvent:
         mocked_subscription,
         mocked_notification_preference,
         monkeypatch,
+        mock_resource_crud,
+        mocked_resource,
     ):
         mocked_subscription.user.deactivated = True
 
         mock_subscription_service.query_all = AsyncMock(side_effect=[[mocked_subscription], []])
         mock_notification_preference_service.query_all = AsyncMock(return_value=[mocked_notification_preference])
+        mock_resource_crud.get_by_id = AsyncMock(return_value=mocked_resource)
 
+        monkeypatch.setattr(
+            notification_manager_module,
+            "get_resource_service",
+            lambda session: mock_resource_crud,
+        )
         monkeypatch.setattr(
             notification_manager_module,
             "get_subscription_service",
@@ -207,16 +231,24 @@ class TestRouteNotificationEvent:
         mock_notification_preference_service,
         mocked_subscription,
         mocked_notification_preference,
+        mock_resource_crud,
+        mocked_resource,
         monkeypatch,
     ):
         mocked_subscription.user.meta = {}  # no slack_id
         mocked_notification_preference.user_id = mocked_subscription.user_id
         mocked_notification_preference.user = mocked_subscription.user
         mocked_notification_preference.channels = ["SLACK"]
+        mock_resource_crud.get_by_id = AsyncMock(return_value=mocked_resource)
 
         mock_subscription_service.query_all = AsyncMock(side_effect=[[mocked_subscription], []])
         mock_notification_preference_service.query_all = AsyncMock(return_value=[mocked_notification_preference])
 
+        monkeypatch.setattr(
+            notification_manager_module,
+            "get_resource_service",
+            lambda session: mock_resource_crud,
+        )
         monkeypatch.setattr(
             notification_manager_module,
             "get_subscription_service",

@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
+from core.notifications.dependencies import get_subscription_service
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
 from core.utils.event_sender import EventSender
@@ -21,6 +22,7 @@ def get_project_service(
     return ProjectService(
         crud=ProjectCRUD(session=session),
         permission_service=get_permission_service(session=session),
+        subscription_service=get_subscription_service(session=session),
         revision_handler=revision_handler,
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,

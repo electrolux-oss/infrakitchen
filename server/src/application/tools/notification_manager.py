@@ -9,6 +9,7 @@ from aio_pika import ExchangeType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
+from application.resources.dependencies import get_resource_service
 from core.base_models import MessageModel
 from core.database import FieldSpec
 from core.dependencies import get_async_session
@@ -108,6 +109,20 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
     """
     subscription_service = get_subscription_service(session)
     preference_service = get_notification_preference_service(session=session)
+    resource_service = get_resource_service(session=session)
+
+    # project subscriptions
+    project_specific = []
+    if event.entity_type == "resource" and event.entity_id is not None:
+        resource = await resource_service.get_by_id(event.entity_id)
+        if not resource:
+            logger.warning(f"Resource with ID {event.entity_id} not found, cannot route notification")
+            return
+
+        if resource.project_id:
+            project_specific = await subscription_service.query_all(
+                filter={"entity_type": "project", "entity_id": resource.project_id},
+            )
 
     sub_fields: FieldSpec = {
         "entity_type": None,
@@ -123,7 +138,7 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
 
     seen_user_ids: set[str] = set()
     subscriptions = []
-    for sub in specific + wildcard:
+    for sub in specific + wildcard + project_specific:
         uid = str(sub.user_id)
         if uid not in seen_user_ids:
             seen_user_ids.add(uid)

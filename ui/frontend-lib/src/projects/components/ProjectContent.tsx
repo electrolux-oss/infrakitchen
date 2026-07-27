@@ -14,11 +14,18 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
 
+import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
 import { ProjectOverview } from "./ProjectOverview";
 import { ProjectPermissions } from "./ProjectPermissions";
 import { ProjectSettings } from "./ProjectSettings";
 
-export const ProjectContent = () => {
+interface ProjectContentProps {
+  subscribersRefreshKey?: number;
+}
+
+export const ProjectContent = ({
+  subscribersRefreshKey = 0,
+}: ProjectContentProps) => {
   const { entity, userEntityPermissions } = useEntityProvider();
 
   const fixedFilters = useMemo(
@@ -56,6 +63,15 @@ export const ProjectContent = () => {
     {
       label: "Policies",
       content: <ProjectPermissions project={entity} />,
+    },
+    {
+      label: "Notifications",
+      content: (
+        <ProjectNotificationSubscribersTable
+          projectId={entity.id}
+          key={subscribersRefreshKey}
+        />
+      ),
     },
     {
       label: "Audit",

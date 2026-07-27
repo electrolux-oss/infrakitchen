@@ -16,6 +16,8 @@ interface SubscribeNotificationButtonProps {
   isLoading?: boolean;
   onSubscribeClick: (inheritChildren: boolean) => void;
   onUnsubscribeClick: (inheritChildren: boolean) => void;
+  entityName?: string;
+  showIncludeChildren?: boolean;
 }
 
 export const SubscribeNotificationButton = ({
@@ -23,6 +25,8 @@ export const SubscribeNotificationButton = ({
   isLoading,
   onSubscribeClick,
   onUnsubscribeClick,
+  entityName = "resource",
+  showIncludeChildren = true,
 }: SubscribeNotificationButtonProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
   const [inheritChildren, setInheritChildren] = useState(false);
@@ -60,8 +64,8 @@ export const SubscribeNotificationButton = ({
       <Tooltip
         title={
           isSubscribed
-            ? "Unsubscribe from resource notifications"
-            : "Subscribe to resource notifications"
+            ? `Unsubscribe from ${entityName} notifications`
+            : `Subscribe to ${entityName} notifications`
         }
       >
         <Button
@@ -87,16 +91,18 @@ export const SubscribeNotificationButton = ({
               ? "Subscribe to notifications"
               : "Unsubscribe from notifications"}
           </Typography>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={inheritChildren}
-                onChange={(e) => setInheritChildren(e.target.checked)}
-                size="small"
-              />
-            }
-            label="Include child resources"
-          />
+          {showIncludeChildren ? (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={inheritChildren}
+                  onChange={(e) => setInheritChildren(e.target.checked)}
+                  size="small"
+                />
+              }
+              label="Include child resources"
+            />
+          ) : null}
           <Stack direction="row" justifyContent="flex-end" gap={1}>
             <Button size="small" onClick={handleClose}>
               Cancel
