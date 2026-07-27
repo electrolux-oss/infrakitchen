@@ -1119,6 +1119,13 @@ class ResourceService:
         resource_policy: EntityPolicyCreate,
         requester: UserDTO,
     ) -> list[Permission]:
+        def collect_resource_ids(node):
+            if node.id not in resource_ids:
+                resource_ids.append(node.id)
+
+            for child in node.children:
+                collect_resource_ids(child)
+
         inherit = resource_policy.inherits_children
         resource = await self.get_by_id(resource_policy.entity_id)
         if not resource:
@@ -1127,11 +1134,9 @@ class ResourceService:
         policies: list[Permission] = []
         if inherit:
             # create policies for resource and all its children
-            resource_tree = await self.crud.get_tree_to_children(str(resource.id))
+            resource_tree = await self.get_tree(str(resource.id))
             resource_ids = []
-            for node in resource_tree:
-                if node["id"] not in resource_ids:
-                    resource_ids.append(node["id"])
+            collect_resource_ids(resource_tree)
 
             for res_id in resource_ids:
                 try:
@@ -1158,6 +1163,13 @@ class ResourceService:
         return policies
 
     async def delete_resource_policy_cascade(self, permission_id: str, requester: UserDTO) -> int:
+        def collect_resource_ids(node):
+            if node.id not in resource_ids:
+                resource_ids.append(node.id)
+
+            for child in node.children:
+                collect_resource_ids(child)
+
         permission = await self.permission_service.query_by_id(permission_id)
         if permission is None:
             raise EntityNotFound("Permission not found")
@@ -1173,14 +1185,10 @@ class ResourceService:
         if not resource:
             raise EntityNotFound(f"Resource {entity_id} not found")
 
-        resource_tree = await self.crud.get_tree_to_children(entity_id)
         resource_ids: list[str] = []
-        seen: set[str] = set()
-        for node in resource_tree:
-            node_id = str(node["id"])
-            if node_id not in seen:
-                seen.add(node_id)
-                resource_ids.append(node_id)
+        resource_tree = await self.get_tree(entity_id)
+
+        collect_resource_ids(resource_tree)
 
         policies_to_delete = await self.permission_service.query_all(
             filter={
@@ -1188,7 +1196,8 @@ class ResourceService:
                 "v0": permission.v0,
                 "v1__in": [f"resource:{resource_id}" for resource_id in resource_ids],
                 "v2": permission.v2,
-            }
+            },
+            range=(0, 100000),
         )
 
         deleted_count = 0
@@ -1209,6 +1218,13 @@ class ResourceService:
         inherit_children: bool = False,
         user_id: str | None = None,
     ) -> list[Subscription]:
+        def collect_resource_ids(node):
+            if node.id not in resource_ids:
+                resource_ids.append(node.id)
+
+            for child in node.children:
+                collect_resource_ids(child)
+
         resource = await self.get_by_id(resource_id)
         if not resource:
             raise EntityNotFound(f"Resource {resource_id} not found")
@@ -1216,25 +1232,20 @@ class ResourceService:
         target_user_id = user_id or str(requester.id)
 
         if not inherit_children:
-            resource_ids_to_subscribe = [resource_id]
+            resource_ids = [resource_id]
         else:
-            resource_tree = await self.crud.get_tree_to_children(resource_id)
-            seen: set[str] = set()
-            resource_ids_to_subscribe = []
-            for node in resource_tree:
-                node_id = str(node["id"])
-                if node_id not in seen:
-                    seen.add(node_id)
-                    resource_ids_to_subscribe.append(node_id)
+            resource_tree = await self.get_tree(resource_id)
+            resource_ids: list[str] = []
+            collect_resource_ids(resource_tree)
 
         # Fetch all existing subscriptions for this user + entity_type in one query
         existing_subscriptions = await self.subscription_service.query_all(
-            filter={"user_id": target_user_id, "entity_type": "resource", "entity_id": resource_ids_to_subscribe}
+            filter={"user_id": target_user_id, "entity_type": "resource", "entity_id": resource_ids}
         )
         already_subscribed = {str(s.entity_id) for s in existing_subscriptions}
 
         # Only create subscriptions for resources not already subscribed
-        ids_to_create = [rid for rid in resource_ids_to_subscribe if rid not in already_subscribed]
+        ids_to_create = [rid for rid in resource_ids if rid not in already_subscribed]
 
         subscriptions: list[Subscription] = list(existing_subscriptions)
         for res_id in ids_to_create:
@@ -1254,6 +1265,13 @@ class ResourceService:
         inherit_children: bool = False,
         user_id: str | None = None,
     ) -> bool:
+        def collect_resource_ids(node):
+            if node.id not in resource_ids:
+                resource_ids.append(node.id)
+
+            for child in node.children:
+                collect_resource_ids(child)
+
         resource = await self.get_by_id(resource_id)
         if not resource:
             raise EntityNotFound(f"Resource {resource_id} not found")
@@ -1261,22 +1279,17 @@ class ResourceService:
         target_user_id = user_id or str(requester.id)
 
         if not inherit_children:
-            resource_ids_to_unsubscribe = [resource_id]
+            resource_ids = [resource_id]
         else:
-            resource_tree = await self.crud.get_tree_to_children(resource_id)
-            seen: set[str] = set()
-            resource_ids_to_unsubscribe = []
-            for node in resource_tree:
-                node_id = str(node["id"])
-                if node_id not in seen:
-                    seen.add(node_id)
-                    resource_ids_to_unsubscribe.append(node_id)
+            resource_tree = await self.get_tree(resource_id)
+            resource_ids: list[str] = []
+            collect_resource_ids(resource_tree)
 
         subscriptions = await self.subscription_service.query_all(
             filter={
                 "user_id": target_user_id,
                 "entity_type": "resource",
-                "entity_id": resource_ids_to_unsubscribe,
+                "entity_id": resource_ids,
             }
         )
 

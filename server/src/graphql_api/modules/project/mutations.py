@@ -1,4 +1,5 @@
 import uuid
+from typing import cast
 
 import strawberry
 from strawberry.scalars import JSON
@@ -10,8 +11,9 @@ from application.projects.schema import ProjectCreate, ProjectUpdate
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions
 from core.errors import AccessDenied
-from core.users.functions import user_has_access_to_entity
+from core.users.functions import user_has_access_to_entity, user_is_super_admin
 from graphql_api.helpers import IsAuthenticated, check_api_permission
+from graphql_api.modules.notification.types import SubscriptionType
 from graphql_api.modules.permission.mutations import EntityPolicyCreateInput
 from graphql_api.modules.permission.types import PermissionType
 from graphql_api.modules.project.types import ProjectType
@@ -44,6 +46,18 @@ class ProjectUpdateInput:
 @strawberry.input
 class ProjectActionInput:
     action: str
+
+
+@strawberry.input
+class ProjectSubscriptionCreateInput:
+    project_id: str
+    user_id: str | None = None
+
+
+@strawberry.input
+class ProjectSubscriptionDeleteInput:
+    project_id: str
+    user_id: str | None = None
 
 
 @strawberry.type
@@ -110,4 +124,46 @@ class ProjectMutation:
         return await service.create_project_policy(
             project_policy=input.to_pydantic(),
             requester=requester,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def create_project_subscription(
+        self,
+        info: Info,
+        input: ProjectSubscriptionCreateInput,
+    ) -> list[SubscriptionType]:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+
+        if input.user_id and str(input.user_id) != str(requester.id):
+            if not await user_is_super_admin(requester):
+                raise AccessDenied("Only super admins can create subscriptions for other users")
+
+        service = get_project_service(session)
+        subscriptions = await service.create_project_subscription(
+            project_id=input.project_id,
+            requester=requester,
+            user_id=input.user_id,
+        )
+        return cast(list[SubscriptionType], subscriptions)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def delete_project_subscription(
+        self,
+        info: Info,
+        input: ProjectSubscriptionDeleteInput,
+    ) -> bool:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+
+        user_id = input.user_id
+        if user_id and str(user_id) != str(requester.id):
+            if not await user_is_super_admin(requester):
+                raise AccessDenied("Only super admins can delete subscriptions for other users")
+
+        service = get_project_service(session)
+        return await service.delete_project_subscription(
+            project_id=input.project_id,
+            requester=requester,
+            user_id=user_id,
         )

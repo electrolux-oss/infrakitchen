@@ -57,3 +57,17 @@ export const DELETE_RESOURCE_SUBSCRIPTION_MUTATION = `
     deleteResourceSubscription(input: $input)
   }
 `;
+
+export const CREATE_PROJECT_SUBSCRIPTION_MUTATION = `
+  mutation CreateProjectSubscription($input: ProjectSubscriptionCreateInput!) {
+    createProjectSubscription(input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_PROJECT_SUBSCRIPTION_MUTATION = `
+  mutation DeleteProjectSubscription($input: ProjectSubscriptionDeleteInput!) {
+    deleteProjectSubscription(input: $input)
+  }
+`;

@@ -8,6 +8,7 @@ from strawberry.types import Info
 from application.executors.model import Executor
 from application.favorites.model import Favorite
 from application.integrations.model import Integration
+from application.projects.model import Project
 from application.resources.model import Resource
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
@@ -25,6 +26,15 @@ async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dic
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {"id": str(row.id), "name": row.name, "entityName": "integration"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_projects(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Project.id, Project.name).where(Project.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "project"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -197,6 +207,7 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "integration": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_integrations(list(keys), session)
         ),
+        "project": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_projects(list(keys), session)),
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),

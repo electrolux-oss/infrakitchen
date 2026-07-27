@@ -10,6 +10,8 @@ from core.constants.model import ModelActions
 from core.base_models import PatchBodyModel
 from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityWrongState, EntityNotFound
+from core.notifications.model import Subscription
+from core.notifications.service import SubscriptionService
 from core.permissions.model import Permission
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
@@ -36,12 +38,14 @@ class ProjectService:
         self,
         crud: ProjectCRUD,
         permission_service: PermissionService,
+        subscription_service: SubscriptionService,
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
     ):
         self.crud: ProjectCRUD = crud
         self.permission_service: PermissionService = permission_service
+        self.subscription_service: SubscriptionService = subscription_service
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
@@ -187,6 +191,7 @@ class ProjectService:
             )
 
         await self.audit_log_handler.create_log(project_id, requester.id, ModelActions.DELETE)
+        await self.subscription_service.delete_many_by_entity_id("project", project_id)
         await self.revision_handler.delete_revisions(project_id)
         await self.crud.delete(existing_project)
 
@@ -217,3 +222,51 @@ class ProjectService:
         )
         await self.permission_service.casbin_enforcer.send_reload_event()
         return [policy]
+
+    async def create_project_subscription(
+        self,
+        project_id: str,
+        requester: UserDTO,
+        user_id: str | None = None,
+    ) -> list[Subscription]:
+        project = await self.get_by_id(project_id)
+        if not project:
+            raise EntityNotFound(f"Project {project_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+        existing_subscriptions = await self.subscription_service.query_all(
+            filter={"user_id": target_user_id, "entity_type": "project", "entity_id": [project_id]}
+        )
+        if existing_subscriptions:
+            return existing_subscriptions
+
+        subscription = await self.subscription_service.create(
+            requester=requester,
+            entity_type="project",
+            entity_id=project_id,
+            user_id=user_id,
+        )
+        return [subscription]
+
+    async def delete_project_subscription(
+        self,
+        project_id: str,
+        requester: UserDTO,
+        user_id: str | None = None,
+    ) -> bool:
+        project = await self.get_by_id(project_id)
+        if not project:
+            raise EntityNotFound(f"Project {project_id} not found")
+
+        target_user_id = user_id or str(requester.id)
+        subscriptions = await self.subscription_service.query_all(
+            filter={
+                "user_id": target_user_id,
+                "entity_type": "project",
+                "entity_id": [project_id],
+            }
+        )
+
+        for subscription in subscriptions:
+            await self.subscription_service.delete(subscription_id=subscription.id)
+        return True
