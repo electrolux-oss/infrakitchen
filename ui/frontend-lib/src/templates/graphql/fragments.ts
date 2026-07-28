@@ -80,18 +80,15 @@ const TREE_NODE_FIELDS = `
   status
 `;
 
-export const TEMPLATE_TREE_FIELDS = `
-  ${TREE_NODE_FIELDS}
-  children {
+export function buildTemplateTreeQuery(depth: number): string {
+  if (depth <= 1) {
+    return TREE_NODE_FIELDS;
+  }
+  return `
     ${TREE_NODE_FIELDS}
     children {
-      ${TREE_NODE_FIELDS}
-      children {
-        ${TREE_NODE_FIELDS}
-        children {
-          ${TREE_NODE_FIELDS}
-        }
-      }
+      ${buildTemplateTreeQuery(depth - 1)}
     }
-  }
-`;
+  `;
+}
+export const TEMPLATE_TREE_FIELDS = buildTemplateTreeQuery(6);

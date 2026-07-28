@@ -1,4 +1,4 @@
-import { TEMPLATE_TREE_FIELDS } from "../../templates/graphql/fragments";
+import { buildTemplateTreeQuery } from "../../templates/graphql/fragments";
 import {
   VALIDATION_RULE_FIELDS,
   VALIDATION_RULES_BY_VARIABLE_FIELDS,
@@ -63,6 +63,9 @@ export const TEMPLATE_PORTS_QUERY = `
     }
   }
 `;
+
+// Put big number in a variable to avoid exceeding the maximum query length limit
+const TEMPLATE_TREE_FIELDS = buildTemplateTreeQuery(100);
 
 export const SOURCE_CODE_VERSION_CONFIG_PAGE_QUERY = `
   query SourceCodeVersionConfigPage(
