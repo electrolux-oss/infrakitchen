@@ -1,8 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
+import logging
+import os
+import sys
 from unittest.mock import AsyncMock, MagicMock
 
+from alembic.command import upgrade
+from alembic.config import Config
 
+
+from application.projects.dependencies import get_project_service
 from core.casbin.enforcer import CasbinEnforcer
 from core.config import setup_service_environment
 from core.dependencies import get_async_session
@@ -25,6 +32,8 @@ from fixtures.templates import insert_templates
 from fixtures.users import create_guest_super_user, create_regular_user
 from fixtures.validation_rules import insert_validation_rules
 
+logger = logging.getLogger("alembic")
+
 
 async def send_message(message: MessageModel, confirm: bool = False):
     pass
@@ -44,6 +53,19 @@ _casbin_instance.enforcer = _mock_enforcer  # type: ignore[assignment]
 CasbinEnforcer.get_enforcer = AsyncMock(return_value=_mock_enforcer)  # type: ignore[method-assign]
 
 
+def run_sql_migrations():
+    # retrieves the directory that *this* file is in
+    root_dir = os.path.dirname(os.path.realpath(__file__))
+    # this assumes the alembic.ini is also contained in this same directory
+    config_file = os.path.join(root_dir, "../alembic.ini")
+
+    config = Config(file_=config_file)
+    config.set_main_option("script_location", f"{root_dir}/../alembic")
+
+    # upgrade the database to the latest revision
+    upgrade(config, "head")
+
+
 async def drop_all_tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -56,11 +78,22 @@ async def get_session():
         yield session
 
 
-async def create_fixtures():
+async def create_fixtures(drop_tables: bool = False):
     setup_service_environment()
-    await drop_all_tables(engine)
+    if drop_tables:
+        logger.warning("Dropping all tables and recreating fixtures...")
+        await drop_all_tables(engine)
     envs = ["dev", "staging", "prod"]
     async with get_session() as session:
+        project_service = get_project_service(session=session)
+        if await project_service.count() != 0:
+            logger.warning(
+                "Fixtures already exist. Skipping fixture creation. "
+                "Use --drop-tables to drop existing tables and recreate fixtures."
+            )
+            return
+
+        logger.info("Creating fixtures...")
         user = await create_guest_super_user(session)
         await create_auth_provider(session, user)
         await create_regular_user(session, user)
@@ -77,7 +110,9 @@ async def create_fixtures():
         await insert_executors(session, user)
         await insert_resources(session, envs, user)
         await insert_batch_operations(session, envs, user)
+        logger.info("Fixtures created successfully.")
 
 
 if __name__ == "__main__":
-    asyncio.run(create_fixtures())
+    run_sql_migrations()
+    asyncio.run(create_fixtures(drop_tables="--drop-tables" in sys.argv))
