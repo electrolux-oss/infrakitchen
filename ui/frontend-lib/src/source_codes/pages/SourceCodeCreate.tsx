@@ -131,10 +131,6 @@ const SourceCodeCreatePageInner = () => {
               control={control}
               rules={{
                 required: "Source code URL is required",
-                pattern: {
-                  value: /^(https?:\/\/.+|[\w.-]+@[\w.-]+:[\w./-]+)$/,
-                  message: "Https or Git URL is required",
-                },
               }}
               render={({ field }) => (
                 <TextField
