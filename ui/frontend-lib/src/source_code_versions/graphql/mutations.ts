@@ -7,6 +7,9 @@
 export type SourceCodeVersionUpdateFieldInput = Partial<{
   description: string | null;
   labels: string[];
+  lifecycleState: string | null;
+  breakingChanges: string | null;
+  index: number;
 }>;
 
 export type SourceConfigUpdateItemInput = Partial<{

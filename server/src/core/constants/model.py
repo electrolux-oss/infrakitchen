@@ -70,3 +70,12 @@ class WorkflowAction(StrEnum):
 class EventType(StrEnum):
     UPDATE = "update"
     EXECUTE = "execute"
+
+
+@unique
+class VersionLifecycleState(StrEnum):
+    PREVIEW = "preview"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    UNKNOWN = "unknown"
+    ARCHIVED = "archived"

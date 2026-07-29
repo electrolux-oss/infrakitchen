@@ -1,9 +1,24 @@
 import { ENTITY_STATE, ENTITY_STATUS, WORKER_STATUS } from "../utils";
 
+type ColorToken = {
+  backgroundColor: string;
+  color: string;
+  borderColor: string;
+};
+
+export type MuiChipColor =
+  | "default"
+  | "success"
+  | "info"
+  | "warning"
+  | "error"
+  | "secondary"
+  | "primary";
+
 export const getStateColor = (
   statusValue: string,
   stateValue: string | undefined,
-): { backgroundColor: string; color: string; borderColor: string } => {
+): ColorToken => {
   const status = statusValue.toLocaleLowerCase() as
     | ENTITY_STATUS
     | WORKER_STATUS;

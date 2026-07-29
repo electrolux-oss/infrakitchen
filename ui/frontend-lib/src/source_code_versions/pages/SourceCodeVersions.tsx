@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig, FilterConfig, PermissionWrapper } from "../../common";
@@ -13,6 +13,7 @@ import {
 import { EntityFetchTable } from "../../common/components/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 export const SourceCodeVersionsPage = () => {
@@ -92,11 +93,44 @@ export const SourceCodeVersionsPage = () => {
         },
       },
       {
+        field: "resourcesCount",
+        headerName: "Resource Count",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => {
+          const count = params.row.resourcesCount || 0;
+          return (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+              }}
+            >
+              {count}
+            </Box>
+          );
+        },
+      },
+      {
         field: "status",
         headerName: "Status",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
           <StatusChip status={params.row.status} />
+        ),
+      },
+      {
+        field: "lifecycleState",
+        headerName: "Lifecycle State",
+        fetchFields: ["lifecycleState", "breakingChanges"],
+        sortField: "lifecycleState",
+        flex: 1,
+        renderCell: (params: GridRenderCellParams) => (
+          <VersionLifecycleStateChip
+            lifecycleState={params.row.lifecycleState}
+            breakingChanges={params.row.breakingChanges}
+          />
         ),
       },
       {

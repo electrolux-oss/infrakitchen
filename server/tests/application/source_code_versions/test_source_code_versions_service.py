@@ -528,7 +528,7 @@ class TestUpdate:
         response = SourceCodeVersionResponse.model_validate(updated_source_code_response)
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
 
-        assert result.status == ModelStatus.READY
+        assert result.status == ModelStatus.DONE
 
     @pytest.mark.asyncio
     async def test_update_not_found(
@@ -649,6 +649,65 @@ class TestPatch:
         mock_source_code_version_crud.refresh.assert_not_awaited()
         mock_audit_log_handler.create_log.assert_awaited_once()
         mock_event_sender.send_event.assert_not_awaited()
+
+
+class TestGetSourceCodeVersionActions:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "status,user_permissions,expected_actions",
+        [
+            (ModelStatus.IN_PROGRESS, {"api:source_code_version": "admin"}, []),
+            (
+                ModelStatus.READY,
+                {"api:source_code_version": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.DONE,
+                {"api:source_code_version": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.ERROR,
+                {"api:source_code_version": "admin"},
+                [ModelActions.SYNC, ModelActions.EDIT, ModelActions.DISABLE],
+            ),
+            (
+                ModelStatus.DISABLED,
+                {"api:source_code_version": "admin"},
+                [ModelActions.ENABLE, ModelActions.DELETE, ModelActions.EDIT],
+            ),
+            (ModelStatus.DONE, {"api:source_code_version": "write"}, []),
+            (ModelStatus.DONE, {"api:source_code_version": "read"}, []),
+            (ModelStatus.DONE, {}, []),
+        ],
+    )
+    async def test_get_source_code_version_actions(
+        self,
+        status,
+        user_permissions,
+        expected_actions,
+        mock_source_code_version_service,
+        mock_source_code_version_crud,
+        source_code_version,
+        monkeypatch,
+        mock_user_dto,
+        mock_user_permissions,
+    ):
+        mock_user_permissions(
+            user_permissions,
+            monkeypatch,
+            "application.source_code_versions.functions.user_api_permission",
+        )
+        existing_source_code_version = source_code_version
+        existing_source_code_version.status = status
+        mock_source_code_version_crud.get_by_id.return_value = existing_source_code_version
+
+        result = await mock_source_code_version_service.get_actions(
+            source_code_version_id=source_code_version.id, requester=mock_user_dto
+        )
+
+        assert result == expected_actions
 
 
 class TestDelete:

@@ -25,6 +25,7 @@ interface ReferenceInputProps {
   onChange: (selectedEntity: any) => void;
   filter?: object;
   fields?: Array<string>;
+  sort?: Array<string>;
   value: any;
   label: string;
   error?: boolean;
@@ -36,6 +37,7 @@ interface ReferenceInputProps {
   optionFilter?: (option: IkEntity) => boolean;
   getOptionDisabled?: (option: IkEntity) => boolean;
   options?: IkEntity[];
+  renderOptionContent?: (option: IkEntity) => React.ReactNode;
   [key: string]: any; // Allow additional props
 }
 
@@ -49,11 +51,13 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     entity_name,
     filter = {},
     fields,
+    sort = ["name", "ASC"],
     showFields = ["name"],
     value,
     optionFilter,
     getOptionDisabled: getOptionDisabledProp,
     options: externalOptions,
+    renderOptionContent,
     ...otherProps
   } = props;
 
@@ -108,7 +112,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         }`,
         {
           filter,
-          sort: ["name", "ASC"],
+          sort: sort,
           range: [0, 100],
         },
       )
@@ -149,7 +153,9 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         getOptionLabel={(option) => getOptionLabel(option, showFields)}
         renderOption={(renderProps, option) => (
           <li {...renderProps} key={option.id}>
-            {getOptionLabel(option, showFields)}
+            {renderOptionContent
+              ? renderOptionContent(option)
+              : getOptionLabel(option, showFields)}
           </li>
         )}
         isOptionEqualToValue={(option, value) => option.id === value.id}

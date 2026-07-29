@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -18,8 +19,12 @@ import {
 import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
 import { notifyError } from "../../../common/hooks/useNotification";
+import VersionLifecycleStateChip from "../../../common/VersionLifecycleStateChip";
 import { IkEntity, ValidationRule } from "../../../types";
-import { ENTITY_STATE } from "../../../utils/constants";
+import {
+  ENTITY_STATE,
+  VERSION_LIFECYCLE_STATE,
+} from "../../../utils/constants";
 import {
   GqlValidationRulesByVariable,
   transformValidationRulesByVariable,
@@ -117,6 +122,19 @@ export const ResourceVariablesEditDialog = ({
   );
 
   const effectiveVersionId = selectedVersionId;
+  const selectedVersion = useMemo(
+    () =>
+      selectedVersionId && Array.isArray(buffer["source_code_versions"])
+        ? (buffer["source_code_versions"] as any[]).find(
+            (version) => version.id === selectedVersionId,
+          )
+        : null,
+    [buffer, selectedVersionId],
+  );
+  const isDeprecatedVersion =
+    selectedVersion?.lifecycleState?.toLowerCase() ===
+    VERSION_LIFECYCLE_STATE.DEPRECATED;
+  const breakingChangesWarning = selectedVersion?.breakingChanges?.trim();
 
   const versionChanged = selectedVersionId !== initialVersionId;
 
@@ -313,15 +331,54 @@ export const ResourceVariablesEditDialog = ({
             ikApi={ikApi}
             entity_name="source_code_versions"
             showFields={["identifier"]}
-            fields={["id", "identifier", "status"]}
+            fields={[
+              "id",
+              "identifier",
+              "status",
+              "lifecycleState",
+              "breakingChanges",
+            ]}
             buffer={buffer}
+            sort={["index", "ASC"]}
             setBuffer={setBuffer}
             getOptionDisabled={(option: any) => option.status !== "done"}
             filter={scvFilter}
             value={selectedVersionId}
             onChange={(value: string | null) => setSelectedVersionId(value)}
             label="Template Version"
+            renderOptionContent={(option: any) => (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 1,
+                  width: "100%",
+                }}
+              >
+                <Typography variant="body2">{option.identifier}</Typography>
+                <VersionLifecycleStateChip
+                  lifecycleState={option.lifecycleState}
+                  breakingChanges={option.breakingChanges}
+                />
+              </Box>
+            )}
           />
+          {isDeprecatedVersion ? (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              This template version is deprecated. Prefer an active or preview
+              version unless you intentionally need the deprecated one.
+            </Alert>
+          ) : null}
+          {breakingChangesWarning ? (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              <Typography variant="body2">
+                This version has breaking changes. Please review the following
+                before saving:
+              </Typography>
+              {breakingChangesWarning}
+            </Alert>
+          ) : null}
         </Box>
 
         {loadingSchema && (

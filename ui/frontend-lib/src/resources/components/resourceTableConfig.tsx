@@ -10,6 +10,7 @@ import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
+import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import { GqlResourceShort } from "../graphql";
@@ -88,6 +89,15 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "sourceCodeVersion",
     headerName: "Template Version",
     flex: 1,
+    fetchFields: [
+      "sourceCodeVersion.sourceCodeVersion",
+      "sourceCodeVersion.sourceCodeBranch",
+      "sourceCodeVersion.lifecycleState",
+      "sourceCodeVersion.breakingChanges",
+      "sourceCodeVersion.identifier",
+      "sourceCodeVersion.entityName",
+      "sourceCodeVersion.id",
+    ],
     sortField: "source_code_version.tag",
     valueGetter: (_value: any, row: any) => {
       const scv = row.sourceCodeVersion;
@@ -98,7 +108,29 @@ export const resourceColumns: EntityTableColumn[] = [
       const scv = params.row.sourceCodeVersion;
       if (!scv) return null;
       const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-      return <GetEntityLink {...scv} name={ref} />;
+      const color = getVersionLifecycleStateColor(scv.lifecycleState);
+      const textColor =
+        color === "success"
+          ? "success.main"
+          : color === "info"
+            ? "info.main"
+            : color === "warning"
+              ? "warning.main"
+              : color === "error"
+                ? "error.main"
+                : "text.primary";
+
+      return (
+        <GetEntityLink
+          {...scv}
+          name={ref}
+          sx={{
+            color: textColor,
+            fontWeight: color === "warning" ? 600 : 500,
+            textDecorationColor: textColor,
+          }}
+        />
+      );
     },
   },
   {

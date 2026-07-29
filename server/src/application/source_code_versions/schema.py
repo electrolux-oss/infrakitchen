@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 
 from application.templates.schema import TemplateResponse, TemplateShort
 from application.source_codes.schema import SourceCodeShort
-from core.constants.model import ModelStatus
+from core.constants.model import ModelStatus, VersionLifecycleState
 from core.users.schema import UserShort
 
 
@@ -162,6 +162,15 @@ class SourceCodeVersionResponse(BaseModel):
     description: str = Field(default="")
     labels: list[str] = Field(default_factory=list)
 
+    lifecycle_state: Literal[
+        VersionLifecycleState.UNKNOWN,
+        VersionLifecycleState.PREVIEW,
+        VersionLifecycleState.ACTIVE,
+        VersionLifecycleState.DEPRECATED,
+        VersionLifecycleState.ARCHIVED,
+    ] = Field(default=VersionLifecycleState.UNKNOWN)
+    breaking_changes: str | None = Field(default=None)
+    index: int = Field(default=0)
     model_config = ConfigDict(from_attributes=True)
 
     @computed_field
@@ -194,6 +203,16 @@ class SourceCodeVersionUpdate(BaseModel):
 
     description: str | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
+    lifecycle_state: Literal[
+        VersionLifecycleState.UNKNOWN,
+        VersionLifecycleState.PREVIEW,
+        VersionLifecycleState.ACTIVE,
+        VersionLifecycleState.DEPRECATED,
+        VersionLifecycleState.ARCHIVED,
+        None,
+    ] = Field(default=None)
+    breaking_changes: str | None = Field(default=None)
+    index: int | None = Field(default=None)
 
 
 class SourceCodeVersionShort(BaseModel):
@@ -204,6 +223,15 @@ class SourceCodeVersionShort(BaseModel):
     source_code_folder: str = Field(default="", frozen=True)
     template: TemplateShort = Field(...)
     source_code: SourceCodeShort = Field(...)
+    lifecycle_state: Literal[
+        VersionLifecycleState.UNKNOWN,
+        VersionLifecycleState.PREVIEW,
+        VersionLifecycleState.ACTIVE,
+        VersionLifecycleState.DEPRECATED,
+        VersionLifecycleState.ARCHIVED,
+    ] = Field(default=VersionLifecycleState.UNKNOWN)
+    breaking_changes: str | None = Field(default=None)
+    index: int = Field(default=0)
 
     model_config = ConfigDict(from_attributes=True)
 

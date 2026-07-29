@@ -47,10 +47,12 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
 import { ValidationRule } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
+import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import {
   GqlValidationRulesByVariable,
   transformValidationRulesByVariable,
@@ -211,6 +213,28 @@ const ResourceCreatePageInner = () => {
   const watchedWorkspaceId = watch("workspaceId");
   const watchedSourceCodeVersionId = watch("sourceCodeVersionId");
   const hasDocs = Boolean(watchedTemplate?.documentation);
+  const sourceCodeVersionOptions = useMemo(
+    () =>
+      Array.isArray(buffer["source_code_versions"])
+        ? (buffer["source_code_versions"] as Array<{
+            id: string;
+            lifecycleState?: string | null;
+          }>)
+        : [],
+    [buffer],
+  );
+  const selectedSourceCodeVersion = useMemo(
+    () =>
+      watchedSourceCodeVersionId && sourceCodeVersionOptions.length > 0
+        ? sourceCodeVersionOptions.find(
+            (version) => version.id === watchedSourceCodeVersionId,
+          )
+        : null,
+    [sourceCodeVersionOptions, watchedSourceCodeVersionId],
+  );
+  const isDeprecatedSourceCodeVersion =
+    selectedSourceCodeVersion?.lifecycleState?.toLowerCase() ===
+    VERSION_LIFECYCLE_STATE.DEPRECATED;
   const selectedProject = useMemo(
     () =>
       watchedProjectId && Array.isArray(buffer["projects"])
@@ -269,6 +293,28 @@ const ResourceCreatePageInner = () => {
   useEffect(() => {
     setValue("sourceCodeVersionId", null);
   }, [watchedTemplateId, setValue]);
+
+  useEffect(() => {
+    if (!watchedTemplateId || watchedSourceCodeVersionId) return;
+
+    const activeVersion = sourceCodeVersionOptions.find(
+      (version) =>
+        version.lifecycleState?.toLowerCase() ===
+        VERSION_LIFECYCLE_STATE.ACTIVE,
+    );
+
+    if (activeVersion) {
+      setValue("sourceCodeVersionId", activeVersion.id, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [
+    watchedTemplateId,
+    watchedSourceCodeVersionId,
+    sourceCodeVersionOptions,
+    setValue,
+  ]);
 
   useEffect(() => {
     const requiredVars =
@@ -1112,7 +1158,12 @@ const ResourceCreatePageInner = () => {
                         {...field}
                         ikApi={ikApi}
                         entity_name="source_code_versions"
-                        fields={["identifier", "status"]}
+                        fields={[
+                          "identifier",
+                          "status",
+                          "lifecycleState",
+                          "breakingChanges",
+                        ]}
                         buffer={buffer}
                         setBuffer={setBuffer}
                         getOptionDisabled={(option: any) =>
@@ -1125,13 +1176,40 @@ const ResourceCreatePageInner = () => {
                             : ""
                         }
                         filter={filter_template}
+                        sort={["index", "ASC"]}
                         value={field.value}
                         label="Template Version"
+                        renderOptionContent={(option: any) => (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 1,
+                              width: "100%",
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {option.identifier}
+                            </Typography>
+                            <VersionLifecycleStateChip
+                              lifecycleState={option.lifecycleState}
+                              breakingChanges={option.breakingChanges}
+                            />
+                          </Box>
+                        )}
                         required
                         disabled={!watchedTemplateId}
                       />
                     )}
                   />
+                  {isDeprecatedSourceCodeVersion ? (
+                    <Alert severity="warning" sx={{ mt: 1 }}>
+                      This template version is deprecated. Prefer an active or
+                      preview version unless you intentionally need the
+                      deprecated one.
+                    </Alert>
+                  ) : null}
                 </Box>
 
                 {Array.isArray(schema) && schema.length > 0 && (

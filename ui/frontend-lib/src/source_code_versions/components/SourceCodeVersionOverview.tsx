@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 
-import { TextField } from "@mui/material";
+import { MenuItem, TextField } from "@mui/material";
 
 import { Labels } from "../../common";
 import {
@@ -18,6 +18,8 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import { GqlSourceCodeVersion } from "../graphql";
 import {
   SourceCodeVersionUpdateFieldInput,
@@ -35,6 +37,8 @@ export const SourceCodeVersionOverview = ({
   const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:source_code_version", "write");
+  const lifecycleState =
+    source_code_version.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN;
 
   const saveField = useCallback(
     async (input: SourceCodeVersionUpdateFieldInput) => {
@@ -92,6 +96,61 @@ export const SourceCodeVersionOverview = ({
           source_code_version.sourceCodeVersion
             ? source_code_version.sourceCodeVersion
             : "No Version",
+        )}
+      />
+      <CommonEditableField<string>
+        name={"Breaking Changes"}
+        canEdit={canEdit}
+        value={source_code_version.breakingChanges ?? ""}
+        ariaLabel="Edit breaking changes"
+        display={
+          <span>
+            {source_code_version.breakingChanges || "No breaking changes"}
+          </span>
+        }
+        onSave={(value) => saveField({ breakingChanges: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Breaking Changes"
+            fullWidth
+            margin="normal"
+            autoFocus
+          />
+        )}
+        size={12}
+      />
+      <CommonEditableField<string>
+        name={"Lifecycle State"}
+        canEdit={canEdit}
+        value={source_code_version.lifecycleState ?? "unknown"}
+        ariaLabel="Edit lifecycle state"
+        display={
+          <VersionLifecycleStateChip
+            lifecycleState={lifecycleState}
+            breakingChanges={source_code_version.breakingChanges ?? undefined}
+          />
+        }
+        onSave={(value) =>
+          saveField({ lifecycleState: value.toLocaleUpperCase() })
+        }
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            label="Lifecycle State"
+            fullWidth
+            margin="normal"
+            autoFocus
+          >
+            {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
         )}
       />
       <CommonField

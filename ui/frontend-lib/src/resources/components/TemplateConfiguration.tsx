@@ -33,7 +33,10 @@ import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { IkEntity } from "../../types";
+import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
@@ -123,6 +126,24 @@ export const TemplateConfiguration = ({
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
   const canEditStorage = checkActionPermission("api:storage", "admin");
+  const sourceCodeVersionLifecycleState =
+    resource.sourceCodeVersion?.lifecycleState?.toLowerCase();
+  const showSourceCodeVersionLifecycleState =
+    !!sourceCodeVersionLifecycleState &&
+    sourceCodeVersionLifecycleState !== VERSION_LIFECYCLE_STATE.UNKNOWN;
+  const sourceCodeVersionLifecycleColor = getVersionLifecycleStateColor(
+    sourceCodeVersionLifecycleState,
+  );
+  const sourceCodeVersionTextColor =
+    sourceCodeVersionLifecycleColor === "success"
+      ? "success.main"
+      : sourceCodeVersionLifecycleColor === "info"
+        ? "info.main"
+        : sourceCodeVersionLifecycleColor === "warning"
+          ? "warning.main"
+          : sourceCodeVersionLifecycleColor === "error"
+            ? "error.main"
+            : "text.primary";
   const [isStorageEditable, setIsStorageEditable] = useState(false);
   const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
 
@@ -226,12 +247,25 @@ export const TemplateConfiguration = ({
                       resource.sourceCodeVersion?.sourceCodeBranch ||
                       "Unnamed Version"
                     }
+                    sx={{
+                      color: sourceCodeVersionTextColor,
+                      fontWeight:
+                        sourceCodeVersionLifecycleColor === "warning"
+                          ? 600
+                          : 500,
+                      textDecorationColor: sourceCodeVersionTextColor,
+                    }}
                   />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     Not set
                   </Typography>
                 )}
+                {showSourceCodeVersionLifecycleState ? (
+                  <VersionLifecycleStateChip
+                    lifecycleState={sourceCodeVersionLifecycleState}
+                  />
+                ) : null}
                 {canEdit && (
                   <Tooltip title="Change template version">
                     <IconButton
