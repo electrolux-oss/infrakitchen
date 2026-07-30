@@ -11,6 +11,11 @@ export interface GqlSourceCodeVersionShort {
   sourceCodeVersion: string | null;
   sourceCodeBranch: string | null;
   sourceCodeFolder: string;
+  lifecycleState: string | null;
+  breakingChanges: string | null;
+  index: number;
+  resourcesCount?: number | null;
+  status?: string | null;
 }
 
 export interface GqlSourceCodeVersion {
@@ -29,6 +34,9 @@ export interface GqlSourceCodeVersion {
   codeSnapshot: string | null;
   description: string;
   labels: string[] | null;
+  lifecycleState: string | null;
+  breakingChanges: string | null;
+  index: number;
   resourcesCount: number | null;
   status: string;
   revisionNumber: number;

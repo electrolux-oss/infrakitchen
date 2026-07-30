@@ -12,7 +12,7 @@ from application.source_code_versions.schema import OutputVariableModel, Variabl
 from application.source_codes.model import SourceCode, SourceCodeDTO
 from sqlalchemy import JSON
 from core.base_models import Base, BaseRevision
-from core.constants.model import ModelStatus
+from core.constants.model import ModelStatus, VersionLifecycleState
 from core.users.model import User, UserDTO
 
 
@@ -34,14 +34,19 @@ class SourceCodeVersion(BaseRevision):
     variable_configs: Mapped[list["SourceConfig"]] = relationship(
         "SourceConfig",
         back_populates="source_code_version",
-        # lazy="joined",
     )
     output_configs: Mapped[list["SourceOutputConfig"]] = relationship(
         "SourceOutputConfig",
-        # lazy="joined",
     )
     code_snapshot: Mapped[str | None] = mapped_column()
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
+    lifecycle_state: Mapped[VersionLifecycleState] = mapped_column(
+        SQLAlchemyEnum(VersionLifecycleState, name="version_lifecycle_state", native_enum=False),
+        nullable=False,
+        default=VersionLifecycleState.UNKNOWN,
+    )
+    breaking_changes: Mapped[str | None] = mapped_column(default=None)
+    index: Mapped[int] = mapped_column(default=0)
     creator: Mapped[User] = relationship("User", lazy="joined")
 
     status: Mapped[ModelStatus] = mapped_column(
@@ -165,6 +170,15 @@ class SourceCodeVersionDTO(BaseModel):
     outputs: list[OutputVariableModel] = Field(default_factory=list)
     code_snapshot: str | None = Field(default="")
     description: str = Field(default="")
+    lifecycle_state: Literal[
+        VersionLifecycleState.UNKNOWN,
+        VersionLifecycleState.PREVIEW,
+        VersionLifecycleState.ACTIVE,
+        VersionLifecycleState.DEPRECATED,
+        VersionLifecycleState.ARCHIVED,
+    ] = Field(default=VersionLifecycleState.UNKNOWN)
+    breaking_changes: str | None = Field(default=None)
+    index: int = Field(default=0)
     labels: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)

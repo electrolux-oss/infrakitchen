@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import { Box, Typography, Grid, GridSize, Link } from "@mui/material";
+import { SxProps, Theme } from "@mui/system";
 
 import { IconField } from "../../icons/Icons";
 import { useConfig } from "../context";
@@ -87,6 +88,7 @@ interface GetEntityLinkProps {
   entityName?: string;
   name?: string;
   identifier?: string;
+  sx?: SxProps<Theme>;
 }
 
 export const GetEntityLink: FC<GetEntityLinkProps> = ({
@@ -94,6 +96,7 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   entityName,
   name,
   identifier,
+  sx,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -120,6 +123,7 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
       <Link
         href={fullPath}
         onClick={handleClick}
+        sx={sx}
         style={{
           textDecoration: "none",
           cursor: "pointer",

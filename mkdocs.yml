@@ -56,7 +56,9 @@ nav:
       - Developer Guide: guides/developer-guide.md
   - Core Concepts:
       - Overview: core-concepts/overview.md
-      - Templates: core-concepts/templates/overview.md
+      - Templates:
+          - Overview: core-concepts/templates/overview.md
+          - Version Lifecycle State: core-concepts/templates/version-lifecycle-state.md
       - Projects: core-concepts/projects/overview.md
       - Executors: core-concepts/executors/overview.md
       - Workflows: core-concepts/workflows/overview.md

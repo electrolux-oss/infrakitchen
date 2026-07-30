@@ -14,7 +14,7 @@ from application.source_codes.service import SourceCodeService
 from application.templates.schema import TemplateResponse
 from application.templates.service import TemplateService
 from core.audit_logs.handler import AuditLogHandler
-from core.constants.model import ModelActions
+from core.constants.model import ModelActions, VersionLifecycleState
 from core.base_models import PatchBodyModel
 from core.database import FieldSpec, to_dict
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
@@ -251,7 +251,7 @@ class SourceCodeVersionService:
         if not existing_source_code_version:
             raise EntityNotFound("SourceCodeVersion not found")
 
-        if existing_source_code_version.status in [ModelStatus.DISABLED, ModelStatus.IN_PROGRESS]:
+        if existing_source_code_version.status in [ModelStatus.IN_PROGRESS]:
             logger.error(f"Entity has wrong status for updating {existing_source_code_version.status}")
             raise ValueError(f"Entity has wrong status for updating {existing_source_code_version.status}")
 
@@ -260,7 +260,6 @@ class SourceCodeVersionService:
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_source_code_version)
 
-        existing_source_code_version.status = ModelStatus.READY
         await self.crud.update(existing_source_code_version, body)
 
         await self.revision_handler.handle_revision(existing_source_code_version)
@@ -299,9 +298,11 @@ class SourceCodeVersionService:
         match body.action:
             case ModelActions.DISABLE:
                 existing_source_code_version.status = ModelStatus.DISABLED
+                existing_source_code_version.lifecycle_state = VersionLifecycleState.ARCHIVED
             case ModelActions.ENABLE:
                 if existing_source_code_version.status == ModelStatus.DISABLED:
                     existing_source_code_version.status = ModelStatus.READY
+                    existing_source_code_version.lifecycle_state = VersionLifecycleState.UNKNOWN
                 else:
                     raise EntityWrongState("Version is already enabled")
             case ModelActions.SYNC:

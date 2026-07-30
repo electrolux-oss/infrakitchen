@@ -16,6 +16,9 @@ export const SCV_GRAPHQL_FIELDS = {
     "sourceCodeFolder",
     "status",
     "entityName",
+    "lifecycleState",
+    "breakingChanges",
+    "index",
   ] as const,
   detail: [
     "id",
@@ -33,6 +36,9 @@ export const SCV_GRAPHQL_FIELDS = {
     "createdAt",
     "updatedAt",
     "entityName",
+    "lifecycleState",
+    "breakingChanges",
+    "index",
   ] as const,
   relations: {
     template: "template",

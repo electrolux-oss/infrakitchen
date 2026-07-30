@@ -20,6 +20,7 @@ from application.source_code_versions.schema import (
 )
 from application.source_code_versions.service import SourceCodeVersionService
 from core.constants import ModelStatus
+from core.constants.model import VersionLifecycleState
 
 
 class MockSourceCodeVersionsService:
@@ -122,6 +123,8 @@ def source_code_version_response(mocked_user_response, template_response, mocked
         template=template_response,
         source_code=mocked_source_code_response,
         status=ModelStatus.DONE,
+        lifecycle_state=VersionLifecycleState.UNKNOWN,
+        index=0,
     )
 
 
@@ -142,6 +145,8 @@ def source_code_version(mocked_user, mocked_template, mocked_source_code):
         creator=mocked_user,
         created_by=mocked_user.id,
         description="Test Source Code Version 1",
+        lifecycle_state=VersionLifecycleState.UNKNOWN,
+        index=0,
         variables=[
             VariableModel(
                 name="var_one",

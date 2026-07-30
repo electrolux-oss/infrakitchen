@@ -90,6 +90,7 @@ async def get_source_code_version_actions(requester: UserDTO, status: ModelStatu
     if status == ModelStatus.DISABLED:
         actions.append(ModelActions.ENABLE)
         actions.append(ModelActions.DELETE)
+        actions.append(ModelActions.EDIT)
         return actions
 
     return actions

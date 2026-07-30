@@ -54,3 +54,11 @@ export enum EVENT_TYPE {
   UPDATE = "update",
   EXECUTE = "execute",
 }
+
+export enum VERSION_LIFECYCLE_STATE {
+  UNKNOWN = "unknown",
+  PREVIEW = "preview",
+  ACTIVE = "active",
+  DEPRECATED = "deprecated",
+  ARCHIVED = "archived",
+}

@@ -13,7 +13,7 @@ from application.source_code_versions.schema import (
     SourceConfigUpdateWithId,
 )
 from core.base_models import PatchBodyModel
-from core.constants.model import ModelActions
+from core.constants.model import ModelActions, VersionLifecycleState
 from core.errors import AccessDenied
 from graphql_api.helpers import IsAuthenticated, check_api_permission
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType, SourceConfigType
@@ -34,6 +34,9 @@ class SourceCodeVersionCreateInput:
 class SourceCodeVersionUpdateInput:
     description: str | None = None
     labels: list[str] | None = None
+    lifecycle_state: VersionLifecycleState | None = None
+    breaking_changes: str | None = None
+    index: int | None = None
 
 
 @strawberry.input
