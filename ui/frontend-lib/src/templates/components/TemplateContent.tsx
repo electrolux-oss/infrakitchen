@@ -15,6 +15,7 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
 
+import { TemplateGraphTab } from "./TemplateGraphTab";
 import { TemplateOverview } from "./TemplateOverview";
 
 export const TemplateContent = () => {
@@ -73,6 +74,10 @@ export const TemplateContent = () => {
           filterStorageKey="filter_storage_source_code_versions"
         />
       ),
+    },
+    {
+      label: "Graph",
+      content: <TemplateGraphTab templateId={entity.id} />,
     },
     {
       label: "Tree View",
