@@ -75,7 +75,12 @@ def make_context(user):
     return {"session": Mock(), "user": user, "request": request}
 
 
-COMMON_VARS = {"k8sService": "aws_eks", "resourceId": "res-123"}
+def make_resource_service():
+    resource = Mock(project_id="proj-123")
+    return Mock(get_by_id=AsyncMock(return_value=resource))
+
+
+COMMON_VARS = {"k8sService": "aws_eks", "resourceId": "123e4567-e89b-12d3-a456-426614174000"}
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────────
@@ -103,8 +108,10 @@ class TestKubernetesGraphqlQueries:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_namespaces(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_namespaces(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_build.return_value = Mock(list_namespaces=AsyncMock(return_value=["default", "kube-system"]))
 
         result = await schema.execute(
@@ -122,8 +129,10 @@ class TestKubernetesGraphqlQueries:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_deployments(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_deployments(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_build.return_value = Mock(list_namespaced_deployment=AsyncMock(return_value=["web", "api"]))
 
         result = await schema.execute(
@@ -141,8 +150,10 @@ class TestKubernetesGraphqlQueries:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_pods(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_pods(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_build.return_value = Mock(list_namespaced_pods=AsyncMock(return_value=["pod-1", "pod-2"]))
 
         result = await schema.execute(
@@ -160,8 +171,10 @@ class TestKubernetesGraphqlQueries:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_services(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_services(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_build.return_value = Mock(list_namespaced_services=AsyncMock(return_value=["svc-web", "svc-api"]))
 
         result = await schema.execute(
@@ -179,8 +192,10 @@ class TestKubernetesGraphqlQueries:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_deployment_pods(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_deployment_pods(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_build.return_value = Mock(list_deployment_pods=AsyncMock(return_value=[SAMPLE_POD]))
 
         result = await schema.execute(
@@ -200,8 +215,10 @@ class TestKubernetesGraphqlMutations:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.mutations.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.mutations.build_kubernetes_client")
-    async def test_delete_kubernetes_pod(self, mock_build, _mock_access, mocked_user):
+    async def test_delete_kubernetes_pod(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_client = Mock(delete_namespaced_pod=AsyncMock())
         mock_build.return_value = mock_client
 
@@ -223,8 +240,12 @@ class TestKubernetesGraphqlMutations:
         new_callable=AsyncMock,
         return_value=True,
     )
+    @patch("graphql_api.modules.providers.kubernetes.mutations.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.mutations.build_kubernetes_client")
-    async def test_restart_kubernetes_deployment(self, mock_build, _mock_access, mocked_user):
+    async def test_restart_kubernetes_deployment(
+        self, mock_build, mock_get_resource_service, _mock_access, mocked_user
+    ):
+        mock_get_resource_service.return_value = make_resource_service()
         mock_client = Mock(restart_namespaced_deployment=AsyncMock())
         mock_build.return_value = mock_client
 
@@ -250,8 +271,10 @@ class TestKubernetesGraphqlAuth:
         new_callable=AsyncMock,
         return_value=False,
     )
+    @patch("graphql_api.modules.providers.kubernetes.queries.get_resource_service")
     @patch("graphql_api.modules.providers.kubernetes.queries.build_kubernetes_client")
-    async def test_kubernetes_namespaces_denied(self, mock_build, _mock_access, mocked_user):
+    async def test_kubernetes_namespaces_denied(self, mock_build, mock_get_resource_service, _mock_access, mocked_user):
+        mock_get_resource_service.return_value = make_resource_service()
         result = await schema.execute(
             KUBERNETES_NAMESPACES_QUERY,
             variable_values=COMMON_VARS,

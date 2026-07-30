@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.dependencies import get_integration_service
-from application.resources.dependencies import get_resource_service
+from application.resources.schema import ResourceResponse
 from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.tools.kubernetes_client import KubernetesClient
@@ -11,7 +11,7 @@ from core.tools.kubernetes_client import KubernetesClient
 
 async def build_kubernetes_client(
     k8s_service: str,
-    resource_id: str,
+    resource: ResourceResponse,
     session: AsyncSession,
 ) -> KubernetesClient:
     """Build a KubernetesClient for the given resource.
@@ -20,11 +20,6 @@ async def build_kubernetes_client(
     both the REST view layer and GraphQL resolvers can translate to their
     own error format.
     """
-    resource_service = get_resource_service(session=session)
-    resource = await resource_service.get_by_id(resource_id)
-    if not resource:
-        raise ValueError("Resource not found")
-
     if k8s_service == "aws_eks":
         integration_provider = "aws"
     else:

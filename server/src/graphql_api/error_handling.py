@@ -102,6 +102,9 @@ def classify_graphql_error(error: GraphQLError) -> tuple[str, str, dict[str, Any
         if isinstance(original, NotImplementedError):
             return "NOT_IMPLEMENTED", _sanitize_message(str(original)), None
 
+        if isinstance(original, PermissionError):
+            return "ACCESS_DENIED", _sanitize_message(str(original)), None
+
     # Strawberry permission errors are plain GraphQLError without original_error.
     if error.message.startswith("Not authenticated"):
         return "ACCESS_DENIED", _sanitize_message(error.message), None

@@ -5,6 +5,8 @@ from strawberry.scalars import JSON
 from strawberry.types import Info
 
 from application.providers.kubernetes.kubernetes_integration import build_kubernetes_client
+from application.resources.dependencies import get_resource_service
+from core.errors import EntityNotFound
 from core.users.functions import user_has_access_to_entity
 from core.utils.json_encoder import json_serialize
 from graphql_api.helpers import IsAuthenticated
@@ -12,10 +14,18 @@ from graphql_api.helpers import IsAuthenticated
 
 async def _get_client(info: Info, k8s_service: str, resource_id: str):
     user = info.context["user"]
-    if not await user_has_access_to_entity(user, resource_id, "write", "resource"):
-        raise PermissionError("Write access to resource is required")
     session = info.context["session"]
-    return await build_kubernetes_client(k8s_service, resource_id, session)
+    resource_service = get_resource_service(session=session)
+    resource = await resource_service.get_by_id(resource_id)
+    if not resource:
+        raise EntityNotFound(f"Resource with id {resource_id} not found")
+
+    if not await user_has_access_to_entity(user, resource_id, "write", "resource") and not (
+        resource.project_id and await user_has_access_to_entity(user, resource.project_id, "write", "project")
+    ):
+        raise PermissionError("Write access to resource is required")
+
+    return await build_kubernetes_client(k8s_service, resource, session)
 
 
 @strawberry.type
@@ -27,7 +37,6 @@ class KubernetesQuery:
         k8s_service: str,
         resource_id: str,
     ) -> list[JSON]:
-        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaces())
 
@@ -39,7 +48,6 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
-        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_deployment(namespace=namespace))
 
@@ -51,7 +59,6 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
-        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_pods(namespace=namespace))
 
@@ -63,7 +70,6 @@ class KubernetesQuery:
         resource_id: str,
         namespace: str,
     ) -> list[JSON]:
-        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         return cast(list[JSON], await client.list_namespaced_services(namespace=namespace))
 
@@ -76,7 +82,6 @@ class KubernetesQuery:
         namespace: str,
         deployment_name: str,
     ) -> list[JSON]:
-        await user_has_access_to_entity(info.context.get("user"), resource_id, "write", "resource")
         client = await _get_client(info, k8s_service, resource_id)
         pods = await client.list_deployment_pods(deployment_name=deployment_name, namespace=namespace, raw=True)
 
