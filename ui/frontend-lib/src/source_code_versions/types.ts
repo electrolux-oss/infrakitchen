@@ -11,6 +11,8 @@ export interface SourceCodeVersionCreate {
   sourceCodeBranch?: string;
   sourceCodeFolder: string;
   templateId: string;
+  lifecycleState: string | null;
+  breakingChanges: string | null;
 }
 
 // Configs

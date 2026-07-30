@@ -18,6 +18,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
+import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { CREATE_SOURCE_CODE_VERSION_MUTATION } from "../graphql";
 import { SourceCodeVersionCreate } from "../types";
 
@@ -376,6 +377,48 @@ const SourceCodeVersionCreatePageInner = () => {
                 </TextField>
               )}
             />
+            <Controller
+              name="breakingChanges"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Breaking Changes"
+                  variant="outlined"
+                  error={!!errors.breakingChanges}
+                  helperText={
+                    errors.breakingChanges
+                      ? errors.breakingChanges.message
+                      : "Provide a short description if this version has breaking changes"
+                  }
+                  fullWidth
+                  margin="normal"
+                />
+              )}
+            />
+            <Controller
+              name="lifecycleState"
+              control={control}
+              rules={{
+                required: "lifecycle State",
+              }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Lifecycle State"
+                  fullWidth
+                  margin="normal"
+                  autoFocus
+                >
+                  {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
           </Box>
         </PropertyCard>
       </Box>
@@ -393,6 +436,8 @@ const SourceCodeVersionCreatePage = () => {
       sourceCodeBranch: "",
       sourceCodeFolder: "",
       templateId: "",
+      breakingChanges: "",
+      lifecycleState: "active",
     },
     mode: "onChange",
   });
