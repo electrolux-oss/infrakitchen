@@ -1,3 +1,4 @@
+import { GoldenStateProjectReport } from "../../dashboard/types";
 import { GqlUserShort } from "../../users/graphql";
 
 import type {
@@ -34,6 +35,7 @@ type GqlProjectDetailFieldTypes = {
   createdAt: string;
   updatedAt: string;
   entityName: string;
+  goldenState: GoldenStateProjectReport | null;
 };
 
 type GqlProjectRelationFieldTypes = {

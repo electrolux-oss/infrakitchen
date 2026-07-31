@@ -6,7 +6,11 @@ import { notifyError } from "../common/hooks/useNotification";
 import { GqlFavorite } from "../favorites/graphql";
 import { USER_SHORT_FIELDS } from "../users/graphql";
 
-import { ActivityLogEntry, FavoriteResource } from "./types";
+import {
+  ActivityLogEntry,
+  FavoriteResource,
+  GoldenStateSummary,
+} from "./types";
 
 const DASHBOARD_QUERY = `
   query Dashboard($auditFilter: JSON, $auditSort: [String!], $auditRange: [Int!]) {
@@ -27,6 +31,20 @@ const DASHBOARD_QUERY = `
         ${USER_SHORT_FIELDS}
       }
     }
+    goldenStateReport {
+      overallScore
+      projects {
+        projectId
+        projectName
+        score
+        total
+        compliant
+        updateAvailable
+        deprecated
+        critical
+        noGolden
+      }
+    }
   }
 `;
 
@@ -34,6 +52,7 @@ interface DashboardResponse {
   resourcesCount: number;
   favorites: GqlFavorite[];
   auditLogs: GqlAuditLog[];
+  goldenStateReport: GoldenStateSummary | null;
 }
 
 function transformFavoriteToResource(
@@ -56,6 +75,8 @@ export const useDashboardData = () => {
   const { ikApi } = useConfig();
   const [favorites, setFavorites] = useState<FavoriteResource[]>([]);
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
+  const [goldenStateReport, setGoldenStateReport] =
+    useState<GoldenStateSummary | null>(null);
   const [hasResources, setHasResources] = useState(false);
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
@@ -81,6 +102,7 @@ export const useDashboardData = () => {
       if (!resourcesExist) {
         setFavorites([]);
         setActivities([]);
+        setGoldenStateReport(null);
         return;
       }
 
@@ -92,6 +114,8 @@ export const useDashboardData = () => {
       setActivities(
         Array.isArray(response?.auditLogs) ? response.auditLogs : [],
       );
+
+      setGoldenStateReport(response?.goldenStateReport ?? null);
     } catch (err) {
       notifyError(err);
     } finally {
@@ -107,6 +131,7 @@ export const useDashboardData = () => {
   return {
     favorites,
     activities,
+    goldenStateReport,
     hasResources,
     loading,
     refetch: fetchData,

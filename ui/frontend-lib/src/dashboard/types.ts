@@ -39,3 +39,20 @@ export interface DashboardContextType {
   error: string | null;
   refetch: () => Promise<void>;
 }
+
+export interface GoldenStateProjectReport {
+  projectId: string | null;
+  projectName: string;
+  score: number;
+  total: number;
+  compliant: number;
+  updateAvailable: number;
+  deprecated: number;
+  critical: number;
+  noGolden: number;
+}
+
+export interface GoldenStateSummary {
+  overallScore: number;
+  projects: GoldenStateProjectReport[];
+}

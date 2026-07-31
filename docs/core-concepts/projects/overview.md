@@ -187,6 +187,9 @@ Owners are not just informational. InfraKitchen checks the owner list when decid
 Projects connect several InfraKitchen concepts:
 
 - **Resources** can belong to a project and inherit project tags/config defaults
+- **Golden State** shows whether project resources are aligned with each template's active version
 - **Workspaces** can be assigned at the project level to centralize generated code sync
 - **Policies** can be applied at the project boundary, separate from individual resources
 - **Audit Logs** and **Revisions** track changes to project metadata over time
+
+See also: [Golden State](golden-state.md)

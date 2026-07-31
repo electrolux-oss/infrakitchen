@@ -2,6 +2,7 @@ import {
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
+import { GOLDEN_STATE_PROJECT_REPORT_FIELDS } from "../../dashboard/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const PROJECT_GRAPHQL_FIELDS = {
@@ -44,7 +45,8 @@ export type ProjectGraphqlShortField =
   | (typeof PROJECT_GRAPHQL_FIELDS.short)[number]
   | typeof PROJECT_GRAPHQL_FIELDS.relations.owners;
 export type ProjectGraphqlDetailField =
-  (typeof PROJECT_GRAPHQL_FIELDS.detail)[number];
+  | (typeof PROJECT_GRAPHQL_FIELDS.detail)[number]
+  | "goldenState";
 export type ProjectGraphqlRelationKey =
   keyof typeof PROJECT_GRAPHQL_FIELDS.relations;
 export type ProjectGraphqlRelationField =
@@ -57,6 +59,7 @@ export const PROJECT_SHORT_FIELDS = `
 
 export const PROJECT_LIST_FIELDS = `
   ${buildSelection(PROJECT_GRAPHQL_FIELDS.list)}
+  ${buildNestedSelection("goldenState", GOLDEN_STATE_PROJECT_REPORT_FIELDS)}
 `;
 
 const WORKSPACE_SHORT_FIELDS = `
@@ -66,6 +69,7 @@ const WORKSPACE_SHORT_FIELDS = `
 
 export const PROJECT_DETAIL_FIELDS = `
   ${buildSelection(PROJECT_GRAPHQL_FIELDS.detail)}
+  ${buildNestedSelection("goldenState", GOLDEN_STATE_PROJECT_REPORT_FIELDS)}
   ${buildNestedSelection(PROJECT_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
   ${buildNestedSelection(PROJECT_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
   ${buildNestedSelection(PROJECT_GRAPHQL_FIELDS.relations.workspace, WORKSPACE_SHORT_FIELDS)}

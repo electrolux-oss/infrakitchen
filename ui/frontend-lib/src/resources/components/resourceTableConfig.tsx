@@ -13,7 +13,11 @@ import StatusChip from "../../common/StatusChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
-import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
+import {
+  ENTITY_STATE,
+  ENTITY_STATUS,
+  VERSION_LIFECYCLE_STATE,
+} from "../../utils/constants";
 import { GqlResourceShort } from "../graphql";
 
 // --- Column visibility defaults ---
@@ -129,17 +133,36 @@ export const resourceColumns: EntityTableColumn[] = [
       "sourceCodeVersion.id",
     ],
     sortField: "source_code_version.tag",
-    filter: {
-      field: "source_code_version_id",
-      label: "Version",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "sourceCodeVersions",
-        labelField: "identifier",
-      }),
-    },
+    filter: [
+      {
+        field: "source_code_version_id",
+        label: "Version",
+        operators: ["eq", "in"],
+        valueType: "reference",
+        defaultOperator: "eq",
+        makeReferenceLoader: serverSearchReference({
+          entityPlural: "sourceCodeVersions",
+          labelField: "identifier",
+        }),
+      },
+      {
+        field: "source_code_version__lifecycle_state",
+        label: "Version Lifecycle State",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
+          { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
+          { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
+          {
+            label: "Deprecated",
+            value: VERSION_LIFECYCLE_STATE.DEPRECATED,
+          },
+          { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
+        ],
+      },
+    ],
     valueGetter: (_value: any, row: any) => {
       const scv = row.sourceCodeVersion;
       if (!scv) return "";

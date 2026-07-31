@@ -129,6 +129,19 @@ export const ReferenceAutocomplete = ({
     return [...missing, ...options];
   }, [options, selectedValues]);
 
+  const selectedOption =
+    !multiple && typeof value === "string"
+      ? effectiveOptions.find((o) => o.value === value) || null
+      : null;
+
+  useEffect(() => {
+    if (multiple) {
+      return;
+    }
+
+    setInputValue(selectedOption?.label || "");
+  }, [multiple, selectedOption]);
+
   if (multiple) {
     const arrValue = Array.isArray(value) ? value : value ? [value] : [];
     const selectedOptions = arrValue
@@ -176,9 +189,6 @@ export const ReferenceAutocomplete = ({
       />
     );
   }
-
-  const selectedOption =
-    effectiveOptions.find((o) => o.value === value) || null;
 
   return (
     <Autocomplete

@@ -9,6 +9,7 @@ import {
   TabDefinition,
 } from "../../common/components/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
@@ -36,6 +37,17 @@ export const ProjectContent = ({
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
+    {
+      label: "Golden State",
+      content: (
+        <GoldenStateWidget
+          goldenStateReport={{
+            overallScore: entity.goldenState?.score ?? 100,
+            projects: entity.goldenState ? [entity.goldenState] : [],
+          }}
+        />
+      ),
+    },
     {
       label: "Resources",
       tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
