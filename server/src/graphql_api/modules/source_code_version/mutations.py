@@ -28,6 +28,8 @@ class SourceCodeVersionCreateInput:
     source_code_folder: str = ""
     description: str = ""
     labels: list[str] = strawberry.field(default_factory=list)
+    lifecycle_state: str = "active"
+    breaking_changes: str | None = None
 
 
 @strawberry_pydantic.input(model=SourceCodeVersionUpdate, all_fields=False)

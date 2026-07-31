@@ -60,6 +60,8 @@ export function useVersionActions(
       sourceCodeFolder: folder,
       description: "",
       labels: [],
+      breakingChanges: "",
+      lifecycleState: "active",
     };
 
     try {

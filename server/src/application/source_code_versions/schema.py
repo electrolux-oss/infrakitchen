@@ -193,6 +193,15 @@ class SourceCodeVersionCreate(BaseModel):
     source_code_branch: str | None = Field(default=None, frozen=True)
     source_code_folder: str = Field(default="", frozen=True)
     description: str = Field(default="")
+    lifecycle_state: Literal[
+        VersionLifecycleState.UNKNOWN,
+        VersionLifecycleState.PREVIEW,
+        VersionLifecycleState.ACTIVE,
+        VersionLifecycleState.DEPRECATED,
+        VersionLifecycleState.ARCHIVED,
+        None,
+    ] = Field(default=None)
+    breaking_changes: str | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
 
