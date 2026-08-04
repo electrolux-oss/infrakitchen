@@ -57,7 +57,7 @@ async def microsoft_login(service: SSOService = Depends(get_sso_service)):
 async def microsoft_refresh_token(service: SSOService, request: Request, response: Response, cookie: str | None = None):
     def get_user_email_from_access_token(access_token):
         decoded_token = jwt.decode(access_token, options={"verify_signature": False})
-        return decoded_token.get("email")
+        return decoded_token.get("email") or decoded_token.get("upn") or decoded_token.get("preferred_username")
 
     microsoft_sso = await get_microsoft_sso(service)
 
