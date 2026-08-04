@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -22,8 +22,9 @@ import {
   Link,
 } from "@mui/material";
 
-import { FilterConfig, PermissionWrapper } from "../../common";
+import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -33,6 +34,7 @@ import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { TemplateVersionReorderDialog } from "../../source_code_versions/components/TemplateVersionReorderDialog";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
+import { templateColumns } from "../components/templateFilterConfig";
 import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
 
 const TEMPLATE_ACTION_MUTATION = buildEntityActionMutation("template");
@@ -42,7 +44,6 @@ export const TemplatesPage = () => {
   const [templates, setTemplates] = useState<GqlTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [labels, setLabels] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [reorderTemplate, setReorderTemplate] = useState<GqlTemplate | null>(
@@ -58,10 +59,7 @@ export const TemplatesPage = () => {
   const entityName = "template";
 
   const fetchTemplates = useCallback(async () => {
-    const apiFilters: Record<string, any> = {};
-    if (filterValues.labels && filterValues.labels.length > 0) {
-      apiFilters["labels__contains_all"] = filterValues.labels;
-    }
+    const apiFilters = buildAdvancedApiFilters(filterValues);
 
     if (isInitialLoad) {
       setLoading(true);
@@ -70,13 +68,11 @@ export const TemplatesPage = () => {
     try {
       const response = await ikApi.graphqlRequest<{
         templates: GqlTemplate[];
-        labels: string[];
       }>(
         `  query Templates($filter: JSON, $sort: [String!], $range: [Int!]) {
                     templates(filter: $filter, sort: $sort, range: $range) {
                       ${TEMPLATE_LIST_FIELDS}
                     }
-                    labels: labels(entity: "template")
                   }
         `,
         {
@@ -86,7 +82,6 @@ export const TemplatesPage = () => {
         },
       );
       setTemplates(response.templates || []);
-      setLabels(response.labels || []);
       setIsInitialLoad(false);
     } catch (error: any) {
       setError(error.message || "Failed to fetch templates");
@@ -94,7 +89,7 @@ export const TemplatesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [ikApi, filterValues.labels, isInitialLoad]);
+  }, [ikApi, filterValues, isInitialLoad]);
 
   const handleFilterChange = useCallback(
     (newFilterValues: Record<string, any>) => {
@@ -150,39 +145,6 @@ export const TemplatesPage = () => {
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
-
-  const filteredTemplates = useMemo(
-    () =>
-      templates.filter((t) => {
-        const s = (filterValues.name || "").toLowerCase();
-        return (
-          !s ||
-          t.name.toLowerCase().includes(s) ||
-          t.description?.toLowerCase().includes(s)
-        );
-      }),
-    [templates, filterValues.name],
-  );
-
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-      {
-        id: "labels",
-        type: "autocomplete" as const,
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
-  );
 
   const actions = (
     <Box>
@@ -267,11 +229,14 @@ export const TemplatesPage = () => {
       actions={actions}
     >
       <Box sx={{ width: "100%" }}>
-        <FilterPanel
-          filters={filterConfigs}
+        <FilterProvider
+          columns={templateColumns}
           storageKey={`filter_${entityName}s`}
           onFilterChange={handleFilterChange}
-        />
+          syncToUrl
+        >
+          <FilterPanel />
+        </FilterProvider>
         {loading ? (
           <Box
             sx={{
@@ -283,7 +248,7 @@ export const TemplatesPage = () => {
           >
             <CircularProgress />
           </Box>
-        ) : filteredTemplates.length === 0 ? (
+        ) : templates.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
             <Typography variant="h5" component="p">
               No templates available
@@ -302,7 +267,7 @@ export const TemplatesPage = () => {
               mt: 4,
             }}
           >
-            {filteredTemplates.map((template) => {
+            {templates.map((template) => {
               const enabled = template.status !== "disabled";
 
               return (

@@ -12,7 +12,7 @@ import {
 import {
   EntityFetchTable,
   EntityFetchTableRef,
-} from "../../../common/components/EntityFetchTable";
+} from "../../../common/components/entity_table/EntityFetchTable";
 import { OverviewCard } from "../../../common/components/OverviewCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";

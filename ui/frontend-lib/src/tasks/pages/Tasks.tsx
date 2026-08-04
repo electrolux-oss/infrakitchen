@@ -1,16 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Link } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
-import { FilterConfig, useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { useConfig } from "../../common";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
+import {
+  taskColumns,
+  taskDefaultColumnVisibilityModel,
+} from "../components/taskTableConfig";
 import { TASK_FIELD_MAP } from "../graphql";
 
 export const TasksPage = () => {
@@ -18,100 +16,14 @@ export const TasksPage = () => {
 
   const navigate = useNavigate();
 
-  // Configure filters
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "entity",
-        type: "autocomplete" as const,
-        label: "Entity Type",
-        options: globalConfig.entities,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [globalConfig.entities],
-  );
-
-  // Build API filters
-  const buildApiFilters = useCallback((filterValues: Record<string, any>) => {
-    const apiFilters: Record<string, any> = {};
-
-    if (filterValues.entity && filterValues.entity.length > 0) {
-      apiFilters["entity__in"] = filterValues.entity;
-    }
-
-    return apiFilters;
-  }, []);
-
   const columns = useMemo(
-    () => [
-      {
-        field: "entity",
-        fetchFields: ["entity", "entityId", "entityData"],
-        headerName: "Entity",
-        flex: 1,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          return (
-            <Link
-              onClick={() => {
-                navigate(
-                  `${linkPrefix}${params.row.entity}s/${params.row.entityId}`,
-                );
-              }}
-              rel="noopener"
-              style={{ cursor: "pointer" }}
-            >
-              {params.row.entityData?.name ?? params.row.entity}
-            </Link>
-          );
-        },
-      },
-      {
-        field: "status",
-        fetchFields: ["status", "state"],
-        headerName: "Status",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip status={params.row.status} state={params.row.state} />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        sortField: "created_at",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "updatedAt",
-        headerName: "Last Updated",
-        sortField: "updated_at",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        sortField: "creator.identifier",
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) =>
-          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
-      },
-    ],
-    [navigate, linkPrefix],
+    () =>
+      taskColumns({
+        navigate,
+        linkPrefix,
+        entityOptions: globalConfig.entities,
+      }),
+    [navigate, linkPrefix, globalConfig.entities],
   );
 
   return (
@@ -121,11 +33,8 @@ export const TasksPage = () => {
         entityName="task"
         columns={columns}
         entityFieldMap={TASK_FIELD_MAP}
-        filterConfigs={filterConfigs}
-        buildApiFilters={buildApiFilters}
-        defaultColumnVisibilityModel={{
-          created_by: false,
-        }}
+        defaultColumnVisibilityModel={taskDefaultColumnVisibilityModel}
+        syncFiltersToUrl
       />
     </PageContainer>
   );

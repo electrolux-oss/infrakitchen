@@ -166,10 +166,14 @@ export const getCategoryFromLabels = (labels: string[]) => {
   return label ? label.replace("type:", "") : "general";
 };
 
-const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   github: "GitHub",
   github_ssh: "GitHub",
   google: "Google",
+  microsoft: "Microsoft",
+  guest: "Guest",
+  backstage: "Backstage",
+  ik_service_account: "Service Account",
   bitbucket: "Bitbucket",
   bitbucket_ssh: "Bitbucket",
   aws: "AWS",

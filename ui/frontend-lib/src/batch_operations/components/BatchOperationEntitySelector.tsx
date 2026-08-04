@@ -19,7 +19,9 @@ import {
 } from "@mui/x-data-grid";
 
 import { GetEntityLink } from "../../common/components/CommonField";
-import { FilterConfig } from "../../common/components/filter_panel/FilterConfig";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
+import { FilterProvider } from "../../common/components/filter_panel/FilterContext";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -27,7 +29,9 @@ import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
+import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { BatchOperationCreate } from "../types";
@@ -51,8 +55,6 @@ export const BatchOperationEntitySelector = (
     name: "entityIds",
   }) as Array<string | number> | undefined;
 
-  const [labels, setLabels] = useState<string[]>([]);
-  const [templates, setTemplates] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<Record<string, any>>(() => {
     const stored = getStoredValue(`filter_batch_operation_${entityType}`);
     return stored && Object.keys(stored).length > 0 ? stored : {};
@@ -66,53 +68,7 @@ export const BatchOperationEntitySelector = (
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
 
-  useEffect(() => {
-    if (entityType === "resource") {
-      ikApi
-        .graphqlRequest<{ labels: string[]; templates: { name: string }[] }>(
-          `
-            query BatchOperationResourceFilters($sort: [String!], $range: [Int!]) {
-              labels: labels(entity: "resource")
-              templates(sort: $sort, range: $range) {
-                name
-              }
-            }
-          `,
-          {
-            sort: ["name", "ASC"],
-            range: [0, 1000],
-          },
-        )
-        .then((response) => {
-          setLabels(response.labels || []);
-          const templateNames = (response.templates || []).map((t) => t.name);
-          setTemplates(templateNames);
-        })
-        .catch(() => {
-          setLabels([]);
-          setTemplates([]);
-        });
-
-      return;
-    }
-
-    ikApi
-      .graphqlRequest<{ labels: string[] }>(
-        `
-          query BatchOperationExecutorLabels {
-            labels: labels(entity: "executor")
-          }
-        `,
-      )
-      .then((response) => {
-        setLabels(response.labels || []);
-      })
-      .catch(() => {
-        setLabels([]);
-      });
-  }, [ikApi, entityType]);
-
-  const resourceColumns: GridColDef[] = useMemo(
+  const resourceSelectionColumns: GridColDef[] = useMemo(
     () => [
       {
         field: "name",
@@ -172,7 +128,7 @@ export const BatchOperationEntitySelector = (
     [],
   );
 
-  const executorColumns: GridColDef[] = useMemo(
+  const executorSelectionColumns: GridColDef[] = useMemo(
     () => [
       {
         field: "name",
@@ -222,54 +178,19 @@ export const BatchOperationEntitySelector = (
   );
 
   const columns = useMemo(
-    () => (entityType === "resource" ? resourceColumns : executorColumns),
-    [entityType, resourceColumns, executorColumns],
-  );
-
-  const filterConfigs: FilterConfig[] = useMemo(
     () =>
       entityType === "resource"
-        ? [
-            {
-              id: "name",
-              type: "search" as const,
-              label: "Search",
-              width: 420,
-            },
-            {
-              id: "template",
-              type: "autocomplete" as const,
-              label: "Template",
-              options: templates,
-              multiple: true,
-              width: 420,
-            },
-            {
-              id: "labels",
-              type: "autocomplete" as const,
-              label: "Labels",
-              options: labels,
-              multiple: true,
-              width: 420,
-            },
-          ]
-        : [
-            {
-              id: "name",
-              type: "search" as const,
-              label: "Search",
-              width: 420,
-            },
-            {
-              id: "labels",
-              type: "autocomplete" as const,
-              label: "Labels",
-              options: labels,
-              multiple: true,
-              width: 420,
-            },
-          ],
-    [entityType, labels, templates],
+        ? resourceSelectionColumns
+        : executorSelectionColumns,
+    [entityType, resourceSelectionColumns, executorSelectionColumns],
+  );
+
+  const filterColumns = useMemo<EntityTableColumn[]>(
+    () =>
+      entityType === "resource"
+        ? filterableResourceColumns
+        : filterableExecutorColumns,
+    [entityType],
   );
 
   const handleFilterChange = useCallback((values: Record<string, any>) => {
@@ -283,29 +204,6 @@ export const BatchOperationEntitySelector = (
       ids: new Set(selectedIds),
     }),
     [],
-  );
-
-  const buildApiFilters = useCallback(
-    (values: Record<string, any>) => {
-      const apiFilters: Record<string, any> = {};
-
-      if (values.name && values.name.trim().length > 0) {
-        apiFilters["name__like"] = values.name;
-      }
-
-      if (values.labels && values.labels.length > 0) {
-        apiFilters["labels__contains_all"] = values.labels;
-      }
-
-      if (entityType === "resource") {
-        if (values.template && values.template.length > 0) {
-          apiFilters["template__name__in"] = values.template;
-        }
-      }
-
-      return apiFilters;
-    },
-    [entityType],
   );
 
   useEffect(() => {
@@ -363,7 +261,7 @@ export const BatchOperationEntitySelector = (
             }
           `,
           {
-            filter: buildApiFilters(filterValues),
+            filter: buildAdvancedApiFilters(filterValues),
             sort: [apiSort.field, apiSort.order],
             range: [
               paginationModel.page * paginationModel.pageSize,
@@ -396,7 +294,6 @@ export const BatchOperationEntitySelector = (
     paginationModel.pageSize,
     sortModel,
     filterValues,
-    buildApiFilters,
   ]);
 
   return (
@@ -414,11 +311,13 @@ export const BatchOperationEntitySelector = (
             {`Select ${entityType === "resource" ? "Resources" : "Executors"}`}
           </InputLabel>
           <Box sx={{ mt: 1 }}>
-            <FilterPanel
-              filters={filterConfigs}
+            <FilterProvider
+              columns={filterColumns}
               storageKey={`filter_batch_operation_${entityType}`}
               onFilterChange={handleFilterChange}
-            />
+            >
+              <FilterPanel />
+            </FilterProvider>
             <Box sx={{ mt: 2, height: 520, width: "100%" }}>
               <DataGrid
                 rows={entities}

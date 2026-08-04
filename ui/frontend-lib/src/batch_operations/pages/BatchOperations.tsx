@@ -1,104 +1,17 @@
-import { useMemo } from "react";
-
 import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { FilterConfig, PermissionWrapper, useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { PermissionWrapper, useConfig } from "../../common";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
+import { batchOperationColumns } from "../components/batchOperationTableConfig";
 import { BATCH_OPERATION_FIELD_MAP } from "../graphql";
 
 export const BatchOperationsPage = () => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
-
-  const columns = useMemo(
-    () => [
-      {
-        field: "name",
-        headerName: "Name",
-        fetchFields: ["name", "id", "entityName"],
-        flex: 1,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
-        },
-      },
-      {
-        field: "entityType",
-        headerName: "Entity",
-        flex: 0.5,
-      },
-      {
-        field: "entityIds",
-        headerName: "# of Entities",
-        flex: 0.5,
-        valueGetter: (value: any) => (value ? value.length : 0),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "updatedAt",
-        headerName: "Last Updated",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        sortField: "creator.identifier",
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} name={creator.identifier} />;
-        },
-      },
-    ],
-    [],
-  );
-
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-    ],
-    [],
-  );
-
-  const buildApiFilters = (filterValues: Record<string, any>) => {
-    const apiFilters: Record<string, any> = {};
-
-    if (filterValues.name && filterValues.name.trim().length > 0) {
-      apiFilters["name__like"] = filterValues.name;
-    }
-
-    return apiFilters;
-  };
 
   return (
     <PageContainer
@@ -122,10 +35,9 @@ export const BatchOperationsPage = () => {
       <EntityFetchTable
         title="Batch Operations"
         entityName="batchOperation"
-        columns={columns}
+        columns={batchOperationColumns}
         entityFieldMap={BATCH_OPERATION_FIELD_MAP}
-        filterConfigs={filterConfigs}
-        buildApiFilters={buildApiFilters}
+        syncFiltersToUrl
       />
     </PageContainer>
   );

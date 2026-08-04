@@ -1,185 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-
 import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  FilterConfig,
-  getRepoNameFromUrl,
-  PermissionWrapper,
-  useConfig,
-} from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
-import { Labels } from "../../common/components/Labels";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { PermissionWrapper, useConfig } from "../../common";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import StatusChip from "../../common/StatusChip";
+import { executorColumns } from "../components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../graphql/fragments";
 
 export const ExecutorsPage = () => {
-  const { ikApi, linkPrefix } = useConfig();
+  const { linkPrefix } = useConfig();
   const navigate = useNavigate();
-  const [labels, setLabels] = useState<string[]>([]);
-
-  useEffect(() => {
-    ikApi
-      .graphqlRequest<{ labels: string[] }>(
-        `query ExecutorLabels {
-          labels: labels(entity: "executor")
-        }`,
-      )
-      .then((response) => {
-        setLabels(response.labels || []);
-      });
-  }, [ikApi]);
-
-  const columns = useMemo(
-    () => [
-      {
-        field: "Favorite",
-        fetchFields: ["isFavorite"],
-        headerName: "",
-        width: 60,
-        resizable: false,
-        sortable: true,
-        filterable: false,
-        align: "center" as const,
-        headerAlign: "center" as const,
-        renderCell: (params: GridRenderCellParams) => (
-          <FavoriteButton
-            componentId={String(params.row.id)}
-            componentType="executor"
-            ariaLabel="Toggle executor favorite"
-            format="table"
-            isFavorite={params.row.isFavorite}
-          />
-        ),
-      },
-      {
-        field: "name",
-        headerName: "Name",
-        fetchFields: ["name", "entityName"],
-        flex: 1,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
-        },
-      },
-      {
-        field: "sourceCode",
-        headerName: "Code Repository",
-        flex: 1,
-        sortField: "source_code.source_code_url",
-        valueGetter: (_value: any, row: any) =>
-          row.sourceCode?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.sourceCode;
-          return (
-            <GetEntityLink
-              {...sourceCodeVersion}
-              name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
-            />
-          );
-        },
-      },
-      {
-        field: "state",
-        fetchFields: ["state", "status"],
-        headerName: "State",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={String(params.row.status).toLowerCase()}
-            state={String(params.row.state).toLowerCase()}
-          />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "updatedAt",
-        headerName: "Last Updated",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "labels",
-        headerName: "Labels",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-        renderCell: (params: GridRenderCellParams) => (
-          <Labels labels={params.row.labels} />
-        ),
-      },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) =>
-          params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
-      },
-    ],
-    [],
-  );
-
-  // Configure filters using the new FilterConfig system
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-      {
-        id: "labels",
-        type: "autocomplete" as const,
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
-  );
-
-  // Custom API filter builder for Executors
-  const buildApiFilters = (filterValues: Record<string, any>) => {
-    const apiFilters: Record<string, any> = {};
-
-    // Handle name search
-    if (filterValues.name && filterValues.name.trim().length > 0) {
-      apiFilters["name__like"] = filterValues.name;
-    }
-
-    // Handle labels filter
-    if (filterValues.labels && filterValues.labels.length > 0) {
-      apiFilters["labels__contains_all"] = filterValues.labels;
-    }
-
-    return apiFilters;
-  };
 
   return (
     <PageContainer
@@ -203,10 +35,9 @@ export const ExecutorsPage = () => {
       <EntityFetchTable
         title="Executors"
         entityName="executor"
-        columns={columns}
+        columns={executorColumns}
         entityFieldMap={EXECUTOR_FIELD_MAP}
-        filterConfigs={filterConfigs}
-        buildApiFilters={buildApiFilters}
+        syncFiltersToUrl
       />
     </PageContainer>
   );

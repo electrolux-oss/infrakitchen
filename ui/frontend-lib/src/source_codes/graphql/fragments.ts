@@ -1,4 +1,5 @@
 import {
+  GraphqlFieldMap,
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
@@ -68,6 +69,17 @@ export const SOURCE_CODE_SHORT_FIELDS = `
 export const SOURCE_CODE_LIST_FIELDS = `
   ${buildSelection(SOURCE_CODE_GRAPHQL_FIELDS.list)}
 `;
+
+export const SOURCE_CODE_FIELD_MAP: GraphqlFieldMap = {
+  integration: buildNestedSelection(
+    SOURCE_CODE_GRAPHQL_FIELDS.relations.integration,
+    INTEGRATION_SHORT_FIELDS,
+  ),
+  creator: buildNestedSelection(
+    SOURCE_CODE_GRAPHQL_FIELDS.relations.creator,
+    USER_SHORT_FIELDS,
+  ),
+};
 
 export const SOURCE_CODE_DETAIL_FIELDS = `
   ${buildSelection(SOURCE_CODE_GRAPHQL_FIELDS.detail)}

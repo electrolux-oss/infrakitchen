@@ -1,13 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback } from "react";
 
-import { Chip } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
-
-import { FilterConfig, useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
-import StatusChip from "../../common/StatusChip";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
+import { workspaceColumns } from "../../workspaces/components/workspaceTableConfig";
+import { WORKSPACE_FIELD_MAP } from "../../workspaces/graphql/fragments";
 
 interface IntegrationWorkspaceDependenciesProps {
   integration_id: string;
@@ -17,117 +13,16 @@ export const IntegrationWorkspaceDependencies = (
   props: IntegrationWorkspaceDependenciesProps,
 ) => {
   const { integration_id } = props;
-  const { ikApi } = useConfig();
-  const [labels, setLabels] = useState<string[]>([]);
-
-  useEffect(() => {
-    ikApi
-      .graphqlRequest<{ labels: string[] }>(
-        `query WorkspaceLabels {
-          labels: labels(entity: "workspace")
-        }`,
-      )
-      .then((response) => {
-        setLabels(response.labels || []);
-      });
-  }, [ikApi]);
-
-  const columns = useMemo(
-    () => [
-      {
-        field: "name",
-        headerName: "Name",
-        fetchFields: ["id", "name", "entityName"],
-        flex: 1,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <GetEntityLink {...params.row} />
-        ),
-      },
-      {
-        field: "state",
-        fetchFields: ["status"],
-        headerName: "State",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip status={String(params.row.status).toLowerCase()} />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "updatedAt",
-        headerName: "Last Updated",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
-      {
-        field: "description",
-        headerName: "Description",
-        flex: 2,
-      },
-      {
-        field: "labels",
-        headerName: "Labels",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <>
-            {(params.value || []).map((l: string) => (
-              <Chip key={l} label={l} size="small" sx={{ mr: 0.5 }} />
-            ))}
-          </>
-        ),
-      },
-    ],
-    [],
-  );
 
   const defaultColumnVisibilityModel = {
     description: false,
   };
 
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      { id: "name", type: "search", label: "Search", width: 420 },
-      {
-        id: "labels",
-        type: "autocomplete",
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
-  );
-
   const buildApiFilters = useCallback(
-    (filterValues: Record<string, any>) => {
-      const apiFilters: Record<string, any> = { integration_id };
-
-      if (filterValues.name?.trim()) {
-        apiFilters.name__like = filterValues.name;
-      }
-      if (filterValues.labels?.length > 0) {
-        apiFilters.labels__contains_all = filterValues.labels;
-      }
-
-      return apiFilters;
-    },
+    (filterValues: Record<string, any>) => ({
+      ...buildAdvancedApiFilters(filterValues),
+      integration_id,
+    }),
     [integration_id],
   );
 
@@ -135,9 +30,9 @@ export const IntegrationWorkspaceDependencies = (
     <EntityFetchTable
       title="Workspaces"
       entityName="workspace"
-      columns={columns}
+      columns={workspaceColumns}
+      entityFieldMap={WORKSPACE_FIELD_MAP}
       defaultColumnVisibilityModel={defaultColumnVisibilityModel}
-      filterConfigs={filterConfigs}
       filterStorageKey={`filter_integration_workspaces`}
       buildApiFilters={buildApiFilters}
     />

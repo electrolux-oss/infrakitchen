@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -12,14 +12,16 @@ import {
   Typography,
 } from "@mui/material";
 
-import { FilterConfig, PermissionWrapper } from "../../common";
+import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { projectColumns } from "../components/projectTableConfig";
 import { GqlProject, PROJECT_LIST_FIELDS } from "../graphql";
 
 export const ProjectsPage = () => {
@@ -27,7 +29,6 @@ export const ProjectsPage = () => {
   const [projects, setProjects] = useState<GqlProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [labels, setLabels] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
@@ -35,10 +36,7 @@ export const ProjectsPage = () => {
   const entityName = "project";
 
   const fetchProjects = useCallback(async () => {
-    const apiFilters: Record<string, any> = {};
-    if (filterValues.labels && filterValues.labels.length > 0) {
-      apiFilters["labels__contains_all"] = filterValues.labels;
-    }
+    const apiFilters = buildAdvancedApiFilters(filterValues);
 
     if (isInitialLoad) {
       setLoading(true);
@@ -47,13 +45,11 @@ export const ProjectsPage = () => {
     try {
       const response = await ikApi.graphqlRequest<{
         projects: GqlProject[];
-        labels: string[];
       }>(
         `  query Projects($filter: JSON, $sort: [String!], $range: [Int!]) {
                     projects(filter: $filter, sort: $sort, range: $range) {
                       ${PROJECT_LIST_FIELDS}
                     }
-                    labels: labels(entity: "project")
                   }
         `,
         {
@@ -63,7 +59,6 @@ export const ProjectsPage = () => {
         },
       );
       setProjects(response.projects || []);
-      setLabels(response.labels || []);
       setIsInitialLoad(false);
     } catch (error: any) {
       setError(error.message || "Failed to fetch projects");
@@ -71,7 +66,7 @@ export const ProjectsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [ikApi, filterValues.labels, isInitialLoad]);
+  }, [ikApi, filterValues, isInitialLoad]);
 
   const handleFilterChange = useCallback(
     (newFilterValues: Record<string, any>) => {
@@ -83,39 +78,6 @@ export const ProjectsPage = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
-
-  const filteredProjects = useMemo(
-    () =>
-      projects.filter((p) => {
-        const s = (filterValues.name || "").toLowerCase();
-        return (
-          !s ||
-          p.name.toLowerCase().includes(s) ||
-          p.description?.toLowerCase().includes(s)
-        );
-      }),
-    [projects, filterValues.name],
-  );
-
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-      {
-        id: "labels",
-        type: "autocomplete" as const,
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
-  );
 
   const actions = (
     <Box>
@@ -199,11 +161,14 @@ export const ProjectsPage = () => {
       actions={actions}
     >
       <Box sx={{ width: "100%" }}>
-        <FilterPanel
-          filters={filterConfigs}
+        <FilterProvider
+          columns={projectColumns}
           storageKey={`filter_${entityName}s`}
           onFilterChange={handleFilterChange}
-        />
+          syncToUrl
+        >
+          <FilterPanel />
+        </FilterProvider>
         {loading ? (
           <Box
             sx={{
@@ -215,10 +180,10 @@ export const ProjectsPage = () => {
           >
             <CircularProgress />
           </Box>
-        ) : filteredProjects.length === 0 ? (
+        ) : projects.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
             <Typography variant="h5" component="p">
-              No projects available
+              No projects match your filters
             </Typography>
           </Box>
         ) : (
@@ -234,7 +199,7 @@ export const ProjectsPage = () => {
               mt: 4,
             }}
           >
-            {filteredProjects.map((project) => (
+            {projects.map((project) => (
               <EntityCard
                 key={project.id}
                 entity_name={entityName}
