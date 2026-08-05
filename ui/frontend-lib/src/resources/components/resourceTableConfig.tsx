@@ -3,17 +3,20 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { FilterConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityTableColumn } from "../../common/components/EntityTable";
+import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import { Labels } from "../../common/components/Labels";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
+import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 import { GqlResourceShort } from "../graphql";
+
+// --- Column visibility defaults ---
 
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   creator: false,
@@ -56,6 +59,12 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Name",
     flex: 1,
     hideable: false,
+    filter: {
+      field: "name",
+      operators: ["like", "eq", "not_like"],
+      valueType: "text",
+      defaultOperator: "like",
+    },
     renderCell: (params: GridRenderCellParams) => {
       return <GetEntityLink {...params.row} />;
     },
@@ -66,6 +75,17 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     fetchFields: ["template"],
     sortField: "template.name",
+    filter: {
+      field: "template_id",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "templates",
+        labelField: "name",
+        baseFilter: { abstract: false },
+      }),
+    },
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
@@ -78,6 +98,16 @@ export const resourceColumns: EntityTableColumn[] = [
     flex: 1,
     fetchFields: ["project"],
     sortField: "project.name",
+    filter: {
+      field: "project_id",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "projects",
+        labelField: "name",
+      }),
+    },
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const project = params.row.project;
@@ -99,6 +129,17 @@ export const resourceColumns: EntityTableColumn[] = [
       "sourceCodeVersion.id",
     ],
     sortField: "source_code_version.tag",
+    filter: {
+      field: "source_code_version_id",
+      label: "Version",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "sourceCodeVersions",
+        labelField: "identifier",
+      }),
+    },
     valueGetter: (_value: any, row: any) => {
       const scv = row.sourceCodeVersion;
       if (!scv) return "";
@@ -138,6 +179,40 @@ export const resourceColumns: EntityTableColumn[] = [
     fetchFields: ["state", "status"],
     headerName: "State",
     flex: 1,
+    filter: [
+      {
+        field: "state",
+        label: "State",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Provision", value: ENTITY_STATE.PROVISION },
+          { label: "Provisioned", value: ENTITY_STATE.PROVISIONED },
+          { label: "Destroy", value: ENTITY_STATE.DESTROY },
+          { label: "Destroyed", value: ENTITY_STATE.DESTROYED },
+          { label: "Update", value: ENTITY_STATE.UPDATE },
+        ],
+      },
+      {
+        field: "status",
+        label: "Status",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Queued", value: ENTITY_STATUS.QUEUED },
+          { label: "In Progress", value: ENTITY_STATUS.IN_PROGRESS },
+          { label: "Done", value: ENTITY_STATUS.DONE },
+          { label: "Error", value: ENTITY_STATUS.ERROR },
+          { label: "Unknown", value: ENTITY_STATUS.UNKNOWN },
+          { label: "Approval Pending", value: ENTITY_STATUS.APPROVAL_PENDING },
+          { label: "Pending", value: ENTITY_STATUS.PENDING },
+          { label: "Rejected", value: ENTITY_STATUS.REJECTED },
+          { label: "Ready", value: ENTITY_STATUS.READY },
+        ],
+      },
+    ],
     valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
     renderCell: (params: GridRenderCellParams) => (
       <StatusChip
@@ -173,6 +248,16 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Creator",
     flex: 1,
     sortField: "creator.identifier",
+    filter: {
+      field: "created_by",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "users",
+        labelField: "identifier",
+      }),
+    },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
     renderCell: (params: GridRenderCellParams) => {
       const creator = params.row.creator;
@@ -184,6 +269,16 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "storage",
     headerName: "Storage",
     flex: 1,
+    filter: {
+      field: "storage_id",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "storages",
+        labelField: "name",
+      }),
+    },
     valueGetter: (_value: any, row: any) => row.storage?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const storage = params.row.storage;
@@ -195,6 +290,16 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "workspace",
     headerName: "Workspace",
     flex: 1,
+    filter: {
+      field: "workspace_id",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "workspaces",
+        labelField: "name",
+      }),
+    },
     valueGetter: (_value: any, row: any) => row.workspace?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const workspace = params.row.workspace;
@@ -206,6 +311,16 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "integrationIds",
     headerName: "Integrations",
     flex: 1,
+    filter: {
+      field: "integration_ids",
+      operators: ["any"],
+      valueType: "reference",
+      defaultOperator: "any",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "integrations",
+        labelField: "name",
+      }),
+    },
     valueGetter: (_value: any, row: any) =>
       (row.integrationIds || [])
         .map((i: GqlIntegrationShort) => i.name)
@@ -231,6 +346,16 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Secrets",
     flex: 1,
     sortField: "secret_ids.name",
+    filter: {
+      field: "secret_ids",
+      operators: ["any"],
+      valueType: "reference",
+      defaultOperator: "any",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "secrets",
+        labelField: "name",
+      }),
+    },
     valueGetter: (_value: any, row: any) =>
       (row.secretIds || []).map((s: GqlSecretShort) => s.name).join(", "),
     renderCell: (params: GridRenderCellParams) => {
@@ -318,6 +443,13 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "labels",
     headerName: "Labels",
     flex: 1,
+    filter: {
+      field: "labels",
+      operators: ["contains_all"],
+      valueType: "autocomplete-multiple",
+      defaultOperator: "contains_all",
+      labelsEntity: "resource",
+    },
     valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
     renderCell: (params: GridRenderCellParams) => (
       <Labels labels={params.row.labels || []} />
@@ -363,117 +495,4 @@ export const resourceColumns: EntityTableColumn[] = [
   },
 ];
 
-export const buildResourceApiFilters = (
-  filterValues: Record<string, any>,
-  forcedTemplateId?: string,
-): Record<string, any> => {
-  const apiFilters: Record<string, any> = {};
-
-  if (forcedTemplateId) {
-    apiFilters.template_id = forcedTemplateId;
-  }
-
-  if (filterValues.name && filterValues.name.trim().length > 0) {
-    apiFilters.name__like = filterValues.name;
-  }
-
-  if (filterValues.labels && filterValues.labels.length > 0) {
-    apiFilters.labels__contains_all = filterValues.labels;
-  }
-
-  if (filterValues.source_code_version_id) {
-    apiFilters.source_code_version_id = filterValues.source_code_version_id;
-  }
-
-  if (filterValues.template_version) {
-    const selection = filterValues.template_version;
-
-    const stripPrefix = (val: any) => {
-      if (typeof val !== "string") return val;
-      if (val.startsWith("template:")) return val.replace("template:", "");
-      if (val.startsWith("scv:")) return val.split(":")[1];
-      return val;
-    };
-
-    if (Array.isArray(selection)) {
-      const [t, v] = selection;
-      if (t) apiFilters.template_id = stripPrefix(t);
-      if (v) apiFilters.source_code_version_id = stripPrefix(v);
-    } else {
-      apiFilters.template_id = stripPrefix(selection);
-    }
-  }
-
-  return apiFilters;
-};
-
-interface ResourceFilterConfigProps {
-  labels: string[];
-  loadTemplateOptions?: (
-    search: string,
-    page: number,
-  ) => Promise<{
-    options: Array<{
-      label: string;
-      value: string;
-      loadChildren?: (
-        parentValue: string,
-      ) => Promise<Array<{ label: string; value: string }>>;
-    }>;
-    hasMore: boolean;
-  }>;
-  loadTemplateOptionByValue?: (value: string) => Promise<{
-    label: string;
-    value: string;
-    loadChildren?: (
-      parentValue: string,
-    ) => Promise<Array<{ label: string; value: string }>>;
-  } | null>;
-  versionOptions?: string[];
-  showTemplateVersionFilter: boolean;
-}
-
-export const createResourceFilterConfigs = ({
-  labels,
-  loadTemplateOptions,
-  loadTemplateOptionByValue,
-  versionOptions = [] as string[],
-  showTemplateVersionFilter,
-}: ResourceFilterConfigProps): FilterConfig[] => {
-  const primaryFilter: FilterConfig = showTemplateVersionFilter
-    ? {
-        id: "template_version",
-        type: "cascading",
-        label: "Template & Version",
-        loadOptions: loadTemplateOptions,
-        loadOptionByValue: loadTemplateOptionByValue,
-        width: 420,
-      }
-    : {
-        id: "source_code_version_id",
-        type: "autocomplete",
-        label: "Version",
-        options: versionOptions,
-        multiple: false,
-        disableCloseOnSelect: false,
-        width: 420,
-      };
-
-  return [
-    primaryFilter,
-    {
-      id: "name",
-      type: "search",
-      label: "Search",
-      width: 420,
-    },
-    {
-      id: "labels",
-      type: "autocomplete",
-      label: "Labels",
-      options: labels,
-      multiple: true,
-      width: 420,
-    },
-  ];
-};
+export { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";

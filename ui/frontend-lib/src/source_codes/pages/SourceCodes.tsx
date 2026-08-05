@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -11,8 +11,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import { FilterConfig, IconField, PermissionWrapper } from "../../common";
+import { FilterProvider, IconField, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -20,6 +21,7 @@ import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { getRepoNameFromUrl } from "../../common/utils";
+import { sourceCodeColumns } from "../components/sourceCodeTableConfig";
 import { GqlSourceCode, SOURCE_CODES_QUERY } from "../graphql";
 
 export const SourceCodesPage = () => {
@@ -27,7 +29,6 @@ export const SourceCodesPage = () => {
   const [repositories, setRepositories] = useState<GqlSourceCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [labels, setLabels] = useState<string[]>([]);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const navigate = useNavigate();
@@ -42,10 +43,7 @@ export const SourceCodesPage = () => {
   );
 
   const fetchSourceCodes = useCallback(() => {
-    const apiFilters: Record<string, any> = {};
-    if (filterValues.labels && filterValues.labels.length > 0) {
-      apiFilters["labels__contains_all"] = filterValues.labels;
-    }
+    const apiFilters = buildAdvancedApiFilters(filterValues);
 
     if (isInitialLoad) {
       setLoading(true);
@@ -54,7 +52,6 @@ export const SourceCodesPage = () => {
     ikApi
       .graphqlRequest<{
         sourceCodes: GqlSourceCode[];
-        labels: string[];
       }>(SOURCE_CODES_QUERY, {
         filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
         sort: ["updated_at", "DESC"],
@@ -62,7 +59,6 @@ export const SourceCodesPage = () => {
       })
       .then((response) => {
         setRepositories(response.sourceCodes || []);
-        setLabels(response.labels || []);
         setIsInitialLoad(false);
       })
       .catch((e: any) => {
@@ -72,46 +68,12 @@ export const SourceCodesPage = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [ikApi, filterValues.labels, isInitialLoad]);
+  }, [ikApi, filterValues, isInitialLoad]);
 
   // Fetch data when component mounts or when label filter changes
   useEffect(() => {
     fetchSourceCodes();
   }, [fetchSourceCodes]);
-
-  const filteredRepositories = useMemo(
-    () =>
-      repositories.filter((repository) => {
-        const s = (filterValues.name || "").toLowerCase();
-        return (
-          !s ||
-          repository.identifier.toLowerCase().includes(s) ||
-          repository.description?.toLowerCase().includes(s)
-        );
-      }),
-    [repositories, filterValues.name],
-  );
-
-  // Configure filters
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-      {
-        id: "labels",
-        type: "autocomplete" as const,
-        label: "Labels",
-        options: labels,
-        multiple: true,
-        width: 420,
-      },
-    ],
-    [labels],
-  );
 
   const actions = (
     <PermissionWrapper
@@ -187,17 +149,18 @@ export const SourceCodesPage = () => {
   return (
     <PageContainer title="Code Repositories" actions={actions}>
       <Box sx={{ width: "100%" }}>
-        <FilterPanel
-          filters={filterConfigs}
+        <FilterProvider
+          columns={sourceCodeColumns}
           storageKey={`filter_${entityName}s`}
           onFilterChange={handleFilterChange}
-        />
-        {filteredRepositories.length === 0 ? (
+          syncToUrl
+        >
+          <FilterPanel />
+        </FilterProvider>
+        {repositories.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 4 }}>
             <Typography variant="h5">
-              {repositories.length === 0
-                ? "No code repositories available"
-                : "No code repositories match your filters"}
+              No code repositories match your filters
             </Typography>
           </Box>
         ) : (
@@ -213,7 +176,7 @@ export const SourceCodesPage = () => {
               mt: 4,
             }}
           >
-            {filteredRepositories.map((repository) => (
+            {repositories.map((repository) => (
               <EntityCard
                 key={repository.id}
                 entity_name="source_code"

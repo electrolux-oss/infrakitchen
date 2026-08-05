@@ -37,6 +37,8 @@ export interface EntityCardProps {
     | "info"
     | "success";
   lastUpdated?: string | Date;
+  headerAction?: ReactNode;
+  secondaryAction?: ReactNode;
 }
 
 export const EntityCard = ({
@@ -53,6 +55,8 @@ export const EntityCard = ({
   chip,
   chipColor = "info",
   lastUpdated,
+  headerAction,
+  secondaryAction,
 }: EntityCardProps) => {
   const navigate = useNavigate();
 
@@ -107,15 +111,17 @@ export const EntityCard = ({
         title={name}
         subheader={description || "No description"}
         action={
-          chip && (
-            <Chip
-              label={chip.toUpperCase()}
-              size="small"
-              variant="outlined"
-              color={chipColor}
-              sx={{ marginRight: 1 }}
-            />
-          )
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            {chip && (
+              <Chip
+                label={chip.toUpperCase()}
+                size="small"
+                variant="outlined"
+                color={chipColor}
+              />
+            )}
+            {headerAction}
+          </Box>
         }
         sx={{ mb: 0 }}
       />
@@ -136,7 +142,7 @@ export const EntityCard = ({
           ))}
         </Box>
       </CardContent>
-      <CardActions sx={{ pt: 0, px: 2 }}>
+      <CardActions sx={{ pt: 0, px: 1, flexDirection: "column", gap: 1.5 }}>
         <Box
           sx={{
             display: "flex",
@@ -169,6 +175,17 @@ export const EntityCard = ({
             </PermissionWrapper>
           )}
         </Box>
+        {secondaryAction ? (
+          <Box
+            sx={{
+              width: "100%",
+              pt: 0,
+              px: 1,
+            }}
+          >
+            {secondaryAction}
+          </Box>
+        ) : null}
       </CardActions>
     </Card>
   );

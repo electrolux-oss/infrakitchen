@@ -9,9 +9,3 @@ export function buildAuditLogsQuery(requestedFields: string[]) {
     }
   }`;
 }
-
-export const AUDIT_LOG_ACTIONS_QUERY = `
-  query AuditLogActions {
-    auditLogActions
-  }
-`;

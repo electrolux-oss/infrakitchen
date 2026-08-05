@@ -1,61 +1,72 @@
-import { memo, useEffect } from "react";
+import { memo } from "react";
 
+import SaveIcon from "@mui/icons-material/Save";
 import { Box, Button, CardContent, CardHeader } from "@mui/material";
 import Card from "@mui/material/Card";
 
-import { useMultiFilterState } from "../../hooks";
+import { notify } from "../../hooks/useNotification";
 
 import { FilterConfig, FilterPanelProps } from "./FilterConfig";
+import { useFilterContext } from "./FilterContext";
 import { FilterRenderer } from "./FilterRenderer";
 
 export const FilterPanel = memo((props: FilterPanelProps) => {
-  const { filters, storageKey, onFilterChange } = props;
-
-  const { filterValues, setFilterValue, resetFilters, hasActiveFilters } =
-    useMultiFilterState({
-      storageKey,
-      initialValues: {},
-    });
-
-  // Notify parent of filter changes
-  useEffect(() => {
-    if (onFilterChange) {
-      onFilterChange(filterValues);
-    }
-  }, [filterValues, onFilterChange]);
+  const { sx } = props;
+  const {
+    filters,
+    filterValues,
+    setFilterValue,
+    resetFilters,
+    hasActiveFilters,
+    hasUnsavedFilters,
+    saveFilters,
+    syncToUrl,
+  } = useFilterContext();
 
   if (filters.length === 0) {
     return null;
   }
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%", ...sx }}>
       <Card sx={{ pb: 0 }}>
         <CardHeader
           title="Filters"
           action={
-            <Button
-              onClick={resetFilters}
-              variant="outlined"
-              disabled={!hasActiveFilters}
-              size="small"
-              sx={{ textTransform: "none" }}
-            >
-              Reset
-            </Button>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              {syncToUrl && saveFilters && (
+                <Button
+                  onClick={() => {
+                    saveFilters();
+                    notify("Filters saved", "success");
+                  }}
+                  variant="outlined"
+                  disabled={!hasUnsavedFilters}
+                  size="small"
+                  startIcon={<SaveIcon />}
+                  sx={{ textTransform: "none" }}
+                >
+                  Save filter
+                </Button>
+              )}
+              <Button
+                onClick={resetFilters}
+                variant="outlined"
+                disabled={!hasActiveFilters}
+                size="small"
+                sx={{ textTransform: "none" }}
+              >
+                Reset
+              </Button>
+            </Box>
           }
         />
         <CardContent>
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+              display: "flex",
+              flexDirection: "column",
               gap: 2,
-              alignItems: "end",
-              "& > *": {
-                maxWidth: "550px",
-              },
             }}
           >
             {filters.map((config: FilterConfig) => (

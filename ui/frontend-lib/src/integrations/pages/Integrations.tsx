@@ -16,14 +16,16 @@ import {
   Typography,
 } from "@mui/material";
 
-import { CascadingOption, FilterConfig, PermissionWrapper } from "../../common";
+import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
+import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { integrationColumns } from "../components/integrationFilterConfig";
 import { providers } from "../constants";
 import { GqlIntegration, INTEGRATIONS_QUERY } from "../graphql";
 import { ConnectionType, IntegrationType } from "../types";
@@ -44,7 +46,7 @@ const IntegrationsPage = () => {
     setError(null);
     ikApi
       .graphqlRequest<{ integrations: GqlIntegration[] }>(INTEGRATIONS_QUERY, {
-        filter: null,
+        filter: buildAdvancedApiFilters(filterValues),
         sort: ["name", "ASC"],
         range: [0, 1000],
       })
@@ -57,7 +59,7 @@ const IntegrationsPage = () => {
         notifyError(err);
         setLoading(false);
       });
-  }, [ikApi]);
+  }, [ikApi, filterValues]);
 
   useEffect(() => {
     fetchIntegrations();
@@ -78,7 +80,7 @@ const IntegrationsPage = () => {
     [],
   );
 
-  const cascadingOptions = useMemo<CascadingOption[]>(
+  const providerGroups = useMemo<ProviderGroup[]>(
     () => [
       {
         label: "Git",
@@ -104,58 +106,6 @@ const IntegrationsPage = () => {
     ],
     [allProviders],
   );
-
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [
-      {
-        id: "name",
-        type: "search" as const,
-        label: "Search",
-        width: 420,
-      },
-      {
-        id: "type_provider",
-        type: "cascading" as const,
-        label: "Provider",
-        options: cascadingOptions,
-        width: 320,
-      },
-    ],
-    [cascadingOptions],
-  );
-
-  const filtered = useMemo(() => {
-    const searchTerm = (filterValues.name || "").toLowerCase();
-    const typeProviderFilter = filterValues.type_provider ?? null;
-    const selectedType: IntegrationType | null = Array.isArray(
-      typeProviderFilter,
-    )
-      ? (typeProviderFilter[0] as IntegrationType)
-      : typeProviderFilter
-        ? (typeProviderFilter as IntegrationType)
-        : null;
-    const selectedProviderSlug: string | null = Array.isArray(
-      typeProviderFilter,
-    )
-      ? (typeProviderFilter[1] ?? null)
-      : null;
-
-    return integrations
-      .filter((i) => !selectedType || i.integrationType === selectedType)
-      .filter(
-        (i) =>
-          !searchTerm ||
-          i.name.toLowerCase().includes(searchTerm) ||
-          (i.description || "").toLowerCase().includes(searchTerm),
-      )
-      .filter((i) => {
-        if (!selectedProviderSlug) return true;
-        return (
-          i.integrationProvider === selectedProviderSlug ||
-          i.integrationProvider === `${selectedProviderSlug}_ssh`
-        );
-      });
-  }, [integrations, filterValues]);
 
   const integrationEntityFields = (integration: GqlIntegration) => (
     <>
@@ -225,7 +175,7 @@ const IntegrationsPage = () => {
         open={Boolean(submenuAnchor)}
         onClose={closeAllMenus}
       >
-        {cascadingOptions
+        {providerGroups
           .find((c) => String(c.value) === activeCategory)
           ?.children?.map((child) => {
             const provider = allProviders.find((p) => p.slug === child.value);
@@ -297,11 +247,14 @@ const IntegrationsPage = () => {
       actions={actions}
     >
       <Box sx={{ width: "100%" }}>
-        <FilterPanel
-          filters={filterConfigs}
+        <FilterProvider
+          columns={integrationColumns}
           storageKey="filter_integrations"
           onFilterChange={handleFilterChange}
-        />
+          syncToUrl
+        >
+          <FilterPanel />
+        </FilterProvider>
         {loading ? (
           <Box
             sx={{
@@ -313,7 +266,7 @@ const IntegrationsPage = () => {
           >
             <CircularProgress />
           </Box>
-        ) : filtered.length === 0 ? (
+        ) : integrations.length === 0 ? (
           <Box
             sx={{
               display: "flex",
@@ -369,7 +322,7 @@ const IntegrationsPage = () => {
               mt: 4,
             }}
           >
-            {filtered.map((integration) => {
+            {integrations.map((integration) => {
               const provider = providers.find(
                 (p) =>
                   integration.integrationProvider === p.slug ||
@@ -413,3 +366,8 @@ const IntegrationsPage = () => {
 IntegrationsPage.path = "/integrations";
 
 export { IntegrationsPage };
+type ProviderGroup = {
+  label: string;
+  value: string;
+  children?: Array<{ label: string; value: string }>;
+};

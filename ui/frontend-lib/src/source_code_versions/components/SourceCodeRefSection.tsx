@@ -12,8 +12,10 @@ import {
 import { GridPaginationModel } from "@mui/x-data-grid";
 
 import {
+  buildAdvancedApiFilters,
   useEntityListProvider,
   EntityListProvider,
+  FilterClause,
   FilterState,
   FilterRenderer,
   useLocalStorage,
@@ -25,6 +27,27 @@ import { SCV_FIELD_MAP } from "../graphql";
 import { RefType } from "../types";
 
 import { SourceCodeRefRow } from "./SourceCodeRefRow";
+
+const matchesRefFilterClause = (ref: string, clause: FilterClause) => {
+  const normalizedRef = ref.toLowerCase();
+  const rawValue = clause.value;
+
+  if (rawValue === undefined || rawValue === null || rawValue === "") {
+    return true;
+  }
+
+  const value = String(rawValue).toLowerCase();
+
+  switch (clause.operator) {
+    case "eq":
+      return normalizedRef === value;
+    case "not_like":
+      return !normalizedRef.includes(value);
+    case "like":
+    default:
+      return normalizedRef.includes(value);
+  }
+};
 
 type SourceCodeRefSectionProps = {
   refs: string[];
@@ -156,17 +179,36 @@ export const SourceCodeRefSection = ({
     type === RefType.BRANCH
       ? (location.state?.refBranchSearch ?? "")
       : (location.state?.refTagSearch ?? "");
+  const refFilterField =
+    type === RefType.BRANCH ? "source_code_branch" : "source_code_version";
 
   const [filterValues, setFilterValues] = useState<FilterState>({
-    ref_search: initialSearch,
+    filter: initialSearch
+      ? [
+          {
+            id: "initial_ref_search",
+            field: refFilterField,
+            operator: "like",
+            value: initialSearch,
+          },
+        ]
+      : [],
     enabled_only: false,
   });
 
   const filteredRefs = useMemo(() => {
-    const search = filterValues["ref_search"]?.toLowerCase();
-    if (!search) return refs;
-    return refs.filter((ref) => ref.toLowerCase().includes(search));
-  }, [refs, filterValues]);
+    const clauses = Array.isArray(filterValues.filter)
+      ? (filterValues.filter as FilterClause[]).filter(
+          (clause) => clause.field === refFilterField,
+        )
+      : [];
+
+    if (clauses.length === 0) return refs;
+
+    return refs.filter((ref) =>
+      clauses.every((clause) => matchesRefFilterClause(ref, clause)),
+    );
+  }, [refs, filterValues.filter, refFilterField]);
 
   const pagedRefs = useMemo(() => {
     const start = paginationModel.page * paginationModel.pageSize;
@@ -188,23 +230,17 @@ export const SourceCodeRefSection = ({
 
   const params = useMemo(() => {
     const baseFilter: any = { source_code_id: sourceCodeId };
-    const refField =
-      type === RefType.BRANCH ? "source_code_branch" : "source_code_version";
     const otherField =
       type === RefType.BRANCH ? "source_code_version" : "source_code_branch";
+    const advancedFilters = buildAdvancedApiFilters(filterValues);
 
     if (filterValues["enabled_only"]) {
       baseFilter.status = ENTITY_STATUS.DONE;
       baseFilter[otherField] = null; // Filter out records that belong to the other type
 
-      const search = filterValues["ref_search"];
-      if (search) {
-        baseFilter[`${refField}__like`] = search;
-      }
-
       return {
         sort: { field: "created_at", order: "DESC" as const },
-        filter: baseFilter,
+        filter: { ...baseFilter, ...advancedFilters },
         pagination: {
           page: paginationModel.page + 1,
           perPage: paginationModel.pageSize,
@@ -225,7 +261,7 @@ export const SourceCodeRefSection = ({
         ],
       };
     } else {
-      baseFilter[refField] = queryRefs;
+      baseFilter[refFilterField] = queryRefs;
       return {
         sort: { field: "created_at", order: "DESC" as const },
         filter: baseFilter,
@@ -246,7 +282,14 @@ export const SourceCodeRefSection = ({
         ],
       };
     }
-  }, [sourceCodeId, type, queryRefs, paginationModel, filterValues]);
+  }, [
+    sourceCodeId,
+    type,
+    queryRefs,
+    paginationModel,
+    filterValues,
+    refFilterField,
+  ]);
 
   const handlePageChange = (newPage: number) => {
     const updatedModel = { ...paginationModel, page: newPage - 1 };
@@ -285,8 +328,34 @@ export const SourceCodeRefSection = ({
             p: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-            <Box sx={{ flex: 1 }} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 1,
+              mb: 1.5,
+              flexWrap: "wrap",
+            }}
+          >
+            <Box sx={{ width: "40rem", maxWidth: "100%" }}>
+              <FilterRenderer
+                config={{
+                  id: "filter",
+                  label: "Filters",
+                  fields: [
+                    {
+                      field: refFilterField,
+                      label: type === RefType.BRANCH ? "Branch" : "Tag",
+                      operators: ["like", "not_like", "eq"],
+                      valueType: "text",
+                      defaultOperator: "like",
+                    },
+                  ],
+                }}
+                filterValues={filterValues}
+                onChange={handleFilterChange}
+              />
+            </Box>
             <FormControlLabel
               control={
                 <Switch
@@ -303,23 +372,9 @@ export const SourceCodeRefSection = ({
                   fontSize: "0.75rem",
                   color: "text.secondary",
                 },
-                ml: 1,
+                ml: { xs: 0, sm: "auto" },
               }}
             />
-            <Box sx={{ width: "15rem", px: "1rem" }}>
-              <FilterRenderer
-                config={{
-                  id: "ref_search",
-                  type: "search",
-                  label:
-                    type === RefType.BRANCH
-                      ? "Filter branches…"
-                      : "Filter tags…",
-                }}
-                filterValues={filterValues}
-                onChange={handleFilterChange}
-              />
-            </Box>
           </Box>
 
           <SourceCodeGitRefRows

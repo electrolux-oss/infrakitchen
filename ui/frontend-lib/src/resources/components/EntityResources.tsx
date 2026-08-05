@@ -1,11 +1,10 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
-import { FilterConfig } from "../../common";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RESOURCE_FIELD_MAP } from "../graphql";
 
 import {
-  buildResourceApiFilters,
+  buildAdvancedApiFilters,
   resourceColumns,
   resourceDefaultColumnVisibilityModel,
 } from "./resourceTableConfig";
@@ -19,14 +18,9 @@ export const EntityResources = ({
   fixedFilters,
   filterStorageKey,
 }: EntityResourcesProps) => {
-  const filterConfigs: FilterConfig[] = useMemo(
-    () => [{ id: "name", type: "search", label: "Search", width: 420 }],
-    [],
-  );
-
   const buildApiFilters = useCallback(
     (filterValues: Record<string, any>) => ({
-      ...buildResourceApiFilters(filterValues),
+      ...buildAdvancedApiFilters(filterValues),
       ...fixedFilters,
     }),
     [fixedFilters],
@@ -40,7 +34,6 @@ export const EntityResources = ({
       columns={resourceColumns}
       defaultColumnVisibilityModel={resourceDefaultColumnVisibilityModel}
       filterStorageKey={filterStorageKey}
-      filterConfigs={filterConfigs}
       buildApiFilters={buildApiFilters}
     />
   );

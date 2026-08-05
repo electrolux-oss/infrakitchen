@@ -22,7 +22,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/CommonDialog";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";

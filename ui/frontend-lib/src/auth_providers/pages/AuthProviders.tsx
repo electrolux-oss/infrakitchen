@@ -12,7 +12,7 @@ import {
   getProviderValue,
   getBooleanLabel,
 } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";

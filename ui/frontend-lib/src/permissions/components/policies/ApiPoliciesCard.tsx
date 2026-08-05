@@ -9,7 +9,7 @@ import { GetEntityLink } from "../../../common/components/CommonField";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
-} from "../../../common/components/EntityFetchTable";
+} from "../../../common/components/entity_table/EntityFetchTable";
 import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";

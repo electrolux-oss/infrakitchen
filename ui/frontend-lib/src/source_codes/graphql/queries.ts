@@ -8,7 +8,6 @@ export const SOURCE_CODES_QUERY = `
     sourceCodes(filter: $filter, sort: $sort, range: $range) {
       ${SOURCE_CODE_LIST_FIELDS}
     }
-    labels: labels(entity: "source_code")
   }
 `;
 

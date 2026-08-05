@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import FilterListIcon from "@mui/icons-material/FilterList";
 import InfoOutlined from "@mui/icons-material/InfoOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
@@ -23,10 +24,13 @@ import {
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
+import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
+
 export type EntityTableColumn = GridColDef<any> & {
   field?: string;
   fetchFields?: string[];
   sortField?: string;
+  filter?: ColumnFilterSpec | ColumnFilterSpec[];
 };
 
 export interface ResourceTableProps {
@@ -47,6 +51,10 @@ export interface ResourceTableProps {
     model: GridColumnVisibilityModel,
   ) => void;
   onRefresh?: () => void;
+  showFilterToggle?: boolean;
+  isFilterPanelOpen?: boolean;
+  hasActiveFilters?: boolean;
+  onToggleFilterPanel?: () => void;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -69,6 +77,10 @@ export const EntityTable = ({
   setFilterModel,
   handleColumnVisibilityModelChange,
   onRefresh,
+  showFilterToggle,
+  isFilterPanelOpen,
+  hasActiveFilters,
+  onToggleFilterPanel,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
 
@@ -141,6 +153,22 @@ export const EntityTable = ({
                   <RefreshIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
+              {showFilterToggle && (
+                <Tooltip
+                  title={isFilterPanelOpen ? "Hide filters" : "Show filters"}
+                >
+                  <IconButton
+                    size="small"
+                    aria-label={
+                      isFilterPanelOpen ? "Hide filters" : "Show filters"
+                    }
+                    onClick={onToggleFilterPanel}
+                    color={hasActiveFilters ? "primary" : "default"}
+                  >
+                    <FilterListIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip title="Show or hide columns">
                 <span>
                   <IconButton

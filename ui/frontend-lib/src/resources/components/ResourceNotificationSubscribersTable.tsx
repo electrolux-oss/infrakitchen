@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 

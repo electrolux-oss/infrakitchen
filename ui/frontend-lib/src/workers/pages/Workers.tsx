@@ -4,7 +4,7 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/EntityFetchTable";
+import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
