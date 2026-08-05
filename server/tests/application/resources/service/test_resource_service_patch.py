@@ -191,9 +191,80 @@ class TestPatch:
         )
 
     @pytest.mark.asyncio
-    async def test_patch_error(
-        self, mock_resource_service, mock_resource_crud, template_response, mocked_user_response, monkeypatch
+    async def test_patch_selected_fields_apply_directly_when_project_allows_unapproved_edits(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mocked_project,
+        mocked_user_response,
+        mocked_resource_temp_state_handler,
+        mock_event_sender,
     ):
+        mock_resource_service.publish_notification_event = AsyncMock()
+        resource_id = uuid4()
+        updated_resource = mocked_resource
+        updated_resource.id = resource_id
+        updated_resource.project = mocked_project
+        updated_resource.project.configuration = {"allow_unapproved_metadata_edits": ["description", "labels"]}
+        updated_resource.state = ModelState.PROVISIONED
+        updated_resource.status = ModelStatus.DONE
+
+        resource_patch = ResourceUpdate(description="Updated description", labels=["ops", "documented"])
+
+        mock_resource_crud.get_by_id.side_effect = [updated_resource, updated_resource]
+
+        result = await mock_resource_service.update_resource(
+            resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
+        )
+
+        assert result is updated_resource
+        mock_resource_crud.update.assert_awaited_once_with(
+            updated_resource,
+            model_db_dump(resource_patch, exclude_unset=True, exclude_defaults=True),
+        )
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+
+        response = ResourceResponse.model_validate(updated_resource)
+        mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.UPDATE)
+
+    @pytest.mark.asyncio
+    async def test_patch_unselected_fields_still_create_temp_state_when_project_allows_unapproved_edits(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource,
+        mocked_project,
+        mocked_user_response,
+        mocked_resource_temp_state_handler,
+    ):
+        mock_resource_service.publish_notification_event = AsyncMock()
+        resource_id = uuid4()
+        existing_resource = mocked_resource
+        existing_resource.id = resource_id
+        existing_resource.project = mocked_project
+        existing_resource.project.configuration = {"allow_unapproved_metadata_edits": ["description"]}
+        existing_resource.state = ModelState.PROVISIONED
+        existing_resource.status = ModelStatus.DONE
+        existing_resource.abstract = True
+
+        resource_patch = ResourceUpdate(description="Updated description", dependency_tags=[])
+
+        mock_resource_crud.get_by_id.return_value = existing_resource
+
+        await mock_resource_service.update_resource(
+            resource_id=str(resource_id), resource=resource_patch, requester=mocked_user_response
+        )
+
+        mock_resource_crud.update.assert_not_awaited()
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_awaited_once_with(
+            resource_id=resource_id,
+            value=model_db_dump(resource_patch, exclude_unset=True, exclude_defaults=True),
+            created_by=mocked_user_response.id,
+        )
+
+    @pytest.mark.asyncio
+    async def test_patch_error(self, mock_resource_service, mock_resource_crud, mocked_user_response):
         resource_update = Mock(spec=ResourceUpdate)
 
         error = RuntimeError("get resource fail")

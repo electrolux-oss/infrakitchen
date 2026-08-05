@@ -1,0 +1,15 @@
+RESOURCE_UPDATE_APPROVAL_BYPASS_FIELDS = (
+    "name",
+    "description",
+    "source_code_version_id",
+    "integration_ids",
+    "secret_ids",
+    "variables",
+    "dependency_tags",
+    "dependency_config",
+    "labels",
+    "workspace_id",
+    "project_id",
+    "storage_id",
+    "storage_path",
+)

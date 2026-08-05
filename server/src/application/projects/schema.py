@@ -2,9 +2,10 @@ from datetime import datetime, UTC
 from typing import Literal
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from application.common.schema import DependencyConfig, DependencyTag
+from application.resources.constants import RESOURCE_UPDATE_APPROVAL_BYPASS_FIELDS
 from application.workspaces.schema import WorkspaceShort
 from core.constants.model import ModelStatus
 from core.users.schema import UserShort
@@ -12,6 +13,16 @@ from core.users.schema import UserShort
 
 class ProjectConfig(BaseModel):
     always_use_workspace: bool = Field(default=False)
+    allow_unapproved_metadata_edits: list[str] = Field(default_factory=list)
+
+    @field_validator("allow_unapproved_metadata_edits")
+    @classmethod
+    def validate_allow_unapproved_metadata_edits(cls, value: list[str]) -> list[str]:
+        invalid_fields = sorted(set(value) - set(RESOURCE_UPDATE_APPROVAL_BYPASS_FIELDS))
+        if invalid_fields:
+            raise ValueError("Invalid allow_unapproved_metadata_edits fields: " + ", ".join(invalid_fields))
+
+        return value
 
 
 class ProjectShort(BaseModel):

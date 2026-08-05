@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   Checkbox,
+  FormGroup,
   FormControlLabel,
   TextField,
   Typography,
@@ -22,6 +23,7 @@ import PageContainer from "../../common/PageContainer";
 import { validateTagEntries } from "../../resources/utils/formValidation";
 import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { CREATE_PROJECT_MUTATION } from "../graphql";
 import { ProjectCreateRequest } from "../types";
 
@@ -43,6 +45,7 @@ export const ProjectCreatePage = () => {
       workspaceId: null,
       configuration: {
         always_use_workspace: false,
+        allow_unapproved_metadata_edits: [],
       },
       dependencyTags: [],
       dependencyConfig: [],
@@ -236,6 +239,48 @@ export const ProjectCreatePage = () => {
                   >
                     Force resources in this project to use the assigned
                     workspace.
+                  </Typography>
+                </Box>
+              )}
+            />
+            <Controller
+              name="configuration.allow_unapproved_metadata_edits"
+              control={control}
+              render={({ field }) => (
+                <Box>
+                  <FormGroup>
+                    {RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.map(
+                      (option) => (
+                        <FormControlLabel
+                          key={option.value}
+                          control={
+                            <Checkbox
+                              checked={(field.value || []).includes(
+                                option.value,
+                              )}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.checked
+                                    ? [...(field.value || []), option.value]
+                                    : (field.value || []).filter(
+                                        (item) => item !== option.value,
+                                      ),
+                                )
+                              }
+                            />
+                          }
+                          label={option.label}
+                        />
+                      ),
+                    )}
+                  </FormGroup>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: -1, mb: 1 }}
+                  >
+                    Let users update selected resource fields without creating
+                    an approval request.
                   </Typography>
                 </Box>
               )}

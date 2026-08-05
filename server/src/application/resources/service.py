@@ -584,7 +584,21 @@ class ResourceService:
         if not has_field_changes(body, existing_resource):
             raise ValueError("No changes detected; the resource is already up to date.")
 
-        if (
+        # Check if the project allows unapproved metadata edits and if the fields being updated are allowed
+        project_configuration = getattr(getattr(existing_resource, "project", None), "configuration", {}) or {}
+        allow_unapproved_metadata_edits = project_configuration.get("allow_unapproved_metadata_edits", []) or []
+        allowed_unapproved_fields = set(allow_unapproved_metadata_edits)
+        should_apply_metadata_update_directly = bool(allowed_unapproved_fields) and set(body).issubset(
+            allowed_unapproved_fields
+        )
+
+        if should_apply_metadata_update_directly:
+            await self.crud.update(existing_resource, body)
+            existing_resource = await self.crud.get_by_id(existing_resource.id)
+            if not existing_resource:
+                raise EntityNotFound("Resource not found after update")
+
+        elif (
             existing_resource_pydantic.status == ModelStatus.APPROVAL_PENDING
             and existing_resource_pydantic.state == ModelState.PROVISION
             and body is not None
