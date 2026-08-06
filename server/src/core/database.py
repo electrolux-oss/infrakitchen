@@ -163,7 +163,7 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
             parts = key.split("__")
             potential_operator = parts[-1]
 
-            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like"]:
+            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like", "is_none"]:
                 operator = potential_operator
                 field_path = parts[:-1]
             else:
@@ -191,6 +191,8 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                     relation_filter = related_column.ilike(f"%{value}%")
                 elif operator == "not_like":
                     relation_filter = ~related_column.ilike(f"%{value}%")
+                elif operator == "is_none":
+                    relation_filter = related_column.is_(None)
                 else:
                     raise ValueError(f"Operator {operator} not supported for nested relationships")
 
@@ -264,6 +266,8 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                     filters.append(column.in_(value))
                 else:
                     filters.append(column == value)
+            case "is_none":
+                filters.append(column.is_(None))
             case _:
                 raise ValueError(f"Unsupported operator: {operator} in filter")
 

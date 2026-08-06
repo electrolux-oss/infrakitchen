@@ -104,7 +104,7 @@ export const resourceColumns: EntityTableColumn[] = [
     sortField: "project.name",
     filter: {
       field: "project_id",
-      operators: ["eq", "in"],
+      operators: ["eq", "in", "is_none"],
       valueType: "reference",
       defaultOperator: "eq",
       makeReferenceLoader: serverSearchReference({

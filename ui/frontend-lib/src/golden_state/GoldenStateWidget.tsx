@@ -48,17 +48,20 @@ function buildProjectResourcesUrl(
   project: GoldenStateProjectReport,
   extraClauses: FilterClause[] = [],
 ) {
-  if (!project.projectId) {
-    return "/resources";
-  }
-
   const filters: FilterClause[] = [
-    {
-      id: `gsp-project-${project.projectId}`,
-      field: "project_id",
-      operator: "eq",
-      value: project.projectId,
-    },
+    project.projectId
+      ? {
+          id: `gsp-project-${project.projectId}`,
+          field: "project_id",
+          operator: "eq",
+          value: project.projectId,
+        }
+      : {
+          id: "gsp-project-unassigned",
+          field: "project_id",
+          operator: "is_none",
+          value: true,
+        },
     ...extraClauses,
   ];
 
@@ -67,7 +70,7 @@ function buildProjectResourcesUrl(
 
 function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
   if (!project.projectId) {
-    return "/resources";
+    return buildProjectResourcesUrl(project);
   }
 
   return `/projects/${project.projectId}/resources`;
