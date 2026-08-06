@@ -1,8 +1,3 @@
-import { PROJECT_STATUS } from "./constants";
-
-export type ProjectStatus =
-  (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS];
-
 export interface DependencyTag {
   name: string;
   value: string;
@@ -17,7 +12,23 @@ export interface DependencyConfig {
 
 export interface ProjectConfig {
   always_use_workspace: boolean;
+  allow_unapproved_metadata_edits: ResourceUpdateApprovalBypassField[];
 }
+
+export type ResourceUpdateApprovalBypassField =
+  | "name"
+  | "description"
+  | "source_code_version_id"
+  | "integration_ids"
+  | "secret_ids"
+  | "variables"
+  | "dependency_tags"
+  | "dependency_config"
+  | "labels"
+  | "workspace_id"
+  | "project_id"
+  | "storage_id"
+  | "storage_path";
 
 export interface ProjectCreateRequest {
   name: string;

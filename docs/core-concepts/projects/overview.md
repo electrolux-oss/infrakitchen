@@ -15,7 +15,7 @@ Each project in InfraKitchen contains the following core properties:
 | **Name** | Human-readable project name | Must be unique |
 | **Description** | Summary of the project's purpose | Optional |
 | **Workspace** | Shared workspace reference | Optional |
-| **Configuration** | Project-level behavior flags | Currently includes `always_use_workspace` |
+| **Configuration** | Project-level behavior flags | Includes workspace behavior and resource approval exceptions |
 | **Owners** | Users allowed to administer the project | Owners effectively gain project admin actions |
 | **Dependency Tags** | Default tags shared with project resources | Can be inherited by children |
 | **Dependency Config** | Default config values shared with project resources | Can be inherited by children |
@@ -49,6 +49,9 @@ Owners:
 Workspace: platform-live-infra
 Configuration:
   always_use_workspace: true
+  allow_unapproved_metadata_edits:
+    - description
+    - labels
 
 Dependency Tags:
   - name: team
@@ -79,7 +82,7 @@ Projects are created from the **Projects** section in the UI.
 3. Enter the project name and optional description
 4. Select an optional workspace
 5. Configure optional labels and owners
-6. Set project configuration such as **Always use workspace**
+6. Set project configuration such as **Always use workspace** and any resource fields that can bypass approval
 7. Add optional dependency tags and dependency config values
 8. Click **Save**
 
@@ -87,17 +90,43 @@ Projects are created from the **Projects** section in the UI.
 
 ## ⚙️ Project Configuration
 
-Projects currently support one project-level configuration flag:
+Projects currently support the following project-level configuration options:
 
 | Option | Description | Notes |
 | :----- | :---------- | :---- |
 | **Always Use Workspace** | Forces project resources to use the project's assigned workspace for workspace sync operations | Requires the project to have a workspace assigned |
+| **Allow Unapproved Metadata Edits** | Lets project owners choose which `ResourceUpdate` fields can be updated without creating an approval request | Users still need normal resource edit permission; field-specific validation still applies |
 
 When `always_use_workspace` is enabled:
 
 - A resource in the project can use the project's workspace automatically
 - The project workspace acts as the fallback sync target during resource workspace operations
 - This helps keep related resource code in one repository boundary
+
+When `allow_unapproved_metadata_edits` contains selected resource update fields:
+
+- A resource update is applied directly when every changed field is included in the configured list
+- InfraKitchen skips the temporary-state approval step for those selected fields
+- Normal permission checks still apply, including special checks for sensitive fields such as storage changes
+- Mixed updates still require approval if even one changed field is not included in the configured list
+
+Example:
+
+```yaml
+Configuration:
+  allow_unapproved_metadata_edits:
+    - description
+    - labels
+```
+
+With this configuration:
+
+- Changing only `description` updates the resource immediately
+- Changing only `labels` updates the resource immediately
+- Changing `description` and `labels` together updates the resource immediately
+- Changing `description` and `variables` together still creates an approval request because `variables` is not in the allowed list
+
+InfraKitchen allows selecting any field from the `ResourceUpdate` model in the project UI. This makes it possible to tune approval flow at the project level, but broad allow-lists should be used carefully because they reduce review for resource lifecycle changes.
 
 ---
 

@@ -8,12 +8,13 @@ import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS } from "../constants";
 import { GqlProject } from "../graphql";
 import {
   ProjectUpdateFieldInput,
   UPDATE_PROJECT_MUTATION,
 } from "../graphql/mutations";
-import { ProjectConfig } from "../types";
+import { ProjectConfig, ResourceUpdateApprovalBypassField } from "../types";
 
 interface ProjectSettingsProps {
   project: GqlProject;
@@ -46,6 +47,7 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
       saveField({
         configuration: {
           always_use_workspace: false,
+          allow_unapproved_metadata_edits: [],
           ...(project.configuration || {}),
           ...partial,
         },
@@ -77,8 +79,59 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         )}
         size={6}
       />
+      <CommonEditableField<ResourceUpdateApprovalBypassField[]>
+        name={"Allow Update Without Approval"}
+        canEdit={canEdit}
+        value={project.configuration?.allow_unapproved_metadata_edits ?? []}
+        ariaLabel="Edit allow unapproved resource update fields"
+        display={
+          (project.configuration?.allow_unapproved_metadata_edits ?? []).length
+            ? (project.configuration?.allow_unapproved_metadata_edits ?? [])
+                .map(
+                  (field: string) =>
+                    RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.find(
+                      (option) => option.value === field,
+                    )?.label ?? field,
+                )
+                .join(", ")
+            : "None"
+        }
+        onSave={(value) =>
+          saveConfiguration({ allow_unapproved_metadata_edits: value })
+        }
+        renderEditor={({ value, onChange }) => (
+          <>
+            {RESOURCE_UPDATE_APPROVAL_BYPASS_FIELD_OPTIONS.map((option) => (
+              <FormControlLabel
+                key={option.value}
+                control={
+                  <Checkbox
+                    checked={value.includes(option.value)}
+                    onChange={(e) =>
+                      onChange(
+                        e.target.checked
+                          ? [...value, option.value]
+                          : value.filter((item) => item !== option.value),
+                      )
+                    }
+                  />
+                }
+                label={option.label}
+              />
+            ))}
+          </>
+        )}
+        isEqual={(a, b) =>
+          a.length === b.length && a.every((value) => b.includes(value))
+        }
+        size={6}
+      />
       <Typography variant="body2" color="text.secondary">
         Force resources in this project to use the assigned workspace.
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        Let users update selected resource fields without creating an approval
+        request.
       </Typography>
     </OverviewCard>
   );

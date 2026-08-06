@@ -926,6 +926,7 @@ class TestPatch:
             template_id=uuid4(),
             integration_ids=[],
             parents=[parent],
+            project=None,
         )
         mock_resource_crud.get_by_id.return_value = existing_resource
         monkeypatch.setattr("application.resources.service.to_dict", Mock(return_value={}))
