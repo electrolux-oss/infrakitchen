@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 
+import { NotFoundPage } from "../../dashboard/pages/NotFound";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import PageContainer from "../PageContainer";
@@ -28,7 +29,8 @@ export const EntityContainer = (props: EntityContainerProps) => {
   const { children, title, actions, showEditAction } = props;
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
-  const { entity, loading, error, refreshEntity } = useEntityProvider();
+  const { entity, loading, error, notFound, refreshEntity } =
+    useEntityProvider();
 
   const handleRefresh = () => {
     if (refreshEntity) {
@@ -54,6 +56,10 @@ export const EntityContainer = (props: EntityContainerProps) => {
         </Box>
       </PageContainer>
     );
+  }
+
+  if (notFound) {
+    return <NotFoundPage />;
   }
 
   if (error) {
