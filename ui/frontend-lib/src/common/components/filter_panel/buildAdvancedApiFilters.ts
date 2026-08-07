@@ -19,6 +19,11 @@ export const buildAdvancedApiFilters = (
   for (const clause of clauses) {
     if (!clause.field) continue;
 
+    if (clause.operator === "is_none") {
+      apiFilters[`${clause.field}__${clause.operator}`] = true;
+      continue;
+    }
+
     // Skip empty values
     const val = clause.value;
     if (val === undefined || val === null || val === "") continue;

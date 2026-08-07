@@ -59,7 +59,9 @@ nav:
       - Templates:
           - Overview: core-concepts/templates/overview.md
           - Version Lifecycle State: core-concepts/templates/version-lifecycle-state.md
-      - Projects: core-concepts/projects/overview.md
+      - Projects:
+          - Overview: core-concepts/projects/overview.md
+          - Golden State: core-concepts/projects/golden-state.md
       - Executors: core-concepts/executors/overview.md
       - Workflows: core-concepts/workflows/overview.md
       - Resources:

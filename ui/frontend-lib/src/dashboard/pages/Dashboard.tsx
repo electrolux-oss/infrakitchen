@@ -4,14 +4,21 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { Box, Typography, Button, CircularProgress } from "@mui/material";
 
 import PageContainer from "../../common/PageContainer";
+import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { GettingStartedContent } from "../components/GettingStarted";
 import { MyFavoritesWidget } from "../components/MyFavoritesWidget";
 import { RecentActivityWidget } from "../components/RecentActivityWidget";
 import { useDashboardData } from "../useDashboardData";
 
 export const DashboardPage = () => {
-  const { favorites, activities, hasResources, loading, refetch } =
-    useDashboardData();
+  const {
+    favorites,
+    activities,
+    goldenStateReport,
+    hasResources,
+    loading,
+    refetch,
+  } = useDashboardData();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -80,6 +87,13 @@ export const DashboardPage = () => {
         </Button>
       }
     >
+      <Box sx={{ width: "100%", mb: 3 }}>
+        <GoldenStateWidget
+          goldenStateReport={goldenStateReport}
+          loading={loading}
+          expandable
+        />
+      </Box>
       <Box
         sx={{
           display: "grid",

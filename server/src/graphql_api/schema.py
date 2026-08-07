@@ -65,6 +65,7 @@ from graphql_api.modules.validation_rule.mutations import ValidationRuleMutation
 from graphql_api.modules.validation_rule.queries import ValidationRuleQuery
 from graphql_api.modules.auth.mutations import AuthMutation
 from graphql_api.modules.auth.queries import AuthQuery
+from graphql_api.modules.golden_state.queries import GoldenStateQuery
 
 
 @strawberry.type
@@ -105,6 +106,7 @@ class Query(
     ValidationRuleQuery,
     NotificationQuery,
     AuthQuery,
+    GoldenStateQuery,
 ):
     pass
 

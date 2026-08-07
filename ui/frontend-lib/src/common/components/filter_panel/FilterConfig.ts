@@ -11,6 +11,7 @@ export type FilterOperator =
   | "eq"
   | "like"
   | "not_like"
+  | "is_none"
   | "in"
   | "contains_all"
   | "any";

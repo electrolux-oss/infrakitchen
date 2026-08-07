@@ -7,6 +7,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Link,
   Typography,
@@ -21,6 +22,7 @@ import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { getScoreChipColor } from "../../golden_state/GoldenStateWidget";
 import { projectColumns } from "../components/projectTableConfig";
 import { GqlProject, PROJECT_LIST_FIELDS } from "../graphql";
 
@@ -112,6 +114,24 @@ export const ProjectsPage = () => {
           <Typography variant="caption" sx={{ fontWeight: 500 }}>
             {project.resourcesCount}
           </Typography>
+        </Box>
+        <Box>
+          <Typography variant="caption" sx={{ display: "block" }}>
+            Golden State
+          </Typography>
+          {project.goldenState ? (
+            <Chip
+              label={`${project.goldenState.score}%`}
+              size="small"
+              color={getScoreChipColor(project.goldenState.score)}
+              variant="outlined"
+              sx={{ fontWeight: 600 }}
+            />
+          ) : (
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+              -
+            </Typography>
+          )}
         </Box>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>

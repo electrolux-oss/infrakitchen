@@ -32,10 +32,13 @@ const OPERATOR_LABELS: Record<FilterOperator, string> = {
   eq: "is",
   like: "contains",
   not_like: "does not contain",
+  is_none: "is None",
   in: "is any of",
   contains_all: "has all of",
   any: "matches any",
 };
+
+const VALUELESS_OPERATOR_SENTINEL = true;
 
 let clauseIdCounter = 0;
 function generateClauseId(): string {
@@ -44,6 +47,10 @@ function generateClauseId(): string {
 
 function isMultiValueOperator(op: FilterOperator): boolean {
   return op === "in" || op === "contains_all" || op === "any";
+}
+
+function isValuelessOperator(op: FilterOperator): boolean {
+  return op === "is_none";
 }
 
 function getDefaultOperator(field?: FilterableField): FilterOperator {
@@ -130,15 +137,17 @@ const ClauseRow = ({
     const defaultOp = getDefaultOperator(selectedField);
     onUpdate(clause.id, {
       operator: defaultOp,
-      value: isMultiValueOperator(defaultOp)
-        ? Array.isArray(clause.value)
-          ? clause.value
-          : clause.value
-            ? [clause.value]
-            : []
-        : Array.isArray(clause.value)
-          ? clause.value[0] || ""
-          : clause.value || "",
+      value: isValuelessOperator(defaultOp)
+        ? VALUELESS_OPERATOR_SENTINEL
+        : isMultiValueOperator(defaultOp)
+          ? Array.isArray(clause.value)
+            ? clause.value
+            : clause.value
+              ? [clause.value]
+              : []
+          : Array.isArray(clause.value)
+            ? clause.value[0] || ""
+            : clause.value || "",
     });
   }, [
     availableOperators,
@@ -152,7 +161,11 @@ const ClauseRow = ({
   const handleFieldChange = (newField: string) => {
     const field = fields.find((f) => f.field === newField);
     const defaultOp = getDefaultOperator(field);
-    const defaultValue = isMultiValueOperator(defaultOp) ? [] : "";
+    const defaultValue = isValuelessOperator(defaultOp)
+      ? VALUELESS_OPERATOR_SENTINEL
+      : isMultiValueOperator(defaultOp)
+        ? []
+        : "";
     onUpdate(clause.id, {
       field: newField,
       operator: defaultOp,
@@ -164,7 +177,13 @@ const ClauseRow = ({
     const wasMulti = isMultiValueOperator(clause.operator);
     const isMulti = isMultiValueOperator(newOp);
     let newValue = clause.value;
-    if (wasMulti && !isMulti) {
+    if (isValuelessOperator(newOp)) {
+      newValue = VALUELESS_OPERATOR_SENTINEL;
+    } else if (isValuelessOperator(clause.operator) && isMulti) {
+      newValue = [];
+    } else if (isValuelessOperator(clause.operator)) {
+      newValue = "";
+    } else if (wasMulti && !isMulti) {
       newValue = Array.isArray(clause.value) ? clause.value[0] || "" : "";
     } else if (!wasMulti && isMulti) {
       newValue = clause.value ? [clause.value] : [];
@@ -212,6 +231,18 @@ const ClauseRow = ({
       );
     }
 
+    if (isValuelessOperator(clause.operator)) {
+      return (
+        <TextField
+          size="small"
+          disabled
+          value=""
+          placeholder="No value needed"
+          sx={SINGLE_VALUE_INPUT_SX}
+        />
+      );
+    }
+
     const multiValue = isMultiValueOperator(clause.operator);
     const valueInputKey = `${clause.field}::${clause.operator}`;
 
@@ -228,11 +259,7 @@ const ClauseRow = ({
           onChange={(newVal) => onUpdate(clause.id, { value: newVal })}
           multiple={multiValue}
           placeholder={`Search ${selectedField.label.toLowerCase()}...`}
-          sx={
-            multiValue
-              ? MULTI_VALUE_REFERENCE_AUTOCOMPLETE_SX
-              : SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX
-          }
+          sx={SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX}
         />
       );
     }
@@ -428,6 +455,7 @@ export const AdvancedFilter = ({
   const toPersistedClauses = useCallback((nextClauses: FilterClause[]) => {
     return nextClauses.filter((clause) => {
       if (!clause.field) return false;
+      if (isValuelessOperator(clause.operator)) return true;
       if (
         clause.value === undefined ||
         clause.value === null ||
@@ -597,4 +625,3 @@ export const AdvancedFilter = ({
     </Box>
   );
 };
-const MULTI_VALUE_REFERENCE_AUTOCOMPLETE_SX = MULTI_VALUE_AUTOCOMPLETE_SX;
