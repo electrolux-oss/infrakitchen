@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
@@ -11,6 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 
+import { NotFoundPage } from "../../dashboard/pages/NotFound";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import PageContainer from "../PageContainer";
@@ -26,9 +27,11 @@ export interface EntityContainerProps {
 
 export const EntityContainer = (props: EntityContainerProps) => {
   const { children, title, actions, showEditAction } = props;
+  const location = useLocation();
   const navigate = useNavigate();
   const { linkPrefix } = useConfig();
-  const { entity, loading, error, refreshEntity } = useEntityProvider();
+  const { entity, loading, error, notFound, refreshEntity } =
+    useEntityProvider();
 
   const handleRefresh = () => {
     if (refreshEntity) {
@@ -36,11 +39,21 @@ export const EntityContainer = (props: EntityContainerProps) => {
     }
   };
 
+  const handleBack = (fallback: string) => {
+    // React Router uses the default key for direct-entry loads, which do not
+    // have an in-app history entry to return to.
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      navigate(fallback);
+    }
+  };
+
   if (loading) {
     return (
       <PageContainer
         title="Loading..."
-        onBack={() => navigate(`${linkPrefix}${entity?.entityName}s`)}
+        onBack={() => handleBack(`${linkPrefix}${entity?.entityName}s`)}
       >
         <Box
           sx={{
@@ -56,11 +69,15 @@ export const EntityContainer = (props: EntityContainerProps) => {
     );
   }
 
+  if (notFound) {
+    return <NotFoundPage />;
+  }
+
   if (error) {
     return (
       <PageContainer
         title="Error"
-        onBack={() => navigate(`${linkPrefix}${entity?.entityName}s`)}
+        onBack={() => handleBack(`${linkPrefix}${entity?.entityName}s`)}
       >
         <Alert severity="error" sx={{ width: "100%" }}>
           {error}
@@ -71,7 +88,10 @@ export const EntityContainer = (props: EntityContainerProps) => {
 
   if (!entity) {
     return (
-      <PageContainer title="Not Found" onBack={() => navigate(`${linkPrefix}`)}>
+      <PageContainer
+        title="Not Found"
+        onBack={() => handleBack(`${linkPrefix}`)}
+      >
         <Alert severity="warning" sx={{ width: "100%" }}>
           Entity not found
         </Alert>
@@ -82,7 +102,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
   return (
     <PageContainer
       title={title || entity?.name || entity?.identifier || "Entity"}
-      onBack={() => navigate(`${linkPrefix}${entity.entityName}s`)}
+      onBack={() => handleBack(`${linkPrefix}${entity.entityName}s`)}
       actions={
         <>
           <EntityActions

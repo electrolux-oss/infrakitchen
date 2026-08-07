@@ -130,6 +130,16 @@ def test_classify_auth_message_is_access_denied() -> None:
     assert message.startswith("Not authenticated")
 
 
+def test_classify_invalid_uuid_variable_is_validation() -> None:
+    error = GraphQLError(
+        "Variable '$id' got invalid value 'test'; Value cannot represent a UUID: \"test\". badly formed hexadecimal UUID string"  # noqa: E501
+    )
+    code, message, extras = classify_graphql_error(error)
+    assert code == "VALIDATION"
+    assert message.startswith("Variable '$id' got invalid value 'test'")
+    assert extras is None
+
+
 def test_format_includes_extensions_code() -> None:
     error = GraphQLError("Resource not found", original_error=EntityNotFound("Resource not found"))
     payload = format_graphql_error(error)

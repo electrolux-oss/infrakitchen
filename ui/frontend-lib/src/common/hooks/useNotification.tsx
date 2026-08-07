@@ -57,6 +57,14 @@ function getMessage(message: any) {
   }
 }
 
+const hasErrorDetails = (metadata: ApiClientError["metadata"] | undefined) => {
+  if (Array.isArray(metadata)) {
+    return metadata.length > 0;
+  }
+
+  return Boolean(metadata && Object.keys(metadata).length > 0);
+};
+
 const toastForVariant = (variant: SnackbarVariant) => {
   switch (variant) {
     case "success":
@@ -97,8 +105,9 @@ export const notify = (
 export const notifyError = (error: unknown, options?: NotifyOptions) => {
   if (error instanceof ApiClientError) {
     const displayMessage = `${error.status} ${getMessage(error.message)}`;
+    const showDetailedToast = hasErrorDetails(error.metadata);
 
-    if (error.error_code === "DEPENDENCY_ERROR") {
+    if (error.error_code === "DEPENDENCY_ERROR" && showDetailedToast) {
       toast.custom(
         (id) => (
           <DependencyError
@@ -113,6 +122,7 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
     }
 
     if (
+      showDetailedToast &&
       error.error_code &&
       error.error_code.toUpperCase() !== "UNKNOWN_ERROR"
     ) {
