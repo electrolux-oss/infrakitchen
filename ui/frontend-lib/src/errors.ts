@@ -26,3 +26,6 @@ export class ApiClientError extends Error {
     Object.setPrototypeOf(this, ApiClientError.prototype);
   }
 }
+
+export const isNotFoundError = (error: unknown): error is ApiClientError =>
+  error instanceof ApiClientError && error.error_code === "NOT_FOUND";

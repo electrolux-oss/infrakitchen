@@ -7,6 +7,7 @@ import {
   useCallback,
 } from "react";
 
+import { ApiClientError, isNotFoundError } from "../../errors";
 import { IkEntity } from "../../types";
 import { notifyError } from "../hooks/useNotification";
 
@@ -44,6 +45,7 @@ interface EntityContextType {
   entity_id: string;
   loading: boolean;
   error?: string | null;
+  notFound: boolean;
   refreshEntity?: (entity?: IkEntity) => void;
   refreshActions?: () => void;
   userEntityPermissions: string[];
@@ -74,6 +76,7 @@ export const EntityProvider = ({
   const [refresh, refreshNumber] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState<boolean>(false);
   const { ikApi } = useConfig();
 
   const { event } = useEventProvider();
@@ -105,7 +108,12 @@ export const EntityProvider = ({
           .then((response: any) => {
             const data = response?.[entity_name];
             if (!data) {
-              throw new Error(`${entity_name} not found`);
+              throw new ApiClientError(
+                404,
+                `${entity_name} not found`,
+                "NOT_FOUND",
+                {},
+              );
             }
             const actionsData = response?.[`${entity_name}Actions`] || [];
             const userEntityPermissions = response?.userEntityPermissions || [];
@@ -115,11 +123,16 @@ export const EntityProvider = ({
           })
           .then((response: any) => {
             setEntity(response);
+            setNotFound(false);
             setError(null);
             // userActionsHandler();
           });
       } catch (e: any) {
-        notifyError(e);
+        const entityNotFound = isNotFoundError(e);
+        if (!entityNotFound) {
+          notifyError(e);
+        }
+        setNotFound(entityNotFound);
         setError(e.message);
       } finally {
         setLoading(false);
@@ -172,6 +185,7 @@ export const EntityProvider = ({
     entity_id,
     loading,
     error,
+    notFound,
     refreshEntity,
     refreshActions,
     userEntityPermissions,

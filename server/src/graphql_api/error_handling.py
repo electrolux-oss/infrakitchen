@@ -24,6 +24,16 @@ from core.utils.json_encoder import JsonEncoder
 logger = logging.getLogger(__name__)
 
 
+def _is_graphql_input_error(error: GraphQLError) -> bool:
+    message = error.message
+    return (
+        message.startswith("Variable '$")
+        and "got invalid value" in message
+        or message.startswith("Argument '")
+        and "has invalid value" in message
+    )
+
+
 def _unwrap_original_error(error: GraphQLError) -> Exception | None:
     current: Exception | None = error.original_error if isinstance(error.original_error, Exception) else None
     visited: set[int] = set()
@@ -108,6 +118,9 @@ def classify_graphql_error(error: GraphQLError) -> tuple[str, str, dict[str, Any
     # Strawberry permission errors are plain GraphQLError without original_error.
     if error.message.startswith("Not authenticated"):
         return "ACCESS_DENIED", _sanitize_message(error.message), None
+
+    if _is_graphql_input_error(error):
+        return "VALIDATION", _sanitize_message(error.message), None
 
     return "INTERNAL", _sanitize_message(error.message), None
 

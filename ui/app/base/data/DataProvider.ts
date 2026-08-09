@@ -19,6 +19,7 @@ export interface IKDataProvider extends InfraKitchenApi {
 type GraphqlErrorResponse = {
   message?: string;
   extensions?: {
+    code?: string;
     error_code?: string;
     metadata?: ApiErrorResponse["metadata"];
   };
@@ -76,7 +77,8 @@ const parseGraphqlError = (errors: GraphqlErrorResponse[]): never => {
 
   const apiError = toApiClientError(GRAPHQL_ERROR_STATUS, {
     message: firstError.message || "GraphQL request failed",
-    error_code: firstError.extensions?.error_code,
+    error_code:
+      firstError.extensions?.code ?? firstError.extensions?.error_code,
     metadata: firstError.extensions?.metadata || {},
   });
 
