@@ -117,13 +117,20 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
         borderRadius: 1,
       }}
     >
-      <Grid container alignItems="center">
+      <Grid
+        container
+        sx={{
+          alignItems: "center",
+        }}
+      >
         <Grid size={{ xs: 12, md: 8 }}>
           <Typography
             variant="body1"
-            fontWeight={500}
             component="span"
-            sx={{ mr: 1 }}
+            sx={{
+              fontWeight: 500,
+              mr: 1,
+            }}
           >
             {variable.name}
           </Typography>
@@ -182,7 +189,12 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               gap: 1,
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Type:
             </Typography>
             {formatTypeDisplay(variable.type)}
@@ -190,9 +202,11 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
 
           <Typography
             variant="caption"
-            color="text.secondary"
-            display="block"
-            mt={1}
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mt: 1,
+            }}
           >
             {variable.description || "No description"}
           </Typography>
@@ -200,9 +214,11 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {variable.source && (
             <Typography
               variant="caption"
-              color="text.secondary"
-              display="block"
-              mt={0.5}
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                mt: 0.5,
+              }}
             >
               source: {variable.source}
             </Typography>
@@ -216,10 +232,20 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
             mt: { xs: 1, md: 0 },
           }}
         >
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             Default
           </Typography>
-          <Typography variant="body2" fontWeight={500}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+            }}
+          >
             {formatDefaultValue(variable.default)}
           </Typography>
         </Grid>

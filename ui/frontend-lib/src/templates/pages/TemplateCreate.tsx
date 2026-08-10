@@ -247,7 +247,6 @@ export const TemplateCreatePage = () => {
           />
         </Box>
       </PropertyCard>
-
       <PropertyCard title="Template Configuration">
         <Box>
           <Controller
@@ -261,8 +260,12 @@ export const TemplateCreatePage = () => {
                 />
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mt: -1, mb: 1 }}
+                  sx={{
+                    color: "text.secondary",
+                    display: "block",
+                    mt: -1,
+                    mb: 1,
+                  }}
                 >
                   Abstract templates represent reusable entities such as Org,
                   Team, or Project. They do not provision infrastructure

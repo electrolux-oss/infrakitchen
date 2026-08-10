@@ -91,36 +91,67 @@ export const ActivityFeedItem = ({
       <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
           spacing={1}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
-          <Box flex={1} minWidth={0}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <Stack
               direction="row"
               spacing={0.5}
-              alignItems="center"
-              flexWrap="wrap"
+              sx={{
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
             >
-              <Typography variant="body2" fontWeight={600}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                }}
+              >
                 {activity.action}
               </Typography>
-              <Typography variant="caption" color="text.disabled">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.disabled",
+                }}
+              >
                 ·
               </Typography>
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ textTransform: "capitalize" }}
+                sx={{
+                  color: "text.secondary",
+                  textTransform: "capitalize",
+                }}
               >
                 {activity.model?.replace(/_/g, " ")}
               </Typography>
               {(entityName || activity.entityId) && (
                 <>
-                  <Typography variant="caption" color="text.disabled">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.disabled",
+                    }}
+                  >
                     ·
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     <GetEntityLink
                       id={activity.entityId}
                       entityName={activity.model}
@@ -131,10 +162,20 @@ export const ActivityFeedItem = ({
               )}
               {activity.creator && (
                 <>
-                  <Typography variant="caption" color="text.disabled">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.disabled",
+                    }}
+                  >
                     ·
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     by{" "}
                     <span onClick={(e) => e.stopPropagation()}>
                       <GetEntityLink
@@ -151,11 +192,20 @@ export const ActivityFeedItem = ({
               )}
             </Stack>
           </Box>
-          <Stack direction="row" spacing={1} alignItems="center" flexShrink={0}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              flexShrink: 0,
+            }}
+          >
             <Typography
               variant="caption"
-              color="text.disabled"
-              whiteSpace="nowrap"
+              sx={{
+                color: "text.disabled",
+                whiteSpace: "nowrap",
+              }}
             >
               <RelativeTime
                 date={activity.createdAt}

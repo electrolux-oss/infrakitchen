@@ -127,7 +127,13 @@ export function WiringCanvasSidebar({
       }}
     >
       <Box sx={{ px: 1.5, pt: 1.5, pb: 0.5 }}>
-        <Typography variant="caption" fontWeight={700} color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{
+            fontWeight: 700,
+            color: "text.secondary",
+          }}
+        >
           Available Templates
         </Typography>
         <TextField
@@ -151,7 +157,6 @@ export function WiringCanvasSidebar({
           }}
         />
       </Box>
-
       <List
         dense
         sx={{
@@ -165,8 +170,12 @@ export function WiringCanvasSidebar({
         {filteredTemplates.length === 0 && (
           <Typography
             variant="caption"
-            color="text.disabled"
-            sx={{ px: 1.5, py: 1, display: "block" }}
+            sx={{
+              color: "text.disabled",
+              px: 1.5,
+              py: 1,
+              display: "block",
+            }}
           >
             {search ? "No matches" : "All templates added"}
           </Typography>
@@ -217,21 +226,29 @@ export function WiringCanvasSidebar({
           </ListItemButton>
         ))}
       </List>
-
       {missingParentTemplates.length > 0 && (
         <>
           <Divider />
           <Box sx={{ px: 1.5, pt: 1, pb: 0.5 }}>
             <Typography
               variant="caption"
-              fontWeight={700}
-              color="warning.main"
-              sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+              sx={{
+                fontWeight: 700,
+                color: "warning.main",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
             >
               <StorageIcon sx={{ fontSize: 14 }} />
               Input Templates
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Parent templates - add to wire outputs to dependent resources.
             </Typography>
           </Box>
@@ -240,8 +257,12 @@ export function WiringCanvasSidebar({
             {availableParentTemplates.length === 0 && (
               <Typography
                 variant="caption"
-                color="text.disabled"
-                sx={{ px: 1.5, py: 1, display: "block" }}
+                sx={{
+                  color: "text.disabled",
+                  px: 1.5,
+                  py: 1,
+                  display: "block",
+                }}
               >
                 All parent templates added
               </Typography>
@@ -294,19 +315,27 @@ export function WiringCanvasSidebar({
           </List>
         </>
       )}
-
       <Divider />
       <Box sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
         <Typography
           variant="caption"
-          fontWeight={700}
-          color="secondary.main"
-          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          sx={{
+            fontWeight: 700,
+            color: "secondary.main",
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }}
         >
           <TuneIcon sx={{ fontSize: 14 }} />
           Constants
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           Fixed values wired to inputs.
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5, mt: 1 }}>

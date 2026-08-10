@@ -257,7 +257,12 @@ export const TemplateConfiguration = ({
                     }}
                   />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     Not set
                   </Typography>
                 )}
@@ -317,7 +322,12 @@ export const TemplateConfiguration = ({
                         )}
                       </IconButton>
                     </Tooltip>
-                    <Typography variant="body2" color="warning.main">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "warning.main",
+                      }}
+                    >
                       {isStorageEditable
                         ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
                         : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
@@ -409,7 +419,6 @@ export const TemplateConfiguration = ({
           )}
         </Grid>
       </OverviewCard>
-
       {resource.abstract === false && (
         <>
           <OverviewCard

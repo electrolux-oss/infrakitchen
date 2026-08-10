@@ -196,8 +196,11 @@ const GcpProviderFields = ({
           />
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 1 }}
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mt: 1,
+            }}
           >
             InfraKitchen issues a signed OIDC token for this integration. After
             saving, open the integration page to copy the{" "}
@@ -248,8 +251,11 @@ const GcpProviderFields = ({
               />
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", ml: 4 }}
+                sx={{
+                  color: "text.secondary",
+                  display: "block",
+                  ml: 4,
+                }}
               >
                 Google storage bucket named{" "}
                 <code>infrakitchen-{"{GCP Project ID}"}-bucket</code> will be
@@ -425,8 +431,11 @@ export const renderFieldsForProvider = (
                   />
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", ml: 4 }}
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      ml: 4,
+                    }}
                   >
                     S3 bucket named{" "}
                     <code>infrakitchen-{"{AWS_ACCOUNT_ID}"}-bucket</code> will

@@ -234,8 +234,12 @@ export const ProjectCreatePage = () => {
                   />
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: -1, mb: 1 }}
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      mt: -1,
+                      mb: 1,
+                    }}
                   >
                     Force resources in this project to use the assigned
                     workspace.
@@ -276,8 +280,12 @@ export const ProjectCreatePage = () => {
                   </FormGroup>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: -1, mb: 1 }}
+                    sx={{
+                      color: "text.secondary",
+                      display: "block",
+                      mt: -1,
+                      mb: 1,
+                    }}
                   >
                     Let users update selected resource fields without creating
                     an approval request.

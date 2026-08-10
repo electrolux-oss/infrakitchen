@@ -19,7 +19,15 @@ export const Labels: FC<LabelsProps> = ({ labels }) => {
   }
 
   return (
-    <Box display="flex" gap={1} flexWrap="wrap" marginTop={1} marginBottom={2}>
+    <Box
+      sx={{
+        display: "flex",
+        gap: 1,
+        flexWrap: "wrap",
+        marginTop: 1,
+        marginBottom: 2,
+      }}
+    >
       {labels.map((label: string) => (
         <Chip key={label} label={label} size="small" variant="outlined" />
       ))}

@@ -107,7 +107,12 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="flex-end">
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
         <Button onClick={handleExpandClick}>
           {expanded.length === 0 ? "Expand all" : "Collapse all"}
         </Button>

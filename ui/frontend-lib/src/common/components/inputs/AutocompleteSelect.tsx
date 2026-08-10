@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { Autocomplete, Chip, SxProps, TextField, Theme } from "@mui/material";
+import {
+  Autocomplete,
+  AutocompleteRenderValue,
+  Chip,
+  SxProps,
+  TextField,
+  Theme,
+} from "@mui/material";
 
 export interface AsyncAutocompleteOption {
   label: string;
@@ -84,9 +91,16 @@ export const AutocompleteSelect = ({
         onChange={(_e, newValue) =>
           onChange((newValue as AutocompleteValue[]).map(toStoredValue))
         }
-        renderTags={(tagValue, getTagProps) =>
+        renderValue={(
+          tagValue: AutocompleteRenderValue<
+            AsyncAutocompleteOption,
+            true,
+            boolean
+          >,
+          getItemProps,
+        ) =>
           tagValue.map((option, index) => {
-            const { key, ...rest } = getTagProps({ index });
+            const { key, ...rest } = getItemProps({ index });
             return (
               <Chip
                 key={key}

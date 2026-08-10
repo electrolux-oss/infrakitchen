@@ -30,7 +30,13 @@ export const RevisionTimeline = ({
 }: RevisionTimelineProps) => {
   return (
     <Box sx={{ mb: 3 }}>
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          alignItems: "center",
+        }}
+      >
         <Chip
           label={revision}
           size="small"
@@ -52,7 +58,13 @@ export const RevisionTimeline = ({
           items={[...logs].reverse()}
           renderItem={(log) => (
             <>
-              <Typography variant="body2" fontWeight={500} sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 500,
+                  mt: 0.5,
+                }}
+              >
                 {log.action}
               </Typography>
               <RelativeTime

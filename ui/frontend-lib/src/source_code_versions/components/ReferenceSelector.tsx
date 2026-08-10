@@ -45,7 +45,13 @@ export const ReferenceSelector = () => {
             label="Inherit from"
             variant="outlined"
             size="small"
-            InputLabelProps={{ shrink: true }}
+            slotProps={{
+              ...params.slotProps,
+              inputLabel: {
+                ...params.slotProps.inputLabel,
+                shrink: true,
+              },
+            }}
           />
         )}
         renderOption={(props, option) => {
@@ -56,7 +62,12 @@ export const ReferenceSelector = () => {
                   {option.sourceCodeVersion || option.sourceCodeBranch}
                 </Typography>
                 {option.description && (
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     {option.description}
                   </Typography>
                 )}

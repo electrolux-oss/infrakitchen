@@ -126,7 +126,13 @@ export const LogsView = (props: {
           ))}
         </InfiniteScroll>
       ) : (
-        <Typography color="text.secondary">No logs available.</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          No logs available.
+        </Typography>
       )}
     </Box>
   );

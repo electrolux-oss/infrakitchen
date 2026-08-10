@@ -54,8 +54,10 @@ const getDependencyVariables = (variables: DependencyVariable[]) => {
         >
           <Typography
             variant="body2"
-            sx={{ color: "text.primary" }}
-            fontWeight="bold"
+            sx={{
+              fontWeight: "bold",
+              color: "text.primary",
+            }}
           >
             {variable.name}
           </Typography>
@@ -81,7 +83,12 @@ const getDependencyVariables = (variables: DependencyVariable[]) => {
                 />
               }
               label={
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Inherited By Children
                 </Typography>
               }
@@ -152,7 +159,7 @@ const DependencyEditDialog = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      TransitionProps={{ onEnter: handleOpen }}
+      slotProps={{ transition: { onEnter: handleOpen } }}
     >
       <DialogTitle>Edit {title}</DialogTitle>
       <DialogContent>

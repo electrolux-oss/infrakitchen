@@ -317,9 +317,12 @@ const ExecutorCreatePageInner = () => {
                             ? errors.sourceCodeVersion.message
                             : "Select git tag"
                         }
-                        inputProps={{
-                          ...params.inputProps,
-                          "aria-label": "Source git tag",
+                        slotProps={{
+                          ...params.slotProps,
+                          htmlInput: {
+                            ...params.slotProps.htmlInput,
+                            "aria-label": "Source git tag",
+                          },
                         }}
                       />
                     )}
@@ -350,9 +353,12 @@ const ExecutorCreatePageInner = () => {
                           ? errors.sourceCodeBranch.message
                           : "Select git branch"
                       }
-                      inputProps={{
-                        ...params.inputProps,
-                        "aria-label": "Source git branch",
+                      slotProps={{
+                        ...params.slotProps,
+                        htmlInput: {
+                          ...params.slotProps.htmlInput,
+                          "aria-label": "Source git branch",
+                        },
                       }}
                     />
                   )}

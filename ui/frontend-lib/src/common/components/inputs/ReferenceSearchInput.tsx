@@ -250,11 +250,14 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
               {...otherProps}
               label={props.label}
               error={props.error}
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>{loading ? "..." : params.InputProps.endAdornment}</>
-                ),
+              slotProps={{
+                ...params.slotProps,
+                input: {
+                  ...params.slotProps.input,
+                  endAdornment: (
+                    <>{loading ? "..." : params.slotProps.input.endAdornment}</>
+                  ),
+                },
               }}
             />
           )}

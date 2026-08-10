@@ -120,7 +120,12 @@ const PodRow = (props: {
           </IconButton>
         </TableCell>
         <TableCell component="th" scope="row">
-          <Typography variant="body1" fontWeight="medium">
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: "medium",
+            }}
+          >
             {pod?.metadata.name}
           </Typography>
         </TableCell>
@@ -133,12 +138,22 @@ const PodRow = (props: {
           />
         </TableCell>
         <TableCell align="center">
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             {pod?.metadata.labels["app.kubernetes.io/version"] || "N/A"}
           </Typography>
         </TableCell>
         <TableCell align="center">
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             {getDateValue(pod?.metadata.creation_timestamp) || "N/A"}
           </Typography>
         </TableCell>
@@ -151,7 +166,13 @@ const PodRow = (props: {
 
           {isConfirmingKill ? (
             // Display Approve and Cancel buttons when confirming
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                justifyContent: "flex-end",
+              }}
+            >
               <Button
                 variant="outlined"
                 color="success"
@@ -217,7 +238,13 @@ const PodRow = (props: {
                 <TableBody>
                   <TableRow>
                     <TableCell colSpan={2}>
-                      <Typography variant="h6" gutterBottom fontWeight="bold">
+                      <Typography
+                        variant="h6"
+                        gutterBottom
+                        sx={{
+                          fontWeight: "bold",
+                        }}
+                      >
                         Labels:
                       </Typography>
                     </TableCell>
@@ -227,7 +254,12 @@ const PodRow = (props: {
                     Object.entries(pod.metadata.labels).map(([key, value]) => (
                       <TableRow key={key}>
                         <TableCell component="th" scope="row">
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "text.secondary",
+                            }}
+                          >
                             {key}
                           </Typography>
                         </TableCell>
@@ -243,8 +275,10 @@ const PodRow = (props: {
                       <TableCell colSpan={2} align="center">
                         <Typography
                           variant="body2"
-                          color="text.secondary"
-                          sx={{ py: 1 }}
+                          sx={{
+                            color: "text.secondary",
+                            py: 1,
+                          }}
                         >
                           No labels found for this pod.
                         </Typography>
@@ -259,8 +293,10 @@ const PodRow = (props: {
                             <Typography
                               variant="h6"
                               gutterBottom
-                              fontWeight="bold"
-                              sx={{ mt: 2 }}
+                              sx={{
+                                fontWeight: "bold",
+                                mt: 2,
+                              }}
                             >
                               Annotations:
                             </Typography>
@@ -272,7 +308,9 @@ const PodRow = (props: {
                               <TableCell component="th" scope="row">
                                 <Typography
                                   variant="body2"
-                                  color="text.secondary"
+                                  sx={{
+                                    color: "text.secondary",
+                                  }}
                                 >
                                   {key}
                                 </Typography>
@@ -294,8 +332,10 @@ const PodRow = (props: {
                           <Typography
                             variant="h6"
                             gutterBottom
-                            fontWeight="bold"
-                            sx={{ mt: 2 }}
+                            sx={{
+                              fontWeight: "bold",
+                              mt: 2,
+                            }}
                           >
                             Containers:
                           </Typography>
@@ -304,7 +344,12 @@ const PodRow = (props: {
                       {pod.spec.containers.map((container: any) => (
                         <TableRow key={container.name}>
                           <TableCell component="th" scope="row">
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                color: "text.secondary",
+                              }}
+                            >
                               {container.name}
                             </Typography>
                           </TableCell>
@@ -494,7 +539,12 @@ export const PodDetails = (props: PodDetailsProps) => {
               </Table>
             </TableContainer>
           ) : (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               No pods found for this deployment.
             </Typography>
           )}

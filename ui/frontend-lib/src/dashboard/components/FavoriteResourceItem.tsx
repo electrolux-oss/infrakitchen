@@ -50,20 +50,31 @@ export const FavoriteResourceItem = ({
       }}
     >
       <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{
+            alignItems: "center",
+          }}
+        >
           <Typography
             variant="body2"
-            fontWeight={600}
             title={resource.name}
-            sx={{ flex: 1, minWidth: 0 }}
+            sx={{
+              fontWeight: 600,
+              flex: 1,
+              minWidth: 0,
+            }}
           >
             {resource.name}
           </Typography>
           {resource.updatedAt && (
             <Typography
               variant="caption"
-              color="text.disabled"
-              whiteSpace="nowrap"
+              sx={{
+                color: "text.disabled",
+                whiteSpace: "nowrap",
+              }}
             >
               <RelativeTime
                 date={resource.updatedAt}

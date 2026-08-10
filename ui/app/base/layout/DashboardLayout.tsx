@@ -115,10 +115,12 @@ export default function DashboardLayout() {
           <React.Suspense
             fallback={
               <Box
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                flex={1}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flex: 1,
+                }}
               >
                 <GradientCircularProgress />
               </Box>

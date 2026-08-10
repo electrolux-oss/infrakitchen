@@ -209,7 +209,13 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
 
   if (files.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          p: 2,
+        }}
+      >
         No code files found in snapshot.
       </Typography>
     );
@@ -250,7 +256,6 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
           {renderTreeItems(tree.children)}
         </SimpleTreeView>
       </Box>
-
       <Box
         sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}
       >
@@ -288,7 +293,13 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
             </Box>
           </>
         ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              p: 2,
+            }}
+          >
             Select a file to view its contents.
           </Typography>
         )}

@@ -323,7 +323,13 @@ export const ResourceVariablesEditDialog = ({
       <DialogTitle>Edit Input Variables</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 3, mt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              mb: 1,
+            }}
+          >
             Select a template version. Variables will be reconfigured based on
             the selected version&apos;s schema.
           </Typography>
@@ -440,8 +446,10 @@ export const ResourceVariablesEditDialog = ({
               effectiveVersionId && (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ py: 2 }}
+                  sx={{
+                    color: "text.secondary",
+                    py: 2,
+                  }}
                 >
                   No configurable variables for this template version.
                 </Typography>

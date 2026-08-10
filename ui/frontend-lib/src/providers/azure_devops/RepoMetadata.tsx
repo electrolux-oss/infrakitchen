@@ -103,13 +103,17 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
       >
         {metadata.name}
       </Typography>
-
       {metadata.description && (
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            mb: 2,
+          }}
+        >
           {metadata.description}
         </Typography>
       )}
-
       {/* Basic Info */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 3 }}>
         <Chip
@@ -130,7 +134,6 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           </MuiLink>
         )}
       </Box>
-
       {/* Owner Info */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" gutterBottom>
@@ -149,7 +152,6 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           </Typography>
         </Box>
       </Box>
-
       <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
         <MuiLink
           href={metadata.url}
@@ -169,7 +171,6 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           View Repository on Azure DevOps
         </MuiLink>
       </Box>
-
       <Accordion sx={{ mt: 3, boxShadow: 1, borderRadius: 2 }}>
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}

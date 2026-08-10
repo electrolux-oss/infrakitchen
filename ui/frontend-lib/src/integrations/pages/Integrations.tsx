@@ -278,7 +278,13 @@ const IntegrationsPage = () => {
           >
             {integrations.length === 0 ? (
               <>
-                <Typography variant="h5" component="p" color="text.secondary">
+                <Typography
+                  variant="h5"
+                  component="p"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   No integrations connected yet
                 </Typography>
                 <Box
@@ -304,7 +310,13 @@ const IntegrationsPage = () => {
                 </Box>
               </>
             ) : (
-              <Typography variant="h5" component="p" color="text.secondary">
+              <Typography
+                variant="h5"
+                component="p"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 No integrations match your filters
               </Typography>
             )}

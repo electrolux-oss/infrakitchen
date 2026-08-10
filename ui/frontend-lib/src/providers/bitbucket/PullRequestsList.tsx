@@ -102,7 +102,12 @@ export function BitbucketPullRequestsList(
             <Box
               sx={{ display: "flex", flexDirection: "column", width: "100%" }}
             >
-              <Typography variant="body1" fontWeight="bold">
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: "bold",
+                }}
+              >
                 #{pr.id}: {pr.title} {/* Bitbucket uses 'id' for PR number */}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
@@ -113,7 +118,12 @@ export function BitbucketPullRequestsList(
                   sx={{ mr: 1 }}
                 />
                 {pr.draft && <Chip label="Draft" size="small" sx={{ mr: 1 }} />}
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Opened by{" "}
                   {pr.author && (
                     <MuiLink
@@ -132,12 +142,19 @@ export function BitbucketPullRequestsList(
               <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mr: 1 }}
+                  sx={{
+                    color: "text.secondary",
+                    mr: 1,
+                  }}
                 >
                   Comments: {pr.comment_count}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Tasks: {pr.task_count}
                 </Typography>
               </Box>
@@ -159,7 +176,11 @@ export function BitbucketPullRequestsList(
               height="300px" // Set a fixed height with scrollbar
             />
             {pr.description && pr.description.length > 0 && (
-              <Box mt={2}>
+              <Box
+                sx={{
+                  mt: 2,
+                }}
+              >
                 <Typography variant="h5" gutterBottom>
                   Description:
                 </Typography>
@@ -180,7 +201,11 @@ export function BitbucketPullRequestsList(
               </Box>
             )}
             {pr.summary && pr.summary.raw && pr.summary.raw.length > 0 && (
-              <Box mt={2}>
+              <Box
+                sx={{
+                  mt: 2,
+                }}
+              >
                 <Typography variant="h5" gutterBottom>
                   Summary:
                 </Typography>
@@ -200,7 +225,13 @@ export function BitbucketPullRequestsList(
                 </Box>
               </Box>
             )}
-            <Box mt={2} display="flex" justifyContent="flex-end">
+            <Box
+              sx={{
+                mt: 2,
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <MuiLink
                 href={pr.links.html.href}
                 target="_blank"

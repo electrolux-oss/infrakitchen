@@ -356,12 +356,24 @@ const ExecutionStatusIcon = ({
   const { icon: Icon, color } = executionStatusIcons[status];
   const icon = <Icon color={color} fontSize="small" />;
   const label = showLabel && (
-    <Typography component="span" color={`${color}.main`} fontWeight={500}>
+    <Typography
+      component="span"
+      color={`${color}.main`}
+      sx={{
+        fontWeight: 500,
+      }}
+    >
       {status}
     </Typography>
   );
   const durationText = duration && (
-    <Typography component="span" variant="caption" color="text.secondary">
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{
+        color: "text.secondary",
+      }}
+    >
       {duration}
     </Typography>
   );
@@ -530,16 +542,31 @@ export const SummaryView = (props: {
       }}
     >
       {!loaded ? (
-        <Typography color="text.secondary">Loading...</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          Loading...
+        </Typography>
       ) : allLogs.length === 0 ? (
-        <Typography color="text.secondary">No logs available.</Typography>
+        <Typography
+          sx={{
+            color: "text.secondary",
+          }}
+        >
+          No logs available.
+        </Typography>
       ) : (
         <>
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ px: 0.5, mb: 2 }}
+            sx={{
+              alignItems: "center",
+              justifyContent: "space-between",
+              px: 0.5,
+              mb: 2,
+            }}
           >
             <Typography variant="body2">
               <Box component="span" sx={{ fontWeight: 600 }}>
@@ -620,7 +647,11 @@ export const SummaryView = (props: {
             </Alert>
           )}
           {changes.length === 0 && fatalErrorLines.length === 0 ? (
-            <Typography color="text.secondary">
+            <Typography
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               No changes in summary.
             </Typography>
           ) : (

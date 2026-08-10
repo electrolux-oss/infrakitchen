@@ -284,7 +284,12 @@ export const ValidationRegexControls = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Provide a regular expression for this variable or use the toggles to
         generate one automatically.
       </Typography>
@@ -368,7 +373,12 @@ export const ValidationRegexControls = ({
                   <li key={option.id} {...optionProps}>
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
                       <Typography variant="body2">{option.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         {option.regex}
                       </Typography>
                     </Box>
@@ -383,11 +393,14 @@ export const ValidationRegexControls = ({
                   fullWidth
                   margin="normal"
                   onBlur={field.onBlur}
-                  InputProps={{
-                    ...params.InputProps,
-                    sx: {
-                      fontFamily:
-                        '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                  slotProps={{
+                    ...params.slotProps,
+                    input: {
+                      ...params.slotProps.input,
+                      sx: {
+                        fontFamily:
+                          '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                      },
                     },
                   }}
                   error={Boolean(fieldState.error)}
@@ -403,13 +416,11 @@ export const ValidationRegexControls = ({
           );
         }}
       />
-
       {isComplexRegex && (
         <Alert severity="warning" sx={{ mt: 1 }}>
           This regex is too complex to edit using toggles.
         </Alert>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -438,7 +449,6 @@ export const ValidationRegexControls = ({
           </Box>
         ))}
       </Stack>
-
       {toggleError && (
         <Typography
           variant="caption"
@@ -448,7 +458,6 @@ export const ValidationRegexControls = ({
           {toggleError}
         </Typography>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -491,7 +500,6 @@ export const ValidationRegexControls = ({
           label="Infinite max length"
         />
       </Stack>
-
       {lengthError && (
         <Typography
           variant="caption"
@@ -501,7 +509,6 @@ export const ValidationRegexControls = ({
           {lengthError}
         </Typography>
       )}
-
       <TextField
         label="Test Input"
         value={testValue}

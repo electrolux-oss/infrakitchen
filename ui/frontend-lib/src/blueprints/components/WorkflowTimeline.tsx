@@ -28,7 +28,13 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
 
   if (workflows.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          py: 2,
+        }}
+      >
         No workflows yet.
       </Typography>
     );
@@ -72,7 +78,12 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
               </Typography>
               <StatusChip status={exec.status} />
             </Box>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               {new Date(exec.createdAt).toLocaleString()}
             </Typography>
           </Box>

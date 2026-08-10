@@ -104,14 +104,17 @@ const AzureDevopsRepos = forwardRef<any, AzureDevopsReposProps>(
             margin="normal"
             error={!!fetchError}
             helperText={fetchError ? fetchError.message : helpertext || ""}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoading ? <GradientCircularProgress size={20} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              input: {
+                ...params.slotProps.input,
+                endAdornment: (
+                  <>
+                    {isLoading ? <GradientCircularProgress size={20} /> : null}
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}
@@ -120,7 +123,12 @@ const AzureDevopsRepos = forwardRef<any, AzureDevopsReposProps>(
             <Box>
               <Typography variant="body1">{option.name}</Typography>
               {option.description && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   {option.description}
                 </Typography>
               )}

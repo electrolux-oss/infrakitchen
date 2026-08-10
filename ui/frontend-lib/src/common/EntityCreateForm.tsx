@@ -144,9 +144,11 @@ export const EntityCreateDialog = <T extends FieldValues>({
       open={open}
       onClose={onClose}
       maxWidth={false}
-      PaperProps={{
-        style: {
-          borderRadius: "0.5em",
+      slotProps={{
+        paper: {
+          style: {
+            borderRadius: "0.5em",
+          },
         },
       }}
     >

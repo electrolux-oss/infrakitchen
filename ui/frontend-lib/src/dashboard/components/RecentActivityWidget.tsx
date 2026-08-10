@@ -47,24 +47,33 @@ export const RecentActivityWidget = ({
       <CardContent sx={{ maxHeight: 400, overflowY: "auto" }}>
         {loading ? (
           <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            minHeight={250}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 250,
+            }}
           >
             <CircularProgress />
           </Box>
         ) : displayedActivities.length === 0 ? (
           <Box
-            display="flex"
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-            minHeight={250}
-            color="text.secondary"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 250,
+              color: "text.secondary",
+            }}
           >
             <HistoryIcon sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2" textAlign="center">
+            <Typography
+              variant="body2"
+              sx={{
+                textAlign: "center",
+              }}
+            >
               No recent activity on your favorites.
             </Typography>
           </Box>

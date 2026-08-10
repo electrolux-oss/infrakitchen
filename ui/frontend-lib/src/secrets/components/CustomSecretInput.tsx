@@ -50,7 +50,14 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
 
     return (
       <Box sx={{ mt: 2, px: 2 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            alignItems: "center",
+            mb: 1,
+          }}
+        >
           <Grid size={{ xs: 12, sm: 11 }}>
             <Typography variant="h5" component="h3" sx={{ mb: 0 }}>
               {label}
@@ -68,7 +75,14 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
           </Grid>
         </Grid>
         {currentValue.map((item, index) => (
-          <Grid container spacing={2} alignItems="flex-end" key={index}>
+          <Grid
+            container
+            spacing={2}
+            key={index}
+            sx={{
+              alignItems: "flex-end",
+            }}
+          >
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Name"

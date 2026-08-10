@@ -118,7 +118,13 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   );
 
   return (
-    <Box display="inline-flex" alignItems="center" gap={1}>
+    <Box
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 1,
+      }}
+    >
       {entityName === "user" && <UserAvatar id={id} identifier={displayText} />}
       <Link
         href={fullPath}
@@ -159,7 +165,14 @@ export const getBooleanLabel = (value: boolean) => {
 
 export const getProviderValue = (provider: string, iconSize: number = 24) => {
   return (
-    <Box display="flex" alignItems="center" justifyContent="flex-start" gap={1}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-start",
+        gap: 1,
+      }}
+    >
       {IconField(provider, iconSize)}
       <Typography variant="body2" sx={{ color: "text.secondary" }}>
         {getProviderDisplayName(provider)}

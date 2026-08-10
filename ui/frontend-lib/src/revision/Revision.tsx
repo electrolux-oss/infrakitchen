@@ -190,10 +190,20 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   {revisions.map((r) => (
                     <MenuItem key={r.id} value={String(r.revisionNumber)}>
                       <Box>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                          }}
+                        >
                           v{r.revisionNumber}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
                           {getDateValue(r.createdAt)}
                         </Typography>
                       </Box>
@@ -229,10 +239,20 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   {revisions.map((r) => (
                     <MenuItem key={r.id} value={String(r.revisionNumber)}>
                       <Box>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                          }}
+                        >
                           v{r.revisionNumber}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
                           {getDateValue(r.createdAt)}
                         </Typography>
                       </Box>

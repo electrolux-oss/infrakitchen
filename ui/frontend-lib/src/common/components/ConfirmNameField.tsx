@@ -40,17 +40,19 @@ export const ConfirmNameField = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         error={value.length > 0 && !matched}
-        InputProps={{
-          endAdornment: value.length > 0 && (
-            <InputAdornment position="end">
-              <Typography
-                variant="caption"
-                color={matched ? "success.main" : "error.main"}
-              >
-                {matched ? "✓" : "✗"}
-              </Typography>
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            endAdornment: value.length > 0 && (
+              <InputAdornment position="end">
+                <Typography
+                  variant="caption"
+                  color={matched ? "success.main" : "error.main"}
+                >
+                  {matched ? "✓" : "✗"}
+                </Typography>
+              </InputAdornment>
+            ),
+          },
         }}
         autoComplete="off"
       />

@@ -40,7 +40,11 @@ export const IntegrationConfiguration = ({
       <CommonField
         name={"Integration Provider"}
         value={
-          <Box height="auto">
+          <Box
+            sx={{
+              height: "auto",
+            }}
+          >
             {getProviderValue(integration.integrationProvider)}
           </Box>
         }

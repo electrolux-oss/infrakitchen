@@ -46,9 +46,9 @@ export const userColumns: EntityTableColumn[] = [
     flex: 1,
     renderCell: (params: GridRenderCellParams) => (
       <Box
-        display="flex"
-        height="100%"
         sx={{
+          display: "flex",
+          height: "100%",
           wordBreak: "break-all",
           whiteSpace: "normal",
           alignItems: "center",
@@ -73,7 +73,13 @@ export const userColumns: EntityTableColumn[] = [
       })),
     },
     renderCell: (params: GridRenderCellParams) => (
-      <Box display="flex" alignItems="center" height="100%">
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
         {getProviderValue(params.value)}
       </Box>
     ),
@@ -134,11 +140,13 @@ export const userColumns: EntityTableColumn[] = [
       (row.secondaryAccounts || []).map((u: any) => u.identifier).join(", "),
     renderCell: (params: GridRenderCellParams) => (
       <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={0.5}
-        alignItems="center"
-        height="100%"
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 0.5,
+          alignItems: "center",
+          height: "100%",
+        }}
       >
         {(params.row.secondaryAccounts || []).map((u: any) => (
           <GetEntityLink key={u.id} {...u} />
@@ -155,11 +163,13 @@ export const userColumns: EntityTableColumn[] = [
       (row.primaryAccount || []).map((u: any) => u.identifier).join(", "),
     renderCell: (params: GridRenderCellParams) => (
       <Box
-        display="flex"
-        flexWrap="wrap"
-        gap={0.5}
-        alignItems="center"
-        height="100%"
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 0.5,
+          alignItems: "center",
+          height: "100%",
+        }}
       >
         {(params.row.primaryAccount || []).map((u: any) => (
           <GetEntityLink key={u.id} {...u} />

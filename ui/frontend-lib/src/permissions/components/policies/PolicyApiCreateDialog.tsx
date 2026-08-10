@@ -174,7 +174,12 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                             />
                           }
                           label={
-                            <Typography variant="body1" fontWeight="medium">
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontWeight: "medium",
+                              }}
+                            >
                               {apiName}
                             </Typography>
                           }

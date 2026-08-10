@@ -37,9 +37,11 @@ export const PropertyCollapseCard = (props: PropertyCollapseCardProps) => {
       <CardHeader
         title={
           <Box
-            display="flex"
-            alignItems="center"
             onClick={() => toggleExpanded(cardId)}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+            }}
           >
             {title}
             {subtitle && (

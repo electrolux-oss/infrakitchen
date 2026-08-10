@@ -245,7 +245,6 @@ export const SourceCodeRefRow = ({
           </IconButton>
         </Box>
       </Box>
-
       <CommonDialog
         open={toggleDialogOpen}
         onClose={() => setToggleDialogOpen(false)}
@@ -266,7 +265,6 @@ export const SourceCodeRefRow = ({
           </Button>
         }
       />
-
       <Collapse in={open} unmountOnExit>
         <Divider />
         <Box sx={{ px: 2, pb: 1.5 }}>

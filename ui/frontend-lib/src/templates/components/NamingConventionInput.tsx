@@ -147,10 +147,15 @@ export const NamingConventionInput = ({
           htmlInput: { "aria-label": "Naming convention pattern" },
         }}
       />
-
       {/* Available variables */}
       <Box sx={{ mt: 0.5, mb: 1 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            mr: 1,
+          }}
+        >
           Available variables (click to insert):
         </Typography>
         {loading && (
@@ -159,7 +164,12 @@ export const NamingConventionInput = ({
         {!loading &&
           configs.length === 0 &&
           parentOutputGroups.every((g) => g.outputs.length === 0) && (
-            <Typography variant="caption" color="text.disabled">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.disabled",
+              }}
+            >
               No variables found — add source code versions with variable
               configs first.
             </Typography>
@@ -170,8 +180,11 @@ export const NamingConventionInput = ({
           <Box sx={{ mt: 0.5, mb: 0.5 }}>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.25 }}
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                mb: 0.25,
+              }}
             >
               Input variables:
             </Typography>
@@ -207,8 +220,11 @@ export const NamingConventionInput = ({
               <Box key={group.parentName} sx={{ mt: 0.5, mb: 0.5 }}>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block", mb: 0.25 }}
+                  sx={{
+                    color: "text.secondary",
+                    display: "block",
+                    mb: 0.25,
+                  }}
                 >
                   Parent <strong>{group.parentName}</strong> outputs:
                 </Typography>

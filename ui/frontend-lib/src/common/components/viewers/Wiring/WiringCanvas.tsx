@@ -134,7 +134,6 @@ function WiringCanvasInner({
         onExternalTemplateAdd={onExternalTemplateAdd}
         onConstantAdd={onConstantAdd}
       />
-
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <ReactFlow<DiagramNode>
           nodes={nodes}
@@ -170,7 +169,12 @@ function WiringCanvasInner({
               gap: 8,
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Drag templates from the sidebar or drag from a green{" "}
               <strong>output</strong> dot to a blue <strong>input</strong> dot
               to wire. Press <strong>Backspace</strong> to delete an edge.

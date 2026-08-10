@@ -131,7 +131,11 @@ export const ResourceStateReviewDialog: React.FC<
             </Box>
           )}
           {entity?.status === ENTITY_STATUS.APPROVAL_PENDING && (
-            <Typography color="warning.main">
+            <Typography
+              sx={{
+                color: "warning.main",
+              }}
+            >
               Resource is pending for approval.
             </Typography>
           )}
