@@ -21,8 +21,7 @@ export const LogLiveTail = () => {
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
-    | { isMinimized: boolean }
-    | undefined;
+    { isMinimized: boolean } | undefined;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

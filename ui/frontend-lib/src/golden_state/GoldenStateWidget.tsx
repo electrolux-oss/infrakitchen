@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SecurityIcon from "@mui/icons-material/Security";
 import UpdateIcon from "@mui/icons-material/Update";

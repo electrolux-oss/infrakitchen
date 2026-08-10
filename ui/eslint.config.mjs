@@ -61,6 +61,11 @@ export default defineConfig([
       "unused-imports/no-unused-imports": "error",
       "import/prefer-default-export": "off",
       "react-hooks/exhaustive-deps": "error",
+      "react-hooks/immutability": "off",
+      "react-hooks/incompatible-library": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/refs": "off",
+      "react-hooks/set-state-in-effect": "off",
 
       "import/order": [
         "error",

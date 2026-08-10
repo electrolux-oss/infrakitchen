@@ -49,11 +49,7 @@ export const GlobalNotificationPopup = () => {
     lastSourceId.current = sourceId;
 
     const severity = (notification.status || "info") as
-      | "default"
-      | "error"
-      | "success"
-      | "warning"
-      | "info";
+      "default" | "error" | "success" | "warning" | "info";
 
     const title: string | undefined = notification.title ?? undefined;
     const body: string = notification.msg || "Notification received";

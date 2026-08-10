@@ -43,12 +43,7 @@ import { MetadataTab } from "./MetadataTab";
 import { SourceCodeVersionConfig } from "./SourceCodeVersionConfig";
 
 type TabValue =
-  | "metadata"
-  | "inputs"
-  | "outputs"
-  | "configuration"
-  | "audit"
-  | "revision";
+  "metadata" | "inputs" | "outputs" | "configuration" | "audit" | "revision";
 
 type GitRefRow = {
   entry: string;

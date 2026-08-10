@@ -126,8 +126,10 @@ export const EntityCreateForm = <T extends FieldValues>({
   );
 };
 
-interface EntityCreateDialogProps<T extends FieldValues>
-  extends Omit<EntityCreateFormProps<T>, "children"> {
+interface EntityCreateDialogProps<T extends FieldValues> extends Omit<
+  EntityCreateFormProps<T>,
+  "children"
+> {
   open: boolean;
   children: (methods: UseFormReturn<T>) => ReactNode;
 }

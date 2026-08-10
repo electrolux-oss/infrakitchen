@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 
 import {
   Add as AddIcon,
-  DeleteOutline as DeleteOutlineIcon,
+  DeleteOutlined as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import {
   TextField,

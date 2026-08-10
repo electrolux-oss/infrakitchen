@@ -16,8 +16,7 @@ export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
 ): MuiChipColor => {
   const lifecycleState = lifecycleStateValue?.toLocaleLowerCase() as
-    | VERSION_LIFECYCLE_STATE
-    | undefined;
+    VERSION_LIFECYCLE_STATE | undefined;
 
   if (lifecycleState === VERSION_LIFECYCLE_STATE.ACTIVE) return "success";
 

@@ -8,19 +8,10 @@ export interface BaseFilterConfig {
 // --- Advanced filter types ---
 
 export type FilterOperator =
-  | "eq"
-  | "like"
-  | "not_like"
-  | "is_none"
-  | "in"
-  | "contains_all"
-  | "any";
+  "eq" | "like" | "not_like" | "is_none" | "in" | "contains_all" | "any";
 
 export type ValueInputType =
-  | "text"
-  | "autocomplete-multiple"
-  | "select"
-  | "reference";
+  "text" | "autocomplete-multiple" | "select" | "reference";
 
 export interface ReferenceOption {
   label: string;

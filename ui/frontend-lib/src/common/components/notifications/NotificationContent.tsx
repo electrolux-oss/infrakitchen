@@ -1,19 +1,15 @@
 import { forwardRef } from "react";
 
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Typography, IconButton, Theme } from "@mui/material";
 import { toast } from "sonner";
 
 export type SnackbarVariant =
-  | "success"
-  | "error"
-  | "warning"
-  | "info"
-  | "default";
+  "success" | "error" | "warning" | "info" | "default";
 
 interface NotificationContentProps {
   id: string | number;
