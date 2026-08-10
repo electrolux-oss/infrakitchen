@@ -19,6 +19,10 @@ import {
   Typography,
 } from "@mui/material";
 
+import {
+  getAutocompleteInputProps,
+  getAutocompleteTextFieldProps,
+} from "../../common/utils/autocompleteInput";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import {
   buildRegexFromState,
@@ -385,33 +389,36 @@ export const ValidationRegexControls = ({
                   </li>
                 );
               }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Validation Regex"
-                  placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
-                  fullWidth
-                  margin="normal"
-                  onBlur={field.onBlur}
-                  slotProps={{
-                    ...params.slotProps,
-                    input: {
-                      ...params.slotProps.input,
-                      sx: {
-                        fontFamily:
-                          '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+              renderInput={(params) => {
+                const inputProps = getAutocompleteInputProps(params);
+
+                return (
+                  <TextField
+                    {...params}
+                    {...getAutocompleteTextFieldProps(params, {
+                      input: {
+                        ...inputProps,
+                        sx: {
+                          fontFamily:
+                            '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                        },
                       },
-                    },
-                  }}
-                  error={Boolean(fieldState.error)}
-                  helperText={
-                    fieldState.error?.message ||
-                    (selectedOption
-                      ? `Selected rule: ${selectedOption.label}`
-                      : "Select a predefined rule or enter a custom regex.")
-                  }
-                />
-              )}
+                    })}
+                    label="Validation Regex"
+                    placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
+                    fullWidth
+                    margin="normal"
+                    onBlur={field.onBlur}
+                    error={Boolean(fieldState.error)}
+                    helperText={
+                      fieldState.error?.message ||
+                      (selectedOption
+                        ? `Selected rule: ${selectedOption.label}`
+                        : "Select a predefined rule or enter a custom regex.")
+                    }
+                  />
+                );
+              }}
             />
           );
         }}
