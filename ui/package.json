@@ -36,24 +36,24 @@
     "codemirror-lang-hcl": "^0.1.0",
     "date-fns": "^4.4.0",
     "graphql": "^16.14.2",
-    "graphql-ws": "^6.2.0",
+    "graphql-ws": "^6.2.1",
     "jwt-decode": "^4.0.0",
     "material-ui-popup-state": "5.3.7",
     "react": "^19.2.8",
     "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^19.2.8",
-    "react-hook-form": "^7.83.0",
+    "react-hook-form": "^7.85.0",
     "react-router": "^7.18.2",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.1",
     "@react-router/dev": "^7.18.2",
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.65.0",
-    "@typescript-eslint/parser": "^8.65.0",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.66.0",
+    "@typescript-eslint/parser": "^8.66.0",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
@@ -71,7 +71,8 @@
     "globals": "^16.0.0",
     "typescript": "5.9.3",
     "react": "^19.2.8",
-    "react-router": "7.18.1"
+    "react-router": "7.18.2",
+    "linkify-it": "^5.0.2"
   },
   "packageManager": "yarn@4.4.1"
 }
