@@ -68,6 +68,7 @@ export const ResourceContent = ({
       content: (
         <ResourceNotificationSubscribersTable
           resourceId={entity.id}
+          projectId={entity.project?.id}
           key={subscribersRefreshKey}
         />
       ),
