@@ -491,6 +491,15 @@ __metadata:
     typescript: "npm:^7.0.2"
     vite: "npm:^8.2.1"
     vite-plugin-dts: "npm:^5.0.3"
+    zustand: "npm:^5.0.14"
+  peerDependencies:
+    "@emotion/react": ^11.14.0
+    "@emotion/styled": ^11.14.1
+    "@mui/icons-material": ^9.3.1
+    "@mui/material": ^9.3.1
+    react: ^19.2.8
+    react-dom: ^19.2.8
+    react-router: ^8.3.0
   languageName: unknown
   linkType: soft
 

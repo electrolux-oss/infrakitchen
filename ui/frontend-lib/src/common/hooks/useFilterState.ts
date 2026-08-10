@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useSearchParams } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import {
   FilterConfig,
@@ -185,7 +185,28 @@ export function useFilterState(
     setKey,
     value: contextValue,
   } = useLocalStorage<Record<string, FilterState>>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+
+  const setSearchParams = useCallback(
+    (nextSearchParams: URLSearchParams, options?: { replace?: boolean }) => {
+      const search = nextSearchParams.toString();
+
+      void navigate(
+        {
+          pathname: location.pathname,
+          search: search ? `?${search}` : "",
+          hash: location.hash,
+        },
+        { replace: options?.replace },
+      );
+    },
+    [location.hash, location.pathname, navigate],
+  );
 
   const getInitialState = useCallback(() => {
     const savedState = get(storageKey);

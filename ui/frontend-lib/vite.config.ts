@@ -17,6 +17,16 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["react", "react-dom", "react-router",
+        "@emotion/react",
+        "@emotion/styled",
+        "@mui/material",
+        "@mui/material/colors",
+        "@mui/material/styles",
+        "@mui/icons-material",
+        "ansi-to-react",
+        "graphql-ws",
+        "zustand",
+        "zustand/react/shallow",
         'react/jsx-runtime',
       ],
       output: {
