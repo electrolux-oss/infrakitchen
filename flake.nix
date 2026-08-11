@@ -67,12 +67,9 @@
         initNodeModulesScript = pkgs.writeText "init-node-modules.sh" ''
           # Placeholder for any Node.js initialization commands
           echo "Initializing Node.js modules..."
-          if [ ! -d "ui/node_modules" ]; then
-            cd ui
-            echo "Installing Node.js dependencies..."
-            ${pkgs.yarn}/bin/yarn install
-            cd ..
-          fi
+          cd ui
+          ${pkgs.yarn}/bin/yarn install
+          cd ..
           '';
 
       in
