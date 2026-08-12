@@ -18,11 +18,21 @@ export const HorizontalTimeline = <T extends HorizontalTimelineItem>({
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", ml: 2 }}>
       {items.map((item, index) => (
-        <Stack key={item.id} alignItems="center" sx={{ minWidth: 160, pb: 1 }}>
+        <Stack
+          key={item.id}
+          sx={{
+            alignItems: "center",
+            minWidth: 160,
+            pb: 1,
+          }}
+        >
           <Stack
             direction="row"
-            alignItems="center"
-            sx={{ width: "100%", height: 12 }}
+            sx={{
+              alignItems: "center",
+              width: "100%",
+              height: 12,
+            }}
           >
             <Box
               sx={{

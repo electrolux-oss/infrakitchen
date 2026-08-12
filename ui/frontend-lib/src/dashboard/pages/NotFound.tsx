@@ -35,9 +35,11 @@ export const NotFoundPage = () => {
         <Typography
           variant="h2"
           component="h1"
-          fontWeight="700"
-          color="text.primary"
           gutterBottom
+          sx={{
+            fontWeight: "700",
+            color: "text.primary",
+          }}
         >
           404
         </Typography>
@@ -48,8 +50,11 @@ export const NotFoundPage = () => {
 
         <Typography
           variant="body1"
-          color="text.secondary"
-          sx={{ mb: 4, maxWidth: "500px" }}
+          sx={{
+            color: "text.secondary",
+            mb: 4,
+            maxWidth: "500px",
+          }}
         >
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
           Don&apos;t worry, even the best explorers get lost sometimes.
@@ -65,7 +70,13 @@ export const NotFoundPage = () => {
             bgcolor: "action.hover",
           }}
         >
-          <Typography variant="subtitle1" fontWeight="600" mb={2}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: "600",
+              mb: 2,
+            }}
+          >
             Let&apos;s get you back on track:
           </Typography>
 

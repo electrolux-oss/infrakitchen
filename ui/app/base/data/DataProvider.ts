@@ -56,8 +56,10 @@ const parseErrorBody = async (response: Response): Promise<void> => {
   let errorBody: ApiErrorResponse;
   try {
     errorBody = await response.json();
-  } catch (_) {
-    throw new Error(`${response.status} ${response.statusText}.`);
+  } catch (error) {
+    throw new Error(`${response.status} ${response.statusText}.`, {
+      cause: error,
+    });
   }
 
   const apiError = toApiClientError(response.status, errorBody);

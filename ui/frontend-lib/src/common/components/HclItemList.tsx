@@ -59,7 +59,12 @@ export const HclItemList: React.FC<HclItemListProps> = ({
 
   if (!items || items.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         {emptyMessage || defaultEmptyMessage}
       </Typography>
     );
@@ -100,10 +105,12 @@ export const HclItemList: React.FC<HclItemListProps> = ({
         <Box sx={{ mb: 2 }}>
           <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            flexWrap="wrap"
-            gap={1}
+            sx={{
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 1,
+            }}
           >
             {/* Variable counts */}
             <Stack direction="row" spacing={1}>
@@ -150,7 +157,6 @@ export const HclItemList: React.FC<HclItemListProps> = ({
           </Stack>
         </Box>
       )}
-
       {type === "variables" ? (
         <>
           {sortedItems.map((variable: any) => (

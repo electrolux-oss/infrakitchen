@@ -19,6 +19,10 @@ import {
   Typography,
 } from "@mui/material";
 
+import {
+  getAutocompleteInputProps,
+  getAutocompleteTextFieldProps,
+} from "../../common/utils/autocompleteInput";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import {
   buildRegexFromState,
@@ -284,7 +288,12 @@ export const ValidationRegexControls = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Provide a regular expression for this variable or use the toggles to
         generate one automatically.
       </Typography>
@@ -368,48 +377,57 @@ export const ValidationRegexControls = ({
                   <li key={option.id} {...optionProps}>
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
                       <Typography variant="body2">{option.label}</Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         {option.regex}
                       </Typography>
                     </Box>
                   </li>
                 );
               }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Validation Regex"
-                  placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
-                  fullWidth
-                  margin="normal"
-                  onBlur={field.onBlur}
-                  InputProps={{
-                    ...params.InputProps,
-                    sx: {
-                      fontFamily:
-                        '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
-                    },
-                  }}
-                  error={Boolean(fieldState.error)}
-                  helperText={
-                    fieldState.error?.message ||
-                    (selectedOption
-                      ? `Selected rule: ${selectedOption.label}`
-                      : "Select a predefined rule or enter a custom regex.")
-                  }
-                />
-              )}
+              renderInput={(params) => {
+                const inputProps = getAutocompleteInputProps(params);
+
+                return (
+                  <TextField
+                    {...params}
+                    {...getAutocompleteTextFieldProps(params, {
+                      input: {
+                        ...inputProps,
+                        sx: {
+                          fontFamily:
+                            '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                        },
+                      },
+                    })}
+                    label="Validation Regex"
+                    placeholder="e.g. ^[a-zA-Z0-9]{1,64}$"
+                    fullWidth
+                    margin="normal"
+                    onBlur={field.onBlur}
+                    error={Boolean(fieldState.error)}
+                    helperText={
+                      fieldState.error?.message ||
+                      (selectedOption
+                        ? `Selected rule: ${selectedOption.label}`
+                        : "Select a predefined rule or enter a custom regex.")
+                    }
+                  />
+                );
+              }}
             />
           );
         }}
       />
-
       {isComplexRegex && (
         <Alert severity="warning" sx={{ mt: 1 }}>
           This regex is too complex to edit using toggles.
         </Alert>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -438,7 +456,6 @@ export const ValidationRegexControls = ({
           </Box>
         ))}
       </Stack>
-
       {toggleError && (
         <Typography
           variant="caption"
@@ -448,7 +465,6 @@ export const ValidationRegexControls = ({
           {toggleError}
         </Typography>
       )}
-
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -491,7 +507,6 @@ export const ValidationRegexControls = ({
           label="Infinite max length"
         />
       </Stack>
-
       {lengthError && (
         <Typography
           variant="caption"
@@ -501,7 +516,6 @@ export const ValidationRegexControls = ({
           {lengthError}
         </Typography>
       )}
-
       <TextField
         label="Test Input"
         value={testValue}

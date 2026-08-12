@@ -208,13 +208,11 @@ export const ResourceOverview = ({
         )}
         size={4}
       />
-
       <CommonField
         name="State"
         value={<StatusChip status={resource.status} state={resource.state} />}
         size={4}
       />
-
       <CommonEditableField<string>
         name="Description"
         canEdit={canEdit}
@@ -239,7 +237,6 @@ export const ResourceOverview = ({
         )}
         size={12}
       />
-
       <CommonField
         name="Created"
         value={
@@ -253,7 +250,6 @@ export const ResourceOverview = ({
         size={4}
       />
       <CommonField name="Revision" value={resource.revisionNumber} size={4} />
-
       <CommonEditableField<string[]>
         name="Labels"
         canEdit={canEdit}
@@ -275,11 +271,9 @@ export const ResourceOverview = ({
         )}
         size={12}
       />
-
       <Box sx={{ width: "100%", my: 1 }}>
         <Divider />
       </Box>
-
       <CommonEditableField<string | null>
         name="Project"
         canEdit={canEdit}
@@ -308,7 +302,6 @@ export const ResourceOverview = ({
         )}
         size={6}
       />
-
       {resource.abstract === false && (
         <>
           <CommonEditableField<string[]>
@@ -319,7 +312,13 @@ export const ResourceOverview = ({
             isEqual={sameStringSet}
             display={withPendingChange(
               resource.integrationIds && resource.integrationIds.length > 0 ? (
-                <Box display="flex" gap={1} flexWrap="wrap">
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {resource.integrationIds.map((integration) => (
                     <span key={integration.id}>
                       <GetReferenceUrlValue {...integration} />
@@ -357,7 +356,13 @@ export const ResourceOverview = ({
             isEqual={sameStringSet}
             display={withPendingChange(
               resource.secretIds && resource.secretIds.length > 0 ? (
-                <Box display="flex" gap={1} flexWrap="wrap">
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {resource.secretIds.map((secret) => (
                     <span key={secret.id}>
                       <GetReferenceUrlValue {...secret} />
@@ -456,7 +461,6 @@ export const ResourceOverview = ({
           />
         </>
       )}
-
       <CommonField
         name="Parents"
         size={6}

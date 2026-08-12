@@ -126,10 +126,20 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         }
         size={6}
       />
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Force resources in this project to use the assigned workspace.
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+        }}
+      >
         Let users update selected resource fields without creating an approval
         request.
       </Typography>

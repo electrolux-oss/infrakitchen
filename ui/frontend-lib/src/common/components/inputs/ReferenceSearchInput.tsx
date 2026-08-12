@@ -11,6 +11,10 @@ import { InfraKitchenApi } from "../../../api/InfraKitchenApi";
 import { IkEntity } from "../../../types";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
+import {
+  getAutocompleteInputProps,
+  getAutocompleteTextFieldProps,
+} from "../../utils/autocompleteInput";
 
 import { getOptionLabel } from "./utils";
 
@@ -244,20 +248,26 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
           onChange={handleAutocompleteChange}
           onInputChange={handleInputChange}
           filterOptions={(x) => x}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              {...otherProps}
-              label={props.label}
-              error={props.error}
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>{loading ? "..." : params.InputProps.endAdornment}</>
-                ),
-              }}
-            />
-          )}
+          renderInput={(params) => {
+            const inputProps = getAutocompleteInputProps(params);
+
+            return (
+              <TextField
+                {...params}
+                {...otherProps}
+                {...getAutocompleteTextFieldProps(params, {
+                  input: {
+                    ...inputProps,
+                    endAdornment: (
+                      <>{loading ? "..." : inputProps.endAdornment}</>
+                    ),
+                  },
+                })}
+                label={props.label}
+                error={props.error}
+              />
+            );
+          }}
         />
         <FormHelperText error={props.error}>
           {props.helpertext || ""}

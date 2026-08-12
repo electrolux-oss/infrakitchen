@@ -17,6 +17,7 @@ import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
@@ -308,6 +309,11 @@ const ExecutorCreatePageInner = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
+                        {...getAutocompleteTextFieldProps(params, {
+                          htmlInput: {
+                            "aria-label": "Source git tag",
+                          },
+                        })}
                         label="Select Git Tag"
                         fullWidth
                         margin="normal"
@@ -317,10 +323,6 @@ const ExecutorCreatePageInner = () => {
                             ? errors.sourceCodeVersion.message
                             : "Select git tag"
                         }
-                        inputProps={{
-                          ...params.inputProps,
-                          "aria-label": "Source git tag",
-                        }}
                       />
                     )}
                   />
@@ -341,6 +343,11 @@ const ExecutorCreatePageInner = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
+                      {...getAutocompleteTextFieldProps(params, {
+                        htmlInput: {
+                          "aria-label": "Source git branch",
+                        },
+                      })}
                       label="Select Git Branch"
                       fullWidth
                       margin="normal"
@@ -350,10 +357,6 @@ const ExecutorCreatePageInner = () => {
                           ? errors.sourceCodeBranch.message
                           : "Select git branch"
                       }
-                      inputProps={{
-                        ...params.inputProps,
-                        "aria-label": "Source git branch",
-                      }}
                     />
                   )}
                 />

@@ -74,24 +74,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     let loginUrl: string = "";
-    let loginRedirectUri: string = "";
     if (provider === "microsoft") {
-      loginRedirectUri = "/api/auth/microsoft/callback";
+      const loginRedirectUri = "/api/auth/microsoft/callback";
       loginUrl = `/api/auth/microsoft/login?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     } else if (provider === "guest_default") {
-      loginRedirectUri = "/api/auth/guest/callback/default";
+      const loginRedirectUri = "/api/auth/guest/callback/default";
       loginUrl = `/api/auth/guest/login/default?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     } else if (provider === "guest_super") {
-      loginRedirectUri = "/api/auth/guest/callback/super";
+      const loginRedirectUri = "/api/auth/guest/callback/super";
       loginUrl = `/api/auth/guest/login/super?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     } else if (provider === "guest_infra") {
-      loginRedirectUri = "/api/auth/guest/callback/infra";
+      const loginRedirectUri = "/api/auth/guest/callback/infra";
       loginUrl = `/api/auth/guest/login/infra?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     } else if (provider === "github") {
-      loginRedirectUri = "/api/auth/github/callback";
+      const loginRedirectUri = "/api/auth/github/callback";
       loginUrl = `/api/auth/github/login?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     } else if (provider === "google") {
-      loginRedirectUri = "/api/auth/google/callback";
+      const loginRedirectUri = "/api/auth/google/callback";
       loginUrl = `/api/auth/google/login?redirect_uri=${encodeURIComponent(loginRedirectUri)}`;
     }
     if (loginUrl) {

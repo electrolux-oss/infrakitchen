@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 
-import { Link as RouterLink } from "react-router";
+import { useNavigate } from "react-router";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import SecurityIcon from "@mui/icons-material/Security";
 import UpdateIcon from "@mui/icons-material/Update";
@@ -76,11 +76,23 @@ function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
   return `/projects/${project.projectId}/resources`;
 }
 
+function isPlainLeftClick(event: MouseEvent<HTMLElement>) {
+  return !(
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.shiftKey
+  );
+}
+
 function ProjectHeatMapTile({
   project,
 }: {
   project: GoldenStateProjectReport;
 }) {
+  const navigate = useNavigate();
   const comparable = project.total - project.noGolden;
   const scoreColor = getScoreChipColor(project.score);
   const resourcesUrl = buildProjectResourcesUrl(project);
@@ -118,10 +130,20 @@ function ProjectHeatMapTile({
     },
   ]);
 
+  const handleNavigate = (url: string) => (event: MouseEvent<HTMLElement>) => {
+    if (!isPlainLeftClick(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    void navigate(url);
+  };
+
   return (
     <Box
-      component={RouterLink}
-      to={projectPageResourcesUrl}
+      component="a"
+      href={projectPageResourcesUrl}
+      onClick={handleNavigate(projectPageResourcesUrl)}
       sx={(theme) => ({
         display: "flex",
         flexDirection: "column",
@@ -141,12 +163,16 @@ function ProjectHeatMapTile({
       })}
     >
       <Link
-        component={RouterLink}
-        to={resourcesUrl}
+        component="a"
+        href={resourcesUrl}
+        onClick={handleNavigate(resourcesUrl)}
         underline="hover"
         variant="body2"
-        fontWeight={600}
-        sx={{ color: "inherit", lineHeight: 1.3 }}
+        sx={{
+          fontWeight: 600,
+          color: "inherit",
+          lineHeight: 1.3,
+        }}
       >
         {project.projectName}
       </Link>
@@ -164,11 +190,15 @@ function ProjectHeatMapTile({
           color={scoreColor}
           variant="filled"
         />
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           {project.compliant}/{comparable} at golden state
         </Typography>
       </Box>
-
       <Box
         sx={{
           mt: "auto",
@@ -179,9 +209,10 @@ function ProjectHeatMapTile({
       >
         {project.compliant > 0 && (
           <Chip
-            component={RouterLink}
+            component="a"
             clickable
-            to={activeResourcesUrl}
+            href={activeResourcesUrl}
+            onClick={handleNavigate(activeResourcesUrl)}
             icon={<CheckCircleIcon />}
             label={project.compliant}
             size="small"
@@ -192,9 +223,10 @@ function ProjectHeatMapTile({
         )}
         {project.updateAvailable > 0 && (
           <Chip
-            component={RouterLink}
+            component="a"
             clickable
-            to={previewResourcesUrl}
+            href={previewResourcesUrl}
+            onClick={handleNavigate(previewResourcesUrl)}
             icon={<UpdateIcon />}
             label={project.updateAvailable}
             size="small"
@@ -205,9 +237,10 @@ function ProjectHeatMapTile({
         )}
         {project.deprecated > 0 && (
           <Chip
-            component={RouterLink}
+            component="a"
             clickable
-            to={deprecatedResourcesUrl}
+            href={deprecatedResourcesUrl}
+            onClick={handleNavigate(deprecatedResourcesUrl)}
             icon={<WarningAmberIcon />}
             label={project.deprecated}
             size="small"
@@ -218,9 +251,10 @@ function ProjectHeatMapTile({
         )}
         {project.critical > 0 && (
           <Chip
-            component={RouterLink}
+            component="a"
             clickable
-            to={archivedResourcesUrl}
+            href={archivedResourcesUrl}
+            onClick={handleNavigate(archivedResourcesUrl)}
             icon={<ErrorOutlineIcon />}
             label={project.critical}
             size="small"
@@ -304,26 +338,40 @@ export const GoldenStateWidget = ({
       >
         {loading ? (
           <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            py={2}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              py: 2,
+            }}
           >
             <CircularProgress size={24} />
           </Box>
         ) : goldenStateReport && goldenStateReport.projects.length === 0 ? (
           <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            py={3}
-            color="text.secondary"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              py: 3,
+              color: "text.secondary",
+            }}
           >
             <SecurityIcon sx={{ fontSize: 36, mb: 1, opacity: 0.5 }} />
-            <Typography variant="body2" textAlign="center">
+            <Typography
+              variant="body2"
+              sx={{
+                textAlign: "center",
+              }}
+            >
               No resources to evaluate.
             </Typography>
-            <Typography variant="caption" textAlign="center">
+            <Typography
+              variant="caption"
+              sx={{
+                textAlign: "center",
+              }}
+            >
               Create resources with templates that have an Active version to see
               compliance.
             </Typography>

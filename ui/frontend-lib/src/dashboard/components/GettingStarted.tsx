@@ -44,28 +44,46 @@ export const GettingStartedContent = () => {
 
   return (
     <Box>
-      <Stack direction="row" alignItems="center" gap={2} mb={3}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          gap: 2,
+          mb: 3,
+        }}
+      >
         <Icon icon="emojione:shopping-cart" width="24" height="24" />
         <Typography variant="h5" component="h2" color="primary">
           Getting Started
         </Typography>
       </Stack>
-
       {steps.map((step, idx) => (
         <Box
           key={step.title}
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-          borderTop={1}
-          borderColor="divider"
-          py={2.5}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderTop: 1,
+            borderColor: "divider",
+            py: 2.5,
+          }}
         >
           <Box>
-            <Typography variant="body1" mb={0.5}>
+            <Typography
+              variant="body1"
+              sx={{
+                mb: 0.5,
+              }}
+            >
               {idx + 1}. {step.title}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               {step.description}
             </Typography>
           </Box>

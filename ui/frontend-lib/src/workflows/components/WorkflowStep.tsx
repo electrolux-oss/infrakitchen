@@ -96,7 +96,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             {step.startedAt && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 <RelativeTime date={step.startedAt} />
               </Typography>
             )}
@@ -116,7 +121,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
           >
             {/* Resource */}
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 Resource
               </Typography>
               <Box sx={{ mt: 0.5 }}>
@@ -129,7 +139,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                     }
                   />
                 ) : (
-                  <Typography variant="body2" color="text.disabled">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.disabled",
+                    }}
+                  >
                     {workflowAction === "destroy"
                       ? "Resource removed"
                       : "Not created yet"}
@@ -141,7 +156,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             {/* SCV */}
             {step.sourceCodeVersion?.id && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Source Code Version
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
@@ -160,7 +180,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             {/* Duration */}
             {step.startedAt && step.completedAt && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Duration
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
@@ -174,8 +199,10 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 600,
+                  }}
                 >
                   Parent Resources
                 </Typography>
@@ -210,8 +237,10 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 600,
+                  }}
                 >
                   External Inputs (Read-only)
                 </Typography>
@@ -246,7 +275,12 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                           gap: 0.75,
                         }}
                       >
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
                           {resource.template?.name ??
                             resource.template?.id ??
                             "External"}
@@ -283,8 +317,10 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               <Box sx={{ mt: 1.5 }}>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{
+                    color: "text.secondary",
+                    fontWeight: 600,
+                  }}
                 >
                   Integrations
                 </Typography>

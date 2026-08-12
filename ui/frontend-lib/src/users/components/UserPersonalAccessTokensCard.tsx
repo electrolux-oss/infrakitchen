@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import {
   Alert,
@@ -120,7 +120,14 @@ const TokenDialog = ({
             }}
             helperText="Leave blank for a token that does not expire."
           />
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{
+              flexWrap: "wrap",
+            }}
+          >
             {expirationOptions.map((days) => (
               <Button
                 key={days}
@@ -195,7 +202,12 @@ const TokenValueDialog = ({
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="h6">Store this token securely</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 This is the only time the full token value will be shown. Copy
                 it now and store it in a secure password manager or secret
                 vault.
@@ -209,8 +221,11 @@ const TokenValueDialog = ({
           <Box>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.75 }}
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                mb: 0.75,
+              }}
             >
               Access token
             </Typography>
@@ -255,7 +270,12 @@ const TokenValueDialog = ({
             spacing={1}
             sx={{ justifyContent: "space-between" }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant="caption"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               After this dialog closes, only the token prefix will remain
               visible.
             </Typography>
@@ -429,11 +449,21 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
           }}
         >
           {isLoading ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               Loading tokens...
             </Typography>
           ) : tokens.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
               No personal access tokens yet.
             </Typography>
           ) : (
@@ -470,7 +500,12 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                         <Chip label="Expired" size="small" color="error" />
                       ) : null}
                     </Stack>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                      }}
+                    >
                       Prefix: <code>{token.tokenPrefix}</code>
                     </Typography>
                     <Stack
@@ -478,10 +513,20 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                       spacing={2}
                       useFlexGap
                     >
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         Expires: {formatExpirySummary(token.expiresAt)}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         Last used:{" "}
                         {token.lastUsedAt ? (
                           <RelativeTime date={token.lastUsedAt} />
@@ -489,7 +534,12 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                           "Never"
                         )}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                        }}
+                      >
                         Created: <RelativeTime date={token.createdAt} />
                       </Typography>
                     </Stack>

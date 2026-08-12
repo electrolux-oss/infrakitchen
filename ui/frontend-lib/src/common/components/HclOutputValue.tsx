@@ -23,9 +23,11 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
     >
       <Typography
         variant="body1"
-        fontWeight={500}
         component="span"
-        sx={{ mr: 1 }}
+        sx={{
+          fontWeight: 500,
+          mr: 1,
+        }}
       >
         {output.name}
       </Typography>
@@ -34,9 +36,11 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
       )}
       <Typography
         variant="caption"
-        color="text.secondary"
-        display="block"
-        mt={1}
+        sx={{
+          color: "text.secondary",
+          display: "block",
+          mt: 1,
+        }}
       >
         {output.description || "No description"}
       </Typography>

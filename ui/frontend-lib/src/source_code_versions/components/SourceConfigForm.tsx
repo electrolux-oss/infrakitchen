@@ -161,9 +161,11 @@ export const SourceConfigForm = (props: {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Typography
             variant="subtitle1"
-            color="text.primary"
-            fontWeight="bold"
             component="span"
+            sx={{
+              color: "text.primary",
+              fontWeight: "bold",
+            }}
           >
             {configName}
           </Typography>
@@ -209,15 +211,18 @@ export const SourceConfigForm = (props: {
           )}
         </Box>
       </Box>
-
       {configDescription && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 2,
+          }}
+        >
           {configDescription}
         </Typography>
       )}
-
       <Divider sx={{ mb: 2 }} />
-
       {sensitive && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="error">
@@ -226,7 +231,6 @@ export const SourceConfigForm = (props: {
           </Typography>
         </Box>
       )}
-
       {!sensitive && (
         <Box>
           <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
@@ -350,8 +354,10 @@ export const SourceConfigForm = (props: {
             <Stack
               direction={{ xs: "column", md: "row" }}
               spacing={{ xs: 0.5, md: 1 }}
-              alignItems="flex-start"
-              sx={{ flexGrow: 1 }}
+              sx={{
+                alignItems: "flex-start",
+                flexGrow: 1,
+              }}
             >
               <Box>
                 <Controller
@@ -442,7 +448,12 @@ export const SourceConfigForm = (props: {
                     gap: 2,
                   }}
                 >
-                  <Typography variant="subtitle2" fontWeight={600}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      fontWeight: 600,
+                    }}
+                  >
                     String Validation
                   </Typography>
                   <Controller
@@ -456,7 +467,12 @@ export const SourceConfigForm = (props: {
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                         label={
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                            }}
+                          >
                             {field.value ? "Enabled" : "Disabled"}
                           </Typography>
                         }
@@ -464,7 +480,6 @@ export const SourceConfigForm = (props: {
                           <Switch
                             size="small"
                             name={field.name}
-                            inputRef={field.ref}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}
                             onFocus={(event) => event.stopPropagation()}
@@ -475,8 +490,11 @@ export const SourceConfigForm = (props: {
                                 "string",
                               )
                             }
-                            inputProps={{
-                              "aria-label": "Toggle string validation",
+                            slotProps={{
+                              input: {
+                                ref: field.ref,
+                                "aria-label": "Toggle string validation",
+                              },
                             }}
                           />
                         }
@@ -489,7 +507,12 @@ export const SourceConfigForm = (props: {
                 {validationEnabled ? (
                   <ValidationRegexControls control={control} index={index} />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     Validation is disabled for this variable. Toggle the switch
                     to enable it.
                   </Typography>
@@ -522,7 +545,12 @@ export const SourceConfigForm = (props: {
                     gap: 2,
                   }}
                 >
-                  <Typography variant="subtitle2" fontWeight={600}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      fontWeight: 600,
+                    }}
+                  >
                     Number Validation
                   </Typography>
                   <Controller
@@ -536,7 +564,12 @@ export const SourceConfigForm = (props: {
                         onClick={(event) => event.stopPropagation()}
                         onFocus={(event) => event.stopPropagation()}
                         label={
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                            }}
+                          >
                             {field.value ? "Enabled" : "Disabled"}
                           </Typography>
                         }
@@ -544,7 +577,6 @@ export const SourceConfigForm = (props: {
                           <Switch
                             size="small"
                             name={field.name}
-                            inputRef={field.ref}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}
                             onFocus={(event) => event.stopPropagation()}
@@ -555,8 +587,11 @@ export const SourceConfigForm = (props: {
                                 "number",
                               )
                             }
-                            inputProps={{
-                              "aria-label": "Toggle number validation",
+                            slotProps={{
+                              input: {
+                                ref: field.ref,
+                                "aria-label": "Toggle number validation",
+                              },
                             }}
                           />
                         }
@@ -569,7 +604,12 @@ export const SourceConfigForm = (props: {
                 {validationEnabled ? (
                   <ValidationNumberControls control={control} index={index} />
                 ) : (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     Validation is disabled for this variable. Toggle the switch
                     to enable numeric boundaries.
                   </Typography>

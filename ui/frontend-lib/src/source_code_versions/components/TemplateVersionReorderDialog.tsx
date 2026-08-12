@@ -1,7 +1,7 @@
 import type { DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
@@ -345,7 +345,12 @@ export const TemplateVersionReorderDialog = ({
       <DialogTitle>Rearrange Template Versions</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             Drag and drop versions for `{templateName}`. The saved order updates
             each version&apos;s index.
           </Typography>

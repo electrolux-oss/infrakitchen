@@ -20,8 +20,7 @@ export const getStateColor = (
   stateValue: string | undefined,
 ): ColorToken => {
   const status = statusValue.toLocaleLowerCase() as
-    | ENTITY_STATUS
-    | WORKER_STATUS;
+    ENTITY_STATUS | WORKER_STATUS;
   const state = stateValue?.toLocaleLowerCase() as ENTITY_STATE;
 
   if (status === ENTITY_STATUS.DONE && state === ENTITY_STATE.PROVISIONED)

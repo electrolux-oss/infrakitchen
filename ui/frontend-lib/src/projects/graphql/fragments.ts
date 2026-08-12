@@ -45,8 +45,7 @@ export type ProjectGraphqlShortField =
   | (typeof PROJECT_GRAPHQL_FIELDS.short)[number]
   | typeof PROJECT_GRAPHQL_FIELDS.relations.owners;
 export type ProjectGraphqlDetailField =
-  | (typeof PROJECT_GRAPHQL_FIELDS.detail)[number]
-  | "goldenState";
+  (typeof PROJECT_GRAPHQL_FIELDS.detail)[number] | "goldenState";
 export type ProjectGraphqlRelationKey =
   keyof typeof PROJECT_GRAPHQL_FIELDS.relations;
 export type ProjectGraphqlRelationField =

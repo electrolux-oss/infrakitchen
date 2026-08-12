@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import { Button, Stack } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 

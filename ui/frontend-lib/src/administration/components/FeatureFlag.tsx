@@ -110,9 +110,11 @@ export const FeatureFlagSection = () => {
       <Box sx={{ mb: 3 }}>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 1 }}
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1,
+          }}
         >
           <Typography variant="h5" component="h2" gutterBottom>
             Feature Flags
@@ -140,7 +142,6 @@ export const FeatureFlagSection = () => {
           Manage application feature toggles and configuration settings
         </Typography>
       </Box>
-
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {featureFlags.map((flag) => (
           <Grid

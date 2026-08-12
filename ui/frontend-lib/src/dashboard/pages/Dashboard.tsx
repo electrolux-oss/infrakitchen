@@ -46,7 +46,13 @@ export const DashboardPage = () => {
             >
               Welcome to InfraKitchen
             </Typography>
-            <Typography variant="body1" color="text.secondary" mb={6}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "text.secondary",
+                mb: 6,
+              }}
+            >
               Streamline your infrastructure management with our powerful
               platform for composing, deploying, and managing infrastructure as
               code.
@@ -66,7 +72,9 @@ export const DashboardPage = () => {
             variant="h4"
             component="h1"
             color="primary"
-            fontWeight={600}
+            sx={{
+              fontWeight: 600,
+            }}
           >
             Welcome to InfraKitchen
           </Typography>

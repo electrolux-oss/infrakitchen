@@ -32,28 +32,42 @@ export const MyFavoritesWidget = ({
       <CardContent sx={{ maxHeight: 400, overflowY: "auto" }}>
         {loading ? (
           <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            py={2}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              py: 2,
+            }}
           >
             <CircularProgress size={24} />
           </Box>
         ) : favorites.length === 0 ? (
           <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            py={3}
-            color="text.secondary"
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              py: 3,
+              color: "text.secondary",
+            }}
           >
             <FavoriteIcon
               sx={{ fontSize: 36, mb: 1, opacity: 0.5, color: "error.main" }}
             />
-            <Typography variant="body2" textAlign="center">
+            <Typography
+              variant="body2"
+              sx={{
+                textAlign: "center",
+              }}
+            >
               No favorites yet.
             </Typography>
-            <Typography variant="caption" textAlign="center">
+            <Typography
+              variant="caption"
+              sx={{
+                textAlign: "center",
+              }}
+            >
               Pin resources for quick access.
             </Typography>
           </Box>

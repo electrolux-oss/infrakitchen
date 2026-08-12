@@ -79,7 +79,13 @@ export const IntegrationOidcSection = ({
   };
 
   const copyableValue = (value: string) => (
-    <Stack direction="row" alignItems="center" spacing={1}>
+    <Stack
+      direction="row"
+      spacing={1}
+      sx={{
+        alignItems: "center",
+      }}
+    >
       <Box
         component="span"
         sx={{ wordBreak: "break-all", fontFamily: "monospace" }}
@@ -118,8 +124,11 @@ export const IntegrationOidcSection = ({
             </Button>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mt: 0.5 }}
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                mt: 0.5,
+              }}
             >
               Upload this JWKS into the GCP Workload Identity provider only when
               InfraKitchen is not publicly reachable by GCP.

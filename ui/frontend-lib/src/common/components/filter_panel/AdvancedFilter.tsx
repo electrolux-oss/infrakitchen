@@ -7,7 +7,7 @@ import React, {
 } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import {
   Box,
   Button,
@@ -381,7 +381,12 @@ const ClauseRow = ({
         sx={{ flex: "0 0 220px", minWidth: 0, height: ROW_HEIGHT }}
       >
         <MenuItem value="" disabled>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             Field...
           </Typography>
         </MenuItem>
@@ -391,7 +396,6 @@ const ClauseRow = ({
           </MenuItem>
         ))}
       </Select>
-
       {/* Operator selector */}
       <Select
         size="small"
@@ -410,10 +414,8 @@ const ClauseRow = ({
           </MenuItem>
         ))}
       </Select>
-
       {/* Value input */}
       {renderValueInput()}
-
       {/* Remove button */}
       <Tooltip title="Remove filter">
         <span>

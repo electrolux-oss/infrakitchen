@@ -100,7 +100,12 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
             <Box
               sx={{ display: "flex", flexDirection: "column", width: "100%" }}
             >
-              <Typography variant="body1" fontWeight="bold">
+              <Typography
+                variant="body1"
+                sx={{
+                  fontWeight: "bold",
+                }}
+              >
                 #{pr.number}: {pr.title}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
@@ -110,7 +115,12 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
                   size="small"
                   sx={{ mr: 1 }}
                 />
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   Opened by{" "}
                   <MuiLink
                     href={pr.user.html_url}
@@ -124,7 +134,13 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
                   })}
                 </Typography>
               </Box>
-              <Box mt={2} display="flex" justifyContent="flex-end">
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
                 <MuiLink
                   href={pr.html_url}
                   target="_blank"
@@ -152,7 +168,11 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
               height="300px"
             />
             {pr.body && pr.body.length > 0 && (
-              <Box mt={2}>
+              <Box
+                sx={{
+                  mt: 2,
+                }}
+              >
                 <Typography variant="h5" gutterBottom>
                   Description:
                 </Typography>

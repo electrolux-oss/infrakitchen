@@ -57,7 +57,13 @@ export const storageColumns: EntityTableColumn[] = [
       ],
     },
     renderCell: (params: GridRenderCellParams) => (
-      <Box display="flex" alignItems="center" height="100%">
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
         {getProviderValue(params.value)}
       </Box>
     ),

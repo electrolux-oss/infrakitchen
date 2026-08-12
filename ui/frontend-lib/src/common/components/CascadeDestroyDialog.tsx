@@ -71,7 +71,6 @@ const ResourceRow = ({
           }}
         />
       </Tooltip>
-
       {/* name + template */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
@@ -89,16 +88,16 @@ const ResourceRow = ({
         {resource.templateName && (
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ lineHeight: 1.2 }}
+            sx={{
+              color: "text.secondary",
+              lineHeight: 1.2,
+            }}
           >
             {resource.templateName}
           </Typography>
         )}
       </Box>
-
       <StatusChip status={resource.status} state={resource.state} compact />
-
       <Tooltip title="Open in new tab" arrow>
         <IconButton
           size="small"
@@ -212,7 +211,12 @@ export const CascadeDestroyDialog = ({
                   }}
                 >
                   <CircularProgress size={16} />
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     Fetching dependency tree…
                   </Typography>
                 </Box>
@@ -221,8 +225,10 @@ export const CascadeDestroyDialog = ({
               ) : (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ p: 2 }}
+                  sx={{
+                    color: "text.secondary",
+                    p: 2,
+                  }}
                 >
                   Could not load resource tree.
                 </Typography>

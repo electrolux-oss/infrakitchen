@@ -44,7 +44,13 @@ export const ValidationNumberControls = ({
 
   return (
     <Box sx={{ mt: 1 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          mb: 2,
+        }}
+      >
         Set optional numeric boundaries for this variable. Leave a field blank
         to skip that constraint entirely.
       </Typography>
@@ -77,7 +83,7 @@ export const ValidationNumberControls = ({
               value={formatNumericDisplayValue(field.value)}
               label="Min value"
               type="number"
-              inputProps={{ step: "any" }}
+              slotProps={{ htmlInput: { step: "any" } }}
               onChange={(event) => {
                 field.onChange(event.target.value);
                 setValue(ruleIdFieldName, null, {
@@ -119,7 +125,7 @@ export const ValidationNumberControls = ({
               value={formatNumericDisplayValue(field.value)}
               label="Max value"
               type="number"
-              inputProps={{ step: "any" }}
+              slotProps={{ htmlInput: { step: "any" } }}
               onChange={(event) => {
                 field.onChange(event.target.value);
                 setValue(ruleIdFieldName, null, {

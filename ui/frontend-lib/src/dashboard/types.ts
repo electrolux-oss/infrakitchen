@@ -1,7 +1,9 @@
 import { IkEntity } from "../types";
 
-export interface FavoriteResource
-  extends Omit<IkEntity, "created_at" | "updated_at"> {
+export interface FavoriteResource extends Omit<
+  IkEntity,
+  "created_at" | "updated_at"
+> {
   id: string;
   name: string;
   type?: string;

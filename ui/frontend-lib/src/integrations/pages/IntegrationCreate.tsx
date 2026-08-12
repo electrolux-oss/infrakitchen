@@ -215,7 +215,6 @@ const IntegrationCreatePage = () => {
           </Tabs>
         </Box>
       )}
-
       <Card
         sx={{
           mb: 4,
@@ -273,7 +272,6 @@ const IntegrationCreatePage = () => {
           </Box>
         </CardContent>
       </Card>
-
       <Card
         sx={{
           width: "75%",

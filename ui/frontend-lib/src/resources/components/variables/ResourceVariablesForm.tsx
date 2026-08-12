@@ -53,17 +53,21 @@ export const ResourceVariableRow = ({
       <TableCell sx={{ width: "320px" }}>
         <Typography
           variant="body1"
-          color="text.primary"
-          fontWeight="bold"
           component="span"
+          sx={{
+            color: "text.primary",
+            fontWeight: "bold",
+          }}
         >
           {variable.name}
           {variable.required && <span style={{ color: "#d32f2f" }}> *</span>}
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ display: "block" }}
+          sx={{
+            color: "text.secondary",
+            display: "block",
+          }}
         >
           {variable.description}
         </Typography>
@@ -95,7 +99,13 @@ export const ResourceVariableRow = ({
       </TableCell>
       <TableCell sx={{ width: "300px" }}>
         {isDeleted && (
-          <Typography variant="body2" color="warning.main" sx={{ mb: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "warning.main",
+              mb: 1,
+            }}
+          >
             This variable was deleted from the current schema.
           </Typography>
         )}

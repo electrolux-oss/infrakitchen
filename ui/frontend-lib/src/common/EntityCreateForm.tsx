@@ -126,8 +126,10 @@ export const EntityCreateForm = <T extends FieldValues>({
   );
 };
 
-interface EntityCreateDialogProps<T extends FieldValues>
-  extends Omit<EntityCreateFormProps<T>, "children"> {
+interface EntityCreateDialogProps<T extends FieldValues> extends Omit<
+  EntityCreateFormProps<T>,
+  "children"
+> {
   open: boolean;
   children: (methods: UseFormReturn<T>) => ReactNode;
 }
@@ -142,9 +144,11 @@ export const EntityCreateDialog = <T extends FieldValues>({
       open={open}
       onClose={onClose}
       maxWidth={false}
-      PaperProps={{
-        style: {
-          borderRadius: "0.5em",
+      slotProps={{
+        paper: {
+          style: {
+            borderRadius: "0.5em",
+          },
         },
       }}
     >

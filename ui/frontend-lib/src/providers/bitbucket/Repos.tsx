@@ -5,6 +5,10 @@ import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import GradientCircularProgress from "../../common/GradientCircularProgress";
 import { notifyError } from "../../common/hooks/useNotification";
+import {
+  getAutocompleteInputProps,
+  getAutocompleteTextFieldProps,
+} from "../../common/utils/autocompleteInput";
 import { IkEntity } from "../../types";
 
 import { BITBUCKET_REPOS_QUERY } from "./graphql";
@@ -87,24 +91,30 @@ const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
       onChange={handleEntityChange}
       getOptionLabel={(option) => option.name || ""}
       isOptionEqualToValue={(option, val) => option.uuid === val.uuid}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          margin="normal"
-          error={!!fetchError}
-          helperText={fetchError ? fetchError.message : helpertext || ""}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {isLoading ? <GradientCircularProgress size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      renderInput={(params) => {
+        const inputProps = getAutocompleteInputProps(params);
+
+        return (
+          <TextField
+            {...params}
+            {...getAutocompleteTextFieldProps(params, {
+              input: {
+                ...inputProps,
+                endAdornment: (
+                  <>
+                    {isLoading ? <GradientCircularProgress size={20} /> : null}
+                    {inputProps.endAdornment}
+                  </>
+                ),
+              },
+            })}
+            label={label}
+            margin="normal"
+            error={!!fetchError}
+            helperText={fetchError ? fetchError.message : helpertext || ""}
+          />
+        );
+      }}
       renderOption={(props, option) => {
         const { ...otherProps } = props;
         return (
@@ -112,7 +122,12 @@ const BitbucketRepos = forwardRef<any, BitbucketReposProps>((props, _ref) => {
             <Box>
               <Typography variant="body1">{option.name}</Typography>
               {option.description && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                  }}
+                >
                   {option.description}
                 </Typography>
               )}

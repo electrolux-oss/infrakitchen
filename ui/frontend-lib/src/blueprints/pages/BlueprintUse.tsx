@@ -584,14 +584,12 @@ export const BlueprintUsePage = () => {
           to continue.
         </Alert>
       )}
-
       {allParentsResolved && hasAllScvs && !allRequiredVariablesFilled && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           Some required input variables are empty. Fill them in to create
           resources.
         </Alert>
       )}
-
       <PropertyCard title="General Configuration">
         <Box>
           <ArrayReferenceInput
@@ -709,11 +707,16 @@ export const BlueprintUsePage = () => {
           />
         </Box>
       </PropertyCard>
-
       {constantBlocks.length > 0 && (
         <PropertyCard title="Constants">
           <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+                mb: 1,
+              }}
+            >
               Enter values for each constant. These values will be applied to
               all wired template inputs.
             </Typography>
@@ -738,17 +741,19 @@ export const BlueprintUsePage = () => {
                   helperText={isEmpty ? "This constant is required" : " "}
                   fullWidth
                   margin="normal"
-                  InputProps={{
-                    startAdornment: (
-                      <Chip
-                        icon={<TuneIcon />}
-                        label={isNumber ? "Number" : "String"}
-                        size="small"
-                        color="secondary"
-                        variant="outlined"
-                        sx={{ mr: 1 }}
-                      />
-                    ),
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Chip
+                          icon={<TuneIcon />}
+                          label={isNumber ? "Number" : "String"}
+                          size="small"
+                          color="secondary"
+                          variant="outlined"
+                          sx={{ mr: 1 }}
+                        />
+                      ),
+                    },
                   }}
                 />
               );
@@ -756,7 +761,6 @@ export const BlueprintUsePage = () => {
           </Box>
         </PropertyCard>
       )}
-
       {allParentsResolved &&
         blueprint.templates?.map((t, idx) => {
           const scvs = scvsByTemplate[t.id] || [];
@@ -837,7 +841,6 @@ export const BlueprintUsePage = () => {
                 fullWidth
                 sx={{ mb: 1 }}
               />
-
               {/* Missing parent selectors */}
               {missing.length > 0 && (
                 <Alert severity="info" sx={{ mb: 1 }}>
@@ -846,7 +849,6 @@ export const BlueprintUsePage = () => {
                   General Configuration above.
                 </Alert>
               )}
-
               {/* Variables */}
               {totalNonRestricted > 0 ? (
                 <Accordion
@@ -998,8 +1000,10 @@ export const BlueprintUsePage = () => {
               ) : currentScv ? (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 1 }}
+                  sx={{
+                    color: "text.secondary",
+                    mt: 1,
+                  }}
                 >
                   No input variables for this template version.
                 </Typography>

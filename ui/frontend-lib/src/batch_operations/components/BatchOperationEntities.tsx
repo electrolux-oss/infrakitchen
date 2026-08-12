@@ -599,7 +599,13 @@ export const BatchOperationEntities = ({
                       primary={entity ? <GetEntityLink {...entity} /> : key}
                       secondary={result?.message}
                     />
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{
+                        alignItems: "center",
+                      }}
+                    >
                       <Chip
                         size="small"
                         label={status}

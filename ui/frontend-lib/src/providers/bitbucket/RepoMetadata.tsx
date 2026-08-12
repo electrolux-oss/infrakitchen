@@ -119,7 +119,13 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
         {metadata.full_name}
       </Typography>
       {metadata.description && (
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant="body1"
+          sx={{
+            color: "text.secondary",
+            mb: 2,
+          }}
+        >
           {metadata.description}
         </Typography>
       )}

@@ -295,7 +295,7 @@ export const WiringDiagram = ({
         open
         fullScreen
         onClose={() => setFullscreen(false)}
-        PaperProps={{ sx: { bgcolor: "background.default" } }}
+        slotProps={{ paper: { sx: { bgcolor: "background.default" } } }}
       >
         <DialogContent sx={{ p: 0, height: "100vh" }}>{canvas}</DialogContent>
       </Dialog>

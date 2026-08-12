@@ -85,7 +85,13 @@ const ExpandableCard = ({
         >
           {icon}
           <Box>
-            <Box fontWeight="bold">{title}</Box>
+            <Box
+              sx={{
+                fontWeight: "bold",
+              }}
+            >
+              {title}
+            </Box>
             {subtitleLines.map((line, index) => (
               <Typography key={index} variant="body2" color="textSecondary">
                 {line}
@@ -129,10 +135,10 @@ const ExpandableCard = ({
         }}
       >
         <Box
-          pt={2}
-          px={1}
           onClick={handleCardClick}
           sx={{
+            pt: 2,
+            px: 1,
             cursor: onClick ? "pointer" : "default",
           }}
         >
@@ -163,7 +169,13 @@ const ExpandableCard = ({
                 <Typography variant="body1" gutterBottom>
                   Labels
                 </Typography>
-                <Box display="flex" gap={1} flexWrap="wrap">
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
                   {labels.map((label) => (
                     <Chip
                       key={label}

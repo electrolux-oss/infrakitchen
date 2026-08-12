@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
 import { useSourceCodeVersionConfigContext } from "../context/SourceCodeVersionConfigContext";
 import { GqlSourceCodeVersion } from "../graphql";
 
@@ -42,10 +43,14 @@ export const ReferenceSelector = () => {
         renderInput={(params) => (
           <TextField
             {...params}
+            {...getAutocompleteTextFieldProps(params, {
+              inputLabel: {
+                shrink: true,
+              },
+            })}
             label="Inherit from"
             variant="outlined"
             size="small"
-            InputLabelProps={{ shrink: true }}
           />
         )}
         renderOption={(props, option) => {
@@ -56,7 +61,12 @@ export const ReferenceSelector = () => {
                   {option.sourceCodeVersion || option.sourceCodeBranch}
                 </Typography>
                 {option.description && (
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                    }}
+                  >
                     {option.description}
                   </Typography>
                 )}

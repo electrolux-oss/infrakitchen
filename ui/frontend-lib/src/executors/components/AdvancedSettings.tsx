@@ -111,7 +111,12 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
                   )}
                 </IconButton>
               </Tooltip>
-              <Typography variant="body2" color="warning.main">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "warning.main",
+                }}
+              >
                 {isStorageUnlocked
                   ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
                   : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
@@ -231,7 +236,6 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
         )}
         size={6}
       />
-
       <CommonEditableField<string | null>
         name={"Storage Path"}
         canEdit={canEditStorage && isStorageUnlocked}

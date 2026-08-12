@@ -59,7 +59,13 @@ export const WorkflowResolvedVariables = ({
 
   if (grouped.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          py: 2,
+        }}
+      >
         No workflow steps.
       </Typography>
     );
@@ -168,7 +174,12 @@ const StepVariablesBlock = ({
             sx={{ fontWeight: 700, minWidth: 36 }}
           />
         )}
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           {entries.length} variable{entries.length === 1 ? "" : "s"}
         </Typography>
         <Box sx={{ flex: 1 }} />
@@ -178,12 +189,14 @@ const StepVariablesBlock = ({
           </IconButton>
         </Tooltip>
       </Box>
-
       {entries.length === 0 ? (
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ px: 2, py: 1.5 }}
+          sx={{
+            color: "text.secondary",
+            px: 2,
+            py: 1.5,
+          }}
         >
           No resolved variables.
         </Typography>

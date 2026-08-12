@@ -21,8 +21,7 @@ export const LogLiveTail = () => {
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
-    | { isMinimized: boolean }
-    | undefined;
+    { isMinimized: boolean } | undefined;
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -212,7 +211,6 @@ export const LogLiveTail = () => {
           }}
         />
       )}
-
       <Alert
         severity="info"
         icon={false}
@@ -250,7 +248,12 @@ export const LogLiveTail = () => {
               paddingRight: 1,
             }}
           >
-            <Typography variant="body2" fontWeight={600}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+              }}
+            >
               Live Log Tail
             </Typography>
             {isReceivingLogs && <CircularProgress size={14} thickness={5} />}

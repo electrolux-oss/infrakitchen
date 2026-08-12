@@ -15,7 +15,13 @@ export const WorkflowSteps = ({
 }: WorkflowStepsProps) => {
   if (steps.length === 0) {
     return (
-      <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "text.secondary",
+          py: 2,
+        }}
+      >
         No workflow steps.
       </Typography>
     );

@@ -118,7 +118,12 @@ export const EntityTable = ({
       <Card sx={{ mt: 2 }}>
         <CardHeader
           title={
-            <Box display="flex" alignItems="center">
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               {entityName}
               {subtitle && (
                 <Tooltip title={subtitle} arrow>
@@ -142,7 +147,13 @@ export const EntityTable = ({
           }
           sx={{ pb: 2 }}
           action={
-            <Box display="flex" alignItems="center" gap={0.5}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
               <Tooltip title="Refresh">
                 <IconButton
                   size="small"

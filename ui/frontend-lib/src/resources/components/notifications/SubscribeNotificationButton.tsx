@@ -103,7 +103,13 @@ export const SubscribeNotificationButton = ({
               label="Include child resources"
             />
           ) : null}
-          <Stack direction="row" justifyContent="flex-end" gap={1}>
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
             <Button size="small" onClick={handleClose}>
               Cancel
             </Button>

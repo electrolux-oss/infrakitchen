@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 
 import {
   Add as AddIcon,
-  DeleteOutline as DeleteOutlineIcon,
+  DeleteOutlined as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import {
   TextField,
@@ -69,7 +69,14 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
 
   return (
     <Box sx={{ mt: 2, px: 2 }}>
-      <Grid container spacing={2} alignItems="center" sx={{ mb: 1 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          alignItems: "center",
+          mb: 1,
+        }}
+      >
         <Grid
           size={{
             xs: 12,
@@ -95,7 +102,14 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
         </Grid>
       </Grid>
       {currentValue.map((item: Tag, index: number) => (
-        <Grid container spacing={2} alignItems="flex-end" key={index}>
+        <Grid
+          container
+          spacing={2}
+          key={index}
+          sx={{
+            alignItems: "flex-end",
+          }}
+        >
           <Grid
             size={{
               xs: 12,
@@ -185,9 +199,14 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
           </Grid>
         </Grid>
       ))}
-
       {showErrors && typeof fieldErrors?.message === "string" && (
-        <Typography variant="body2" color="error.main" sx={{ mt: 1 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "error.main",
+            mt: 1,
+          }}
+        >
           {fieldErrors.message}
         </Typography>
       )}

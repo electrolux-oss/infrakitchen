@@ -183,11 +183,9 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         )}
         size={12}
       />
-
       <Box sx={{ width: "100%", my: 1 }}>
         <Divider />
       </Box>
-
       <CommonEditableField<string[]>
         name={"Parents"}
         canEdit={canEdit}
@@ -196,7 +194,13 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         isEqual={sameStringSet}
         display={
           template.parents && template.parents.length > 0 ? (
-            <Box display="flex" gap={1} flexWrap="wrap">
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
               {template.parents.map((parent, idx) => (
                 <span key={parent.id || idx}>
                   <GetReferenceUrlValue {...parent} />
@@ -228,7 +232,13 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         isEqual={sameStringSet}
         display={
           template.children && template.children.length > 0 ? (
-            <Box display="flex" gap={1} flexWrap="wrap">
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
               {template.children.map((child, idx) => (
                 <span key={child.id || idx}>
                   <GetReferenceUrlValue {...child} />
@@ -252,7 +262,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         )}
         size={6}
       />
-
       <CommonEditableField<string[]>
         name={"Cloud Resource Types"}
         canEdit={canEdit}
@@ -302,7 +311,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         )}
         size={6}
       />
-
       <CommonEditableField<IntegrationProviderType[]>
         name={"Allowed Integration Providers"}
         canEdit={canEdit}

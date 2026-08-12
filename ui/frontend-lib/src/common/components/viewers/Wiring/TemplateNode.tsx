@@ -128,7 +128,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           </Tooltip>
         )}
       </Box>
-
       {/* External badge */}
       {isExternal && (
         <Box sx={{ px: 1.5, pt: 1 }}>
@@ -140,14 +139,17 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           />
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mt: 0.5, mb: 0.5 }}
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mt: 0.5,
+              mb: 0.5,
+            }}
           >
             Parent resource as input
           </Typography>
         </Box>
       )}
-
       {/* Resource link (workflow mode only) */}
       {data.resourceId && (
         <Box
@@ -159,7 +161,12 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
             gap: 0.5,
           }}
         >
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             Resource:
           </Typography>
           <GetReferenceUrlValue
@@ -169,7 +176,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           />
         </Box>
       )}
-
       {/* Error message (workflow mode only) */}
       {data.errorMessage && (
         <Tooltip title={data.errorMessage} arrow>
@@ -193,15 +199,18 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           </Box>
         </Tooltip>
       )}
-
       {/* Ports */}
       <Box sx={{ display: "flex", gap: 2, p: 1.5 }}>
         {data.inputs.length > 0 && (
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ fontWeight: 600, display: "block", mb: 0.5 }}
+              sx={{
+                color: "text.secondary",
+                fontWeight: 600,
+                display: "block",
+                mb: 0.5,
+              }}
             >
               Inputs
             </Typography>
@@ -244,8 +253,8 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: "text.secondary",
                 fontWeight: 600,
                 display: "block",
                 mb: 0.5,

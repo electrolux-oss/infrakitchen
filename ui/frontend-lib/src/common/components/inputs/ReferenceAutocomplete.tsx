@@ -6,7 +6,14 @@ import React, {
   useState,
 } from "react";
 
-import { Autocomplete, Chip, SxProps, TextField, Theme } from "@mui/material";
+import {
+  Autocomplete,
+  AutocompleteRenderValue,
+  Chip,
+  SxProps,
+  TextField,
+  Theme,
+} from "@mui/material";
 
 import { ReferenceLoader, ReferenceOption } from "../filter_panel/FilterConfig";
 
@@ -171,9 +178,12 @@ export const ReferenceAutocomplete = ({
         onInputChange={handleInputChange}
         loading={loading}
         filterOptions={(x) => x}
-        renderTags={(val, getTagProps) =>
+        renderValue={(
+          val: AutocompleteRenderValue<ReferenceOption, true, false>,
+          getItemProps,
+        ) =>
           val.map((option, index) => {
-            const { key, ...rest } = getTagProps({ index });
+            const { key, ...rest } = getItemProps({ index });
             return (
               <Chip key={key} label={option.label} size="small" {...rest} />
             );
