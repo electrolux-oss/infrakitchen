@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { useNavigate } from "react-router";
+
 import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import { Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
@@ -14,6 +16,7 @@ import {
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../../common/components/RelativeTime";
+import { useConfig } from "../../../common/context";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -25,15 +28,23 @@ import {
 interface EntityPoliciesBaseProps {
   entityId: string;
   entityName: string;
+  inheritedEntityIds?: string[];
 }
 
 export const EntityPoliciesBase = ({
   entityId,
   entityName = "resource",
+  inheritedEntityIds,
 }: EntityPoliciesBaseProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const tableRef = useRef<EntityFetchTableRef>(null);
+  const navigate = useNavigate();
+  const { linkPrefix } = useConfig();
+  const originalEntityId = `${entityName}:${entityId}`;
+  const mergedEntityIds = inheritedEntityIds?.length
+    ? [originalEntityId, ...inheritedEntityIds]
+    : undefined;
 
   const refreshPoliciesTable = useCallback(() => {
     void tableRef.current?.refresh();
@@ -69,7 +80,7 @@ export const EntityPoliciesBase = ({
       },
       {
         field: "action",
-        fetchFields: ["v2"],
+        fetchFields: ["v1", "v2"],
         headerName: "Action",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
@@ -80,6 +91,44 @@ export const EntityPoliciesBase = ({
           }
         },
       },
+      ...(inheritedEntityIds?.length
+        ? [
+            {
+              field: "policySource",
+              fetchFields: ["v1"],
+              headerName: "Source",
+              sortable: false,
+              flex: 1,
+              renderCell: (params: GridRenderCellParams) => {
+                const isInherited = params.row.v1 !== originalEntityId;
+                const inheritedProjectId = params.row.v1.split(":")[1];
+                const projectPoliciesPath = `${linkPrefix}projects/${inheritedProjectId}/policies`;
+
+                return isInherited ? (
+                  <Chip
+                    size="small"
+                    label="Inherited from Project"
+                    color="info"
+                    variant="outlined"
+                    component="a"
+                    href={projectPoliciesPath}
+                    clickable
+                    onClick={(event) => {
+                      if (event.metaKey || event.ctrlKey) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      navigate(projectPoliciesPath);
+                    }}
+                  />
+                ) : (
+                  <Chip size="small" label="Direct" variant="outlined" />
+                );
+              },
+            },
+          ]
+        : []),
       {
         field: "createdAt",
         headerName: "Created",
@@ -106,21 +155,29 @@ export const EntityPoliciesBase = ({
         headerName: "Delete",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <PermissionWrapper
-            requiredPermission="api:permission"
-            permissionAction="admin"
-          >
-            <DeletePermissionButton
-              permission_id={params.value}
-              onDelete={refreshPoliciesTable}
-              enableCascadeDelete={entityName === "resource"}
-            />
-          </PermissionWrapper>
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          params.row.v1 === originalEntityId ? (
+            <PermissionWrapper
+              requiredPermission="api:permission"
+              permissionAction="admin"
+            >
+              <DeletePermissionButton
+                permission_id={params.value}
+                onDelete={refreshPoliciesTable}
+                enableCascadeDelete={entityName === "resource"}
+              />
+            </PermissionWrapper>
+          ) : null,
       },
     ],
-    [refreshPoliciesTable, entityName],
+    [
+      refreshPoliciesTable,
+      entityName,
+      inheritedEntityIds,
+      linkPrefix,
+      navigate,
+      originalEntityId,
+    ],
   );
 
   return (
@@ -163,7 +220,11 @@ export const EntityPoliciesBase = ({
         ref={tableRef}
         title={`${capitalizeFirstLetter(entityName)} Policies`}
         entityName="permission"
-        defaultFilter={{ ptype: "p", v1: `${entityName}:${entityId}` }}
+        defaultFilter={
+          mergedEntityIds
+            ? { ptype: "p", v1__in: mergedEntityIds }
+            : { ptype: "p", v1: originalEntityId }
+        }
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />

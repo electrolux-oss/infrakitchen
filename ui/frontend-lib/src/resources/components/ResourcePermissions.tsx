@@ -10,6 +10,11 @@ export const ResourcePermissions = ({ resource }: AdvancedSettingsProps) => {
     <EntityPoliciesTab
       entityId={resource.id}
       entityName={resource.entityName}
+      inheritedEntityIds={
+        resource.project
+          ? [`${resource.project.entityName}:${resource.project.id}`]
+          : []
+      }
     />
   );
 };
