@@ -17,6 +17,11 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
+    "paths": {
+      "@electrolux-oss/infrakitchen": [
+        "./frontend-lib/src/index.ts"
+      ]
+    },
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
@@ -25,6 +30,7 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
-    "app"
+    "app",
+    "frontend-lib/src"
   ]
 }
