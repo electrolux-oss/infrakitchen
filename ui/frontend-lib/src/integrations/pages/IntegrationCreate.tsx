@@ -187,9 +187,8 @@ const IntegrationCreatePage = () => {
         <Box
           sx={{
             mb: 3,
-            width: "75%",
+            width: "100%",
             minWidth: 320,
-            maxWidth: 1000,
           }}
         >
           <Tabs
@@ -218,9 +217,8 @@ const IntegrationCreatePage = () => {
       <Card
         sx={{
           mb: 4,
-          width: "75%",
+          width: "100%",
           minWidth: 320,
-          maxWidth: 1000,
         }}
       >
         <CardHeader
@@ -274,9 +272,8 @@ const IntegrationCreatePage = () => {
       </Card>
       <Card
         sx={{
-          width: "75%",
+          width: "100%",
           minWidth: 320,
-          maxWidth: 1000,
         }}
       >
         <CardHeader

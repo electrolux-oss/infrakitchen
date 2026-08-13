@@ -13,7 +13,9 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import SettingsMenu from "./SettingsMenu";
 import ThemeSwitcher from "./ThemeSwitcher";
+import UserSidebar from "./UserSidebar";
 
 const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderWidth: 0,
@@ -136,16 +138,20 @@ export default function DashboardHeader({
             sx={{
               alignItems: "center",
               marginLeft: "auto",
+              minWidth: 0,
             }}
           >
             <Stack
               direction="row"
+              spacing={0.5}
               sx={{
                 alignItems: "center",
               }}
             >
+              <SettingsMenu />
               <ThemeSwitcher />
             </Stack>
+            <UserSidebar />
           </Stack>
         </Stack>
       </Toolbar>

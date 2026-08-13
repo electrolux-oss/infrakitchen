@@ -10,6 +10,8 @@ import { styled } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import { useUserSettings } from "./hooks";
+
 const PageContentHeader = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
@@ -38,6 +40,7 @@ export interface PageContainerProps extends Omit<ContainerProps, "title"> {
 }
 
 export default function PageContainer(props: PageContainerProps) {
+  const { settings } = useUserSettings();
   const {
     children,
     title,
@@ -47,15 +50,23 @@ export default function PageContainer(props: PageContainerProps) {
     onBack,
     backIcon,
     backAriaLabel = "Back",
+    maxWidth,
+    sx,
+    ...containerProps
   } = props;
 
   return (
     <Container
-      sx={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-      }}
+      {...containerProps}
+      maxWidth={settings.fullWidthPages ? false : maxWidth}
+      sx={[
+        {
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
     >
       <Stack sx={{ flex: 1, my: 2, minHeight: 0 }} spacing={2}>
         <Stack>

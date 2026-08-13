@@ -36,7 +36,12 @@ export const DashboardPage = () => {
   if (!loading && !hasResources) {
     return (
       <PageContainer>
-        <Box sx={{ mb: 4, width: "80%", maxWidth: 1000 }}>
+        <Box
+          sx={{
+            mb: 4,
+            width: "100%",
+          }}
+        >
           <Box>
             <Typography
               variant="h4"
@@ -70,7 +75,7 @@ export const DashboardPage = () => {
         <>
           <Typography
             variant="h4"
-            component="h1"
+            component="span"
             color="primary"
             sx={{
               fontWeight: 600,

@@ -17,7 +17,7 @@ import {
 } from "@mui/x-data-grid";
 import { GridSortItem } from "@mui/x-data-grid/models/gridSortModel";
 
-import { useConfig } from "../..";
+import { useConfig, useUserSettings } from "../..";
 import { IkEntity } from "../../../types";
 import {
   buildGraphqlFields,
@@ -95,6 +95,7 @@ export const EntityFetchTableContent = forwardRef<
   } = props;
 
   const { ikApi } = useConfig();
+  const { settings } = useUserSettings();
   const {
     filters,
     filterValues,
@@ -241,7 +242,13 @@ export const EntityFetchTableContent = forwardRef<
   }, [fetchFilteredData]);
 
   return (
-    <Box sx={{ maxWidth: 1400, width: "100%", alignSelf: "center" }}>
+    <Box
+      sx={{
+        maxWidth: settings.fullWidthPages ? "100%" : 1400,
+        width: "100%",
+        alignSelf: "center",
+      }}
+    >
       {hasFilters && isFilterPanelOpen && <FilterPanel />}
       <EntityTable
         entityName={title}

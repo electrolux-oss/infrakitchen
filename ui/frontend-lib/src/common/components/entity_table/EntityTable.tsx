@@ -24,6 +24,7 @@ import {
 } from "@mui/x-data-grid";
 import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
 
+import { useUserSettings } from "../../hooks";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
 
 export type EntityTableColumn = GridColDef<any> & {
@@ -83,6 +84,7 @@ export const EntityTable = ({
   onToggleFilterPanel,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
+  const { settings } = useUserSettings();
 
   const effectiveColumnVisibilityModel = useMemo(() => {
     if (!columnVisibilityModel) {
@@ -112,7 +114,7 @@ export const EntityTable = ({
     <Box
       sx={{
         width: "100%",
-        maxWidth: 1400,
+        maxWidth: settings.fullWidthPages ? "100%" : 1400,
       }}
     >
       <Card sx={{ mt: 2 }}>

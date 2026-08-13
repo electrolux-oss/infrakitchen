@@ -23,6 +23,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { useConfig } from "../common";
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
 import {
   GoldenStateProjectReport,
@@ -65,7 +66,7 @@ function buildProjectResourcesUrl(
     ...extraClauses,
   ];
 
-  return `/resources?filter=${encodeURIComponent(JSON.stringify(filters))}`;
+  return `resources?filter=${encodeURIComponent(JSON.stringify(filters))}`;
 }
 
 function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
@@ -73,7 +74,7 @@ function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
     return buildProjectResourcesUrl(project);
   }
 
-  return `/projects/${project.projectId}/resources`;
+  return `projects/${project.projectId}/resources`;
 }
 
 function isPlainLeftClick(event: MouseEvent<HTMLElement>) {
@@ -93,6 +94,7 @@ function ProjectHeatMapTile({
   project: GoldenStateProjectReport;
 }) {
   const navigate = useNavigate();
+  const { linkPrefix } = useConfig();
   const comparable = project.total - project.noGolden;
   const scoreColor = getScoreChipColor(project.score);
   const resourcesUrl = buildProjectResourcesUrl(project);
@@ -136,15 +138,22 @@ function ProjectHeatMapTile({
     }
 
     event.preventDefault();
-    void navigate(url);
+    void navigate(`${linkPrefix}${url}`);
   };
 
   return (
     <Box
-      component="a"
-      href={projectPageResourcesUrl}
+      role="link"
+      tabIndex={0}
       onClick={handleNavigate(projectPageResourcesUrl)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          void navigate(`${linkPrefix}${projectPageResourcesUrl}`);
+        }
+      }}
       sx={(theme) => ({
+        cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         gap: 1,
@@ -160,10 +169,13 @@ function ProjectHeatMapTile({
           transform: "translateY(-1px)",
           boxShadow: theme.shadows[2],
         },
+        "&:focus-visible": {
+          outline: `2px solid ${theme.palette.primary.main}`,
+          outlineOffset: 2,
+        },
       })}
     >
       <Link
-        component="a"
         href={resourcesUrl}
         onClick={handleNavigate(resourcesUrl)}
         underline="hover"

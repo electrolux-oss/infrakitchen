@@ -18,7 +18,7 @@ export const AdminPage = () => {
 
   return (
     <PageContainer title="Administration">
-      <Box sx={{ width: "100%", maxWidth: 1200 }}>
+      <Box sx={{ width: "100%" }}>
         <Box sx={{ mt: 2 }}>
           <Tabs
             value={activeTab}

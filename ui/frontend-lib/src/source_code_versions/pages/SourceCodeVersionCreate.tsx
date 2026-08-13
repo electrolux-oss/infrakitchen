@@ -183,9 +183,8 @@ const SourceCodeVersionCreatePageInner = () => {
           display: "flex",
           alignItems: "center",
           flexDirection: "column",
-          width: "75%",
+          width: "100%",
           minWidth: 320,
-          maxWidth: 1000,
         }}
       >
         <PropertyCard title="Version Definition">
