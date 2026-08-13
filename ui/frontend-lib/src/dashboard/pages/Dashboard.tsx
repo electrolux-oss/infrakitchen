@@ -36,7 +36,12 @@ export const DashboardPage = () => {
   if (!loading && !hasResources) {
     return (
       <PageContainer>
-        <Box sx={{ mb: 4, width: "80%", maxWidth: 1000 }}>
+        <Box
+          sx={{
+            mb: 4,
+            width: "100%",
+          }}
+        >
           <Box>
             <Typography
               variant="h4"

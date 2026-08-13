@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Link, matchPath, useLocation } from "react-router";
+import { matchPath, useLocation } from "react-router";
 
 import { Icon } from "@iconify/react";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -14,7 +14,6 @@ import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import StorageIcon from "@mui/icons-material/Storage";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
-import { Avatar, Stack, Typography } from "@mui/material";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
@@ -24,7 +23,6 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
-import { useAuth } from "../auth/AuthContext";
 
 import { DashboardAdminSidebar } from "./DashboardAdminSidebar";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
@@ -34,7 +32,6 @@ import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
 } from "./mixins";
-import OptionsMenu from "./UserSidebar";
 
 export interface DashboardSidebarProps {
   expanded?: boolean;
@@ -52,7 +49,6 @@ export default function DashboardSidebar({
   const theme = useTheme();
 
   const { pathname } = useLocation();
-  const { user } = useAuth();
 
   const isOverSmViewport = useMediaQuery(theme.breakpoints.up("sm"));
   const isOverMdViewport = useMediaQuery(theme.breakpoints.up("md"));
@@ -292,77 +288,10 @@ export default function DashboardSidebar({
             permissionKey="worker"
           />
           <DashboardAdminSidebar />
-
-          <DashboardSidebarDividerItem />
-          {user && (
-            <Stack
-              direction="row"
-              sx={{
-                p: 2,
-                gap: 1,
-                alignItems: "center",
-              }}
-            >
-              <Avatar
-                sx={{
-                  fontSize: 10,
-                  height: 16,
-                  width: 16,
-                  flexShrink: 0,
-                }}
-              >
-                {user.identifier
-                  .split(/[\s_-]+/)
-                  .slice(0, 2)
-                  .map((words) => words.charAt(0).toUpperCase())
-                  .join("")}
-              </Avatar>
-              <Box
-                component={Link}
-                to={`/users/${user.id}`}
-                sx={{
-                  mr: "auto",
-                  minWidth: 0,
-                  flex: 1,
-                  overflow: "hidden",
-                  textDecoration: "none",
-                  color: "inherit",
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 500,
-                    lineHeight: "16px",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {user.identifier}
-                </Typography>
-                {user.email && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      display: "block",
-                    }}
-                  >
-                    {user.email}
-                  </Typography>
-                )}
-              </Box>
-              <OptionsMenu />
-            </Stack>
-          )}
         </List>
       </Box>
     ),
-    [mini, hasDrawerTransitions, isFullyExpanded, pathname, user],
+    [mini, hasDrawerTransitions, isFullyExpanded, pathname],
   );
 
   const getDrawerSharedSx = React.useCallback(

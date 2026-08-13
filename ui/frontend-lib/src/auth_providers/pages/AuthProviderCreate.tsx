@@ -113,9 +113,8 @@ const AuthProviderCreatePageInner = () => {
           display: "flex",
           alignItems: "center",
           flexDirection: "column",
-          width: "75%",
           minWidth: 320,
-          maxWidth: 1000,
+          width: "100%",
         }}
       >
         <PropertyCard title="Auth Provider Definition">
