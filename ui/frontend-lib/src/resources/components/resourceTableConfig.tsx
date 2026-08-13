@@ -118,7 +118,6 @@ export const resourceColumns: EntityTableColumn[] = [
       return <GetEntityLink {...project} />;
     },
   },
-
   {
     field: "sourceCodeVersion",
     headerName: "Template Version",
@@ -132,7 +131,7 @@ export const resourceColumns: EntityTableColumn[] = [
       "sourceCodeVersion.entityName",
       "sourceCodeVersion.id",
     ],
-    sortField: "source_code_version.tag",
+    sortField: "source_code_version.source_code_version",
     filter: [
       {
         field: "source_code_version_id",
