@@ -73,13 +73,24 @@ export const ActivityFeedItem = ({
 
   return (
     <Card
-      component="a"
-      href={href}
+      role="link"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(href);
+        }
+      }}
       sx={{
         cursor: "pointer",
         textDecoration: "none",
         display: "block",
+        "&:focus-visible": {
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+        },
         "&:hover": {
           borderColor: "text.disabled",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
@@ -152,11 +163,13 @@ export const ActivityFeedItem = ({
                       color: "text.secondary",
                     }}
                   >
-                    <GetEntityLink
-                      id={activity.entityId}
-                      entityName={activity.model}
-                      name={entityName ?? activity.entityId}
-                    />
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <GetEntityLink
+                        id={activity.entityId}
+                        entityName={activity.model}
+                        name={entityName ?? activity.entityId}
+                      />
+                    </span>
                   </Typography>
                 </>
               )}
