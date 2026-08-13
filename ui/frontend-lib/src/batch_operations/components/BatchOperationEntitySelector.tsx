@@ -11,13 +11,13 @@ import {
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 import {
   DataGrid,
-  GridColDef,
   GridPaginationModel,
   GridRenderCellParams,
   GridRowSelectionModel,
   GridSortModel,
 } from "@mui/x-data-grid";
 
+import { serverSearchReference } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
@@ -29,11 +29,13 @@ import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
+import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
+import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { BatchOperationCreate } from "../types";
 
 export interface BatchOperationEntitySelectorProps {
@@ -68,7 +70,7 @@ export const BatchOperationEntitySelector = (
   });
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
 
-  const resourceSelectionColumns: GridColDef[] = useMemo(
+  const resourceSelectionColumns: EntityTableColumn[] = useMemo(
     () => [
       {
         field: "name",
@@ -92,15 +94,83 @@ export const BatchOperationEntitySelector = (
       },
       {
         field: "sourceCodeVersion",
-        headerName: "Source Code Version",
+        headerName: "Template Version",
         flex: 1,
-        valueGetter: (value: any, row: any) =>
-          row.sourceCodeVersion?.identifier || "",
+        fetchFields: [
+          "sourceCodeVersion.sourceCodeVersion",
+          "sourceCodeVersion.sourceCodeBranch",
+          "sourceCodeVersion.lifecycleState",
+          "sourceCodeVersion.breakingChanges",
+          "sourceCodeVersion.identifier",
+          "sourceCodeVersion.entityName",
+          "sourceCodeVersion.id",
+        ],
+        sortField: "source_code_version.source_code_version",
+        filter: [
+          {
+            field: "source_code_version_id",
+            label: "Version",
+            operators: ["eq", "in"],
+            valueType: "reference",
+            defaultOperator: "eq",
+            makeReferenceLoader: serverSearchReference({
+              entityPlural: "sourceCodeVersions",
+              labelField: "identifier",
+            }),
+          },
+          {
+            field: "source_code_version__lifecycle_state",
+            label: "Version Lifecycle State",
+            operators: ["eq", "in"],
+            valueType: "select",
+            defaultOperator: "eq",
+            selectOptions: [
+              { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
+              { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
+              { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
+              {
+                label: "Deprecated",
+                value: VERSION_LIFECYCLE_STATE.DEPRECATED,
+              },
+              { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
+            ],
+          },
+        ],
+        valueGetter: (_value: any, row: any) => {
+          const scv = row.sourceCodeVersion;
+          if (!scv) return "";
+          return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
+        },
         renderCell: (params: GridRenderCellParams) => {
-          const sourceCodeVersion = params.row.sourceCodeVersion;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          const scv = params.row.sourceCodeVersion;
+          if (!scv) return null;
+          const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
+          const color = getVersionLifecycleStateColor(scv.lifecycleState);
+          const textColor =
+            color === "success"
+              ? "success.main"
+              : color === "info"
+                ? "info.main"
+                : color === "warning"
+                  ? "warning.main"
+                  : color === "error"
+                    ? "error.main"
+                    : "text.primary";
+
+          return (
+            <GetEntityLink
+              {...scv}
+              name={ref}
+              sx={{
+                color: textColor,
+                fontWeight: color === "warning" ? 600 : 500,
+                textDecorationColor: textColor,
+              }}
+            />
+          );
         },
       },
+
       {
         field: "state",
         headerName: "State",
@@ -128,7 +198,7 @@ export const BatchOperationEntitySelector = (
     [],
   );
 
-  const executorSelectionColumns: GridColDef[] = useMemo(
+  const executorSelectionColumns: EntityTableColumn[] = useMemo(
     () => [
       {
         field: "name",
@@ -185,6 +255,16 @@ export const BatchOperationEntitySelector = (
     [entityType, resourceSelectionColumns, executorSelectionColumns],
   );
 
+  const sortFieldMap = useMemo(
+    () =>
+      new Map(
+        columns
+          .filter((column) => column.sortField)
+          .map((column) => [column.field!, column.sortField!]),
+      ),
+    [columns],
+  );
+
   const filterColumns = useMemo<EntityTableColumn[]>(
     () =>
       entityType === "resource"
@@ -221,7 +301,7 @@ export const BatchOperationEntitySelector = (
           : sortModel[0];
       const apiSort = sort
         ? {
-            field: sort.field,
+            field: sortFieldMap.get(sort.field) ?? sort.field,
             order: sort.sort?.toUpperCase() as "ASC" | "DESC",
           }
         : { field: "created_at", order: "DESC" as "ASC" | "DESC" };
@@ -293,6 +373,7 @@ export const BatchOperationEntitySelector = (
     paginationModel.page,
     paginationModel.pageSize,
     sortModel,
+    sortFieldMap,
     filterValues,
   ]);
 
@@ -328,6 +409,7 @@ export const BatchOperationEntitySelector = (
                 sortingMode="server"
                 checkboxSelection
                 disableRowSelectionOnClick
+                disableColumnFilter
                 rowSelectionModel={buildRowSelectionModel(
                   Array.isArray(selectedEntityIds) ? selectedEntityIds : [],
                 )}

@@ -27,12 +27,18 @@ function getGitCommitHash() {
 
 const appVersion = getAppVersion();
 const gitCommitHash = getGitCommitHash();
+const frontendLibSource = resolve(__dirname, "frontend-lib/src/index.ts");
 
 export default defineConfig({
   plugins: [react()],
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
     __GIT_COMMIT_HASH__: JSON.stringify(gitCommitHash),
+  },
+  resolve: {
+    alias: {
+      "@electrolux-oss/infrakitchen": frontendLibSource,
+    },
   },
   server: {
     host: "0.0.0.0",

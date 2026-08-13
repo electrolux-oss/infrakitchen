@@ -163,7 +163,7 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
             parts = key.split("__")
             potential_operator = parts[-1]
 
-            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like", "is_none"]:
+            if potential_operator in ["contains_all", "any", "eq", "like", "in", "not_like", "is_none", "not_eq"]:
                 operator = potential_operator
                 field_path = parts[:-1]
             else:
@@ -187,6 +187,8 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                     relation_filter = related_column.in_(value)
                 elif operator == "eq":
                     relation_filter = related_column == value
+                elif operator == "not_eq":
+                    relation_filter = related_column != value
                 elif operator == "like":
                     relation_filter = related_column.ilike(f"%{value}%")
                 elif operator == "not_like":
@@ -257,6 +259,33 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
                         continue
 
                 filters.append(column == value)
+            case "not_eq":
+                if is_valid_uuid(value):
+                    filters.append(column != valid_uuid(value))
+                    continue
+                if isinstance(value, list):
+                    if all(is_valid_uuid(v) for v in value):
+                        filters.append(column.notin_([valid_uuid(v) for v in value]))
+                    elif all(isinstance(v, dict) for v in value):
+                        nested_ids = [v.get("id") for v in value if "id" in v]
+                        if all(is_valid_uuid(nested_id) for nested_id in nested_ids):
+                            filters.append(column.notin_([valid_uuid(nested_id) for nested_id in nested_ids]))
+                        else:
+                            filters.append(column.notin_(nested_ids))
+                    else:
+                        filters.append(column.notin_(value))
+                    continue
+
+                if isinstance(value, dict):
+                    if "id" in value:
+                        nested_id = value.get("id")
+                        if is_valid_uuid(nested_id):
+                            filters.append(column != valid_uuid(nested_id))
+                        else:
+                            filters.append(column != nested_id)
+                        continue
+
+                filters.append(column != value)
             case "like":
                 filters.append(column.ilike(f"%{value}%"))
             case "not_like":
