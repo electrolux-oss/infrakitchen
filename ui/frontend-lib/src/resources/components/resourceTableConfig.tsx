@@ -205,7 +205,7 @@ export const resourceColumns: EntityTableColumn[] = [
       {
         field: "state",
         label: "State",
-        operators: ["eq", "in"],
+        operators: ["eq", "in", "not_eq"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [
@@ -219,7 +219,7 @@ export const resourceColumns: EntityTableColumn[] = [
       {
         field: "status",
         label: "Status",
-        operators: ["eq", "in"],
+        operators: ["eq", "in", "not_eq"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [

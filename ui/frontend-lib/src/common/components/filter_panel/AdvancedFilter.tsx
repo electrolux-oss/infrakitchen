@@ -30,6 +30,7 @@ import {
 
 const OPERATOR_LABELS: Record<FilterOperator, string> = {
   eq: "is",
+  not_eq: "is not",
   like: "contains",
   not_like: "does not contain",
   is_none: "is None",
