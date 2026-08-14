@@ -36,14 +36,19 @@ from core.errors import (
     TaskFailure,
 )
 from core.scheduler.executor import SchedulerExecutor
+from core.telemetry import get_meter
 from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
-from prometheus_client import Counter
 
 logger = logging.getLogger("TaskWorker")
 
 
-prometheus_counter = Counter("tasks_total", "Total executed tasks", ["job_type", "status"])
+meter = get_meter("infrakitchen.worker.tasks")
+task_executions_counter = meter.create_counter(
+    name="infrakitchen.tasks.executions",
+    description="Total executed tasks",
+    unit="{task}",
+)
 
 
 class TaskWorker(BaseMessagesWorker):
@@ -124,9 +129,9 @@ class TaskWorker(BaseMessagesWorker):
         try:
             await task_controller.start_pipeline()
             await self._send_success_notification(task_controller, action)
-            prometheus_counter.labels(entity_controller, "success").inc()
+            task_executions_counter.add(1, {"job_type": entity_controller, "status": "success"})
         except Exception as e:
-            prometheus_counter.labels(entity_controller, "error").inc()
+            task_executions_counter.add(1, {"job_type": entity_controller, "status": "error"})
             await self.handle_exception(e, message, task_controller, action)
         finally:
             await self.worker_service.increment_tasks_completed(self.worker.id)

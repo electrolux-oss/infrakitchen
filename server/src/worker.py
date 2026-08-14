@@ -3,13 +3,11 @@ import logging
 import os
 import sys
 
-from prometheus_async.aio import web
-
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
-from core.config import setup_service_environment
+from core.config import Settings, setup_service_environment
+from core.telemetry import init_metrics
 from application.workers import TaskWorker
 from core import RabbitMQConnection
 from core.dependencies import get_async_session
@@ -31,8 +29,7 @@ async def run_task_worker(rabbitmq):
 
 
 async def main():
-    # prometheus
-    await web.start_http_server(port=8001)
+    init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-worker")
     rabbitmq = RabbitMQConnection()
     await run_task_worker(rabbitmq)
 

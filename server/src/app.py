@@ -21,8 +21,8 @@ from core.utils.event_stream_manager import start_rabbitmq_consumer
 
 from application.init_app import init_app
 from fastapi import FastAPI, Request
-from prometheus_fastapi_instrumentator import Instrumentator
 from core.config import Settings, setup_service_environment
+from core.telemetry import get_meter, init_metrics
 from application.views import main_router
 from application.oidc import oidc_router
 from graphql_api.helpers import mask_sensitive_values
@@ -93,8 +93,19 @@ app = FastAPI(
 )
 
 setup_service_environment()
+init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-api")
 
-Instrumentator().instrument(app).expose(app)
+meter = get_meter("infrakitchen.api")
+http_request_counter = meter.create_counter(
+    name="infrakitchen.http.server.request.count",
+    description="Total number of HTTP requests handled by InfraKitchen API",
+    unit="{request}",
+)
+http_request_duration = meter.create_histogram(
+    name="infrakitchen.http.server.request.duration",
+    description="Duration of HTTP requests handled by InfraKitchen API",
+    unit="s",
+)
 
 
 @app.middleware("http")
@@ -103,6 +114,15 @@ async def add_process_time_header(request: Request, call_next):
     start_time = time.perf_counter()
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
+    route = request.scope.get("route")
+    route_path = getattr(route, "path", None) or request.url.path
+    metric_attributes = {
+        "http.request.method": request.method,
+        "http.route": route_path,
+        "http.response.status_code": response.status_code,
+    }
+    http_request_counter.add(1, metric_attributes)
+    http_request_duration.record(process_time, metric_attributes)
     response.headers["X-Process-Time"] = str(process_time)
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
     return response

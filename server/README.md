@@ -10,7 +10,7 @@ It enables users with super admin access to define and manage jobs using cron-ba
 **Job Management API**
 
 - Create Job: `POST /scheduler/jobs`
-*(Requires super admin access)*
+  _(Requires super admin access)_
 - List Jobs: `GET /scheduler/jobs`
 
 Each scheduler job includes the following fields:
@@ -26,6 +26,20 @@ Each scheduler job includes the following fields:
 ```
 
 Jobs are stored in the `scheduler_jobs` table in the database.
+
+#### OpenTelemetry Metrics
+
+InfraKitchen emits metrics through OpenTelemetry (OTLP HTTP/protobuf).
+
+Configure metrics with these environment variables:
+
+- `OTEL_METRICS_ENABLED` (`true`/`false`)
+- `OTEL_SERVICE_NAME` (base service name, API/worker suffixes are appended)
+- `OTEL_EXPORTER_OTLP_ENDPOINT` (default: `http://localhost:4318/v1/metrics`)
+- `OTEL_EXPORTER_OTLP_PROTOCOL` (default: `http/protobuf`)
+- `OTEL_RESOURCE_ATTRIBUTES` (optional resource attributes)
+
+By default, InfraKitchen no longer exposes a Prometheus scrape endpoint. Metrics are exported directly to an OTLP collector.
 
 **How It Works**
 
