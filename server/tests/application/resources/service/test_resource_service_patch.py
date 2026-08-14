@@ -185,7 +185,7 @@ class TestPatch:
         assert result.state == expected_state
         assert result.status == expected_status
         mock_resource_crud.get_by_id.assert_awaited_once_with(str(resource_id))
-        expected_resource = model_db_dump(resource_patch, exclude_unset=True, exclude_none=True)
+        expected_resource = model_db_dump(resource_patch, exclude_unset=True)
         mocked_resource_temp_state_handler.set_resource_temp_state.assert_awaited_once_with(
             resource_id=resource_id, value=expected_resource, created_by=mocked_user_response.id
         )
