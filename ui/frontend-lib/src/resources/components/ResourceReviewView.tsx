@@ -3,8 +3,7 @@ import React from "react";
 import { Alert, Button, Typography } from "@mui/material";
 
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils";
-import { useResourceTempState } from "../hooks";
+import { ENTITY_ACTION } from "../../utils";
 
 import ResourceStateReviewDialog from "./ResourceStateReviewDialog";
 
@@ -14,12 +13,6 @@ export const ResourceReviewView = () => {
   const hasCheckStateDifferencePermission =
     actions.includes(ENTITY_ACTION.APPROVE) ||
     actions.includes(ENTITY_ACTION.HAS_TEMPORARY_STATE);
-  const { resourceTempState, loading, error } = useResourceTempState({
-    resourceId: entity.id,
-    enabled:
-      openStateReview && entity.status !== ENTITY_STATUS.APPROVAL_PENDING,
-    refreshKey: openStateReview ? entity.updatedAt : null,
-  });
 
   return (
     <>
@@ -53,9 +46,7 @@ export const ResourceReviewView = () => {
         actions={actions}
         title="Review Changes"
         entity_name={entity.entityName}
-        resourceTempState={resourceTempState}
-        loading={loading}
-        error={error}
+        resourceTempState={entity.tempState}
         onClose={() => {
           setOpenStateReview(false);
         }}

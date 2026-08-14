@@ -609,8 +609,12 @@ class ResourceService:
                 raise EntityNotFound("Resource not found after update")
 
         elif body is not None:
+            full_body = model_db_dump(
+                resource,
+                exclude_unset=True,
+            )
             await self.resource_temp_state_handler.set_resource_temp_state(
-                resource_id=existing_resource.id, value=body, created_by=requester.id
+                resource_id=existing_resource.id, value=full_body, created_by=requester.id
             )
 
         response_pydantic = ResourceResponse.model_validate(existing_resource)
@@ -660,6 +664,9 @@ class ResourceService:
             # compare variables in temp state and existing resource, if they differ, we need to change resource status
             if resource_temp_state is None:
                 return False
+
+            if resource_temp_state.value.get("source_code_version_id"):
+                return True
 
             input_variables = resource_temp_state.value.get("variables", [])
             if not input_variables:

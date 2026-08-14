@@ -7,8 +7,9 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from application.resources.model import Resource
 from application.validation_rules.schema import ValidationRuleResponse
 
-from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader
+from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader, get_resource_temp_state_loader
 from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
 from graphql_api.modules.storage.types import StorageType
@@ -63,6 +64,15 @@ class ResourceType:
 
         loader = get_favorite_status_loader(info, str(user.id), "resource")
         return await loader.load(str(self.id))
+
+    @strawberry.field
+    async def temp_state(self, info: Info) -> ResourceTempStateType | None:
+        loader = get_resource_temp_state_loader(info)
+        temp_state = await loader.load(str(self.id))
+        if temp_state is None:
+            return None
+
+        return ResourceTempStateType(**temp_state)
 
 
 resource_mapper.finalize()

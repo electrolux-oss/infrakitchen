@@ -18,6 +18,7 @@ import {
 
 import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
+import { useEntityProvider } from "../../../common/context/EntityContext";
 import { notifyError } from "../../../common/hooks/useNotification";
 import VersionLifecycleStateChip from "../../../common/VersionLifecycleStateChip";
 import { IkEntity, ValidationRule } from "../../../types";
@@ -31,7 +32,6 @@ import {
   VALIDATION_RULES_BY_VARIABLE_FIELDS,
 } from "../../../validation_rules/graphql";
 import { GqlResource, RESOURCE_VARIABLE_SCHEMA_QUERY } from "../../graphql";
-import type { ResourcePendingChanges } from "../../hooks";
 import { ResourceVariableSchema, VariableInput } from "../../types";
 import { buildValidationRuleMaps } from "../../utils/validationRules";
 
@@ -47,7 +47,6 @@ export interface ResourceVariablesEditDialogProps {
   open: boolean;
   onClose: () => void;
   resource: GqlResource;
-  pendingChanges?: ResourcePendingChanges;
   onSave: (
     variables: VariableInput[],
     sourceCodeVersionId?: string | null,
@@ -58,10 +57,10 @@ export const ResourceVariablesEditDialog = ({
   open,
   onClose,
   resource,
-  pendingChanges = null,
   onSave,
 }: ResourceVariablesEditDialogProps) => {
   const { ikApi } = useConfig();
+  const { pendingChanges } = useEntityProvider();
   const [schema, setSchema] = useState<ResourceVariableSchema[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingSchema, setLoadingSchema] = useState(false);

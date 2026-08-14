@@ -38,19 +38,15 @@ import {
   SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql";
-import type { ResourcePendingChanges } from "../hooks";
 
 export interface ResourceAboutProps {
   resource: GqlResource;
-  pendingChanges?: ResourcePendingChanges;
 }
 
-export const ResourceOverview = ({
-  resource,
-  pendingChanges = null,
-}: ResourceAboutProps) => {
+export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions, actions } = useEntityProvider();
+  const { refreshEntity, userEntityPermissions, actions, hasPendingChange } =
+    useEntityProvider();
   const { permissions } = usePermissionProvider();
   const canEdit =
     userEntityPermissions.includes("write") || actions.includes("edit");
@@ -134,13 +130,6 @@ export const ResourceOverview = ({
       }
     },
     [ikApi, resource.id, refreshEntity],
-  );
-
-  const hasPendingChange = useCallback(
-    (key: string) =>
-      pendingChanges !== null &&
-      Object.prototype.hasOwnProperty.call(pendingChanges, key),
-    [pendingChanges],
   );
 
   const withPendingChange = useCallback(
