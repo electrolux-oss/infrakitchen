@@ -56,6 +56,7 @@ type GqlResourceRelationFieldTypes = {
   secretIds: GqlSecret[] | null;
   storage: GqlStorage | null;
   creator: GqlUserShort | null;
+  tempState: GqlResourceTempState | null;
   parents: GqlResourceShort[] | null;
   children: GqlResourceShort[] | null;
   workspace: GqlWorkspaceShort | null;

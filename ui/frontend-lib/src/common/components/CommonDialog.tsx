@@ -8,7 +8,6 @@ import {
   IconButton,
   DialogContent,
   DialogActions,
-  Typography,
   Button,
 } from "@mui/material";
 
@@ -63,7 +62,7 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
         </Box>
       </DialogTitle>
       <DialogContent dividers sx={{ minWidth: { xs: 300, sm: 400 } }}>
-        <Typography component="span">{content}</Typography>
+        <Box>{content}</Box>
       </DialogContent>
       {hasFooterActions && (
         <DialogActions>

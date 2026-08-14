@@ -42,14 +42,12 @@ import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql/mutations";
-import type { ResourcePendingChanges } from "../hooks";
 import { VariableInput, VariableOutput } from "../types";
 
 import { ResourceVariablesEditDialog } from "./variables/ResourceVariablesEditDialog";
 
 export interface TemplateConfigurationProps {
   resource: GqlResource;
-  pendingChanges?: ResourcePendingChanges;
 }
 
 const getSourceCodeVariables = (
@@ -119,10 +117,9 @@ const getSourceCodeVariables = (
 
 export const TemplateConfiguration = ({
   resource,
-  pendingChanges = null,
 }: TemplateConfigurationProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
+  const { refreshEntity, hasPendingChange } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
   const canEditStorage = checkActionPermission("api:storage", "admin");
@@ -184,13 +181,6 @@ export const TemplateConfiguration = ({
       await saveField(input);
     },
     [saveField],
-  );
-
-  const hasPendingChange = useCallback(
-    (key: string) =>
-      pendingChanges !== null &&
-      Object.prototype.hasOwnProperty.call(pendingChanges, key),
-    [pendingChanges],
   );
 
   const withPendingChange = useCallback(
@@ -450,7 +440,6 @@ export const TemplateConfiguration = ({
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
-            pendingChanges={pendingChanges}
             onSave={handleVariablesSave}
           />
           <OverviewCard name="Output Values">

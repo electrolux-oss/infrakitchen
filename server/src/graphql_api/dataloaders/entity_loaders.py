@@ -9,6 +9,7 @@ from application.executors.model import Executor
 from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.projects.model import Project
+from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
@@ -58,6 +59,22 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
             "entityName": "resource",
         }
         for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_resource_temp_states_by_resource(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(ResourceTempState).where(ResourceTempState.resource_id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.resource_id): {
+            "id": row.id,
+            "resource_id": row.resource_id,
+            "value": row.value,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+        for row in result.scalars()
     }
     return [mapping.get(key) for key in keys]
 
@@ -202,6 +219,10 @@ def get_favorite_status_loader(info: Info, user_id: str, component_type: str) ->
     return loaders[loader_key]
 
 
+def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any] | None]:
+    return info.context["loaders"]["resource_temp_state_by_resource"]
+
+
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
     return {
         "integration": DataLoader[str, dict[str, Any] | None](
@@ -209,6 +230,9 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         ),
         "project": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_projects(list(keys), session)),
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
+        "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)
+        ),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),
         "workspace": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_workspaces(list(keys), session)),

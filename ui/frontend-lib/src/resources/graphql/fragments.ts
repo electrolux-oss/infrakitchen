@@ -40,6 +40,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     secretIds: "secretIds",
     storage: "storage",
     creator: "creator",
+    tempState: "tempState",
     parents: "parents",
     children: "children",
     workspace: "workspace",
@@ -61,6 +62,14 @@ export const RESOURCE_SHORT_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.template, TEMPLATE_SHORT_FIELDS)}
 `;
 
+export const RESOURCE_TEMP_STATE_FIELDS = `
+  id
+  resourceId
+  value
+  createdAt
+  updatedAt
+`;
+
 export const RESOURCE_DETAIL_FIELDS = `
   ${buildSelection(RESOURCE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
@@ -69,18 +78,11 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.integrationIds, INTEGRATION_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workspace, WORKSPACE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
-`;
-
-export const RESOURCE_TEMP_STATE_FIELDS = `
-  id
-  resourceId
-  value
-  createdAt
-  updatedAt
 `;
 
 /** Maps snake_case table column fields to their GraphQL selection strings. */

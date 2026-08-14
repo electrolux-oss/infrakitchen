@@ -2,7 +2,14 @@ import React from "react";
 
 import ReactDiffViewer, { DiffMethod } from "react-diff-viewer-continued";
 
-import { Typography, Paper, Box, CircularProgress } from "@mui/material";
+import {
+  Typography,
+  Paper,
+  Box,
+  CircularProgress,
+  useColorScheme,
+  useTheme,
+} from "@mui/material";
 
 import { useEntityProvider } from "../../common";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
@@ -17,18 +24,35 @@ interface JsonDiffViewerProps {
 }
 
 function JsonDiffViewer({ originalText, modifiedText }: JsonDiffViewerProps) {
+  const theme = useTheme();
+  const { mode } = useColorScheme();
+
   return (
     <ReactDiffViewer
+      key={`resource-diff-${mode}`}
       oldValue={originalText}
       newValue={modifiedText}
       splitView={true}
-      leftTitle="Current State"
-      rightTitle="Updated State"
       compareMethod={DiffMethod.LINES}
       showDiffOnly={false}
       hideLineNumbers={false}
       disableWordDiff={true}
-      useDarkTheme={false}
+      useDarkTheme={mode === "dark"}
+      styles={{
+        variables: {
+          dark: {
+            diffViewerBackground: theme.vars?.palette.grey?.[800],
+            gutterBackground: theme.vars?.palette.background.paper,
+            gutterColor: theme.vars?.palette.text.secondary,
+          },
+        },
+        contentText: {
+          fontSize: theme.typography.caption.fontSize,
+        },
+        lineNumber: {
+          fontSize: theme.typography.caption.fontSize,
+        },
+      }}
     />
   );
 }
@@ -80,53 +104,85 @@ export const ResourceStateReviewDialog: React.FC<
             </Box>
           )}
           {resourceTempState && (
-            <Box sx={{ width: "100%", minWidth: "1200px" }}>
+            <Box sx={{ width: "100%" }}>
               <Typography variant="h5" sx={{ mb: 2 }}>
                 Resource State Comparison
               </Typography>
-              <Paper variant="outlined" sx={{ p: 0, overflow: "hidden" }}>
-                <JsonDiffViewer
-                  originalText={(() => {
-                    const filteredEntity: any = {};
-                    if (entity && resourceTempState.value) {
-                      Object.keys(resourceTempState.value || {}).forEach(
-                        (key) => {
-                          if (
-                            Object.prototype.hasOwnProperty.call(entity, key)
-                          ) {
+              <Paper variant="outlined" sx={{ p: 0 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                    minWidth: "1200px",
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ px: 2, py: 1.5 }}>
+                    Current State
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ px: 2, py: 1.5 }}>
+                    Updated State
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: "100%",
+                    maxWidth: "100%",
+                    maxHeight: "70vh",
+                    overflow: "auto",
+                    "& .diff-viewer-wrapper": {
+                      minWidth: "1200px",
+                    },
+                    "& table": {
+                      marginTop: 0,
+                    },
+                  }}
+                >
+                  <JsonDiffViewer
+                    originalText={(() => {
+                      const filteredEntity: any = {};
+                      if (entity && resourceTempState.value) {
+                        Object.keys(resourceTempState.value || {}).forEach(
+                          (key) => {
                             if (
-                              key.endsWith("_ids") &&
-                              Array.isArray((entity as any)[key])
+                              Object.prototype.hasOwnProperty.call(entity, key)
                             ) {
-                              // For fields that are arrays of IDs, we want to compare the IDs directly rather than the full objects
-                              filteredEntity[key] = (entity as any)[key].map(
-                                (item: any) =>
-                                  item && typeof item === "object"
-                                    ? item.id
-                                    : item,
-                              );
-                            } else {
-                              filteredEntity[key] = (entity as any)[key];
+                              if (
+                                key.endsWith("_ids") &&
+                                Array.isArray((entity as any)[key])
+                              ) {
+                                // For fields that are arrays of IDs, we want to compare the IDs directly rather than the full objects
+                                filteredEntity[key] = (entity as any)[key].map(
+                                  (item: any) =>
+                                    item && typeof item === "object"
+                                      ? item.id
+                                      : item,
+                                );
+                              } else {
+                                filteredEntity[key] = (entity as any)[key];
+                              }
+                            } else if (key === "storage_id") {
+                              // entity exposes "storage" as an expanded object; map it back to a UUID for comparison
+                              const storage = (entity as any)["storage"];
+                              filteredEntity[key] =
+                                storage && typeof storage === "object"
+                                  ? storage.id
+                                  : (storage ?? null);
                             }
-                          } else if (key === "storage_id") {
-                            // entity exposes "storage" as an expanded object; map it back to a UUID for comparison
-                            const storage = (entity as any)["storage"];
-                            filteredEntity[key] =
-                              storage && typeof storage === "object"
-                                ? storage.id
-                                : (storage ?? null);
-                          }
-                        },
-                      );
-                    }
-                    return JSON.stringify(filteredEntity, null, 2);
-                  })()}
-                  modifiedText={JSON.stringify(
-                    resourceTempState.value,
-                    null,
-                    2,
-                  )}
-                />
+                          },
+                        );
+                      }
+                      return JSON.stringify(filteredEntity, null, 2);
+                    })()}
+                    modifiedText={JSON.stringify(
+                      resourceTempState.value,
+                      null,
+                      2,
+                    )}
+                  />
+                </Box>
               </Paper>
             </Box>
           )}

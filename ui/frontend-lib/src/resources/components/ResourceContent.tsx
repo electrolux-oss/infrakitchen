@@ -10,8 +10,6 @@ import {
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
-import { ENTITY_STATUS } from "../../utils/constants";
-import { useResourceTempState } from "../hooks";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
@@ -28,23 +26,12 @@ export const ResourceContent = ({
 }: ResourceContentProps) => {
   const { entity, userEntityPermissions } = useEntityProvider();
 
-  const { pendingChanges } = useResourceTempState({
-    resourceId: entity?.id,
-    enabled: entity != null && entity.status !== ENTITY_STATUS.APPROVAL_PENDING,
-    refreshKey: entity?.updatedAt,
-  });
-
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
     {
       label: "Template",
-      content: (
-        <TemplateConfiguration
-          resource={entity}
-          pendingChanges={pendingChanges}
-        />
-      ),
+      content: <TemplateConfiguration resource={entity} />,
     },
     {
       label: "Dependencies",
@@ -116,7 +103,7 @@ export const ResourceContent = ({
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
-      <ResourceOverview resource={entity} pendingChanges={pendingChanges} />
+      <ResourceOverview resource={entity} />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}

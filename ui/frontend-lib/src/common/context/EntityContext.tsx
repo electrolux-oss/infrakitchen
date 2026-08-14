@@ -5,9 +5,11 @@ import {
   ReactNode,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 
 import { ApiClientError, isNotFoundError } from "../../errors";
+import { GqlResourceTempState } from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { notifyError } from "../hooks/useNotification";
 
@@ -49,6 +51,9 @@ interface EntityContextType {
   refreshEntity?: (entity?: IkEntity) => void;
   refreshActions?: () => void;
   userEntityPermissions: string[];
+  resourceTempState: GqlResourceTempState | null;
+  pendingChanges: Record<string, any> | null;
+  hasPendingChange: (key: string) => boolean;
 }
 
 export const EntityContext = createContext<EntityContextType | undefined>(
@@ -178,6 +183,23 @@ export const EntityProvider = ({
       });
   }, [ikApi, entity_name, entity_id]);
 
+  const resourceTempState = useMemo(
+    () => (entity_name === "resource" ? (entity?.tempState ?? null) : null),
+    [entity, entity_name],
+  );
+
+  const pendingChanges = useMemo(
+    () => resourceTempState?.value ?? null,
+    [resourceTempState],
+  );
+
+  const hasPendingChange = useCallback(
+    (key: string) =>
+      pendingChanges !== null &&
+      Object.prototype.hasOwnProperty.call(pendingChanges, key),
+    [pendingChanges],
+  );
+
   const contextValue: EntityContextType = {
     actions,
     entity,
@@ -189,6 +211,9 @@ export const EntityProvider = ({
     refreshEntity,
     refreshActions,
     userEntityPermissions,
+    resourceTempState,
+    pendingChanges,
+    hasPendingChange,
   };
   return (
     <EntityContext.Provider value={contextValue}>
