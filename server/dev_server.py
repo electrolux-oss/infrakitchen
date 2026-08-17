@@ -1,6 +1,5 @@
 import asyncio
 import os
-from prometheus_async.aio import web
 import uvicorn
 import base64
 from alembic.command import upgrade
@@ -12,8 +11,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from application.logger import change_logger, get_uvicorn_log_config
-from core.config import setup_service_environment
+from core.config import Settings, setup_service_environment
 from core.rabbitmq import RabbitMQConnection
+from core.telemetry import init_metrics
 from core.utils.event_sender import EventSender
 from scheduler import schedule_jobs, schedule_polling_job, start_reload_consumer
 from worker import run_task_worker
@@ -56,7 +56,7 @@ def run_sql_migrations():
 
 async def start_task_worker():
     """Initializes and runs the TaskWorker indefinitely."""
-    await web.start_http_server(port=8001)
+    init_metrics(service_name=f"{Settings().OTEL_SERVICE_NAME}-worker")
     rabbitmq = RabbitMQConnection()
     await run_task_worker(rabbitmq)
 

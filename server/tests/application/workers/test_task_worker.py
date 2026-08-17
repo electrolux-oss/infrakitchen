@@ -22,6 +22,72 @@ def mock_session():
 
 class TestTaskWorker:
     @pytest.mark.asyncio
+    async def test_process_task_message_records_success_metric(self, mock_session, mocked_user, monkeypatch):
+        message_raw_body = {
+            "_metadata": {
+                "_message_type": "task",
+                "action": "create",
+                "id": "cf95ed6d-a779-4c80-8425-c09ea872ba8f",
+                "user": "test-user",
+                "entity_controller": "source_code",
+            }
+        }
+
+        message = Mock(spec=tw_mod.MessageHandler)
+        message.raw_body = json.dumps(message_raw_body).encode("utf-8")
+
+        mock_counter = Mock()
+        monkeypatch.setattr(tw_mod, "task_executions_counter", mock_counter)
+
+        task_controller = Mock()
+        task_controller.start_pipeline = AsyncMock()
+
+        task_worker = TaskWorker(session=mock_session, name="task_worker", lock=asyncio.Lock())
+        task_worker.user_service.get_dto_by_id = AsyncMock(return_value=mocked_user)
+        task_worker.get_task_controller = AsyncMock(return_value=task_controller)
+        task_worker._send_success_notification = AsyncMock()
+        task_worker.handle_exception = AsyncMock()
+        task_worker.worker_service.set_current_task = AsyncMock()
+        task_worker.worker_service.increment_tasks_completed = AsyncMock()
+
+        await task_worker.process_message(message=message)
+
+        mock_counter.add.assert_called_once_with(1, {"job_type": "source_code", "status": "success"})
+
+    @pytest.mark.asyncio
+    async def test_process_task_message_records_error_metric(self, mock_session, mocked_user, monkeypatch):
+        message_raw_body = {
+            "_metadata": {
+                "_message_type": "task",
+                "action": "create",
+                "id": "cf95ed6d-a779-4c80-8425-c09ea872ba8f",
+                "user": "test-user",
+                "entity_controller": "source_code",
+            }
+        }
+
+        message = Mock(spec=tw_mod.MessageHandler)
+        message.raw_body = json.dumps(message_raw_body).encode("utf-8")
+
+        mock_counter = Mock()
+        monkeypatch.setattr(tw_mod, "task_executions_counter", mock_counter)
+
+        task_controller = Mock()
+        task_controller.start_pipeline = AsyncMock(side_effect=RuntimeError("boom"))
+
+        task_worker = TaskWorker(session=mock_session, name="task_worker", lock=asyncio.Lock())
+        task_worker.user_service.get_dto_by_id = AsyncMock(return_value=mocked_user)
+        task_worker.get_task_controller = AsyncMock(return_value=task_controller)
+        task_worker._send_success_notification = AsyncMock()
+        task_worker.handle_exception = AsyncMock()
+        task_worker.worker_service.set_current_task = AsyncMock()
+        task_worker.worker_service.increment_tasks_completed = AsyncMock()
+
+        await task_worker.process_message(message=message)
+
+        mock_counter.add.assert_called_once_with(1, {"job_type": "source_code", "status": "error"})
+
+    @pytest.mark.asyncio
     async def test_process_scheduler_message_success(self, mock_session, monkeypatch):
         message_raw_body = {
             "_metadata": {
