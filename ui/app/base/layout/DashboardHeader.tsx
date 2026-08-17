@@ -2,6 +2,8 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
+import { ServerInfoDialog } from "@electrolux-oss/infrakitchen";
+import { useConfig } from "@electrolux-oss/infrakitchen";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MuiAppBar from "@mui/material/AppBar";
@@ -46,9 +48,20 @@ export default function DashboardHeader({
   menuOpen,
   onToggleMenu,
 }: DashboardHeaderProps) {
+  const [serverInfoOpen, setServerInfoOpen] = React.useState(false);
+  const { serverInfo } = useConfig();
+
   const handleMenuOpen = React.useCallback(() => {
     onToggleMenu(!menuOpen);
   }, [menuOpen, onToggleMenu]);
+
+  const handleServerInfoOpen = React.useCallback(() => {
+    setServerInfoOpen(true);
+  }, []);
+
+  const handleServerInfoClose = React.useCallback(() => {
+    setServerInfoOpen(false);
+  }, []);
 
   const getMenuIcon = React.useCallback(
     (isExpanded: boolean) => {
@@ -121,14 +134,24 @@ export default function DashboardHeader({
               ) : null}
               <Typography
                 variant="caption"
+                component="button"
+                type="button"
+                onClick={handleServerInfoOpen}
                 sx={{
                   color: "text.disabled",
                   fontSize: "0.6rem",
                   ml: 2,
                   whiteSpace: "nowrap",
+                  background: "none",
+                  border: 0,
+                  padding: 0,
+                  cursor: "pointer",
+                  font: "inherit",
                 }}
               >
-                v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
+                {serverInfo
+                  ? `${serverInfo.version}+${serverInfo.sourceCommitShort}`
+                  : ""}
               </Typography>
             </Stack>
           </Stack>
@@ -154,6 +177,10 @@ export default function DashboardHeader({
             <UserSidebar />
           </Stack>
         </Stack>
+        <ServerInfoDialog
+          open={serverInfoOpen}
+          onClose={handleServerInfoClose}
+        />
       </Toolbar>
     </AppBar>
   );

@@ -137,7 +137,7 @@ class BaseMessagesWorker:
                 raise
 
     async def register(self):
-        self.worker.host_metadata = get_host_metadata()
+        self.worker.host_metadata = await get_host_metadata()
         self.worker = await self.worker_service.save_worker(self.worker)
         await self.session.commit()
 
