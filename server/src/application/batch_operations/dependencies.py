@@ -4,7 +4,6 @@ from application.executors.dependencies import get_executor_service
 from application.resources.dependencies import get_resource_service
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
-from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import BatchOperationCRUD
@@ -23,7 +22,6 @@ def get_batch_operation_service(
         crud=BatchOperationCRUD(session=session),
         executor_service=get_executor_service(session=session),
         resource_service=get_resource_service(session=session),
-        task_service=get_task_service(session=session),
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,
     )

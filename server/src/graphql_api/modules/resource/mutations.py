@@ -3,6 +3,7 @@ from typing import Any, cast
 
 import strawberry
 from strawberry import Maybe
+from strawberry.experimental import pydantic as strawberry_pydantic
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
@@ -19,7 +20,6 @@ from graphql_api.modules.permission.mutations import EntityPolicyCreateInput
 from graphql_api.modules.permission.types import PermissionType
 from graphql_api.modules.resource.types import ResourceType
 from graphql_api.modules.workflow.types import WorkflowType
-from strawberry.experimental import pydantic as strawberry_pydantic
 
 
 @strawberry_pydantic.input(model=ResourceCreate, all_fields=True)

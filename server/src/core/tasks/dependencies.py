@@ -1,11 +1,11 @@
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.dependencies import get_db_session
+from core.utils.event_sender import EventSender
 
 from .crud import TaskEntityCRUD
 from .service import TaskEntityService
-
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def get_task_service(
@@ -13,4 +13,5 @@ def get_task_service(
 ) -> TaskEntityService:
     return TaskEntityService(
         crud=TaskEntityCRUD(session=session),
+        event_sender=EventSender("scheduled_entity_action"),
     )

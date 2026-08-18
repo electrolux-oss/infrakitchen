@@ -37,7 +37,6 @@ def mock_integration_service(
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
-    mock_task_entity_service,
     mock_permission_service,
 ):
     return IntegrationService(
@@ -45,7 +44,6 @@ def mock_integration_service(
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
-        task_service=mock_task_entity_service,
         permission_service=mock_permission_service,
     )
 

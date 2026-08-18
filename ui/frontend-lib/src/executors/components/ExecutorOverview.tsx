@@ -1,6 +1,7 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import { TextField } from "@mui/material";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import { Button, Stack, TextField } from "@mui/material";
 
 import {
   CommonField,
@@ -12,6 +13,7 @@ import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { ScheduleEntityActionDialog } from "../../common/components/ScheduleEntityActionDialog";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -31,8 +33,10 @@ export interface ExecutorAboutProps {
 
 export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { actions, refreshEntity, scheduledActions, userEntityPermissions } =
+    useEntityProvider();
   const canEdit = userEntityPermissions.includes("admin");
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
@@ -51,17 +55,48 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
     [ikApi, executor.id, refreshEntity],
   );
 
+  const pendingScheduledActions = useMemo(
+    () =>
+      scheduledActions
+        .filter((action) => action.status === "PENDING")
+        .sort(
+          (left, right) =>
+            new Date(left.runAt).getTime() - new Date(right.runAt).getTime(),
+        ),
+    [scheduledActions],
+  );
+
+  const pendingScheduledAction = pendingScheduledActions[0] ?? null;
+  const formatScheduledRunAt = useCallback(
+    (runAt: string) => new Date(runAt).toLocaleString(),
+    [],
+  );
+
   return (
     <OverviewCard
       name={executor.name}
       description={executor.description || "No description"}
       actions={
-        <FavoriteButton
-          componentId={String(executor.id)}
-          componentType="executor"
-          ariaLabel="Add executor to favorites"
-          isFavorite={executor.isFavorite}
-        />
+        <Stack spacing={1} sx={{ alignItems: "flex-end" }}>
+          {actions.includes("execute") && (
+            <Button
+              variant={pendingScheduledAction ? "contained" : "outlined"}
+              color={pendingScheduledAction ? "warning" : "inherit"}
+              startIcon={<ScheduleIcon />}
+              onClick={() => setIsScheduleDialogOpen(true)}
+            >
+              {pendingScheduledAction
+                ? `Scheduled Apply: ${formatScheduledRunAt(pendingScheduledAction.runAt)}`
+                : "Schedule Apply"}
+            </Button>
+          )}
+          <FavoriteButton
+            componentId={String(executor.id)}
+            componentType="executor"
+            ariaLabel="Add executor to favorites"
+            isFavorite={executor.isFavorite}
+          />
+        </Stack>
       }
     >
       <CommonField
@@ -125,6 +160,16 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
           />
         )}
         size={12}
+      />
+      <ScheduleEntityActionDialog
+        open={isScheduleDialogOpen}
+        entityId={String(executor.id)}
+        entityType="executor"
+        scheduledAction={pendingScheduledAction}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        onChanged={() => {
+          refreshEntity?.();
+        }}
       />
     </OverviewCard>
   );

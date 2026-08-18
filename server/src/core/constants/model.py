@@ -43,6 +43,7 @@ class ModelStatus(StrEnum):
     IN_PROGRESS = "in_progress"
     DONE = "done"
     ERROR = "error"
+    CANCELLED = "cancelled"
     UNKNOWN = "unknown"
     APPROVAL_PENDING = "approval_pending"
     PENDING = "pending"

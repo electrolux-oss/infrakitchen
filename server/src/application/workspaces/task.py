@@ -10,7 +10,7 @@ from application.workspaces.model import Workspace, WorkspaceDTO
 from application.workspaces.schema import WorkspaceResponse
 from core.adapters.provider_adapters import IntegrationProvider
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.utils.event_sender import EventSender
 
@@ -32,7 +32,7 @@ class WorkspaceTask:
         crud_workspace: WorkspaceCRUD,
         resource_task_controller: ResourceTask,
         workspace_instance: Workspace,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         user: UserDTO,
         event_sender: EventSender,
@@ -47,7 +47,7 @@ class WorkspaceTask:
         self.workspace_instance: Workspace = workspace_instance
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
 
         self.git_client: GitClient | None = None
@@ -167,7 +167,12 @@ class WorkspaceTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.workspace_instance.status)
+        await self.task_service.update_task(
+            entity_id=self.workspace_instance.id,
+            entity_name="workspace",
+            requester=self.user,
+            status=self.workspace_instance.status,
+        )
         await self.session.commit()
         await self.crud_workspace.refresh(self.workspace_instance)
         response_model = WorkspaceResponse.model_validate(self.workspace_instance)

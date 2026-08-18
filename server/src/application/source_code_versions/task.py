@@ -19,7 +19,7 @@ from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.model import SourceCodeDTO
 from core.adapters.provider_adapters import IntegrationProvider
 from core.constants.model import ModelActions, ModelStatus
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
@@ -65,7 +65,7 @@ class SourceCodeVersionTask:
         source_code_version_service: SourceCodeVersionService,
         source_code_version_instance: SourceCodeVersion,
         source_code_instance: SourceCodeDTO,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         user: UserDTO,
         event_sender: EventSender,
@@ -81,7 +81,7 @@ class SourceCodeVersionTask:
         self.source_code_instance: SourceCodeDTO = source_code_instance
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
         self.git_client: GitClient | None = None
         self.environment_variables: dict[str, str] = {}
@@ -263,7 +263,12 @@ class SourceCodeVersionTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.source_code_version_instance.status)
+        await self.task_service.update_task(
+            entity_id=self.source_code_version_instance.id,
+            entity_name="source_code_version",
+            requester=self.user,
+            status=self.source_code_version_instance.status,
+        )
         await self.session.commit()
         await self.crud_source_code_version.refresh(self.source_code_version_instance)
         response_model = SourceCodeVersionResponse.model_validate(self.source_code_version_instance)

@@ -25,7 +25,6 @@ from .fixtures.test_handlers_fixtures import (
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
-    mock_task_handler,
 )
 from .fixtures.test_entity_tasks_fixtures import mock_task_entity_crud, mock_task_entity_service
 from .fixtures.test_executor_fixtures import (
@@ -152,7 +151,6 @@ from .fixtures.test_tools_fixtures import mock_stream_subprocess
 __all__ = [
     "mock_template_crud",
     "mock_revision_handler",
-    "mock_task_handler",
     "mock_event_sender",
     "mock_audit_log_handler",
     "mock_template_service",

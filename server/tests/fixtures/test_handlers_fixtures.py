@@ -20,8 +20,3 @@ def mock_audit_log_handler():
 @pytest.fixture
 def mock_resource_temp_state_handler():
     return AsyncMock()
-
-
-@pytest.fixture
-def mock_task_handler():
-    return AsyncMock()
