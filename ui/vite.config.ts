@@ -1,5 +1,3 @@
-import { execSync } from "child_process";
-import { readFileSync } from "fs";
 import { resolve } from "path";
 
 import { defineConfig } from "vite";
@@ -8,33 +6,10 @@ import react from "@vitejs/plugin-react";
 const DEFAULT_PORT = "7777";
 const port = process.env.VITE_PORT || DEFAULT_PORT;
 const backendHost = process.env.BACKEND_HOST || "localhost";
-
-function getAppVersion() {
-  try {
-    return readFileSync(resolve(__dirname, "../VERSION"), "utf-8").trim();
-  } catch {
-    return "unknown";
-  }
-}
-
-function getGitCommitHash() {
-  try {
-    return execSync("git rev-parse --short HEAD").toString().trim();
-  } catch {
-    return "unknown";
-  }
-}
-
-const appVersion = getAppVersion();
-const gitCommitHash = getGitCommitHash();
 const frontendLibSource = resolve(__dirname, "frontend-lib/src/index.ts");
 
 export default defineConfig({
   plugins: [react()],
-  define: {
-    __APP_VERSION__: JSON.stringify(appVersion),
-    __GIT_COMMIT_HASH__: JSON.stringify(gitCommitHash),
-  },
   resolve: {
     alias: {
       "@electrolux-oss/infrakitchen": frontendLibSource,

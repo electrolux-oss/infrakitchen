@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from application.logger import change_logger, get_uvicorn_log_config
+from build_info import write_build_info
 from core.config import setup_service_environment
 from core.rabbitmq import RabbitMQConnection
 from core.utils.event_sender import EventSender
@@ -109,6 +110,7 @@ async def run_server_and_worker():
 
 
 if __name__ == "__main__":
+    write_build_info()
     generate_env_local()
     run_sql_migrations()
     try:

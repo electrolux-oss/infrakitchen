@@ -1,11 +1,16 @@
 import os
 from typing import Any
+
 from dotenv import load_dotenv
 from pydantic import computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import URL
 
+from build_info import load_build_info
 from core.singleton_meta import SingletonMeta
+
+
+BUILD_INFO = load_build_info()
 
 
 def setup_service_environment():
@@ -53,6 +58,11 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     approval_flow: bool = True
     demo_mode: bool = False
     websocket: bool = True
+    server_version: str = BUILD_INFO["version"]
+    git_commit: str = BUILD_INFO["git_commit"]
+    git_commit_short: str = BUILD_INFO["git_commit_short"]
+    repository: str = BUILD_INFO["repository"]
+    repository_url: str = BUILD_INFO["repository_url"]
 
     def __setattr__(self, name: str, value: Any, /) -> None:
         if not hasattr(self, name):
@@ -65,7 +75,10 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             f"  approval_flow={self.approval_flow}, "
             f"  demo_mode={self.demo_mode}, "
             f"  websocket={self.websocket}, "
-            ")"
+            f"  server_version={self.server_version}, "
+            f"  git_commit={self.git_commit}, "
+            f"  repository_url={self.repository_url}, "
+            f")"
         )
 
     def __str__(self) -> str:
@@ -76,4 +89,9 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             "approval_flow": self.approval_flow,
             "demo_mode": self.demo_mode,
             "websocket": self.websocket,
+            "server_version": self.server_version,
+            "git_commit": self.git_commit,
+            "git_commit_short": self.git_commit_short,
+            "repository": self.repository,
+            "repository_url": self.repository_url,
         }

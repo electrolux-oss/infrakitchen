@@ -9,7 +9,7 @@ FROM docker.io/library/python:3.14.6-slim-bookworm@sha256:86f975aca15cf04a40b399
 
 ARG TARGETARCH
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl unzip binutils && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip binutils git && \
   rm -rf /var/lib/apt/lists/*
 
 RUN case "$TARGETARCH" in \
@@ -33,15 +33,18 @@ RUN case "$TARGETARCH" in \
 
 WORKDIR /app
 
-COPY ./server /app
+COPY ./ /app
 
 # install UV
 ENV UV_COMPILE_BYTECODE=1 \
   UV_LINK_MODE=copy \
-  UV_NO_CACHE=1
+  UV_NO_CACHE=1 \
+  UV_PROJECT_ENVIRONMENT=/app/.venv
 
 RUN pip install --no-cache-dir uv && \
-  uv sync --no-dev --frozen
+  cd server && uv sync --no-dev --frozen
+
+RUN uv run --project server /app/server/generate_build_info.py
 
 RUN find /app/.venv -type d -name "__pycache__" -prune -exec rm -rf {} + && \
   find /app/.venv -type d -name "tests" -prune -exec rm -rf {} + && \
@@ -51,8 +54,7 @@ RUN find /app/.venv -type d -name "__pycache__" -prune -exec rm -rf {} + && \
 
 FROM node:26.7.0-bookworm-slim@sha256:c00614442a3c693109886209462dd1b15462f6726347fa9cb9fc0125ca26f275 AS node_builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends git && \
-  apt-get clean && rm -rf /var/lib/apt/lists/* && npm install -g corepack
+RUN npm install -g corepack
 
 WORKDIR /app
 COPY ./ /app
@@ -80,11 +82,12 @@ RUN sed -i -e 's/^user www-data;/# user www-data;/' -e 's|pid /run/nginx.pid;|pi
 WORKDIR /app
 
 COPY --from=python_builder /app/.venv /app/.venv
-COPY --from=python_builder /app/src /app
+COPY --from=python_builder /app/server/src /app
+COPY --from=python_builder /app/server/build-info.json /app/build-info.json
 COPY --from=python_builder /tofu /usr/local/bin/tofu
 COPY --from=python_builder /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=python_builder /aws-cli-bin/ /usr/local/bin/
-COPY --from=python_builder /app/.env /app/.env
+COPY --from=python_builder /app/server/.env /app/.env
 COPY ./docs/examples/docker/entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh && \
