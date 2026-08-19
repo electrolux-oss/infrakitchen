@@ -5,6 +5,7 @@ export interface GqlTask {
   entity: string;
   entityId: string;
   entityName: string;
+  runAt: string | null;
   state: string | null;
   status: string;
   createdAt: string;

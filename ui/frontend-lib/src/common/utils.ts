@@ -48,6 +48,7 @@ export const getStateColor = (
     };
 
   if (
+    status === ENTITY_STATUS.PENDING ||
     status === ENTITY_STATUS.APPROVAL_PENDING ||
     status === ENTITY_STATUS.READY
   )
@@ -106,7 +107,7 @@ export const STATUS_CHIP_COLOR: Record<
   done: "success",
   error: "error",
   in_progress: "info",
-  pending: "default",
+  pending: "warning",
   approval_pending: "warning",
   ready: "warning",
   disabled: "default",
@@ -124,34 +125,52 @@ export const formatTimeAgo = (dateInput: string | Date) => {
   }
 
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const diffInMs = date.getTime() - now.getTime();
+  const isFuture = diffInMs > 0;
+  const absDiffInMs = Math.abs(diffInMs);
+  const diffInMinutes = Math.floor(absDiffInMs / (1000 * 60));
+  const diffInHours = Math.floor(absDiffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(absDiffInMs / (1000 * 60 * 60 * 24));
 
   if (diffInMinutes < 1) return "Just now";
 
-  if (diffInMinutes < 60)
-    return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+  if (diffInMinutes < 60) {
+    return isFuture
+      ? `in ${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"}`
+      : `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+  }
 
-  if (diffInHours < 24)
-    return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  if (diffInHours < 24) {
+    return isFuture
+      ? `in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`
+      : `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  }
 
-  if (diffInDays === 1) return "1 day ago";
+  if (diffInDays === 1) return isFuture ? "in 1 day" : "1 day ago";
 
-  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 7)
+    return isFuture ? `in ${diffInDays} days` : `${diffInDays} days ago`;
 
   if (diffInDays < 30) {
     const weeks = Math.floor(diffInDays / 7);
+    if (isFuture) {
+      return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
+    }
     return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
   }
 
   if (diffInDays < 365) {
     const months = Math.floor(diffInDays / 30);
+    if (isFuture) {
+      return months === 1 ? "in 1 month" : `in ${months} months`;
+    }
     return months === 1 ? "1 month ago" : `${months} months ago`;
   }
 
   const years = Math.floor(diffInDays / 365);
+  if (isFuture) {
+    return years === 1 ? "in 1 year" : `in ${years} years`;
+  }
   return years === 1 ? "1 year ago" : `${years} years ago`;
 };
 

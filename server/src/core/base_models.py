@@ -59,9 +59,15 @@ TMessageModel = TypeVar("TMessageModel", bound="MessageModel")
 
 class MessageModel(PydanticBaseModel):
     body: dict[str, Any] = Field(default_factory=dict)
-    message_type: Literal["user", "notification", "log", "broadcast", "task", "event", "scheduler_job"] = Field(
-        default="user"
-    )
+    message_type: Literal[
+        "user",
+        "notification",
+        "log",
+        "broadcast",
+        "task",
+        "event",
+        "scheduler_job",
+    ] = Field(default="user")
     exchange: str = Field(default="ik_tasks")
     exchange_type: ExchangeType = Field(default=ExchangeType.DIRECT)
     routing_key: str | None = Field(default="")

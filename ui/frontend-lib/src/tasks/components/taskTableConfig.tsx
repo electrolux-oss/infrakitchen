@@ -84,6 +84,19 @@ export const taskColumns = (options: {
     ),
   },
   {
+    field: "runAt",
+    headerName: "Run At",
+    sortField: "run_at",
+    flex: 1,
+    renderCell: (params: GridRenderCellParams) =>
+      params.value ? (
+        <RelativeTime
+          date={params.value}
+          sx={{ fontSize: "0.75rem", display: "flex" }}
+        />
+      ) : null,
+  },
+  {
     field: "creator",
     headerName: "Creator",
     flex: 1,

@@ -28,8 +28,7 @@ from core.constants.model import ModelActions
 from core.errors import CannotProceed
 from application.resource_temp_state.crud import ResourceTempStateCrud
 from application.resource_temp_state.model import ResourceTempStateDTO
-from core.tasks.crud import TaskEntityCRUD
-from core.tasks.handler import TaskHandler
+from core.tasks.dependencies import get_task_service
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
@@ -49,15 +48,11 @@ async def get_source_code_task(
     if not source_code_instance:
         raise CannotProceed(f"Source code {obj_id} not found")
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session), entity_name="source_code", entity_id=source_code_instance.id, user=user
-    )
-
     return SourceCodeTask(
         session=session,
         crud_source_code=crud_source_code,
         source_code_instance=source_code_instance,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=EntityLogger(
             entity_name="source_code",
             entity_id=source_code_instance.id,
@@ -92,20 +87,13 @@ async def get_source_code_version_task(
     if not source_code_instance:
         raise CannotProceed(f"Source code {source_code_version_instance.source_code_id} not found")
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session),
-        entity_name="source_code_version",
-        entity_id=source_code_version_instance.id,
-        user=user,
-    )
-
     return SourceCodeVersionTask(
         session=session,
         crud_source_code_version=crud_source_code_version,
         source_code_version_service=get_source_code_version_service(session=session),
         source_code_version_instance=source_code_version_instance,
         source_code_instance=source_code_instance,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=EntityLogger(
             entity_name="source_code_version",
             entity_id=str(source_code_version_instance.id),
@@ -134,15 +122,11 @@ async def get_storage_task(
     if not storage_instance:
         raise CannotProceed(f"Storage {obj_id} not found")
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session), entity_name="storage", entity_id=storage_instance.id, user=user
-    )
-
     return StorageTask(
         session=session,
         crud_storage=crud_storage,
         storage_instance=storage_instance,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=EntityLogger(
             entity_name="storage",
             entity_id=storage_instance.id,
@@ -178,9 +162,6 @@ async def get_resource_task(
     if temp_state_instance is not None:
         temp_state_instance_pydantic = ResourceTempStateDTO.model_validate(temp_state_instance)
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session), entity_name="resource", entity_id=resource_instance.id, user=user
-    )
     r_logger = EntityLogger(
         entity_name="resource",
         entity_id=resource_instance.id,
@@ -201,7 +182,7 @@ async def get_resource_task(
         resource_instance=resource_instance,
         resource_temp_state_instance=temp_state_instance_pydantic,
         source_code_version_service=source_code_version_service,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=r_logger,
         secret_manager=secret_manager,
         user=user,
@@ -226,9 +207,6 @@ async def get_executor_task(
     if not executor_instance:
         raise CannotProceed(f"Executor {obj_id} not found")
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session), entity_name="executor", entity_id=executor_instance.id, user=user
-    )
     r_logger = EntityLogger(
         entity_name="executor",
         entity_id=executor_instance.id,
@@ -248,7 +226,7 @@ async def get_executor_task(
         executor_service=get_executor_service(session=session),
         executor_instance=executor_instance,
         source_code_service=source_code_service,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=r_logger,
         secret_manager=secret_manager,
         user=user,
@@ -341,16 +319,12 @@ async def get_workspace_task(
         session=session, obj_id=resource_instance.id, user=user, action=ModelActions.DRYRUN_WITH_TEMP_STATE
     )
 
-    task_handler = TaskHandler(
-        TaskEntityCRUD(session=session), entity_name="workspace", entity_id=workspace_instance.id, user=user
-    )
-
     return WorkspaceTask(
         session=session,
         crud_workspace=crud_workspace,
         resource_task_controller=resource_task,
         workspace_instance=workspace_instance,
-        task_handler=task_handler,
+        task_service=get_task_service(session=session),
         logger=w_logger,
         user=user,
         event_sender=workspace_event_sender,

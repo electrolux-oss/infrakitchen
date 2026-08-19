@@ -26,7 +26,7 @@ from core.constants.model import ModelActions
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, ChildrenIsNotReady, ExitWithoutSave, ParentIsNotReady
 from application.resource_temp_state.model import ResourceTempStateDTO
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import make_done, make_in_progress
@@ -46,7 +46,7 @@ class ResourceTask:
         resource_service: ResourceService,
         resource_instance: Resource,
         source_code_version_service: SourceCodeVersionService,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         secret_manager: SecretManager,
         user: UserDTO,
@@ -67,7 +67,7 @@ class ResourceTask:
         self.source_code_version_instance: SourceCodeVersionDTO | None = None
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
         self.tf_client: OtfClient | None = None
         self.git_client: GitClient | None = None
@@ -384,7 +384,13 @@ class ResourceTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.resource_instance.status, state=self.resource_instance.state)
+        await self.task_service.update_task(
+            entity_id=self.resource_instance.id,
+            entity_name="resource",
+            requester=self.user,
+            status=self.resource_instance.status,
+            state=self.resource_instance.state,
+        )
         await self.session.commit()
         await self.crud_resource.refresh(self.resource_instance)
 

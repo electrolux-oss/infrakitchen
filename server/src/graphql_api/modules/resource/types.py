@@ -7,13 +7,18 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from application.resources.model import Resource
 from application.validation_rules.schema import ValidationRuleResponse
 
-from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader, get_resource_temp_state_loader
+from graphql_api.dataloaders.entity_loaders import (
+    get_favorite_status_loader,
+    get_scheduled_action_loader,
+    get_resource_temp_state_loader,
+)
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
 from graphql_api.modules.storage.types import StorageType
 from graphql_api.modules.template.types import TemplateType
+from graphql_api.modules.task.types import TaskType
 from graphql_api.modules.user.types import UserType
 from graphql_api.modules.workspace.types import WorkspaceType
 from graphql_api.modules.project.types import ProjectType
@@ -73,6 +78,12 @@ class ResourceType:
             return None
 
         return ResourceTempStateType(**temp_state)
+
+    @strawberry.field
+    async def scheduled_actions(self, info: Info) -> list[TaskType]:
+        loader = get_scheduled_action_loader(info, "resource")
+        scheduled_actions = await loader.load(str(self.id))
+        return [scheduled_actions] if scheduled_actions else []
 
 
 resource_mapper.finalize()

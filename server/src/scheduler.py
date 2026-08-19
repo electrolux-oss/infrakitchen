@@ -7,14 +7,20 @@ from uuid import UUID
 import aio_pika
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from application.logger import change_logger
 
+from core.constants.model import ModelStatus
 from core.dependencies import get_async_session
+from core.errors import EntityNotFound
 from core.rabbitmq import RabbitMQConnection
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
+from core.tasks.crud import TaskEntityCRUD
+from core.users.crud import UserCRUD
+from core.users.service import UserService
 from core.utils.event_sender import EventSender
 
 change_logger()
@@ -24,6 +30,7 @@ logger = logging.getLogger("scheduler")
 # Id of the internal polling job. Excluded when reconciling DB jobs so it is
 # never treated as a stale job and removed.
 POLL_JOB_ID = "poll_new_jobs"
+ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 
 # Serializes reconciliation so the event-driven reload and the periodic poll
 # never mutate the APScheduler job store concurrently.
@@ -35,6 +42,35 @@ async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender
     await event_sender.send_scheduler_job(job_id=job_id, job_type=job_type, job_script=job_script)
     await event_sender.flush()
     logger.info(f"Scheduler job {job_id} sent successfully to worker")
+
+
+async def run_entity_action(action_id: UUID, event_sender: EventSender):
+    async with get_async_session() as session:
+        scheduled_action_crud = TaskEntityCRUD(session=session)
+        scheduled_action = await scheduled_action_crud.get_by_id(action_id)
+        if scheduled_action is None:
+            raise EntityNotFound("Scheduled action not found")
+
+        if scheduled_action.run_at is None or scheduled_action.status != ModelStatus.PENDING:
+            logger.info(f"Skipping scheduled action {action_id}: no longer pending")
+            return
+
+        user_service = UserService(crud=UserCRUD(session=session))
+        user = await user_service.get_dto_by_id(scheduled_action.created_by)
+        if user is None:
+            raise EntityNotFound(f"User {scheduled_action.created_by} not found")
+
+    logger.info(
+        f"Sending scheduled action {action_id} for {scheduled_action.entity} {scheduled_action.entity_id} to worker"
+    )
+    await event_sender.send_task(
+        entity_id=scheduled_action.entity_id,
+        requester=user,
+        action=scheduled_action.action.value if scheduled_action.action else "execute",
+        extra_metadata={"entity_controller": scheduled_action.entity},
+    )
+    await event_sender.flush()
+    logger.info(f"Scheduled action {action_id} sent successfully to worker")
 
 
 def _add_or_replace_job(scheduler: AsyncIOScheduler, job, event_sender: EventSender) -> None:
@@ -78,7 +114,9 @@ async def schedule_jobs(scheduler: AsyncIOScheduler, event_sender: EventSender):
     async with _reconcile_lock:
         async with get_async_session() as session:
             crud = SchedulerJobCRUD(session=session)
+            scheduled_action_crud = TaskEntityCRUD(session=session)
             jobs = await crud.get_all()
+            scheduled_actions = await scheduled_action_crud.get_pending_scheduled()
 
         db_job_ids = {str(job.id) for job in jobs}
 
@@ -96,12 +134,47 @@ async def schedule_jobs(scheduler: AsyncIOScheduler, event_sender: EventSender):
         for existing in scheduler.get_jobs():
             if existing.id == POLL_JOB_ID:
                 continue
+            if existing.id.startswith(ENTITY_ACTION_JOB_PREFIX):
+                continue
             if existing.id not in db_job_ids:
                 scheduler.remove_job(existing.id)
                 logger.info(f"Removed stale job {existing.id}")
 
+        db_action_job_ids = set()
+        for scheduled_action in scheduled_actions:
+            job_id = f"{ENTITY_ACTION_JOB_PREFIX}{scheduled_action.id}"
+            db_action_job_ids.add(job_id)
+            existing = scheduler.get_job(job_id)
+            if existing is None:
+                scheduler.add_job(
+                    run_entity_action,
+                    trigger=DateTrigger(run_date=scheduled_action.run_at),
+                    kwargs={"action_id": scheduled_action.id, "event_sender": event_sender},
+                    id=job_id,
+                    name=f"{scheduled_action.action}:{scheduled_action.entity}:{scheduled_action.entity_id}",
+                    replace_existing=True,
+                )
+                logger.info(f"Scheduled action {scheduled_action.id} at {scheduled_action.run_at}")
+            else:
+                # If the scheduled action's run_at has changed, reschedule it.
+                if existing.trigger.run_date != scheduled_action.run_at:
+                    scheduler.reschedule_job(
+                        job_id,
+                        trigger=DateTrigger(run_date=scheduled_action.run_at),
+                    )
+                    logger.info(f"Rescheduled action {scheduled_action.id} to {scheduled_action.run_at}")
+
+        for existing in scheduler.get_jobs():
+            if not existing.id.startswith(ENTITY_ACTION_JOB_PREFIX):
+                continue
+            if existing.id not in db_action_job_ids:
+                scheduler.remove_job(existing.id)
+                logger.info(f"Removed stale scheduled action {existing.id}")
+
     if not jobs:
         logger.info("No jobs found in DB")
+    if not scheduled_actions:
+        logger.info("No scheduled actions found in DB")
 
 
 async def schedule_polling_job(scheduler: AsyncIOScheduler, event_sender: EventSender):

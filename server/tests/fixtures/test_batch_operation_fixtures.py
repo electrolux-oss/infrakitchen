@@ -29,7 +29,6 @@ def mock_batch_operation_service(
     mock_batch_operation_crud,
     mock_executor_service,
     mock_resource_service,
-    mock_task_entity_service,
     mock_event_sender,
     mock_audit_log_handler,
 ):
@@ -37,7 +36,6 @@ def mock_batch_operation_service(
         crud=mock_batch_operation_crud,
         executor_service=mock_executor_service,
         resource_service=mock_resource_service,
-        task_service=mock_task_entity_service,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,
     )

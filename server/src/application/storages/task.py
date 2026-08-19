@@ -10,7 +10,7 @@ from application.storages.schema import StorageResponse
 from application.tools.storage_manager import StorageManager
 from core.adapters.provider_adapters import StorageProviderAdapter
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.utils.entity_state_handler import make_done, make_in_progress
 from core.utils.event_sender import EventSender
 
@@ -30,7 +30,7 @@ class StorageTask:
         session: AsyncSession,
         crud_storage: StorageCRUD,
         storage_instance: Storage,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         user: UserDTO,
         event_sender: EventSender,
@@ -44,7 +44,7 @@ class StorageTask:
         self.storage_instance: Storage = storage_instance
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
         self.storage_manager: StorageManager = StorageManager(
             model_instance=storage_instance,
@@ -128,7 +128,13 @@ class StorageTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.storage_instance.status, state=self.storage_instance.state)
+        await self.task_service.update_task(
+            entity_id=self.storage_instance.id,
+            entity_name="storage",
+            requester=self.user,
+            status=self.storage_instance.status,
+            state=self.storage_instance.state,
+        )
         await self.session.commit()
         await self.crud_storage.refresh(self.storage_instance)
         response_model = StorageResponse.model_validate(self.storage_instance)

@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.constants.model import ModelStatus
 from core.database import (
     FieldSpec,
     evaluate_sqlalchemy_filters,
@@ -71,6 +72,23 @@ class TaskEntityCRUD:
         self.session.add(db_task)
         await self.session.flush()
         return db_task
+
+    async def get_pending_scheduled(self) -> list[TaskEntity]:
+        statement = (
+            select(TaskEntity)
+            .where(
+                TaskEntity.run_at.is_not(None),
+                TaskEntity.status == ModelStatus.PENDING,
+            )
+            .order_by(TaskEntity.run_at.asc())
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def update(self, task: TaskEntity, body: dict[str, Any]) -> TaskEntity:
+        for key, value in body.items():
+            setattr(task, key, value)
+        return task
 
     async def delete_by_entity_id(self, entity_id: str | UUID) -> None:
         if not is_valid_uuid(entity_id):

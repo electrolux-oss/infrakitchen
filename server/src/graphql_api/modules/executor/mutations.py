@@ -1,8 +1,8 @@
 import uuid
 
 import strawberry
-from strawberry.types import Info
 from strawberry.experimental import pydantic as strawberry_pydantic
+from strawberry.types import Info
 
 from application.executors.dependencies import get_executor_service
 from application.executors.schema import ExecutorCreate, ExecutorUpdate

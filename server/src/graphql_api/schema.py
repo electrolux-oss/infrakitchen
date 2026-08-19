@@ -42,6 +42,7 @@ from graphql_api.modules.permission.queries import PermissionQuery
 from graphql_api.modules.permission.mutations import PermissionMutation
 from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQuery
 from graphql_api.modules.revision.queries import RevisionQuery
+from graphql_api.modules.task.mutations import TaskMutation
 from graphql_api.modules.task.queries import TaskQuery
 from graphql_api.modules.workflow.queries import WorkflowQuery
 from graphql_api.modules.workflow.mutations import WorkflowMutation
@@ -134,6 +135,7 @@ class Mutation(
     FavoriteMutation,
     BatchOperationMutation,
     PermissionMutation,
+    TaskMutation,
     WorkflowMutation,
     WorkspaceMutation,
     ValidationRuleMutation,

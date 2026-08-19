@@ -18,7 +18,6 @@ from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, 
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
-from core.tasks.service import TaskEntityService
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
@@ -48,14 +47,12 @@ class IntegrationService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
-        task_service: TaskEntityService,
         permission_service: PermissionService,
     ):
         self.crud: IntegrationCRUD = crud
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
-        self.task_service: TaskEntityService = task_service
         self.permission_service: PermissionService = permission_service
 
     async def get_dto_by_id(self, integration_id: str | UUID) -> IntegrationDTO | None:
@@ -258,7 +255,6 @@ class IntegrationService:
 
         await self.audit_log_handler.create_log(integration_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(integration_id)
-        await self.task_service.delete_by_entity_id(integration_id)
         await self.permission_service.delete_entity_permissions("integration", integration_id)
         await self.crud.delete(existing_integration)
 

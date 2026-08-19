@@ -19,6 +19,7 @@ from application.templates.model import Template
 from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
+from core.tasks.model import TaskEntity
 from core.users.model import User
 
 
@@ -76,6 +77,23 @@ async def _load_resource_temp_states_by_resource(keys: list[str], session: Async
         }
         for row in result.scalars()
     }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_scheduled_actions_by_entity(
+    keys: list[str], session: AsyncSession, entity_type: str
+) -> list[TaskEntity | None]:
+    stmt = (
+        select(TaskEntity)
+        .where(
+            TaskEntity.entity == entity_type,
+            TaskEntity.entity_id.in_(keys),
+            TaskEntity.run_at.is_not(None),
+        )
+        .order_by(TaskEntity.run_at.asc())
+    )
+    result = await session.execute(stmt)
+    mapping: dict[str, TaskEntity] = {str(row.entity_id): row for row in result.scalars()}
     return [mapping.get(key) for key in keys]
 
 
@@ -223,6 +241,10 @@ def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any]
     return info.context["loaders"]["resource_temp_state_by_resource"]
 
 
+def get_scheduled_action_loader(info: Info, entity_type: str) -> DataLoader[str, TaskEntity | None]:
+    return info.context["loaders"][f"scheduled_actions_by_{entity_type}"]
+
+
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
     return {
         "integration": DataLoader[str, dict[str, Any] | None](
@@ -233,8 +255,14 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)
         ),
+        "scheduled_actions_by_resource": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "resource")
+        ),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),
+        "scheduled_actions_by_executor": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "executor")
+        ),
         "workspace": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_workspaces(list(keys), session)),
         "source_code": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_source_codes(list(keys), session)

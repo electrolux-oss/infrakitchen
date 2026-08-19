@@ -41,6 +41,7 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     storage: "storage",
     creator: "creator",
     tempState: "tempState",
+    scheduledActions: "scheduledActions",
     parents: "parents",
     children: "children",
     workspace: "workspace",
@@ -70,6 +71,19 @@ export const RESOURCE_TEMP_STATE_FIELDS = `
   updatedAt
 `;
 
+export const RESOURCE_SCHEDULED_ACTION_FIELDS = `
+  id
+  entityId
+  entity
+  action
+  runAt
+  status
+  error
+  createdAt
+  updatedAt
+  entityData
+`;
+
 export const RESOURCE_DETAIL_FIELDS = `
   ${buildSelection(RESOURCE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
@@ -79,6 +93,7 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workspace, WORKSPACE_SHORT_FIELDS)}

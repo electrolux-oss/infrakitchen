@@ -57,6 +57,7 @@ type GqlResourceRelationFieldTypes = {
   storage: GqlStorage | null;
   creator: GqlUserShort | null;
   tempState: GqlResourceTempState | null;
+  scheduledActions: GqlScheduledResourceAction[] | null;
   parents: GqlResourceShort[] | null;
   children: GqlResourceShort[] | null;
   workspace: GqlWorkspaceShort | null;
@@ -90,4 +91,18 @@ export interface GqlResourceTreeNode {
   templateName: string;
   nodeId: string;
   children: GqlResourceTreeNode[];
+}
+
+export interface GqlScheduledResourceAction {
+  id: string;
+  entityId: string;
+  entity: string;
+  action: string;
+  runAt: string;
+  status: string;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creator?: GqlUserShort | null;
+  entityData?: { id?: string; name?: string; entityName?: string } | null;
 }

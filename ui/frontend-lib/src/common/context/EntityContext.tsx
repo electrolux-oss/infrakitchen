@@ -9,7 +9,10 @@ import {
 } from "react";
 
 import { ApiClientError, isNotFoundError } from "../../errors";
-import { GqlResourceTempState } from "../../resources/graphql";
+import {
+  GqlResourceTempState,
+  GqlScheduledResourceAction,
+} from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { notifyError } from "../hooks/useNotification";
 
@@ -45,6 +48,7 @@ interface EntityContextType {
   entity: any | undefined;
   entity_name: string;
   entity_id: string;
+  refreshVersion: number;
   loading: boolean;
   error?: string | null;
   notFound: boolean;
@@ -52,6 +56,7 @@ interface EntityContextType {
   refreshActions?: () => void;
   userEntityPermissions: string[];
   resourceTempState: GqlResourceTempState | null;
+  scheduledActions: GqlScheduledResourceAction[];
   pendingChanges: Record<string, any> | null;
   hasPendingChange: (key: string) => boolean;
 }
@@ -193,6 +198,15 @@ export const EntityProvider = ({
     [resourceTempState],
   );
 
+  const scheduledActions = useMemo(
+    () =>
+      entity_name === "resource" || entity_name === "executor"
+        ? ((entity?.scheduledActions as GqlScheduledResourceAction[] | null) ??
+          [])
+        : [],
+    [entity, entity_name],
+  );
+
   const hasPendingChange = useCallback(
     (key: string) =>
       pendingChanges !== null &&
@@ -205,6 +219,7 @@ export const EntityProvider = ({
     entity,
     entity_name,
     entity_id,
+    refreshVersion: refresh,
     loading,
     error,
     notFound,
@@ -212,6 +227,7 @@ export const EntityProvider = ({
     refreshActions,
     userEntityPermissions,
     resourceTempState,
+    scheduledActions,
     pendingChanges,
     hasPendingChange,
   };

@@ -1,10 +1,13 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 
+import ScheduleIcon from "@mui/icons-material/Schedule";
 import SyncIcon from "@mui/icons-material/Sync";
 import {
   Box,
+  Button,
   Divider,
   IconButton,
+  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -24,6 +27,7 @@ import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { ScheduleEntityActionDialog } from "../../common/components/ScheduleEntityActionDialog";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -45,12 +49,18 @@ export interface ResourceAboutProps {
 
 export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions, actions, hasPendingChange } =
-    useEntityProvider();
+  const {
+    refreshEntity,
+    userEntityPermissions,
+    actions,
+    hasPendingChange,
+    scheduledActions,
+  } = useEntityProvider();
   const { permissions } = usePermissionProvider();
   const canEdit =
     userEntityPermissions.includes("write") || actions.includes("edit");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -132,6 +142,24 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
     [ikApi, resource.id, refreshEntity],
   );
 
+  const pendingScheduledActions = useMemo(
+    () =>
+      scheduledActions
+        .filter((action) => action.status === "PENDING")
+        .sort(
+          (left, right) =>
+            new Date(left.runAt).getTime() - new Date(right.runAt).getTime(),
+        ),
+    [scheduledActions],
+  );
+
+  const formatScheduledRunAt = useCallback(
+    (runAt: string) => new Date(runAt).toLocaleString(),
+    [],
+  );
+
+  const pendingScheduledAction = pendingScheduledActions[0] ?? null;
+
   const withPendingChange = useCallback(
     (display: ReactNode, key: string) => {
       if (!hasPendingChange(key)) {
@@ -170,12 +198,26 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
       name={resource.name}
       description={resource.description || "No description"}
       actions={
-        <FavoriteButton
-          componentId={String(resource.id)}
-          componentType="resource"
-          ariaLabel="Add resource to favorites"
-          isFavorite={resource.isFavorite}
-        />
+        <Stack spacing={1} sx={{ alignItems: "flex-end" }}>
+          {actions.includes("execute") && (
+            <Button
+              variant={pendingScheduledAction ? "contained" : "outlined"}
+              color={pendingScheduledAction ? "warning" : "inherit"}
+              startIcon={<ScheduleIcon />}
+              onClick={() => setIsScheduleDialogOpen(true)}
+            >
+              {pendingScheduledAction
+                ? `Scheduled Apply: ${formatScheduledRunAt(pendingScheduledAction.runAt)}`
+                : "Schedule Apply"}
+            </Button>
+          )}
+          <FavoriteButton
+            componentId={String(resource.id)}
+            componentType="resource"
+            ariaLabel="Add resource to favorites"
+            isFavorite={resource.isFavorite}
+          />
+        </Stack>
       }
     >
       <CommonEditableField<string>
@@ -507,6 +549,16 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
             </Box>
           ) : null
         }
+      />
+      <ScheduleEntityActionDialog
+        open={isScheduleDialogOpen}
+        entityId={String(resource.id)}
+        entityType="resource"
+        scheduledAction={pendingScheduledAction}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        onChanged={() => {
+          refreshEntity?.();
+        }}
       />
     </OverviewCard>
   );

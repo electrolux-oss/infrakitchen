@@ -89,3 +89,14 @@ export const SYNC_WORKSPACE_MUTATION = `
     }
   }
 `;
+
+export const CANCEL_SCHEDULED_ENTITY_ACTION_MUTATION = `
+  mutation CancelScheduledEntityAction($id: UUID!) {
+    cancelScheduledEntityAction(id: $id) {
+      id
+      status
+      error
+      updatedAt
+    }
+  }
+`;

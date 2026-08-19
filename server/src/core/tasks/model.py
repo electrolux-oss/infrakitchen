@@ -1,21 +1,27 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Literal
 import uuid
+
 from pydantic import ConfigDict, Field, computed_field
+from sqlalchemy import UUID, DateTime, Enum as SQLAlchemyEnum, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sqlalchemy import UUID, Enum as SQLAlchemyEnum, ForeignKey, func
-from core.constants.model import ModelState, ModelStatus
+from core.base_models import Base, BaseModel
+from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.users.model import User, UserDTO
-
-from ..base_models import BaseModel, Base
 
 
 class TaskEntity(Base):
     __tablename__: str = "tasks"
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     entity: Mapped[str] = mapped_column()
+    action: Mapped[ModelActions | None] = mapped_column(
+        SQLAlchemyEnum(ModelActions, name="model_actions", native_enum=False), nullable=True
+    )
+    run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    error: Mapped[str | None] = mapped_column(nullable=True)
 
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(default=func.now())
@@ -46,12 +52,16 @@ class TaskEntityModel(BaseModel):
         ModelStatus.IN_PROGRESS,
         ModelStatus.DONE,
         ModelStatus.ERROR,
+        ModelStatus.CANCELLED,
         ModelStatus.UNKNOWN,
         ModelStatus.APPROVAL_PENDING,
         ModelStatus.PENDING,
         ModelStatus.REJECTED,
         ModelStatus.READY,
     ] = Field(default=ModelStatus.QUEUED)
+    action: ModelActions | None = Field(default=None)
+    run_at: datetime | None = Field(default=None)
+    error: str | None = Field(default=None)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

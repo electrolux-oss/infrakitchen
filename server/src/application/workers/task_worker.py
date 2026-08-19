@@ -90,6 +90,8 @@ class TaskWorker(BaseMessagesWorker):
         if not entity_controller:
             raise CannotProceed("Entity controller is not defined in message")
 
+        obj_uuid = UUID(str(obj_id))
+
         user = await self.user_service.get_dto_by_id(user_id)
         if not user:
             raise CannotProceed(f"User {user_id} not found")
@@ -101,7 +103,7 @@ class TaskWorker(BaseMessagesWorker):
 
         task_controller = await self.get_task_controller(
             entity_controller=entity_controller,
-            obj_id=obj_id,
+            obj_id=obj_uuid,
             user=user,
             action=action,
             trace_id=trace_id,
