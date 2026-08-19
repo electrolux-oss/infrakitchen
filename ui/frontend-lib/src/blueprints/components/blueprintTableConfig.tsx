@@ -21,6 +21,7 @@ export const blueprintColumns: EntityTableColumn[] = [
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => (
       <GetEntityLink {...params.row} />

@@ -68,6 +68,7 @@ export function FilterProvider(props: FilterProviderProps) {
         id: "filter",
         label: "Filters",
         fields,
+        defaultField: fields.find((field) => field.defaultSelected)?.field,
       },
     ];
   }, [columns, ikApi, globalConfig.entities]);

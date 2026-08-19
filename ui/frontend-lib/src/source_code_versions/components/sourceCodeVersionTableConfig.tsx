@@ -25,6 +25,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
         operators: ["like", "not_like", "eq"],
         valueType: "text",
         defaultOperator: "like",
+        defaultSelected: true,
       },
       {
         field: "source_code_version",

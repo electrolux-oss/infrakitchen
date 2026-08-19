@@ -34,6 +34,7 @@ export const deriveFilterableFields = (
         operators: spec.operators,
         valueType: spec.valueType,
         defaultOperator: spec.defaultOperator,
+        defaultSelected: spec.defaultSelected,
       };
 
       // Resolve static select options

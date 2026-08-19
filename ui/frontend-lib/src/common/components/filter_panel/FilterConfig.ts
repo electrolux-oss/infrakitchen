@@ -42,6 +42,8 @@ export interface FilterableField {
   valueType: ValueInputType;
   /** Default operator when this field is first selected */
   defaultOperator?: FilterOperator;
+  /** Whether this field should seed the first empty filter row */
+  defaultSelected?: boolean;
   /** Options for autocomplete-multiple / select value inputs */
   options?: string[] | (() => Promise<string[]>);
   /** Static select options (for state/status fields) */
@@ -71,6 +73,8 @@ export interface ColumnFilterSpec {
   valueType: ValueInputType;
   /** Default operator when this field is first selected */
   defaultOperator?: FilterOperator;
+  /** Whether this field should seed the first empty filter row */
+  defaultSelected?: boolean;
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
   /** Static string options for autocomplete-multiple inputs. */
@@ -110,6 +114,8 @@ export interface FilterClause {
 export interface FilterConfig extends BaseFilterConfig {
   /** Filterable fields available in the query builder */
   fields: FilterableField[];
+  /** Default field preselected in the empty clause row */
+  defaultField?: string;
 }
 
 export interface FilterState {
