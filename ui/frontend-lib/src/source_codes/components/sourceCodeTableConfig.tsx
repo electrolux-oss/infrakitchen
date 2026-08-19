@@ -18,6 +18,7 @@ export const sourceCodeColumns: EntityTableColumn[] = [
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {

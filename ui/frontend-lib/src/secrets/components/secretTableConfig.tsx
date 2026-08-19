@@ -27,6 +27,7 @@ export const secretColumns: EntityTableColumn[] = [
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
       return <GetEntityLink {...params.row} />;

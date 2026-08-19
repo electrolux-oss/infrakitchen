@@ -42,6 +42,7 @@ export const executorColumns: EntityTableColumn[] = [
       operators: ["like", "eq", "not_like"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
       return <GetEntityLink {...params.row} />;

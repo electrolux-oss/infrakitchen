@@ -262,12 +262,14 @@ const ResourceCreatePageInner = () => {
   const watchedName = watch("name");
 
   const integrationWriteFilter = useMemo(
-    () => (option: IkEntity) => {
-      if (permissions["*"] === "admin") return true;
-      const p = permissions[`integration:${option.id}`];
-      return p === "write" || p === "admin";
+    () => (_option: IkEntity) => {
+      // TOODO: add integration validation
+      // if (permissions["*"] === "admin") return true;
+      // const p = permissions[`integration:${option.id}`];
+      // return p === "write" || p === "admin";
+      return true;
     },
-    [permissions],
+    [],
   );
 
   const workspaceWriteFilter = useMemo(

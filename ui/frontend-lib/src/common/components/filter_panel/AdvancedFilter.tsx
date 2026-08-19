@@ -439,12 +439,34 @@ const ClauseRow = ({
   );
 };
 
-function makeEmptyClause(): FilterClause {
+function makeEmptyClause(
+  fields: FilterableField[],
+  defaultField?: string,
+): FilterClause {
+  const selectedField = defaultField
+    ? fields.find((field) => field.field === defaultField)
+    : undefined;
+
+  if (!selectedField) {
+    return {
+      id: generateClauseId(),
+      field: "",
+      operator: "like" as FilterOperator,
+      value: "",
+    };
+  }
+
+  const operator = getDefaultOperator(selectedField);
+
   return {
     id: generateClauseId(),
-    field: "",
-    operator: "like" as FilterOperator,
-    value: "",
+    field: selectedField.field,
+    operator,
+    value: isValuelessOperator(operator)
+      ? VALUELESS_OPERATOR_SENTINEL
+      : isMultiValueOperator(operator)
+        ? []
+        : "",
   };
 }
 
@@ -453,7 +475,7 @@ export const AdvancedFilter = ({
   value,
   onChange,
 }: AdvancedFilterProps) => {
-  const { fields } = config;
+  const { defaultField, fields } = config;
 
   const toPersistedClauses = useCallback((nextClauses: FilterClause[]) => {
     return nextClauses.filter((clause) => {
@@ -477,7 +499,7 @@ export const AdvancedFilter = ({
   // Sync from external value only on initial mount or explicit reset.
   const [clauses, setClauses] = useState<FilterClause[]>(() => {
     if (value && value.length > 0) return value;
-    return [makeEmptyClause()];
+    return [makeEmptyClause(fields, defaultField)];
   });
 
   // Track whether this is an external reset (e.g. "Reset" button clears all)
@@ -498,7 +520,7 @@ export const AdvancedFilter = ({
       prev.length > 0 &&
       !awaitingInternalEmptySyncRef.current
     ) {
-      setClauses([makeEmptyClause()]);
+      setClauses([makeEmptyClause(fields, defaultField)]);
     } else if (!value || value.length === 0) {
       awaitingInternalEmptySyncRef.current = false;
     }
@@ -506,7 +528,7 @@ export const AdvancedFilter = ({
     else if (value.length > 0 && clauses.length === 1 && !clauses[0].field) {
       setClauses(value);
     }
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defaultField, fields, value, clauses]);
 
   // Propagate changes to parent (which writes to URL)
   const propagate = useCallback(
@@ -554,17 +576,17 @@ export const AdvancedFilter = ({
     (id: string) => {
       const remaining = clauses.filter((c) => c.id !== id);
       if (remaining.length === 0) {
-        propagate([makeEmptyClause()]);
+        propagate([makeEmptyClause(fields, defaultField)]);
       } else {
         propagate(remaining);
       }
     },
-    [clauses, propagate],
+    [clauses, defaultField, fields, propagate],
   );
 
   const handleAdd = useCallback(() => {
-    propagate([...clauses, makeEmptyClause()]);
-  }, [clauses, propagate]);
+    propagate([...clauses, makeEmptyClause(fields)]);
+  }, [clauses, fields, propagate]);
 
   // Check if we can add more (any unselected field still available)
   const canAddMore = useMemo(() => {
