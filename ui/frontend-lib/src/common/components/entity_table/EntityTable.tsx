@@ -2,7 +2,6 @@ import { useCallback, useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import FilterListIcon from "@mui/icons-material/FilterList";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
 import { Box, IconButton, Tooltip } from "@mui/material";
@@ -54,10 +53,6 @@ export interface ResourceTableProps {
   onRefresh?: () => void;
   /** Set false to remove the row hover affordance (e.g. no detail page). */
   rowClickable?: boolean;
-  showFilterToggle?: boolean;
-  isFilterPanelOpen?: boolean;
-  hasActiveFilters?: boolean;
-  onToggleFilterPanel?: () => void;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -78,11 +73,7 @@ export const EntityTable = ({
   setFilterModel,
   handleColumnVisibilityModelChange,
   onRefresh,
-  showFilterToggle,
   rowClickable = true,
-  isFilterPanelOpen,
-  hasActiveFilters,
-  onToggleFilterPanel,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
   const { linkPrefix } = useConfig();
@@ -114,12 +105,12 @@ export const EntityTable = ({
     const model: GridColumnVisibilityModel = { ...columnVisibilityModel };
 
     columns.forEach((column) => {
-      if (columns.some((baseColumn) => baseColumn.field === column.field)) {
-        return;
-      }
-
-      if (model[column.field] === undefined) {
-        model[column.field] = false;
+      // `hideable: false` columns must stay visible even if a persisted
+      // visibility model (e.g. stale localStorage) tries to hide them —
+      // otherwise the column can never be shown again (its panel checkbox
+      // is disabled) and the grid degrades to "No columns".
+      if (column.hideable === false && column.field) {
+        model[column.field] = true;
       }
     });
 
@@ -168,20 +159,6 @@ export const EntityTable = ({
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          {showFilterToggle && (
-            <Tooltip
-              title={isFilterPanelOpen ? "Hide filters" : "Show filters"}
-            >
-              <IconButton
-                size="small"
-                aria-label={isFilterPanelOpen ? "Hide filters" : "Show filters"}
-                onClick={onToggleFilterPanel}
-                color={hasActiveFilters ? "primary" : "default"}
-              >
-                <FilterListIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
           <Tooltip title="Show or hide columns">
             <span>
               <IconButton

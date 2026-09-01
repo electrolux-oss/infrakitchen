@@ -98,15 +98,8 @@ export const EntityFetchTableContent = forwardRef<
   } = props;
 
   const { ikApi } = useConfig();
-  const {
-    filters,
-    filterValues,
-    setFilterValues,
-    hasActiveFilters,
-    hasFilters,
-    isFilterPanelOpen,
-    toggleFilterPanel,
-  } = useFilterContext();
+  const { filters, filterValues, setFilterValues, hasFilters } =
+    useFilterContext();
 
   const appliedInitialFiltersRef = useRef<string | null>(null);
 
@@ -249,7 +242,7 @@ export const EntityFetchTableContent = forwardRef<
         alignSelf: "center",
       }}
     >
-      {hasFilters && isFilterPanelOpen && <FilterPanel />}
+      {hasFilters && <FilterPanel />}
       <EntityTable
         entityName={title}
         subtitle={subtitle}
@@ -266,11 +259,7 @@ export const EntityFetchTableContent = forwardRef<
         columnVisibilityModel={columnVisibilityModel}
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         onRefresh={fetchFilteredData}
-        showFilterToggle={hasFilters}
         rowClickable={rowClickable}
-        isFilterPanelOpen={isFilterPanelOpen}
-        hasActiveFilters={hasActiveFilters}
-        onToggleFilterPanel={toggleFilterPanel}
       />
     </Box>
   );

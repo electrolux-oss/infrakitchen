@@ -17,7 +17,7 @@ export const MyFavoritesWidget = ({
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <FavoriteIcon sx={{ color: "error.main", fontSize: 20 }} />
+        <FavoriteIcon sx={{ color: "primary.main", fontSize: 20 }} />
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           My Favorites
         </Typography>
@@ -65,7 +65,7 @@ export const MyFavoritesWidget = ({
             }}
           >
             <FavoriteIcon
-              sx={{ fontSize: 32, mb: 1, opacity: 0.5, color: "error.main" }}
+              sx={{ fontSize: 32, mb: 1, opacity: 0.5, color: "primary.main" }}
             />
             <Typography variant="body2">No favorites yet.</Typography>
             <Typography variant="caption">

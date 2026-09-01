@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 
 import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
 
@@ -107,7 +108,6 @@ interface ClauseRowProps {
   fields: FilterableField[];
   usedFields: Set<string>;
   usedFieldOperatorPairs: Set<string>;
-  isOnly: boolean;
   onUpdate: (id: string, updates: Partial<FilterClause>) => void;
   onRemove: (id: string) => void;
 }
@@ -117,7 +117,6 @@ const ClauseRow = ({
   fields,
   usedFields,
   usedFieldOperatorPairs,
-  isOnly,
   onUpdate,
   onRemove,
 }: ClauseRowProps) => {
@@ -399,20 +398,27 @@ const ClauseRow = ({
       {/* Operator selector */}
       <Select
         size="small"
-        value={clause.operator}
+        value={availableOperators.length === 0 ? "" : clause.operator}
         onChange={(e) => handleOperatorChange(e.target.value as FilterOperator)}
         disabled={!clause.field || availableOperators.length <= 1}
+        displayEmpty
         sx={{ flex: "0 0 160px", minWidth: 0, height: ROW_HEIGHT }}
       >
-        {availableOperators.map((op) => (
-          <MenuItem
-            key={op}
-            value={op}
-            disabled={isFieldOperatorTaken(clause.field, op)}
-          >
-            {OPERATOR_LABELS[op]}
+        {availableOperators.length === 0 ? (
+          <MenuItem value="" disabled>
+            Operator
           </MenuItem>
-        ))}
+        ) : (
+          availableOperators.map((op) => (
+            <MenuItem
+              key={op}
+              value={op}
+              disabled={isFieldOperatorTaken(clause.field, op)}
+            >
+              {OPERATOR_LABELS[op]}
+            </MenuItem>
+          ))
+        )}
       </Select>
       {/* Value input */}
       {renderValueInput()}
@@ -423,13 +429,14 @@ const ClauseRow = ({
           <IconButton
             size="small"
             onClick={() => onRemove(clause.id)}
-            disabled={isOnly && !clause.field}
             sx={{
               color: "text.secondary",
               border: "none",
               backgroundColor: "transparent",
               "&:hover": {
-                backgroundColor: "transparent",
+                backgroundColor: (theme) =>
+                  alpha(theme.palette.error.main, 0.08),
+                color: "error.main",
               },
             }}
           >
@@ -633,18 +640,24 @@ export const AdvancedFilter = ({
             fields={fields}
             usedFields={usedFields}
             usedFieldOperatorPairs={usedFieldOperatorPairs}
-            isOnly={clauses.length === 1}
             onUpdate={handleUpdate}
             onRemove={handleRemove}
           />
         </Box>
-      ))}{" "}
-      {fields.length > 0 && (
+      ))}
+      {/* Only show "Add filter" while there is still an unused field to add;
+          once every filterable field is in use (e.g. a single-field table
+          like Roles), there is nothing more to add, so the button disappears
+          instead of staying permanently disabled. */}
+      {usedFields.size < fields.length && (
         <Tooltip
           title="Complete the current filter row first"
           disableHoverListener={canAddMore}
         >
-          <span>
+          {/* The span is a flex item in the column wrapper; keep it from
+              stretching full-width so the tooltip anchors to the button
+              instead of floating centered over the panel. */}
+          <Box component="span" sx={{ alignSelf: "flex-start" }}>
             <Button
               size="small"
               startIcon={<AddIcon />}
@@ -668,7 +681,7 @@ export const AdvancedFilter = ({
             >
               Add filter
             </Button>
-          </span>
+          </Box>
         </Tooltip>
       )}
     </Box>
