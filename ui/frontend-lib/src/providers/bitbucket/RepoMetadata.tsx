@@ -119,7 +119,6 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
       </Typography>
       {metadata.description && (
         <Typography
-          variant="body1"
           sx={{
             color: "text.secondary",
             mb: 2,
@@ -176,7 +175,7 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
             alt={metadata.owner.display_name}
             src={metadata.owner.links.avatar.href}
           />
-          <Typography variant="body1">
+          <Typography variant="body2">
             <MuiLink
               href={metadata.owner.links.html.href}
               target="_blank"

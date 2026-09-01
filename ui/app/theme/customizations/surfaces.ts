@@ -15,6 +15,14 @@ export const surfacesCustomizations: Components<Theme> = {
       ":root": {
         "--template-surface-radius": `${shape.borderRadius}px`,
       },
+      // Match the Typography default (body2 / 14px): MUI's CssBaseline
+      // otherwise sizes the body element with body1 (16px), which unstyled
+      // text inherits. Keep only the size-related props so the default
+      // body rule (color, background, margin) stays intact.
+      body: ({ theme }) => ({
+        fontSize: theme.typography.body2.fontSize,
+        lineHeight: theme.typography.body2.lineHeight,
+      }),
     },
   },
   MuiAccordion: {

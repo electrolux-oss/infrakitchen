@@ -134,16 +134,24 @@ export const SourceCodeVersionOverview = ({
         renderEditor={({ value, onChange }) => (
           <TextField
             select
+            size="small"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Lifecycle State"
+            slotProps={{ input: { "aria-label": "Lifecycle State" } }}
             fullWidth
             margin="normal"
             autoFocus
+            sx={{
+              "& .MuiInputBase-root": {
+                height: "32px !important",
+                minHeight: 32,
+                marginTop: "0 !important",
+              },
+            }}
           >
             {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
               <MenuItem key={option} value={option}>
-                {option}
+                <VersionLifecycleStateChip lifecycleState={option} />
               </MenuItem>
             ))}
           </TextField>

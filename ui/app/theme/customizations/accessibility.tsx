@@ -104,6 +104,9 @@ export const accessibilityCustomizations: Components<Theme> = {
   // Ensure proper heading hierarchy accessibility
   MuiTypography: {
     defaultProps: {
+      // body2 (14px) is the global text default; components only opt into
+      // body1 or other variants explicitly.
+      variant: "body2",
       // Add component prop defaults to prevent heading skips
       variantMapping: {
         h1: "h1",

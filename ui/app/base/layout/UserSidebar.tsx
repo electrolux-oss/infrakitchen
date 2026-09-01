@@ -2,9 +2,9 @@ import * as React from "react";
 
 import { useNavigate } from "react-router";
 
+import { UserAvatar } from "@electrolux-oss/infrakitchen";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Divider, { dividerClasses } from "@mui/material/Divider";
 import { listClasses } from "@mui/material/List";
@@ -15,7 +15,7 @@ import MuiMenuItem from "@mui/material/MenuItem";
 import { paperClasses } from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
+import Typography, { typographyClasses } from "@mui/material/Typography";
 
 import { useAuth } from "../auth/AuthContext";
 
@@ -23,15 +23,9 @@ import MenuButton from "./MenuButton";
 
 const MenuItem = styled(MuiMenuItem)({
   margin: "2px 0",
+  paddingTop: 4,
+  paddingBottom: 4,
 });
-
-// Build the initials avatar from the user identifier.
-const getInitials = (identifier: string) =>
-  identifier
-    .split(/[\s_-]+/)
-    .slice(0, 2)
-    .map((word) => word.charAt(0).toUpperCase())
-    .join("");
 
 export default function UserSidebar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -79,19 +73,17 @@ export default function UserSidebar() {
           }),
         })}
       >
-        <Avatar
+        <UserAvatar
+          identifier={user.identifier}
           sx={{
-            fontSize: 11,
+            fontSize: 14,
             height: 30,
             width: 30,
             flexShrink: 0,
             border: "1px solid",
             borderColor: "divider",
-            backgroundColor: "action.selected",
           }}
-        >
-          {getInitials(user.identifier)}
-        </Avatar>
+        />
       </MenuButton>
       <Menu
         anchorEl={anchorEl}
@@ -103,37 +95,34 @@ export default function UserSidebar() {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         sx={{
           [`& .${listClasses.root}`]: {
-            padding: "4px",
+            padding: "2px",
           },
           [`& .${paperClasses.root}`]: {
             padding: 0,
-            minWidth: 240,
+            minWidth: 200,
           },
           [`& .${dividerClasses.root}`]: {
-            margin: "4px 0",
+            margin: "2px 0",
           },
         }}
       >
         <Stack
           direction="row"
-          spacing={1.5}
-          sx={{ px: 2, py: 1.5, alignItems: "center" }}
+          spacing={1}
+          sx={{ px: 1.5, py: 1, alignItems: "center" }}
         >
-          <Avatar
+          <UserAvatar
+            identifier={user.identifier}
             sx={{
-              fontSize: 15,
-              height: 40,
-              width: 40,
-              bgcolor: "action.selected",
+              fontSize: 14,
+              height: 30,
+              width: 30,
             }}
-          >
-            {getInitials(user.identifier)}
-          </Avatar>
+          />
           <Box sx={{ minWidth: 0 }}>
             <Typography
               variant="body1"
               sx={{
-                fontWeight: 600,
                 lineHeight: 1.3,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -173,7 +162,15 @@ export default function UserSidebar() {
           <ListItemIcon>
             <PersonRoundedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>My profile</ListItemText>
+          <ListItemText
+            sx={{
+              [`& .${typographyClasses.root}`]: {
+                fontWeight: 400,
+              },
+            }}
+          >
+            My Profile
+          </ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -188,7 +185,15 @@ export default function UserSidebar() {
           <ListItemIcon>
             <LogoutRoundedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Log Out</ListItemText>
+          <ListItemText
+            sx={{
+              [`& .${typographyClasses.root}`]: {
+                fontWeight: 400,
+              },
+            }}
+          >
+            Log Out
+          </ListItemText>
         </MenuItem>
       </Menu>
     </Stack>

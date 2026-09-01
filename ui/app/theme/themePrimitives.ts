@@ -305,14 +305,14 @@ export const typography = {
     color: grey[500],
   },
   body1: {
-    fontSize: defaultTheme.typography.pxToRem(15),
-    lineHeight: 1.55,
+    fontSize: defaultTheme.typography.pxToRem(16),
+    lineHeight: 1.5,
     letterSpacing: "0em",
   },
   body2: {
     fontSize: defaultTheme.typography.pxToRem(14),
     fontWeight: 400,
-    lineHeight: 1.5,
+    lineHeight: 1.43,
   },
   caption: {
     fontSize: defaultTheme.typography.pxToRem(12),

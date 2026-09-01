@@ -105,7 +105,6 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
       </Typography>
       {metadata.description && (
         <Typography
-          variant="body1"
           sx={{
             color: "text.secondary",
             mb: 2,
@@ -140,7 +139,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           Owner
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Typography variant="body1">
+          <Typography variant="body2">
             <MuiLink
               href={metadata.project.url}
               target="_blank"

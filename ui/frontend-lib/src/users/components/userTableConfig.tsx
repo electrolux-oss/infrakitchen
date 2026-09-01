@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
+import { Box, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { useConfig } from "../../common";
 import {
   GetEntityLink,
   getProviderValue,
@@ -8,6 +9,37 @@ import {
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
+import { solidChipColorSx } from "../../common/utils/softChip";
+
+const UserIdentifierCell = (params: GridRenderCellParams) => {
+  const { currentUser } = useConfig();
+  const isCurrentUser = currentUser?.id === params.row.id;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        height: "100%",
+      }}
+    >
+      <GetEntityLink {...params.row} />
+      {isCurrentUser ? (
+        <Chip
+          label="You"
+          size="small"
+          variant="filled"
+          sx={(theme) => ({
+            ...solidChipColorSx("info")(theme),
+            height: 18,
+            fontSize: "0.625rem",
+          })}
+        />
+      ) : null}
+    </Box>
+  );
+};
 
 const USER_AUTH_PROVIDERS = [
   "microsoft",
@@ -31,9 +63,9 @@ export const userColumns: EntityTableColumn[] = [
       valueType: "text",
       defaultOperator: "like",
     },
-    renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <UserIdentifierCell {...params} />
+    ),
   },
   {
     field: "displayName",

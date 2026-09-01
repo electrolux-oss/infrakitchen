@@ -148,7 +148,7 @@ export const getTextValue = (text: any) => {
   }
 
   return (
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+    <Typography sx={{ color: "text.secondary" }}>
       {text.toString()}
     </Typography>
   );
@@ -173,7 +173,7 @@ export const getProviderValue = (provider: string, iconSize: number = 24) => {
       }}
     >
       {IconField(provider, iconSize)}
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+      <Typography sx={{ color: "text.secondary" }}>
         {getProviderDisplayName(provider)}
       </Typography>
     </Box>
@@ -228,7 +228,6 @@ export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
     <Grid size={gridSize}>
       <Typography
         component="div"
-        variant="body2"
         sx={{
           // Muted label style shared with the datagrid headers: medium weight,
           // small size, secondary color — the value is the visual anchor.
@@ -243,7 +242,7 @@ export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
       {isEmptyValue ? (
         <PlaceholderText />
       ) : isStringOrNumber ? (
-        <Typography variant="body2">{value}</Typography>
+        <Typography>{value}</Typography>
       ) : (
         value
       )}

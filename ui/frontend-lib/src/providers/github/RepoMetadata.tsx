@@ -119,7 +119,6 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
       </Typography>
       {metadata.description && (
         <Typography
-          variant="body1"
           sx={{
             color: "text.secondary",
             mb: 2,
@@ -169,7 +168,7 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Avatar alt={metadata.owner.login} src={metadata.owner.avatar_url} />
-          <Typography variant="body1">
+          <Typography variant="body2">
             <MuiLink
               href={metadata.owner.html_url}
               target="_blank"
