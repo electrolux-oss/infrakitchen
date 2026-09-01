@@ -138,7 +138,6 @@ export const DeletePermissionButton = (
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Stack direction="row" spacing={1}>
             <Button
-              variant="outlined"
               color="inherit"
               onClick={handleCloseDialog}
               startIcon={<CloseIcon />}

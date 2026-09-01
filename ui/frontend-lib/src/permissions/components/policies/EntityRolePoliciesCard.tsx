@@ -118,7 +118,6 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => handleOpenDialog()}
           startIcon={<Icon icon="icon-park-outline:add" />}
         >

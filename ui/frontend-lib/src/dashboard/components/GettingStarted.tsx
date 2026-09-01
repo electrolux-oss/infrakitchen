@@ -88,7 +88,6 @@ export const GettingStartedContent = () => {
             </Typography>
           </Box>
           <Button
-            variant="outlined"
             startIcon={step.icon}
             sx={{ minWidth: "200px" }}
             onClick={() => navivate(`${linkPrefix}${step.navigateTo}`)}

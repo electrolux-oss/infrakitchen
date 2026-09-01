@@ -88,7 +88,6 @@ export const ProjectsPage = () => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => navigate(`${linkPrefix}projects/create`)}
           startIcon={<AddIcon />}
         >
@@ -153,9 +152,7 @@ export const ProjectsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button variant="outlined" onClick={fetchProjects}>
-            Retry
-          </Button>
+          <Button onClick={fetchProjects}>Retry</Button>
         </Box>
       </PageContainer>
     );

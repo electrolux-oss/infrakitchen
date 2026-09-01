@@ -553,7 +553,6 @@ export const BlueprintUsePage = () => {
       bottomActions={
         <>
           <Button
-            variant="outlined"
             onClick={() => navigate(`${linkPrefix}blueprints/${blueprint_id}`)}
           >
             Cancel

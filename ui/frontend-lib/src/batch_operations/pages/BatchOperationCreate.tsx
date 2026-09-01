@@ -69,16 +69,10 @@ export const BatchOperationCreatePage = () => {
       title="Create Batch Operation"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`${linkPrefix}batch_operations`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}batch_operations`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

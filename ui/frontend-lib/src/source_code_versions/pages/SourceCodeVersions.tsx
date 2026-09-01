@@ -23,7 +23,6 @@ export const SourceCodeVersionsPage = () => {
           permissionAction="write"
         >
           <Button
-            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
           >

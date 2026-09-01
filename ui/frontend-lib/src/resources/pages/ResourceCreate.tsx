@@ -554,9 +554,7 @@ const ResourceCreatePageInner = () => {
       title="Create Resource"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
+          <Button onClick={handleBack}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleSubmit(handleSave, handleInvalidSave)}

@@ -62,13 +62,8 @@ const RoleCreatePageInner = () => {
       title="Create Role"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             Save
           </Button>
         </>

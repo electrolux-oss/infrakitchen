@@ -129,7 +129,6 @@ export const FeatureFlagSection = () => {
               Save
             </Button>
             <Button
-              variant="outlined"
               size="medium"
               onClick={handleFeatureFlagReload}
               disabled={loading}

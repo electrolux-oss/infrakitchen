@@ -36,7 +36,6 @@ export const ResourcesPage = () => {
         >
           {" "}
           <Button
-            variant="outlined"
             onClick={() => navigate(`${linkPrefix}resources/create`)}
             startIcon={<AddIcon />}
           >

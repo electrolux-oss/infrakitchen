@@ -173,7 +173,6 @@ const PodRow = (props: {
               }}
             >
               <Button
-                variant="outlined"
                 color="success"
                 startIcon={<CheckIcon />}
                 onClick={() => handleKillPod(pod.metadata.name)}
@@ -183,7 +182,6 @@ const PodRow = (props: {
                 Approve
               </Button>
               <Button
-                variant="outlined"
                 color="error"
                 startIcon={<CloseIcon />}
                 onClick={handleCancelKill}

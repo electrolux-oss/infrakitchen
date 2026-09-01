@@ -46,11 +46,7 @@ const TemplatePageContent = () => {
       actions={
         entity?.status !== ENTITY_STATUS.DISABLED ? (
           <Tooltip title="Create a new resource from this template">
-            <Button
-              variant="outlined"
-              onClick={handleUseTemplate}
-              startIcon={<AddIcon />}
-            >
+            <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
               Create Resource
             </Button>
           </Tooltip>

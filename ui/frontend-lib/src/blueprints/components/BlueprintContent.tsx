@@ -60,7 +60,6 @@ export const BlueprintContent = () => {
                   canEdit ? (
                     <Button
                       size="small"
-                      variant="outlined"
                       startIcon={wiringEdit ? <VisibilityIcon /> : <EditIcon />}
                       onClick={() => setWiringEdit((prev) => !prev)}
                     >

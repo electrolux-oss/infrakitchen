@@ -58,7 +58,6 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
       {isConfirmingUnlink ? (
         <Stack direction="row" spacing={1}>
           <Button
-            variant="outlined"
             color="success"
             startIcon={<CheckIcon />}
             onClick={() => handleUnlinkAccount()}
@@ -68,7 +67,6 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
             Approve
           </Button>
           <Button
-            variant="outlined"
             color="error"
             startIcon={<CloseIcon />}
             onClick={handleCancelUnlink}
@@ -80,7 +78,6 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
         </Stack>
       ) : (
         <Button
-          variant="outlined"
           onClick={handleInitiateUnlinkConfirmation}
           startIcon={<Icon icon="carbon:unlink" />}
         >

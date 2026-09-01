@@ -53,7 +53,6 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                 </Box>
               )}
               <Button
-                variant="outlined"
                 onClick={() => handleOpenSecondaryAccountsDialog()}
                 startIcon={<Icon icon="carbon:link" />}
                 sx={{ mt: 2 }}

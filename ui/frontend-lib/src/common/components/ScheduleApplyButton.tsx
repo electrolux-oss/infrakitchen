@@ -36,7 +36,6 @@ export const ScheduleApplyButton = ({
 
   const button = (
     <Button
-      variant="outlined"
       color="inherit"
       startIcon={<ScheduleIcon />}
       onClick={() => setIsDialogOpen(true)}

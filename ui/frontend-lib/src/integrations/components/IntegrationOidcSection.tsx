@@ -114,11 +114,7 @@ export const IntegrationOidcSection = ({
         name={"OIDC JWKS (offline upload)"}
         value={
           <Box>
-            <Button
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={handleDownloadJwks}
-            >
+            <Button startIcon={<DownloadIcon />} onClick={handleDownloadJwks}>
               Download JWKS
             </Button>
             <Typography

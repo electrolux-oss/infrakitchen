@@ -41,7 +41,6 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
   if (!isConfirming) {
     return (
       <Button
-        variant="outlined"
         color="error"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
@@ -54,7 +53,6 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        variant="outlined"
         color="success"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
@@ -63,7 +61,6 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
         Confirm
       </Button>
       <Button
-        variant="outlined"
         color="inherit"
         startIcon={<CloseIcon />}
         onClick={() => setIsConfirming(false)}

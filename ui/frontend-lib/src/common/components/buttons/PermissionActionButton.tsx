@@ -57,7 +57,6 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
       {isConfirmingDelete ? (
         <Stack direction="row" spacing={1}>
           <Button
-            variant="outlined"
             color="success"
             startIcon={<CheckIcon />}
             onClick={() => handleDeletePermission()}
@@ -67,7 +66,6 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
             Approve
           </Button>
           <Button
-            variant="outlined"
             color="error"
             startIcon={<CloseIcon />}
             onClick={handleCancelDelete}

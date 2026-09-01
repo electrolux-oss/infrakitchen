@@ -131,7 +131,6 @@ const TokenDialog = ({
             {expirationOptions.map((days) => (
               <Button
                 key={days}
-                variant="outlined"
                 disabled={isLoading}
                 onClick={() =>
                   setExpiresAt(formatDateTimeLocal(addDays(new Date(), days)))
@@ -305,7 +304,6 @@ const DeleteTokenButton = ({
   if (!isConfirming) {
     return (
       <Button
-        variant="outlined"
         color="error"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
@@ -318,7 +316,6 @@ const DeleteTokenButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        variant="outlined"
         color="success"
         startIcon={<CheckIcon />}
         disabled={isLoading}
@@ -327,7 +324,6 @@ const DeleteTokenButton = ({
         Confirm
       </Button>
       <Button
-        variant="outlined"
         color="inherit"
         startIcon={<CloseIcon />}
         disabled={isLoading}
@@ -420,11 +416,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         description="Create and delete tokens for CLI and API access on your account."
         actions={
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              onClick={loadTokens}
-              disabled={isLoading}
-            >
+            <Button onClick={loadTokens} disabled={isLoading}>
               Refresh
             </Button>
             <Button

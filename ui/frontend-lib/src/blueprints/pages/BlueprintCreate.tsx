@@ -91,16 +91,10 @@ export const BlueprintCreatePage = () => {
       title="Create Blueprint"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`${linkPrefix}blueprints`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}blueprints`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

@@ -103,7 +103,6 @@ const TemplateFiltersComponent: React.FC<TemplateFiltersProps> = ({
           <Box sx={{ flex: "0 0 150px" }}>
             <Button
               fullWidth
-              variant="outlined"
               size="medium"
               onClick={onReset}
               sx={{ height: 40 }}

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Box, Button } from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
@@ -19,7 +20,10 @@ export const BlueprintsPage = () => {
         requiredPermission="api:blueprint"
         permissionAction="write"
       >
-        <Button onClick={() => navigate(`${linkPrefix}blueprints/create`)}>
+        <Button
+          onClick={() => navigate(`${linkPrefix}blueprints/create`)}
+          startIcon={<AddIcon />}
+        >
           Create
         </Button>
       </PermissionWrapper>

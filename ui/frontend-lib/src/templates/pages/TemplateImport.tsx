@@ -98,9 +98,7 @@ export const TemplateImportPage = () => {
       title="Import Template from Repository"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
+          <Button onClick={handleBack}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleSubmit(onSubmit)}

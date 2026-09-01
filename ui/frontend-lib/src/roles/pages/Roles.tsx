@@ -22,7 +22,6 @@ export const RolesPage = () => {
           permissionAction="write"
         >
           <Button
-            variant="outlined"
             onClick={() => navigate(`${linkPrefix}roles/create`)}
             startIcon={<AddIcon />}
           >

@@ -67,7 +67,6 @@ export const SlackSync = ({ userId, slackId }: SlackSyncProps) => {
         </Tooltip>
       ) : slackIntegrationId ? (
         <Button
-          variant="outlined"
           startIcon={
             syncing ? (
               <CircularProgress size={14} />

@@ -69,7 +69,6 @@ export const SubscribeNotificationButton = ({
         }
       >
         <Button
-          variant="outlined"
           startIcon={<NotificationsActiveOutlinedIcon fontSize="small" />}
           color={isSubscribed ? "error" : "primary"}
           onClick={handleButtonClick}
@@ -110,9 +109,7 @@ export const SubscribeNotificationButton = ({
               gap: 1,
             }}
           >
-            <Button onClick={handleClose}>
-              Cancel
-            </Button>
+            <Button onClick={handleClose}>Cancel</Button>
             <Button variant="contained" onClick={handleConfirm}>
               {action === "subscribe" ? "Subscribe" : "Unsubscribe"}
             </Button>

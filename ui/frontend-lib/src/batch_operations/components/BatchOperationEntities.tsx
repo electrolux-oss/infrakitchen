@@ -426,7 +426,6 @@ export const BatchOperationEntities = ({
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
           <Button
-            variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
             onClick={() => handleRemoveEntity(params.row.id)}
@@ -468,7 +467,6 @@ export const BatchOperationEntities = ({
             Add
           </Button>
           <Button
-            variant="outlined"
             onClick={() => handleOpenActionDialog("dryrun")}
             disabled={selectedEntityIds.length === 0}
           >
@@ -534,7 +532,7 @@ export const BatchOperationEntities = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseLogs} color="primary" variant="outlined">
+          <Button onClick={handleCloseLogs} color="primary">
             Cancel
           </Button>
         </DialogActions>
@@ -558,9 +556,7 @@ export const BatchOperationEntities = ({
             />
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={handleCloseAddDialog}>
-              Cancel
-            </Button>
+            <Button onClick={handleCloseAddDialog}>Cancel</Button>
             <Button
               variant="contained"
               onClick={addForm.handleSubmit(handleAddEntities)}
@@ -621,9 +617,7 @@ export const BatchOperationEntities = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={handleCloseActionDialog}>
-            Close
-          </Button>
+          <Button onClick={handleCloseActionDialog}>Close</Button>
           <Button
             variant="contained"
             onClick={handleRunAction}

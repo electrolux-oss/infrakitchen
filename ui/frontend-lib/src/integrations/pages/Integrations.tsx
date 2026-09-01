@@ -141,7 +141,6 @@ const IntegrationsPage = () => {
     >
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button
-          variant="outlined"
           startIcon={<Icon icon="octicon:git-branch-24" />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
@@ -151,7 +150,6 @@ const IntegrationsPage = () => {
           Connect Git
         </Button>
         <Button
-          variant="outlined"
           startIcon={<Icon icon="octicon:cloud-24" />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
@@ -161,7 +159,6 @@ const IntegrationsPage = () => {
           Connect Cloud
         </Button>
         <Button
-          variant="outlined"
           startIcon={<Icon icon="octicon:report" />}
           onClick={(e) => {
             setSubmenuAnchor(e.currentTarget);
@@ -208,9 +205,7 @@ const IntegrationsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>{" "}
-          <Button variant="outlined" onClick={fetchIntegrations}>
-            Retry
-          </Button>
+          <Button onClick={fetchIntegrations}>Retry</Button>
         </Box>
       </PageContainer>
     );
@@ -300,7 +295,6 @@ const IntegrationsPage = () => {
                   {allProviders.map((p) => (
                     <Button
                       key={p.slug}
-                      variant="outlined"
                       startIcon={<p.icon width="20" height="20" />}
                       onClick={() =>
                         navigate(`${linkPrefix}integrations/${p.slug}/setup`)

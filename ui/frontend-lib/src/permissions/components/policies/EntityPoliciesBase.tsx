@@ -186,7 +186,6 @@ export const EntityPoliciesBase = ({
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => setIsDialogOpen(true)}
           startIcon={<Icon icon="icon-park-outline:add" />}
           sx={{ mr: 1 }}
@@ -201,7 +200,6 @@ export const EntityPoliciesBase = ({
           onSuccess={refreshPoliciesTable}
         />
         <Button
-          variant="outlined"
           onClick={() => setIsUserDialogOpen(true)}
           startIcon={<Icon icon="icon-park-outline:add" />}
         >

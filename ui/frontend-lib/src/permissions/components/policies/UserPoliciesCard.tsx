@@ -119,7 +119,6 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => handleOpenDialog()}
           startIcon={<Icon icon="icon-park-outline:add" />}
         >

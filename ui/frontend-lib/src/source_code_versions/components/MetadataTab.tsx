@@ -242,7 +242,6 @@ export const MetadataTab = ({
               <Tooltip title={"Configure template references"}>
                 <span>
                   <Button
-                    variant="outlined"
                     color="error"
                     onClick={(e) => {
                       if (e.metaKey || e.ctrlKey) {
@@ -273,7 +272,6 @@ export const MetadataTab = ({
               >
                 <span>
                   <Button
-                    variant="outlined"
                     color="error"
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={

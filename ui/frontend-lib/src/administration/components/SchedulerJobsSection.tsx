@@ -276,7 +276,6 @@ export const SchedulerJobsSection = () => {
                             Save
                           </Button>
                           <Button
-                            variant="outlined"
                             onClick={handleCancelEditSchedulerJob}
                             disabled={updatingSchedulerJob}
                           >
@@ -297,14 +296,12 @@ export const SchedulerJobsSection = () => {
                         </Typography>
                         <Stack direction="row" spacing={1}>
                           <Button
-                            variant="outlined"
                             onClick={() => handleStartEditSchedulerJob(job)}
                           >
                             Edit
                           </Button>
                           <Button
                             color="error"
-                            variant="outlined"
                             startIcon={<DeleteIcon />}
                             onClick={() => setDeleteDialogJobId(job.id)}
                           >
@@ -380,7 +377,6 @@ export const SchedulerJobsSection = () => {
                         </Typography>
                         <Box>
                           <Button
-                            variant="outlined"
                             onClick={() => {
                               setNewSchedulerScript(example.script);
                               setNewSchedulerCron(example.cron);

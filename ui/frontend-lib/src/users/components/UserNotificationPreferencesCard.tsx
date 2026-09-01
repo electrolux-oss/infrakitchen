@@ -168,7 +168,7 @@ const NotificationPreferenceDialog = ({
       }
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+          <Button onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSave} disabled={isLoading}>
@@ -210,7 +210,6 @@ const DeleteNotificationPreferenceButton = ({
   if (!isConfirming) {
     return (
       <Button
-        variant="outlined"
         color="error"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
@@ -223,7 +222,6 @@ const DeleteNotificationPreferenceButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        variant="outlined"
         color="success"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
@@ -232,7 +230,6 @@ const DeleteNotificationPreferenceButton = ({
         Confirm
       </Button>
       <Button
-        variant="outlined"
         color="inherit"
         startIcon={<CloseIcon />}
         onClick={() => setIsConfirming(false)}
@@ -252,11 +249,7 @@ const EditNotificationPreferenceButton = ({
   onEdit: (preference: GqlNotificationPreference) => void;
 }) => {
   return (
-    <Button
-      variant="outlined"
-      startIcon={<EditOutlinedIcon />}
-      onClick={() => onEdit(preference)}
-    >
+    <Button startIcon={<EditOutlinedIcon />} onClick={() => onEdit(preference)}>
       Edit
     </Button>
   );

@@ -337,7 +337,6 @@ export function WiringCanvasSidebar({
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5, mt: 1 }}>
           <Button
-            variant="outlined"
             color="secondary"
             startIcon={<TextFieldsIcon />}
             onClick={() => onConstantAdd("string")}
@@ -346,7 +345,6 @@ export function WiringCanvasSidebar({
             String
           </Button>
           <Button
-            variant="outlined"
             color="secondary"
             startIcon={<NumbersIcon />}
             onClick={() => onConstantAdd("number")}
