@@ -8,6 +8,7 @@ import {
 
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -59,42 +60,17 @@ export const taskColumns = (options: {
       <StatusChip status={params.row.status} state={params.row.state} />
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    sortField: "created_at",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    sortField: "updated_at",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns({
+    createdSortField: "created_at",
+    updatedSortField: "updated_at",
+  }),
   {
     field: "runAt",
     headerName: "Run At",
     sortField: "run_at",
     flex: 1,
     renderCell: (params: GridRenderCellParams) =>
-      params.value ? (
-        <RelativeTime
-          date={params.value}
-          sx={{ fontSize: "0.75rem", display: "flex" }}
-        />
-      ) : null,
+      params.value ? <RelativeTime date={params.value} /> : null,
   },
   {
     field: "creator",

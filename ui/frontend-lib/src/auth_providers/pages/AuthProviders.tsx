@@ -100,8 +100,8 @@ export const AuthProvidersPage = () => {
           permissionAction="write"
         >
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
             startIcon={<AddIcon />}
           >

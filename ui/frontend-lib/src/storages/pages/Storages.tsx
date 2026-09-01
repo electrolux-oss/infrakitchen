@@ -33,8 +33,8 @@ export const StoragesPage = () => {
           permissionAction="write"
         >
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}storages/create`)}
             startIcon={<AddIcon />}
           >

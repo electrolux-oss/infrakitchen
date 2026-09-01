@@ -229,7 +229,7 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
         display: "flex",
         border: 1,
         borderColor: "divider",
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
         overflow: "hidden",
         minHeight: 400,
       }}

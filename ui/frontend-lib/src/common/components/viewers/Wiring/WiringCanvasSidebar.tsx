@@ -188,7 +188,7 @@ export function WiringCanvasSidebar({
             onDragStart={(e) => handleDragStart(e, t)}
             onClick={() => onAdd(t as unknown as GenericTemplate)}
             sx={{
-              borderRadius: 1,
+              borderRadius: "var(--template-surface-radius)",
               mb: 0.25,
               cursor: "grab",
               "&:active": { cursor: "grabbing" },
@@ -275,7 +275,7 @@ export function WiringCanvasSidebar({
                 onDragStart={(e) => handleExternalDragStart(e, t)}
                 onClick={() => onExternalTemplateAdd(t)}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: "var(--template-surface-radius)",
                   mb: 0.25,
                   cursor: "grab",
                   "&:active": { cursor: "grabbing" },

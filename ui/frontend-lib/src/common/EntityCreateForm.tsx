@@ -81,7 +81,7 @@ export const EntityCreateForm = <T extends FieldValues>({
             </Typography>
           )}
         </Box>
-        <IconButton onClick={onClose} disabled={saving}>
+        <IconButton size="small" onClick={onClose} disabled={saving}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -140,18 +140,7 @@ export const EntityCreateDialog = <T extends FieldValues>({
   ...rest
 }: EntityCreateDialogProps<T>) => {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth={false}
-      slotProps={{
-        paper: {
-          style: {
-            borderRadius: "0.5em",
-          },
-        },
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth={false}>
       <DialogContent>
         <EntityCreateForm onClose={onClose} {...rest} />
       </DialogContent>

@@ -172,17 +172,11 @@ export const BlueprintWiringEditor = ({
         missingParentTemplates={form.missingParentTemplates}
       />
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={onClose}
-          disabled={saving}
-        >
+        <Button variant="outlined" onClick={onClose} disabled={saving}>
           Cancel
         </Button>
         <Button
           variant="contained"
-          color="primary"
           onClick={handleSubmit(onSubmit)}
           disabled={saving}
         >

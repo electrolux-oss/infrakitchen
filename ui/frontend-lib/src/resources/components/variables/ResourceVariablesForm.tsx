@@ -60,7 +60,9 @@ export const ResourceVariableRow = ({
           }}
         >
           {variable.name}
-          {variable.required && <span style={{ color: "#d32f2f" }}> *</span>}
+          {variable.required && (
+            <span style={{ color: theme.palette.primary.main }}> *</span>
+          )}
         </Typography>
         <Typography
           variant="body2"

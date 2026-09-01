@@ -131,7 +131,7 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
                   component="pre"
                   sx={{
                     backgroundColor: "action.hover",
-                    borderRadius: 1,
+                    borderRadius: "var(--template-surface-radius)",
                     p: 1.5,
                     overflow: "auto",
                     fontFamily: "'Roboto Mono', monospace",
@@ -176,7 +176,11 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
               component="img"
               src={src}
               alt={alt}
-              sx={{ maxWidth: "100%", height: "auto", borderRadius: 1 }}
+              sx={{
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: "var(--template-surface-radius)",
+              }}
             />
           ),
         }}

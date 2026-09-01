@@ -35,6 +35,8 @@ export const TasksPage = () => {
         entityFieldMap={TASK_FIELD_MAP}
         defaultColumnVisibilityModel={taskDefaultColumnVisibilityModel}
         syncFiltersToUrl
+        // Tasks have no detail page — rows shouldn't navigate (or look clickable).
+        rowClickable={false}
       />
     </PageContainer>
   );

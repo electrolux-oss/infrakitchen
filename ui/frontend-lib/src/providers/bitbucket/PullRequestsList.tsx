@@ -93,7 +93,14 @@ export function BitbucketPullRequestsList(
   return (
     <Box sx={{ width: "100%", typography: "body1", p: 2 }}>
       {pullRequests.map((pr) => (
-        <Accordion key={pr.id} sx={{ mb: 1, boxShadow: 1, borderRadius: 2 }}>
+        <Accordion
+          key={pr.id}
+          sx={{
+            mb: 1,
+            boxShadow: 1,
+            borderRadius: "var(--template-surface-radius)",
+          }}
+        >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls={`panel-${pr.id}-content`}
@@ -169,8 +176,8 @@ export function BitbucketPullRequestsList(
               extensions={[json()]}
               readOnly={true}
               style={{
-                border: "1px solid silver",
-                borderRadius: "8px",
+                border: "1px solid var(--template-palette-divider)",
+                borderRadius: "var(--template-surface-radius)",
                 overflow: "hidden", // Ensure rounded corners apply
               }}
               height="300px" // Set a fixed height with scrollbar
@@ -186,10 +193,10 @@ export function BitbucketPullRequestsList(
                 </Typography>
                 <Box
                   sx={{
-                    border: "1px solid #ccc",
+                    border: "1px solid var(--template-palette-divider)",
                     p: 2,
-                    borderRadius: "8px",
-                    backgroundColor: "#f9f9f9",
+                    borderRadius: "var(--template-surface-radius)",
+                    backgroundColor: "var(--template-palette-action-hover)",
                     maxHeight: "200px",
                     overflowY: "auto",
                   }}
@@ -211,10 +218,10 @@ export function BitbucketPullRequestsList(
                 </Typography>
                 <Box
                   sx={{
-                    border: "1px solid #ccc",
+                    border: "1px solid var(--template-palette-divider)",
                     p: 2,
-                    borderRadius: "8px",
-                    backgroundColor: "#f9f9f9",
+                    borderRadius: "var(--template-surface-radius)",
+                    backgroundColor: "var(--template-palette-action-hover)",
                     maxHeight: "200px",
                     overflowY: "auto",
                   }}

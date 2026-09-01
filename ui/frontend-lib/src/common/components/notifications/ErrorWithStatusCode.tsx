@@ -67,7 +67,11 @@ export const ErrorWithStatusCode = forwardRef<
               <ExpandMoreIcon />
             </ExpandIconButton>
 
-            <IconButton sx={{ padding: "8px 8px" }} onClick={handleDismiss}>
+            <IconButton
+              size="small"
+              sx={{ padding: "8px 8px" }}
+              onClick={handleDismiss}
+            >
               <CloseIcon />
             </IconButton>
           </Box>
@@ -95,7 +99,7 @@ export const ErrorWithStatusCode = forwardRef<
                       ? "rgba(0, 0, 0, 0.05)"
                       : "rgba(255, 255, 255, 0.05)",
                   padding: 1,
-                  borderRadius: 1,
+                  borderRadius: "var(--template-surface-radius)",
                 }}
               >
                 {JSON.stringify(metadata, null, 2)}

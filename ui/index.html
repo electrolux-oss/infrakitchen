@@ -18,7 +18,7 @@
       body {
         margin: 0;
         padding: 0;
-        font-family: space-grotesk;
+        font-family: "Geist", -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
       }
 
       .loader-container {
@@ -31,7 +31,12 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background-color: #1e1e1e;
+        background-color: #ffffff;
+      }
+
+      /* Follow MUI's persisted color scheme (set on <html> via data-attr). */
+      html[data-mui-color-scheme="dark"] .loader-container {
+        background-color: hsl(0, 0%, 8%);
       }
 
       /* CSS Spinner from https://projects.lukehaas.me/css-loaders/ */
@@ -43,7 +48,7 @@
       }
 
       .loader {
-        color: #d7ffcf;
+        color: #171717;
         font-size: 11px;
         text-indent: -99999em;
         margin: 55px auto;
@@ -56,6 +61,10 @@
         transform: translateZ(0);
       }
 
+      html[data-mui-color-scheme="dark"] .loader {
+        color: hsl(0, 0%, 55%);
+      }
+
       .loader:before,
       .loader:after {
         position: absolute;
@@ -65,7 +74,7 @@
       .loader:before {
         width: 5.2em;
         height: 10.2em;
-        background: #1e1e1e;
+        background: #ffffff;
         border-radius: 10.2em 0 0 10.2em;
         top: -0.1em;
         left: -0.1em;
@@ -75,10 +84,14 @@
         animation: load2 2s infinite ease 1.5s;
       }
 
+      html[data-mui-color-scheme="dark"] .loader:before {
+        background: hsl(0, 0%, 8%);
+      }
+
       .loader:after {
         width: 5.2em;
         height: 10.2em;
-        background: #1e1e1e;
+        background: #ffffff;
         border-radius: 0 10.2em 10.2em 0;
         top: -0.1em;
         left: 5.1em;
@@ -86,6 +99,10 @@
         transform-origin: 0px 5.1em;
         -webkit-animation: load2 2s infinite ease;
         animation: load2 2s infinite ease;
+      }
+
+      html[data-mui-color-scheme="dark"] .loader:after {
+        background: hsl(0, 0%, 8%);
       }
 
       @-webkit-keyframes load2 {
@@ -111,10 +128,6 @@
       }
     </style>
     <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
   </head>
 
   <body>

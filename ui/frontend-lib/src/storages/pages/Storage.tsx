@@ -15,7 +15,7 @@ export const StoragePage = () => {
       entity_id={storage_id || ""}
       entityFields={STORAGE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Storage Overview"}>
+      <EntityContainer title={"Storage Details"}>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

@@ -24,6 +24,7 @@ import {
 
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/EntityCard";
+import { entityCardGridSx } from "../../common/utils/entityCardGrid";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -70,11 +71,11 @@ export const TemplatesPage = () => {
         templates: GqlTemplate[];
       }>(
         `  query Templates($filter: JSON, $sort: [String!], $range: [Int!]) {
-                    templates(filter: $filter, sort: $sort, range: $range) {
-                      ${TEMPLATE_LIST_FIELDS}
-                    }
-                  }
-        `,
+                          templates(filter: $filter, sort: $sort, range: $range) {
+                            ${TEMPLATE_LIST_FIELDS}
+                          }
+                        }
+              `,
         {
           filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
           sort: ["name", "ASC"],
@@ -153,6 +154,7 @@ export const TemplatesPage = () => {
         permissionAction="write"
       >
         <Button
+          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/create`)}
           startIcon={<AddIcon />}
@@ -160,6 +162,7 @@ export const TemplatesPage = () => {
           Create
         </Button>
         <Button
+          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/import`)}
           sx={{ ml: 1 }}
@@ -178,12 +181,12 @@ export const TemplatesPage = () => {
           <Typography variant="caption" sx={{ display: "block" }}>
             Status
           </Typography>
-          <StatusChip status={template.status} compact />
+          <StatusChip status={template.status} />
         </Box>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
             Last Updated
-          </Typography>
+          </Typography>{" "}
           <RelativeTime
             date={template.updatedAt}
             variant="caption"
@@ -201,7 +204,7 @@ export const TemplatesPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button variant="outlined" onClick={fetchTemplates}>
+          <Button size="small" variant="outlined" onClick={fetchTemplates}>
             Retry
           </Button>
         </Box>
@@ -255,18 +258,7 @@ export const TemplatesPage = () => {
             </Typography>
           </Box>
         ) : (
-          <Box
-            sx={{
-              "--card-min-width": { xs: "260px", sm: "300px", md: "340px" },
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 3,
-              width: "100%",
-              alignItems: "stretch",
-              mt: 4,
-            }}
-          >
+          <Box sx={{ ...entityCardGridSx(), mt: 3 }}>
             {templates.map((template) => {
               const enabled = template.status !== "disabled";
 
@@ -275,7 +267,7 @@ export const TemplatesPage = () => {
                   key={template.id}
                   entity_name="template"
                   name={template.name}
-                  description={template.description || "No description"}
+                  description={template.description ?? ""}
                   status={template.status}
                   detailsUrl={`${linkPrefix}templates/${template.id}`}
                   {...(enabled && {

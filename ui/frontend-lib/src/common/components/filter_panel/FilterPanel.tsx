@@ -1,8 +1,8 @@
 import { memo } from "react";
 
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SaveIcon from "@mui/icons-material/Save";
-import { Box, Button, CardContent, CardHeader } from "@mui/material";
-import Card from "@mui/material/Card";
+import { Box, IconButton, Tooltip } from "@mui/material";
 
 import { notify } from "../../hooks/useNotification";
 
@@ -29,57 +29,75 @@ export const FilterPanel = memo((props: FilterPanelProps) => {
 
   return (
     <Box sx={{ width: "100%", ...sx }}>
-      <Card sx={{ pb: 0 }}>
-        <CardHeader
-          title="Filters"
-          action={
-            <Box sx={{ display: "flex", gap: 1 }}>
-              {syncToUrl && saveFilters && (
-                <Button
+      {hasActiveFilters && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 0.5,
+            mb: 1,
+          }}
+        >
+          {syncToUrl && saveFilters && (
+            <Tooltip title="Save filter" disableInteractive>
+              <span>
+                <IconButton
+                  aria-label="Save filter"
                   onClick={() => {
                     saveFilters();
                     notify("Filters saved", "success");
                   }}
-                  variant="outlined"
                   disabled={!hasUnsavedFilters}
                   size="small"
-                  startIcon={<SaveIcon />}
-                  sx={{ textTransform: "none" }}
+                  sx={{
+                    color: hasUnsavedFilters
+                      ? "text.primary"
+                      : "text.secondary",
+                    border: "none",
+                    backgroundColor: "transparent",
+                  }}
                 >
-                  Save filter
-                </Button>
-              )}
-              <Button
+                  <SaveIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+          <Tooltip title="Reset filters" disableInteractive>
+            <span>
+              <IconButton
+                aria-label="Reset filters"
                 onClick={resetFilters}
-                variant="outlined"
-                disabled={!hasActiveFilters}
                 size="small"
-                sx={{ textTransform: "none" }}
+                sx={{
+                  color: "text.secondary",
+                  border: "none",
+                  backgroundColor: "transparent",
+                }}
               >
-                Reset
-              </Button>
-            </Box>
-          }
-        />
-        <CardContent>
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            {filters.map((config: FilterConfig) => (
-              <FilterRenderer
-                key={config.id}
-                config={config}
-                filterValues={filterValues}
-                onChange={setFilterValue}
-              />
-            ))}
-          </Box>
-        </CardContent>
-      </Card>
+                <RestartAltIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          pb: 0.5,
+        }}
+      >
+        {filters.map((config: FilterConfig) => (
+          <FilterRenderer
+            key={config.id}
+            config={config}
+            filterValues={filterValues}
+            onChange={setFilterValue}
+          />
+        ))}
+      </Box>
     </Box>
   );
 });

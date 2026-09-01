@@ -2,16 +2,26 @@ import * as React from "react";
 
 import { matchPath, useLocation } from "react-router";
 
-import { Icon } from "@iconify/react";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import BallotIcon from "@mui/icons-material/Ballot";
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import ArticleIcon from "@mui/icons-material/Article";
+import BadgeIcon from "@mui/icons-material/Badge";
 import CodeIcon from "@mui/icons-material/Code";
+import ConstructionIcon from "@mui/icons-material/Construction";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import EngineeringIcon from "@mui/icons-material/Engineering";
+import ExtensionIcon from "@mui/icons-material/Extension";
+import FolderIcon from "@mui/icons-material/Folder";
 import HistoryIcon from "@mui/icons-material/History";
-import HubIcon from "@mui/icons-material/Hub";
+import InventoryIcon from "@mui/icons-material/Inventory";
 import KeyIcon from "@mui/icons-material/Key";
-import ListAltIcon from "@mui/icons-material/ListAlt";
+import LanIcon from "@mui/icons-material/Lan";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import MemoryIcon from "@mui/icons-material/Memory";
 import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import StorageIcon from "@mui/icons-material/Storage";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import Box from "@mui/material/Box";
@@ -26,8 +36,8 @@ import DashboardSidebarContext from "../../context/DashboardSidebarContext";
 
 import { DashboardAdminSidebar } from "./DashboardAdminSidebar";
 import DashboardSidebarDividerItem from "./DashboardSidebarDividerItem";
-import DashboardSidebarHeaderItem from "./DashboardSidebarHeaderItem";
 import DashboardSidebarPageItem from "./DashboardSidebarPageItem";
+import DashboardSidebarToggleItem from "./DashboardSidebarToggleItem";
 import {
   getDrawerSxTransitionMixin,
   getDrawerWidthTransitionMixin,
@@ -93,14 +103,60 @@ export default function DashboardSidebar({
     [setExpanded],
   );
 
+  // undefined = auto (expand when a child route is active); once the user
+  // toggles a group, their explicit choice wins until they toggle again.
+  const [nestedExpanded, setNestedExpanded] = React.useState<
+    Record<string, boolean | undefined>
+  >({
+    templates: true,
+    configurations: undefined,
+    operations: undefined,
+    management: undefined,
+  });
+
   const handlePageItemClick = React.useCallback(
     (itemId: string, hasNestedNavigation: boolean) => {
-      if (!isOverSmViewport && !hasNestedNavigation) {
+      if (hasNestedNavigation) {
+        // Group parent: toggle its children.
+        setNestedExpanded((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
+        return;
+      }
+      if (!isOverSmViewport) {
         setExpanded(false);
       }
     },
     [setExpanded, isOverSmViewport],
   );
+
+  // Auto-expand a group when one of its children is the active route.
+  const isTemplateVersionsActive = !!matchPath(
+    "/source_code_versions/*",
+    pathname,
+  );
+  const isConfigurationsActive = [
+    "/integrations/*",
+    "/source_codes/*",
+    "/workspaces/*",
+    "/storages/*",
+    "/secrets/*",
+  ].some((pattern) => matchPath(pattern, pathname));
+  const isOperationsActive = ["/tasks/*", "/workflows/*", "/workers/*"].some(
+    (pattern) => matchPath(pattern, pathname),
+  );
+  const isManagementActive = [
+    "/users/*",
+    "/roles/*",
+    "/audit_logs/*",
+    "/auth_providers/*",
+    "/admin/*",
+  ].some((pattern) => matchPath(pattern, pathname));
+
+  const templatesExpanded =
+    nestedExpanded.templates ?? isTemplateVersionsActive;
+  const configurationsExpanded =
+    nestedExpanded.configurations ?? isConfigurationsActive;
+  const operationsExpanded = nestedExpanded.operations ?? isOperationsActive;
+  const managementExpanded = nestedExpanded.management ?? isManagementActive;
 
   const hasDrawerTransitions =
     isOverSmViewport && (!disableCollapsibleSidebar || isOverMdViewport);
@@ -112,186 +168,255 @@ export default function DashboardSidebar({
         aria-label={`${viewport.charAt(0).toUpperCase()}${viewport.slice(1)}`}
         sx={{
           height: "100%",
-          overflow: "auto",
-          scrollbarGutter: mini ? "stable" : "auto",
-          overflowX: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
           ...(hasDrawerTransitions
             ? getDrawerSxTransitionMixin(isFullyExpanded, "padding")
             : {}),
         }}
       >
         <Toolbar />
-        <List
-          dense
+        <Box
           sx={{
-            padding: mini ? 0 : 0.5,
-            width: mini ? MINI_DRAWER_WIDTH : "auto",
-            pt: !mini ? 0 : 2,
+            flex: 1,
+            minHeight: 0,
+            overflow: "auto",
+            scrollbarGutter: mini ? "stable" : "auto",
+            overflowX: "hidden",
           }}
         >
-          <DashboardSidebarHeaderItem></DashboardSidebarHeaderItem>
-          <DashboardSidebarPageItem
-            id="dashboard"
-            title="Dashboard"
-            icon={<Icon icon="emojione:shopping-cart" width="20" height="20" />}
-            href="/"
-            selected={pathname === "/"}
-          />
-          <DashboardSidebarPageItem
-            id="integrations"
-            title="Integrations"
-            icon={<Icon icon="noto:fork-and-knife" width="20" height="20" />}
-            href="/integrations"
-            selected={!!matchPath("/integrations/*", pathname)}
-            permissionKey="integration"
-          />
-          <DashboardSidebarPageItem
-            id="templates"
-            title="Templates"
-            icon={<Icon icon="noto:canned-food" width="20" height="20" />}
-            href="/templates"
-            selected={!!matchPath("/templates/*", pathname)}
-            permissionKey="template"
-          />
-          <DashboardSidebarPageItem
-            id="resources"
-            title="Resources"
-            icon={
-              <Icon icon="emojione:delivery-truck" width="22" height="24" />
-            }
-            href="/resources"
-            selected={!!matchPath("/resources/*", pathname)}
-            permissionKey="resource"
-          />
-          <DashboardSidebarPageItem
-            id="projects"
-            title="Projects"
-            icon={<WorkspacesIcon />}
-            href="/projects"
-            selected={!!matchPath("/projects/*", pathname)}
-            permissionKey="project"
-          />
-          <DashboardSidebarPageItem
-            id="executors"
-            title="Executors"
-            icon={<Icon icon="emojione:package" width="22" height="24" />}
-            href="/executors"
-            selected={!!matchPath("/executors/*", pathname)}
-            permissionKey="executor"
-          />
-          <DashboardSidebarPageItem
-            id="blueprints"
-            title="Blueprints"
-            icon={<Icon icon="noto:spiral-notepad" width="20" height="20" />}
-            href="/blueprints"
-            selected={!!matchPath("/blueprints/*", pathname)}
-            permissionKey="blueprint"
-          />
+          <List
+            dense
+            sx={{
+              padding: mini ? 0 : "0px 8px",
+              width: mini ? MINI_DRAWER_WIDTH : "auto",
+              // Same top padding in both modes, so items stay at the same
+              // vertical position when collapsing/expanding.
+              pt: 1,
+            }}
+          >
+            <DashboardSidebarPageItem
+              id="dashboard"
+              title="Dashboard"
+              icon={<DashboardIcon />}
+              href="/"
+              selected={pathname === "/"}
+            />
+            <DashboardSidebarPageItem
+              id="projects"
+              title="Projects"
+              icon={<FolderIcon />}
+              href="/projects"
+              selected={!!matchPath("/projects/*", pathname)}
+              permissionKey="project"
+            />
+            <DashboardSidebarPageItem
+              id="templates"
+              title="Templates"
+              icon={<LibraryBooksIcon />}
+              href="/templates"
+              selected={!!matchPath("/templates/*", pathname)}
+              permissionKey="template"
+              expanded={templatesExpanded}
+              nestedNavigation={
+                <Box sx={{ pl: 1.25 }}>
+                  <DashboardSidebarPageItem
+                    id="source_code_versions"
+                    title="Template Versions"
+                    icon={<HistoryIcon />}
+                    href="/source_code_versions"
+                    selected={!!matchPath("/source_code_versions/*", pathname)}
+                    permissionKey="source_code_version"
+                  />
+                </Box>
+              }
+            />
+            <DashboardSidebarPageItem
+              id="resources"
+              title="Resources"
+              icon={<InventoryIcon />}
+              href="/resources"
+              selected={!!matchPath("/resources/*", pathname)}
+              permissionKey="resource"
+            />
+            <DashboardSidebarPageItem
+              id="batch_operations"
+              title="Batch Operations"
+              icon={<DoneAllIcon />}
+              href="/batch_operations"
+              selected={!!matchPath("/batch_operations/*", pathname)}
+              permissionKey="batch_operation"
+            />
+            <DashboardSidebarPageItem
+              id="executors"
+              title="Executors"
+              icon={<MemoryIcon />}
+              href="/executors"
+              selected={!!matchPath("/executors/*", pathname)}
+              permissionKey="executor"
+            />
+            <DashboardSidebarPageItem
+              id="blueprints"
+              title="Blueprints"
+              label="alpha"
+              icon={<ArticleIcon />}
+              href="/blueprints"
+              selected={!!matchPath("/blueprints/*", pathname)}
+              permissionKey="blueprint"
+            />
 
-          <DashboardSidebarDividerItem />
-          <DashboardSidebarHeaderItem>Advanced</DashboardSidebarHeaderItem>
+            <DashboardSidebarDividerItem />
 
-          <DashboardSidebarPageItem
-            id="source_codes"
-            title="Code Repositories"
-            icon={<CodeIcon />}
-            href="/source_codes"
-            selected={!!matchPath("/source_codes/*", pathname)}
-            permissionKey="source_code"
+            <DashboardSidebarPageItem
+              id="configurations"
+              title="Configurations"
+              icon={<LanIcon />}
+              expanded={configurationsExpanded}
+              nestedNavigation={
+                <Box sx={{ pl: 1.25 }}>
+                  <DashboardSidebarPageItem
+                    id="integrations"
+                    title="Integrations"
+                    icon={<ExtensionIcon />}
+                    href="/integrations"
+                    selected={!!matchPath("/integrations/*", pathname)}
+                    permissionKey="integration"
+                  />
+                  <DashboardSidebarPageItem
+                    id="source_codes"
+                    title="Code Repositories"
+                    icon={<CodeIcon />}
+                    href="/source_codes"
+                    selected={!!matchPath("/source_codes/*", pathname)}
+                    permissionKey="source_code"
+                  />
+                  <DashboardSidebarPageItem
+                    id="workspaces"
+                    title="Workspaces"
+                    icon={<WorkspacesIcon />}
+                    href="/workspaces"
+                    selected={!!matchPath("/workspaces/*", pathname)}
+                    permissionKey="workspace"
+                  />
+                  <DashboardSidebarPageItem
+                    id="storages"
+                    title="Storage"
+                    icon={<StorageIcon />}
+                    href="/storages"
+                    selected={!!matchPath("/storages/*", pathname)}
+                    permissionKey="storage"
+                  />
+                  <DashboardSidebarPageItem
+                    id="secrets"
+                    title="Secrets"
+                    icon={<KeyIcon />}
+                    href="/secrets"
+                    selected={!!matchPath("/secrets/*", pathname)}
+                    permissionKey="secret"
+                  />
+                </Box>
+              }
+            />
+
+            <DashboardSidebarDividerItem />
+
+            <DashboardSidebarPageItem
+              id="operations"
+              title="Operations"
+              icon={<ConstructionIcon />}
+              expanded={operationsExpanded}
+              nestedNavigation={
+                <Box sx={{ pl: 1.25 }}>
+                  <DashboardSidebarPageItem
+                    id="tasks"
+                    title="Tasks"
+                    icon={<PlaylistAddCheckIcon />}
+                    href="/tasks"
+                    selected={!!matchPath("/tasks/*", pathname)}
+                    permissionKey="task"
+                  />
+                  <DashboardSidebarPageItem
+                    id="workflows"
+                    title="Workflows"
+                    icon={<AccountTreeIcon />}
+                    href="/workflows"
+                    selected={!!matchPath("/workflows/*", pathname)}
+                    permissionKey="workflow"
+                  />
+                  <DashboardSidebarPageItem
+                    id="workers"
+                    title="Workers"
+                    icon={<EngineeringIcon />}
+                    href="/workers"
+                    selected={!!matchPath("/workers/*", pathname)}
+                    permissionKey="worker"
+                  />
+                </Box>
+              }
+            />
+
+            <DashboardSidebarDividerItem />
+
+            <DashboardSidebarPageItem
+              id="management"
+              title="Management"
+              icon={<AdminPanelSettingsIcon />}
+              expanded={managementExpanded}
+              nestedNavigation={
+                <Box sx={{ pl: 1.25 }}>
+                  <DashboardSidebarPageItem
+                    id="users"
+                    title="Users"
+                    icon={<PeopleIcon />}
+                    href="/users"
+                    selected={!!matchPath("/users/*", pathname)}
+                    permissionKey="user"
+                  />
+                  <DashboardSidebarPageItem
+                    id="roles"
+                    title="Roles"
+                    icon={<BadgeIcon />}
+                    href="/roles"
+                    selected={!!matchPath("/roles/*", pathname)}
+                    permissionKey="permission"
+                  />
+                  <DashboardSidebarPageItem
+                    id="audit_logs"
+                    title="Audit Log"
+                    icon={<ReceiptLongIcon />}
+                    href="/audit_logs"
+                    selected={!!matchPath("/audit_logs/*", pathname)}
+                    permissionKey="audit_log"
+                  />
+                  <DashboardAdminSidebar />
+                </Box>
+              }
+            />
+          </List>
+        </Box>
+        {viewport === "desktop" && !disableCollapsibleSidebar ? (
+          <DashboardSidebarToggleItem
+            expanded={expanded}
+            setExpanded={setExpanded}
           />
-          <DashboardSidebarPageItem
-            id="source_code_versions"
-            title="Template Versions"
-            icon={<HistoryIcon />}
-            href="/source_code_versions"
-            selected={!!matchPath("/source_code_versions/*", pathname)}
-            permissionKey="source_code_version"
-          />
-          <DashboardSidebarPageItem
-            id="workspaces"
-            title="Workspaces"
-            icon={<WorkspacesIcon />}
-            href="/workspaces"
-            selected={!!matchPath("/workspaces/*", pathname)}
-            permissionKey="workspace"
-          />
-          <DashboardSidebarPageItem
-            id="tasks"
-            title="Tasks"
-            icon={<PlaylistAddCheckIcon />}
-            href="/tasks"
-            selected={!!matchPath("/tasks/*", pathname)}
-            permissionKey="task"
-          />
-          <DashboardSidebarPageItem
-            id="storages"
-            title="Storage"
-            icon={<StorageIcon />}
-            href="/storages"
-            selected={!!matchPath("/storages/*", pathname)}
-            permissionKey="storage"
-          />
-          <DashboardSidebarPageItem
-            id="secrets"
-            title="Secrets"
-            icon={<KeyIcon />}
-            href="/secrets"
-            selected={!!matchPath("/secrets/*", pathname)}
-            permissionKey="secret"
-          />
-          <DashboardSidebarPageItem
-            id="batch_operations"
-            title="Batch Operations"
-            icon={<BallotIcon />}
-            href="/batch_operations"
-            selected={!!matchPath("/batch_operations/*", pathname)}
-            permissionKey="batch_operation"
-          />
-          <DashboardSidebarPageItem
-            id="workflows"
-            title="Workflows"
-            icon={<ListAltIcon />}
-            href="/workflows"
-            selected={!!matchPath("/workflows/*", pathname)}
-            permissionKey="workflow"
-          />
-          <DashboardSidebarPageItem
-            id="users"
-            title="Users"
-            icon={<PeopleIcon />}
-            href="/users"
-            selected={!!matchPath("/users/*", pathname)}
-            permissionKey="user"
-          />
-          <DashboardSidebarPageItem
-            id="roles"
-            title="Roles"
-            icon={<AccountCircleIcon />}
-            href="/roles"
-            selected={!!matchPath("/roles/*", pathname)}
-            permissionKey="permission"
-          />
-          <DashboardSidebarPageItem
-            id="audit_logs"
-            title="Audit Log"
-            icon={<ListAltIcon />}
-            href="/audit_logs"
-            selected={!!matchPath("/audit_logs/*", pathname)}
-            permissionKey="audit_log"
-          />
-          <DashboardSidebarPageItem
-            id="workers"
-            title="Workers"
-            icon={<HubIcon />}
-            href="/workers"
-            selected={!!matchPath("/workers/*", pathname)}
-            permissionKey="worker"
-          />
-          <DashboardAdminSidebar />
-        </List>
+        ) : null}
       </Box>
     ),
-    [mini, hasDrawerTransitions, isFullyExpanded, pathname],
+    [
+      mini,
+      hasDrawerTransitions,
+      isFullyExpanded,
+      pathname,
+      expanded,
+      setExpanded,
+      disableCollapsibleSidebar,
+      templatesExpanded,
+      configurationsExpanded,
+      operationsExpanded,
+      managementExpanded,
+      nestedExpanded,
+    ],
   );
 
   const getDrawerSharedSx = React.useCallback(

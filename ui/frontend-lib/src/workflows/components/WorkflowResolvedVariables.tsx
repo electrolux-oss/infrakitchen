@@ -82,7 +82,7 @@ export const WorkflowResolvedVariables = ({
           sx={{
             border: 1,
             borderColor: "divider",
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             "&:before": { display: "none" },
             overflow: "hidden",
           }}

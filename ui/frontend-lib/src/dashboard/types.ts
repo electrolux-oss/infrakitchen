@@ -34,6 +34,13 @@ export interface ActivityLogEntry {
   [key: string]: any;
 }
 
+export interface DashboardStats {
+  total: number;
+  ready: number;
+  needsUpdate: number;
+  critical: number;
+}
+
 export interface DashboardContextType {
   favorites: FavoriteResource[];
   activities: ActivityLogEntry[];

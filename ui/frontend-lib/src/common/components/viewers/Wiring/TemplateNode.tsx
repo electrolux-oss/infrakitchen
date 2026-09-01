@@ -55,7 +55,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       sx={{
         background: bg,
         border: `2px ${borderStyle} ${borderColor}`,
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
         maxWidth: 300,
         boxShadow: theme.shadows[2],
@@ -186,7 +186,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               p: 0.75,
               bgcolor: "error.main",
               color: "error.contrastText",
-              borderRadius: 0.5,
+              borderRadius: "var(--template-surface-radius)",
               fontSize: 11,
               fontFamily: "monospace",
               overflow: "hidden",

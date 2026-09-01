@@ -195,7 +195,7 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
                 <HostInfoRow hostMetadata={serverInfo.hostMetadata} />
               </Stack>
             ) : (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="textSecondary">
                 No server info available.
               </Typography>
             )}

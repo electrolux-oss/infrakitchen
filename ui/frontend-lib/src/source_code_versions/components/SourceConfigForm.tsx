@@ -140,7 +140,7 @@ export const SourceConfigForm = (props: {
         width: "100%",
         mb: 2,
         p: 2,
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
         border: "1px solid",
         borderColor: "divider",
         borderLeft: "4px solid",
@@ -433,7 +433,7 @@ export const SourceConfigForm = (props: {
               sx={{
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 mt: 1,
                 "&:before": { display: "none" },
               }}
@@ -530,7 +530,7 @@ export const SourceConfigForm = (props: {
               sx={{
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 mt: 1,
                 "&:before": { display: "none" },
               }}

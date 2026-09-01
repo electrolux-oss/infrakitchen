@@ -39,7 +39,7 @@ const IntegrationCard = ({ integration, provider }: IntegrationItemProps) => {
         </Box>
       }
       labels={integration.labels || []}
-      description={integration.description || "No description provided."}
+      description={integration.description ?? undefined}
       metadata={[
         {
           label: "Created",

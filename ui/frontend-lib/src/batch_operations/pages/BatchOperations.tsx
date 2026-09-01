@@ -22,8 +22,8 @@ export const BatchOperationsPage = () => {
           permissionAction="read"
         >
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}batch_operations/create`)}
             startIcon={<AddIcon />}
           >

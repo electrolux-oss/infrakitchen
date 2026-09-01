@@ -160,15 +160,11 @@ const IntegrationCreatePage = () => {
 
   if (!providerObject) {
     return (
-      <PageContainer
-        title="Integration Not Found"
-        onBack={() => navigate(`${linkPrefix}integrations`)}
-      >
+      <PageContainer title="Integration Not Found">
         <Typography variant="h5">
           The specified integration provider was not found.
         </Typography>
         <Button
-          variant="outlined"
           onClick={() => navigate(`${linkPrefix}integrations`)}
           sx={{ mt: 2 }}
         >
@@ -181,7 +177,6 @@ const IntegrationCreatePage = () => {
   return (
     <PageContainer
       title={`Set up ${providerObject?.name} Integration`}
-      onBack={() => navigate(`${linkPrefix}integrations`)}
     >
       {hasMultipleAuthMethods && (
         <Box
@@ -244,7 +239,7 @@ const IntegrationCreatePage = () => {
               backgroundColor: (t) => alpha(t.palette.grey[600], 0.2),
               p: "1rem 2rem",
               m: "0 3rem",
-              borderRadius: 1,
+              borderRadius: "var(--template-surface-radius)",
             }}
           >
             <Typography variant="body2" sx={{ mb: 1 }}>
@@ -269,11 +264,16 @@ const IntegrationCreatePage = () => {
             )}
           </Box>
         </CardContent>
-      </Card>
+      </Card>{" "}
       <Card
         sx={{
           width: "100%",
+          maxWidth: 760,
           minWidth: 320,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          boxShadow: "none",
         }}
       >
         <CardHeader
@@ -347,12 +347,9 @@ const IntegrationCreatePage = () => {
             justifyContent: "center",
           }}
         >
-          <Button variant="outlined" onClick={handleValidation}>
-            Test Connection
-          </Button>
+          <Button onClick={handleValidation}>Test Connection</Button>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave, () =>
               notifyError(new Error("Fix validation errors before saving.")),
             )}

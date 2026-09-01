@@ -2,6 +2,7 @@ export * from "./LogsComponent";
 export * from "./context";
 export * from "./components";
 export * from "./hooks";
+export * from "./theme";
 export * from "./GradientCircularProgress";
 export * from "./StyledComponents";
 export * from "../icons/Icons";

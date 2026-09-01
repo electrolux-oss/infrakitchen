@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
 
-import { useLocation, useNavigate } from "react-router";
-
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Box,
@@ -12,7 +10,6 @@ import {
 } from "@mui/material";
 
 import { NotFoundPage } from "../../dashboard/pages/NotFound";
-import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import PageContainer from "../PageContainer";
 
@@ -27,9 +24,6 @@ export interface EntityContainerProps {
 
 export const EntityContainer = (props: EntityContainerProps) => {
   const { children, title, actions, showEditAction } = props;
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { linkPrefix } = useConfig();
   const { entity, loading, error, notFound, refreshEntity } =
     useEntityProvider();
 
@@ -39,22 +33,9 @@ export const EntityContainer = (props: EntityContainerProps) => {
     }
   };
 
-  const handleBack = (fallback: string) => {
-    // React Router uses the default key for direct-entry loads, which do not
-    // have an in-app history entry to return to.
-    if (location.key !== "default") {
-      navigate(-1);
-    } else {
-      navigate(fallback);
-    }
-  };
-
   if (loading) {
     return (
-      <PageContainer
-        title="Loading..."
-        onBack={() => handleBack(`${linkPrefix}${entity?.entityName}s`)}
-      >
+      <PageContainer title="Loading...">
         <Box
           sx={{
             display: "flex",
@@ -75,10 +56,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
 
   if (error) {
     return (
-      <PageContainer
-        title="Error"
-        onBack={() => handleBack(`${linkPrefix}${entity?.entityName}s`)}
-      >
+      <PageContainer title="Error">
         <Alert severity="error" sx={{ width: "100%" }}>
           {error}
         </Alert>
@@ -88,10 +66,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
 
   if (!entity) {
     return (
-      <PageContainer
-        title="Not Found"
-        onBack={() => handleBack(`${linkPrefix}`)}
-      >
+      <PageContainer title="Not Found">
         <Alert severity="warning" sx={{ width: "100%" }}>
           Entity not found
         </Alert>
@@ -102,7 +77,6 @@ export const EntityContainer = (props: EntityContainerProps) => {
   return (
     <PageContainer
       title={title || entity?.name || entity?.identifier || "Entity"}
-      onBack={() => handleBack(`${linkPrefix}${entity.entityName}s`)}
       actions={
         <>
           <EntityActions
@@ -112,7 +86,11 @@ export const EntityContainer = (props: EntityContainerProps) => {
           />
           {actions}
           <Tooltip title="Refresh">
-            <IconButton onClick={() => handleRefresh()} aria-label="refresh">
+            <IconButton
+              size="small"
+              onClick={() => handleRefresh()}
+              aria-label="refresh"
+            >
               <RefreshIcon />
             </IconButton>
           </Tooltip>

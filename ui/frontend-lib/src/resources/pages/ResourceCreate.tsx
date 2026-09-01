@@ -552,16 +552,14 @@ const ResourceCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Resource"
-      onBack={handleBack}
-      backAriaLabel="Back to resources"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave, handleInvalidSave)}
           >
             {saving ? "Saving..." : "Save"}
@@ -1221,7 +1219,7 @@ const ResourceCreatePageInner = () => {
                     onChange={() => setVariablesOpen(!variablesOpen)}
                     elevation={0}
                     sx={{
-                      borderRadius: 1,
+                      borderRadius: "var(--template-surface-radius)",
                       mt: 2,
                       "&:before": {
                         display: "none",

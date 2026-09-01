@@ -15,9 +15,8 @@ import {
   GridPaginationModel,
   GridSortModel,
 } from "@mui/x-data-grid";
-import { GridSortItem } from "@mui/x-data-grid/models/gridSortModel";
 
-import { useConfig, useUserSettings } from "../..";
+import { useConfig } from "../..";
 import { IkEntity } from "../../../types";
 import {
   buildGraphqlFields,
@@ -39,11 +38,13 @@ interface EntityFetchTableContentProps {
   initialFilters?: Record<string, any>;
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
+  rowClickable?: boolean;
   buildApiFiltersRef: MutableRefObject<
     ((filterValues: Record<string, any>) => Record<string, any>) | undefined
   >;
   defaultFilterRef: MutableRefObject<Record<string, any> | undefined>;
   columnsRef: MutableRefObject<EntityTableColumn[]>;
+  defaultSort?: { field: string; sort: "asc" | "desc" };
   loading: boolean;
   setLoading: Dispatch<SetStateAction<boolean>>;
   data: IkEntity[];
@@ -76,9 +77,11 @@ export const EntityFetchTableContent = forwardRef<
     initialFilters,
     entityFieldMap,
     transformFn,
+    rowClickable,
     buildApiFiltersRef,
     defaultFilterRef,
     columnsRef,
+    defaultSort,
     loading,
     setLoading,
     data,
@@ -95,7 +98,6 @@ export const EntityFetchTableContent = forwardRef<
   } = props;
 
   const { ikApi } = useConfig();
-  const { settings } = useUserSettings();
   const {
     filters,
     filterValues,
@@ -140,11 +142,11 @@ export const EntityFetchTableContent = forwardRef<
         apiFilters = { ...(defaultFilterRef.current ?? defaultFilter) };
       }
 
-      let sort: GridSortItem;
+      let sort: NonNullable<GridSortModel[number]>;
       if (sortModel.length === 0) {
-        sort = { field: "created_at", sort: "desc" };
+        sort = defaultSort ?? { field: "created_at", sort: "desc" };
       } else {
-        sort = sortModel[0] as GridSortItem;
+        sort = sortModel[0] as NonNullable<GridSortModel[number]>;
       }
 
       const sortFieldMap = new Map(
@@ -155,12 +157,10 @@ export const EntityFetchTableContent = forwardRef<
             column.sortField!,
           ]),
       );
-      const apiSort = sort
-        ? {
-            field: sortFieldMap.get(sort.field) ?? sort.field,
-            order: sort.sort?.toUpperCase() as "ASC" | "DESC",
-          }
-        : { field: "created_at", order: "DESC" as "ASC" | "DESC" };
+      const apiSort = {
+        field: sortFieldMap.get(sort.field) ?? sort.field,
+        order: (sort.sort ?? "desc").toUpperCase() as "ASC" | "DESC",
+      };
 
       setLoading(true);
 
@@ -175,14 +175,14 @@ export const EntityFetchTableContent = forwardRef<
         await ikApi
           .graphqlRequest(
             `query Query($filter: JSON, $sort: [String!], $range: [Int!]) {
-                      ${entityName}s(filter: $filter, sort: $sort, range: $range) {
-                      ${buildGraphqlFields(
-                        fetchParams.fields,
-                        entityFieldMap || {},
-                      )}
-                      }
-                      ${entityName}sCount(filter: $filter)
-              }`,
+                            ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+                            ${buildGraphqlFields(
+                              fetchParams.fields,
+                              entityFieldMap || {},
+                            )}
+                            }
+                            ${entityName}sCount(filter: $filter)
+                    }`,
             {
               filter: fetchParams.filter,
               sort: [fetchParams.sort.field, fetchParams.sort.order],
@@ -244,7 +244,7 @@ export const EntityFetchTableContent = forwardRef<
   return (
     <Box
       sx={{
-        maxWidth: settings.fullWidthPages ? "100%" : 1400,
+        maxWidth: "100%",
         width: "100%",
         alignSelf: "center",
       }}
@@ -267,6 +267,7 @@ export const EntityFetchTableContent = forwardRef<
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         onRefresh={fetchFilteredData}
         showFilterToggle={hasFilters}
+        rowClickable={rowClickable}
         isFilterPanelOpen={isFilterPanelOpen}
         hasActiveFilters={hasActiveFilters}
         onToggleFilterPanel={toggleFilterPanel}

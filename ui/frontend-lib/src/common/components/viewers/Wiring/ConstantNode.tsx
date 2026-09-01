@@ -28,7 +28,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
       sx={{
         background: bg,
         border: `2px solid ${theme.palette.secondary.main}`,
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
         boxShadow: theme.shadows[2],
       }}

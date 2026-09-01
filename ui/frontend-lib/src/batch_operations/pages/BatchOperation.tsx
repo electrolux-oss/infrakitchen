@@ -14,7 +14,7 @@ export const BatchOperationPage = () => {
       entity_id={batch_operation_id || ""}
       entityFields={BATCH_OPERATION_FIELDS}
     >
-      <EntityContainer title={"Batch Operation Overview"}>
+      <EntityContainer title={"Batch Operation Details"}>
         <BatchOperationContent />
       </EntityContainer>
     </EntityProvider>

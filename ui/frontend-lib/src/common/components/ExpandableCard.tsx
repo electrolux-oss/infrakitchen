@@ -12,6 +12,9 @@ import {
 } from "@mui/material";
 
 import { useLocalStorage } from "../context/UIStateContext";
+import { softChipColorSx } from "../utils/softChip";
+
+import { PlaceholderDescription } from "./PlaceholderDescription";
 
 type MetadataItem = {
   label: string;
@@ -163,7 +166,6 @@ const ExpandableCard = ({
                 )}
               </Grid>
             ))}
-
             {labels.length > 0 && (
               <Grid size={12}>
                 <Typography variant="body1" gutterBottom>
@@ -181,19 +183,23 @@ const ExpandableCard = ({
                       key={label}
                       label={label}
                       size="small"
-                      variant="outlined"
+                      variant="filled"
+                      sx={softChipColorSx("default")}
                     />
                   ))}
                 </Box>
               </Grid>
-            )}
-
+            )}{" "}
             {description !== undefined && (
               <Grid size={12}>
                 <Typography variant="body1" gutterBottom>
                   Description
                 </Typography>
-                <Typography variant="body2">{description || "-"}</Typography>
+                {description ? (
+                  <Typography variant="body2">{description}</Typography>
+                ) : (
+                  <PlaceholderDescription />
+                )}
               </Grid>
             )}
           </Grid>

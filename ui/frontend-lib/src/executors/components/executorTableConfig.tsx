@@ -3,10 +3,12 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { getRepoNameFromUrl } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  createdUpdatedColumns,
+  labelsColumn,
+} from "../../common/components/entity_table/tableColumns";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { Labels } from "../../common/components/Labels";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
@@ -121,44 +123,8 @@ export const executorColumns: EntityTableColumn[] = [
       />
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "labels",
-    headerName: "Labels",
-    flex: 1,
-    filter: {
-      field: "labels",
-      operators: ["contains_all"],
-      valueType: "autocomplete-multiple",
-      defaultOperator: "contains_all",
-      labelsEntity: "executor",
-    },
-    valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Labels labels={params.row.labels || []} />
-    ),
-  },
+  ...createdUpdatedColumns(),
+  labelsColumn("executor"),
   {
     field: "creator",
     headerName: "Creator",

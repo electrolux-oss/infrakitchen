@@ -222,7 +222,7 @@ const PodRow = (props: {
                 margin: 1.5,
                 p: 2,
                 bgcolor: "background.paper",
-                borderRadius: 2,
+                borderRadius: "var(--template-surface-radius)",
                 boxShadow: 3,
               }}
             >

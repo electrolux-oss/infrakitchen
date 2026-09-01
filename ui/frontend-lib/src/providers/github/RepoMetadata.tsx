@@ -32,7 +32,6 @@ interface GithubRepoMetadataProps {
 
 export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
   const { organization, name, queryParams } = props;
-
   const { ikApi } = useConfig();
   const [metadata, setMetadata] = useState<GithubRepo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,7 +105,7 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
         maxWidth: "800px",
         mx: "auto",
         bgcolor: "background.paper",
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         boxShadow: 3,
       }}
     >
@@ -246,7 +245,7 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
           sx={{
             px: 3,
             py: 1.5,
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             textDecoration: "none",
             backgroundColor: "primary.main",
             color: "white",
@@ -256,7 +255,13 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
           View Repository on GitHub
         </MuiLink>
       </Box>
-      <Accordion sx={{ mt: 3, boxShadow: 1, borderRadius: 2 }}>
+      <Accordion
+        sx={{
+          mt: 3,
+          boxShadow: 1,
+          borderRadius: "var(--template-surface-radius)",
+        }}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="raw-metadata-content"
@@ -272,8 +277,8 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
             extensions={[json()]}
             readOnly={true}
             style={{
-              border: "1px solid silver",
-              borderRadius: "8px",
+              border: "1px solid var(--template-palette-divider)",
+              borderRadius: "var(--template-surface-radius)",
               overflow: "hidden",
             }}
             height="400px"

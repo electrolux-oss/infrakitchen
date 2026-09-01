@@ -80,16 +80,14 @@ const StorageCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Storage"
-      onBack={handleBack}
-      backAriaLabel="Back to storages"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             {saving ? "Saving..." : "Save"}

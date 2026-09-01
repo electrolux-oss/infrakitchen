@@ -42,11 +42,12 @@ const TemplatePageContent = () => {
 
   return (
     <EntityContainer
-      title={"Template Overview"}
+      title={"Template Details"}
       actions={
         entity?.status !== ENTITY_STATUS.DISABLED ? (
           <Tooltip title="Create a new resource from this template">
             <Button
+              size="small"
               variant="outlined"
               onClick={handleUseTemplate}
               startIcon={<AddIcon />}

@@ -161,18 +161,10 @@ const SourceCodeVersionCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Template Version"
-      onBack={handleBack}
-      backAriaLabel="Back to template versions"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>

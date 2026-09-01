@@ -34,9 +34,10 @@ export const ResourcesPage = () => {
           requiredPermission="api:resource"
           permissionAction="read"
         >
+          {" "}
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}resources/create`)}
             startIcon={<AddIcon />}
           >

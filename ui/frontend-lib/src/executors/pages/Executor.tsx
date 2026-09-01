@@ -2,6 +2,7 @@ import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
+import { ScheduleApplyButton } from "../../common/components/ScheduleApplyButton";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ExecutorContent } from "../components/ExecutorContent";
 import { EXECUTOR_DETAIL_FIELDS } from "../graphql";
@@ -15,7 +16,11 @@ export const ExecutorPage = () => {
       entity_id={executor_id || ""}
       entityFields={EXECUTOR_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Executor Overview"}>
+      {" "}
+      <EntityContainer
+        title={"Executor Details"}
+        actions={<ScheduleApplyButton entityType="executor" />}
+      >
         <ExecutorContent />
         <LogLiveTail />
       </EntityContainer>

@@ -190,16 +190,14 @@ const ExecutorCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Executor"
-      onBack={handleBack}
-      backAriaLabel="Back to executors list"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             {saving ? "Saving..." : "Save"}

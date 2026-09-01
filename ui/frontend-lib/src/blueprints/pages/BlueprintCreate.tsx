@@ -89,20 +89,18 @@ export const BlueprintCreatePage = () => {
   return (
     <PageContainer
       title="Create Blueprint"
-      onBack={() => navigate(`${linkPrefix}blueprints`)}
-      backAriaLabel="Back to blueprints"
       bottomActions={
         <>
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}blueprints`)}
           >
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(onSubmit)}
           >
             Save

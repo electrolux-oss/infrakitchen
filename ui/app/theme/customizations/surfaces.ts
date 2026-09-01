@@ -1,8 +1,22 @@
 import { alpha, Theme, Components } from "@mui/material/styles";
 
-import { grey } from "../themePrimitives";
+import { grey, shape } from "../themePrimitives";
 
 export const surfacesCustomizations: Components<Theme> = {
+  // Single CSS variable for the surface corner radius, emitted from the theme
+  // token (shape.borderRadius). Surfaces reference `var(--template-surface-radius)`
+  // so changing the radius is a one-line change here — components never hardcode
+  // a number. `:root` is correct because shape does not vary by color scheme.
+  // Note: MuiCssBaseline styleOverrides keys are top-level selectors (html,
+  // body, ...), so `:root` must be a key directly — wrapping it under `root`
+  // would emit a rule that never matches and the variable would be undefined.
+  MuiCssBaseline: {
+    styleOverrides: {
+      ":root": {
+        "--template-surface-radius": `${shape.borderRadius}px`,
+      },
+    },
+  },
   MuiAccordion: {
     defaultProps: {
       elevation: 0,
@@ -12,7 +26,7 @@ export const surfacesCustomizations: Components<Theme> = {
       root: ({ theme }) => ({
         padding: 4,
         overflow: "clip",
-        backgroundColor: (theme.vars || theme).palette.background.default,
+        backgroundColor: (theme.vars || theme).palette.background.paper,
         border: "1px solid",
         borderColor: (theme.vars || theme).palette.divider,
         ":before": {
@@ -34,9 +48,9 @@ export const surfacesCustomizations: Components<Theme> = {
   },
   MuiAccordionSummary: {
     styleOverrides: {
-      root: () => ({
+      root: ({ theme }) => ({
         border: "none",
-        borderRadius: 8,
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         "&:focus-visible": { backgroundColor: "transparent" },
       }),
     },
@@ -51,6 +65,22 @@ export const surfacesCustomizations: Components<Theme> = {
       elevation: 0,
     },
   },
+  // DataGrid is content: white (paper), not the grey canvas. The grid paints
+  // its container via a CSS variable, so set both the variable and the
+  // background color to stay robust across MUI X versions. Its own radius
+  // variable (`--unstable_DataGrid-radius`) can resolve unitless, so declare
+  // the radius explicitly to keep the grid's corners rounded like every other
+  // surface.
+  MuiDataGrid: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        "--DataGrid-t-color-background-base": (theme.vars || theme).palette
+          .background.paper,
+        backgroundColor: (theme.vars || theme).palette.background.paper,
+        borderRadius: "var(--template-surface-radius)",
+      }),
+    },
+  },
   MuiCard: {
     styleOverrides: {
       root: ({ theme }) => {
@@ -58,13 +88,11 @@ export const surfacesCustomizations: Components<Theme> = {
           padding: 16,
           gap: 16,
           transition: "all 100ms ease",
-          backgroundColor: grey[50],
+          // White (paper) cards on the grey canvas background.
+          backgroundColor: (theme.vars || theme).palette.background.paper,
           borderRadius: (theme.vars || theme).shape.borderRadius,
           border: `1px solid ${(theme.vars || theme).palette.divider}`,
           boxShadow: "none",
-          ...theme.applyStyles("dark", {
-            backgroundColor: (theme.vars || theme).palette.background.paper,
-          }),
           variants: [
             {
               props: {

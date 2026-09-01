@@ -46,6 +46,12 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          px: 3,
+          pt: 2.5,
+          pb: 1.5,
+          fontSize: "1.0625rem",
+          fontWeight: 600,
+          lineHeight: 1.4,
         }}
       >
         {title}
@@ -55,20 +61,22 @@ export const CommonDialog: React.FC<CommonDialogProps> = ({
             onClick={onClose}
             size="small"
             aria-label="Close Dialog"
-            sx={{ ml: headerAction ? 0 : 1 }}
+            sx={{
+              ml: headerAction ? 0 : 1,
+              color: "text.secondary",
+              "&:hover": { bgcolor: "action.hover" },
+            }}
           >
-            <CloseIcon />
+            <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
       </DialogTitle>
-      <DialogContent dividers sx={{ minWidth: { xs: 300, sm: 400 } }}>
+      <DialogContent sx={{ minWidth: { xs: 300, sm: 400 }, pt: 0.5 }}>
         <Box>{content}</Box>
       </DialogContent>
       {hasFooterActions && (
-        <DialogActions>
-          <Button onClick={onClose} color="primary" variant="outlined">
-            Cancel
-          </Button>
+        <DialogActions sx={{ px: 3, pt: 1, pb: 2.5, gap: 1 }}>
+          <Button onClick={onClose}>Cancel</Button>
           {actions}
         </DialogActions>
       )}

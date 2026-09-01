@@ -81,8 +81,12 @@ export default function SignInCard() {
     <Card variant="outlined">
       <Typography
         component="h1"
-        variant="h4"
-        sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 1rem)" }}
+        variant="h2"
+        sx={{
+          width: "100%",
+          // Fluid 24px → 30px: theme h2 (30px) on desktop, smaller on mobile.
+          fontSize: "clamp(1.5rem, 5vw, 1.875rem)",
+        }}
       >
         Welcome to InfraKitchen
       </Typography>

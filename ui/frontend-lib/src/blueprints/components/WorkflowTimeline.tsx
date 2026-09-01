@@ -49,7 +49,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
             mb: 3,
             border: 1,
             borderColor: "divider",
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             overflow: "hidden",
           }}
         >

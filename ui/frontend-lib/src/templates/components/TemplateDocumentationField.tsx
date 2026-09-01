@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 
 import { CommonField } from "../../common/components/CommonField";
+import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 
 export interface TemplateDocumentationFieldProps {
@@ -67,27 +69,29 @@ export const TemplateDocumentationField = ({
         value={
           <Box
             sx={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              gap: 1,
-              width: "100%",
+              gap: 0.25,
+              maxWidth: "100%",
+              // Reveal the edit affordance on hover/focus, like other fields.
+              "&:hover .doc-edit-action, &:focus-within .doc-edit-action": {
+                opacity: 1,
+              },
             }}
           >
-            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Box sx={{ minWidth: 0 }}>
               {documentation ? (
                 <span>Documentation provided</span>
               ) : (
-                <span>No documentation</span>
+                <PlaceholderText />
               )}
             </Box>
-            <Button
-              size="small"
-              variant="outlined"
+            <EditAffordance
+              className="doc-edit-action"
               onClick={openDialog}
+              ariaLabel="Edit documentation"
               disabled={!canEdit}
-            >
-              Edit
-            </Button>
+            />
           </Box>
         }
         size={size}

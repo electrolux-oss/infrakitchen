@@ -32,7 +32,6 @@ interface BitbucketRepoMetadataProps {
 
 export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
   const { organization, name, queryParams } = props;
-
   const { ikApi } = useConfig();
   const [metadata, setMetadata] = useState<BitbucketRepo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,7 +105,7 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
         maxWidth: "800px",
         mx: "auto",
         bgcolor: "background.paper",
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         boxShadow: 3,
       }}
     >
@@ -238,7 +237,7 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
           sx={{
             px: 3,
             py: 1.5,
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             textDecoration: "none",
             backgroundColor: "primary.main",
             color: "white",
@@ -248,7 +247,13 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
           View Repository on Bitbucket
         </MuiLink>
       </Box>
-      <Accordion sx={{ mt: 3, boxShadow: 1, borderRadius: 2 }}>
+      <Accordion
+        sx={{
+          mt: 3,
+          boxShadow: 1,
+          borderRadius: "var(--template-surface-radius)",
+        }}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="raw-metadata-content"
@@ -264,8 +269,8 @@ export function BitbucketRepoMetadata(props: BitbucketRepoMetadataProps) {
             extensions={[json()]}
             readOnly={true}
             style={{
-              border: "1px solid silver",
-              borderRadius: "8px",
+              border: "1px solid var(--template-palette-divider)",
+              borderRadius: "var(--template-surface-radius)",
               overflow: "hidden",
             }}
             height="400px"

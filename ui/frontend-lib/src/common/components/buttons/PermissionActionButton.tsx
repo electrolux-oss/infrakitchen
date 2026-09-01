@@ -82,12 +82,14 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
       ) : (
         <>
           <IconButton
+            size="small"
             title="Link to Permission"
             href={`${linkPrefix}permissions/${permission_id}`}
           >
             <Icon icon="quill:link-out" />
           </IconButton>
           <IconButton
+            size="small"
             title="Delete Permission"
             onClick={handleInitiateDeleteConfirmation}
           >

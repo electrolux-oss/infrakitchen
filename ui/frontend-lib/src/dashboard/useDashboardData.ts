@@ -8,45 +8,50 @@ import { USER_SHORT_FIELDS } from "../users/graphql";
 
 import {
   ActivityLogEntry,
+  DashboardStats,
   FavoriteResource,
   GoldenStateSummary,
 } from "./types";
 
 const DASHBOARD_QUERY = `
-  query Dashboard($auditFilter: JSON, $auditSort: [String!], $auditRange: [Int!]) {
+  query Dashboard(
+    $auditFilter: JSON
+    $auditSort: [String!]
+    $auditRange: [Int!]
+  ) {
     resourcesCount
     favorites {
-      componentType
-      componentId
-      componentData
-    }
-    auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
-      id
-      action
-      model
-      entityId
-      entityData
-      createdAt
-      creator {
-        ${USER_SHORT_FIELDS}
-      }
-    }
-    goldenStateReport {
-      overallScore
-      projects {
-        projectId
-        projectName
-        score
-        total
-        compliant
-        updateAvailable
-        deprecated
-        critical
-        noGolden
-      }
-    }
-  }
-`;
+            componentType
+            componentId
+            componentData
+          }
+          auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
+            id
+            action
+            model
+            entityId
+            entityData
+            createdAt
+            creator {
+              ${USER_SHORT_FIELDS}
+            }
+          }
+          goldenStateReport {
+            overallScore
+            projects {
+              projectId
+              projectName
+              score
+              total
+              compliant
+              updateAvailable
+              deprecated
+              critical
+              noGolden
+            }
+          }
+        }
+      `;
 
 interface DashboardResponse {
   resourcesCount: number;
@@ -78,6 +83,12 @@ export const useDashboardData = () => {
   const [goldenStateReport, setGoldenStateReport] =
     useState<GoldenStateSummary | null>(null);
   const [hasResources, setHasResources] = useState(false);
+  const [stats, setStats] = useState<DashboardStats>({
+    total: 0,
+    ready: 0,
+    needsUpdate: 0,
+    critical: 0,
+  });
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
 
@@ -103,6 +114,7 @@ export const useDashboardData = () => {
         setFavorites([]);
         setActivities([]);
         setGoldenStateReport(null);
+        setStats({ total: 0, ready: 0, needsUpdate: 0, critical: 0 });
         return;
       }
 
@@ -114,8 +126,21 @@ export const useDashboardData = () => {
       setActivities(
         Array.isArray(response?.auditLogs) ? response.auditLogs : [],
       );
+      const goldenStateReport = response?.goldenStateReport ?? null;
+      setGoldenStateReport(goldenStateReport);
 
-      setGoldenStateReport(response?.goldenStateReport ?? null);
+      const sumProjects = (key: "compliant" | "updateAvailable" | "critical") =>
+        (goldenStateReport?.projects ?? []).reduce(
+          (total, project) => total + (project[key] || 0),
+          0,
+        );
+
+      setStats({
+        total: response?.resourcesCount ?? 0,
+        ready: sumProjects("compliant"),
+        needsUpdate: sumProjects("updateAvailable"),
+        critical: sumProjects("critical"),
+      });
     } catch (err) {
       notifyError(err);
     } finally {
@@ -127,12 +152,12 @@ export const useDashboardData = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
   return {
     favorites,
     activities,
     goldenStateReport,
     hasResources,
+    stats,
     loading,
     refetch: fetchData,
   };

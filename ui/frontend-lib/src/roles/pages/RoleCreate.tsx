@@ -60,16 +60,14 @@ const RoleCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Role"
-      onBack={handleBack}
-      backAriaLabel="Back to roles"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             Save

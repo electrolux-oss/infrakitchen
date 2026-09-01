@@ -24,7 +24,7 @@ export const EntityPolicyRoleCreateDialog = (
   return (
     <CommonDialog
       actions={
-        <Button type="submit" form={formId} variant="contained" color="primary">
+        <Button type="submit" form={formId} variant="contained">
           Submit
         </Button>
       }
@@ -55,7 +55,7 @@ export const RolePolicyEntityCreateDialog = (
       onClose={onClose}
       title="Create Resource Policy"
       actions={
-        <Button type="submit" form={formId} variant="contained" color="primary">
+        <Button type="submit" form={formId} variant="contained">
           Submit
         </Button>
       }
@@ -90,7 +90,7 @@ export const EntityPolicyUserCreateDialog = (
       onClose={onClose}
       title="Create User Policy"
       actions={
-        <Button type="submit" form={formId} variant="contained" color="primary">
+        <Button type="submit" form={formId} variant="contained">
           Submit
         </Button>
       }
@@ -126,7 +126,7 @@ export const UserPolicyEntityCreateDialog = (
       onClose={onClose}
       title="Create User Policy"
       actions={
-        <Button type="submit" form={formId} variant="contained" color="primary">
+        <Button type="submit" form={formId} variant="contained">
           Submit
         </Button>
       }

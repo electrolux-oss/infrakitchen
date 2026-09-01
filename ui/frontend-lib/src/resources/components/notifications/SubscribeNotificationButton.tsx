@@ -69,6 +69,7 @@ export const SubscribeNotificationButton = ({
         }
       >
         <Button
+          size="small"
           variant="outlined"
           startIcon={<NotificationsActiveOutlinedIcon fontSize="small" />}
           color={isSubscribed ? "error" : "primary"}

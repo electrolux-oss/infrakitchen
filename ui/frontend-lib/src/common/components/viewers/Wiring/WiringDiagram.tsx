@@ -244,7 +244,7 @@ export const WiringDiagram = ({
         height: fullscreen ? "100%" : height,
         position: "relative",
         border: fullscreen ? "none" : `1px solid ${theme.palette.divider}`,
-        borderRadius: fullscreen ? 0 : 2,
+        borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",
         overflow: "hidden",
       }}
     >

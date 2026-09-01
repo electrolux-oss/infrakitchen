@@ -26,6 +26,10 @@ import {
 } from "@mui/x-data-grid";
 
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
+import {
+  dataGridDefaultProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCard } from "../../common/components/PropertyCard";
@@ -129,12 +133,12 @@ export const BatchOperationEntities = ({
       const fieldMap = isResource ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
 
       const query = `
-        query BatchEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
-          ${entityName}s(filter: $filter, sort: $sort, range: $range) {
-            ${buildGraphqlFields(fields, fieldMap)}
-          }
-        }
-      `;
+              query BatchEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
+                ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+                  ${buildGraphqlFields(fields, fieldMap)}
+                }
+              }
+            `;
 
       const response = await ikApi.graphqlRequest<Record<string, any>>(query, {
         filter: { id__in: entityIds },
@@ -491,11 +495,13 @@ export const BatchOperationEntities = ({
         </>
       }
     >
+      {" "}
       <DataGrid
         rows={entities}
         columns={entityColumns}
         autoHeight
         loading={entitiesLoading}
+        {...dataGridDefaultProps}
         checkboxSelection
         disableRowSelectionOnClick
         rowSelectionModel={{
@@ -516,6 +522,7 @@ export const BatchOperationEntities = ({
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
         pageSizeOptions={[10, 25, 50, 100]}
+        sx={{ ...dataGridSx }}
       />
       <Dialog
         open={Boolean(logsEntityId)}
@@ -602,9 +609,7 @@ export const BatchOperationEntities = ({
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{
-                        alignItems: "center",
-                      }}
+                      sx={{ alignItems: "center" }}
                     >
                       <Chip
                         size="small"

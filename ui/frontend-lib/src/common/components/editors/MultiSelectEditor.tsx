@@ -3,7 +3,9 @@ import { Autocomplete, Chip, TextField } from "@mui/material";
 export interface MultiSelectEditorProps<T> {
   value: T[];
   onChange: (value: T[]) => void;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
   helperText?: string;
   options: T[];
   getOptionLabel: (option: T) => string;
@@ -14,12 +16,15 @@ export const MultiSelectEditor = <T,>({
   value,
   onChange,
   label,
+  ariaLabel,
+  placeholder,
   helperText,
   options,
   getOptionLabel,
 }: MultiSelectEditorProps<T>) => (
   <Autocomplete
     multiple
+    size="small"
     options={options}
     value={value}
     onChange={(_event, newValue) => onChange(newValue as T[])}
@@ -40,10 +45,24 @@ export const MultiSelectEditor = <T,>({
     renderInput={(params) => (
       <TextField
         {...params}
-        label={label}
+        label={label ? label : undefined}
+        placeholder={placeholder}
         helperText={helperText}
         fullWidth
-        margin="normal"
+        margin="dense"
+        sx={{
+          "& .MuiInputBase-root": {
+            minHeight: 32,
+            marginTop: "0 !important",
+          },
+        }}
+        slotProps={{
+          ...params.slotProps,
+          htmlInput: {
+            ...params.slotProps.htmlInput,
+            ...(label ? {} : { "aria-label": ariaLabel || label || "" }),
+          },
+        }}
       />
     )}
   />

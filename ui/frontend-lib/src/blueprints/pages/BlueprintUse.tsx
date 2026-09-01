@@ -514,10 +514,7 @@ export const BlueprintUsePage = () => {
 
   if (loading) {
     return (
-      <PageContainer
-        title="Use Blueprint"
-        onBack={() => navigate(`${linkPrefix}blueprints`)}
-      >
+      <PageContainer title="Use Blueprint">
         <Box
           sx={{
             display: "flex",
@@ -534,10 +531,7 @@ export const BlueprintUsePage = () => {
 
   if (error || !blueprint) {
     return (
-      <PageContainer
-        title="Use Blueprint"
-        onBack={() => navigate(`${linkPrefix}blueprints`)}
-      >
+      <PageContainer title="Use Blueprint">
         <Alert severity="error" sx={{ width: "100%" }}>
           {error || "Blueprint not found"}
         </Alert>
@@ -556,19 +550,18 @@ export const BlueprintUsePage = () => {
   return (
     <PageContainer
       title={`Use Blueprint: ${blueprint.name}`}
-      onBack={() => navigate(`${linkPrefix}blueprints/${blueprint_id}`)}
-      backAriaLabel="Back to blueprint"
       bottomActions={
         <>
           <Button
+            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}blueprints/${blueprint_id}`)}
           >
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(onSubmit)}
             disabled={!canSubmit}
           >
@@ -855,7 +848,7 @@ export const BlueprintUsePage = () => {
                   defaultExpanded
                   elevation={0}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: "var(--template-surface-radius)",
                     mt: 2,
                     "&:before": { display: "none" },
                   }}
@@ -899,7 +892,7 @@ export const BlueprintUsePage = () => {
                             justifyContent: "center",
                             p: 0.5,
                             ml: "auto",
-                            borderRadius: 1,
+                            borderRadius: "var(--template-surface-radius)",
                             color: hideDefaults
                               ? "primary.main"
                               : "action.active",

@@ -91,7 +91,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
         maxWidth: "800px",
         mx: "auto",
         bgcolor: "background.paper",
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         boxShadow: 3,
       }}
     >
@@ -161,7 +161,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           sx={{
             px: 3,
             py: 1.5,
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             textDecoration: "none",
             backgroundColor: "primary.main",
             color: "white",
@@ -171,7 +171,13 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
           View Repository on Azure DevOps
         </MuiLink>
       </Box>
-      <Accordion sx={{ mt: 3, boxShadow: 1, borderRadius: 2 }}>
+      <Accordion
+        sx={{
+          mt: 3,
+          boxShadow: 1,
+          borderRadius: "var(--template-surface-radius)",
+        }}
+      >
         <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           aria-controls="raw-metadata-content"
@@ -185,8 +191,8 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
             extensions={[json()]}
             readOnly={true}
             style={{
-              border: "1px solid silver",
-              borderRadius: "8px",
+              border: "1px solid var(--template-palette-divider)",
+              borderRadius: "var(--template-surface-radius)",
               overflow: "hidden",
             }}
             height="400px"

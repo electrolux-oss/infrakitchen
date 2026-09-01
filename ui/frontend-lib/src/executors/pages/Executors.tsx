@@ -22,8 +22,6 @@ export const ExecutorsPage = () => {
           permissionAction="read"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}executors/create`)}
             startIcon={<AddIcon />}
           >

@@ -21,7 +21,7 @@ export const ReferenceSelector = () => {
     references.find((ref) => ref.id === selectedReferenceId) || null;
 
   const handleAutocompleteChange = (
-    event: SyntheticEvent,
+    _event: SyntheticEvent,
     newValue: GqlSourceCodeVersion | null,
   ) => {
     const newReferenceId = newValue ? newValue.id : "";

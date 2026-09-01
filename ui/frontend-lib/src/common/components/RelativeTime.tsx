@@ -53,16 +53,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
     >
       {user && <UserAvatar id={user.id} identifier={user.identifier} />}
       <Tooltip title={exactTimestamp}>
-        <Typography
-          component="span"
-          variant="inherit"
-          sx={{
-            cursor: "pointer",
-            textDecoration: "underline dashed",
-            textDecorationColor: "text.secondary",
-            textUnderlineOffset: "5px",
-          }}
-        >
+        <Typography component="span" variant="inherit">
           {timeAgoText}
         </Typography>
       </Tooltip>

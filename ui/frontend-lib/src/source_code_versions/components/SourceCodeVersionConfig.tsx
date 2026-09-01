@@ -452,11 +452,7 @@ export const SourceCodeVersionConfig = () => {
                 mt: 3,
               }}
             >
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmit(onSubmit)}
-              >
+              <Button variant="contained" onClick={handleSubmit(onSubmit)}>
                 Save
               </Button>
             </Box>

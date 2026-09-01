@@ -27,7 +27,7 @@ export const ProjectPage = () => {
       entityFields={PROJECT_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Project Overview"}
+        title={"Project Details"}
         actions={
           <SubscribeNotificationButton
             isSubscribed={isSubscribed}

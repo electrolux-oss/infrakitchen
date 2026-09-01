@@ -235,7 +235,7 @@ const TokenValueDialog = ({
                 alignItems: "center",
                 gap: 1,
                 border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: 1.5,
+                borderRadius: "var(--template-surface-radius)",
                 px: 1.5,
                 py: 1,
                 bgcolor: "background.paper",
@@ -256,6 +256,7 @@ const TokenValueDialog = ({
               </Typography>
               <Tooltip title="Copy token">
                 <IconButton
+                  size="small"
                   onClick={handleCopy}
                   edge="end"
                   aria-label="Copy token"
@@ -424,6 +425,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         actions={
           <Stack direction="row" spacing={1}>
             <Button
+              size="small"
               variant="outlined"
               onClick={loadTokens}
               disabled={isLoading}
@@ -431,6 +433,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
               Refresh
             </Button>
             <Button
+              size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setDialogOpen(true)}
@@ -473,7 +476,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                   key={token.id}
                   sx={{
                     border: (theme) => `1px solid ${theme.palette.divider}`,
-                    borderRadius: 2,
+                    borderRadius: "var(--template-surface-radius)",
                     p: 2,
                     display: "flex",
                     flexDirection: { xs: "column", md: "row" },

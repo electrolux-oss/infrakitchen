@@ -18,6 +18,9 @@ export interface EntityFetchTableProps {
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
   syncFiltersToUrl?: boolean;
+  defaultSort?: { field: string; sort: "asc" | "desc" };
+  /** Set to false for tables whose rows shouldn't offer a click affordance. */
+  rowClickable?: boolean;
 }
 
 export interface EntityFetchTableRef {

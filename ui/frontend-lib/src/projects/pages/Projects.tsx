@@ -49,11 +49,11 @@ export const ProjectsPage = () => {
         projects: GqlProject[];
       }>(
         `  query Projects($filter: JSON, $sort: [String!], $range: [Int!]) {
-                    projects(filter: $filter, sort: $sort, range: $range) {
-                      ${PROJECT_LIST_FIELDS}
-                    }
-                  }
-        `,
+                          projects(filter: $filter, sort: $sort, range: $range) {
+                            ${PROJECT_LIST_FIELDS}
+                          }
+                        }
+              `,
         {
           filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
           sort: ["name", "ASC"],
@@ -88,6 +88,7 @@ export const ProjectsPage = () => {
         permissionAction="write"
       >
         <Button
+          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}projects/create`)}
           startIcon={<AddIcon />}
@@ -105,7 +106,7 @@ export const ProjectsPage = () => {
           <Typography variant="caption" sx={{ display: "block" }}>
             Status
           </Typography>
-          <StatusChip status={project.status} compact />
+          <StatusChip status={project.status} />
         </Box>
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
@@ -136,7 +137,7 @@ export const ProjectsPage = () => {
         <Box>
           <Typography variant="caption" sx={{ display: "block" }}>
             Last Updated
-          </Typography>
+          </Typography>{" "}
           <RelativeTime
             date={project.updatedAt}
             variant="caption"
@@ -154,7 +155,7 @@ export const ProjectsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button variant="outlined" onClick={fetchProjects}>
+          <Button size="small" variant="outlined" onClick={fetchProjects}>
             Retry
           </Button>
         </Box>
@@ -209,14 +210,13 @@ export const ProjectsPage = () => {
         ) : (
           <Box
             sx={{
-              "--card-min-width": { xs: "260px", sm: "300px", md: "340px" },
+              "--card-min-width": { xs: "240px", sm: "260px", md: "300px" },
               display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 3,
+              gap: 2,
               width: "100%",
-              alignItems: "stretch",
-              mt: 4,
+              mt: 3,
             }}
           >
             {projects.map((project) => (
@@ -224,7 +224,7 @@ export const ProjectsPage = () => {
                 key={project.id}
                 entity_name={entityName}
                 name={project.name}
-                description={project.description || "No description"}
+                description={project.description ?? ""}
                 status={project.status}
                 detailsUrl={`${linkPrefix}projects/${project.id}`}
                 labels={project.labels || []}

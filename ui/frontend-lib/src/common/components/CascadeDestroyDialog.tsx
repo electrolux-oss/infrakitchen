@@ -56,7 +56,7 @@ const ResourceRow = ({
         py: 0.75,
         px: 1,
         pl: 1 + depth * 2,
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
         "&:hover": { bgcolor: "action.hover" },
       }}
     >
@@ -194,7 +194,7 @@ export const CascadeDestroyDialog = ({
               sx={{
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 overflow: "hidden",
                 maxHeight: 260,
                 overflowY: "auto",

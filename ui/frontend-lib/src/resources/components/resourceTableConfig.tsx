@@ -5,10 +5,12 @@ import {
 
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  createdUpdatedColumns,
+  labelsColumn,
+} from "../../common/components/entity_table/tableColumns";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { Labels } from "../../common/components/Labels";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
@@ -68,7 +70,6 @@ export const resourceColumns: EntityTableColumn[] = [
       operators: ["like", "eq", "not_like"],
       valueType: "text",
       defaultOperator: "like",
-      defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
       return <GetEntityLink {...params.row} />;
@@ -119,6 +120,7 @@ export const resourceColumns: EntityTableColumn[] = [
       return <GetEntityLink {...project} />;
     },
   },
+
   {
     field: "sourceCodeVersion",
     headerName: "Template Version",
@@ -132,7 +134,7 @@ export const resourceColumns: EntityTableColumn[] = [
       "sourceCodeVersion.entityName",
       "sourceCodeVersion.id",
     ],
-    sortField: "source_code_version.source_code_version",
+    sortField: "source_code_version.tag",
     filter: [
       {
         field: "source_code_version_id",
@@ -206,7 +208,7 @@ export const resourceColumns: EntityTableColumn[] = [
       {
         field: "state",
         label: "State",
-        operators: ["eq", "in", "not_eq"],
+        operators: ["eq", "in"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [
@@ -220,7 +222,7 @@ export const resourceColumns: EntityTableColumn[] = [
       {
         field: "status",
         label: "Status",
-        operators: ["eq", "in", "not_eq"],
+        operators: ["eq", "in"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [
@@ -244,28 +246,12 @@ export const resourceColumns: EntityTableColumn[] = [
       />
     ),
   },
-  {
-    field: "created_at",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.row.createdAt}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updated_at",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.row.updatedAt}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns({
+    createdField: "created_at",
+    updatedField: "updated_at",
+    createdValue: (params: GridRenderCellParams) => params.row.createdAt,
+    updatedValue: (params: GridRenderCellParams) => params.row.updatedAt,
+  }),
   {
     field: "creator",
     headerName: "Creator",
@@ -462,22 +448,7 @@ export const resourceColumns: EntityTableColumn[] = [
         .map((o: { name: string }) => o.name)
         .join(", ") || null,
   },
-  {
-    field: "labels",
-    headerName: "Labels",
-    flex: 1,
-    filter: {
-      field: "labels",
-      operators: ["contains_all"],
-      valueType: "autocomplete-multiple",
-      defaultOperator: "contains_all",
-      labelsEntity: "resource",
-    },
-    valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Labels labels={params.row.labels || []} />
-    ),
-  },
+  labelsColumn("resource"),
   {
     field: "dependencyTags",
     headerName: "Dependency Tags",

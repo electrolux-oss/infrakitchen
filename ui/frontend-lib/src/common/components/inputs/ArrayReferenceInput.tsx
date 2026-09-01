@@ -32,7 +32,11 @@ interface ArrayReferenceInputProps {
   buffer: Record<string, IkEntity[]>;
   bufferKey?: string;
   showFields?: Array<string>;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
+  /** Keep selected chips on a single line (horizontal scroll) so the control stays compact. */
+  singleLine?: boolean;
   value: any;
   error?: boolean;
   setBuffer: (selectedEntity: any) => void;
@@ -55,6 +59,9 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       fields,
       filter = {},
       label,
+      ariaLabel,
+      placeholder,
+      singleLine,
       value,
       optionFilter,
       tooltip,
@@ -99,11 +106,11 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       ikApi
         .graphqlRequest(
           `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
-            ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-              ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
-            }
-            ${graphqlCountName}(filter: $filter)
-          }`,
+                  ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+                    ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+                  }
+                  ${graphqlCountName}(filter: $filter)
+                }`,
           {
             filter,
             sort: ["name", "ASC"],
@@ -129,25 +136,32 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       setBuffer,
       externalOptions,
     ]);
-
     const control = (
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="dense">
         <Autocomplete
+          size="small"
           sx={{
             "& .MuiOutlinedInput-root": {
-              height: "auto",
-              paddingTop: "6px",
-              paddingBottom: "6px",
               alignItems: "center",
+              minHeight: 32,
+              marginTop: "0 !important",
+              ...(singleLine && {
+                height: "32px !important",
+                minHeight: "32px !important",
+                paddingTop: "0 !important",
+                paddingBottom: "0 !important",
+              }),
             },
             "& .MuiAutocomplete-tagContainer": {
-              flexWrap: "wrap",
-              overflow: "visible",
+              flexWrap: singleLine ? "nowrap" : "wrap",
+              overflowX: singleLine ? "auto" : undefined,
+              overflow: singleLine ? "hidden" : "visible",
               margin: "2px 0",
               padding: "0 2px",
             },
             "& .MuiAutocomplete-tag": {
               margin: "2px",
+              flexShrink: singleLine ? 0 : undefined,
             },
           }}
           clearIcon={false}
@@ -205,7 +219,20 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
               ) : null,
             ];
           }}
-          renderInput={(params) => <TextField label={label} {...params} />}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label ? label : undefined}
+              placeholder={placeholder}
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  ...(label ? {} : { "aria-label": ariaLabel || label || "" }),
+                },
+              }}
+            />
+          )}
         />
 
         <FormHelperText error={props.error}>

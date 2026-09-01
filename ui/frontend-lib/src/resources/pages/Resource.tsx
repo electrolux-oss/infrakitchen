@@ -6,6 +6,7 @@ import { Button, Tooltip } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
 import { EntityContainer } from "../../common/components/EntityContainer";
+import { ScheduleApplyButton } from "../../common/components/ScheduleApplyButton";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { SubscribeNotificationButton } from "../components/notifications/SubscribeNotificationButton";
 import { ResourceContent } from "../components/ResourceContent";
@@ -46,9 +47,10 @@ export const ResourcePage = () => {
       entityFields={RESOURCE_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Resource Overview"}
+        title={"Resource Details"}
         actions={
           <>
+            <ScheduleApplyButton entityType="resource" />
             <SubscribeNotificationButton
               isSubscribed={isSubscribed}
               isLoading={loading}
@@ -60,9 +62,7 @@ export const ResourcePage = () => {
               permissionAction="read"
             >
               <Tooltip title="View resource metadata">
-                <Button variant="outlined" onClick={handleMetadata}>
-                  Metadata
-                </Button>
+                <Button onClick={handleMetadata}>Metadata</Button>
               </Tooltip>
             </PermissionWrapper>
           </>

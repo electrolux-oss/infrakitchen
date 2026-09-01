@@ -1,15 +1,16 @@
 import { useCallback } from "react";
 
-import { Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 
 import {
   CommonField,
-  getBooleanLabel,
   getProviderValue,
 } from "../../common/components/CommonField";
+import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringChips } from "../../common/components/editors/StringChips";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -17,7 +18,7 @@ import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { sameStringSet } from "../../common/utils";
+
 import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,
@@ -54,10 +55,7 @@ export const AuthProviderOverview = ({
   );
 
   return (
-    <OverviewCard
-      name={authProvider.name}
-      description={authProvider.description}
-    >
+    <OverviewCard name={authProvider.name}>
       <CommonEditableField<string>
         name={"Name"}
         canEdit={canEdit}
@@ -69,7 +67,7 @@ export const AuthProviderOverview = ({
           <TextField
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Name"
+            slotProps={{ input: { "aria-label": "Name" } }}
             fullWidth
             margin="normal"
             autoFocus
@@ -81,72 +79,35 @@ export const AuthProviderOverview = ({
         name={"Auth Provider Type"}
         value={getProviderValue(authProvider.authProvider)}
         size={6}
-      />
-      <CommonEditableField<string>
-        name={"Description"}
+      />{" "}
+      <EditableDescriptionField
+        value={authProvider.description}
         canEdit={canEdit}
-        value={authProvider.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{authProvider.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
-      <CommonEditableField<boolean>
+      <BooleanInlineField
         name={"Enabled"}
         canEdit={canEdit}
         value={authProvider.enabled}
         ariaLabel="Edit enabled status"
-        display={getBooleanLabel(authProvider.enabled)}
         onSave={(value) => saveField({ enabled: value })}
-        renderEditor={({ value, onChange }) => (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={value}
-                onChange={(e) => onChange(e.target.checked)}
-              />
-            }
-            label="Enabled"
-          />
-        )}
         size={6}
-      />
-      <CommonEditableField<string[]>
-        name={"Filter By Domain"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
+        name="Filter By Domain"
         value={authProvider.filterByDomain || []}
-        ariaLabel="Edit filter by domain"
-        isEqual={sameStringSet}
+        canEdit={canEdit}
+        onSave={(value) => saveField({ filterByDomain: value })}
+        helperText="Add domains and press Enter"
+        size={6}
         display={
           authProvider.filterByDomain &&
           authProvider.filterByDomain.length > 0 ? (
             <Labels labels={authProvider.filterByDomain} />
           ) : (
-            <StringChips values={[]} />
+            <PlaceholderText />
           )
         }
-        onSave={(value) => saveField({ filterByDomain: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Filter By Domain"
-            helperText="Add domains and press Enter"
-          />
-        )}
-        size={6}
       />
       <CommonField
         name={"Created"}

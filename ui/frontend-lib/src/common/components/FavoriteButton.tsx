@@ -71,6 +71,7 @@ export const FavoriteButton = ({
 
   return (
     <IconButton
+      size="small"
       aria-label={ariaLabel}
       onClick={handleAddFavorite}
       disabled={submittingState}
@@ -92,7 +93,7 @@ export const FavoriteButton = ({
     >
       {favoriteState ? (
         <FavoriteIcon
-          sx={{ color: "#e91e63" }}
+          sx={{ color: "primary.main" }}
           fontSize={format === "table" ? "small" : "medium"}
         />
       ) : (

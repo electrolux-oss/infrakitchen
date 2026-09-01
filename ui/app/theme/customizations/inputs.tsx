@@ -9,6 +9,8 @@ import { toggleButtonGroupClasses } from "@mui/material/ToggleButtonGroup";
 
 import { grey, brand } from "../themePrimitives";
 
+import { dropdownItemStyle, dropdownPaperStyle } from "./dataDisplay";
+
 export const inputsCustomizations: Components<Theme> = {
   MuiButtonBase: {
     defaultProps: {
@@ -20,13 +22,17 @@ export const inputsCustomizations: Components<Theme> = {
         boxSizing: "border-box",
         transition: "all 100ms ease-in",
         "&:focus-visible": {
-          outline: `3px solid ${alpha(theme.palette.primary.main, 0.5)}`,
+          outline: `2px solid ${alpha(theme.palette.primary.main, 0.35)}`,
           outlineOffset: "2px",
         },
       }),
     },
   },
   MuiButton: {
+    defaultProps: {
+      size: "small",
+      variant: "outlined",
+    },
     styleOverrides: {
       root: ({ theme }) => ({
         boxShadow: "none",
@@ -51,35 +57,58 @@ export const inputsCustomizations: Components<Theme> = {
             },
           },
           {
+            // Destructive action button (Destroy / Delete / Disable / Cascade
+            // Destroy / …). Single centralized definition, small + solid red.
+            props: {
+              color: "error",
+              variant: "contained",
+            },
+            style: {
+              height: "2.25rem",
+              padding: "8px 12px",
+              minHeight: 0,
+              color: "#fff",
+              backgroundColor: (theme.vars || theme).palette.error.main,
+              "&:hover": {
+                backgroundColor: (theme.vars || theme).palette.error.dark,
+              },
+              "&:active": {
+                backgroundColor: (theme.vars || theme).palette.error.main,
+              },
+              ...theme.applyStyles("dark", {
+                color: "#fff",
+                backgroundColor: (theme.vars || theme).palette.error.dark,
+                "&:hover": {
+                  backgroundColor: (theme.vars || theme).palette.error.main,
+                },
+                "&:active": {
+                  backgroundColor: (theme.vars || theme).palette.error.dark,
+                },
+              }),
+            },
+          },
+          {
             props: {
               color: "primary",
               variant: "contained",
             },
             style: {
-              color: "white",
+              color: "#fff",
               backgroundColor: grey[900],
-              backgroundImage: `linear-gradient(to bottom, ${grey[700]}, ${grey[800]})`,
-              boxShadow: `inset 0 1px 0 ${grey[600]}, inset 0 -1px 0 1px hsl(220, 0%, 0%)`,
               "&:hover": {
-                backgroundImage: "none",
-                backgroundColor: grey[700],
-                boxShadow: "none",
+                backgroundColor: "#202020",
               },
               "&:active": {
                 backgroundColor: grey[800],
               },
               ...theme.applyStyles("dark", {
-                color: "black",
+                color: grey[900],
                 backgroundColor: grey[50],
-                backgroundImage: `linear-gradient(to bottom, ${grey[100]}, ${grey[50]})`,
-                boxShadow: "inset 0 -1px 0  hsl(220, 30%, 80%)",
                 "&:hover": {
-                  backgroundImage: "none",
-                  backgroundColor: grey[300],
-                  boxShadow: "none",
+                  backgroundColor: "#EDEDED",
                 },
                 "&:active": {
-                  backgroundColor: grey[400],
+                  backgroundColor: grey[300],
                 },
               }),
             },
@@ -90,18 +119,24 @@ export const inputsCustomizations: Components<Theme> = {
               variant: "contained",
             },
             style: {
-              color: "white",
-              backgroundColor: brand[300],
-              backgroundImage: `linear-gradient(to bottom, ${alpha(brand[400], 0.8)}, ${brand[500]})`,
-              boxShadow: `inset 0 2px 0 ${alpha(brand[200], 0.2)}, inset 0 -2px 0 ${alpha(brand[700], 0.4)}`,
+              color: "#fff",
+              backgroundColor: grey[900],
               "&:hover": {
-                backgroundColor: brand[700],
-                boxShadow: "none",
+                backgroundColor: "#202020",
               },
               "&:active": {
-                backgroundColor: brand[700],
-                backgroundImage: "none",
+                backgroundColor: grey[800],
               },
+              ...theme.applyStyles("dark", {
+                color: grey[900],
+                backgroundColor: grey[50],
+                "&:hover": {
+                  backgroundColor: "#EDEDED",
+                },
+                "&:active": {
+                  backgroundColor: grey[300],
+                },
+              }),
             },
           },
           {
@@ -111,25 +146,26 @@ export const inputsCustomizations: Components<Theme> = {
             style: {
               color: (theme.vars || theme).palette.text.primary,
               border: "1px solid",
-              borderColor: grey[200],
-              backgroundColor: alpha(grey[50], 0.3),
+              borderColor: grey[300],
+              // White pill on the grey canvas; colored variants (contained
+              // primary/error/…) keep their own background.
+              backgroundColor: (theme.vars || theme).palette.background.paper,
               "&:hover": {
                 backgroundColor: grey[100],
-                borderColor: grey[300],
+                borderColor: grey[400],
               },
               "&:active": {
                 backgroundColor: grey[200],
               },
               ...theme.applyStyles("dark", {
-                backgroundColor: grey[800],
-                borderColor: grey[700],
-
+                backgroundColor: "transparent",
+                borderColor: grey[600],
                 "&:hover": {
-                  backgroundColor: grey[900],
-                  borderColor: grey[600],
+                  backgroundColor: alpha(grey[100], 0.08),
+                  borderColor: grey[500],
                 },
                 "&:active": {
-                  backgroundColor: grey[900],
+                  backgroundColor: alpha(grey[100], 0.14),
                 },
               }),
             },
@@ -140,28 +176,27 @@ export const inputsCustomizations: Components<Theme> = {
               variant: "outlined",
             },
             style: {
-              color: brand[700],
+              color: (theme.vars || theme).palette.text.primary,
               border: "1px solid",
-              borderColor: brand[200],
-              backgroundColor: brand[50],
+              borderColor: grey[300],
+              backgroundColor: (theme.vars || theme).palette.background.paper,
               "&:hover": {
-                backgroundColor: brand[100],
-                borderColor: brand[400],
+                backgroundColor: grey[100],
+                borderColor: grey[400],
               },
               "&:active": {
-                backgroundColor: alpha(brand[200], 0.7),
+                backgroundColor: grey[200],
               },
               ...theme.applyStyles("dark", {
-                color: brand[50],
-                border: "1px solid",
-                borderColor: brand[900],
-                backgroundColor: alpha(brand[900], 0.3),
+                color: (theme.vars || theme).palette.text.primary,
+                backgroundColor: "transparent",
+                borderColor: grey[600],
                 "&:hover": {
-                  borderColor: brand[700],
-                  backgroundColor: alpha(brand[900], 0.6),
+                  backgroundColor: alpha(grey[100], 0.08),
+                  borderColor: grey[500],
                 },
                 "&:active": {
-                  backgroundColor: alpha(brand[900], 0.5),
+                  backgroundColor: alpha(grey[100], 0.14),
                 },
               }),
             },
@@ -179,12 +214,12 @@ export const inputsCustomizations: Components<Theme> = {
                 backgroundColor: grey[200],
               },
               ...theme.applyStyles("dark", {
-                color: grey[50],
+                color: grey[300],
                 "&:hover": {
-                  backgroundColor: grey[700],
+                  backgroundColor: alpha(grey[100], 0.08),
                 },
                 "&:active": {
-                  backgroundColor: alpha(grey[700], 0.7),
+                  backgroundColor: alpha(grey[100], 0.14),
                 },
               }),
             },
@@ -195,20 +230,20 @@ export const inputsCustomizations: Components<Theme> = {
               variant: "text",
             },
             style: {
-              color: brand[700],
+              color: grey[700],
               "&:hover": {
-                backgroundColor: alpha(brand[100], 0.5),
+                backgroundColor: grey[100],
               },
               "&:active": {
-                backgroundColor: alpha(brand[200], 0.7),
+                backgroundColor: grey[200],
               },
               ...theme.applyStyles("dark", {
-                color: brand[100],
+                color: grey[200],
                 "&:hover": {
-                  backgroundColor: alpha(brand[900], 0.5),
+                  backgroundColor: alpha(grey[100], 0.08),
                 },
                 "&:active": {
-                  backgroundColor: alpha(brand[900], 0.3),
+                  backgroundColor: alpha(grey[100], 0.14),
                 },
               }),
             },
@@ -225,28 +260,17 @@ export const inputsCustomizations: Components<Theme> = {
         textTransform: "none",
         fontWeight: theme.typography.fontWeightMedium,
         letterSpacing: 0,
-        color: (theme.vars || theme).palette.text.primary,
-        border: "1px solid ",
-        borderColor: grey[200],
-        backgroundColor: alpha(grey[50], 0.3),
+        color: (theme.vars || theme).palette.text.secondary,
+        border: "none",
+        backgroundColor: "transparent",
+        transition:
+          "background-color 120ms ease-in-out, color 120ms ease-in-out",
         "&:hover": {
-          backgroundColor: grey[100],
-          borderColor: grey[300],
+          backgroundColor: (theme.vars || theme).palette.action.hover,
         },
         "&:active": {
-          backgroundColor: grey[200],
+          backgroundColor: (theme.vars || theme).palette.action.selected,
         },
-        ...theme.applyStyles("dark", {
-          backgroundColor: grey[800],
-          borderColor: grey[700],
-          "&:hover": {
-            backgroundColor: grey[900],
-            borderColor: grey[600],
-          },
-          "&:active": {
-            backgroundColor: grey[900],
-          },
-        }),
         variants: [
           {
             props: {
@@ -275,16 +299,14 @@ export const inputsCustomizations: Components<Theme> = {
   MuiToggleButtonGroup: {
     styleOverrides: {
       root: ({ theme }) => ({
-        borderRadius: "10px",
-        boxShadow: `0 4px 16px ${alpha(grey[400], 0.2)}`,
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         [`& .${toggleButtonGroupClasses.selected}`]: {
-          color: brand[500],
+          color: grey[900],
         },
         ...theme.applyStyles("dark", {
           [`& .${toggleButtonGroupClasses.selected}`]: {
             color: "#fff",
           },
-          boxShadow: `0 4px 16px ${alpha(brand[700], 0.5)}`,
         }),
       }),
     },
@@ -294,13 +316,12 @@ export const inputsCustomizations: Components<Theme> = {
       root: ({ theme }) => ({
         padding: "12px 16px",
         textTransform: "none",
-        borderRadius: "10px",
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         fontWeight: 500,
         ...theme.applyStyles("dark", {
-          color: grey[400],
-          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.5)",
+          color: grey[300],
           [`&.${toggleButtonClasses.selected}`]: {
-            color: brand[300],
+            color: grey[50],
           },
         }),
       }),
@@ -332,17 +353,17 @@ export const inputsCustomizations: Components<Theme> = {
           borderColor: brand[300],
         },
         "&.Mui-focusVisible": {
-          outline: `3px solid ${alpha(brand[500], 0.5)}`,
+          outline: `2px solid ${alpha(grey[900], 0.18)}`,
           outlineOffset: "2px",
-          borderColor: brand[400],
+          borderColor: grey[700],
         },
         "&.Mui-checked": {
           color: "white",
-          backgroundColor: brand[500],
-          borderColor: brand[500],
+          backgroundColor: grey[900],
+          borderColor: grey[900],
           boxShadow: `none`,
           "&:hover": {
-            backgroundColor: brand[600],
+            backgroundColor: grey[700],
           },
         },
         ...theme.applyStyles("dark", {
@@ -388,8 +409,10 @@ export const inputsCustomizations: Components<Theme> = {
           },
         },
       }),
-      paper: ({ theme }) => ({
-        boxShadow: theme.shadows[8],
+      paper: dropdownPaperStyle,
+      listbox: ({ theme }) => ({
+        padding: "8px",
+        "& .MuiAutocomplete-option": dropdownItemStyle({ theme }),
       }),
     },
   },
@@ -416,14 +439,15 @@ export const inputsCustomizations: Components<Theme> = {
         color: (theme.vars || theme).palette.text.primary,
         borderRadius: (theme.vars || theme).shape.borderRadius,
         border: `1px solid ${(theme.vars || theme).palette.divider}`,
-        backgroundColor: (theme.vars || theme).palette.background.default,
+        // White inputs so they stay distinct from the grey canvas background.
+        backgroundColor: (theme.vars || theme).palette.background.paper,
         transition: "border 120ms ease-in",
         "&:hover": {
           borderColor: grey[400],
         },
         [`&.${outlinedInputClasses.focused}`]: {
-          outline: `3px solid ${alpha(brand[500], 0.5)}`,
-          borderColor: brand[400],
+          outline: `2px solid ${alpha(grey[900], 0.15)}`,
+          borderColor: grey[800],
         },
         ...theme.applyStyles("dark", {
           "&:hover": {

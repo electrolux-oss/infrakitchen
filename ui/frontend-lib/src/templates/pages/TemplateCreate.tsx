@@ -86,20 +86,18 @@ export const TemplateCreatePage = () => {
   return (
     <PageContainer
       title="Create Template"
-      onBack={() => navigate(`${linkPrefix}templates`)}
-      backAriaLabel="Back to templates"
       bottomActions={
         <>
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}templates`)}
           >
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(onSubmit)}
           >
             Save

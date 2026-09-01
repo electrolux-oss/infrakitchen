@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 
 import { useConfig, PermissionWrapper } from "../../common";
@@ -22,8 +23,9 @@ export const SourceCodeVersionsPage = () => {
           permissionAction="write"
         >
           <Button
+            size="small"
             variant="outlined"
-            color="primary"
+            startIcon={<AddIcon />}
             onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
           >
             Create

@@ -24,7 +24,7 @@ export const ConfirmNameField = ({
             px: 0.5,
             py: 0.25,
             bgcolor: "action.selected",
-            borderRadius: 0.5,
+            borderRadius: "var(--template-surface-radius)",
             fontFamily: "monospace",
             fontSize: "0.85em",
           }}

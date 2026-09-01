@@ -71,7 +71,7 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
       : [];
 
     const handleAutocompleteChange = (
-      event: React.SyntheticEvent,
+      _event: React.SyntheticEvent,
       newValue: IkEntity | null,
     ) => {
       onChange(newValue ? newValue.id : null);
@@ -80,7 +80,7 @@ const ReferenceSearchInput = forwardRef<any, ReferenceSearchInputProps>(
     };
 
     const handleInputChange = (
-      event: React.SyntheticEvent,
+      _event: React.SyntheticEvent,
       newInputValue: string,
       reason: string,
     ) => {

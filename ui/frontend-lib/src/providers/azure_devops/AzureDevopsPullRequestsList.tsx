@@ -95,7 +95,11 @@ export function AzureDevopsPullRequestsList(
       {pullRequests.map((pr) => (
         <Accordion
           key={pr.pullRequestId}
-          sx={{ mb: 1, boxShadow: 1, borderRadius: 2 }}
+          sx={{
+            mb: 1,
+            boxShadow: 1,
+            borderRadius: "var(--template-surface-radius)",
+          }}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
@@ -166,8 +170,8 @@ export function AzureDevopsPullRequestsList(
               extensions={[json()]}
               readOnly={true}
               style={{
-                border: "1px solid silver",
-                borderRadius: "8px",
+                border: "1px solid var(--template-palette-divider)",
+                borderRadius: "var(--template-surface-radius)",
                 overflow: "hidden",
               }}
               height="300px"
@@ -183,10 +187,10 @@ export function AzureDevopsPullRequestsList(
                 </Typography>
                 <Box
                   sx={{
-                    border: "1px solid #ccc",
+                    border: "1px solid var(--template-palette-divider)",
                     p: 2,
-                    borderRadius: "8px",
-                    backgroundColor: "#f9f9f9",
+                    borderRadius: "var(--template-surface-radius)",
+                    backgroundColor: "var(--template-palette-action-hover)",
                     maxHeight: "200px",
                     overflowY: "auto",
                   }}

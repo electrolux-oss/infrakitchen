@@ -6,7 +6,7 @@ import {
   getProviderValue,
 } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
 
 const USER_AUTH_PROVIDERS = [
@@ -84,28 +84,7 @@ export const userColumns: EntityTableColumn[] = [
       </Box>
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns(),
   {
     field: "description",
     headerName: "Description",

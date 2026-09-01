@@ -5,10 +5,19 @@ import { Box, useColorScheme, useTheme } from "@mui/material";
 export interface DiffEditorProps {
   originalText: string;
   modifiedText: string;
+  /** Side-by-side (true) vs unified (false) view. Defaults to unified. */
+  splitView?: boolean;
+  /** Whether to hide unchanged lines. Defaults to showing full context. */
+  showDiffOnly?: boolean;
 }
 
 export function DiffEditor(props: DiffEditorProps) {
-  const { originalText, modifiedText } = props;
+  const {
+    originalText,
+    modifiedText,
+    splitView = false,
+    showDiffOnly = false,
+  } = props;
   const theme = useTheme();
   const { mode } = useColorScheme();
 
@@ -42,12 +51,12 @@ export function DiffEditor(props: DiffEditorProps) {
       }}
     >
       <DiffViewer
-        key={`diffviewer-${mode}`}
+        key={`diffviewer-${mode}-${splitView}-${showDiffOnly}`}
         oldValue={originalText}
         newValue={modifiedText}
-        splitView={false}
+        splitView={splitView}
         hideLineNumbers={false}
-        showDiffOnly={false}
+        showDiffOnly={showDiffOnly}
         styles={diffStyles}
         useDarkTheme={mode === "dark"}
         compareMethod={DiffMethod.WORDS}

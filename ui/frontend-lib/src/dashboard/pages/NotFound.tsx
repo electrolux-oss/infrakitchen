@@ -66,7 +66,7 @@ export const NotFoundPage = () => {
             p: 3,
             width: "100%",
             maxWidth: 450,
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             bgcolor: "action.hover",
           }}
         >
@@ -86,7 +86,7 @@ export const NotFoundPage = () => {
             disableElevation
             startIcon={<Icon icon="solar:home-2-bold" />}
             onClick={() => navigate(`${linkPrefix}`)}
-            sx={{ px: 4, borderRadius: 2 }}
+            sx={{ px: 4, borderRadius: "var(--template-surface-radius)" }}
           >
             Go to Dashboard
           </Button>

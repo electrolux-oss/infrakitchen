@@ -55,13 +55,14 @@ export const SecretPage = () => {
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Secret Overview"}
+        title={"Secret Details"}
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"
             permissionAction="write"
           >
             <Button
+              size="small"
               startIcon={<TaskAltIcon />}
               variant="outlined"
               onClick={handleValidation}

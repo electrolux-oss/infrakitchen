@@ -18,13 +18,17 @@ import Tooltip from "@mui/material/Tooltip";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import { MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
+import { neutralPillSx } from "./mixins";
 
 export interface DashboardSidebarPageItemProps {
   id: string;
   title: string;
   icon?: React.ReactNode;
-  href: string;
+  /** Page URL; omit for pure group parents that only expand/collapse. */
+  href?: string;
   action?: React.ReactNode;
+  /** Small pill shown next to the title, e.g. "alpha" or "beta". */
+  label?: string;
   defaultExpanded?: boolean;
   expanded?: boolean;
   selected?: boolean;
@@ -39,6 +43,7 @@ export default function DashboardSidebarPageItem({
   icon,
   href,
   action,
+  label,
   defaultExpanded = false,
   expanded = defaultExpanded,
   selected = false,
@@ -129,7 +134,7 @@ export default function DashboardSidebarPageItem({
         sx={{
           display: "block",
           py: 0,
-          px: 1,
+          px: 0,
           overflowX: "hidden",
         }}
       >
@@ -139,10 +144,24 @@ export default function DashboardSidebarPageItem({
             disabled={disabled}
             sx={{
               height: mini ? 34 : "auto",
+              mx: 0,
             }}
             {...(nestedNavigation && !mini
               ? {
                   onClick: handleClick,
+                  // A parent can also be a page: navigate AND toggle children.
+                  ...(href
+                    ? {
+                        LinkComponent,
+                        ...(hasExternalHref
+                          ? {
+                              target: "_blank",
+                              rel: "noopener noreferrer",
+                            }
+                          : {}),
+                        to: href,
+                      }
+                    : {}),
                 }
               : {})}
             {...(!nestedNavigation
@@ -191,6 +210,20 @@ export default function DashboardSidebarPageItem({
                   zIndex: 1,
                 }}
               />
+            ) : null}
+            {label && !mini ? (
+              <Box
+                component="span"
+                sx={{
+                  ...neutralPillSx,
+                  ml: 1,
+                  // Slightly tighter than the header version chip.
+                  fontSize: "0.62rem",
+                  padding: "3px 7px",
+                }}
+              >
+                {label}
+              </Box>
             ) : null}
             {action && !mini && fullyExpanded ? action : null}
             {nestedNavigation ? (

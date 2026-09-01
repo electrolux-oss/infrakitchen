@@ -1,3 +1,8 @@
+import {
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -37,6 +42,33 @@ import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
 import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { BatchOperationCreate } from "../types";
+
+// State + Created columns are identical across the resource and executor
+// selection grids; defined once so they can't drift apart.
+const selectionStateColumn: EntityTableColumn = {
+  field: "state",
+  headerName: "State",
+  flex: 1,
+  valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
+  renderCell: (params: GridRenderCellParams) => (
+    <StatusChip
+      status={String(params.row.status).toLowerCase()}
+      state={String(params.row.state).toLowerCase()}
+    />
+  ),
+};
+
+const selectionCreatedAtColumn: EntityTableColumn = {
+  field: "createdAt",
+  headerName: "Created",
+  flex: 1,
+  renderCell: (params: GridRenderCellParams) => (
+    <RelativeTime
+      date={params.value}
+      sx={{ fontSize: "0.75rem", display: "flex" }}
+    />
+  ),
+};
 
 export interface BatchOperationEntitySelectorProps {
   control: Control<BatchOperationCreate>;
@@ -171,29 +203,8 @@ export const BatchOperationEntitySelector = (
         },
       },
 
-      {
-        field: "state",
-        headerName: "State",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={String(params.row.status).toLowerCase()}
-            state={String(params.row.state).toLowerCase()}
-          />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
+      selectionStateColumn,
+      selectionCreatedAtColumn,
     ],
     [],
   );
@@ -214,35 +225,15 @@ export const BatchOperationEntitySelector = (
         field: "sourceCode",
         headerName: "Source Code",
         flex: 1,
-        valueGetter: (value: any, row: any) => row.sourceCode?.identifier || "",
+        valueGetter: (_value: any, row: any) =>
+          row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.sourceCode;
           return <GetEntityLink {...sourceCodeVersion} />;
         },
       },
-      {
-        field: "state",
-        headerName: "State",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={String(params.row.status).toLowerCase()}
-            state={String(params.row.state).toLowerCase()}
-          />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
+      selectionStateColumn,
+      selectionCreatedAtColumn,
     ],
     [],
   );
@@ -409,7 +400,7 @@ export const BatchOperationEntitySelector = (
                 sortingMode="server"
                 checkboxSelection
                 disableRowSelectionOnClick
-                disableColumnFilter
+                {...dataGridDefaultProps}
                 rowSelectionModel={buildRowSelectionModel(
                   Array.isArray(selectedEntityIds) ? selectedEntityIds : [],
                 )}
@@ -448,27 +439,10 @@ export const BatchOperationEntitySelector = (
                 onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 25, 50, 100]}
                 keepNonExistentRowsSelected
-                sx={{
-                  "& .MuiDataGrid-columnHeader": {
-                    "& .MuiDataGrid-columnHeaderTitleContainer": {
-                      justifyContent: "space-between",
-                      flexDirection: "row",
-                    },
-                  },
-                }}
-                slotProps={{
-                  pagination: {
-                    SelectProps: {
-                      inputProps: {
-                        "aria-label": "Rows per page",
-                        "aria-labelledby": "entity-pagination-label",
-                      },
-                      "aria-label": "Rows per page",
-                    },
-                    labelRowsPerPage: "Rows per page:",
-                    labelId: "entity-pagination-label",
-                  },
-                }}
+                sx={{ ...dataGridSx }}
+                slotProps={dataGridPaginationSlotProps(
+                  "entity-pagination-label",
+                )}
               />
             </Box>
           </Box>

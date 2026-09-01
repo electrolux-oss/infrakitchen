@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
-import { dividerClasses } from "@mui/material/Divider";
+import Divider, { dividerClasses } from "@mui/material/Divider";
 import { listClasses } from "@mui/material/List";
 import ListItemIcon, { listItemIconClasses } from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -25,12 +25,22 @@ const MenuItem = styled(MuiMenuItem)({
   margin: "2px 0",
 });
 
+// Build the initials avatar from the user identifier.
+const getInitials = (identifier: string) =>
+  identifier
+    .split(/[\s_-]+/)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+
 export default function UserSidebar() {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const navigate = useNavigate();
 
   const { user, logout } = useAuth();
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+
+  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
@@ -50,66 +60,42 @@ export default function UserSidebar() {
         minWidth: 0,
       }}
     >
-      <Avatar
-        sx={{
-          fontSize: 10,
-          height: 24,
-          width: 24,
-          flexShrink: 0,
-        }}
-      >
-        {user.identifier
-          .split(/[\s_-]+/)
-          .slice(0, 2)
-          .map((words) => words.charAt(0).toUpperCase())
-          .join("")}
-      </Avatar>
-      <Box
-        component={Link}
-        to={`/users/${user.id}`}
-        sx={{
-          minWidth: 0,
-          textDecoration: "none",
-          color: "inherit",
-        }}
-      >
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            lineHeight: "16px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {user.identifier}
-        </Typography>
-        {user.email ? (
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              display: "block",
-            }}
-          >
-            {user.email}
-          </Typography>
-        ) : null}
-      </Box>
       <MenuButton
         aria-label="Open user menu"
-        onClick={handleClick}
-        sx={{ borderColor: "transparent", flexShrink: 0 }}
+        onClick={handleOpen}
+        aria-controls={open ? "user-menu" : undefined}
+        aria-expanded={open ? "true" : undefined}
+        aria-haspopup="true"
+        sx={(theme) => ({
+          p: 0,
+          border: "none",
+          backgroundColor: "transparent",
+          "&:hover": { backgroundColor: "transparent" },
+          height: "2.25rem",
+          ...theme.applyStyles("dark", {
+            border: "none",
+            backgroundColor: "transparent",
+            "&:hover": { backgroundColor: "transparent" },
+          }),
+        })}
       >
-        <MoreVertRoundedIcon />
+        <Avatar
+          sx={{
+            fontSize: 11,
+            height: 30,
+            width: 30,
+            flexShrink: 0,
+            border: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "action.selected",
+          }}
+        >
+          {getInitials(user.identifier)}
+        </Avatar>
       </MenuButton>
       <Menu
         anchorEl={anchorEl}
-        id="menu"
+        id="user-menu"
         open={open}
         onClose={handleClose}
         onClick={handleClose}
@@ -121,19 +107,81 @@ export default function UserSidebar() {
           },
           [`& .${paperClasses.root}`]: {
             padding: 0,
+            minWidth: 240,
           },
           [`& .${dividerClasses.root}`]: {
-            margin: "4px -4px",
+            margin: "4px 0",
           },
         }}
       >
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ px: 2, py: 1.5, alignItems: "center" }}
+        >
+          <Avatar
+            sx={{
+              fontSize: 15,
+              height: 40,
+              width: 40,
+              bgcolor: "action.selected",
+            }}
+          >
+            {getInitials(user.identifier)}
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="body1"
+              sx={{
+                fontWeight: 600,
+                lineHeight: 1.3,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {user.identifier}
+            </Typography>
+            {user.email ? (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  display: "block",
+                }}
+              >
+                {user.email}
+              </Typography>
+            ) : null}
+          </Box>
+        </Stack>
+
+        <Divider />
+
+        <MenuItem
+          onClick={() => navigate(`/users/${user.id}`)}
+          sx={{
+            [`& .${listItemIconClasses.root}`]: {
+              minWidth: 0,
+              mr: 1.5,
+            },
+          }}
+        >
+          <ListItemIcon>
+            <PersonRoundedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>My profile</ListItemText>
+        </MenuItem>
+
         <MenuItem
           onClick={logout}
           sx={{
             [`& .${listItemIconClasses.root}`]: {
-              ml: "auto",
               minWidth: 0,
-              mr: 1,
+              mr: 1.5,
             },
           }}
         >

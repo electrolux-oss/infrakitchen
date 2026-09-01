@@ -96,16 +96,14 @@ export const TemplateImportPage = () => {
   return (
     <PageContainer
       title="Import Template from Repository"
-      onBack={handleBack}
-      backAriaLabel="Back to templates"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
           >

@@ -91,16 +91,14 @@ const AuthProviderCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Auth Provider"
-      onBack={handleBack}
-      backAriaLabel="Back to auth_providers"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             {saving ? "Saving..." : "Save"}

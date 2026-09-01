@@ -31,6 +31,16 @@ export default function ThemeSwitcher() {
           size="small"
           aria-label={`Switch to ${paletteMode === "dark" ? "light" : "dark"} mode`}
           onClick={toggleMode}
+          sx={(theme) => ({
+            border: "none",
+            backgroundColor: "transparent",
+            "&:hover": { backgroundColor: "transparent" },
+            ...theme.applyStyles("dark", {
+              border: "none",
+              backgroundColor: "transparent",
+              "&:hover": { backgroundColor: "transparent" },
+            }),
+          })}
         >
           {theme.getColorSchemeSelector ? (
             <React.Fragment>

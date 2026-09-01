@@ -11,6 +11,8 @@ import {
   Theme,
 } from "@mui/material";
 
+import { softChipColorSx } from "../utils/softChip";
+
 export interface OverviewCardProps {
   name?: ReactNode;
   description?: ReactNode;
@@ -40,9 +42,12 @@ export const OverviewCard = (props: OverviewCardProps) => {
     chipColor = "info",
     sx,
   } = props;
+
+  const hasHeader = !!(name || description || actions || chip || icon);
+
   return (
     <Card sx={{ width: "100%", ...sx }}>
-      {(name || description || actions || chip) && (
+      {hasHeader && (
         <CardHeader
           title={
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
@@ -52,13 +57,13 @@ export const OverviewCard = (props: OverviewCardProps) => {
                 <Chip
                   label={chip.toUpperCase()}
                   size="small"
-                  variant="outlined"
-                  color={chipColor}
+                  variant="filled"
+                  sx={softChipColorSx(chipColor)}
                 />
               )}
             </Box>
           }
-          subheader={description}
+          subheader={description ? description : undefined}
           action={actions}
           sx={{
             "& .MuiCardHeader-content": {

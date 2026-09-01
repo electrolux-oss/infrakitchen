@@ -133,19 +133,21 @@ const SecretCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Secret"
-      onBack={handleBack}
-      backAriaLabel="Back to secrets"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleSubmit(handleValidation)}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={handleSubmit(handleValidation)}
+          >
             Test Connection
           </Button>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             {saving ? "Saving..." : "Save"}

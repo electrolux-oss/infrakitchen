@@ -19,10 +19,7 @@ export const BlueprintsPage = () => {
         requiredPermission="api:blueprint"
         permissionAction="write"
       >
-        <Button
-          variant="outlined"
-          onClick={() => navigate(`${linkPrefix}blueprints/create`)}
-        >
+        <Button onClick={() => navigate(`${linkPrefix}blueprints/create`)}>
           Create
         </Button>
       </PermissionWrapper>

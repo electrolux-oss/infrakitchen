@@ -27,7 +27,9 @@ interface ReferenceInputProps {
   fields?: Array<string>;
   sort?: Array<string>;
   value: any;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
   error?: boolean;
   showFields?: Array<string>;
   helpertext?: string;
@@ -74,7 +76,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     allOptions.find((option) => option.id === value) || null;
 
   const handleAutocompleteChange = (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     newValue: IkEntity | null,
   ) => {
     onChange(newValue ? newValue.id : null);
@@ -105,11 +107,11 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ikApi
       .graphqlRequest(
         `query ReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
-          ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-            ${buildGraphqlFields(["id", ...(fields || showFields)])}
-          }
-          ${graphqlCountName}(filter: $filter)
-        }`,
+                ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+                  ${buildGraphqlFields(["id", ...(fields || showFields)])}
+                }
+                ${graphqlCountName}(filter: $filter)
+              }`,
         {
           filter,
           sort: sort,
@@ -120,7 +122,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         const data = (response[graphqlEntityName] as IkEntity[]) || [];
         if (data.length === 0 && otherProps.required === true) {
           setWarning(
-            `No available options for the required field "${props.label}". You need to create them first.`,
+            `No available options for the required field "${props.label || props.ariaLabel || "this field"}". You need to create them first.`,
           );
         }
 
@@ -144,10 +146,11 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
   ]);
 
   return (
-    <FormControl fullWidth margin="normal">
+    <FormControl fullWidth margin="dense">
       <Autocomplete
         readOnly={otherProps.readOnly}
         disabled={otherProps.disabled || otherProps.readOnly}
+        size="small"
         value={selectedOption}
         options={options}
         getOptionLabel={(option) => getOptionLabel(option, showFields)}
@@ -165,14 +168,34 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         renderValue={(option) => {
           return `${option.name || option.identifier}`;
         }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            {...otherProps}
-            label={props.label}
-            error={props.error}
-          />
-        )}
+        renderInput={(params) => {
+          const hasLabel = Boolean(props.label);
+          return (
+            <TextField
+              {...params}
+              {...otherProps}
+              label={hasLabel ? props.label : undefined}
+              placeholder={props.placeholder}
+              error={props.error}
+              sx={{
+                "& .MuiInputBase-root": {
+                  height: 32,
+                  minHeight: 32,
+                  marginTop: "0 !important",
+                },
+              }}
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  ...(!hasLabel
+                    ? { "aria-label": props.ariaLabel || props.label || "" }
+                    : {}),
+                },
+              }}
+            />
+          );
+        }}
       />
       <FormHelperText error={props.error}>
         {props.helpertext || ""}

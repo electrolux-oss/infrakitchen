@@ -21,6 +21,7 @@ import { EntityCard } from "../../common/components/EntityCard";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
+import { entityCardGridSx } from "../../common/utils/entityCardGrid";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -113,12 +114,12 @@ const IntegrationsPage = () => {
         <Typography variant="caption" sx={{ display: "block" }}>
           Status
         </Typography>
-        <StatusChip status={integration.status} compact />
+        <StatusChip status={integration.status} />
       </Box>
       <Box>
         <Typography variant="caption" sx={{ display: "block" }}>
           Last Updated
-        </Typography>
+        </Typography>{" "}
         <RelativeTime
           date={integration.updatedAt}
           variant="caption"
@@ -206,8 +207,8 @@ const IntegrationsPage = () => {
         <Box sx={{ width: "100%", py: 4 }}>
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
-          </Alert>
-          <Button variant="outlined" onClick={fetchIntegrations}>
+          </Alert>{" "}
+          <Button size="small" variant="outlined" onClick={fetchIntegrations}>
             Retry
           </Button>
         </Box>
@@ -295,9 +296,11 @@ const IntegrationsPage = () => {
                     justifyContent: "center",
                   }}
                 >
+                  {" "}
                   {allProviders.map((p) => (
                     <Button
                       key={p.slug}
+                      size="small"
                       variant="outlined"
                       startIcon={<p.icon width="20" height="20" />}
                       onClick={() =>
@@ -322,18 +325,7 @@ const IntegrationsPage = () => {
             )}
           </Box>
         ) : (
-          <Box
-            sx={{
-              "--card-min-width": { xs: "260px", sm: "300px", md: "340px" },
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 3,
-              width: "100%",
-              alignItems: "stretch",
-              mt: 4,
-            }}
-          >
+          <Box sx={{ ...entityCardGridSx(), mt: 4 }}>
             {integrations.map((integration) => {
               const provider = providers.find(
                 (p) =>
@@ -352,13 +344,13 @@ const IntegrationsPage = () => {
                   labels={integration.labels || []}
                   icon={
                     provider ? (
-                      <provider.icon width="40" height="40" />
+                      <provider.icon width="32" height="32" />
                     ) : undefined
                   }
                   chip={integration.integrationType}
                   chipColor={
                     integration.integrationType === IntegrationType.CLOUD
-                      ? "primary"
+                      ? "info"
                       : integration.integrationType ===
                           IntegrationType.NOTIFICATION
                         ? "warning"

@@ -19,5 +19,6 @@ export * from "./Labels";
 export * from "./MarkdownViewer";
 export * from "./notifications";
 export * from "./PendingChangeBadge";
+export * from "./RevisionChip";
 export * from "./ServerInfoDialog";
 export * from "./UserAvatar";

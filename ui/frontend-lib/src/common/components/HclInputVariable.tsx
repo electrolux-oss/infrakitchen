@@ -2,6 +2,14 @@ import React from "react";
 
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../theme";
+import { InlineCode } from "./InlineCode";
+import {
+  PlaceholderDescription,
+  PlaceholderText,
+} from "./PlaceholderDescription";
+import { solidChipColorSx } from "../utils/softChip";
+
 import { SourceConfigResponse } from "../../source_code_versions/types";
 import { getValidationSummary } from "../../source_code_versions/utils/validationSummary";
 
@@ -19,11 +27,10 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
   const theme = useTheme();
 
   const validationSummary = getValidationSummary(variable);
-
   const formatTypeDisplay = (type: string) => {
-    // If it's a simple type, display inline
+    // If it's a simple type, display inline as mono text (not a badge)
     if (!type.includes("\n")) {
-      return <Chip label={type} size="small" variant="outlined" />;
+      return <InlineCode>{type}</InlineCode>;
     }
 
     // For complex types, display in a code block
@@ -32,11 +39,12 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
         component="pre"
         sx={{
           fontSize: theme.typography.caption.fontSize,
+          fontFamily: CODE_FONT_FAMILY,
           margin: 0,
           p: 1,
           backgroundColor: theme.palette.action.hover,
           border: `1px solid ${theme.palette.divider}`,
-          borderRadius: 1.5,
+          borderRadius: "var(--template-surface-radius)",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
           overflow: "auto",
@@ -48,10 +56,10 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
       </Box>
     );
   };
-
   const formatDefaultValue = (defaultValue: any) => {
     if (defaultValue === undefined || defaultValue === null) {
-      return "null";
+      // No default provided — same empty-value convention as the forms.
+      return <PlaceholderText />;
     }
 
     if (typeof defaultValue === "object") {
@@ -64,6 +72,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           component="pre"
           sx={{
             fontSize: "0.75rem",
+            fontFamily: CODE_FONT_FAMILY,
             margin: 0,
             whiteSpace: "pre",
             border: isEmptyObject ? "none" : "1px solid",
@@ -78,33 +87,20 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
     }
 
     if (typeof defaultValue === "string") {
-      return (
-        <Box
-          component="code"
-          sx={{
-            fontSize: "0.75rem",
-          }}
-        >
-          {`"${defaultValue}"`}
-        </Box>
-      );
+      return <InlineCode>{`"${defaultValue}"`}</InlineCode>;
     }
 
     if (typeof defaultValue === "boolean") {
       return (
-        <Box
-          component="code"
-          sx={{
-            fontSize: "0.75rem",
-            color: defaultValue ? "success.main" : "error.main",
-          }}
+        <InlineCode
+          sx={{ color: defaultValue ? "success.main" : "error.main" }}
         >
           {String(defaultValue)}
-        </Box>
+        </InlineCode>
       );
     }
 
-    return String(defaultValue);
+    return <InlineCode>{String(defaultValue)}</InlineCode>;
   };
 
   return (
@@ -114,7 +110,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
         borderColor: "divider",
         p: 2,
         mb: 2,
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
       }}
     >
       <Grid
@@ -133,54 +129,51 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
             }}
           >
             {variable.name}
-          </Typography>
-
+          </Typography>{" "}
           {variable.required ? (
             <Chip
               label="required"
               size="small"
-              color="warning"
-              variant="outlined"
+              color="error"
+              variant="filled"
+              sx={solidChipColorSx("error")}
             />
           ) : (
             <Chip
               label="optional"
               size="small"
               color="info"
-              variant="outlined"
+              variant="filled"
+              sx={solidChipColorSx("info")}
             />
           )}
-
           {validationSummary && (
             <Chip
               label={validationSummary}
               size="small"
               color="success"
-              variant="outlined"
-              sx={{ ml: 1 }}
+              variant="filled"
+              sx={{ ml: 1, ...solidChipColorSx("success")(useTheme()) }}
             />
           )}
-
           {variable.restricted && (
             <Chip
               label="restricted"
               size="small"
-              color="error"
-              variant="outlined"
-              sx={{ ml: 1 }}
+              color="warning"
+              variant="filled"
+              sx={{ ml: 1, ...solidChipColorSx("warning")(useTheme()) }}
             />
           )}
-
           {variable.sensitive && (
             <Chip
               label="sensitive"
               size="small"
               color="secondary"
-              variant="outlined"
-              sx={{ ml: 1 }}
+              variant="filled"
+              sx={{ ml: 1, ...solidChipColorSx("secondary")(useTheme()) }}
             />
           )}
-
           <Box
             sx={{
               display: "flex",
@@ -199,7 +192,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
             </Typography>
             {formatTypeDisplay(variable.type)}
           </Box>
-
           <Typography
             variant="caption"
             sx={{
@@ -208,9 +200,8 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               mt: 1,
             }}
           >
-            {variable.description || "No description"}
+            {variable.description ? variable.description : <PlaceholderDescription />}
           </Typography>
-
           {variable.source && (
             <Typography
               variant="caption"

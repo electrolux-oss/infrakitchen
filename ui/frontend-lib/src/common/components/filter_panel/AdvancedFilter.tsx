@@ -63,19 +63,23 @@ const VALUE_INPUT_SX = {
   minWidth: 0,
 } as const;
 
-const ROW_HEIGHT = 40;
+const ROW_HEIGHT = 32;
 
 const SINGLE_VALUE_INPUT_SX = {
   ...VALUE_INPUT_SX,
   "& .MuiInputBase-root": {
-    height: ROW_HEIGHT,
+    height: `${ROW_HEIGHT}px !important`,
+    minHeight: ROW_HEIGHT,
+    marginTop: "0 !important",
   },
 } as const;
 
 const SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX = {
   ...VALUE_INPUT_SX,
   "& .MuiInputBase-root": {
-    height: ROW_HEIGHT,
+    height: `${ROW_HEIGHT}px !important`,
+    minHeight: ROW_HEIGHT,
+    marginTop: "0 !important",
     flexWrap: "nowrap",
   },
 } as const;
@@ -84,6 +88,7 @@ const MULTI_VALUE_AUTOCOMPLETE_SX = {
   ...VALUE_INPUT_SX,
   "& .MuiInputBase-root": {
     minHeight: ROW_HEIGHT,
+    marginTop: "0 !important",
   },
 } as const;
 
@@ -102,9 +107,9 @@ interface ClauseRowProps {
   fields: FilterableField[];
   usedFields: Set<string>;
   usedFieldOperatorPairs: Set<string>;
+  isOnly: boolean;
   onUpdate: (id: string, updates: Partial<FilterClause>) => void;
   onRemove: (id: string) => void;
-  isOnly: boolean;
 }
 
 const ClauseRow = ({
@@ -112,9 +117,9 @@ const ClauseRow = ({
   fields,
   usedFields,
   usedFieldOperatorPairs,
+  isOnly,
   onUpdate,
   onRemove,
-  isOnly,
 }: ClauseRowProps) => {
   const selectedField = fields.find((f) => f.field === clause.field);
   const availableOperators = useMemo(
@@ -356,7 +361,6 @@ const ClauseRow = ({
       />
     );
   };
-
   return (
     <Box
       sx={{
@@ -366,11 +370,6 @@ const ClauseRow = ({
         width: "100%",
         flexWrap: "nowrap",
         minWidth: 0,
-        p: 1,
-        borderRadius: 2,
-        border: 1,
-        borderColor: "divider",
-        backgroundColor: "background.paper",
       }}
     >
       {/* Field selector */}
@@ -420,15 +419,18 @@ const ClauseRow = ({
       {/* Remove button */}
       <Tooltip title="Remove filter">
         <span>
+          {" "}
           <IconButton
             size="small"
             onClick={() => onRemove(clause.id)}
             disabled={isOnly && !clause.field}
             sx={{
               color: "text.secondary",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1.5,
+              border: "none",
+              backgroundColor: "transparent",
+              "&:hover": {
+                backgroundColor: "transparent",
+              },
             }}
           >
             <DeleteOutlineIcon fontSize="small" />
@@ -498,8 +500,9 @@ export const AdvancedFilter = ({
   // Maintain local clause state so incomplete rows aren't lost on URL re-render.
   // Sync from external value only on initial mount or explicit reset.
   const [clauses, setClauses] = useState<FilterClause[]>(() => {
+    // No filter rows by default; rows are added on demand via "Add filter".
     if (value && value.length > 0) return value;
-    return [makeEmptyClause(fields, defaultField)];
+    return [];
   });
 
   // Track whether this is an external reset (e.g. "Reset" button clears all)
@@ -512,7 +515,6 @@ export const AdvancedFilter = ({
     if (value && value.length > 0) {
       awaitingInternalEmptySyncRef.current = false;
     }
-
     // External reset: value went from non-empty to empty/undefined
     if (
       (!value || value.length === 0) &&
@@ -520,15 +522,15 @@ export const AdvancedFilter = ({
       prev.length > 0 &&
       !awaitingInternalEmptySyncRef.current
     ) {
-      setClauses([makeEmptyClause(fields, defaultField)]);
+      setClauses([]);
     } else if (!value || value.length === 0) {
       awaitingInternalEmptySyncRef.current = false;
     }
-    // External load from URL on mount (clauses are still the default empty row)
-    else if (value.length > 0 && clauses.length === 1 && !clauses[0].field) {
+    // External load from URL on mount (no rows added yet)
+    else if (value.length > 0 && clauses.length === 0) {
       setClauses(value);
     }
-  }, [defaultField, fields, value, clauses]);
+  }, [value, clauses]);
 
   // Propagate changes to parent (which writes to URL)
   const propagate = useCallback(
@@ -571,31 +573,34 @@ export const AdvancedFilter = ({
     },
     [clauses, propagate],
   );
-
   const handleRemove = useCallback(
     (id: string) => {
       const remaining = clauses.filter((c) => c.id !== id);
-      if (remaining.length === 0) {
-        propagate([makeEmptyClause(fields, defaultField)]);
-      } else {
-        propagate(remaining);
-      }
+      propagate(remaining);
     },
-    [clauses, defaultField, fields, propagate],
+    [clauses, propagate],
   );
 
   const handleAdd = useCallback(() => {
-    propagate([...clauses, makeEmptyClause(fields)]);
-  }, [clauses, fields, propagate]);
+    // Preselect the default field on the first added row.
+    propagate([
+      ...clauses,
+      makeEmptyClause(fields, clauses.length === 0 ? defaultField : undefined),
+    ]);
+  }, [clauses, defaultField, fields, propagate]); // A clause counts as complete when it would actually be persisted
+  // (a field selected and, for value-based operators, a value entered).
+  const allClausesComplete = useMemo(
+    () => clauses.every((c) => toPersistedClauses([c]).length === 1),
+    [clauses, toPersistedClauses],
+  );
 
-  // Check if we can add more (any unselected field still available)
+  // Can add more only when every existing row is complete and a field is free.
   const canAddMore = useMemo(() => {
-    return usedFields.size < fields.length;
-  }, [fields.length, usedFields]);
-
+    return usedFields.size < fields.length && allClausesComplete;
+  }, [allClausesComplete, fields.length, usedFields]);
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 1.5, width: "100%" }}
+      sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}
     >
       {clauses.map((clause, index) => (
         <Box
@@ -628,24 +633,43 @@ export const AdvancedFilter = ({
             fields={fields}
             usedFields={usedFields}
             usedFieldOperatorPairs={usedFieldOperatorPairs}
+            isOnly={clauses.length === 1}
             onUpdate={handleUpdate}
             onRemove={handleRemove}
-            isOnly={clauses.length === 1}
           />
         </Box>
-      ))}
-
-      {canAddMore && (
-        <Box sx={{ mt: 0.5 }}>
-          <Button
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={handleAdd}
-            sx={{ textTransform: "none", color: "text.secondary" }}
-          >
-            Add filter
-          </Button>
-        </Box>
+      ))}{" "}
+      {fields.length > 0 && (
+        <Tooltip
+          title="Complete the current filter row first"
+          disableHoverListener={canAddMore}
+        >
+          <span>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleAdd}
+              disabled={!canAddMore}
+              sx={{
+                height: 28,
+                minHeight: 0,
+                p: "0 10px",
+                color: "text.secondary",
+                border: "1px dashed",
+                borderColor: "divider",
+                borderRadius: 1,
+                "& .MuiSvgIcon-root": { fontSize: 16 },
+                "&:hover": {
+                  color: "text.primary",
+                  borderColor: "text.secondary",
+                  backgroundColor: "action.hover",
+                },
+              }}
+            >
+              Add filter
+            </Button>
+          </span>
+        </Tooltip>
       )}
     </Box>
   );

@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import SearchIcon from "@mui/icons-material/Search";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import {
   Alert,
   Box,
-  Card,
-  CardContent,
-  Chip,
-  Stack,
+  InputAdornment,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Tooltip,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import {
   DataGrid,
   GridColDef,
@@ -35,6 +32,12 @@ import {
   ACTIONS_WITH_LOGS,
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
+import { RevisionChip } from "../RevisionChip";
+import {
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "../entity_table/dataGridStyles";
 import { GetEntityLink } from "../CommonField";
 import { RelativeTime } from "../RelativeTime";
 
@@ -48,40 +51,6 @@ export interface AuditProps {
   showRevisionColumn?: boolean;
   showTimelineView?: boolean;
 }
-
-interface AuditFilterPanelProps {
-  search: string;
-  setSearch: (value: string) => void;
-}
-
-export const AuditFilterPanel = ({
-  search,
-  setSearch,
-}: AuditFilterPanelProps) => {
-  return (
-    <Box>
-      <Card>
-        <CardContent
-          sx={{
-            p: 0,
-            "&:last-child": { paddingBottom: 0 },
-          }}
-        >
-          <Box sx={{ width: 400 }}>
-            <Stack spacing={1}>
-              <TextField
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                label={"Search"}
-                slotProps={{ input: { spellCheck: false } }}
-              />
-            </Stack>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
-  );
-};
 
 export const Audit = ({
   entityId,
@@ -134,18 +103,18 @@ export const Audit = ({
       const query =
         rev === 1
           ? `query RevisionDiff($entityId: UUID!, $rightNum: Int!) {
-              right: revision(entityId: $entityId, revisionNumber: $rightNum) {
-                ${REVISION_FIELDS}
-              }
-            }`
+                    right: revision(entityId: $entityId, revisionNumber: $rightNum) {
+                      ${REVISION_FIELDS}
+                    }
+                  }`
           : `query RevisionDiff($entityId: UUID!, $leftNum: Int!, $rightNum: Int!) {
-              left: revision(entityId: $entityId, revisionNumber: $leftNum) {
-                ${REVISION_FIELDS}
-              }
-              right: revision(entityId: $entityId, revisionNumber: $rightNum) {
-                ${REVISION_FIELDS}
-              }
-            }`;
+                    left: revision(entityId: $entityId, revisionNumber: $leftNum) {
+                      ${REVISION_FIELDS}
+                    }
+                    right: revision(entityId: $entityId, revisionNumber: $rightNum) {
+                      ${REVISION_FIELDS}
+                    }
+                  }`;
       ikApi
         .graphqlRequest<{ left?: GqlRevision | null; right: GqlRevision }>(
           query,
@@ -254,12 +223,8 @@ export const Audit = ({
                 const rev = params.row.revisionNumber;
                 if (!rev) return null;
                 return (
-                  <Chip
-                    label={`v${rev}`}
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                    sx={{ cursor: "pointer" }}
+                  <RevisionChip
+                    revision={rev}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRevisionClick(entityId, rev);
@@ -292,7 +257,7 @@ export const Audit = ({
         headerName: "Time",
         flex: 1,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
-          <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
+          <RelativeTime date={params.value} />
         ),
       },
       {
@@ -321,176 +286,174 @@ export const Audit = ({
 
   return (
     <Box>
-      <AuditFilterPanel search={search} setSearch={setSearch} />
-      <Box>
-        <Card sx={{ mt: 2 }}>
-          <CardContent>
-            {showTimelineView && (
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-                <ToggleButtonGroup
-                  value={viewMode}
-                  exclusive
-                  onChange={(_, value) => value && setViewMode(value)}
-                  size="small"
-                  sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
-                >
-                  <ToggleButton value="table">
-                    <Tooltip title="Table view">
-                      <TableRowsIcon sx={{ fontSize: "1rem" }} />
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="timeline">
-                    <Tooltip title="Timeline view">
-                      <TimelineIcon sx={{ fontSize: "1rem" }} />
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            )}
-            <Box sx={{ width: "100%", overflowX: "auto", minHeight: 300 }}>
-              {viewMode === "table" ? (
-                <DataGrid
-                  rows={auditLogs}
-                  columns={columns}
-                  pagination
-                  disableColumnFilter
-                  disableColumnMenu
-                  disableRowSelectionOnClick
-                  sortModel={sortModel}
-                  onSortModelChange={handleSortModelChange}
-                  paginationModel={paginationModel}
-                  onPaginationModelChange={handlePaginationModelChange}
-                  pageSizeOptions={[10, 25, 50, 100]}
-                  filterModel={filterModel}
-                  onFilterModelChange={setFilterModel}
-                  sx={{
-                    "& .MuiDataGrid-columnHeader": {
-                      "& .MuiDataGrid-columnHeaderTitleContainer": {
-                        justifyContent: "space-between",
-                        flexDirection: "row",
-                      },
-                      "& .MuiButtonBase-root": {
-                        border: "none",
-                      },
-                    },
-                    "& .MuiTablePagination-root": {
-                      "& .MuiButtonBase-root": {
-                        border: "none",
-                      },
-                    },
-                    "& .MuiDataGrid-row": {
-                      "&:hover": {
-                        backgroundColor: (theme) =>
-                          alpha(theme.palette.primary.main, 0.08),
-                      },
-                    },
-                  }}
-                  slotProps={{
-                    pagination: {
-                      SelectProps: {
-                        inputProps: {
-                          "aria-label": "Rows per page",
-                          "aria-labelledby": "audit-pagination-label",
-                        },
-                        "aria-label": "Rows per page",
-                      },
-                      labelRowsPerPage: "Rows per page:",
-                      labelId: "audit-pagination-label",
-                    },
-                  }}
-                />
-              ) : (
-                <RevisionTimelines
-                  logs={auditLogs}
-                  search={search}
-                  actionsWithLogs={ACTIONS_WITH_LOGS}
-                  onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
-                  onOpenDialog={openDialog}
-                />
-              )}
-              {logsOpen &&
-                (selectedAuditLogId || selectedTraceId) &&
-                selectedView && (
-                  <LogsDialog
-                    entityId={entityId}
-                    action={selectedAction ?? undefined}
-                    view={selectedView}
-                    auditLogId={selectedAuditLogId ?? undefined}
-                    traceId={selectedTraceId ?? undefined}
-                    onClose={() => {
-                      const newParams = new URLSearchParams(hashParams);
-                      newParams.delete("auditLogId");
-                      newParams.delete("traceId");
-                      newParams.delete("view");
-                      if (useVersionId) {
-                        newParams.delete("versionId");
-                      }
-                      setHashParams(newParams);
-                    }}
-                    onViewChange={(view) => {
-                      const newParams = new URLSearchParams(hashParams);
-                      if (selectedTraceId) {
-                        newParams.set("traceId", selectedTraceId);
-                      } else if (selectedAuditLogId) {
-                        newParams.set("auditLogId", selectedAuditLogId);
-                      }
-                      newParams.set("view", view);
-                      if (useVersionId) {
-                        newParams.set("versionId", entityId);
-                      }
-                      setHashParams(newParams);
-                    }}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+          mb: 1,
+          flexWrap: "wrap",
+        }}
+      >
+        <TextField
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search audit events…"
+          size="small"
+          slotProps={{
+            input: {
+              spellCheck: false,
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon
+                    fontSize="small"
+                    sx={{ color: "text.secondary" }}
                   />
-                )}
-              <CommonDialog
-                title={
-                  revisionDialogRev === 1
-                    ? `v1`
-                    : `v${revisionDialogRev! - 1} → v${revisionDialogRev}`
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ width: 320, maxWidth: "100%" }}
+        />
+        {showTimelineView && (
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, value) => value && setViewMode(value)}
+            size="small"
+            sx={{ "& .MuiToggleButton-root": { py: 0.5 } }}
+          >
+            <ToggleButton value="table">
+              <Tooltip title="Table view">
+                <TableRowsIcon sx={{ fontSize: "1rem" }} />
+              </Tooltip>
+            </ToggleButton>
+            <ToggleButton value="timeline">
+              <Tooltip title="Timeline view">
+                <TimelineIcon sx={{ fontSize: "1rem" }} />
+              </Tooltip>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
+      </Box>
+      <Box
+        sx={{
+          width: "100%",
+          overflowX: "auto",
+          minHeight: 300,
+          border: 1,
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          bgcolor: "background.paper",
+        }}
+      >
+        {viewMode === "table" ? (
+          <DataGrid
+            rows={auditLogs}
+            columns={columns}
+            pagination
+            disableRowSelectionOnClick
+            sortModel={sortModel}
+            onSortModelChange={handleSortModelChange}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationModelChange}
+            pageSizeOptions={[10, 25, 50, 100]}
+            filterModel={filterModel}
+            onFilterModelChange={setFilterModel}
+            {...dataGridDefaultProps}
+            sx={{ ...dataGridSx, bgcolor: "background.paper" }}
+            slotProps={dataGridPaginationSlotProps("audit-pagination-label")}
+          />
+        ) : (
+          <RevisionTimelines
+            logs={auditLogs}
+            search={search}
+            actionsWithLogs={ACTIONS_WITH_LOGS}
+            onRevisionClick={(rev) => handleRevisionClick(entityId, rev)}
+            onOpenDialog={openDialog}
+          />
+        )}
+        {logsOpen &&
+          (selectedAuditLogId || selectedTraceId) &&
+          selectedView && (
+            <LogsDialog
+              entityId={entityId}
+              action={selectedAction ?? undefined}
+              view={selectedView}
+              auditLogId={selectedAuditLogId ?? undefined}
+              traceId={selectedTraceId ?? undefined}
+              onClose={() => {
+                const newParams = new URLSearchParams(hashParams);
+                newParams.delete("auditLogId");
+                newParams.delete("traceId");
+                newParams.delete("view");
+                if (useVersionId) {
+                  newParams.delete("versionId");
                 }
-                maxWidth="lg"
-                hasFooterActions={false}
-                open={revisionDialogRev !== null}
-                onClose={() => {
-                  setRevisionDialogRev(null);
-                  setRevisionDialogLeft(null);
-                  setRevisionDialogRight(null);
+                setHashParams(newParams);
+              }}
+              onViewChange={(view) => {
+                const newParams = new URLSearchParams(hashParams);
+                if (selectedTraceId) {
+                  newParams.set("traceId", selectedTraceId);
+                } else if (selectedAuditLogId) {
+                  newParams.set("auditLogId", selectedAuditLogId);
+                }
+                newParams.set("view", view);
+                if (useVersionId) {
+                  newParams.set("versionId", entityId);
+                }
+                setHashParams(newParams);
+              }}
+            />
+          )}
+        <CommonDialog
+          title={
+            revisionDialogRev === 1
+              ? `v1`
+              : `v${revisionDialogRev! - 1} → v${revisionDialogRev}`
+          }
+          maxWidth="lg"
+          hasFooterActions={false}
+          open={revisionDialogRev !== null}
+          onClose={() => {
+            setRevisionDialogRev(null);
+            setRevisionDialogLeft(null);
+            setRevisionDialogRight(null);
+          }}
+          content={
+            revisionDialogLoading ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "60vh",
                 }}
-                content={
-                  revisionDialogLoading ? (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: "60vh",
-                      }}
-                    >
-                      <GradientCircularProgress />
-                    </Box>
-                  ) : revisionDialogRight ? (
-                    <Box sx={{ height: "60vh" }}>
-                      <DiffEditor
-                        originalText={
-                          revisionDialogLeft
-                            ? JSON.stringify(revisionDialogLeft.data, null, 2)
-                            : ""
-                        }
-                        modifiedText={JSON.stringify(
-                          revisionDialogRight.data,
-                          null,
-                          2,
-                        )}
-                      />
-                    </Box>
-                  ) : (
-                    <Alert severity="warning">No diff available</Alert>
-                  )
-                }
-              />
-            </Box>
-          </CardContent>
-        </Card>
+              >
+                <GradientCircularProgress />
+              </Box>
+            ) : revisionDialogRight ? (
+              <Box sx={{ height: "60vh" }}>
+                <DiffEditor
+                  originalText={
+                    revisionDialogLeft
+                      ? JSON.stringify(revisionDialogLeft.data, null, 2)
+                      : ""
+                  }
+                  modifiedText={JSON.stringify(
+                    revisionDialogRight.data,
+                    null,
+                    2,
+                  )}
+                />
+              </Box>
+            ) : (
+              <Alert severity="warning">No diff available</Alert>
+            )
+          }
+        />
       </Box>
     </Box>
   );

@@ -52,7 +52,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               : step.status === "done"
                 ? "success.main"
                 : "divider",
-          borderRadius: 2,
+          borderRadius: "var(--template-surface-radius)",
           overflow: "hidden",
         }}
       >
@@ -264,7 +264,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         py: 0.75,
                         border: 1,
                         borderColor: "divider",
-                        borderRadius: 1,
+                        borderRadius: "var(--template-surface-radius)",
                         bgcolor: "background.paper",
                       }}
                     >
@@ -359,7 +359,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 p: 1.5,
                 bgcolor: "error.main",
                 color: "error.contrastText",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 fontSize: 13,
                 fontFamily: "monospace",
                 whiteSpace: "pre-wrap",
@@ -381,7 +381,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 mt: 1.5,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 "&:before": { display: "none" },
               }}
             >

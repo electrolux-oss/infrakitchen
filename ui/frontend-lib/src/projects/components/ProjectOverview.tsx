@@ -6,17 +6,17 @@ import { UserAvatar } from "../../common";
 import { GetReferenceUrlValue } from "../../common/components/CommonField";
 import { CommonField } from "../../common/components/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { sameStringSet } from "../../common/utils";
+
 import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { GqlProject } from "../graphql";
@@ -122,10 +122,7 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
   );
 
   return (
-    <OverviewCard
-      name={project.name}
-      description={project.description || "No description"}
-    >
+    <OverviewCard name={project.name}>
       <CommonEditableField<string>
         name={"Name"}
         canEdit={canEdit}
@@ -137,7 +134,7 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
           <TextField
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Name"
+            slotProps={{ input: { "aria-label": "Name" } }}
             fullWidth
             margin="normal"
             autoFocus
@@ -149,27 +146,11 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
         name={"Status"}
         value={<StatusChip status={project.status} />}
         size={6}
-      />
-      <CommonEditableField<string>
-        name={"Description"}
+      />{" "}
+      <EditableDescriptionField
+        value={project.description}
         canEdit={canEdit}
-        value={project.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{project.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
       <CommonEditableField<string | null>
         name={"Workspace"}
@@ -194,7 +175,8 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
             showFields={["name", "workspace_provider"]}
             value={value}
             onChange={onChange}
-            label="Workspace"
+            ariaLabel="Workspace"
+            placeholder="Select workspace…"
           />
         )}
         size={6}
@@ -208,24 +190,11 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
         name={"Last Updated"}
         value={<RelativeTime date={project.updatedAt} />}
         size={6}
-      />
-      <CommonEditableField<string[]>
-        name={"Labels"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
         value={project.labels || []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
-        display={<Labels labels={project.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
       />
       <CommonEditableField<UserOption[]>
         name={"Owners"}
@@ -242,7 +211,8 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
           <MultiSelectEditor<UserOption>
             value={value}
             onChange={onChange}
-            label="Assigned Users"
+            ariaLabel="Owners"
+            placeholder="Select users…"
             helperText="Optional users allowed to edit this project"
             options={users}
             getOptionLabel={getUserLabel}

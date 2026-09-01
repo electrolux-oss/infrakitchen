@@ -70,7 +70,13 @@ const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
   return (
     <FormControl fullWidth margin="normal" error={!!error}>
       <FormLabel>{label}</FormLabel>
-      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
+      <Box
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+        }}
+      >
         <CodeMirror
           basicSetup={{ lineNumbers: true, foldGutter: false }}
           extensions={[jsonLang(), lintGutter()]}
@@ -193,16 +199,11 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
     <FormProvider {...methods}>
       <PageContainer
         title={`Edit Workflow ${workflow.id.slice(0, 8)}…`}
-        onBack={handleBack}
-        backAriaLabel="Back to workflow"
         bottomActions={
           <>
-            <Button variant="outlined" onClick={handleBack}>
-              Cancel
-            </Button>
+            <Button onClick={handleBack}>Cancel</Button>
             <Button
               variant="contained"
-              color="primary"
               onClick={handleSubmit(onSubmit)}
               disabled={isSubmitting || !canEdit}
             >

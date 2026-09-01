@@ -60,16 +60,14 @@ const UserCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Service Account User"
-      onBack={handleBack}
-      backAriaLabel="Back to users"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
+          <Button size="small" variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave)}
           >
             {saving ? "Saving..." : "Save"}

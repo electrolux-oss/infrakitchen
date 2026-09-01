@@ -4,7 +4,10 @@ import { GridSize } from "@mui/material";
 
 import { CommonField } from "../CommonField";
 
-import { InlineEditableField } from "./InlineEditableField";
+import {
+  InlineEditableField,
+  InlineEditableFieldLock,
+} from "./InlineEditableField";
 
 export interface CommonEditableFieldProps<T> {
   /** Field label shown above the value. */
@@ -34,6 +37,8 @@ export interface CommonEditableFieldProps<T> {
   placeholder?: string;
   /** Optional hook called when edit mode is opened. */
   onEditStart?: () => void;
+  /** Optional lock affordance for protected fields. */
+  lock?: InlineEditableFieldLock;
 }
 
 /**
@@ -54,6 +59,7 @@ export function CommonEditableField<T>({
   ariaLabel,
   placeholder,
   onEditStart,
+  lock,
 }: CommonEditableFieldProps<T>) {
   return (
     <CommonField
@@ -71,6 +77,7 @@ export function CommonEditableField<T>({
           ariaLabel={ariaLabel}
           placeholder={placeholder}
           onEditStart={onEditStart}
+          lock={lock}
         />
       }
     />
