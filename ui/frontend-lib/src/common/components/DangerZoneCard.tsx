@@ -82,7 +82,7 @@ export const DangerZoneCard = () => {
             }}
           >
             <WarningIcon color="error" />
-            <Typography color="error" variant="h5" component="h2">
+            <Typography color="error" variant="h6" component="h2">
               Danger Zone
             </Typography>
           </Box>

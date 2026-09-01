@@ -72,7 +72,7 @@ export const EntityCreateForm = <T extends FieldValues>({
         }}
       >
         <Box>
-          <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 0 }}>
+          <Typography variant="h6" component="h2" gutterBottom sx={{ mb: 0 }}>
             {title}
           </Typography>
           {showError && (

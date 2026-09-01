@@ -18,6 +18,7 @@ import {
 import { alpha } from "@mui/material/styles";
 
 import { useConfig, StyledTab, LabelInput } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
@@ -223,10 +224,10 @@ const IntegrationCreatePage = () => {
                 <providerObject.icon width="50" height="50" />
               )}
               <Box sx={{ ml: 2 }}>
-                <Typography variant="h5" component="h2">
+                <Typography variant="h6" component="h2">
                   {providerObject.name} Integration Setup
                 </Typography>
-                <Typography variant="body2">
+                <Typography sx={{ color: "text.secondary" }}>
                   {`Connect ${providerObject.name} to integrate with InfraKitchen.`}
                 </Typography>
               </Box>
@@ -236,23 +237,73 @@ const IntegrationCreatePage = () => {
         <CardContent>
           <Box
             sx={{
-              backgroundColor: (t) => alpha(t.palette.grey[600], 0.2),
-              p: "1rem 2rem",
-              m: "0 3rem",
+              backgroundColor: "action.hover",
+              p: 2,
+              mx: 3,
               borderRadius: "var(--template-surface-radius)",
+              // Code/commands inside instruction steps use the app's inline
+              // code style (same as the shared InlineCode component).
+              "& code": {
+                fontSize: "0.85em",
+                fontFamily: CODE_FONT_FAMILY,
+                backgroundColor: "var(--template-palette-action-hover)",
+                borderRadius: "var(--template-surface-radius)",
+                px: 0.75,
+                py: 0.25,
+                wordBreak: "break-all",
+              },
+              "& pre": {
+                fontFamily: CODE_FONT_FAMILY,
+                fontSize: "0.85em",
+                backgroundColor: "var(--template-palette-action-hover)",
+                borderRadius: "var(--template-surface-radius)",
+                margin: 0.5,
+                p: 1,
+                overflowX: "auto",
+                whiteSpace: "pre-wrap",
+              },
             }}
           >
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>How to connect to {providerObject.name}:</strong>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              How to connect to {providerObject.name}:
             </Typography>
-            <Typography variant="body2" component="div">
+            <Box
+              component="div"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+              }}
+            >
               {providerObject.instructions.map((line, index) => (
-                <div key={index}>
-                  {index + 1}.{" "}
-                  <span dangerouslySetInnerHTML={{ __html: line }} />
-                </div>
+                <Box key={index} sx={{ display: "flex", gap: 1.5 }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      flexShrink: 0,
+                      mt: 0.1,
+                      borderRadius: "50%",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "primary.main",
+                      color: "primary.contrastText",
+                      fontSize: "0.75rem",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
+                  <Box
+                    component="span"
+                    sx={{ alignSelf: "center" }}
+                    dangerouslySetInnerHTML={{ __html: line }}
+                  />
+                </Box>
               ))}
-            </Typography>
+            </Box>
             {providerObject.tokenLink && (
               <Link
                 href={providerObject.tokenLink}
@@ -268,7 +319,6 @@ const IntegrationCreatePage = () => {
       <Card
         sx={{
           width: "100%",
-          maxWidth: 760,
           minWidth: 320,
           border: "1px solid",
           borderColor: "divider",
@@ -315,8 +365,8 @@ const IntegrationCreatePage = () => {
                 {...field}
                 label="Description"
                 helperText={
-                  errors.name
-                    ? errors.name.message
+                  errors.description
+                    ? errors.description.message
                     : "Provide a short description"
                 }
                 fullWidth

@@ -46,6 +46,9 @@ export const inputsCustomizations: Components<Theme> = {
             style: {
               height: "2.25rem",
               padding: "8px 12px",
+              // MUI v9 sizes small buttons at 13px; keep them at the 14px
+              // body2 default like the rest of the UI.
+              fontSize: "0.875rem",
             },
           },
           {
@@ -414,6 +417,13 @@ export const inputsCustomizations: Components<Theme> = {
         padding: "8px",
         "& .MuiAutocomplete-option": dropdownItemStyle({ theme }),
       }),
+    },
+  },
+  MuiTextField: {
+    defaultProps: {
+      // Compact text fields by default; components opt into medium when they
+      // need a larger control.
+      size: "small",
     },
   },
   MuiInputBase: {

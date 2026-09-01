@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Difference, SwapHoriz } from "@mui/icons-material";
 import {
@@ -13,8 +13,6 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 
@@ -29,48 +27,6 @@ import {
   GqlRevisionShort,
   GqlRevision,
 } from "./graphql";
-
-// Counts added/removed lines between two texts using a longest-common-
-// subsequence walk. Kept local so the diff page needs no extra dependency.
-const countDiffStats = (original: string, modified: string) => {
-  const a = original.split("\n");
-  const b = modified.split("\n");
-  const n = a.length;
-  const m = b.length;
-
-  const dp: number[][] = Array.from({ length: n + 1 }, () =>
-    new Array(m + 1).fill(0),
-  );
-  for (let i = n - 1; i >= 0; i--) {
-    for (let j = m - 1; j >= 0; j--) {
-      dp[i][j] =
-        a[i] === b[j]
-          ? dp[i + 1][j + 1] + 1
-          : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
-
-  let i = 0;
-  let j = 0;
-  let added = 0;
-  let removed = 0;
-  while (i < n && j < m) {
-    if (a[i] === b[j]) {
-      i++;
-      j++;
-    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      removed++;
-      i++;
-    } else {
-      added++;
-      j++;
-    }
-  }
-  added += m - j;
-  removed += n - i;
-
-  return { added, removed };
-};
 
 export interface RevisionProps {
   resourceId: string;
@@ -92,8 +48,6 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [diffLoading, setDiffLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [view, setView] = useState<"unified" | "split">("unified");
-  const [showDiffOnly, setShowDiffOnly] = useState(false);
 
   const handleChangeLeft = (event: SelectChangeEvent) => {
     const val = event.target.value;
@@ -146,6 +100,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       setSelectedRevisionRight(nums[0]);
     }
   }, [revisions, resourceRevision]);
+
   useEffect(() => {
     if (!selectedRevisionLeft || !selectedRevisionRight) {
       setDiffLoading(false);
@@ -180,50 +135,9 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
       });
   }, [ikApi, resourceId, selectedRevisionLeft, selectedRevisionRight]);
 
-  const diffStats = useMemo(() => {
-    if (!leftRevision || !rightRevision) return null;
-    return countDiffStats(
-      JSON.stringify(leftRevision.data, null, 2),
-      JSON.stringify(rightRevision.data, null, 2),
-    );
-  }, [leftRevision, rightRevision]);
-
   if (initialLoading) return <GradientCircularProgress />;
   if (error) return <Alert severity="error">{error.toString()}</Alert>;
   if (!revisions.length) return <Alert severity="info">No revisions</Alert>;
-
-  const revisionSelect = (
-    side: "left" | "right",
-    value: number | "",
-    onChange: (event: SelectChangeEvent) => void,
-  ) => (
-    <FormControl size="small" sx={{ minWidth: 200 }}>
-      <InputLabel>{side === "left" ? "From" : "To"}</InputLabel>
-      <Select
-        label={side === "left" ? "From" : "To"}
-        variant="outlined"
-        value={String(value)}
-        onChange={onChange}
-        renderValue={(v) => {
-          const r = revisions.find((r) => String(r.revisionNumber) === v);
-          return r ? `v${r.revisionNumber} · ${getDateValue(r.createdAt)}` : v;
-        }}
-      >
-        {revisions.map((r) => (
-          <MenuItem key={r.id} value={String(r.revisionNumber)}>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                v{r.revisionNumber}
-              </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {getDateValue(r.createdAt)}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  );
 
   return (
     <Box
@@ -244,110 +158,135 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
         }}
       >
         <CardHeader
-          sx={{ px: 2, pt: 1.5, pb: 0.5 }}
+          sx={{ mt: 2, mb: 0, ml: 1 }}
           title={
             <Box
               sx={{
                 display: "flex",
-                flexDirection: { xs: "column", md: "row" },
-                alignItems: { xs: "flex-start", md: "center" },
-                gap: 1.5,
-                flexWrap: "wrap",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 2,
+                p: 1,
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  mr: 1,
-                }}
-              >
-                <Difference fontSize="small" />
-                <Typography
-                  variant="h6"
-                  component="span"
-                  sx={{ fontWeight: 600 }}
+              <Difference fontSize="small" sx={{ mt: 0.75 }} />
+              <FormControl>
+                <InputLabel>From</InputLabel>
+                <Select
+                  label="From"
+                  size="small"
+                  variant="outlined"
+                  value={String(selectedRevisionLeft)}
+                  onChange={handleChangeLeft}
+                  sx={{
+                    minWidth: 180,
+                    // Select's sx targets the input root element itself, so
+                    // the compact size must use a same-element selector.
+                    "&.MuiInputBase-root": {
+                      height: "32px !important",
+                      minHeight: 32,
+                      marginTop: "0 !important",
+                    },
+                    // Pin the selected value text to 14px (body2).
+                    "& .MuiSelect-select": { fontSize: "0.875rem" },
+                  }}
+                  renderValue={(v) => {
+                    const r = revisions.find(
+                      (r) => String(r.revisionNumber) === v,
+                    );
+                    return r
+                      ? `v${r.revisionNumber} - ${getDateValue(r.createdAt)}`
+                      : v;
+                  }}
                 >
-                  Revision Diff
-                </Typography>
-              </Box>
-              {revisionSelect("left", selectedRevisionLeft, handleChangeLeft)}
+                  {revisions.map((r) => (
+                    <MenuItem key={r.id} value={String(r.revisionNumber)}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                          }}
+                        >
+                          v{r.revisionNumber}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
+                          {getDateValue(r.createdAt)}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <IconButton
                 size="small"
                 onClick={handleSwap}
                 title="Swap revisions"
-                sx={{ flexShrink: 0 }}
+                sx={{ mt: 0.75 }}
               >
                 <SwapHoriz fontSize="small" />
               </IconButton>
-              {revisionSelect(
-                "right",
-                selectedRevisionRight,
-                handleChangeRight,
-              )}
-              <Box sx={{ flexGrow: 1 }} />
-              <ToggleButtonGroup
-                size="small"
-                exclusive
-                value={view}
-                onChange={(_, next) => {
-                  if (next) setView(next);
-                }}
-              >
-                <ToggleButton value="unified">Unified</ToggleButton>
-                <ToggleButton value="split">Split</ToggleButton>
-              </ToggleButtonGroup>
-              <ToggleButton
-                size="small"
-                value="changes"
-                selected={showDiffOnly}
-                onChange={() => setShowDiffOnly((prev) => !prev)}
-              >
-                Only changes
-              </ToggleButton>
+              <FormControl>
+                <InputLabel>To</InputLabel>
+                <Select
+                  label="To"
+                  size="small"
+                  variant="outlined"
+                  value={String(selectedRevisionRight)}
+                  onChange={handleChangeRight}
+                  sx={{
+                    minWidth: 180,
+                    // Select's sx targets the input root element itself, so
+                    // the compact size must use a same-element selector.
+                    "&.MuiInputBase-root": {
+                      height: "32px !important",
+                      minHeight: 32,
+                      marginTop: "0 !important",
+                    },
+                    // Pin the selected value text to 14px (body2).
+                    "& .MuiSelect-select": { fontSize: "0.875rem" },
+                  }}
+                  renderValue={(v) => {
+                    const r = revisions.find(
+                      (r) => String(r.revisionNumber) === v,
+                    );
+                    return r
+                      ? `v${r.revisionNumber} - ${getDateValue(r.createdAt)}`
+                      : v;
+                  }}
+                >
+                  {revisions.map((r) => (
+                    <MenuItem key={r.id} value={String(r.revisionNumber)}>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                          }}
+                        >
+                          v{r.revisionNumber}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "text.secondary",
+                          }}
+                        >
+                          {getDateValue(r.createdAt)}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
           }
         />
-        {leftRevision && rightRevision && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              px: 2,
-              py: 0.75,
-              borderBottom: 1,
-              borderColor: "divider",
-              bgcolor: "background.default",
-            }}
-          >
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              v{leftRevision.revisionNumber} → v{rightRevision.revisionNumber}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {getDateValue(leftRevision.createdAt)} →{" "}
-              {getDateValue(rightRevision.createdAt)}
-            </Typography>
-            <Box sx={{ flexGrow: 1 }} />
-            {diffStats && (
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "success.main", fontWeight: 600 }}
-                >
-                  +{diffStats.added}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "error.main", fontWeight: 600 }}
-                >
-                  −{diffStats.removed}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        )}
         <CardContent
           sx={{
             p: 1,
@@ -381,8 +320,6 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                     ? JSON.stringify(rightRevision.data, null, 2)
                     : "{}"
                 }
-                splitView={view === "split"}
-                showDiffOnly={showDiffOnly}
               />
             </Box>
           ) : (

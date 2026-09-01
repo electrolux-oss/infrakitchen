@@ -96,7 +96,7 @@ export function AzureDevopsRepoMetadata(props: AzureDevopsRepoMetadataProps) {
       }}
     >
       <Typography
-        variant="h4"
+        variant="h6"
         component="h1"
         gutterBottom
         sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}

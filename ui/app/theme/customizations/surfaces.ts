@@ -19,10 +19,14 @@ export const surfacesCustomizations: Components<Theme> = {
       // otherwise sizes the body element with body1 (16px), which unstyled
       // text inherits. Keep only the size-related props so the default
       // body rule (color, background, margin) stays intact.
-      body: ({ theme }) => ({
-        fontSize: theme.typography.body2.fontSize,
-        lineHeight: theme.typography.body2.lineHeight,
-      }),
+      //
+      // Note: MuiCssBaseline styleOverrides must be plain objects — callback
+      // functions are silently dropped (unlike other components' overrides),
+      // so body2's literals are duplicated here instead of computed.
+      body: {
+        fontSize: "0.875rem",
+        lineHeight: 1.43,
+      },
     },
   },
   MuiAccordion: {
@@ -134,8 +138,10 @@ export const surfacesCustomizations: Components<Theme> = {
         padding: 0,
         marginBottom: 24,
       },
+      // h6-sized (20px): CardHeader's own default title variant (h5 / 24px)
+      // can't be overridden via theme defaultProps, so size it here instead.
       title: {
-        fontSize: "1.2rem",
+        fontSize: "1.25rem",
         fontWeight: 600,
       },
       subheader: {

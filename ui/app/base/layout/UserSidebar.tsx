@@ -121,7 +121,6 @@ export default function UserSidebar() {
           />
           <Box sx={{ minWidth: 0 }}>
             <Typography
-              variant="body1"
               sx={{
                 lineHeight: 1.3,
                 overflow: "hidden",

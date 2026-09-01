@@ -1,15 +1,8 @@
-import { useNavigate } from "react-router";
+import { Box, Typography, Container } from "@mui/material";
 
-import { Icon } from "@iconify/react";
-import { Box, Button, Typography, Container, Paper } from "@mui/material";
-
-import { useConfig } from "../../common";
 import { InfrakitchenLogo } from "../../icons";
 
 export const NotFoundPage = () => {
-  const { linkPrefix } = useConfig();
-  const navigate = useNavigate();
-
   return (
     <Container maxWidth="md">
       <Box
@@ -25,7 +18,9 @@ export const NotFoundPage = () => {
         <Box
           sx={{
             display: { xs: "none", lg: "flex" },
-            "& svg": { width: 140, height: 140 },
+            // InfrakitchenLogo hardcodes mr: 2 + a white border in its own sx;
+            // reset them here so the icon sits perfectly centered.
+            "& svg": { width: 80, height: 80, mr: 0, border: "none" },
             flexShrink: 0,
             marginBottom: "24px",
           }}
@@ -33,7 +28,7 @@ export const NotFoundPage = () => {
           <InfrakitchenLogo />
         </Box>
         <Typography
-          variant="h2"
+          variant="h4"
           component="h1"
           gutterBottom
           sx={{
@@ -44,12 +39,7 @@ export const NotFoundPage = () => {
           404
         </Typography>
 
-        <Typography variant="h4" component="h2" gutterBottom>
-          Lost in space?
-        </Typography>
-
         <Typography
-          variant="body1"
           sx={{
             color: "text.secondary",
             mb: 4,
@@ -57,40 +47,10 @@ export const NotFoundPage = () => {
           }}
         >
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          <br />
           Don&apos;t worry, even the best explorers get lost sometimes.
         </Typography>
 
-        <Paper
-          variant="outlined"
-          sx={{
-            p: 3,
-            width: "100%",
-            maxWidth: 450,
-            borderRadius: "var(--template-surface-radius)",
-            bgcolor: "action.hover",
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: "600",
-              mb: 2,
-            }}
-          >
-            Let&apos;s get you back on track:
-          </Typography>
-
-          <Button
-            variant="contained"
-            size="large"
-            disableElevation
-            startIcon={<Icon icon="solar:home-2-bold" />}
-            onClick={() => navigate(`${linkPrefix}`)}
-            sx={{ px: 4, borderRadius: "var(--template-surface-radius)" }}
-          >
-            Go to Dashboard
-          </Button>
-        </Paper>
       </Box>
     </Container>
   );

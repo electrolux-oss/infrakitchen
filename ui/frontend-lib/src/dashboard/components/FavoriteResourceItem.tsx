@@ -59,10 +59,8 @@ export const FavoriteResourceItem = ({
       }}
     >
       <Typography
-        variant="body2"
         title={resource.name}
         sx={{
-          fontWeight: 600,
           flex: 1,
           minWidth: 0,
           overflow: "hidden",
@@ -73,15 +71,8 @@ export const FavoriteResourceItem = ({
         {resource.name}
       </Typography>
       {resource.updatedAt && (
-        <Typography
-          variant="caption"
-          color="text.disabled"
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          <RelativeTime
-            date={resource.updatedAt}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+        <Typography color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
+          <RelativeTime date={resource.updatedAt} sx={{ display: "flex" }} />
         </Typography>
       )}
       {(resource.status || resource.state) && (

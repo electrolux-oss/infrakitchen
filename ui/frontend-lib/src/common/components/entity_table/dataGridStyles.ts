@@ -1,44 +1,6 @@
 import { alpha } from "@mui/material/styles";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-// Single source of truth for the slim DataGrid chrome (header/footer).
-// DataGrid sizes its header from the columnHeaderHeight PROP, not CSS, so every
-// grid must pass this value — reference the constant instead of a magic number.
-export const dataGridHeaderHeight = 36;
-
-// Slim footer shared by every DataGrid. Referenced directly by grids that want
-// only the footer slimming, and spread into `dataGridSx` for the full theme.
-// The footer container's own `min-height` is not enough: the pagination
-// toolbar lays out at the height of its tallest child (medium IconButtons +
-// select), so the controls are compacted here too.
-export const dataGridSlimFooterSx = {
-  "& .MuiDataGrid-footerContainer": {
-    minHeight: "36px",
-    borderTop: "1px solid",
-    borderTopColor: "divider",
-  },
-  "& .MuiTablePagination-toolbar": {
-    minHeight: "36px",
-    paddingTop: 0,
-    paddingBottom: 0,
-    // The toolbar's height is driven by its tallest child; the row-count
-    // labels inherit MUI's 14px vertical margins, which alone stretch the
-    // footer past the compact target even with a 36px min-height.
-    "& .MuiTablePagination-selectLabel,\n      & .MuiTablePagination-displayedRows":
-      {
-        marginTop: 0,
-        marginBottom: 0,
-      },
-    "& .MuiTablePagination-actions .MuiIconButton-root": {
-      paddingTop: "4px",
-      paddingBottom: "4px",
-      "& .MuiSvgIcon-root": {
-        fontSize: "1.125rem",
-      },
-    },
-  },
-} as const;
-
 // Centralized "flush" table styling for MUI DataGrid.
 // Every entity table shares this one definition instead of inlining ad-hoc sx.
 export const dataGridSx: SxProps<Theme> = {
@@ -113,8 +75,12 @@ export const dataGridSx: SxProps<Theme> = {
     textOverflow: "clip",
     lineHeight: 1.4,
     wordBreak: "break-word",
-  }, // Slim footer: compact pagination toolbar with no extraneous vertical slack.
-  ...dataGridSlimFooterSx,
+  },  // Footer: keep the flush control look (no focus boxes/swallows), default
+  // MUI heights.
+  "& .MuiDataGrid-footerContainer": {
+    borderTop: "1px solid",
+    borderTopColor: "divider",
+  },
   "& .MuiTablePagination-root": {
     "& .MuiButtonBase-root": {
       border: "none",
@@ -160,7 +126,5 @@ export const dataGridDefaultProps = {
   // Column sorting is available via the header sort icons, so the "More"
   // column-menu button (which would only duplicate the sort actions) is hidden.
   disableColumnMenu: true,
-  // Slim header: uses the shared height so the value lives in exactly one place.
-  columnHeaderHeight: dataGridHeaderHeight,
   getRowHeight: () => "auto" as const,
 };

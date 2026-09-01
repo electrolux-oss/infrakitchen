@@ -59,7 +59,7 @@ export default function PageContainer(props: PageContainerProps) {
             <Box sx={{ display: "flex", flexDirection: "column" }}>
               {title ? (
                 <Typography
-                  variant="h3"
+                  variant="h5"
                   component="h1"
                   sx={{ fontWeight: 600 }}
                 >
@@ -67,14 +67,14 @@ export default function PageContainer(props: PageContainerProps) {
                 </Typography>
               ) : null}
               {description ? (
-                <Box
+                <Typography
                   sx={{
                     color: "text.secondary",
                     mt: 1,
                   }}
                 >
                   {description}
-                </Box>
+                </Typography>
               ) : null}
             </Box>
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>

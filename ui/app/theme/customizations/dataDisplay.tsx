@@ -383,6 +383,11 @@ export const dataDisplayCustomizations: Components<Theme> = {
     },
   },
   MuiSelect: {
+    defaultProps: {
+      // Compact dropdowns by default; components only opt into medium when
+      // they need a larger control.
+      size: "small",
+    },
     styleOverrides: {
       icon: ({ theme }) => ({
         color: (theme.vars || theme).palette.text.secondary,

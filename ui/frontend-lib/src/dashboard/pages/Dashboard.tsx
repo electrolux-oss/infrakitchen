@@ -40,7 +40,7 @@ export const DashboardPage = () => {
           <Box>
             {" "}
             <Typography
-              variant="h3"
+              variant="h5"
               component="h1"
               gutterBottom
               sx={{ fontWeight: 600 }}
@@ -70,12 +70,12 @@ export const DashboardPage = () => {
       title={
         <>
           <Typography
-            variant="h4"
+            variant="h5"
             component="h1"
             color="primary"
             sx={{ fontWeight: 600 }}
           >
-            Welcome to InfraKitchen
+            Dashboard
           </Typography>
         </>
       }
