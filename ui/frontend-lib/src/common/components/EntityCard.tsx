@@ -158,7 +158,6 @@ export const EntityCard = ({
       {isRecentlyUpdated && (
         <Chip
           label="Updated"
-          size="small"
           variant="filled"
           sx={(theme) => ({
             ...solidChipColorSx("success")(theme),
@@ -204,7 +203,6 @@ export const EntityCard = ({
             {chip && (
               <Chip
                 label={chip.toUpperCase()}
-                size="small"
                 variant="filled"
                 sx={(theme) => ({
                   ...solidChipColorSx(chipColor)(theme),
@@ -234,7 +232,6 @@ export const EntityCard = ({
             <Chip
               key={label}
               label={label}
-              size="small"
               sx={softChipColorSx("default")}
             />
           ))}
@@ -255,7 +252,6 @@ export const EntityCard = ({
               permissionAction="write"
             >
               <Button
-                size="small"
                 variant="contained"
                 onClick={handleCreateClick}
                 sx={{ flex: 1 }}

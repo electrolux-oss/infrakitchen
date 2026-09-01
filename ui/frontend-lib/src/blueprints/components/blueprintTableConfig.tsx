@@ -46,7 +46,6 @@ export const blueprintColumns: EntityTableColumn[] = [
             <Chip
               key={t.id}
               label={t.name}
-              size="small"
               variant="filled"
               sx={(theme) =>
                 solidChipColorSx("default", undefined, undefined, true)(theme)
@@ -56,7 +55,6 @@ export const blueprintColumns: EntityTableColumn[] = [
           {templates.length > 3 && (
             <Chip
               label={`+${templates.length - 3}`}
-              size="small"
               variant="filled"
               sx={(theme) =>
                 solidChipColorSx("default", undefined, undefined, true)(theme)

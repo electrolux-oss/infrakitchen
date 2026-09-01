@@ -107,7 +107,6 @@ export const WorkflowResolvedVariables = ({
                 label={`${group.steps.length} step${
                   group.steps.length === 1 ? "" : "s"
                 }`}
-                size="small"
                 variant="outlined"
               />
             </Box>
@@ -169,7 +168,6 @@ const StepVariablesBlock = ({
         {showPosition && (
           <Chip
             label={`#${step.position + 1}`}
-            size="small"
             color="primary"
             sx={{ fontWeight: 700, minWidth: 36 }}
           />

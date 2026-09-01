@@ -46,7 +46,6 @@ const VersionLifecycleStateChip = ({
     <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
       <Chip
         label={normalizedState}
-        size="small"
         sx={(theme) => ({
           ...solidChipColorSx(color)(theme),
           textTransform: "uppercase",

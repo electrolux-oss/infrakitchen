@@ -23,7 +23,6 @@ export const WorkspacesPage = () => {
           permissionAction="write"
         >
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}workspaces/create`)}
             startIcon={<AddIcon />}

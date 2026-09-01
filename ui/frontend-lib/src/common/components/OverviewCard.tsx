@@ -56,7 +56,6 @@ export const OverviewCard = (props: OverviewCardProps) => {
               {chip && (
                 <Chip
                   label={chip.toUpperCase()}
-                  size="small"
                   variant="filled"
                   sx={softChipColorSx(chipColor)}
                 />

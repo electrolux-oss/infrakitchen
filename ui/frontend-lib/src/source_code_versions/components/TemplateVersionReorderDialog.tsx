@@ -465,7 +465,6 @@ export const TemplateVersionReorderDialog = ({
                     )}
                     <TextField
                       select
-                      size="small"
                       label="Lifecycle State"
                       value={
                         item.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN

@@ -98,7 +98,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("dryrun") && (
         <Tooltip title="Preview what will change before applying">
           <Button
-            size="small"
             variant="outlined"
             onClick={() => changeDialog("dryrun")}
             startIcon={<ContentPasteIcon />}
@@ -110,7 +109,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("dryrun") &&
         actions.includes("has_temporary_state") && (
           <Button
-            size="small"
             variant="outlined"
             onClick={() => changeDialog("dryrun_with_temp_state")}
             startIcon={<PendingActionsIcon />}
@@ -121,7 +119,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("execute") && (
         <Tooltip title="Apply changes to infrastructure">
           <Button
-            size="small"
             variant="outlined"
             onClick={() => changeDialog("execute")}
             startIcon={<UpdateIcon />}
@@ -132,7 +129,6 @@ export function EntityActions(props: EntityActionsProps) {
       )}
       {actions.includes("retry") && (
         <Button
-          size="small"
           variant="outlined"
           onClick={() => changeDialog("retry")}
         >
@@ -142,7 +138,6 @@ export function EntityActions(props: EntityActionsProps) {
 
       {actions.includes("sync") && (
         <Button
-          size="small"
           variant="outlined"
           onClick={() => changeDialog("sync")}
           startIcon={<SyncIcon />}
@@ -153,7 +148,6 @@ export function EntityActions(props: EntityActionsProps) {
 
       {actions.includes("recreate") && (
         <Button
-          size="small"
           variant="outlined"
           onClick={() => changeDialog("recreate")}
           startIcon={<RedoIcon />}
@@ -163,7 +157,6 @@ export function EntityActions(props: EntityActionsProps) {
       )}
       {actions.includes("enable") && (
         <Button
-          size="small"
           variant="outlined"
           color="success"
           onClick={() => changeDialog("enable")}
@@ -174,7 +167,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("edit") && showEditAction && (
         <Tooltip title="Edit configuration">
           <Button
-            size="small"
             variant="outlined"
             onClick={() =>
               navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
@@ -188,7 +180,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("download") && (
         <Tooltip title="Download source code for debugging">
           <Button
-            size="small"
             variant="outlined"
             onClick={() => handleDownloadClick()}
             loading={isLoading}

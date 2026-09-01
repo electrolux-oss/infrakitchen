@@ -77,7 +77,6 @@ export const SecretConfigurationField = ({
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
         <Button
-          size="small"
           variant="outlined"
           onClick={openDialog}
           disabled={!canEdit}

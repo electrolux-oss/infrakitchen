@@ -89,14 +89,12 @@ export const TemplateCreatePage = () => {
       bottomActions={
         <>
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}templates`)}
           >
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(onSubmit)}
           >

@@ -240,7 +240,6 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Chip
                     label={idx + 1}
-                    size="small"
                     color="primary"
                     sx={{ fontWeight: 700, minWidth: 28 }}
                   />

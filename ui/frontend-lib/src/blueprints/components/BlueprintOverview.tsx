@@ -124,7 +124,6 @@ export const BlueprintOverview = () => {
                 <Chip
                   key={t.id}
                   label={t.name}
-                  size="small"
                   variant="outlined"
                   color="warning"
                   icon={<StorageIcon />}
@@ -145,7 +144,6 @@ export const BlueprintOverview = () => {
                 <Chip
                   key={c.id}
                   label={c.name}
-                  size="small"
                   variant="outlined"
                   color="secondary"
                   icon={<TuneIcon />}

@@ -137,7 +137,6 @@ export function WiringCanvasSidebar({
           Available Templates
         </Typography>
         <TextField
-          size="small"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -206,7 +205,6 @@ export function WiringCanvasSidebar({
             {t.abstract && (
               <Chip
                 label="Abstract"
-                size="small"
                 color="warning"
                 variant="outlined"
                 sx={{
@@ -293,7 +291,6 @@ export function WiringCanvasSidebar({
                 {t.abstract && (
                   <Chip
                     label="Abstract"
-                    size="small"
                     color="warning"
                     variant="outlined"
                     sx={{
@@ -340,7 +337,6 @@ export function WiringCanvasSidebar({
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5, mt: 1 }}>
           <Button
-            size="small"
             variant="outlined"
             color="secondary"
             startIcon={<TextFieldsIcon />}
@@ -350,7 +346,6 @@ export function WiringCanvasSidebar({
             String
           </Button>
           <Button
-            size="small"
             variant="outlined"
             color="secondary"
             startIcon={<NumbersIcon />}

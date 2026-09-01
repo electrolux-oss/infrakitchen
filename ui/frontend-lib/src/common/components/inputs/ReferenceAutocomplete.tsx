@@ -185,7 +185,7 @@ export const ReferenceAutocomplete = ({
           val.map((option, index) => {
             const { key, ...rest } = getItemProps({ index });
             return (
-              <Chip key={key} label={option.label} size="small" {...rest} />
+              <Chip key={key} label={option.label} {...rest} />
             );
           })
         }

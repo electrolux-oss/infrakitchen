@@ -84,7 +84,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         {displayOrder != null && (
           <Chip
             label={displayOrder}
-            size="small"
             sx={{
               fontWeight: 700,
               minWidth: 24,
@@ -111,7 +110,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         {data.status && !canRemove && (
           <Chip
             label={data.status.replace("_", " ").toUpperCase()}
-            size="small"
             color={STATUS_CHIP_COLOR[data.status]}
             sx={{ fontWeight: 600, fontSize: 10, height: 20 }}
           />
@@ -133,7 +131,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         <Box sx={{ px: 1.5, pt: 1 }}>
           <Chip
             label="External"
-            size="small"
             variant="outlined"
             color="warning"
           />
@@ -230,7 +227,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                 />
                 <Chip
                   label={input}
-                  size="small"
                   variant="outlined"
                   color="info"
                   sx={{ fontSize: 11 }}
@@ -275,7 +271,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               >
                 <Chip
                   label={output}
-                  size="small"
                   variant="outlined"
                   color="success"
                   sx={{ fontSize: 11 }}

@@ -26,7 +26,6 @@ export const SecretsPage = () => {
           permissionAction="write"
         >
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}secrets/create`)}
             startIcon={<AddIcon />}

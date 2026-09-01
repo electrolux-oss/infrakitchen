@@ -115,7 +115,6 @@ const getSourceCodeVariables = (
                   {variable.sensitive && (
                     <Chip
                       label="sensitive"
-                      size="small"
                       sx={solidChipColorSx("secondary")}
                     />
                   )}
@@ -435,7 +434,6 @@ export const TemplateConfiguration = ({
               </Typography>
               <Chip
                 label={String(resource.variables?.length ?? 0)}
-                size="small"
                 sx={solidChipColorSx("info")}
               />
               {hasPendingChange("variables") && <PendingChangeBadge />}
@@ -463,7 +461,6 @@ export const TemplateConfiguration = ({
             </Typography>
             <Chip
               label={String(resource.outputs?.length ?? 0)}
-              size="small"
               sx={solidChipColorSx("info")}
             />
           </Box>

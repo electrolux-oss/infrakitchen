@@ -99,7 +99,6 @@ export const WorkflowOverview = () => {
                 <Chip
                   key={t.id}
                   label={t.name}
-                  size="small"
                   variant="outlined"
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />

@@ -426,7 +426,6 @@ export const BatchOperationEntities = ({
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
           <Button
-            size="small"
             variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
@@ -470,7 +469,6 @@ export const BatchOperationEntities = ({
           </Button>
           <Button
             variant="outlined"
-            size="small"
             onClick={() => handleOpenActionDialog("dryrun")}
             disabled={selectedEntityIds.length === 0}
           >
@@ -478,7 +476,6 @@ export const BatchOperationEntities = ({
           </Button>
           <Button
             variant="contained"
-            size="small"
             onClick={() => handleOpenActionDialog("execute")}
             disabled={selectedEntityIds.length === 0}
           >
@@ -612,7 +609,6 @@ export const BatchOperationEntities = ({
                       sx={{ alignItems: "center" }}
                     >
                       <Chip
-                        size="small"
                         label={status}
                         color={statusColor}
                         variant={status === "pending" ? "outlined" : "filled"}

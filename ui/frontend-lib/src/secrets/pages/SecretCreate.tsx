@@ -136,17 +136,15 @@ const SecretCreatePageInner = () => {
       bottomActions={
         <>
           <Button
-            size="small"
             variant="outlined"
             onClick={handleSubmit(handleValidation)}
           >
             Test Connection
           </Button>
-          <Button size="small" variant="outlined" onClick={handleBack}>
+          <Button variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(handleSave)}
           >

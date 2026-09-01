@@ -45,7 +45,6 @@ const SourceCodeVersionPageContent = () => {
               permissionAction="write"
             >
               <Button
-                size="small"
                 variant="outlined"
                 startIcon={<ReorderIcon />}
                 onClick={() => setDialogOpen(true)}

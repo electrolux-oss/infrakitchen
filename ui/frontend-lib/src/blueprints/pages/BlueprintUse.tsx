@@ -553,14 +553,12 @@ export const BlueprintUsePage = () => {
       bottomActions={
         <>
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}blueprints/${blueprint_id}`)}
           >
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(onSubmit)}
             disabled={!canSubmit}
@@ -788,7 +786,6 @@ export const BlueprintUsePage = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Chip
                     label={idx + 1}
-                    size="small"
                     color="primary"
                     sx={{ fontWeight: 700, minWidth: 28 }}
                   />
@@ -796,7 +793,6 @@ export const BlueprintUsePage = () => {
                   {Object.keys(wired).length > 0 && (
                     <Chip
                       label={`${Object.keys(wired).length} wired`}
-                      size="small"
                       color="info"
                       variant="outlined"
                       icon={<LinkIcon />}

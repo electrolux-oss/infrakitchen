@@ -75,11 +75,10 @@ const SourceCodeCreatePageInner = () => {
       title="Import Code Repository"
       bottomActions={
         <>
-          <Button size="small" variant="outlined" onClick={handleBack}>
+          <Button variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(handleSave)}
           >

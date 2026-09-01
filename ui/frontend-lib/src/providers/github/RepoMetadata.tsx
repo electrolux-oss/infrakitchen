@@ -230,7 +230,7 @@ export function GithubRepoMetadata(props: GithubRepoMetadataProps) {
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
             {metadata.topics.map((topic) => (
-              <Chip key={topic} label={topic} size="small" />
+              <Chip key={topic} label={topic} />
             ))}
           </Box>
         </Box>

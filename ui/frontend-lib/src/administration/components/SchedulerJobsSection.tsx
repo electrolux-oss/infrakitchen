@@ -269,7 +269,6 @@ export const SchedulerJobsSection = () => {
                         />
                         <Stack direction="row" spacing={1}>
                           <Button
-                            size="small"
                             variant="contained"
                             onClick={handleUpdateSchedulerJob}
                             disabled={updatingSchedulerJob}
@@ -277,7 +276,6 @@ export const SchedulerJobsSection = () => {
                             Save
                           </Button>
                           <Button
-                            size="small"
                             variant="outlined"
                             onClick={handleCancelEditSchedulerJob}
                             disabled={updatingSchedulerJob}
@@ -299,14 +297,12 @@ export const SchedulerJobsSection = () => {
                         </Typography>
                         <Stack direction="row" spacing={1}>
                           <Button
-                            size="small"
                             variant="outlined"
                             onClick={() => handleStartEditSchedulerJob(job)}
                           >
                             Edit
                           </Button>
                           <Button
-                            size="small"
                             color="error"
                             variant="outlined"
                             startIcon={<DeleteIcon />}
@@ -385,7 +381,6 @@ export const SchedulerJobsSection = () => {
                         <Box>
                           <Button
                             variant="outlined"
-                            size="small"
                             onClick={() => {
                               setNewSchedulerScript(example.script);
                               setNewSchedulerCron(example.cron);

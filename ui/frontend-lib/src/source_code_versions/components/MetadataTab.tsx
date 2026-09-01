@@ -172,7 +172,6 @@ export const MetadataTab = ({
           {!hasVersion && (
             <Button
               variant="contained"
-              size="small"
               onClick={handleSave}
               disabled={!draftTemplate || !draftFolder || loading}
             >
@@ -206,7 +205,6 @@ export const MetadataTab = ({
         {entity?.status === "error" && (
           <Button
             variant="contained"
-            size="small"
             onClick={(e) => {
               e.stopPropagation();
               triggerSync();
@@ -246,7 +244,6 @@ export const MetadataTab = ({
                   <Button
                     variant="outlined"
                     color="error"
-                    size="small"
                     onClick={(e) => {
                       if (e.metaKey || e.ctrlKey) {
                         window.open(
@@ -278,7 +275,6 @@ export const MetadataTab = ({
                   <Button
                     variant="outlined"
                     color="error"
-                    size="small"
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={
                       entity.status !== ENTITY_STATUS.DISABLED ||

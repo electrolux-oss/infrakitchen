@@ -118,7 +118,6 @@ export function GithubPullRequestsList(props: GithubPullRequestsListProps) {
                 <Chip
                   label={pr.state}
                   color={pr.state === "open" ? "success" : "error"}
-                  size="small"
                   sx={{ mr: 1 }}
                 />
                 <Typography

@@ -121,7 +121,6 @@ export function AzureDevopsPullRequestsList(
                 <Chip
                   label={pr.status}
                   color={pr.status === "active" ? "success" : "error"}
-                  size="small"
                   sx={{ mr: 1 }}
                 />
                 <Typography

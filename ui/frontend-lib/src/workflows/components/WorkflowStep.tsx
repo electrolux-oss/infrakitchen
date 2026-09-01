@@ -72,7 +72,6 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={step.position + 1}
-              size="small"
               color="primary"
               sx={{ fontWeight: 700, minWidth: 28 }}
             />
@@ -86,7 +85,6 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             {step.template?.abstract && (
               <Chip
                 label="Abstract"
-                size="small"
                 color="warning"
                 variant="outlined"
                 sx={{ fontWeight: 600 }}
@@ -288,7 +286,6 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         {resource.template?.abstract && (
                           <Chip
                             label="Abstract"
-                            size="small"
                             color="warning"
                             variant="outlined"
                             sx={{

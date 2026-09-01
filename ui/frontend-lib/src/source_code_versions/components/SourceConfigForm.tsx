@@ -169,18 +169,16 @@ export const SourceConfigForm = (props: {
           >
             {configName}
           </Typography>
-          <Chip label={configType} size="small" variant="outlined" />
+          <Chip label={configType} variant="outlined" />
           {required ? (
             <Chip
               label="required"
-              size="small"
               color="warning"
               variant="outlined"
             />
           ) : (
             <Chip
               label="optional"
-              size="small"
               color="info"
               variant="outlined"
             />
@@ -188,7 +186,6 @@ export const SourceConfigForm = (props: {
           {validationSummary && (
             <Chip
               label={validationSummary}
-              size="small"
               color="success"
               variant="outlined"
             />
@@ -196,7 +193,6 @@ export const SourceConfigForm = (props: {
           {restricted && (
             <Chip
               label="restricted"
-              size="small"
               color="error"
               variant="outlined"
             />
@@ -204,7 +200,6 @@ export const SourceConfigForm = (props: {
           {sensitive && (
             <Chip
               label="sensitive"
-              size="small"
               color="secondary"
               variant="outlined"
             />
@@ -316,7 +311,6 @@ export const SourceConfigForm = (props: {
                           {...params}
                           label="Options"
                           variant="outlined"
-                          size="small"
                           error={!!errors?.options}
                           helperText={
                             errors?.options

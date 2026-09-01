@@ -59,7 +59,6 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
           <Button
             variant="outlined"
             color="success"
-            size="small"
             startIcon={<CheckIcon />}
             onClick={() => handleDeletePermission()}
             sx={{ textTransform: "none", fontWeight: "bold" }}
@@ -70,7 +69,6 @@ export const PermissionActionButton = (props: DeletePermissionButtonProps) => {
           <Button
             variant="outlined"
             color="error"
-            size="small"
             startIcon={<CloseIcon />}
             onClick={handleCancelDelete}
             sx={{ textTransform: "none", fontWeight: "bold" }}

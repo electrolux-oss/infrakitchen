@@ -157,7 +157,6 @@ function ProjectHeatMapTile({
       >
         <Chip
           label={`${project.score}%`}
-          size="small"
           color={scoreColor}
           variant="filled"
         />
@@ -229,7 +228,6 @@ function ProjectHeatMapTile({
         {project.noGolden > 0 && (
           <Chip
             label={`${project.noGolden} no golden`}
-            size="small"
             variant="outlined"
             sx={{ gridColumn: "1 / -1", justifyContent: "flex-start" }}
           />
@@ -259,7 +257,6 @@ export const GoldenStateWidget = ({
           <Chip
             label={`${goldenStateReport.overallScore}%`}
             color={getScoreChipColor(goldenStateReport.overallScore)}
-            size="small"
             sx={{ fontWeight: 700, ml: "auto" }}
           />
         ) : null}
@@ -330,19 +327,16 @@ export const GoldenStateWidget = ({
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
               <Chip
                 label="90-100%"
-                size="small"
                 color="success"
                 variant="outlined"
               />
               <Chip
                 label="70-89%"
-                size="small"
                 color="warning"
                 variant="outlined"
               />
               <Chip
                 label="0-69%"
-                size="small"
                 color="error"
                 variant="outlined"
               />

@@ -105,7 +105,6 @@ export const AutocompleteSelect = ({
               <Chip
                 key={key}
                 label={getOptionLabel(option)}
-                size="small"
                 {...rest}
               />
             );

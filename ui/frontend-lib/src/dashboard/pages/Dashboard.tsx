@@ -82,7 +82,6 @@ export const DashboardPage = () => {
       description="A quick overview of your infrastructure and recent activities"
       actions={
         <Button
-          size="small"
           variant="outlined"
           startIcon={
             refreshing ? <CircularProgress size={16} /> : <RefreshIcon />

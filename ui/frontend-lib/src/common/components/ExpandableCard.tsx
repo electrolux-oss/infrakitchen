@@ -182,7 +182,6 @@ const ExpandableCard = ({
                     <Chip
                       key={label}
                       label={label}
-                      size="small"
                       variant="filled"
                       sx={softChipColorSx("default")}
                     />

@@ -98,7 +98,6 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
 
         {canEdit && (
           <TextField
-            size="small"
             label="Name"
             value={data.name ?? ""}
             onChange={(e) => data.onUpdate?.(data.constantId!, e.target.value)}
@@ -110,7 +109,6 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
 
         {canEdit && (
           <TextField
-            size="small"
             label="Default Value"
             type={data.constantType === "number" ? "number" : "text"}
             value={data.defaultValue ?? ""}
@@ -137,7 +135,6 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
               >
                 <Chip
                   label={output}
-                  size="small"
                   variant="outlined"
                   color="secondary"
                 />
@@ -166,7 +163,6 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
           >
             <Chip
               label={valueLabel}
-              size="small"
               variant="outlined"
               color="secondary"
             />

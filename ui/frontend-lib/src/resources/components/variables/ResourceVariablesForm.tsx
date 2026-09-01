@@ -76,7 +76,6 @@ export const ResourceVariableRow = ({
 
         <Chip
           label={variable.type}
-          size="small"
           color="default"
           sx={{
             fontWeight: "bold",
@@ -84,15 +83,14 @@ export const ResourceVariableRow = ({
           }}
         />
         {isNew && (
-          <Chip label="Added" size="small" color="info" sx={{ ml: 1 }} />
+          <Chip label="Added" color="info" sx={{ ml: 1 }} />
         )}
         {isDeleted && (
-          <Chip label="Deleted" size="small" color="warning" sx={{ ml: 1 }} />
+          <Chip label="Deleted" color="warning" sx={{ ml: 1 }} />
         )}
         {validationSummary && (
           <Chip
             label={validationSummary}
-            size="small"
             color="success"
             variant="outlined"
             sx={{ ml: 1 }}

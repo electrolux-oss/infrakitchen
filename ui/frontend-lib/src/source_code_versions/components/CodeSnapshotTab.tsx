@@ -144,7 +144,6 @@ function renderTreeItems(nodes: TreeNode[]) {
             {!isFolder && node.file?.ref && (
               <Chip
                 label={displayRef(node.file.ref)}
-                size="small"
                 variant="outlined"
                 sx={{
                   ml: "auto",
@@ -282,7 +281,6 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
               {selectedFile.ref && (
                 <Chip
                   label={displayRef(selectedFile.ref)}
-                  size="small"
                   variant="outlined"
                   sx={{ fontFamily: "'Roboto Mono', monospace" }}
                 />

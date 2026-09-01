@@ -154,7 +154,6 @@ export const TemplatesPage = () => {
         permissionAction="write"
       >
         <Button
-          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/create`)}
           startIcon={<AddIcon />}
@@ -162,7 +161,6 @@ export const TemplatesPage = () => {
           Create
         </Button>
         <Button
-          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}templates/import`)}
           sx={{ ml: 1 }}
@@ -204,7 +202,7 @@ export const TemplatesPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button size="small" variant="outlined" onClick={fetchTemplates}>
+          <Button variant="outlined" onClick={fetchTemplates}>
             Retry
           </Button>
         </Box>

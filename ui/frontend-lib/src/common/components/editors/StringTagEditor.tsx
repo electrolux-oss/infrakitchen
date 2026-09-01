@@ -40,7 +40,6 @@ export const StringTagEditor = ({
         placeholder="Add a label..."
         helperText={helperText}
         fullWidth
-        size="small"
       />
     )}
   />

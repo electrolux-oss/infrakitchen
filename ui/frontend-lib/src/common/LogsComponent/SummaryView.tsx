@@ -608,7 +608,6 @@ export const SummaryView = (props: {
                     <Chip
                       key={action}
                       label={`${count} ${action.charAt(0) + action.slice(1).toLowerCase()}`}
-                      size="small"
                       color={getActionColor(action)}
                       variant="outlined"
                     />
@@ -703,7 +702,6 @@ export const SummaryView = (props: {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Chip
                         label={change.action}
-                        size="small"
                         color={getActionColor(change.action)}
                         variant="outlined"
                         sx={{ minWidth: 100, fontWeight: 600 }}

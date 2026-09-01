@@ -115,7 +115,6 @@ export const IntegrationOidcSection = ({
         value={
           <Box>
             <Button
-              size="small"
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={handleDownloadJwks}

@@ -37,7 +37,6 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
       {output.source && (
         <Chip
           label={output.source}
-          size="small"
           variant="filled"
           sx={solidChipColorSx("default")}
         />

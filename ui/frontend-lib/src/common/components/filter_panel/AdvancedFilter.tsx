@@ -228,7 +228,6 @@ const ClauseRow = ({
     if (!selectedField) {
       return (
         <TextField
-          size="small"
           disabled
           placeholder="Select a field first"
           sx={SINGLE_VALUE_INPUT_SX}
@@ -239,7 +238,6 @@ const ClauseRow = ({
     if (isValuelessOperator(clause.operator)) {
       return (
         <TextField
-          size="small"
           disabled
           value=""
           placeholder="No value needed"
@@ -350,7 +348,6 @@ const ClauseRow = ({
     // Default: text input
     return (
       <TextField
-        size="small"
         value={localTextValue}
         onChange={(e) => setLocalTextValue(e.target.value)}
         onBlur={handleTextCommit}
@@ -373,7 +370,6 @@ const ClauseRow = ({
     >
       {/* Field selector */}
       <Select
-        size="small"
         value={clause.field}
         onChange={(e) => handleFieldChange(e.target.value)}
         displayEmpty
@@ -397,7 +393,6 @@ const ClauseRow = ({
       </Select>
       {/* Operator selector */}
       <Select
-        size="small"
         value={availableOperators.length === 0 ? "" : clause.operator}
         onChange={(e) => handleOperatorChange(e.target.value as FilterOperator)}
         disabled={!clause.field || availableOperators.length <= 1}
@@ -659,7 +654,6 @@ export const AdvancedFilter = ({
               instead of floating centered over the panel. */}
           <Box component="span" sx={{ alignSelf: "flex-start" }}>
             <Button
-              size="small"
               startIcon={<AddIcon />}
               onClick={handleAdd}
               disabled={!canAddMore}

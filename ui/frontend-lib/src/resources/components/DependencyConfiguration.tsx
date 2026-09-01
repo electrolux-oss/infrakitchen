@@ -240,7 +240,6 @@ export const DependencyConfiguration = ({
                 )}
               </Box>
               <Button
-                size="small"
                 variant="outlined"
                 onClick={() => setTagsDialogOpen(true)}
                 disabled={!canEdit}
@@ -283,7 +282,6 @@ export const DependencyConfiguration = ({
                 )}
               </Box>
               <Button
-                size="small"
                 variant="outlined"
                 onClick={() => setConfigsDialogOpen(true)}
                 disabled={!canEdit}

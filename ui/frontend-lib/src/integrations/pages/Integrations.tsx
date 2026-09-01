@@ -208,7 +208,7 @@ const IntegrationsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>{" "}
-          <Button size="small" variant="outlined" onClick={fetchIntegrations}>
+          <Button variant="outlined" onClick={fetchIntegrations}>
             Retry
           </Button>
         </Box>
@@ -300,7 +300,6 @@ const IntegrationsPage = () => {
                   {allProviders.map((p) => (
                     <Button
                       key={p.slug}
-                      size="small"
                       variant="outlined"
                       startIcon={<p.icon width="20" height="20" />}
                       onClick={() =>

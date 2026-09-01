@@ -174,7 +174,6 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                 <InputLabel>From</InputLabel>
                 <Select
                   label="From"
-                  size="small"
                   variant="outlined"
                   value={String(selectedRevisionLeft)}
                   onChange={handleChangeLeft}
@@ -235,7 +234,6 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                 <InputLabel>To</InputLabel>
                 <Select
                   label="To"
-                  size="small"
                   variant="outlined"
                   value={String(selectedRevisionRight)}
                   onChange={handleChangeRight}

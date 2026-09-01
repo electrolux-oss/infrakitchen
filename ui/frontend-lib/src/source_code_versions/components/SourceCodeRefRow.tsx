@@ -196,7 +196,6 @@ export const SourceCodeRefRow = ({
             !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Chip
                 label={`${entity.resourcesCount}`}
-                size="small"
                 variant="outlined"
                 onClick={handleResourcesClick}
                 sx={{

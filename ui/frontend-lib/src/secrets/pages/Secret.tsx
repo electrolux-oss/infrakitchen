@@ -62,7 +62,6 @@ export const SecretPage = () => {
             permissionAction="write"
           >
             <Button
-              size="small"
               startIcon={<TaskAltIcon />}
               variant="outlined"
               onClick={handleValidation}

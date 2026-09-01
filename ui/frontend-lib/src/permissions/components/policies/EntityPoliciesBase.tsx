@@ -106,7 +106,6 @@ export const EntityPoliciesBase = ({
 
                 return isInherited ? (
                   <Chip
-                    size="small"
                     label="Inherited from Project"
                     color="info"
                     variant="outlined"
@@ -123,7 +122,7 @@ export const EntityPoliciesBase = ({
                     }}
                   />
                 ) : (
-                  <Chip size="small" label="Direct" variant="outlined" />
+                  <Chip label="Direct" variant="outlined" />
                 );
               },
             },

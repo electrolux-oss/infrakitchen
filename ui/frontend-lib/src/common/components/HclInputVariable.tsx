@@ -133,7 +133,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {variable.required ? (
             <Chip
               label="required"
-              size="small"
               color="error"
               variant="filled"
               sx={solidChipColorSx("error")}
@@ -141,7 +140,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           ) : (
             <Chip
               label="optional"
-              size="small"
               color="info"
               variant="filled"
               sx={solidChipColorSx("info")}
@@ -150,7 +148,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {validationSummary && (
             <Chip
               label={validationSummary}
-              size="small"
               color="success"
               variant="filled"
               sx={{ ml: 1, ...solidChipColorSx("success")(useTheme()) }}
@@ -159,7 +156,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {variable.restricted && (
             <Chip
               label="restricted"
-              size="small"
               color="warning"
               variant="filled"
               sx={{ ml: 1, ...solidChipColorSx("warning")(useTheme()) }}
@@ -168,7 +164,6 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           {variable.sensitive && (
             <Chip
               label="sensitive"
-              size="small"
               color="secondary"
               variant="filled"
               sx={{ ml: 1, ...solidChipColorSx("secondary")(useTheme()) }}

@@ -106,7 +106,6 @@ export const AuthProviderConfigurationEditor = ({
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <Button
-          size="small"
           variant="outlined"
           onClick={openDialog}
           disabled={!canEdit}

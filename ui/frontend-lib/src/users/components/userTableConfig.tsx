@@ -28,7 +28,6 @@ const UserIdentifierCell = (params: GridRenderCellParams) => {
       {isCurrentUser ? (
         <Chip
           label="You"
-          size="small"
           variant="filled"
           sx={(theme) => ({
             ...solidChipColorSx("info")(theme),

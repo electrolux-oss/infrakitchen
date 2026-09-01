@@ -70,14 +70,12 @@ export const BatchOperationCreatePage = () => {
       bottomActions={
         <>
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}batch_operations`)}
           >
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(onSubmit)}
           >

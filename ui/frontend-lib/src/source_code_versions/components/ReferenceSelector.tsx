@@ -50,7 +50,6 @@ export const ReferenceSelector = () => {
             })}
             label="Inherit from"
             variant="outlined"
-            size="small"
           />
         )}
         renderOption={(props, option) => {

@@ -107,14 +107,12 @@ export const ProjectCreatePage = () => {
       bottomActions={
         <>
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}projects`)}
           >
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(onSubmit)}
           >

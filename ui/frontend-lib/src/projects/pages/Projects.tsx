@@ -88,7 +88,6 @@ export const ProjectsPage = () => {
         permissionAction="write"
       >
         <Button
-          size="small"
           variant="outlined"
           onClick={() => navigate(`${linkPrefix}projects/create`)}
           startIcon={<AddIcon />}
@@ -123,7 +122,6 @@ export const ProjectsPage = () => {
           {project.goldenState ? (
             <Chip
               label={`${project.goldenState.score}%`}
-              size="small"
               color={getScoreChipColor(project.goldenState.score)}
               variant="outlined"
               sx={{ fontWeight: 600 }}
@@ -155,7 +153,7 @@ export const ProjectsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button size="small" variant="outlined" onClick={fetchProjects}>
+          <Button variant="outlined" onClick={fetchProjects}>
             Retry
           </Button>
         </Box>

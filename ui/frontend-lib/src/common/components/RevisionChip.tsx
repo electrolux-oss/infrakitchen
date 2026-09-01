@@ -34,7 +34,6 @@ export const RevisionChip = ({
   return (
     <Chip
       label={label}
-      size="small"
       variant={variant === "outlined" ? "outlined" : "filled"}
       color={variant === "outlined" ? "primary" : undefined}
       sx={

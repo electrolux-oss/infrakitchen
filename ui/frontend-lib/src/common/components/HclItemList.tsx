@@ -119,28 +119,24 @@ export const HclItemList: React.FC<HclItemListProps> = ({
               {" "}
               <Chip
                 label={`${variableCounts.required} required`}
-                size="small"
                 color="error"
                 variant="filled"
                 sx={solidChipColorSx("error")}
               />
               <Chip
                 label={`${variableCounts.optional} optional`}
-                size="small"
                 color="info"
                 variant="filled"
                 sx={solidChipColorSx("info")}
               />
               <Chip
                 label={`${variableCounts.restricted} restricted`}
-                size="small"
                 color="warning"
                 variant="filled"
                 sx={solidChipColorSx("warning")}
               />
               <Chip
                 label={`${variableCounts.sensitive} sensitive`}
-                size="small"
                 color="secondary"
                 variant="filled"
                 sx={solidChipColorSx("secondary")}

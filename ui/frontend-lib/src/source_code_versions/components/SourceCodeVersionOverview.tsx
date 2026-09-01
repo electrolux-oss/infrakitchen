@@ -134,7 +134,6 @@ export const SourceCodeVersionOverview = ({
         renderEditor={({ value, onChange }) => (
           <TextField
             select
-            size="small"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             slotProps={{ input: { "aria-label": "Lifecycle State" } }}

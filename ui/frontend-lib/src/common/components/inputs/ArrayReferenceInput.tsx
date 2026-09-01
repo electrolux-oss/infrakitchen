@@ -204,7 +204,6 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
                   label={`${option.name || option.identifier}`}
                   {...getTagProps({ index })}
                   key={option.id}
-                  size="small"
                   variant="outlined"
                 />
               )),
@@ -213,7 +212,6 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
                   label={`+${value.length - maxToShow}`}
                   {...getTagProps({ index: maxToShow })}
                   key="more"
-                  size="small"
                   variant="outlined"
                 />
               ) : null,

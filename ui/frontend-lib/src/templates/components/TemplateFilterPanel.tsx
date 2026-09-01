@@ -47,7 +47,6 @@ const TemplateFiltersComponent: React.FC<TemplateFiltersProps> = ({
               label="Search"
               placeholder="Search templates..."
               variant="outlined"
-              size="small"
               value={filters.search}
               onChange={(e) => onChange({ ...filters, search: e.target.value })}
               slotProps={{

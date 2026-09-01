@@ -64,7 +64,6 @@ export const IntegrationPage = () => {
             permissionAction="write"
           >
             <Button
-              size="small"
               startIcon={<TaskAltIcon />}
               variant="outlined"
               onClick={handleValidation}

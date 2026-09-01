@@ -131,7 +131,6 @@ const TokenDialog = ({
             {expirationOptions.map((days) => (
               <Button
                 key={days}
-                size="small"
                 variant="outlined"
                 disabled={isLoading}
                 onClick={() =>
@@ -306,7 +305,6 @@ const DeleteTokenButton = ({
   if (!isConfirming) {
     return (
       <Button
-        size="small"
         variant="outlined"
         color="error"
         startIcon={<DeleteOutlineIcon />}
@@ -320,7 +318,6 @@ const DeleteTokenButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        size="small"
         variant="outlined"
         color="success"
         startIcon={<CheckIcon />}
@@ -330,7 +327,6 @@ const DeleteTokenButton = ({
         Confirm
       </Button>
       <Button
-        size="small"
         variant="outlined"
         color="inherit"
         startIcon={<CloseIcon />}
@@ -425,7 +421,6 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         actions={
           <Stack direction="row" spacing={1}>
             <Button
-              size="small"
               variant="outlined"
               onClick={loadTokens}
               disabled={isLoading}
@@ -433,7 +428,6 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
               Refresh
             </Button>
             <Button
-              size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setDialogOpen(true)}
@@ -500,7 +494,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                     >
                       <Typography variant="h6">{token.name}</Typography>
                       {isExpired(token.expiresAt) ? (
-                        <Chip label="Expired" size="small" color="error" />
+                        <Chip label="Expired" color="error" />
                       ) : null}
                     </Stack>
                     <Typography

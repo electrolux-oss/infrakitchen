@@ -554,11 +554,10 @@ const ResourceCreatePageInner = () => {
       title="Create Resource"
       bottomActions={
         <>
-          <Button size="small" variant="outlined" onClick={handleBack}>
+          <Button variant="outlined" onClick={handleBack}>
             Cancel
           </Button>
           <Button
-            size="small"
             variant="contained"
             onClick={handleSubmit(handleSave, handleInvalidSave)}
           >
@@ -627,7 +626,6 @@ const ResourceCreatePageInner = () => {
                   >
                     <Chip
                       label="Template Documentation"
-                      size="small"
                       color="info"
                       variant="filled"
                       sx={{

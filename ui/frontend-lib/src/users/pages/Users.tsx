@@ -26,7 +26,6 @@ export const UsersPage = () => {
           permissionAction="write"
         >
           <Button
-            size="small"
             variant="outlined"
             onClick={() => navigate(`${linkPrefix}users/create`)}
             startIcon={<AddIcon />}

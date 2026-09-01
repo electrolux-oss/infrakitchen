@@ -121,10 +121,9 @@ export function BitbucketPullRequestsList(
                 <Chip
                   label={pr.state}
                   color={pr.state === "OPEN" ? "success" : "error"} // Adjusting colors based on Bitbucket states
-                  size="small"
                   sx={{ mr: 1 }}
                 />
-                {pr.draft && <Chip label="Draft" size="small" sx={{ mr: 1 }} />}
+                {pr.draft && <Chip label="Draft" sx={{ mr: 1 }} />}
                 <Typography
                   variant="body2"
                   sx={{

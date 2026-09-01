@@ -197,7 +197,6 @@ export const NamingConventionInput = ({
                 >
                   <Chip
                     label={config.name}
-                    size="small"
                     variant="outlined"
                     color="primary"
                     onClick={() => handleInsertVariable(config.name)}
@@ -239,7 +238,6 @@ export const NamingConventionInput = ({
                     >
                       <Chip
                         label={output.name}
-                        size="small"
                         variant="outlined"
                         color="secondary"
                         onClick={() => handleInsertVariable(output.name)}

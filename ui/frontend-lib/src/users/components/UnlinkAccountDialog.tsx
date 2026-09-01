@@ -60,7 +60,6 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
           <Button
             variant="outlined"
             color="success"
-            size="small"
             startIcon={<CheckIcon />}
             onClick={() => handleUnlinkAccount()}
             sx={{ textTransform: "none", fontWeight: "bold" }}
@@ -71,7 +70,6 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
           <Button
             variant="outlined"
             color="error"
-            size="small"
             startIcon={<CloseIcon />}
             onClick={handleCancelUnlink}
             sx={{ textTransform: "none", fontWeight: "bold" }}

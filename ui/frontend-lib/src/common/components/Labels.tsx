@@ -34,7 +34,6 @@ export const Labels: FC<LabelsProps> = ({ labels, size = "small" }) => {
         <Chip
           key={label}
           label={label}
-          size="small"
           variant="filled"
           sx={softChipColorSx("default", size === "compact")}
         />

@@ -81,7 +81,6 @@ export const PermissionsSection = () => {
                 <Button
                   onClick={handlePermissionReload}
                   variant="contained"
-                  size="small"
                   sx={{ ml: 2 }}
                 >
                   Reload

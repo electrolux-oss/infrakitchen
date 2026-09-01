@@ -11,7 +11,6 @@ const NotifyLinkButton = ({ to, label }: { to: string; label: string }) => {
   const navigate = useNavigate();
   return (
     <Button
-      size="small"
       variant="text"
       sx={{
         fontWeight: 600,

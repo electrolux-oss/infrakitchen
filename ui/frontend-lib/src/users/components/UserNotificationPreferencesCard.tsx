@@ -212,7 +212,6 @@ const DeleteNotificationPreferenceButton = ({
       <Button
         variant="outlined"
         color="error"
-        size="small"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
       >
@@ -226,7 +225,6 @@ const DeleteNotificationPreferenceButton = ({
       <Button
         variant="outlined"
         color="success"
-        size="small"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
         disabled={isLoading}
@@ -236,7 +234,6 @@ const DeleteNotificationPreferenceButton = ({
       <Button
         variant="outlined"
         color="inherit"
-        size="small"
         startIcon={<CloseIcon />}
         onClick={() => setIsConfirming(false)}
         disabled={isLoading}
@@ -257,7 +254,6 @@ const EditNotificationPreferenceButton = ({
   return (
     <Button
       variant="outlined"
-      size="small"
       startIcon={<EditOutlinedIcon />}
       onClick={() => onEdit(preference)}
     >

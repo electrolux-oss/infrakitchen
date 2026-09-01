@@ -35,7 +35,6 @@ export const ConfirmNameField = ({
       </Typography>
       <TextField
         fullWidth
-        size="small"
         placeholder={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
