@@ -177,18 +177,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   variant="outlined"
                   value={String(selectedRevisionLeft)}
                   onChange={handleChangeLeft}
-                  sx={{
-                    minWidth: 180,
-                    // Select's sx targets the input root element itself, so
-                    // the compact size must use a same-element selector.
-                    "&.MuiInputBase-root": {
-                      height: "32px !important",
-                      minHeight: 32,
-                      marginTop: "0 !important",
-                    },
-                    // Pin the selected value text to 14px (body2).
-                    "& .MuiSelect-select": { fontSize: "0.875rem" },
-                  }}
+                  sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
                       (r) => String(r.revisionNumber) === v,
@@ -237,18 +226,7 @@ export const Revision = ({ resourceId, resourceRevision }: RevisionProps) => {
                   variant="outlined"
                   value={String(selectedRevisionRight)}
                   onChange={handleChangeRight}
-                  sx={{
-                    minWidth: 180,
-                    // Select's sx targets the input root element itself, so
-                    // the compact size must use a same-element selector.
-                    "&.MuiInputBase-root": {
-                      height: "32px !important",
-                      minHeight: 32,
-                      marginTop: "0 !important",
-                    },
-                    // Pin the selected value text to 14px (body2).
-                    "& .MuiSelect-select": { fontSize: "0.875rem" },
-                  }}
+                  sx={{ minWidth: 180 }}
                   renderValue={(v) => {
                     const r = revisions.find(
                       (r) => String(r.revisionNumber) === v,

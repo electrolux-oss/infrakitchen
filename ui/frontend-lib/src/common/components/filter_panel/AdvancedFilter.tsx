@@ -66,30 +66,24 @@ const VALUE_INPUT_SX = {
 
 const ROW_HEIGHT = 32;
 
-const SINGLE_VALUE_INPUT_SX = {
-  ...VALUE_INPUT_SX,
-  "& .MuiInputBase-root": {
-    height: `${ROW_HEIGHT}px !important`,
-    minHeight: ROW_HEIGHT,
-    marginTop: "0 !important",
-  },
-} as const;
+// Compact input sizing (32px height, 14px text, no top margin) is the global
+// theme default via MuiOutlinedInput/MuiInputBase, so only the
+// filter-specific layout (flex sizing, chip wrapping) stays here.
+const SINGLE_VALUE_INPUT_SX = VALUE_INPUT_SX;
 
 const SINGLE_VALUE_REFERENCE_AUTOCOMPLETE_SX = {
   ...VALUE_INPUT_SX,
   "& .MuiInputBase-root": {
-    height: `${ROW_HEIGHT}px !important`,
-    minHeight: ROW_HEIGHT,
-    marginTop: "0 !important",
     flexWrap: "nowrap",
   },
 } as const;
 
+// Chips wrap to multiple rows; keep them at the 32px minimum so they stay
+// flush with the single-line inputs above.
 const MULTI_VALUE_AUTOCOMPLETE_SX = {
   ...VALUE_INPUT_SX,
   "& .MuiInputBase-root": {
     minHeight: ROW_HEIGHT,
-    marginTop: "0 !important",
   },
 } as const;
 

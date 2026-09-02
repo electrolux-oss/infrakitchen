@@ -177,13 +177,6 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
               label={hasLabel ? props.label : undefined}
               placeholder={props.placeholder}
               error={props.error}
-              sx={{
-                "& .MuiInputBase-root": {
-                  height: 32,
-                  minHeight: 32,
-                  marginTop: "0 !important",
-                },
-              }}
               slotProps={{
                 ...params.slotProps,
                 htmlInput: {

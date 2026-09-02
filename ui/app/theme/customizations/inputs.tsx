@@ -430,6 +430,9 @@ export const inputsCustomizations: Components<Theme> = {
     styleOverrides: {
       root: {
         border: "none",
+        // MUI sizes input text with body1 (16px); pin it to the 14px body2
+        // default.
+        fontSize: "0.875rem",
       },
       input: {
         "&::placeholder": {
@@ -471,7 +474,11 @@ export const inputsCustomizations: Components<Theme> = {
               multiline: false,
             },
             style: {
-              height: "2.25rem",
+              // Compact 32px controls are the global standard — not the MUI
+              // default 36px small size.
+              height: "2rem",
+              minHeight: 32,
+              marginTop: "0 !important",
             },
           },
           {

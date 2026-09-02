@@ -21,8 +21,8 @@ export const surfacesCustomizations: Components<Theme> = {
       // body rule (color, background, margin) stays intact.
       //
       // Note: MuiCssBaseline styleOverrides must be plain objects — callback
-      // functions are silently dropped (unlike other components' overrides),
-      // so body2's literals are duplicated here instead of computed.
+      // functions are silently dropped, so body2's literals are duplicated
+      // here instead of computed.
       body: {
         fontSize: "0.875rem",
         lineHeight: 1.43,

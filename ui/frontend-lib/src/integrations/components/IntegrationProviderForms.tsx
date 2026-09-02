@@ -49,15 +49,6 @@ const GcpProviderFields = ({
               labelId="gcp-auth-method-label"
               label="Authentication Method"
               disabled={readonly}
-              sx={{
-                // Standard compact dropdown (same as filter/revision selects).
-                "&.MuiInputBase-root": {
-                  height: "32px !important",
-                  minHeight: 32,
-                  marginTop: "0 !important",
-                },
-                "& .MuiSelect-select": { fontSize: "0.875rem" },
-              }}
             >
               <MenuItem value="service_account_key">
                 Service Account Key

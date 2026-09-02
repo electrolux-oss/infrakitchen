@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
 import InputIcon from "@mui/icons-material/Input";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import ReorderIcon from "@mui/icons-material/Reorder";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
@@ -174,20 +174,16 @@ export const TemplatesPage = () => {
     return (
       <>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Status
           </Typography>
-          <StatusChip status={template.status} />
+          <StatusChip status={template.status} compact />
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Last Updated
           </Typography>{" "}
-          <RelativeTime
-            date={template.updatedAt}
-            variant="caption"
-            sx={{ fontWeight: 500 }}
-          />
+          <RelativeTime date={template.updatedAt} />
         </Box>
       </>
     );
@@ -296,7 +292,7 @@ export const TemplatesPage = () => {
                         disabled={togglingTemplateId === template.id}
                         sx={{ mt: -0.5, mr: -0.5 }}
                       >
-                        <MoreVertIcon fontSize="small" />
+                        <MoreHorizIcon fontSize="small" />
                       </IconButton>
                     </PermissionWrapper>
                   }

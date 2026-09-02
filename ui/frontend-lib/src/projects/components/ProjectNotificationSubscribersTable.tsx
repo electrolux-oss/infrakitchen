@@ -32,10 +32,7 @@ export const ProjectNotificationSubscribersTable = ({
         headerName: "Subscribed",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
     ],

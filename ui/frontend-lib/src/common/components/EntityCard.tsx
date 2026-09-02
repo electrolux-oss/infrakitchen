@@ -114,6 +114,11 @@ export const EntityCard = ({
   const descriptionRef = useRef<HTMLElement | null>(null);
   const [isDescriptionTruncated, setIsDescriptionTruncated] = useState(false);
 
+  // Same deal for the title: a tooltip with the full name is shown only when
+  // the single-line no-wrap clamp actually truncates it.
+  const titleRef = useRef<HTMLElement | null>(null);
+  const [isTitleTruncated, setIsTitleTruncated] = useState(false);
+
   useEffect(() => {
     const el = descriptionRef.current;
     if (!el) return;
@@ -126,6 +131,19 @@ export const EntityCard = ({
     document.fonts?.ready.then(check);
     return () => observer.disconnect();
   }, [description]);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const check = () => {
+      setIsTitleTruncated(el.scrollWidth > el.clientWidth + 1);
+    };
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    document.fonts?.ready.then(check);
+    return () => observer.disconnect();
+  }, [name]);
   return (
     <Card
       ref={cardRef}
@@ -142,6 +160,10 @@ export const EntityCard = ({
           "transform 150ms ease-in-out, box-shadow 150ms ease-in-out, border-color 150ms ease-in-out",
         position: "relative",
         overflow: "visible",
+        // The card is a CSS grid item; without this, the grid applies a
+        // content-based automatic minimum and a long title can inflate the
+        // whole row's track width instead of shrinking to it.
+        minWidth: 0,
         cursor: "pointer",
         outline: "none",
         "&:focus-visible": {
@@ -170,9 +192,19 @@ export const EntityCard = ({
       )}
       <CardHeader
         title={
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", minWidth: 0 }}>
             {icon}
-            {name}
+            <Tooltip title={isTitleTruncated ? name : ""} arrow>
+              <Typography
+                component="span"
+                ref={titleRef}
+                variant="inherit"
+                noWrap
+                sx={{ flex: 1, minWidth: 0 }}
+              >
+                {name}
+              </Typography>
+            </Tooltip>
           </Box>
         }
         subheader={
@@ -183,12 +215,16 @@ export const EntityCard = ({
             <Typography
               component="span"
               ref={descriptionRef}
-              sx={{
+              sx={(theme) => ({
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
-              }}
+                // Reserve two description lines so every card header (and the
+                // divider below it) has the same height regardless of how many
+                // lines the description actually renders.
+                minHeight: `${Number(theme.typography.body2.lineHeight ?? 1.43) * 2}em`,
+              })}
             >
               {description ? description : <PlaceholderDescription />}
             </Typography>
@@ -214,7 +250,13 @@ export const EntityCard = ({
             {headerAction}
           </Box>
         }
-        sx={{ mb: 0 }}
+        sx={{
+          mb: 0,
+          // MUI's header content slot is `flex: 1 1 auto` with no min-width,
+          // so a long nowrap title would keep the whole row from shrinking and
+          // overflow the card edge instead of ellipsizing. Let it shrink.
+          "& .MuiCardHeader-content": { minWidth: 0 },
+        }}
       />
       <CardContent sx={{ flexGrow: 1, pb: 1.5 }}>
         <Divider sx={{ mb: 1.5 }} />
@@ -222,7 +264,7 @@ export const EntityCard = ({
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            fontSize: 12,
+            fontSize: 14,
           }}
         >
           {entityFields}

@@ -176,9 +176,7 @@ const IntegrationCreatePage = () => {
   }
 
   return (
-    <PageContainer
-      title={`Set up ${providerObject?.name} Integration`}
-    >
+    <PageContainer title={`Set up ${providerObject?.name} Integration`}>
       {hasMultipleAuthMethods && (
         <Box
           sx={{
@@ -241,8 +239,8 @@ const IntegrationCreatePage = () => {
               p: 2,
               mx: 3,
               borderRadius: "var(--template-surface-radius)",
-              // Code/commands inside instruction steps use the app's inline
-              // code style (same as the shared InlineCode component).
+              // Code/commands inside instruction steps use the inline code
+              // style.
               "& code": {
                 fontSize: "0.85em",
                 fontFamily: CODE_FONT_FAMILY,

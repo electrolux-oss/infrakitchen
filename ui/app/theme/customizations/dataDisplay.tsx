@@ -53,7 +53,7 @@ export const dropdownItemStyle = ({ theme }: { theme: Theme }) => {
         },
       },
     },
-    // Autocomplete options (same colors, different selector/classes)
+    // Autocomplete options use the dropdown item colors
     '&[aria-selected="true"]': {
       backgroundColor: selected(),
       "&.Mui-focusVisible": {

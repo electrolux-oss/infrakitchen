@@ -111,20 +111,16 @@ const IntegrationsPage = () => {
   const integrationEntityFields = (integration: GqlIntegration) => (
     <>
       <Box>
-        <Typography variant="caption" sx={{ display: "block" }}>
+        <Typography sx={{ display: "block", color: "text.secondary" }}>
           Status
         </Typography>
-        <StatusChip status={integration.status} />
+        <StatusChip status={integration.status} compact />
       </Box>
       <Box>
-        <Typography variant="caption" sx={{ display: "block" }}>
+        <Typography sx={{ display: "block", color: "text.secondary" }}>
           Last Updated
         </Typography>{" "}
-        <RelativeTime
-          date={integration.updatedAt}
-          variant="caption"
-          sx={{ fontWeight: 500 }}
-        />
+        <RelativeTime date={integration.updatedAt} />
       </Box>
     </>
   );

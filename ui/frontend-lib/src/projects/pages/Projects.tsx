@@ -101,21 +101,21 @@ export const ProjectsPage = () => {
     return (
       <>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Status
           </Typography>
-          <StatusChip status={project.status} />
+          <StatusChip status={project.status} compact />
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Resources
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          <Typography>
             {project.resourcesCount}
           </Typography>
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Golden State
           </Typography>
           {project.goldenState ? (
@@ -126,20 +126,16 @@ export const ProjectsPage = () => {
               sx={{ fontWeight: 600 }}
             />
           ) : (
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>
+            <Typography>
               -
             </Typography>
           )}
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Last Updated
           </Typography>{" "}
-          <RelativeTime
-            date={project.updatedAt}
-            variant="caption"
-            sx={{ fontWeight: 500 }}
-          />
+          <RelativeTime date={project.updatedAt} />
         </Box>
       </>
     );

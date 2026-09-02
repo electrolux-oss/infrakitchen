@@ -76,7 +76,6 @@ const renderIconWithText = (
       <Box
         sx={(theme) => ({
           color: getThemeColor(theme, colors.backgroundColor),
-          fontWeight: 500,
         })}
       >
         {stateValue.toUpperCase()}

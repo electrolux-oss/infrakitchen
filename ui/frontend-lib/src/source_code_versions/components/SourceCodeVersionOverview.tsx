@@ -140,13 +140,6 @@ export const SourceCodeVersionOverview = ({
             fullWidth
             margin="normal"
             autoFocus
-            sx={{
-              "& .MuiInputBase-root": {
-                height: "32px !important",
-                minHeight: 32,
-                marginTop: "0 !important",
-              },
-            }}
           >
             {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
               <MenuItem key={option} value={option}>

@@ -50,12 +50,6 @@ export const MultiSelectEditor = <T,>({
         helperText={helperText}
         fullWidth
         margin="dense"
-        sx={{
-          "& .MuiInputBase-root": {
-            minHeight: 32,
-            marginTop: "0 !important",
-          },
-        }}
         slotProps={{
           ...params.slotProps,
           htmlInput: {

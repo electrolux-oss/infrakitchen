@@ -27,11 +27,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
 
   if (isNaN(dateObj.getTime())) {
     return (
-      <Typography
-        component={component}
-        variant={variant}
-        sx={sx || { color: "text.secondary" }}
-      >
+      <Typography component={component} variant={variant} sx={sx}>
         {dateObj.toString()}
       </Typography>
     );
@@ -48,7 +44,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
         display: "inline-flex",
         alignItems: "center",
         gap: 1,
-        ...(sx || { color: "text.secondary" }),
+        ...sx,
       }}
     >
       {user && <UserAvatar id={user.id} identifier={user.identifier} />}
