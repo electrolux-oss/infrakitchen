@@ -4,7 +4,6 @@ export * from "./editors/MultiSelectEditor";
 export * from "./editors/StringChips";
 export * from "./editors/StringTagEditor";
 export * from "./entity_table";
-export * from "./ExpandableCard";
 export * from "./filter_panel/FilterConfig";
 export * from "./filter_panel/FilterContext";
 export * from "./filter_panel/deriveFilterableFields";
