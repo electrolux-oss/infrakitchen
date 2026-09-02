@@ -50,7 +50,6 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
   return (
     <OverviewCard
       name={integration.name}
-
       icon={IconField(integration.integrationProvider)}
       chip={integration.integrationType}
     >

@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Icon } from "@iconify/react";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -184,7 +185,7 @@ export const EntityPoliciesBase = ({
       >
         <Button
           onClick={() => setIsDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<AdminPanelSettingsIcon />}
           sx={{ mr: 1 }}
         >
           Add Role
@@ -198,7 +199,7 @@ export const EntityPoliciesBase = ({
         />
         <Button
           onClick={() => setIsUserDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<PersonAddIcon />}
         >
           Add User
         </Button>

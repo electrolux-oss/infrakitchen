@@ -13,7 +13,7 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../../common/components/OverviewCard";
+import { BaseCard } from "../../../common/components/BaseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -110,7 +110,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
@@ -136,6 +136,6 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

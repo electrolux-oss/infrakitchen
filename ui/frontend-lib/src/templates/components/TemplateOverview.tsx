@@ -78,7 +78,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   return (
     <OverviewCard
       name={template.name}
-
       chip={template.abstract ? "Abstract" : undefined}
     >
       <CommonEditableField<string>

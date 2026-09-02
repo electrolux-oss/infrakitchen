@@ -1,13 +1,6 @@
 import { ReactNode } from "react";
 
-import RefreshIcon from "@mui/icons-material/Refresh";
-import {
-  Box,
-  CircularProgress,
-  Alert,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { Alert, Box, CircularProgress } from "@mui/material";
 
 import { NotFoundPage } from "../../dashboard/pages/NotFound";
 import { useEntityProvider } from "../context/EntityContext";
@@ -24,14 +17,7 @@ export interface EntityContainerProps {
 
 export const EntityContainer = (props: EntityContainerProps) => {
   const { children, title, actions, showEditAction } = props;
-  const { entity, loading, error, notFound, refreshEntity } =
-    useEntityProvider();
-
-  const handleRefresh = () => {
-    if (refreshEntity) {
-      refreshEntity();
-    }
-  };
+  const { entity, loading, error, notFound } = useEntityProvider();
 
   if (loading) {
     return (
@@ -85,15 +71,6 @@ export const EntityContainer = (props: EntityContainerProps) => {
             showEditAction={showEditAction}
           />
           {actions}
-          <Tooltip title="Refresh">
-            <IconButton
-              size="small"
-              onClick={() => handleRefresh()}
-              aria-label="refresh"
-            >
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
         </>
       }
     >

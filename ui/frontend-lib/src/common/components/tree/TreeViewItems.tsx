@@ -1,13 +1,12 @@
 import React, { Dispatch } from "react";
 
 import { Launch } from "@mui/icons-material";
-import { Box, Button, Link, Typography } from "@mui/material";
-import Tooltip from "@mui/material/Tooltip";
+import { Box, Link, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 
 import { useConfig } from "../..";
-import { getStateColor } from "../../utils";
+import StatusChip from "../../StatusChip";
 
 import { TreeResponse } from "./types";
 
@@ -33,12 +32,6 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
     setExpanded(itemIds);
   };
 
-  const handleExpandClick = () => {
-    setExpanded((oldExpanded: string[]) =>
-      oldExpanded.length === 0 ? allNodeIds : [],
-    );
-  };
-
   const handleSelect = (
     _event: React.SyntheticEvent | null,
     itemIds: string[],
@@ -51,45 +44,72 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
 
     const status = String(item.status || "").toLowerCase();
     const state = String(item.state || "").toLowerCase();
-    const stateValue = state ? `${state} [${status}]` : status;
 
     return (
       <TreeItem
         itemId={nodeId}
         label={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              minWidth: 0,
+            }}
+          >
+            {" "}
+            {item.templateName && (
+              <>
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.8125rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {item.templateName}
+                </Typography>
+                <Typography sx={{ color: "text.secondary" }}>/</Typography>
+              </>
+            )}
             <Typography
-              variant="body2"
               sx={{
-                fontWeight: "bold",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              {item.templateName && `${item.templateName}: ${item.name}`}
-              {!item.templateName && `${item.name}`}
+              {item.name}
             </Typography>
-            <Tooltip title={stateValue} arrow>
-              <Box
-                sx={{
-                  display: "inline-block",
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  boxShadow: "none",
-                  verticalAlign: "middle",
-                  backgroundColor: getStateColor(status, state).borderColor,
-                }}
-              />
-            </Tooltip>
+            <StatusChip
+              status={status}
+              state={state}
+              compact
+              sx={{ fontSize: 15 }}
+            />
             <Link
               href={`${linkPrefix}${entity_name}s/${entity_id}`}
               target="_blank"
               sx={{ display: "inline-flex" }}
               aria-label={`Open ${item.name} ${entity_name} in new tab`}
             >
-              <Launch sx={{ fontSize: 18 }} />
+              <Launch sx={{ fontSize: 15, color: "text.secondary" }} />
             </Link>
           </Box>
         }
+        sx={{
+          "& .MuiTreeItem-content": {
+            borderRadius: 1,
+            py: 0.25,
+            "&[data-selected], &[data-focused], &[data-selected][data-focused]":
+              {
+                backgroundColor: "transparent",
+                "&:hover": {
+                  backgroundColor: "transparent",
+                },
+              },
+          },
+        }}
         {...others}
       />
     );
@@ -106,17 +126,7 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
   };
 
   return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <Button onClick={handleExpandClick}>
-          {expanded.length === 0 ? "Expand all" : "Collapse all"}
-        </Button>
-      </Box>
+    <Box sx={{ px: 1.5, pt: 4, pb: 0.75 }}>
       <SimpleTreeView
         expandedItems={expanded}
         selectedItems={selected}

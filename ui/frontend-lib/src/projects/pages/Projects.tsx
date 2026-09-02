@@ -110,9 +110,7 @@ export const ProjectsPage = () => {
           <Typography sx={{ display: "block", color: "text.secondary" }}>
             Resources
           </Typography>
-          <Typography>
-            {project.resourcesCount}
-          </Typography>
+          <Typography>{project.resourcesCount}</Typography>
         </Box>
         <Box>
           <Typography sx={{ display: "block", color: "text.secondary" }}>
@@ -126,9 +124,7 @@ export const ProjectsPage = () => {
               sx={{ fontWeight: 600 }}
             />
           ) : (
-            <Typography>
-              -
-            </Typography>
+            <Typography>-</Typography>
           )}
         </Box>
         <Box>

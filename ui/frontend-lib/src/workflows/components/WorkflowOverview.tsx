@@ -28,7 +28,10 @@ export const WorkflowOverview = () => {
     );
 
   return (
-    <OverviewCard name={`Workflow ${workflow.id.slice(0, 8)}…`} description="">
+    <OverviewCard
+      name={`Workflow ${workflow.id.slice(0, 8)}…`}
+      description=""
+    >
       <CommonField
         name="Status"
         value={<StatusChip status={workflow.status} />}

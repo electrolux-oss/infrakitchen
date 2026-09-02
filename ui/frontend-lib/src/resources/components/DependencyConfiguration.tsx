@@ -22,7 +22,7 @@ import { PlaceholderText } from "../../common/components/PlaceholderDescription"
 import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
 import { solidChipColorSx } from "../../common/utils/softChip";
 import TagInput from "../../common/components/inputs/TagInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -405,14 +405,14 @@ export const DependencyConfiguration = ({
 
   return (
     <Box sx={{ gap: 2, display: "flex", flexDirection: "column" }}>
-      <OverviewCard name="Dependency Configuration">
+      <BaseCard name="Dependency Configuration">
         {renderSection("tags", "Dependency Tags", resource.dependencyTags)}
         {renderSection(
           "configs",
           "Dependency Configs",
           resource.dependencyConfig,
         )}
-      </OverviewCard>
+      </BaseCard>
     </Box>
   );
 };

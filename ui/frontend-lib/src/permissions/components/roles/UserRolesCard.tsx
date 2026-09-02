@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Icon } from "@iconify/react";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -10,7 +10,7 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../../common/components/OverviewCard";
+import { BaseCard } from "../../../common/components/BaseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -92,14 +92,14 @@ export const UserRolesCard = (props: { userId: string }) => {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
         <Button
           onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<AdminPanelSettingsIcon />}
         >
           Add Role
         </Button>
@@ -120,6 +120,6 @@ export const UserRolesCard = (props: { userId: string }) => {
         defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

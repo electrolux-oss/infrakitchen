@@ -23,6 +23,7 @@ import {
   PlaceholderText,
 } from "../../common/components/PlaceholderDescription";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -36,6 +37,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
+import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
@@ -49,9 +52,13 @@ import {
 
 export interface ResourceAboutProps {
   resource: GqlResource;
+  onSubscriptionChange?: () => void;
 }
 
-export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
+export const ResourceOverview = ({
+  resource,
+  onSubscriptionChange,
+}: ResourceAboutProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity, userEntityPermissions, actions, hasPendingChange } =
     useEntityProvider();
@@ -61,6 +68,12 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
   const { pendingScheduledAction } = usePendingScheduledAction();
   const [isSyncing, setIsSyncing] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+
+  const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
+    useResourceNotificationDialog({
+      resourceId: String(resource.id),
+      onSubscriptionChange,
+    });
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -174,12 +187,25 @@ export const ResourceOverview = ({ resource }: ResourceAboutProps) => {
     <OverviewCard
       name={resource.name}
       actions={
-        <FavoriteButton
-          componentId={String(resource.id)}
-          componentType="resource"
-          ariaLabel="Add resource to favorites"
-          isFavorite={resource.isFavorite}
-        />
+        <>
+          <SubscribeNotificationButton
+            isSubscribed={isSubscribed}
+            isLoading={loading}
+            onSubscribeClick={(inheritChildren) =>
+              void handleSubscribe(inheritChildren)
+            }
+            onUnsubscribeClick={(inheritChildren) =>
+              void handleUnsubscribe(inheritChildren)
+            }
+          />
+          <DownloadSourceCodeButton entityId={String(resource.id)} />
+          <FavoriteButton
+            componentId={String(resource.id)}
+            componentType="resource"
+            ariaLabel="Add resource to favorites"
+            isFavorite={resource.isFavorite}
+          />
+        </>
       }
     >
       <CommonEditableField<string>

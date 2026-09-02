@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Icon } from "@iconify/react";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -106,7 +106,7 @@ export const RoleUsersCard = (props: { role: string }) => {
       >
         <Button
           onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<PersonAddIcon />}
         >
           Add User to Role
         </Button>

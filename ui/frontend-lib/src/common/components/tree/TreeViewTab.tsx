@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 
 import { useConfig } from "../../context";
-import { OverviewCard } from "../OverviewCard";
 
 import { fetchEntityTree } from "./fetchEntityTree";
 import { EntityTreeViewItems } from "./TreeViewItems";
@@ -38,19 +37,29 @@ export const EntityTreeViewTab = ({
   }, [entity_id, entity_name, ikApi]);
 
   return (
-    <OverviewCard name="Tree View">
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: 320,
+        textAlign: "left",
+        alignSelf: "flex-start",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: "var(--template-surface-radius)",
+        backgroundColor: "background.paper",
+        overflow: "hidden",
+      }}
+    >
       {tree && (
-        <Box sx={{ width: "100%", textAlign: "left", alignSelf: "flex-start" }}>
-          <EntityTreeViewItems
-            entity_name={entity_name}
-            tree={tree}
-            setExpanded={setTreeExpanded}
-            setSelected={setSelected}
-            selected={selected}
-            expanded={treeExpanded}
-          />
-        </Box>
+        <EntityTreeViewItems
+          entity_name={entity_name}
+          tree={tree}
+          setExpanded={setTreeExpanded}
+          setSelected={setSelected}
+          selected={selected}
+          expanded={treeExpanded}
+        />
       )}
-    </OverviewCard>
+    </Box>
   );
 };

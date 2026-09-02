@@ -1,13 +1,6 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 
-import {
-  Box,
-  Button,
-  Chip,
-  Grid,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, Grid, TextField, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
 import {
@@ -18,7 +11,7 @@ import {
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { InlineCode } from "../../common/components/InlineCode";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { PlaceholderText } from "../../common/components/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { solidChipColorSx } from "../../common/utils/softChip";
@@ -109,7 +102,9 @@ const getSourceCodeVariables = (
                       {variable.name}
                     </Typography>
                     {showType && (variable as VariableInput).type && (
-                      <InlineCode>{(variable as VariableInput).type}</InlineCode>
+                      <InlineCode>
+                        {(variable as VariableInput).type}
+                      </InlineCode>
                     )}
                     {variable.sensitive && (
                       <Chip
@@ -262,7 +257,7 @@ export const TemplateConfiguration = ({
   );
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <OverviewCard name="Template Configuration">
+      <BaseCard name="Template Configuration">
         {resource.template && (
           <CommonField
             name="Template"
@@ -424,10 +419,10 @@ export const TemplateConfiguration = ({
             />
           </>
         )}{" "}
-      </OverviewCard>
+      </BaseCard>
       {resource.abstract === false && (
         <>
-          <OverviewCard
+          <BaseCard
             name={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {/* Inherit the card-title styling so this header matches the
@@ -457,14 +452,14 @@ export const TemplateConfiguration = ({
                 emptyMessage: "No input variables.",
               })}
             </Grid>
-          </OverviewCard>
+          </BaseCard>
           <ResourceVariablesEditDialog
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
             onSave={handleVariablesSave}
           />
-          <OverviewCard
+          <BaseCard
             name={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 {/* Inherit the card-title styling so this header matches the
@@ -484,7 +479,7 @@ export const TemplateConfiguration = ({
                 emptyMessage: "No output values.",
               })}
             </Grid>
-          </OverviewCard>
+          </BaseCard>
         </>
       )}
     </Box>

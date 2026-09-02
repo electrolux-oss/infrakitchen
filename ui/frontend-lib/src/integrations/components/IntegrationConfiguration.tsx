@@ -5,7 +5,7 @@ import {
   CommonField,
   getProviderValue,
 } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { GqlIntegration } from "../graphql";
 
@@ -36,7 +36,7 @@ export const IntegrationConfiguration = ({
       "workload_identity_federation_oidc";
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <CommonField
         name={"Integration Provider"}
         value={
@@ -82,6 +82,6 @@ export const IntegrationConfiguration = ({
         integration={integration}
         canEdit={canEdit}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

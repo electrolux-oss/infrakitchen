@@ -9,7 +9,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
@@ -117,7 +117,7 @@ export const UserNotificationSubscriptionsCard = (props: {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <EntityFetchTable
         title="User Subscriptions"
         entityName="subscription"
@@ -125,6 +125,6 @@ export const UserNotificationSubscriptionsCard = (props: {
         defaultFilter={{ user_id }}
         entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

@@ -15,10 +15,12 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import StatusChip from "../../common/StatusChip";
 
 import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
+import { useProjectNotificationDialog } from "../hooks";
 import { GqlProject } from "../graphql";
 import {
   ProjectUpdateFieldInput,
@@ -60,12 +62,22 @@ const ownersDisplay = (owners: UserOption[] | null) => {
 
 interface ProjectOverviewProps {
   project: GqlProject;
+  onSubscriptionChange?: () => void;
 }
 
-export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
+export const ProjectOverview = ({
+  project,
+  onSubscriptionChange,
+}: ProjectOverviewProps) => {
   const { ikApi } = useConfig();
   const { actions, refreshEntity } = useEntityProvider();
   const canEdit = actions.includes("edit");
+
+  const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
+    useProjectNotificationDialog({
+      projectId: String(project.id),
+      onSubscriptionChange,
+    });
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -122,7 +134,23 @@ export const ProjectOverview = ({ project }: ProjectOverviewProps) => {
   );
 
   return (
-    <OverviewCard name={project.name}>
+    <OverviewCard
+      name={project.name}
+      actions={
+        <SubscribeNotificationButton
+          isSubscribed={isSubscribed}
+          isLoading={loading}
+          onSubscribeClick={() => {
+            void handleSubscribe();
+          }}
+          onUnsubscribeClick={() => {
+            void handleUnsubscribe();
+          }}
+          entityName="project"
+          showIncludeChildren={false}
+        />
+      }
+    >
       <CommonEditableField<string>
         name={"Name"}
         canEdit={canEdit}

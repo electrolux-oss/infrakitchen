@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import BugReportIcon from "@mui/icons-material/BugReport";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import EditIcon from "@mui/icons-material/Edit";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
@@ -11,11 +10,9 @@ import SyncIcon from "@mui/icons-material/Sync";
 import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
 
-import { RESOURCE_DOWNLOAD_QUERY } from "../../resources/graphql/queries";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
-import { notifyError } from "../hooks/useNotification";
 
 import { ActionButton } from "./buttons/ActionButton";
 import { CommonDialog } from "./CommonDialog";
@@ -28,7 +25,7 @@ export interface EntityActionsProps {
 export function EntityActions(props: EntityActionsProps) {
   const { entity_id, entity_name, showEditAction } = props;
 
-  const { linkPrefix, ikApi } = useConfig();
+  const { linkPrefix } = useConfig();
   const { actions, refreshActions } = useEntityProvider();
   const navigate = useNavigate();
 
@@ -45,8 +42,6 @@ export function EntityActions(props: EntityActionsProps) {
     enable: false,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const changeDialog = async (dialog: string) => {
     setDialogValues((dialogValues) => {
       return { ...dialogValues, [dialog]: !dialogValues[dialog] as boolean };
@@ -56,41 +51,6 @@ export function EntityActions(props: EntityActionsProps) {
   const changeDialogWithRefresh = async (dialog: string) => {
     changeDialog(dialog);
     if (refreshActions) refreshActions();
-  };
-
-  const handleDownloadClick = async () => {
-    if (!entity_id) return;
-    setIsLoading(true);
-
-    await ikApi
-      .graphqlRequest<{
-        resourceDownload: {
-          filename: string;
-          contentType: string;
-          contentBase64: string;
-        };
-      }>(RESOURCE_DOWNLOAD_QUERY, { id: entity_id })
-      .then((response) => {
-        const bytes = Uint8Array.from(
-          atob(response.resourceDownload.contentBase64),
-          (char) => char.charCodeAt(0),
-        );
-        const blob = new Blob([bytes], {
-          type: response.resourceDownload.contentType,
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = response.resourceDownload.filename;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch((e) => {
-        notifyError(e);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
   };
 
   return (
@@ -159,18 +119,6 @@ export function EntityActions(props: EntityActionsProps) {
           </Button>
         </Tooltip>
       )}
-      {actions.includes("download") && (
-        <Tooltip title="Download source code for debugging">
-          <Button
-            onClick={() => handleDownloadClick()}
-            loading={isLoading}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <BugReportIcon />
-          </Button>
-        </Tooltip>
-      )}
-
       <CommonDialog
         title="Confirmation"
         content="This will apply the changes. Do you want to continue?"

@@ -1,83 +1,39 @@
-import { ReactNode } from "react";
+import { useContext } from "react";
 
-import {
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Grid,
-  SxProps,
-  Theme,
-} from "@mui/material";
+import { EntityContext } from "../context/EntityContext";
 
-import { softChipColorSx } from "../utils/softChip";
+import { BaseCard, BaseCardProps } from "./BaseCard";
+import { EntityRefreshButton } from "./buttons/EntityRefreshButton";
 
-export interface OverviewCardProps {
-  name?: ReactNode;
-  description?: ReactNode;
-  children?: ReactNode;
-  actions?: ReactNode;
-  icon?: ReactNode;
-  chip?: string;
-  chipColor?:
-    | "default"
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning";
-  sx?: SxProps<Theme>;
-}
+/**
+ * BaseCard variant used as the lead card on entity overview pages. Rendering is
+ * delegated to BaseCard so every overview shares the exact same header + grid
+ * layout; this wrapper only adds the entity-page behavior on top: when the card
+ * is rendered inside an entity detail page (i.e. an EntityProvider is present),
+ * a refresh button is appended to the header actions so the page can re-fetch
+ * the entity it displays.
+ *
+ * Outside an entity page the refresh affordance is omitted, making OverviewCard
+ * behave as a plain BaseCard. Takes the same props as BaseCard.
+ */
+export const OverviewCard = (props: BaseCardProps) => {
+  const { actions, ...baseProps } = props;
 
-export const OverviewCard = (props: OverviewCardProps) => {
-  const {
-    name,
-    description,
-    children,
-    actions,
-    icon,
-    chip,
-    chipColor = "info",
-    sx,
-  } = props;
+  // Show the refresh button only on entity detail pages: the EntityProvider
+  // mounts its context there (useContext returns undefined elsewhere), and
+  // EntityRefreshButton reads it via useEntityProvider, which throws if the
+  // context is missing.
+  const showRefresh = !!useContext(EntityContext);
 
-  const hasHeader = !!(name || description || actions || chip || icon);
+  // Build the header actions in one expression so CardHeader's action slot
+  // stays empty (undefined) when there is nothing to show.
+  const headerActions =
+    actions || showRefresh ? (
+      <>
+        {actions}
+        {showRefresh && <EntityRefreshButton />}
+      </>
+    ) : undefined;
 
-  return (
-    <Card sx={{ width: "100%", ...sx }}>
-      {hasHeader && (
-        <CardHeader
-          title={
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              {icon}
-              {name}
-              {chip && (
-                <Chip
-                  label={chip.toUpperCase()}
-                  variant="filled"
-                  sx={softChipColorSx(chipColor)}
-                />
-              )}
-            </Box>
-          }
-          subheader={description ? description : undefined}
-          action={actions}
-          sx={{
-            "& .MuiCardHeader-content": {
-              "& .MuiCardHeader-subheader": {
-                marginTop: 1,
-              },
-            },
-          }}
-        />
-      )}
-      <CardContent>
-        <Grid container spacing={2}>
-          {children}
-        </Grid>
-      </CardContent>
-    </Card>
-  );
+  return <BaseCard {...baseProps} actions={headerActions} />;
 };

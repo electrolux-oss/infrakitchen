@@ -9,7 +9,7 @@ import {
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -74,7 +74,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   const storageFilter = { integration_id: selectedIntegrationIds };
 
   return (
-    <OverviewCard>
+    <BaseCard>
       {" "}
       <CommonField name={"Revision"} value={executor.revisionNumber} />
       <CommonEditableField<string | null>
@@ -258,6 +258,6 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
         )}
         size={12}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

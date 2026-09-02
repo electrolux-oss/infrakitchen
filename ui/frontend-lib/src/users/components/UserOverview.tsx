@@ -55,7 +55,6 @@ export const UserOverview = ({ user }: UserAboutProps) => {
   return (
     <OverviewCard
       name={user.identifier}
-
       icon={<UserAvatar identifier={user.identifier} />}
       chip={user.deactivated ? "Deactivated" : undefined}
       chipColor="error"

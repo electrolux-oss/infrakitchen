@@ -171,17 +171,9 @@ export const SourceConfigForm = (props: {
           </Typography>
           <Chip label={configType} variant="outlined" />
           {required ? (
-            <Chip
-              label="required"
-              color="warning"
-              variant="outlined"
-            />
+            <Chip label="required" color="warning" variant="outlined" />
           ) : (
-            <Chip
-              label="optional"
-              color="info"
-              variant="outlined"
-            />
+            <Chip label="optional" color="info" variant="outlined" />
           )}
           {validationSummary && (
             <Chip
@@ -191,18 +183,10 @@ export const SourceConfigForm = (props: {
             />
           )}
           {restricted && (
-            <Chip
-              label="restricted"
-              color="error"
-              variant="outlined"
-            />
+            <Chip label="restricted" color="error" variant="outlined" />
           )}
           {sensitive && (
-            <Chip
-              label="sensitive"
-              color="secondary"
-              variant="outlined"
-            />
+            <Chip label="sensitive" color="secondary" variant="outlined" />
           )}
         </Box>
       </Box>

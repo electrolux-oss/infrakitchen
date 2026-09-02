@@ -5,7 +5,7 @@ import { Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { PlaceholderText } from "../../common/components/PlaceholderDescription";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -57,7 +57,7 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
   );
 
   return (
-    <OverviewCard name="Project Configuration">
+    <BaseCard name="Project Configuration">
       {" "}
       <BooleanInlineField
         name={"Always Use Workspace"}
@@ -134,6 +134,6 @@ export const ProjectSettings = ({ project }: ProjectSettingsProps) => {
         Let users update selected resource fields without creating an approval
         request.
       </Typography>
-    </OverviewCard>
+    </BaseCard>
   );
 };

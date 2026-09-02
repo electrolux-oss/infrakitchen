@@ -1,4 +1,4 @@
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { AzureDevopsRepoMetadata } from "../../providers/azure_devops/RepoMetadata";
 import { BitbucketRepoMetadata } from "../../providers/bitbucket/RepoMetadata";
 import { GithubRepoMetadata } from "../../providers/github/RepoMetadata";
@@ -17,9 +17,9 @@ export const WorkspaceRepository = ({
 
   if (!provider || !organization || !name || !workspace.integration?.id) {
     return (
-      <OverviewCard name="Repository Metadata">
+      <BaseCard name="Repository Metadata">
         <p>Missing required information to display pull requests.</p>
-      </OverviewCard>
+      </BaseCard>
     );
   }
   const queryParams = { integration_id: workspace.integration.id };

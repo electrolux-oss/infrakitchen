@@ -1,4 +1,4 @@
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { AzureDevopsPullRequestsList } from "../../providers/azure_devops/AzureDevopsPullRequestsList";
 import { BitbucketPullRequestsList } from "../../providers/bitbucket/PullRequestsList";
 import { GithubPullRequestsList } from "../../providers/github/GithubPullRequestsList";
@@ -17,15 +17,15 @@ export const WorkspacePullRequests = ({
 
   if (!provider || !organization || !name || !workspace.integration?.id) {
     return (
-      <OverviewCard name="Pull Requests">
+      <BaseCard name="Pull Requests">
         <p>Missing required information to display pull requests.</p>
-      </OverviewCard>
+      </BaseCard>
     );
   }
   const queryParams = { integration_id: workspace.integration.id };
 
   return (
-    <OverviewCard name="Pull Requests">
+    <BaseCard name="Pull Requests">
       {provider === "github" && (
         <GithubPullRequestsList
           organization={organization}
@@ -47,6 +47,6 @@ export const WorkspacePullRequests = ({
           queryParams={queryParams}
         />
       )}
-    </OverviewCard>
+    </BaseCard>
   );
 };

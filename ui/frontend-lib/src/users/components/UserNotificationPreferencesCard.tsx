@@ -23,7 +23,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
@@ -333,7 +333,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
 
   return (
     <>
-      <OverviewCard
+      <BaseCard
         name="Notification Preferences"
         description="Manage your event preferences and delivery channels."
         actions={
@@ -355,7 +355,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
           defaultFilter={{ user_id }}
           entityFieldMap={NOTIFICATION_PREFERENCE_FIELD_MAP}
         />
-      </OverviewCard>
+      </BaseCard>
       <NotificationPreferenceDialog
         userId={user_id}
         open={dialogOpen}

@@ -22,7 +22,7 @@ import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { PlaceholderText } from "../../common/components/PlaceholderDescription";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
@@ -247,7 +247,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
   };
 
   return (
-    <OverviewCard name="Secret Configuration">
+    <BaseCard name="Secret Configuration">
       <CommonField
         name={"Integration"}
         value={
@@ -364,6 +364,6 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
           />
         </>
       )}
-    </OverviewCard>
+    </BaseCard>
   );
 };

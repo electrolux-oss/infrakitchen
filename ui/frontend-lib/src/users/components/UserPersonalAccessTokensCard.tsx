@@ -21,7 +21,7 @@ import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
 import { CommonDialog } from "../../common/components/CommonDialog";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { GqlUser } from "../graphql";
@@ -411,7 +411,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
 
   return (
     <>
-      <OverviewCard
+      <BaseCard
         name="Personal Access Tokens"
         description="Create and delete tokens for CLI and API access on your account."
         actions={
@@ -545,7 +545,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
             })
           )}
         </Box>
-      </OverviewCard>
+      </BaseCard>
       <TokenDialog
         open={dialogOpen}
         isLoading={isSaving}
