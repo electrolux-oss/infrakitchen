@@ -286,6 +286,11 @@ export const EntityCard = ({
             gap: 1,
             width: "100%",
             justifyContent: "center",
+            // Reserve the action row even when there is no create button (e.g.
+            // disabled templates, or users without write permission) so cards
+            // keep a uniform footprint next to their neighbors. Button height
+            // is 36px (small), so equal to a present button.
+            minHeight: 36,
           }}
         >
           {createButtonName && (

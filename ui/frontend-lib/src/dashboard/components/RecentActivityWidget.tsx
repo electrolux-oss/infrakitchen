@@ -272,6 +272,9 @@ export const RecentActivityWidget = ({
             sx={{
               ...dataGridSx,
               ...dataGridClickableRowSx,
+              // Compact widget list: hug its rows instead of the shared
+              // min-height.
+              minHeight: "auto",
               border: "none",
               bgcolor: "background.paper",
             }}

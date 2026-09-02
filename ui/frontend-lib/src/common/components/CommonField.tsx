@@ -170,9 +170,7 @@ export const getProviderValue = (provider: string, iconSize: number = 24) => {
       }}
     >
       {IconField(provider, iconSize)}
-      <Typography sx={{ color: "text.secondary" }}>
-        {getProviderDisplayName(provider)}
-      </Typography>
+      <Typography>{getProviderDisplayName(provider)}</Typography>
     </Box>
   );
 };

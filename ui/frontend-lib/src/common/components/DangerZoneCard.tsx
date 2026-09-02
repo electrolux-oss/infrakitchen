@@ -29,7 +29,7 @@ import { ConfirmNameField } from "./ConfirmNameField";
 
 export const DangerZoneCard = () => {
   const { ikApi, linkPrefix } = useConfig();
-  const { actions, entity, refreshActions } = useEntityProvider();
+  const { actions, entity, refreshActions, refreshEntity } = useEntityProvider();
   const [destroyConfirm, setDestroyConfirm] = useState("");
   const [dialogValues, setDialogValues] = useState<{
     [key: string]: boolean;
@@ -52,7 +52,11 @@ export const DangerZoneCard = () => {
 
   const changeDialogWithRefresh = async (dialog: string) => {
     changeDialog(dialog);
+    // Refresh the action list AND the entity: actions drive which danger
+    // buttons show, while the entity (status) drives header actions like
+    // Create Resource / Enable — only refreshing one leaves the page stale.
     if (refreshActions) refreshActions();
+    if (refreshEntity) refreshEntity();
   };
 
   if (actions.length === 0) {

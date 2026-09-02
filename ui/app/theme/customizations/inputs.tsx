@@ -390,6 +390,13 @@ export const inputsCustomizations: Components<Theme> = {
       }),
     },
   },
+  MuiSwitch: {
+    defaultProps: {
+      // Compact switches by default, matching the Button/IconButton/TextField
+      // small defaults — components opt into medium explicitly when needed.
+      size: "small",
+    },
+  },
   MuiAutocomplete: {
     styleOverrides: {
       root: ({ theme }) => ({

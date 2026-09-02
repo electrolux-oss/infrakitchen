@@ -75,7 +75,13 @@ export const dataGridSx: SxProps<Theme> = {
     textOverflow: "clip",
     lineHeight: 1.4,
     wordBreak: "break-word",
-  },  // Footer: keep the flush control look (no focus boxes/swallows), default
+  },
+  // Floor the grid height so empty or sparsely populated tables still fill a
+  // respectable footprint (the "No rows" overlay expands instead of huddling
+  // at the top). Embedded grids that intentionally hug their content
+  // (autoHeight, compact read-only tables) reset this with minHeight: "auto".
+  minHeight: 380,
+  // Footer: keep the flush control look (no focus boxes/swallows), default
   // MUI heights.
   "& .MuiDataGrid-footerContainer": {
     borderTop: "1px solid",
@@ -84,6 +90,13 @@ export const dataGridSx: SxProps<Theme> = {
   "& .MuiTablePagination-root": {
     "& .MuiButtonBase-root": {
       border: "none",
+    },
+    // MUI's standard select gives the Rows-per-page value asymmetric vertical
+    // padding (1px top / 5px bottom), which parks the current value ~2px high
+    // against the "Rows per page:" label. Rebalance so the text centers.
+    "& .MuiTablePagination-select": {
+      paddingTop: "3px",
+      paddingBottom: "3px",
     },
   },
 };
@@ -127,4 +140,11 @@ export const dataGridDefaultProps = {
   // column-menu button (which would only duplicate the sort actions) is hidden.
   disableColumnMenu: true,
   getRowHeight: () => "auto" as const,
+  // Friendlier empty states than the terse MUI "No rows" / "No results" —
+  // one covers a table with no records at all, the other a filtered view
+  // whose filters matched nothing.
+  localeText: {
+    noRowsLabel: "No Results Found",
+    noResultsOverlayLabel: "No Results Found",
+  },
 };

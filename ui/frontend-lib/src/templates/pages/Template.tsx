@@ -32,6 +32,12 @@ const TemplatePageContent = () => {
   const navigate = useNavigate();
   const { entity } = useEntityProvider();
 
+  // The API serializes status with its display casing (e.g. "DISABLED"); the
+  // constants are lowercase, so normalize before comparing.
+  const isDisabled =
+    String(entity?.status ?? "").toLocaleLowerCase() ===
+    ENTITY_STATUS.DISABLED;
+
   const handleUseTemplate = () => {
     if (entity?.id) {
       navigate(`${linkPrefix}resources/create`, {
@@ -44,7 +50,7 @@ const TemplatePageContent = () => {
     <EntityContainer
       title={"Template Details"}
       actions={
-        entity?.status !== ENTITY_STATUS.DISABLED ? (
+        !isDisabled ? (
           <Tooltip title="Create a new resource from this template">
             <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
               Create Resource

@@ -167,7 +167,15 @@ export const dataDisplayCustomizations: Components<Theme> = {
   },
   MuiMenuItem: {
     styleOverrides: {
-      root: dropdownItemStyle,
+      // MUI's MenuItem default is 16px body1; pin dropdowns to the same 14px
+      // body2 text as the rest of the UI. This also cascades into the DataGrid
+      // footer's Rows-per-page items (MuiTablePagination-menuItem), which are
+      // built on MenuItem and inherit these overrides.
+      root: ({ theme }) => ({
+        ...dropdownItemStyle({ theme }),
+        fontSize: theme.typography.body2.fontSize,
+        lineHeight: theme.typography.body2.lineHeight,
+      }),
     },
   },
   MuiTooltip: {

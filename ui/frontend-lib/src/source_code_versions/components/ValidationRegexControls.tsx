@@ -443,7 +443,6 @@ export const ValidationRegexControls = ({
             <FormControlLabel
               control={
                 <Switch
-                  size="small"
                   checked={toggleState[definition.key]}
                   onChange={(_, checked) =>
                     handleToggleChange(definition.key, checked)
@@ -498,7 +497,6 @@ export const ValidationRegexControls = ({
           sx={{ mt: 1, minWidth: 200 }}
           control={
             <Switch
-              size="small"
               checked={hasInfiniteMax}
               onChange={(_, checked) => handleInfiniteMaxToggle(checked)}
               disabled={isComplexRegex}

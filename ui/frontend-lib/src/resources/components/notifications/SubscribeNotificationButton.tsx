@@ -140,7 +140,6 @@ export const SubscribeNotificationButton = ({
               <Switch
                 checked={inheritChildren}
                 onChange={(e) => setInheritChildren(e.target.checked)}
-                size="small"
               />
               <Typography variant="body2">Include child resources</Typography>
             </Box>

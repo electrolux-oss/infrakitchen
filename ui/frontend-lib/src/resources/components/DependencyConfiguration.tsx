@@ -86,8 +86,6 @@ const DependencyVariablesTable = ({
         >
           <Switch
             checked={Boolean(params.value)}
-            size="small"
-            disableRipple
             sx={{ pointerEvents: "none", cursor: "default" }}
           />
         </Tooltip>
@@ -127,6 +125,8 @@ const DependencyVariablesTable = ({
             // read-only tables.
             "& .MuiDataGrid-cell": { py: "2px" },
           },
+          // Small embedded table: hug its rows instead of the shared min-height.
+          { minHeight: "auto" },
         ]}
       />
     </Box>

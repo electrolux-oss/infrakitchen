@@ -4,20 +4,11 @@ import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
 import InputIcon from "@mui/icons-material/Input";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import ReorderIcon from "@mui/icons-material/Reorder";
-import ToggleOffIcon from "@mui/icons-material/ToggleOff";
-import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import {
   Alert,
   Box,
   Button,
   CircularProgress,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
   Typography,
   Link,
 } from "@mui/material";
@@ -29,16 +20,12 @@ import { buildAdvancedApiFilters } from "../../common/components/filter_panel/bu
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-import { buildEntityActionMutation } from "../../common/graphql/entityActionMutation";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
-import { TemplateVersionReorderDialog } from "../../source_code_versions/components/TemplateVersionReorderDialog";
-import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
+import { ENTITY_STATUS } from "../../utils/constants";
 import { templateColumns } from "../components/templateFilterConfig";
 import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
-
-const TEMPLATE_ACTION_MUTATION = buildEntityActionMutation("template");
 
 export const TemplatesPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -47,14 +34,6 @@ export const TemplatesPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({});
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [reorderTemplate, setReorderTemplate] = useState<GqlTemplate | null>(
-    null,
-  );
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
-  const [menuTemplate, setMenuTemplate] = useState<GqlTemplate | null>(null);
-  const [togglingTemplateId, setTogglingTemplateId] = useState<string | null>(
-    null,
-  );
   const navigate = useNavigate();
 
   const entityName = "template";
@@ -97,50 +76,6 @@ export const TemplatesPage = () => {
       setFilterValues(newFilterValues);
     },
     [],
-  );
-
-  const handleOpenMenu = useCallback(
-    (event: React.MouseEvent<HTMLElement>, template: GqlTemplate) => {
-      setMenuAnchorEl(event.currentTarget);
-      setMenuTemplate(template);
-    },
-    [],
-  );
-
-  const handleCloseMenu = useCallback(() => {
-    setMenuAnchorEl(null);
-    setMenuTemplate(null);
-  }, []);
-
-  const handleToggleTemplateEnabled = useCallback(
-    async (template: GqlTemplate) => {
-      const action =
-        template.status?.toLocaleLowerCase() === ENTITY_STATUS.DISABLED
-          ? ENTITY_ACTION.ENABLE
-          : ENTITY_ACTION.DISABLE;
-
-      setTogglingTemplateId(template.id);
-      handleCloseMenu();
-
-      try {
-        await ikApi.graphqlRequest(TEMPLATE_ACTION_MUTATION, {
-          id: template.id,
-          input: { action },
-        });
-        notify(
-          action === ENTITY_ACTION.ENABLE
-            ? "Template enabled"
-            : "Template disabled",
-          "success",
-        );
-        await fetchTemplates();
-      } catch (error) {
-        notifyError(error);
-      } finally {
-        setTogglingTemplateId(null);
-      }
-    },
-    [fetchTemplates, handleCloseMenu, ikApi],
   );
 
   useEffect(() => {
@@ -250,7 +185,12 @@ export const TemplatesPage = () => {
         ) : (
           <Box sx={{ ...entityCardGridSx(), mt: 3 }}>
             {templates.map((template) => {
-              const enabled = template.status !== "disabled";
+              // The API serializes status with its display casing (e.g.
+              // "DISABLED"); normalize before comparing against the lowercase
+              // constant so disabled templates don't keep their CTA.
+              const enabled =
+                String(template.status ?? "").toLocaleLowerCase() !==
+                ENTITY_STATUS.DISABLED;
 
               return (
                 <EntityCard
@@ -271,100 +211,12 @@ export const TemplatesPage = () => {
                   chip={template.abstract ? "Abstract" : undefined}
                   lastUpdated={template.updatedAt}
                   entityFields={templateCardFields(template)}
-                  headerAction={
-                    <PermissionWrapper
-                      requiredPermission="api:template"
-                      permissionAction="write"
-                    >
-                      <IconButton
-                        size="small"
-                        aria-label={`Open actions for ${template.name}`}
-                        aria-controls={
-                          menuTemplate?.id === template.id
-                            ? "template-actions-menu"
-                            : undefined
-                        }
-                        aria-haspopup="true"
-                        aria-expanded={
-                          menuTemplate?.id === template.id ? "true" : undefined
-                        }
-                        onClick={(event) => handleOpenMenu(event, template)}
-                        disabled={togglingTemplateId === template.id}
-                        sx={{ mt: -0.5, mr: -0.5 }}
-                      >
-                        <MoreHorizIcon fontSize="small" />
-                      </IconButton>
-                    </PermissionWrapper>
-                  }
                 />
               );
             })}
           </Box>
         )}
       </Box>
-
-      <Menu
-        id="template-actions-menu"
-        anchorEl={menuAnchorEl}
-        open={Boolean(menuAnchorEl && menuTemplate)}
-        onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        {menuTemplate && !menuTemplate.abstract ? (
-          <PermissionWrapper
-            requiredPermission="api:source_code_version"
-            permissionAction="write"
-          >
-            <MenuItem
-              onClick={() => {
-                setReorderTemplate(menuTemplate);
-                handleCloseMenu();
-              }}
-            >
-              <ListItemIcon>
-                <ReorderIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Rearrange Versions</ListItemText>
-            </MenuItem>
-          </PermissionWrapper>
-        ) : null}
-        {menuTemplate ? (
-          <PermissionWrapper
-            requiredPermission="api:template"
-            permissionAction="write"
-          >
-            <MenuItem
-              onClick={() => void handleToggleTemplateEnabled(menuTemplate)}
-              disabled={togglingTemplateId === menuTemplate.id}
-            >
-              <ListItemIcon>
-                {menuTemplate.status?.toLocaleLowerCase() ===
-                ENTITY_STATUS.DISABLED ? (
-                  <ToggleOffIcon fontSize="small" />
-                ) : (
-                  <ToggleOnIcon fontSize="small" />
-                )}
-              </ListItemIcon>
-              <ListItemText>
-                {menuTemplate.status?.toLocaleLowerCase() ===
-                ENTITY_STATUS.DISABLED
-                  ? "Enable"
-                  : "Disable"}
-              </ListItemText>
-            </MenuItem>
-          </PermissionWrapper>
-        ) : null}
-      </Menu>
-      {reorderTemplate ? (
-        <TemplateVersionReorderDialog
-          open
-          templateId={reorderTemplate.id}
-          templateName={reorderTemplate.name}
-          onClose={() => setReorderTemplate(null)}
-          onSaved={() => fetchTemplates()}
-        />
-      ) : null}
     </PageContainer>
   );
 };

@@ -456,7 +456,6 @@ export const SourceConfigForm = (props: {
                         }
                         control={
                           <Switch
-                            size="small"
                             name={field.name}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}
@@ -553,7 +552,6 @@ export const SourceConfigForm = (props: {
                         }
                         control={
                           <Switch
-                            size="small"
                             name={field.name}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}

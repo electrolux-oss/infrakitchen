@@ -359,7 +359,6 @@ export const SourceCodeRefSection = ({
             <FormControlLabel
               control={
                 <Switch
-                  size="small"
                   checked={!!filterValues["enabled_only"]}
                   onChange={(e) =>
                     handleFilterChange("enabled_only", e.target.checked)

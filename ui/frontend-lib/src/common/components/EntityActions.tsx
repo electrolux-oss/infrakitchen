@@ -11,8 +11,10 @@ import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
 
 import { ENTITY_ACTION } from "../../utils/constants";
+import { buildEntityActionMutation } from "../graphql/entityActionMutation";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
+import { notify, notifyError } from "../hooks/useNotification";
 
 import { ActionButton } from "./buttons/ActionButton";
 import { CommonDialog } from "./CommonDialog";
@@ -25,9 +27,10 @@ export interface EntityActionsProps {
 export function EntityActions(props: EntityActionsProps) {
   const { entity_id, entity_name, showEditAction } = props;
 
-  const { linkPrefix } = useConfig();
-  const { actions, refreshActions } = useEntityProvider();
+  const { ikApi, linkPrefix } = useConfig();
+  const { actions, refreshActions, refreshEntity } = useEntityProvider();
   const navigate = useNavigate();
+  const [enabling, setEnabling] = useState(false);
 
   const [dialogValues, setDialogValues] = useState<{
     [key: string]: boolean;
@@ -39,8 +42,29 @@ export function EntityActions(props: EntityActionsProps) {
     retry: false,
     dryrun: false,
     dryrun_with_temp_state: false,
-    enable: false,
   });
+
+  const handleEnable = async () => {
+    setEnabling(true);
+    try {
+      await ikApi.graphqlRequest(
+        buildEntityActionMutation(entity_name),
+        {
+          id: entity_id,
+          input: { action: ENTITY_ACTION.ENABLE },
+        },
+      );
+      notify("Entity enabled", "success");
+      // Refresh actions and the entity so header/status buttons flip (a
+      // disabled entity becomes enabled).
+      if (refreshActions) refreshActions();
+      if (refreshEntity) refreshEntity();
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setEnabling(false);
+    }
+  };
 
   const changeDialog = async (dialog: string) => {
     setDialogValues((dialogValues) => {
@@ -50,7 +74,11 @@ export function EntityActions(props: EntityActionsProps) {
 
   const changeDialogWithRefresh = async (dialog: string) => {
     changeDialog(dialog);
+    // Actions drive which header buttons show (e.g. Enable for a disabled
+    // entity), so refresh both the action list and the entity itself — only
+    // refreshing actions leaves entity.status stale.
     if (refreshActions) refreshActions();
+    if (refreshEntity) refreshEntity();
   };
 
   return (
@@ -103,8 +131,12 @@ export function EntityActions(props: EntityActionsProps) {
         </Button>
       )}
       {actions.includes("enable") && (
-        <Button color="success" onClick={() => changeDialog("enable")}>
-          Enable
+        <Button
+          color="success"
+          onClick={() => void handleEnable()}
+          disabled={enabling}
+        >
+          {enabling ? "Enabling..." : "Enable"}
         </Button>
       )}
       {actions.includes("edit") && showEditAction && (
@@ -221,21 +253,6 @@ export function EntityActions(props: EntityActionsProps) {
         }
         open={dialogValues.recreate}
         onClose={() => changeDialog("recreate")}
-      />
-      <CommonDialog
-        title="Request Enable"
-        content="Do you want to enable this entity?"
-        maxWidth="xs"
-        actions={
-          <ActionButton
-            action={ENTITY_ACTION.ENABLE}
-            onSubmit={() => changeDialogWithRefresh("enable")}
-          >
-            Enable
-          </ActionButton>
-        }
-        open={dialogValues.enable}
-        onClose={() => changeDialog("enable")}
       />
     </>
   );

@@ -131,6 +131,8 @@ const SecretListTable = ({ secrets }: { secrets: CustomSecret[] }) => {
             // read-only table.
             "& .MuiDataGrid-cell": { py: "2px" },
           },
+          // Small embedded table: hug its rows instead of the shared min-height.
+          { minHeight: "auto" },
         ]}
       />
     </Box>

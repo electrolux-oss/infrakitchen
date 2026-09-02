@@ -175,7 +175,6 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
           <FormControlLabel
             control={
               <Switch
-                size="small"
                 checked={item.inherited_by_children}
                 onChange={(e) =>
                   handleFieldChange(
