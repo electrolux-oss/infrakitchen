@@ -256,6 +256,11 @@ export const inputsCustomizations: Components<Theme> = {
     },
   },
   MuiIconButton: {
+    defaultProps: {
+      // Compact icon buttons by default, matching the Button small default
+      // (MUI's own IconButton default is medium / 40px).
+      size: "small",
+    },
     styleOverrides: {
       root: ({ theme }) => ({
         boxShadow: "none",
@@ -388,13 +393,22 @@ export const inputsCustomizations: Components<Theme> = {
   MuiAutocomplete: {
     styleOverrides: {
       root: ({ theme }) => ({
-        "& .MuiOutlinedInput-root": {
+        // The sizeSmall variant must be listed explicitly: MUI's own
+        // autocomplete rules (e.g. `padding: 6px` on the input root) use the
+        // size-small class, so an equal-specificity selector here wins for
+        // them as well.
+        "& .MuiOutlinedInput-root, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall": {
           display: "flex",
           alignItems: "center",
-          minHeight: "2.5rem",
+          // Same compact 32px standard as every other input. Multi-select
+          // stays `height: auto` so tag rows can wrap and grow beyond it.
+          minHeight: "2rem",
           height: "auto",
-          padding: "7px 12px",
-          "& .MuiAutocomplete-input": {
+          // Tight vertical padding + the standard 12px text indent: a single
+          // line of 14px text then pins the box to exactly 32px like
+          // OutlinedInput, while chip rows keep their natural height.
+          padding: "1px 12px",
+          "& .MuiAutocomplete-input, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall .MuiAutocomplete-input": {
             padding: 0,
           },
           "& .MuiAutocomplete-endAdornment": {
@@ -415,7 +429,19 @@ export const inputsCustomizations: Components<Theme> = {
       paper: dropdownPaperStyle,
       listbox: ({ theme }) => ({
         padding: "8px",
-        "& .MuiAutocomplete-option": dropdownItemStyle({ theme }),
+        "& .MuiAutocomplete-option": {
+          ...dropdownItemStyle({ theme }),
+          // MUI renders options at 16px body1 with a 48px min-height and
+          // never touches them for compact UIs — pin them to the same
+          // 14px/500 list typography as Menu/Select items and the compact
+          // 32px row standard.
+          fontSize: theme.typography.body2.fontSize,
+          fontWeight: 500,
+          lineHeight: theme.typography.body2.lineHeight,
+          minHeight: "2rem",
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
       }),
     },
   },
@@ -511,7 +537,12 @@ export const inputsCustomizations: Components<Theme> = {
     styleOverrides: {
       root: ({ theme }) => ({
         typography: theme.typography.caption,
-        marginBottom: 8,
+        // Space only standalone labels (rendered above an input), not the
+        // floating InputLabel used by TextField/Autocomplete — marginBottom
+        // there would push the label down and make it overlap the field.
+        "&:not(.MuiInputLabel-root)": {
+          marginBottom: 8,
+        },
       }),
     },
   },

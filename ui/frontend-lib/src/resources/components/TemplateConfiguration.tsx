@@ -1,13 +1,11 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 
-import InfoIcon from "@mui/icons-material/InfoOutlined";
 import {
   Box,
   Button,
   Chip,
   Grid,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -20,6 +18,7 @@ import {
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { InlineCode } from "../../common/components/InlineCode";
+import { OverviewCard } from "../../common/components/OverviewCard";
 import { PlaceholderText } from "../../common/components/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { solidChipColorSx } from "../../common/utils/softChip";
@@ -90,33 +89,42 @@ const getSourceCodeVariables = (
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "center",
-                    gap: 0.75,
-                    flexWrap: "wrap",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    minWidth: 0,
                   }}
                 >
-                  {" "}
-                  <Typography
-                    variant="caption"
-                    sx={{ fontWeight: 600, fontFamily: CODE_FONT_FAMILY }}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      flexWrap: "wrap",
+                    }}
                   >
-                    {variable.name}
-                  </Typography>
-                  {showType && (variable as VariableInput).type && (
-                    <InlineCode>{(variable as VariableInput).type}</InlineCode>
-                  )}
-                  {variable.description && (
-                    <Tooltip title={variable.description}>
-                      <InfoIcon
-                        sx={{ fontSize: "1rem", color: "text.secondary" }}
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, fontFamily: CODE_FONT_FAMILY }}
+                    >
+                      {variable.name}
+                    </Typography>
+                    {showType && (variable as VariableInput).type && (
+                      <InlineCode>{(variable as VariableInput).type}</InlineCode>
+                    )}
+                    {variable.sensitive && (
+                      <Chip
+                        label="sensitive"
+                        sx={solidChipColorSx("secondary")}
                       />
-                    </Tooltip>
-                  )}
-                  {variable.sensitive && (
-                    <Chip
-                      label="sensitive"
-                      sx={solidChipColorSx("secondary")}
-                    />
+                    )}
+                  </Box>
+                  {variable.description && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      {variable.description}
+                    </Typography>
                   )}
                 </Box>
               </Grid>
@@ -254,7 +262,7 @@ export const TemplateConfiguration = ({
   );
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Grid container spacing={2}>
+      <OverviewCard name="Template Configuration">
         {resource.template && (
           <CommonField
             name="Template"
@@ -416,57 +424,67 @@ export const TemplateConfiguration = ({
             />
           </>
         )}{" "}
-      </Grid>
+      </OverviewCard>
       {resource.abstract === false && (
         <>
-          {" "}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 1,
-            }}
+          <OverviewCard
+            name={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {/* Inherit the card-title styling so this header matches the
+                    plain-string titles used by the other overview cards. */}
+                <Typography component="span" variant="inherit">
+                  Input Variables
+                </Typography>
+                <Chip
+                  label={String(resource.variables?.length ?? 0)}
+                  sx={solidChipColorSx("info", undefined, undefined, true)}
+                />
+                {hasPendingChange("variables") && <PendingChangeBadge />}
+              </Box>
+            }
+            actions={
+              <Button
+                onClick={() => setVariablesDialogOpen(true)}
+                disabled={!canEdit}
+              >
+                Edit Configuration
+              </Button>
+            }
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Input Variables
-              </Typography>
-              <Chip
-                label={String(resource.variables?.length ?? 0)}
-                sx={solidChipColorSx("info")}
-              />
-              {hasPendingChange("variables") && <PendingChangeBadge />}
-            </Box>
-            <Button
-              onClick={() => setVariablesDialogOpen(true)}
-              disabled={!canEdit}
-            >
-              Edit
-            </Button>
-          </Box>
-          {getSourceCodeVariables(resource.variables as VariableInput[], {
-            showType: true,
-            emptyMessage: "No input variables.",
-          })}
+            <Grid size={12}>
+              {getSourceCodeVariables(resource.variables as VariableInput[], {
+                showType: true,
+                emptyMessage: "No input variables.",
+              })}
+            </Grid>
+          </OverviewCard>
           <ResourceVariablesEditDialog
             open={variablesDialogOpen}
             onClose={() => setVariablesDialogOpen(false)}
             resource={resource}
             onSave={handleVariablesSave}
           />
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Output Values
-            </Typography>
-            <Chip
-              label={String(resource.outputs?.length ?? 0)}
-              sx={solidChipColorSx("info")}
-            />
-          </Box>
-          {getSourceCodeVariables(resource.outputs as VariableOutput[], {
-            emptyMessage: "No output values.",
-          })}
+          <OverviewCard
+            name={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {/* Inherit the card-title styling so this header matches the
+                    plain-string titles used by the other overview cards. */}
+                <Typography component="span" variant="inherit">
+                  Output Values
+                </Typography>
+                <Chip
+                  label={String(resource.outputs?.length ?? 0)}
+                  sx={solidChipColorSx("info", undefined, undefined, true)}
+                />
+              </Box>
+            }
+          >
+            <Grid size={12}>
+              {getSourceCodeVariables(resource.outputs as VariableOutput[], {
+                emptyMessage: "No output values.",
+              })}
+            </Grid>
+          </OverviewCard>
         </>
       )}
     </Box>

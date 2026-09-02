@@ -131,7 +131,6 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
         onClick={handleClick}
         sx={sx}
         style={{
-          textDecoration: "none",
           cursor: "pointer",
           whiteSpace: "normal",
         }}
@@ -148,9 +147,7 @@ export const getTextValue = (text: any) => {
   }
 
   return (
-    <Typography sx={{ color: "text.secondary" }}>
-      {text.toString()}
-    </Typography>
+    <Typography sx={{ color: "text.secondary" }}>{text.toString()}</Typography>
   );
 };
 
@@ -213,7 +210,7 @@ export const getTimeOnlyValue = (date: Date | string) => {
 };
 
 export interface ParameterFieldProps {
-  name: string;
+  name: ReactNode;
   value: ReactNode;
   size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
 }

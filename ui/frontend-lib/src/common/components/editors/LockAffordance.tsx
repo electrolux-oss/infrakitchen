@@ -29,8 +29,9 @@ export const LockAffordance = ({
       onClick={onClick}
       aria-label={description ? `${title}. ${description}` : title}
       sx={{
-        width: 28,
-        height: 28,
+        width: 24,
+        height: 24,
+        padding: 2,
         flexShrink: 0,
         border: "1px solid transparent",
         // Same default icon color as the edit (pencil) affordance. Always

@@ -18,9 +18,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-
 import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
+import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
 
 import {
   FilterConfig,
@@ -418,16 +417,7 @@ const ClauseRow = ({
           <IconButton
             size="small"
             onClick={() => onRemove(clause.id)}
-            sx={{
-              color: "text.secondary",
-              border: "none",
-              backgroundColor: "transparent",
-              "&:hover": {
-                backgroundColor: (theme) =>
-                  alpha(theme.palette.error.main, 0.08),
-                color: "error.main",
-              },
-            }}
+            sx={deleteIconButtonStyle}
           >
             <DeleteOutlineIcon fontSize="small" />
           </IconButton>

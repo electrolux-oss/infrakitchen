@@ -37,8 +37,9 @@ export const EditAffordance = ({
         opacity: 0,
         transition:
           "opacity 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out",
-        width: 28,
-        height: 28,
+        width: 24,
+        height: 24,
+        padding: 2,
         flexShrink: 0,
         border: "1px solid transparent",
         backgroundColor: "transparent",

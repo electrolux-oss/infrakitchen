@@ -1,6 +1,5 @@
 import { NavigateFunction } from "react-router";
 
-import { Link } from "@mui/material";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
@@ -35,21 +34,14 @@ export const taskColumns = (options: {
       defaultOperator: "in",
       optionsKey: "entities",
     },
-    renderCell: (params: GridRenderCellParams) => {
-      return (
-        <Link
-          onClick={() => {
-            options.navigate(
-              `${options.linkPrefix}${params.row.entity}s/${params.row.entityId}`,
-            );
-          }}
-          rel="noopener"
-          style={{ cursor: "pointer" }}
-        >
-          {params.row.entityData?.name ?? params.row.entity}
-        </Link>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <GetEntityLink
+        id={params.row.entityId}
+        entityName={params.row.entity}
+        name={params.row.entityData?.name}
+        identifier={params.row.entity}
+      />
+    ),
   },
   {
     field: "status",

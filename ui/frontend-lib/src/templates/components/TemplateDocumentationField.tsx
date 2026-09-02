@@ -70,8 +70,7 @@ export const TemplateDocumentationField = ({
           <Box
             sx={{
               display: "inline-flex",
-              alignItems: "center",
-              gap: 0.25,
+              alignItems: "flex-start",
               maxWidth: "100%",
               // Reveal the edit affordance on hover/focus, like other fields.
               "&:hover .doc-edit-action, &:focus-within .doc-edit-action": {
@@ -79,19 +78,34 @@ export const TemplateDocumentationField = ({
               },
             }}
           >
-            <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ position: "relative", minWidth: 0 }}>
               {documentation ? (
                 <span>Documentation provided</span>
               ) : (
                 <PlaceholderText />
               )}
+              {/* Overlay the edit affordance just past the end of the value
+                  text, vertically centered on it, so it never makes the value
+                  row taller and the label-to-value gap stays consistent. */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "100%",
+                  transform: "translateY(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  pl: 0.5,
+                }}
+              >
+                <EditAffordance
+                  className="doc-edit-action"
+                  onClick={openDialog}
+                  ariaLabel="Edit documentation"
+                  disabled={!canEdit}
+                />
+              </Box>
             </Box>
-            <EditAffordance
-              className="doc-edit-action"
-              onClick={openDialog}
-              ariaLabel="Edit documentation"
-              disabled={!canEdit}
-            />
           </Box>
         }
         size={size}

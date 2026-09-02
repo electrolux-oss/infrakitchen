@@ -4,7 +4,6 @@ import {
   CloseFullscreen,
   FitScreen,
   Fullscreen,
-  OpenInFull,
   Terminal,
 } from "@mui/icons-material";
 import Box from "@mui/material/Box";
@@ -183,13 +182,15 @@ export const LogLiveTail = () => {
         position: "fixed",
         bottom: 20,
         right: 20,
-        width: isMinimized ? "auto" : dimensions.width,
-        height: isMinimized ? "auto" : dimensions.height,
+        // Minimized collapses to a compact icon-only FAB so it barely covers
+        // page content; expanded uses the user-resizable dimensions.
+        width: isMinimized ? 44 : dimensions.width,
+        height: isMinimized ? 44 : dimensions.height,
         zIndex: 1300,
         display: "flex",
         flexDirection: "column",
         boxShadow: "0 12px 40px rgba(0, 0, 0, 0.18)",
-        borderRadius: isMinimized ? "999px" : "var(--template-surface-radius)",
+        borderRadius: isMinimized ? "50%" : "var(--template-surface-radius)",
         border: "1px solid",
         borderColor: "divider",
         bgcolor: "background.paper",
@@ -229,19 +230,19 @@ export const LogLiveTail = () => {
       )}
       {isMinimized ? (
         <Box
+          role="button"
+          aria-label="Open log stream"
           sx={{
+            width: "100%",
+            height: "100%",
             display: "flex",
             alignItems: "center",
-            gap: 1,
-            px: 2,
-            py: 1.25,
+            justifyContent: "center",
           }}
         >
-          <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Log Stream
-          </Typography>
-          <OpenInFull fontSize="small" sx={{ color: "text.secondary" }} />
+          <Tooltip title="Log Stream">
+            <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
+          </Tooltip>
         </Box>
       ) : (
         <>

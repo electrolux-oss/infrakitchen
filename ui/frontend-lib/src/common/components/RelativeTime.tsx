@@ -42,7 +42,10 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
       variant={variant}
       sx={{
         display: "inline-flex",
-        alignItems: "center",
+        // Top-align so the text sits at the same distance below the field
+        // label even when an avatar makes the row taller (centering would
+        // push the text down and vary the label-to-value gap per field).
+        alignItems: "flex-start",
         gap: 1,
         ...sx,
       }}

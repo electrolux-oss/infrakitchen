@@ -161,8 +161,7 @@ export function InlineEditableField<T>({
     <Box
       sx={{
         display: "inline-flex",
-        alignItems: "center",
-        gap: 0.25,
+        alignItems: "flex-start",
         maxWidth: "100%",
         // Reveal the edit affordance on hover/focus for a cleaner default view.
         "&:hover .inline-edit-action, &:focus-within .inline-edit-action": {
@@ -170,21 +169,51 @@ export function InlineEditableField<T>({
         },
       }}
     >
-      {" "}
-      <Box sx={{ minWidth: 0 }}>
+      <Box sx={{ position: "relative", minWidth: 0 }}>
         {display ?? <PlaceholderText text={placeholder} />}
-      </Box>
-      {lock ? (
-        <>
-          <LockAffordance
-            locked={lock.locked}
-            onClick={lock.onToggle}
-            title={lock.locked ? lock.lockedTitle : lock.unlockedTitle}
-            description={
-              lock.locked ? lock.lockedDescription : lock.unlockedDescription
-            }
-          />
-          {canEdit && !lock.locked && (
+        {/* Affordances are overlaid just past the end of the value text and
+            vertically centered on it, so they never make the value row taller
+            and the label-to-value gap stays consistent across all fields. */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "100%",
+            transform: "translateY(-50%)",
+            display: "flex",
+            alignItems: "center",
+            pl: 0.5,
+          }}
+        >
+          {lock ? (
+            <>
+              <LockAffordance
+                locked={lock.locked}
+                onClick={lock.onToggle}
+                title={lock.locked ? lock.lockedTitle : lock.unlockedTitle}
+                description={
+                  lock.locked ? lock.lockedDescription : lock.unlockedDescription
+                }
+              />
+              {canEdit && !lock.locked && (
+                <Tooltip title="Edit">
+                  <IconButton
+                    className="inline-edit-action"
+                    size="small"
+                    onClick={startEdit}
+                    aria-label={ariaLabel}
+                    sx={{
+                      opacity: 0,
+                      transition: "opacity 0.15s ease-in-out",
+                      "&:focus-visible": { opacity: 1 },
+                    }}
+                  >
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          ) : canEdit ? (
             <Tooltip title="Edit">
               <IconButton
                 className="inline-edit-action"
@@ -194,48 +223,38 @@ export function InlineEditableField<T>({
                 sx={{
                   opacity: 0,
                   transition: "opacity 0.15s ease-in-out",
+                  width: 24,
+                  height: 24,
+                  padding: 2,
                   "&:focus-visible": { opacity: 1 },
                 }}
               >
                 <EditOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
-        </>
-      ) : canEdit ? (
-        <Tooltip title="Edit">
-          <IconButton
-            className="inline-edit-action"
-            size="small"
-            onClick={startEdit}
-            aria-label={ariaLabel}
-            sx={{
-              opacity: 0,
-              transition: "opacity 0.15s ease-in-out",
-              "&:focus-visible": { opacity: 1 },
-            }}
-          >
-            <EditOutlinedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title={disabledTooltip}>
-          <span>
-            <IconButton
-              className="inline-edit-action"
-              size="small"
-              disabled
-              aria-label={ariaLabel}
+          ) : (
+            <Tooltip title={disabledTooltip}>
+              <span>
+                <IconButton
+                  className="inline-edit-action"
+                  size="small"
+                  disabled
+                  aria-label={ariaLabel}
               sx={{
                 opacity: 0,
                 transition: "opacity 0.15s ease-in-out",
+                width: 24,
+                height: 24,
+                padding: 2,
               }}
-            >
-              <EditOutlinedIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      )}
+                >
+                  <EditOutlinedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }
