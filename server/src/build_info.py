@@ -2,7 +2,6 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from urllib.parse import urlparse
 
 
 MODULE_DIR = Path(__file__).resolve().parent
@@ -32,54 +31,6 @@ def _git_output(*args: str) -> str:
         return "unknown"
 
 
-def _repository_from_remote(remote_url: str) -> str:
-    if not remote_url or remote_url == "unknown":
-        return "unknown"
-
-    normalized_url = remote_url.strip()
-    if normalized_url.endswith(".git"):
-        normalized_url = normalized_url[:-4]
-
-    if normalized_url.startswith("git@") and ":" in normalized_url:
-        _, path = normalized_url.split(":", 1)
-        return path.strip("/") or "unknown"
-
-    if normalized_url.startswith("ssh://"):
-        parsed = urlparse(normalized_url)
-        if parsed.path:
-            return parsed.path.strip("/") or "unknown"
-
-    if normalized_url.startswith("http://") or normalized_url.startswith("https://"):
-        parsed = urlparse(normalized_url)
-        if parsed.path:
-            return parsed.path.strip("/") or "unknown"
-
-    return "unknown"
-
-
-def _repository_url_from_remote(remote_url: str) -> str:
-    if not remote_url or remote_url == "unknown":
-        return ""
-
-    normalized_url = remote_url.strip()
-    if normalized_url.endswith(".git"):
-        normalized_url = normalized_url[:-4]
-
-    if normalized_url.startswith("git@") and ":" in normalized_url:
-        host, path = normalized_url.removeprefix("git@").split(":", 1)
-        return f"https://{host}/{path}"
-
-    if normalized_url.startswith("ssh://git@"):
-        parsed = urlparse(normalized_url)
-        if parsed.hostname and parsed.path:
-            return f"https://{parsed.hostname}{parsed.path}"
-
-    if normalized_url.startswith("http://") or normalized_url.startswith("https://"):
-        return normalized_url
-
-    return ""
-
-
 def build_info_defaults() -> dict[str, str]:
     version = _read_version_file()
     return {
@@ -93,11 +44,8 @@ def build_info_defaults() -> dict[str, str]:
 
 def build_info_payload() -> dict[str, str]:
     defaults = build_info_defaults()
-    remote_url = _git_output("config", "--get", "remote.origin.url")
-    repository = os.getenv("REPOSITORY") or _repository_from_remote(remote_url) or defaults["repository"]
-    repository_url = (
-        os.getenv("REPOSITORY_URL") or _repository_url_from_remote(remote_url) or defaults["repository_url"]
-    )
+    repository = os.getenv("REPOSITORY") or defaults["repository"]
+    repository_url = os.getenv("REPOSITORY_URL") or defaults["repository_url"]
 
     return {
         "version": defaults["version"],

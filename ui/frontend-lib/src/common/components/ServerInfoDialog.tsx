@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 
 import { InfrakitchenLogo } from "../../icons/InfrakitchenLogo";
+import { CODE_FONT_FAMILY } from "../theme";
 import { useConfig } from "../context/ConfigContext";
 
 const flattenObject = (object: Record<string, unknown>) => {
@@ -55,7 +56,6 @@ const InfoRow = ({
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
       <Typography
-        variant="body2"
         sx={{ color: "text.secondary", minWidth: 120, flexShrink: 0 }}
       >
         {label}
@@ -66,13 +66,23 @@ const InfoRow = ({
           target="_blank"
           rel="noreferrer"
           underline="hover"
-          sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.5,
+            fontFamily: CODE_FONT_FAMILY,
+            wordBreak: "break-word",
+          }}
         >
           {displayValue}
           <LaunchIcon sx={{ fontSize: 14 }} />
         </Link>
       ) : (
-        <Typography variant="body2">{displayValue}</Typography>
+        <Typography
+          sx={{ fontFamily: CODE_FONT_FAMILY, wordBreak: "break-word" }}
+        >
+          {displayValue}
+        </Typography>
       )}
     </Stack>
   );
@@ -97,15 +107,12 @@ const HostInfoRow = ({
   return (
     <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
       <Typography
-        variant="body2"
         sx={{ color: "text.secondary", minWidth: 120, flexShrink: 0 }}
       >
         Host info
       </Typography>
       <Typography
-        component="pre"
-        variant="body2"
-        sx={{ m: 0, whiteSpace: "pre-wrap" }}
+        sx={{ m: 0, whiteSpace: "pre-wrap", fontFamily: CODE_FONT_FAMILY }}
       >
         {`${platform} (${arch})\n${formattedString}`}
       </Typography>
@@ -136,70 +143,83 @@ export const ServerInfoDialog = ({ open, onClose }: ServerInfoDialogProps) => {
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5}>
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Build
-            </Typography>
-            <Stack spacing={1}>
-              <InfoRow
-                label="Version"
-                value={serverInfo?.version || "unknown"}
-                url={serverInfo?.versionUrl}
-              />
-              <InfoRow
-                label="Commit"
-                value={serverInfo?.sourceCommitShort || "unknown"}
-                url={serverInfo?.sourceUrl}
-              />
-            </Stack>
-          </Box>
-
-          <Divider />
-
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Server
-            </Typography>
-
-            {serverInfoLoading ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  py: 4,
-                }}
-              >
-                <CircularProgress size={24} />
+          {serverInfoLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                py: 4,
+              }}
+            >
+              <CircularProgress size={24} />
+            </Box>
+          ) : serverInfoError ? (
+            <Alert severity="error">{serverInfoError}</Alert>
+          ) : serverInfo ? (
+            <>
+              {/* Release identification: what build is running. */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 1,
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Build
+                </Typography>
+                <Stack spacing={1}>
+                  <InfoRow
+                    label="Version"
+                    value={serverInfo.version}
+                    url={serverInfo.versionUrl}
+                  />
+                  <InfoRow
+                    label="Repository"
+                    value={serverInfo.repository}
+                    url={serverInfo.repositoryUrl}
+                  />
+                  <InfoRow
+                    label="Commit"
+                    value={serverInfo.sourceCommitShort}
+                    url={serverInfo.sourceUrl}
+                  />
+                </Stack>
               </Box>
-            ) : serverInfoError ? (
-              <Alert severity="error">{serverInfoError}</Alert>
-            ) : serverInfo ? (
-              <Stack spacing={1}>
-                <InfoRow
-                  label="Version"
-                  value={serverInfo.version}
-                  url={serverInfo.versionUrl}
-                />
-                <InfoRow
-                  label="Repository"
-                  value={serverInfo.repository}
-                  url={serverInfo.repositoryUrl}
-                />
-                <InfoRow
-                  label="Source commit"
-                  value={serverInfo.sourceCommit}
-                  url={serverInfo.sourceUrl}
-                />
-                <InfoRow label="Python" value={serverInfo.python} />
-                <HostInfoRow hostMetadata={serverInfo.hostMetadata} />
-              </Stack>
-            ) : (
-              <Typography variant="body2" color="textSecondary">
-                No server info available.
-              </Typography>
-            )}
-          </Box>
+
+              <Divider />
+
+              {/* Runtime environment: where the server runs. */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 1,
+                    color: "text.secondary",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Server
+                </Typography>
+                <Stack spacing={1}>
+                  <InfoRow label="Python" value={serverInfo.python} />
+                  <HostInfoRow hostMetadata={serverInfo.hostMetadata} />
+                </Stack>
+              </Box>
+            </>
+          ) : (
+            <Typography color="textSecondary">
+              No server info available.
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
     </Dialog>
