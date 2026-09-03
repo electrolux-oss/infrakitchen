@@ -239,22 +239,13 @@ const IntegrationCreatePage = () => {
               p: 2,
               mx: 3,
               borderRadius: "var(--template-surface-radius)",
-              // Code/commands inside instruction steps use the inline code
-              // style.
-              "& code": {
-                fontSize: "0.85em",
-                fontFamily: CODE_FONT_FAMILY,
-                backgroundColor: "var(--template-palette-action-hover)",
-                borderRadius: "var(--template-surface-radius)",
-                px: 0.75,
-                py: 0.25,
-                wordBreak: "break-all",
-              },
+              // Inline code inside instruction steps renders through the shared
+              // InlineCode component; block snippets keep the code-font look.
               "& pre": {
                 fontFamily: CODE_FONT_FAMILY,
                 fontSize: "0.85em",
                 backgroundColor: "var(--template-palette-action-hover)",
-                borderRadius: "var(--template-surface-radius)",
+                borderRadius: "var(--template-code-radius)",
                 margin: 0.5,
                 p: 1,
                 overflowX: "auto",
@@ -294,11 +285,9 @@ const IntegrationCreatePage = () => {
                   >
                     {index + 1}
                   </Box>
-                  <Box
-                    component="span"
-                    sx={{ alignSelf: "center" }}
-                    dangerouslySetInnerHTML={{ __html: line }}
-                  />
+                  <Box component="span" sx={{ alignSelf: "center" }}>
+                    {line}
+                  </Box>
                 </Box>
               ))}
             </Box>

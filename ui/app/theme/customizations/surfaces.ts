@@ -1,5 +1,7 @@
 import { alpha, Theme, Components } from "@mui/material/styles";
 
+import { CODE_FONT_FAMILY } from "@electrolux-oss/infrakitchen";
+
 import { grey, shape } from "../themePrimitives";
 
 export const surfacesCustomizations: Components<Theme> = {
@@ -14,6 +16,9 @@ export const surfacesCustomizations: Components<Theme> = {
     styleOverrides: {
       ":root": {
         "--template-surface-radius": `${shape.borderRadius}px`,
+        // Tighter corner radius for inline and block code chips so they read
+        // as a smaller treatment than 8px surfaces.
+        "--template-code-radius": "4px",
       },
       // Match the Typography default (body2 / 14px): MUI's CssBaseline
       // otherwise sizes the body element with body1 (16px), which unstyled
@@ -26,6 +31,13 @@ export const surfacesCustomizations: Components<Theme> = {
       body: {
         fontSize: "0.875rem",
         lineHeight: 1.43,
+      },
+      // Raw <code> elements (entity names / identifiers inline in prose and
+      // dialogs) otherwise fall back to the browser's default monospace stack;
+      // route them through the app's code font token so code-like content
+      // matches InlineCode, logs, and every other code-font usage.
+      code: {
+        fontFamily: CODE_FONT_FAMILY,
       },
     },
   },

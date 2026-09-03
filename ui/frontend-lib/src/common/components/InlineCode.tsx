@@ -18,7 +18,7 @@ export const InlineCode: FC<InlineCodeProps> = ({ children, sx }) => (
       fontSize: "0.85em",
       fontFamily: CODE_FONT_FAMILY,
       backgroundColor: "var(--template-palette-action-hover)",
-      borderRadius: "var(--template-surface-radius)",
+      borderRadius: "var(--template-code-radius)",
       px: 0.75,
       py: 0.25,
       wordBreak: "break-all",

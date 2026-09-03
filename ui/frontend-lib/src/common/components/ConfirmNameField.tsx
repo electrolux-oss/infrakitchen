@@ -1,5 +1,7 @@
 import { Box, InputAdornment, TextField, Typography } from "@mui/material";
 
+import { InlineCode } from "./InlineCode";
+
 interface ConfirmNameFieldProps {
   /** The entity name the user must type to confirm. */
   name: string;
@@ -17,21 +19,7 @@ export const ConfirmNameField = ({
   return (
     <Box>
       <Typography variant="body2" sx={{ mb: 1 }}>
-        To confirm, type{" "}
-        <Box
-          component="code"
-          sx={{
-            px: 0.5,
-            py: 0.25,
-            bgcolor: "action.selected",
-            borderRadius: "var(--template-surface-radius)",
-            fontFamily: "monospace",
-            fontSize: "0.85em",
-          }}
-        >
-          {name}
-        </Box>{" "}
-        below.
+        To confirm, type <InlineCode>{name}</InlineCode> below.
       </Typography>
       <TextField
         fullWidth

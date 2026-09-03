@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { formatLabel } from "../../common";
 import {
   CommonField,
@@ -60,7 +61,7 @@ export const IntegrationConfiguration = ({
             <Box
               sx={{
                 color: "text.secondary",
-                fontFamily: "monospace",
+                fontFamily: CODE_FONT_FAMILY,
                 overflowWrap: "anywhere",
                 wordBreak: "break-word",
               }}

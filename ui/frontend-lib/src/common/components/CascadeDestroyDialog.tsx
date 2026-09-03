@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LaunchIcon from "@mui/icons-material/Launch";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
@@ -168,17 +167,10 @@ export const CascadeDestroyDialog = ({
       maxWidth="sm"
       open={open}
       onClose={onClose}
-      title={
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <DeleteForeverIcon />
-          <Typography variant="h6" component="span">
-            Cascade Destroy
-          </Typography>
-        </Box>
-      }
+      title="Confirmation"
       content={
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Alert severity="warning" icon={<WarningAmberIcon />}>
+          <Alert severity="error" icon={<WarningAmberIcon />}>
             This will permanently destroy <strong>{entityName}</strong> and
             every resource that depends on it. This cannot be undone.
           </Alert>

@@ -58,7 +58,7 @@ export const UnlinkAccountButton = (props: UnlinkAccountButtonProps) => {
       {isConfirmingUnlink ? (
         <Stack direction="row" spacing={1}>
           <Button
-            color="success"
+            variant="contained"
             startIcon={<CheckIcon />}
             onClick={() => handleUnlinkAccount()}
             sx={{ textTransform: "none", fontWeight: "bold" }}

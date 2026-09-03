@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { toast } from "sonner";
 
 import { ExpandIconButton } from "../buttons/ExpandIconButton";
+import { CODE_FONT_FAMILY } from "../../theme";
 
 interface ErrorWithCodeProps {
   id: string | number;
@@ -92,14 +93,14 @@ export const ErrorWithStatusCode = forwardRef<
               <Box
                 component="pre"
                 sx={{
-                  fontFamily: "monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   whiteSpace: "pre-wrap",
                   backgroundColor: (theme) =>
                     theme.palette.mode === "light"
                       ? "rgba(0, 0, 0, 0.05)"
                       : "rgba(255, 255, 255, 0.05)",
                   padding: 1,
-                  borderRadius: "var(--template-surface-radius)",
+                  borderRadius: "var(--template-code-radius)",
                 }}
               >
                 {JSON.stringify(metadata, null, 2)}

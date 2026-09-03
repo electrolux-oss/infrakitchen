@@ -105,9 +105,6 @@ export const ResourceStateReviewDialog: React.FC<
           )}
           {resourceTempState && (
             <Box sx={{ width: "100%" }}>
-              <Typography variant="h5" sx={{ mb: 2 }}>
-                Resource State Comparison
-              </Typography>
               <Paper variant="outlined" sx={{ p: 0 }}>
                 <Box
                   sx={{
@@ -207,7 +204,6 @@ export const ResourceStateReviewDialog: React.FC<
                   onClose();
                   refreshEntity?.();
                 }}
-                color="success"
                 variant="contained"
               >
                 Approve

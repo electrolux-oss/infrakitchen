@@ -173,7 +173,7 @@ const PodRow = (props: {
               }}
             >
               <Button
-                color="success"
+                variant="contained"
                 startIcon={<CheckIcon />}
                 onClick={() => handleKillPod(pod.metadata.name)}
                 sx={{ textTransform: "none", fontWeight: "bold" }}

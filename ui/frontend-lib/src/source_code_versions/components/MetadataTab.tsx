@@ -18,6 +18,7 @@ import {
   useConfig,
   useEntityListProvider,
   CommonDialog,
+  InlineCode,
   PermissionWrapper,
 } from "../../common";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
@@ -184,8 +185,8 @@ export const MetadataTab = ({
             title="Save root path?"
             content={
               <Typography variant="body2">
-                The selected path is <code>/</code>. This will save the version
-                at the repository root. Do you want to continue?
+                The selected path is <InlineCode>/</InlineCode>. This will save
+                the version at the repository root. Do you want to continue?
               </Typography>
             }
             actions={

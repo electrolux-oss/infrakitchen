@@ -222,7 +222,6 @@ const DeleteNotificationPreferenceButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        color="success"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
         disabled={isLoading}

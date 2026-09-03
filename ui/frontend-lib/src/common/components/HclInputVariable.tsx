@@ -44,7 +44,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
           p: 1,
           backgroundColor: theme.palette.action.hover,
           border: `1px solid ${theme.palette.divider}`,
-          borderRadius: "var(--template-surface-radius)",
+          borderRadius: "var(--template-code-radius)",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
           overflow: "auto",
@@ -77,6 +77,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
             whiteSpace: "pre",
             border: isEmptyObject ? "none" : "1px solid",
             borderColor: "divider",
+            borderRadius: "var(--template-code-radius)",
             textAlign: isEmptyObject ? "right" : "left",
             overflow: "auto",
           }}
@@ -195,7 +196,11 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
               mt: 1,
             }}
           >
-            {variable.description ? variable.description : <PlaceholderDescription />}
+            {variable.description ? (
+              variable.description
+            ) : (
+              <PlaceholderDescription />
+            )}
           </Typography>
           {variable.source && (
             <Typography

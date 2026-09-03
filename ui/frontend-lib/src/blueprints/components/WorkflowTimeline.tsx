@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GetEntityLink } from "../../common/components/CommonField";
 import StatusChip from "../../common/StatusChip";
 import { GqlWorkflow } from "../../workflows/graphql";
@@ -66,11 +67,14 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
+              >
                 <Link
                   component="button"
                   variant="subtitle2"
-                  sx={{ fontFamily: "monospace", cursor: "pointer" }}
+                  sx={{ fontFamily: CODE_FONT_FAMILY, cursor: "pointer" }}
                   onClick={() => navigate(`${linkPrefix}workflows/${exec.id}`)}
                 >
                   {exec.id.slice(0, 8)}…

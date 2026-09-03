@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
+import { CODE_FONT_FAMILY } from "../../../theme";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { GetReferenceUrlValue } from "../../CommonField";
 
@@ -129,11 +130,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       {/* External badge */}
       {isExternal && (
         <Box sx={{ px: 1.5, pt: 1 }}>
-          <Chip
-            label="External"
-            variant="outlined"
-            color="warning"
-          />
+          <Chip label="External" variant="outlined" color="warning" />
           <Typography
             variant="caption"
             sx={{
@@ -185,7 +182,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               color: "error.contrastText",
               borderRadius: "var(--template-surface-radius)",
               fontSize: 11,
-              fontFamily: "monospace",
+              fontFamily: CODE_FONT_FAMILY,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",

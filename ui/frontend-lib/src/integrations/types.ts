@@ -50,7 +50,12 @@ export interface Provider {
   name: string;
   icon: React.FC<IconProps>;
   slug: string;
-  instructions: string[];
+  /**
+   * Step-by-step setup instructions. Rendered as React nodes so inline code
+   * segments can use the shared InlineCode component instead of raw HTML
+   * strings; plain-text steps are plain strings.
+   */
+  instructions: React.ReactNode[];
   tokenLink: string;
 }
 

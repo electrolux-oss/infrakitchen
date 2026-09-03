@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
   GqlSourceConfig,
@@ -202,7 +203,7 @@ export const NamingConventionInput = ({
                     onClick={() => handleInsertVariable(config.name)}
                     sx={{
                       cursor: "pointer",
-                      fontFamily: "monospace",
+                      fontFamily: CODE_FONT_FAMILY,
                       fontSize: "0.75rem",
                     }}
                   />
@@ -243,7 +244,7 @@ export const NamingConventionInput = ({
                         onClick={() => handleInsertVariable(output.name)}
                         sx={{
                           cursor: "pointer",
-                          fontFamily: "monospace",
+                          fontFamily: CODE_FONT_FAMILY,
                           fontSize: "0.75rem",
                         }}
                       />

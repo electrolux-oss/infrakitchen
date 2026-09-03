@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GetEntityLink,
   GetReferenceUrlValue,
@@ -78,7 +79,10 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
             {templateName ? (
               <GetEntityLink {...(step.template as GqlTemplateShort)} />
             ) : (
-              <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
+              >
                 {step.template?.id.slice(0, 8)}…
               </Typography>
             )}
@@ -358,7 +362,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 color: "error.contrastText",
                 borderRadius: "var(--template-surface-radius)",
                 fontSize: 13,
-                fontFamily: "monospace",
+                fontFamily: CODE_FONT_FAMILY,
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
@@ -405,7 +409,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                 }}
                               >
@@ -416,7 +420,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                   maxWidth: 400,
                                   wordBreak: "break-all",

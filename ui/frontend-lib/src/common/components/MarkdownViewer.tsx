@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import remarkGfm from "remark-gfm";
 
+import { CODE_FONT_FAMILY } from "../theme";
 import { InlineCode } from "./InlineCode";
 
 interface MarkdownViewerProps {
@@ -131,10 +132,10 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
                   component="pre"
                   sx={{
                     backgroundColor: "action.hover",
-                    borderRadius: "var(--template-surface-radius)",
+                    borderRadius: "var(--template-code-radius)",
                     p: 1.5,
                     overflow: "auto",
-                    fontFamily: "'Roboto Mono', monospace",
+                    fontFamily: CODE_FONT_FAMILY,
                     fontSize: "0.85em",
                     mb: 1.5,
                   }}

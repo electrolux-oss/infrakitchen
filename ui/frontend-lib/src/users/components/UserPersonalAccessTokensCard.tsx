@@ -20,8 +20,10 @@ import {
 import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { CommonDialog } from "../../common/components/CommonDialog";
 import { BaseCard } from "../../common/components/BaseCard";
+import { InlineCode } from "../../common/components/InlineCode";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { GqlUser } from "../graphql";
@@ -233,7 +235,7 @@ const TokenValueDialog = ({
                 alignItems: "center",
                 gap: 1,
                 border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: "var(--template-surface-radius)",
+                borderRadius: "var(--template-code-radius)",
                 px: 1.5,
                 py: 1,
                 bgcolor: "background.paper",
@@ -244,7 +246,7 @@ const TokenValueDialog = ({
                 sx={{
                   flex: 1,
                   minWidth: 0,
-                  fontFamily: "monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   fontSize: 13,
                   lineHeight: 1.6,
                   wordBreak: "break-all",
@@ -316,7 +318,6 @@ const DeleteTokenButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        color="success"
         startIcon={<CheckIcon />}
         disabled={isLoading}
         onClick={() => onDelete(token.id)}
@@ -495,7 +496,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                         color: "text.secondary",
                       }}
                     >
-                      Prefix: <code>{token.tokenPrefix}</code>
+                      Prefix: <InlineCode>{token.tokenPrefix}</InlineCode>
                     </Typography>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}

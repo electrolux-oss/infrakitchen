@@ -145,7 +145,7 @@ const getSourceCodeVariables = (
                       fontSize: "0.75rem",
                       fontFamily: CODE_FONT_FAMILY,
                       bgcolor: "action.hover",
-                      borderRadius: "var(--template-surface-radius)",
+                      borderRadius: "var(--template-code-radius)",
                       overflow: "auto",
                     }}
                   >

@@ -47,13 +47,10 @@ export function EntityActions(props: EntityActionsProps) {
   const handleEnable = async () => {
     setEnabling(true);
     try {
-      await ikApi.graphqlRequest(
-        buildEntityActionMutation(entity_name),
-        {
-          id: entity_id,
-          input: { action: ENTITY_ACTION.ENABLE },
-        },
-      );
+      await ikApi.graphqlRequest(buildEntityActionMutation(entity_name), {
+        id: entity_id,
+        input: { action: ENTITY_ACTION.ENABLE },
+      });
       notify("Entity enabled", "success");
       // Refresh actions and the entity so header/status buttons flip (a
       // disabled entity becomes enabled).
@@ -131,11 +128,7 @@ export function EntityActions(props: EntityActionsProps) {
         </Button>
       )}
       {actions.includes("enable") && (
-        <Button
-          color="success"
-          onClick={() => void handleEnable()}
-          disabled={enabling}
-        >
+        <Button onClick={() => void handleEnable()} disabled={enabling}>
           {enabling ? "Enabling..." : "Enable"}
         </Button>
       )}
@@ -195,7 +188,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.SYNC}
             onSubmit={() => changeDialog("sync")}
-            variant="contained"
           >
             Sync
           </ActionButton>
@@ -212,8 +204,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.DRYRUN}
             onSubmit={() => changeDialog("dryrun")}
-            color="success"
-            variant="contained"
           >
             Plan
           </ActionButton>
@@ -229,8 +219,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.DRYRUN_WITH_TEMP_STATE}
             onSubmit={() => changeDialog("dryrun_with_temp_state")}
-            color="success"
-            variant="contained"
           >
             Plan
           </ActionButton>

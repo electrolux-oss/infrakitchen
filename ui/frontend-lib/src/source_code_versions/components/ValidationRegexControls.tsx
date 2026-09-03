@@ -19,6 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   getAutocompleteInputProps,
   getAutocompleteTextFieldProps,
@@ -399,8 +400,7 @@ export const ValidationRegexControls = ({
                       input: {
                         ...inputProps,
                         sx: {
-                          fontFamily:
-                            '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                          fontFamily: CODE_FONT_FAMILY,
                         },
                       },
                     })}
