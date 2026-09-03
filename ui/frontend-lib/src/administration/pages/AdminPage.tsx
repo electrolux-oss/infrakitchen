@@ -17,7 +17,10 @@ export const AdminPage = () => {
   };
 
   return (
-    <PageContainer title="Settings">
+    <PageContainer
+      title="Settings"
+      description="Manage permissions, feature flags, and scheduled jobs."
+    >
       <Box sx={{ width: "100%" }}>
         <Box sx={{ mt: 2 }}>
           <Tabs

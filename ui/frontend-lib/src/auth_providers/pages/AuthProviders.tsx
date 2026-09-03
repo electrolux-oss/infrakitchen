@@ -51,9 +51,7 @@ export const AuthProvidersPage = () => {
         headerName: "Enabled",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <Tooltip
-            title={params.row.enabled ? "Enabled" : "Disabled"}
-          >
+          <Tooltip title={params.row.enabled ? "Enabled" : "Disabled"}>
             <Switch
               checked={Boolean(params.row.enabled)}
               sx={{ pointerEvents: "none", cursor: "default" }}
@@ -89,6 +87,7 @@ export const AuthProvidersPage = () => {
   return (
     <PageContainer
       title="Auth Providers"
+      description="Sign-in methods you can enable for your users."
       actions={
         <PermissionWrapper
           requiredPermission="api:auth_provider"

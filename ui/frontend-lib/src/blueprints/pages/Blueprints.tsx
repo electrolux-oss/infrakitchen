@@ -31,7 +31,11 @@ export const BlueprintsPage = () => {
   );
 
   return (
-    <PageContainer title="Blueprints" actions={actions}>
+    <PageContainer
+      title="Blueprints"
+      description="Combine multiple templates into one reusable blueprint that provisions infrastructure as a workflow."
+      actions={actions}
+    >
       <EntityFetchTable
         title="Blueprints"
         entityName="blueprint"

@@ -28,7 +28,11 @@ export const SourceCodesPage = () => {
   );
 
   return (
-    <PageContainer title="Code Repositories" actions={actions}>
+    <PageContainer
+      title="Code Repositories"
+      description="Register Git repositories containing Terraform or OpenTofu modules used by your templates and executors."
+      actions={actions}
+    >
       <EntityFetchTable
         title="Code Repositories"
         entityName="sourceCode"

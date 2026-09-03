@@ -162,7 +162,10 @@ export default function WorkerList() {
   );
 
   return (
-    <PageContainer title="Workers">
+    <PageContainer
+      title="Workers"
+      description="The processes that pick up and execute infrastructure tasks."
+    >
       <EntityFetchTable
         title="Workers"
         entityName="worker"

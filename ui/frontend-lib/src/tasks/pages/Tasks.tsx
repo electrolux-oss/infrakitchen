@@ -27,7 +27,10 @@ export const TasksPage = () => {
   );
 
   return (
-    <PageContainer title="Tasks">
+    <PageContainer
+      title="Tasks"
+      description="Background operations running against your entities, such as plans, applies, and syncs."
+    >
       <EntityFetchTable
         title="Tasks"
         entityName="task"

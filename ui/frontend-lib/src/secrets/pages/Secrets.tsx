@@ -20,6 +20,7 @@ export const SecretsPage = () => {
   return (
     <PageContainer
       title="Secrets"
+      description="Securely manage credentials, API keys, and other sensitive values for your infrastructure."
       actions={
         <PermissionWrapper
           requiredPermission="api:secret"

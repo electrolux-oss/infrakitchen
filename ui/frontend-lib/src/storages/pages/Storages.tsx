@@ -27,6 +27,7 @@ export const StoragesPage = () => {
   return (
     <PageContainer
       title="Storages"
+      description="Backends that hold Terraform or OpenTofu state for your resources and executors."
       actions={
         <PermissionWrapper
           requiredPermission="api:storage"

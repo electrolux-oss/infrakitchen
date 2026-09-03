@@ -16,6 +16,7 @@ export const ExecutorsPage = () => {
   return (
     <PageContainer
       title="Executors"
+      description="Run infrastructure code from a repository whenever you need to, without a reusable template."
       actions={
         <PermissionWrapper
           requiredPermission="api:executor"
