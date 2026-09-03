@@ -17,13 +17,13 @@ export const AdminPage = () => {
   };
 
   return (
-    <PageContainer title="Administration">
+    <PageContainer title="Settings">
       <Box sx={{ width: "100%" }}>
         <Box sx={{ mt: 2 }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            aria-label="Administration tabs"
+            aria-label="Settings tabs"
             sx={{
               borderBottom: 1,
               borderColor: "divider",

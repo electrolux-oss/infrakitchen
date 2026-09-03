@@ -19,7 +19,7 @@ const lz = <T extends Record<string, React.ComponentType<any>>>(
   );
 
 const allRoutes: LazyRouteDefinition[] = [
-  // ── Administration ──────────────────────────────────────────────────────────
+  // ── Settings ────────────────────────────────────────────────────────────────
   {
     path: "/admin",
     Component: lz(

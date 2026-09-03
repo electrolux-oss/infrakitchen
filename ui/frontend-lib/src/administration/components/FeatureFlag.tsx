@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, Button, Grid, Stack, Typography } from "@mui/material";
+import { Button, Divider, Grid, Stack } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   FEATURE_FLAGS_QUERY,
@@ -10,7 +11,19 @@ import {
   UPDATE_FEATURE_FLAG_MUTATION,
 } from "../graphql";
 
-import { FeatureFlagCard, type FeatureFlagDTO } from "./FeatureFlagCard";
+import { FeatureFlagRow, type FeatureFlagDTO } from "./FeatureFlagRow";
+
+// Feature flags are backend config keys and the backend exposes no description
+// field, so human-readable copy lives here keyed by flag name. Flags added to
+// the backend's default configs without a mapping render without a description.
+const FEATURE_FLAG_DESCRIPTIONS: Record<string, string> = {
+  "Approval Flow":
+    "When enabled, resource applies and destroys require human approval.",
+  "Demo Mode":
+    "When enabled, applies and destroys are skipped so no real changes are made.",
+  Websocket:
+    "When enabled, real-time events and logs stream over WebSocket subscriptions.",
+};
 
 export const FeatureFlagSection = () => {
   const { ikApi } = useConfig();
@@ -97,72 +110,45 @@ export const FeatureFlagSection = () => {
   };
 
   return (
-    <Box
-      sx={{
-        mt: 4,
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 2,
-        p: 3,
-        position: "relative",
-      }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 1,
-          }}
-        >
-          <Typography variant="h5" component="h2" gutterBottom>
-            Feature Flags
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={handleSaveAll}
-              disabled={loading || !hasUnsavedChanges}
-            >
-              Save
-            </Button>
-            <Button
-              size="medium"
-              onClick={handleFeatureFlagReload}
-              disabled={loading}
-            >
-              Reload
-            </Button>
-          </Stack>
-        </Stack>
-        <Typography variant="body2" color="textSecondary">
-          Manage application feature toggles and configuration settings
-        </Typography>
-      </Box>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {featureFlags.map((flag) => (
-          <Grid
-            key={flag.name}
-            size={{
-              xs: 12,
-              sm: 6,
-              md: 4,
-              lg: 4,
-            }}
-            sx={{ display: "flex" }}
+    <BaseCard
+      name="Feature Flags"
+      description="Manage application feature toggles and configuration settings"
+      sx={{ mt: 4 }}
+      actions={
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={handleSaveAll}
+            disabled={loading || !hasUnsavedChanges}
           >
-            <FeatureFlagCard
+            Save
+          </Button>
+          <Button
+            size="medium"
+            onClick={handleFeatureFlagReload}
+            disabled={loading}
+          >
+            Reload
+          </Button>
+        </Stack>
+      }
+    >
+      <Grid size={{ xs: 12 }}>
+        <Stack divider={<Divider />}>
+          {featureFlags.map((flag) => (
+            <FeatureFlagRow
+              key={flag.name}
               flagName={flag.name}
               displayName={flag.name}
+              description={FEATURE_FLAG_DESCRIPTIONS[flag.name]}
               featureFlags={featureFlags}
               loading={loading}
               onToggle={handleFeatureFlagToggle}
             />
-          </Grid>
-        ))}
+          ))}
+        </Stack>
       </Grid>
-    </Box>
+    </BaseCard>
   );
 };
