@@ -29,7 +29,11 @@ import StatusChip from "../../common/StatusChip";
 import { integrationColumns } from "../components/integrationFilterConfig";
 import { providers } from "../constants";
 import { GqlIntegration, INTEGRATIONS_QUERY } from "../graphql";
-import { ConnectionType, IntegrationType } from "../types";
+import {
+  ConnectionType,
+  IntegrationType,
+  integrationTypeChipColor,
+} from "../types";
 
 const IntegrationsPage = () => {
   const { ikApi, linkPrefix } = useConfig();
@@ -337,14 +341,9 @@ const IntegrationsPage = () => {
                     ) : undefined
                   }
                   chip={integration.integrationType}
-                  chipColor={
-                    integration.integrationType === IntegrationType.CLOUD
-                      ? "info"
-                      : integration.integrationType ===
-                          IntegrationType.NOTIFICATION
-                        ? "warning"
-                        : "secondary"
-                  }
+                  chipColor={integrationTypeChipColor(
+                    integration.integrationType,
+                  )}
                   entityFields={integrationEntityFields(integration)}
                 />
               );

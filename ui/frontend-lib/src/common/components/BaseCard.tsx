@@ -11,7 +11,7 @@ import {
   Theme,
 } from "@mui/material";
 
-import { softChipColorSx } from "../utils/softChip";
+import { softChipColorSx, solidChipColorSx } from "../utils/softChip";
 
 /**
  * Base layout card shared by the section cards on entity detail pages (and the
@@ -44,6 +44,8 @@ export interface BaseCardProps {
     | "info"
     | "success"
     | "warning";
+  /** Chip style: translucent soft pill (default) or solid filled pill (EntityCard-style). */
+  chipVariant?: "soft" | "solid";
   /** Style overrides merged onto the root MUI Card. */
   sx?: SxProps<Theme>;
 }
@@ -57,6 +59,7 @@ export const BaseCard = (props: BaseCardProps) => {
     icon,
     chip,
     chipColor = "info",
+    chipVariant = "soft",
     sx,
   } = props;
 
@@ -77,7 +80,11 @@ export const BaseCard = (props: BaseCardProps) => {
                 <Chip
                   label={chip.toUpperCase()}
                   variant="filled"
-                  sx={softChipColorSx(chipColor)}
+                  sx={
+                    chipVariant === "solid"
+                      ? solidChipColorSx(chipColor)
+                      : softChipColorSx(chipColor)
+                  }
                 />
               )}
             </Box>

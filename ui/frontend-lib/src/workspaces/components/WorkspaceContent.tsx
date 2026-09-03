@@ -14,10 +14,6 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { WorkspaceConfiguration } from "./WorkspaceConfiguration";
 import { WorkspaceOverview } from "./WorkspaceOverview";
 import { WorkspacePermissions } from "./WorkspacePermissions";
-import { WorkspacePullRequests } from "./WorkspacePullRequests";
-import { WorkspaceRepository } from "./WorkspaceRepository";
-
-const METADATA_PROVIDERS = ["github", "bitbucket", "azure_devops"];
 
 export const WorkspaceContent = () => {
   const { entity } = useEntityProvider();
@@ -26,8 +22,6 @@ export const WorkspaceContent = () => {
     [entity?.id],
   );
   if (!entity) return null;
-
-  const hasMetadata = METADATA_PROVIDERS.includes(entity.workspaceProvider);
 
   const tabs: TabDefinition[] = [
     {
@@ -44,18 +38,6 @@ export const WorkspaceContent = () => {
         />
       ),
     },
-    ...(hasMetadata
-      ? [
-          {
-            label: "Repository",
-            content: <WorkspaceRepository workspace={entity} />,
-          },
-          {
-            label: "Pull Requests",
-            content: <WorkspacePullRequests workspace={entity} />,
-          },
-        ]
-      : []),
     {
       label: "Audit",
       content: <Audit entityId={entity.id} />,

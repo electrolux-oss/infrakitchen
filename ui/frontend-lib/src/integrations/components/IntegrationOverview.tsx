@@ -15,6 +15,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { IconField } from "../../icons/Icons";
 import { GqlIntegration } from "../graphql";
+import { integrationTypeChipColor } from "../types";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
@@ -52,6 +53,8 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
       name={integration.name}
       icon={IconField(integration.integrationProvider)}
       chip={integration.integrationType}
+      chipColor={integrationTypeChipColor(integration.integrationType)}
+      chipVariant="solid"
     >
       <CommonEditableField<string>
         name={"Name"}
