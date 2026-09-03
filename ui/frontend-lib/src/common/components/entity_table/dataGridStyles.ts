@@ -1,9 +1,10 @@
 import { alpha } from "@mui/material/styles";
-import type { SxProps, Theme } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
+import type { SystemStyleObject } from "@mui/system";
 
 // Centralized "flush" table styling for MUI DataGrid.
 // Every entity table shares this one definition instead of inlining ad-hoc sx.
-export const dataGridSx: SxProps<Theme> = {
+export const dataGridSx: SystemStyleObject<Theme> = {
   // Header: muted labels over a single hairline, no heavy header bar.
   "& .MuiDataGrid-columnHeaders": {
     backgroundColor: "transparent",
