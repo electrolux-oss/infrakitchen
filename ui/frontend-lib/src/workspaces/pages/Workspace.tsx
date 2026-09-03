@@ -15,7 +15,7 @@ export const WorkspacePage = () => {
       entity_id={workspace_id || ""}
       entityFields={WORKSPACE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Workspace Overview"}>
+      <EntityContainer title={"Workspace Details"}>
         <WorkspaceContent />
         <LogLiveTail />
       </EntityContainer>

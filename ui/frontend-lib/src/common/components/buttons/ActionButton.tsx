@@ -10,7 +10,7 @@ export const ActionButton = (props: {
   action: string;
   onSubmit: () => void;
   disabled?: boolean;
-  color?: "success" | "error";
+  color?: "error";
   variant?: "contained" | "outlined";
   children: string;
 }) => {
@@ -66,7 +66,7 @@ export const ActionButton = (props: {
 
   return (
     <Button
-      color={color || "success"}
+      color={color}
       onClick={() => handleClick()}
       variant={variant || "outlined"}
       disabled={disabled || loading}

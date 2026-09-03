@@ -17,14 +17,13 @@ export const WorkspacesPage = () => {
   return (
     <PageContainer
       title="Workspaces"
+      description="Git repositories where generated infrastructure code is synced and reviewed through pull requests."
       actions={
         <PermissionWrapper
           requiredPermission="api:workspace"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}workspaces/create`)}
             startIcon={<AddIcon />}
           >

@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Card, CardContent, Stack, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -34,63 +34,54 @@ export const FavoriteResourceItem = ({
   );
 
   return (
-    <Card
+    <Box
       component="a"
       href={href}
       onClick={handleClick}
       sx={{
-        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: 2,
+        py: 1.25,
         textDecoration: "none",
-        display: "block",
+        color: "inherit",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        cursor: "pointer",
+        transition: "background-color 120ms ease-in-out",
         "&:hover": {
-          borderColor: "text.disabled",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          backgroundColor: "action.hover",
         },
-        transition: "all 0.1s ease-in-out",
+        "&:last-child": {
+          borderBottom: "none",
+        },
       }}
     >
-      <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            alignItems: "center",
-          }}
-        >
-          <Typography
-            variant="body2"
-            title={resource.name}
-            sx={{
-              fontWeight: 600,
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            {resource.name}
-          </Typography>
-          {resource.updatedAt && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.disabled",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <RelativeTime
-                date={resource.updatedAt}
-                sx={{ fontSize: "0.75rem", display: "flex" }}
-              />
-            </Typography>
-          )}
-          {(resource.status || resource.state) && (
-            <StatusChip
-              status={resource.status ?? ""}
-              state={resource.state}
-              compact
-            />
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+      <Typography
+        title={resource.name}
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {resource.name}
+      </Typography>
+      {resource.updatedAt && (
+        <Typography color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
+          <RelativeTime date={resource.updatedAt} sx={{ display: "flex" }} />
+        </Typography>
+      )}
+      {(resource.status || resource.state) && (
+        <StatusChip
+          status={resource.status ?? ""}
+          state={resource.state}
+          compact
+        />
+      )}
+    </Box>
   );
 };

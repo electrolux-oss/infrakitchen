@@ -16,14 +16,13 @@ export const BatchOperationsPage = () => {
   return (
     <PageContainer
       title="Batch Operations"
+      description="Run one action — such as previewing or applying changes — across multiple resources or executors at once."
       actions={
         <PermissionWrapper
           requiredPermission="api:batch_operation"
           permissionAction="read"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}batch_operations/create`)}
             startIcon={<AddIcon />}
           >

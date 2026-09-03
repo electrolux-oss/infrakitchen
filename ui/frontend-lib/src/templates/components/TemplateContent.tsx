@@ -36,7 +36,6 @@ export const TemplateContent = () => {
               <Card sx={{ position: "relative", overflow: "visible" }}>
                 <Chip
                   label="Template Documentation"
-                  size="small"
                   color="info"
                   variant="filled"
                   sx={{

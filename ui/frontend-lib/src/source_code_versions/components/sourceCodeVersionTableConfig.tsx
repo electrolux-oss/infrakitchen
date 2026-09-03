@@ -1,11 +1,9 @@
 import { Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
@@ -155,13 +153,9 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       />
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created At",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) =>
-      getDateValue(params.row.createdAt),
-  },
+  relativeTimeColumn("createdAt", "Created", {
+    value: (params) => params.row.createdAt,
+  }),
   {
     field: "creator",
     headerName: "Creator",

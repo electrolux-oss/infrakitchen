@@ -13,7 +13,7 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../../common/components/OverviewCard";
+import { BaseCard } from "../../../common/components/BaseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -75,10 +75,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -113,13 +110,12 @@ export const UserPoliciesCard = (props: { userId: string }) => {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => handleOpenDialog()}
           startIcon={<Icon icon="icon-park-outline:add" />}
         >
@@ -140,6 +136,6 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

@@ -104,22 +104,12 @@ export const ProjectCreatePage = () => {
   return (
     <PageContainer
       title="Create Project"
-      onBack={() => navigate(`${linkPrefix}projects`)}
-      backAriaLabel="Back to projects"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(`${linkPrefix}projects`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}projects`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

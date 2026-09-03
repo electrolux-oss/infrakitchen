@@ -4,7 +4,7 @@ import { useEffectOnce } from "react-use";
 
 import { notify } from "@electrolux-oss/infrakitchen";
 import { Icon } from "@iconify/react";
-import { CircularProgress, Menu, MenuItem } from "@mui/material";
+import { CircularProgress, Menu, MenuItem, menuItemClasses } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";
@@ -81,8 +81,10 @@ export default function SignInCard() {
     <Card variant="outlined">
       <Typography
         component="h1"
-        variant="h4"
-        sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 1rem)" }}
+        variant="h5"
+        sx={{
+          width: "100%",
+        }}
       >
         Welcome to InfraKitchen
       </Typography>
@@ -161,6 +163,11 @@ export default function SignInCard() {
             anchorOrigin={{
               vertical: "bottom",
               horizontal: "left",
+            }}
+            sx={{
+              [`& .${menuItemClasses.root}`]: {
+                fontSize: "0.875rem",
+              },
             }}
             slotProps={{
               paper: {

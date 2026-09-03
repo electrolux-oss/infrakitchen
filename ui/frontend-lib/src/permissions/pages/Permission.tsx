@@ -14,7 +14,7 @@ export const PermissionPage = () => {
       entity_id={permission_id || ""}
       entityFields={PERMISSION_FIELDS}
     >
-      <EntityContainer title={"Permission Overview"}>
+      <EntityContainer title={"Permission Details"}>
         <PermissionContent />
       </EntityContainer>
     </EntityProvider>

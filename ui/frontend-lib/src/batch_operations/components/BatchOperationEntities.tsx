@@ -26,6 +26,10 @@ import {
 } from "@mui/x-data-grid";
 
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
+import {
+  dataGridDefaultProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { PropertyCard } from "../../common/components/PropertyCard";
@@ -129,12 +133,12 @@ export const BatchOperationEntities = ({
       const fieldMap = isResource ? RESOURCE_FIELD_MAP : EXECUTOR_FIELD_MAP;
 
       const query = `
-        query BatchEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
-          ${entityName}s(filter: $filter, sort: $sort, range: $range) {
-            ${buildGraphqlFields(fields, fieldMap)}
-          }
-        }
-      `;
+              query BatchEntities($filter: JSON, $sort: [String!], $range: [Int!]) {
+                ${entityName}s(filter: $filter, sort: $sort, range: $range) {
+                  ${buildGraphqlFields(fields, fieldMap)}
+                }
+              }
+            `;
 
       const response = await ikApi.graphqlRequest<Record<string, any>>(query, {
         filter: { id__in: entityIds },
@@ -390,12 +394,7 @@ export const BatchOperationEntities = ({
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
-            sx={{
-              fontSize: "0.75rem",
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-            }}
+            sx={{ display: "flex", alignItems: "center", height: "100%" }}
           />
         ),
       },
@@ -422,8 +421,6 @@ export const BatchOperationEntities = ({
         filterable: false,
         renderCell: (params: GridRenderCellParams) => (
           <Button
-            size="small"
-            variant="outlined"
             color="error"
             startIcon={<DeleteIcon />}
             onClick={() => handleRemoveEntity(params.row.id)}
@@ -465,8 +462,6 @@ export const BatchOperationEntities = ({
             Add
           </Button>
           <Button
-            variant="outlined"
-            size="small"
             onClick={() => handleOpenActionDialog("dryrun")}
             disabled={selectedEntityIds.length === 0}
           >
@@ -474,7 +469,6 @@ export const BatchOperationEntities = ({
           </Button>
           <Button
             variant="contained"
-            size="small"
             onClick={() => handleOpenActionDialog("execute")}
             disabled={selectedEntityIds.length === 0}
           >
@@ -491,11 +485,13 @@ export const BatchOperationEntities = ({
         </>
       }
     >
+      {" "}
       <DataGrid
         rows={entities}
         columns={entityColumns}
         autoHeight
         loading={entitiesLoading}
+        {...dataGridDefaultProps}
         checkboxSelection
         disableRowSelectionOnClick
         rowSelectionModel={{
@@ -516,6 +512,7 @@ export const BatchOperationEntities = ({
         paginationModel={paginationModel}
         onPaginationModelChange={setPaginationModel}
         pageSizeOptions={[10, 25, 50, 100]}
+        sx={{ ...dataGridSx }}
       />
       <Dialog
         open={Boolean(logsEntityId)}
@@ -530,7 +527,7 @@ export const BatchOperationEntities = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseLogs} color="primary" variant="outlined">
+          <Button onClick={handleCloseLogs} color="primary">
             Cancel
           </Button>
         </DialogActions>
@@ -554,9 +551,7 @@ export const BatchOperationEntities = ({
             />
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={handleCloseAddDialog}>
-              Cancel
-            </Button>
+            <Button onClick={handleCloseAddDialog}>Cancel</Button>
             <Button
               variant="contained"
               onClick={addForm.handleSubmit(handleAddEntities)}
@@ -602,12 +597,9 @@ export const BatchOperationEntities = ({
                     <Stack
                       direction="row"
                       spacing={1}
-                      sx={{
-                        alignItems: "center",
-                      }}
+                      sx={{ alignItems: "center" }}
                     >
                       <Chip
-                        size="small"
                         label={status}
                         color={statusColor}
                         variant={status === "pending" ? "outlined" : "filled"}
@@ -620,9 +612,7 @@ export const BatchOperationEntities = ({
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={handleCloseActionDialog}>
-            Close
-          </Button>
+          <Button onClick={handleCloseActionDialog}>Close</Button>
           <Button
             variant="contained"
             onClick={handleRunAction}

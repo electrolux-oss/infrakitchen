@@ -20,8 +20,10 @@ import {
 import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { CommonDialog } from "../../common/components/CommonDialog";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
+import { InlineCode } from "../../common/components/InlineCode";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { GqlUser } from "../graphql";
@@ -131,8 +133,6 @@ const TokenDialog = ({
             {expirationOptions.map((days) => (
               <Button
                 key={days}
-                size="small"
-                variant="outlined"
                 disabled={isLoading}
                 onClick={() =>
                   setExpiresAt(formatDateTimeLocal(addDays(new Date(), days)))
@@ -235,7 +235,7 @@ const TokenValueDialog = ({
                 alignItems: "center",
                 gap: 1,
                 border: (theme) => `1px solid ${theme.palette.divider}`,
-                borderRadius: 1.5,
+                borderRadius: "var(--template-code-radius)",
                 px: 1.5,
                 py: 1,
                 bgcolor: "background.paper",
@@ -246,7 +246,7 @@ const TokenValueDialog = ({
                 sx={{
                   flex: 1,
                   minWidth: 0,
-                  fontFamily: "monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   fontSize: 13,
                   lineHeight: 1.6,
                   wordBreak: "break-all",
@@ -256,6 +256,7 @@ const TokenValueDialog = ({
               </Typography>
               <Tooltip title="Copy token">
                 <IconButton
+                  size="small"
                   onClick={handleCopy}
                   edge="end"
                   aria-label="Copy token"
@@ -305,8 +306,6 @@ const DeleteTokenButton = ({
   if (!isConfirming) {
     return (
       <Button
-        size="small"
-        variant="outlined"
         color="error"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
@@ -319,9 +318,6 @@ const DeleteTokenButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        size="small"
-        variant="outlined"
-        color="success"
         startIcon={<CheckIcon />}
         disabled={isLoading}
         onClick={() => onDelete(token.id)}
@@ -329,8 +325,6 @@ const DeleteTokenButton = ({
         Confirm
       </Button>
       <Button
-        size="small"
-        variant="outlined"
         color="inherit"
         startIcon={<CloseIcon />}
         disabled={isLoading}
@@ -418,16 +412,12 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
 
   return (
     <>
-      <OverviewCard
+      <BaseCard
         name="Personal Access Tokens"
         description="Create and delete tokens for CLI and API access on your account."
         actions={
           <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              onClick={loadTokens}
-              disabled={isLoading}
-            >
+            <Button onClick={loadTokens} disabled={isLoading}>
               Refresh
             </Button>
             <Button
@@ -473,7 +463,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                   key={token.id}
                   sx={{
                     border: (theme) => `1px solid ${theme.palette.divider}`,
-                    borderRadius: 2,
+                    borderRadius: "var(--template-surface-radius)",
                     p: 2,
                     display: "flex",
                     flexDirection: { xs: "column", md: "row" },
@@ -497,7 +487,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                     >
                       <Typography variant="h6">{token.name}</Typography>
                       {isExpired(token.expiresAt) ? (
-                        <Chip label="Expired" size="small" color="error" />
+                        <Chip label="Expired" color="error" />
                       ) : null}
                     </Stack>
                     <Typography
@@ -506,7 +496,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                         color: "text.secondary",
                       }}
                     >
-                      Prefix: <code>{token.tokenPrefix}</code>
+                      Prefix: <InlineCode>{token.tokenPrefix}</InlineCode>
                     </Typography>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
@@ -556,7 +546,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
             })
           )}
         </Box>
-      </OverviewCard>
+      </BaseCard>
       <TokenDialog
         open={dialogOpen}
         isLoading={isSaving}

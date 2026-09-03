@@ -28,7 +28,10 @@ export const WorkflowOverview = () => {
     );
 
   return (
-    <OverviewCard name={`Workflow ${workflow.id.slice(0, 8)}…`} description="">
+    <OverviewCard
+      name={`Workflow ${workflow.id.slice(0, 8)}…`}
+      description=""
+    >
       <CommonField
         name="Status"
         value={<StatusChip status={workflow.status} />}
@@ -99,7 +102,6 @@ export const WorkflowOverview = () => {
                 <Chip
                   key={t.id}
                   label={t.name}
-                  size="small"
                   variant="outlined"
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />

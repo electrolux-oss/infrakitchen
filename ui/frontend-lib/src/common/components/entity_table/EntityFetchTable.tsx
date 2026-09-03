@@ -46,6 +46,8 @@ export const EntityFetchTable = forwardRef<
     entityFieldMap,
     transformFn,
     syncFiltersToUrl,
+    defaultSort,
+    rowClickable,
   } = props;
 
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
@@ -151,6 +153,8 @@ export const EntityFetchTable = forwardRef<
         buildApiFiltersRef={buildApiFiltersRef}
         defaultFilterRef={defaultFilterRef}
         columnsRef={columnsRef}
+        defaultSort={defaultSort}
+        rowClickable={rowClickable}
         loading={loading}
         setLoading={setLoading}
         data={data}

@@ -7,6 +7,7 @@ import {
 } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import { solidChipColorSx } from "../../common/utils/softChip";
 import StatusChip from "../../common/StatusChip";
 
 export const blueprintColumns: EntityTableColumn[] = [
@@ -42,13 +43,22 @@ export const blueprintColumns: EntityTableColumn[] = [
       return (
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
           {templates.slice(0, 3).map((t: any) => (
-            <Chip key={t.id} label={t.name} size="small" variant="outlined" />
+            <Chip
+              key={t.id}
+              label={t.name}
+              variant="filled"
+              sx={(theme) =>
+                solidChipColorSx("default", undefined, undefined, true)(theme)
+              }
+            />
           ))}
           {templates.length > 3 && (
             <Chip
               label={`+${templates.length - 3}`}
-              size="small"
-              variant="outlined"
+              variant="filled"
+              sx={(theme) =>
+                solidChipColorSx("default", undefined, undefined, true)(theme)
+              }
             />
           )}
         </Box>

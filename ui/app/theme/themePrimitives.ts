@@ -1,5 +1,10 @@
+// Activates MUI X's theme module augmentation (MuiDataGrid in Components<T>).
+import "@mui/x-data-grid/themeAugmentation";
+
 import { createTheme, alpha } from "@mui/material/styles";
 import type { Shadows } from "@mui/material/styles";
+
+import { CODE_FONT_FAMILY } from "@electrolux-oss/infrakitchen";
 
 declare module "@mui/material/Paper" {
   interface PaperPropsVariantOverrides {
@@ -33,30 +38,32 @@ declare module "@mui/material/styles" {
 
 const defaultTheme = createTheme();
 
+// Neutral monochrome scale. This is deliberately a pure black-grey ramp, not
+// blue-tinted: surfaces and text read as clean monochrome rather than "cloud blue".
 export const brand = {
-  50: "hsl(210, 100%, 95%)",
-  100: "hsl(210, 100%, 92%)",
-  200: "hsl(210, 100%, 80%)",
-  300: "hsl(210, 100%, 65%)",
-  400: "hsl(210, 98%, 55%)",
-  500: "hsl(210, 98%, 48%)",
-  600: "hsl(210, 98%, 42%)",
-  700: "hsl(210, 100%, 35%)",
-  800: "hsl(210, 100%, 16%)",
-  900: "hsl(210, 100%, 21%)",
+  50: "hsl(0, 0%, 96%)",
+  100: "hsl(0, 0%, 90%)",
+  200: "hsl(0, 0%, 82%)",
+  300: "hsl(0, 0%, 62%)",
+  400: "hsl(0, 0%, 45%)",
+  500: "hsl(0, 0%, 25%)",
+  600: "hsl(0, 0%, 15%)",
+  700: "hsl(0, 0%, 9%)",
+  800: "hsl(0, 0%, 4.5%)",
+  900: "hsl(0, 0%, 0%)",
 };
 
 export const grey = {
-  50: "hsl(220, 10%, 97%)",
-  100: "hsl(220, 8%, 94%)",
-  200: "hsl(220, 5%, 88%)",
-  300: "hsl(220, 5%, 80%)",
-  400: "hsl(220, 5%, 65%)",
-  500: "hsl(220, 5%, 42%)",
-  600: "hsl(220, 5%, 35%)",
-  700: "hsl(220, 5%, 25%)",
-  800: "hsl(220, 8%, 6%)",
-  900: "hsl(220, 10%, 3%)",
+  50: "hsl(0, 0%, 98%)",
+  100: "hsl(0, 0%, 96%)",
+  200: "hsl(0, 0%, 92%)",
+  300: "hsl(0, 0%, 84%)",
+  400: "hsl(0, 0%, 66%)",
+  500: "hsl(0, 0%, 45%)",
+  600: "hsl(0, 0%, 34%)",
+  700: "hsl(0, 0%, 25%)",
+  800: "hsl(0, 0%, 15%)",
+  900: "hsl(0, 0%, 4%)",
 };
 
 export const green = {
@@ -98,174 +105,220 @@ export const red = {
   900: "hsl(0, 93%, 6%)",
 };
 
+// Accent brand hue used to highlight the active/selected navigation item.
+// A vivid blue that stays readable on both light and dark surfaces.
+export const accent = {
+  50: "hsl(217, 91%, 97%)",
+  100: "hsl(214, 95%, 93%)",
+  200: "hsl(213, 94%, 88%)",
+  300: "hsl(214, 92%, 78%)",
+  400: "hsl(217, 91%, 60%)",
+  500: "hsl(221, 83%, 53%)",
+  600: "hsl(224, 76%, 48%)",
+  700: "hsl(226, 71%, 40%)",
+  800: "hsl(228, 68%, 32%)",
+  900: "hsl(229, 66%, 26%)",
+};
+
 export const colorSchemes = {
   light: {
     palette: {
       mode: "light" as "light",
+      // The "primary" action color is pure black, not a brand hue.
       primary: {
         light: brand[200],
-        main: brand[400],
-        dark: brand[600],
-        contrastText: brand[50],
+        main: grey[900],
+        dark: brand[900],
+        contrastText: "#ffffff",
       },
       info: {
         light: brand[100],
-        main: brand[300],
-        dark: brand[600],
+        main: grey[900],
+        dark: brand[900],
         contrastText: grey[50],
       },
       warning: {
         light: orange[300],
-        main: orange[400],
+        // `main` matches success/error main's tuned saturation/lightness so all
+        // semantic `main` colors share a consistent tone (hue differs).
+        main: "hsl(38, 46%, 42%)",
         dark: orange[800],
         text: "black",
       },
       error: {
         light: red[300],
-        main: red[400],
+        // `main` matches success.main's tuned saturation/lightness (hue differs)
+        // so all semantic `main` colors share a consistent tone.
+        main: "hsl(0, 46%, 42%)",
         dark: red[800],
         text: "white",
       },
       success: {
-        light: green[300],
-        main: green[500],
+        light: green[400],
+        // `main` is a tuned blend of green[400] and green[600] so white text
+        // stays readable on it (e.g. the "Updated" badge).
+        main: "hsl(120, 46%, 42%)",
         dark: green[700],
         text: "white",
       },
       grey: {
         ...grey,
       },
-      divider: alpha(grey[300], 0.4),
+      divider: alpha(grey[200], 0.9),
       background: {
-        default: "hsl(0, 0%, 99%)",
-        paper: "hsl(220, 35%, 97%)",
+        // Light grey canvas shared by the page header, sidebar and content
+        // background, so white cards/content stand out on top.
+        default: "rgb(250, 250, 250)",
+        paper: "hsl(0, 0%, 100%)",
       },
       text: {
-        primary: grey[800],
-        secondary: grey[600],
+        primary: grey[900],
+        secondary: grey[500],
         warning: orange[400],
       },
       link: {
-        primary: brand[600],
-        hover: brand[700],
+        primary: grey[900],
+        hover: grey[600],
       },
       action: {
-        hover: alpha(grey[200], 0.2),
-        selected: `${alpha(grey[200], 0.3)}`,
+        hover: alpha(grey[900], 0.05),
+        selected: `${alpha(grey[900], 0.08)}`,
         disabled: "#BBBBBB",
       },
       baseShadow:
-        "hsla(220, 30%, 5%, 0.07) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.07) 0px 8px 16px -5px",
+        "hsla(0, 0%, 0%, 0.05) 0px 1px 2px 0px, hsla(0, 0%, 0%, 0.05) 0px 4px 16px 0px",
     },
   },
   dark: {
     palette: {
       mode: "dark" as "dark",
       primary: {
-        contrastText: brand[50],
-        light: brand[300],
-        main: brand[400],
-        dark: brand[700],
+        contrastText: grey[900],
+        light: grey[200],
+        main: grey[50],
+        dark: brand[500],
       },
       info: {
-        contrastText: brand[300],
-        light: brand[500],
-        main: brand[700],
-        dark: brand[900],
+        contrastText: grey[900],
+        light: grey[200],
+        main: grey[50],
+        dark: brand[500],
       },
       warning: {
         light: orange[400],
-        main: orange[500],
+        // Matches the light theme's success/error/warning main treatment.
+        main: "hsl(38, 44%, 44%)",
         dark: orange[700],
       },
       error: {
         light: red[300],
-        main: red[300],
+        // Matches the light theme's success/error main treatment.
+        main: "hsl(0, 44%, 44%)",
         dark: red[600],
         text: grey[900],
       },
       success: {
         light: green[400],
-        main: green[500],
+        // Tuned blend (see light theme) so white text stays readable on it.
+        main: "hsl(120, 44%, 44%)",
         dark: green[700],
       },
       grey: {
         ...grey,
       },
-      divider: alpha(grey[700], 0.6),
+      divider: alpha(grey[600], 0.55),
       background: {
-        default: "#1E1E1E",
-        paper: "#131313",
+        default: "hsl(0, 0%, 8%)",
+        paper: "hsl(0, 0%, 10%)",
       },
       text: {
-        primary: "hsl(0, 0%, 100%)",
+        primary: "hsl(0, 0%, 97%)",
         secondary: grey[400],
       },
       link: {
-        primary: brand[300],
-        hover: brand[200],
+        primary: grey[50],
+        hover: grey[300],
       },
       action: {
-        hover: alpha(grey[600], 0.2),
-        selected: alpha(grey[600], 0.3),
+        hover: alpha(grey[100], 0.08),
+        selected: alpha(grey[100], 0.14),
         disabled: "#555555",
       },
       baseShadow:
-        "hsla(220, 30%, 5%, 0.7) 0px 4px 16px 0px, hsla(220, 25%, 10%, 0.8) 0px 8px 16px -5px",
+        "hsla(0, 0%, 0%, 0.55) 0px 1px 2px 0px, hsla(0, 0%, 0%, 0.5) 0px 4px 16px 0px",
     },
   },
 };
 
 export const typography = {
   fontFamily:
-    '-apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
+    '"Geist", -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
+  // Fixed-width stack for code-like content (IDs, config values, logs). Kept
+  // as its own token so the code font is changeable in one place. No mono font
+  // is bundled, so this resolves to the OS default monospace glyphs today.
+  fontFamilyMonospace: CODE_FONT_FAMILY,
   h1: {
-    fontSize: defaultTheme.typography.pxToRem(36),
-    fontWeight: 600,
-    lineHeight: 1.2,
+    fontSize: defaultTheme.typography.pxToRem(96),
+    fontWeight: 500,
+    lineHeight: 1.06,
+    letterSpacing: "-0.03em",
   },
   h2: {
-    fontSize: defaultTheme.typography.pxToRem(32),
-    fontWeight: 600,
-    lineHeight: 1.2,
+    fontSize: defaultTheme.typography.pxToRem(60),
+    fontWeight: 500,
+    lineHeight: 1.15,
+    letterSpacing: "-0.025em",
   },
   h3: {
-    fontSize: defaultTheme.typography.pxToRem(30),
-    fontWeight: 600,
+    fontSize: defaultTheme.typography.pxToRem(48),
+    fontWeight: 500,
     lineHeight: 1.2,
+    letterSpacing: "-0.02em",
   },
   h4: {
-    fontSize: defaultTheme.typography.pxToRem(28),
-    fontWeight: 600,
-    lineHeight: 1.5,
+    fontSize: defaultTheme.typography.pxToRem(34),
+    fontWeight: 500,
+    lineHeight: 1.3,
+    letterSpacing: "-0.015em",
   },
   h5: {
     fontSize: defaultTheme.typography.pxToRem(24),
     fontWeight: 600,
+    lineHeight: 1.3,
+    letterSpacing: "-0.015em",
   },
   h6: {
     fontSize: defaultTheme.typography.pxToRem(20),
-    fontWeight: 500,
+    fontWeight: 600,
+    lineHeight: 1.3,
+    letterSpacing: "-0.01em",
   },
   subtitle1: {
-    fontSize: defaultTheme.typography.pxToRem(14),
-    opacity: "75%",
+    fontSize: defaultTheme.typography.pxToRem(16),
+    lineHeight: 1.5,
+    color: grey[500],
   },
   subtitle2: {
-    fontSize: defaultTheme.typography.pxToRem(12),
+    fontSize: defaultTheme.typography.pxToRem(14),
     fontWeight: 500,
-    opacity: "75%",
+    lineHeight: 1.4,
+    color: grey[500],
   },
   body1: {
-    fontSize: defaultTheme.typography.pxToRem(15),
+    fontSize: defaultTheme.typography.pxToRem(16),
+    lineHeight: 1.5,
+    letterSpacing: "0em",
   },
   body2: {
     fontSize: defaultTheme.typography.pxToRem(14),
     fontWeight: 400,
+    lineHeight: 1.43,
   },
   caption: {
     fontSize: defaultTheme.typography.pxToRem(12),
     fontWeight: 400,
+    lineHeight: 1.4,
+    letterSpacing: "0.01em",
   },
 };
 

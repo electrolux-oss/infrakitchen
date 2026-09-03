@@ -19,6 +19,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   getAutocompleteInputProps,
   getAutocompleteTextFieldProps,
@@ -399,8 +400,7 @@ export const ValidationRegexControls = ({
                       input: {
                         ...inputProps,
                         sx: {
-                          fontFamily:
-                            '"Roboto Mono", "SFMono-Regular", "Menlo", monospace',
+                          fontFamily: CODE_FONT_FAMILY,
                         },
                       },
                     })}
@@ -443,7 +443,6 @@ export const ValidationRegexControls = ({
             <FormControlLabel
               control={
                 <Switch
-                  size="small"
                   checked={toggleState[definition.key]}
                   onChange={(_, checked) =>
                     handleToggleChange(definition.key, checked)
@@ -498,7 +497,6 @@ export const ValidationRegexControls = ({
           sx={{ mt: 1, minWidth: 200 }}
           control={
             <Switch
-              size="small"
               checked={hasInfiniteMax}
               onChange={(_, checked) => handleInfiniteMaxToggle(checked)}
               disabled={isComplexRegex}

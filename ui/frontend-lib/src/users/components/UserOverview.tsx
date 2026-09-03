@@ -1,12 +1,14 @@
 import { useCallback } from "react";
 
-import { Checkbox, FormControlLabel, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 
 import {
   CommonField,
   getProviderValue,
 } from "../../common/components/CommonField";
+import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { UserAvatar } from "../../common/components/UserAvatar";
@@ -53,7 +55,6 @@ export const UserOverview = ({ user }: UserAboutProps) => {
   return (
     <OverviewCard
       name={user.identifier}
-      description={user.description}
       icon={<UserAvatar identifier={user.identifier} />}
       chip={user.deactivated ? "Deactivated" : undefined}
       chipColor="error"
@@ -64,46 +65,21 @@ export const UserOverview = ({ user }: UserAboutProps) => {
       <CommonField name={"Last Name"} value={user.lastName} />
       <CommonField name={"Identifier"} value={user.identifier} />
       <CommonField name={"Is Primary"} value={user.isPrimary ? "Yes" : "No"} />
-      <CommonField name={"Provider"} value={getProviderValue(user.provider)} />
-      <CommonEditableField<string>
-        name={"Description"}
+      <CommonField
+        name={"Provider"}
+        value={getProviderValue(user.provider)}
+      />{" "}
+      <EditableDescriptionField
+        value={user.description}
         canEdit={canEdit}
-        value={user.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{user.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
-      <CommonEditableField<boolean>
+      <BooleanInlineField
         name={"Deactivated"}
         canEdit={canEdit}
         value={user.deactivated}
         ariaLabel="Edit deactivated"
-        display={<span>{user.deactivated ? "Yes" : "No"}</span>}
         onSave={(value) => saveField({ deactivated: value })}
-        renderEditor={({ value, onChange }) => (
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={value}
-                onChange={(e) => onChange(e.target.checked)}
-              />
-            }
-            label="Deactivated"
-          />
-        )}
         size={6}
       />
       {isServiceAccount && (
@@ -119,7 +95,7 @@ export const UserOverview = ({ user }: UserAboutProps) => {
             <TextField
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              label="Password"
+              slotProps={{ input: { "aria-label": "Password" } }}
               type="password"
               fullWidth
               margin="normal"

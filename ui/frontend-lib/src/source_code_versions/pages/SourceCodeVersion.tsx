@@ -37,7 +37,7 @@ const SourceCodeVersionPageContent = () => {
   return (
     <>
       <EntityContainer
-        title={"Template Version Overview"}
+        title={"Template Version Details"}
         actions={
           sourceCodeVersion?.template?.id ? (
             <PermissionWrapper
@@ -45,7 +45,6 @@ const SourceCodeVersionPageContent = () => {
               permissionAction="write"
             >
               <Button
-                variant="outlined"
                 startIcon={<ReorderIcon />}
                 onClick={() => setDialogOpen(true)}
               >

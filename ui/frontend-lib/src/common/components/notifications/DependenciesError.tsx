@@ -70,7 +70,11 @@ export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
               <ExpandMoreIcon />
             </ExpandIconButton>
 
-            <IconButton sx={{ padding: "8px 8px" }} onClick={handleDismiss}>
+            <IconButton
+              size="small"
+              sx={{ padding: "8px 8px" }}
+              onClick={handleDismiss}
+            >
               <CloseIcon />
             </IconButton>
           </StyledCardActions>
@@ -86,7 +90,7 @@ export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
                     borderColor: "divider",
                     p: 2,
                     mb: 2,
-                    borderRadius: 1,
+                    borderRadius: "var(--template-surface-radius)",
                     display: "flex",
                     flexDirection: "column",
                     gap: 0.5,

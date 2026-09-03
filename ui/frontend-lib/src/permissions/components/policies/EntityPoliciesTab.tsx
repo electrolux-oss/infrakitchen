@@ -1,4 +1,4 @@
-import { OverviewCard } from "../../../common/components/OverviewCard";
+import { BaseCard } from "../../../common/components/BaseCard";
 
 import { EntityPoliciesBase } from "./EntityPoliciesBase";
 
@@ -7,7 +7,7 @@ export const EntityPoliciesTab = (props: {
   entityName: string;
   inheritedEntityIds?: string[];
 }) => (
-  <OverviewCard>
+  <BaseCard>
     <EntityPoliciesBase {...props} />
-  </OverviewCard>
+  </BaseCard>
 );

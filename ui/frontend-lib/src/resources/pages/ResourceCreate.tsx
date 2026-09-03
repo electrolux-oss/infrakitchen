@@ -552,16 +552,11 @@ const ResourceCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Resource"
-      onBack={handleBack}
-      backAriaLabel="Back to resources"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
+          <Button onClick={handleBack}>Cancel</Button>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave, handleInvalidSave)}
           >
             {saving ? "Saving..." : "Save"}
@@ -629,7 +624,6 @@ const ResourceCreatePageInner = () => {
                   >
                     <Chip
                       label="Template Documentation"
-                      size="small"
                       color="info"
                       variant="filled"
                       sx={{
@@ -1221,7 +1215,7 @@ const ResourceCreatePageInner = () => {
                     onChange={() => setVariablesOpen(!variablesOpen)}
                     elevation={0}
                     sx={{
-                      borderRadius: 1,
+                      borderRadius: "var(--template-surface-radius)",
                       mt: 2,
                       "&:before": {
                         display: "none",

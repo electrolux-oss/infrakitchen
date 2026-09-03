@@ -1,11 +1,8 @@
 import { useCallback } from "react";
 
-import { TextField } from "@mui/material";
-
 import { CommonField } from "../../common/components/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { Labels } from "../../common/components/Labels";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
@@ -13,7 +10,6 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { sameStringSet } from "../../common/utils";
 import { GqlStorage } from "../graphql";
 import {
   StorageUpdateFieldInput,
@@ -48,31 +44,15 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
   );
 
   return (
-    <OverviewCard name={storage.name} description={storage.description}>
+    <OverviewCard name={storage.name}>
       <CommonField
         name={"State"}
         value={<StatusChip status={storage.status} state={storage.state} />}
-      />
-      <CommonEditableField<string>
-        name={"Description"}
+      />{" "}
+      <EditableDescriptionField
+        value={storage.description}
         canEdit={canEdit}
-        value={storage.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{storage.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
       <CommonField
         name={"Created"}
@@ -81,24 +61,13 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
       <CommonField
         name={"Last Updated"}
         value={<RelativeTime date={storage.updatedAt} />}
-      />
-      <CommonEditableField<string[]>
-        name={"Storage Tags"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
+        name="Storage Tags"
         value={storage.labels || []}
-        ariaLabel="Edit storage tags"
-        isEqual={sameStringSet}
-        display={<Labels labels={storage.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Storage Tags"
-            helperText="Press Enter to add a tag"
-          />
-        )}
-        size={12}
+        helperText="Press Enter to add a tag"
       />
     </OverviewCard>
   );

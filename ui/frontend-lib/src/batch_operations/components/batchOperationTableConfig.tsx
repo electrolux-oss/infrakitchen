@@ -2,8 +2,8 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { RelativeTime } from "../../common/components/RelativeTime";
 
 export const batchOperationColumns: EntityTableColumn[] = [
   {
@@ -45,28 +45,7 @@ export const batchOperationColumns: EntityTableColumn[] = [
     flex: 0.5,
     valueGetter: (value: any) => (value ? value.length : 0),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns(),
   {
     field: "creator",
     headerName: "Creator",

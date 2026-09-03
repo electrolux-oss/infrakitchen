@@ -9,7 +9,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { useConfig } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
@@ -41,9 +41,7 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
   if (!isConfirming) {
     return (
       <Button
-        variant="outlined"
         color="error"
-        size="small"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
       >
@@ -55,9 +53,6 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        variant="outlined"
-        color="success"
-        size="small"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
         disabled={isLoading}
@@ -65,9 +60,7 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
         Confirm
       </Button>
       <Button
-        variant="outlined"
         color="inherit"
-        size="small"
         startIcon={<CloseIcon />}
         onClick={() => setIsConfirming(false)}
         disabled={isLoading}
@@ -107,10 +100,7 @@ export const UserNotificationSubscriptionsCard = (props: {
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -126,7 +116,7 @@ export const UserNotificationSubscriptionsCard = (props: {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <EntityFetchTable
         title="User Subscriptions"
         entityName="subscription"
@@ -134,6 +124,6 @@ export const UserNotificationSubscriptionsCard = (props: {
         defaultFilter={{ user_id }}
         entityFieldMap={NOTIFICATION_SUBSCRIPTION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

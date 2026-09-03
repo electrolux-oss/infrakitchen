@@ -49,11 +49,11 @@ export const ProjectsPage = () => {
         projects: GqlProject[];
       }>(
         `  query Projects($filter: JSON, $sort: [String!], $range: [Int!]) {
-                    projects(filter: $filter, sort: $sort, range: $range) {
-                      ${PROJECT_LIST_FIELDS}
-                    }
-                  }
-        `,
+                          projects(filter: $filter, sort: $sort, range: $range) {
+                            ${PROJECT_LIST_FIELDS}
+                          }
+                        }
+              `,
         {
           filter: Object.keys(apiFilters).length > 0 ? apiFilters : null,
           sort: ["name", "ASC"],
@@ -88,7 +88,6 @@ export const ProjectsPage = () => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => navigate(`${linkPrefix}projects/create`)}
           startIcon={<AddIcon />}
         >
@@ -102,46 +101,37 @@ export const ProjectsPage = () => {
     return (
       <>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Status
           </Typography>
           <StatusChip status={project.status} compact />
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Resources
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {project.resourcesCount}
-          </Typography>
+          <Typography>{project.resourcesCount}</Typography>
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Golden State
           </Typography>
           {project.goldenState ? (
             <Chip
               label={`${project.goldenState.score}%`}
-              size="small"
               color={getScoreChipColor(project.goldenState.score)}
               variant="outlined"
               sx={{ fontWeight: 600 }}
             />
           ) : (
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>
-              -
-            </Typography>
+            <Typography>-</Typography>
           )}
         </Box>
         <Box>
-          <Typography variant="caption" sx={{ display: "block" }}>
+          <Typography sx={{ display: "block", color: "text.secondary" }}>
             Last Updated
-          </Typography>
-          <RelativeTime
-            date={project.updatedAt}
-            variant="caption"
-            sx={{ fontWeight: 500 }}
-          />
+          </Typography>{" "}
+          <RelativeTime date={project.updatedAt} />
         </Box>
       </>
     );
@@ -154,9 +144,7 @@ export const ProjectsPage = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
-          <Button variant="outlined" onClick={fetchProjects}>
-            Retry
-          </Button>
+          <Button onClick={fetchProjects}>Retry</Button>
         </Box>
       </PageContainer>
     );
@@ -209,14 +197,13 @@ export const ProjectsPage = () => {
         ) : (
           <Box
             sx={{
-              "--card-min-width": { xs: "260px", sm: "300px", md: "340px" },
+              "--card-min-width": { xs: "240px", sm: "260px", md: "300px" },
               display: "grid",
               gridTemplateColumns:
                 "repeat(auto-fill, minmax(var(--card-min-width), 1fr))",
-              gap: 3,
+              gap: 2,
               width: "100%",
-              alignItems: "stretch",
-              mt: 4,
+              mt: 3,
             }}
           >
             {projects.map((project) => (
@@ -224,7 +211,7 @@ export const ProjectsPage = () => {
                 key={project.id}
                 entity_name={entityName}
                 name={project.name}
-                description={project.description || "No description"}
+                description={project.description ?? ""}
                 status={project.status}
                 detailsUrl={`${linkPrefix}projects/${project.id}`}
                 labels={project.labels || []}

@@ -21,11 +21,11 @@ export const BlueprintPage = () => {
       entityFields={BLUEPRINT_FIELDS}
     >
       <EntityContainer
-        title="Blueprint Overview"
+        title="Blueprint Details"
         actions={
           <Button
+            size="small"
             variant="contained"
-            color="primary"
             startIcon={<PlayArrowIcon />}
             onClick={() =>
               navigate(`${linkPrefix}blueprints/${blueprint_id}/use`)

@@ -1,17 +1,11 @@
 import { Icon } from "@iconify/react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import {
-  Box,
-  Chip,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
 import { AuditLogEntity } from "../../../types";
 import { HorizontalTimeline } from "../HorizontalTimeline";
 import { RelativeTime } from "../RelativeTime";
+import { RevisionChip } from "../RevisionChip";
 
 interface RevisionTimelineProps {
   revision: string;
@@ -37,19 +31,14 @@ export const RevisionTimeline = ({
           alignItems: "center",
         }}
       >
-        <Chip
-          label={revision}
-          size="small"
-          color="primary"
+        <RevisionChip
+          revision={revision}
           variant="outlined"
-          sx={{
-            cursor: logs[0].revisionNumber ? "pointer" : "default",
-          }}
-          onClick={() => {
-            if (logs[0].revisionNumber && onRevisionClick) {
-              onRevisionClick(logs[0].revisionNumber);
-            }
-          }}
+          onClick={
+            logs[0].revisionNumber && onRevisionClick
+              ? () => onRevisionClick(logs[0].revisionNumber as number)
+              : undefined
+          }
         />
         <RelativeTime date={logs[0].createdAt} sx={{ fontSize: "0.75rem" }} />
       </Stack>

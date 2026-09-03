@@ -12,6 +12,7 @@ import { useConfig } from "../context";
 import { getProviderDisplayName } from "../utils";
 
 import { UserAvatar } from "./UserAvatar";
+import { PlaceholderText } from "./PlaceholderDescription";
 
 export const getRemoteUrlValue = (url: string) => {
   // Convert SSH URL to HTTPS URL
@@ -66,13 +67,12 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   );
 
   const displayText = display_name || name || identifier;
-
   return (
     <Link
       href={fullPath}
       onClick={handleClick}
+      underline="hover"
       style={{
-        textDecoration: "none",
         cursor: "pointer",
         whiteSpace: "normal",
         overflowWrap: "anywhere",
@@ -131,7 +131,6 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
         onClick={handleClick}
         sx={sx}
         style={{
-          textDecoration: "none",
           cursor: "pointer",
           whiteSpace: "normal",
         }}
@@ -143,15 +142,12 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
 };
 
 export const getTextValue = (text: any) => {
-  const displayText =
-    text === null || text === undefined || text === ""
-      ? "N/A"
-      : text.toString();
+  if (text === null || text === undefined || text === "") {
+    return <PlaceholderText />;
+  }
 
   return (
-    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-      {displayText}
-    </Typography>
+    <Typography sx={{ color: "text.secondary" }}>{text.toString()}</Typography>
   );
 };
 
@@ -174,9 +170,7 @@ export const getProviderValue = (provider: string, iconSize: number = 24) => {
       }}
     >
       {IconField(provider, iconSize)}
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {getProviderDisplayName(provider)}
-      </Typography>
+      <Typography>{getProviderDisplayName(provider)}</Typography>
     </Box>
   );
 };
@@ -214,7 +208,7 @@ export const getTimeOnlyValue = (date: Date | string) => {
 };
 
 export interface ParameterFieldProps {
-  name: string;
+  name: ReactNode;
   value: ReactNode;
   size?: GridSize | { xs: GridSize; md: GridSize } | undefined;
 }
@@ -227,15 +221,23 @@ export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
 
   return (
     <Grid size={gridSize}>
-      <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+      <Typography
+        component="div"
+        sx={{
+          // Muted label style shared with the datagrid headers: medium weight,
+          // small size, secondary color — the value is the visual anchor.
+          fontWeight: 500,
+          fontSize: "0.8125rem",
+          color: "text.secondary",
+          mb: 0.25,
+        }}
+      >
         {name}
       </Typography>
       {isEmptyValue ? (
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          None
-        </Typography>
+        <PlaceholderText />
       ) : isStringOrNumber ? (
-        <Typography variant="body2">{value}</Typography>
+        <Typography>{value}</Typography>
       ) : (
         value
       )}

@@ -5,7 +5,10 @@ import { AUDIT_LOG_FIELD_MAP } from "../graphql";
 
 export const AuditLogsPage = () => {
   return (
-    <PageContainer title="Audit Logs">
+    <PageContainer
+      title="Audit Logs"
+      description="A record of activities across the system."
+    >
       <EntityFetchTable
         title="Audit Log"
         entityName="auditLog"

@@ -14,7 +14,7 @@ export const UserPage = () => {
       entity_id={user_id || ""}
       entityFields={USER_FIELDS}
     >
-      <EntityContainer title={"User Overview"}>
+      <EntityContainer title={"User Details"}>
         <UserContent />
       </EntityContainer>
     </EntityProvider>

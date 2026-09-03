@@ -5,15 +5,20 @@ import {
   DeleteOutlined as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import {
-  TextField,
+  Box,
+  Button,
+  Chip,
   FormControlLabel,
   IconButton,
-  Checkbox,
-  Typography,
-  Grid,
-  Box,
+  Switch,
+  TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
+
+import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
+import { dashedAddButtonSx } from "../../utils/dashedAddButtonSx";
+import { solidChipColorSx } from "../../utils/softChip";
 
 interface Tag {
   name: string;
@@ -28,11 +33,22 @@ interface TagInputProps {
   onChange: (value: Tag[]) => void;
   name?: string;
   showErrors?: boolean;
+  /** Hide the section header (label + count chip + add action). When set,
+   * only the editable rows render so a caller can keep its own header. */
+  hideHeader?: boolean;
   [key: string]: any;
 }
 
 const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
-  const { errors, label, value, onChange, name, showErrors = false } = props;
+  const {
+    errors,
+    label,
+    value,
+    onChange,
+    name,
+    showErrors = false,
+    hideHeader = false,
+  } = props;
   const currentValue: Tag[] = Array.isArray(value) ? value : [];
 
   const sanitizeTag = (tag: Tag): Tag => ({
@@ -69,136 +85,135 @@ const TagInput = forwardRef<any, TagInputProps>((props, _ref) => {
 
   return (
     <Box sx={{ mt: 2, px: 2 }}>
-      <Grid
-        container
-        spacing={2}
-        sx={{
-          alignItems: "center",
-          mb: 1,
-        }}
-      >
-        <Grid
-          size={{
-            xs: 12,
-            sm: 11,
-          }}
-        >
-          <Typography variant="h5" component="h3" sx={{ mb: 0 }}>
+      {!hideHeader && (
+        /* Section header: label, entry count */
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {label}
           </Typography>
-        </Grid>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 1,
+          <Chip
+            label={String(currentValue.length)}
+            sx={solidChipColorSx("info", undefined, undefined, true)}
+          />
+        </Box>
+      )}
+
+      {currentValue.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 1,
+            pb: 0,
+            color: "text.secondary",
           }}
-          sx={{ display: "flex", justifyContent: "center" }}
         >
-          <Tooltip title="Add entry">
-            <IconButton onClick={handleAdd} aria-label="Add entry">
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
-        </Grid>
-      </Grid>
+          {/* Column captions shown once, instead of "Name"/"Value" labels on
+              every row. Reserve the switch + remove-action widths so the
+              captions stay aligned with the fields below. */}
+          <Typography
+            variant="caption"
+            sx={{ flex: "1 1 180px", minWidth: 160 }}
+          >
+            Name
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ flex: "1 1 180px", minWidth: 160 }}
+          >
+            Value
+          </Typography>
+          <Box sx={{ flex: "0 0 auto", width: 178 }} />
+          <Box sx={{ flex: "0 0 auto", width: 28 }} />
+        </Box>
+      )}
+
       {currentValue.map((item: Tag, index: number) => (
-        <Grid
-          container
-          spacing={2}
+        <Box
           key={index}
           sx={{
-            alignItems: "flex-end",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+            gap: 1,
+            pt: 0.25,
           }}
         >
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
+          <TextField
+            variant="outlined"
+            margin="dense"
+            value={item.name}
+            onChange={(e) => handleFieldChange(index, "name", e.target.value)}
+            error={
+              fieldErrors?.[index]?.name
+                ? true
+                : hasValidationError && sanitizeTag(item).name === ""
+            }
+            helperText={fieldErrors?.[index]?.name?.message || undefined}
+            required
+            slotProps={{ htmlInput: { "aria-label": `Tag name ${index + 1}` } }}
+            sx={{ flex: "1 1 180px", minWidth: 160 }}
+          />
+          <TextField
+            variant="outlined"
+            value={item.value}
+            onChange={(e) => handleFieldChange(index, "value", e.target.value)}
+            error={
+              fieldErrors?.[index]?.value
+                ? true
+                : hasValidationError && sanitizeTag(item).value === ""
+            }
+            helperText={fieldErrors?.[index]?.value?.message || undefined}
+            margin="dense"
+            required
+            slotProps={{
+              htmlInput: { "aria-label": `Tag value ${index + 1}` },
             }}
-          >
-            <TextField
-              label="Name"
-              variant="outlined"
-              margin="normal"
-              value={item.name}
-              onChange={(e) => handleFieldChange(index, "name", e.target.value)}
-              error={
-                fieldErrors?.[index]?.name
-                  ? true
-                  : hasValidationError && sanitizeTag(item).name === ""
-              }
-              helperText={fieldErrors?.[index]?.name?.message || ""}
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 4,
-            }}
-          >
-            <TextField
-              label="Value"
-              variant="outlined"
-              value={item.value}
-              onChange={(e) =>
-                handleFieldChange(index, "value", e.target.value)
-              }
-              error={
-                fieldErrors?.[index]?.value
-                  ? true
-                  : hasValidationError && sanitizeTag(item).value === ""
-              }
-              helperText={fieldErrors?.[index]?.value?.message || ""}
-              margin="normal"
-              fullWidth
-              required
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 3,
-            }}
-            sx={{ mb: 1 }}
-          >
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={item.inherited_by_children}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      index,
-                      "inherited_by_children",
-                      e.target.checked,
-                    )
-                  }
-                />
-              }
-              label={
-                <Typography variant="body2">Inherited By Children</Typography>
-              }
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 12,
-              sm: 1,
-            }}
-            sx={{ display: "flex", justifyContent: "center", mb: 1 }}
-          >
-            <Tooltip title="Remove entry">
-              <IconButton
-                onClick={() => handleRemove(index)}
-                aria-label="Remove entry"
-              >
-                <DeleteOutlineIcon />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
+            sx={{ flex: "1 1 180px", minWidth: 160 }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={item.inherited_by_children}
+                onChange={(e) =>
+                  handleFieldChange(
+                    index,
+                    "inherited_by_children",
+                    e.target.checked,
+                  )
+                }
+              />
+            }
+            label={
+              <Typography variant="body2">Inherited By Children</Typography>
+            }
+            sx={{ alignSelf: "center", my: 0.5, ml: 0 }}
+          />
+          <Tooltip title="Remove">
+            <IconButton
+              size="small"
+              sx={{ ...deleteIconButtonStyle, alignSelf: "center", my: 0.5 }}
+              onClick={() => handleRemove(index)}
+              aria-label="Remove"
+            >
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
       ))}
+      {!hideHeader && (
+        /* Add action sits under the rows, matching the other list editors. */
+        <Box sx={{ mt: 1 }}>
+          <Button
+            startIcon={<AddIcon />}
+            onClick={handleAdd}
+            sx={dashedAddButtonSx}
+          >
+            Add
+          </Button>
+        </Box>
+      )}
       {showErrors && typeof fieldErrors?.message === "string" && (
         <Typography
           variant="body2"

@@ -108,7 +108,7 @@ function WiringCanvasInner({
         height: isFullscreen ? "100vh" : 600,
         display: "flex",
         border: isFullscreen ? "none" : `1px solid ${theme.palette.divider}`,
-        borderRadius: isFullscreen ? 0 : 2,
+        borderRadius: isFullscreen ? 0 : "var(--template-surface-radius)",
         overflow: "hidden",
         "& .react-flow__handle": {
           opacity: 1,
@@ -162,7 +162,7 @@ function WiringCanvasInner({
             style={{
               background: theme.palette.background.paper,
               padding: "6px 12px",
-              borderRadius: 8,
+              borderRadius: "var(--template-surface-radius)",
               border: `1px solid ${theme.palette.divider}`,
               display: "flex",
               alignItems: "center",

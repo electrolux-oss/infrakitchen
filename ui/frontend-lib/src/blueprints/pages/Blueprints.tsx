@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Box, Button } from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
@@ -20,8 +21,8 @@ export const BlueprintsPage = () => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => navigate(`${linkPrefix}blueprints/create`)}
+          startIcon={<AddIcon />}
         >
           Create
         </Button>
@@ -30,7 +31,11 @@ export const BlueprintsPage = () => {
   );
 
   return (
-    <PageContainer title="Blueprints" actions={actions}>
+    <PageContainer
+      title="Blueprints"
+      description="Combine multiple templates into one reusable blueprint that provisions infrastructure as a workflow."
+      actions={actions}
+    >
       <EntityFetchTable
         title="Blueprints"
         entityName="blueprint"

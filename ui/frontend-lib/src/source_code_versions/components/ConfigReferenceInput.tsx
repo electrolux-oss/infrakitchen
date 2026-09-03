@@ -156,11 +156,7 @@ export const ConfigReferenceInput = ({
           )}
         />
       )}
-      <Button
-        variant="outlined"
-        onClick={handleDeleteTemplateSelection}
-        sx={{ mt: 2 }}
-      >
+      <Button onClick={handleDeleteTemplateSelection} sx={{ mt: 2 }}>
         Clear
       </Button>
     </>

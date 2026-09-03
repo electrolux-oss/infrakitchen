@@ -27,7 +27,10 @@ export const TasksPage = () => {
   );
 
   return (
-    <PageContainer title="Tasks">
+    <PageContainer
+      title="Tasks"
+      description="Background operations running against your entities, such as plans, applies, and syncs."
+    >
       <EntityFetchTable
         title="Tasks"
         entityName="task"
@@ -35,6 +38,8 @@ export const TasksPage = () => {
         entityFieldMap={TASK_FIELD_MAP}
         defaultColumnVisibilityModel={taskDefaultColumnVisibilityModel}
         syncFiltersToUrl
+        // Tasks have no detail page — rows shouldn't navigate (or look clickable).
+        rowClickable={false}
       />
     </PageContainer>
   );

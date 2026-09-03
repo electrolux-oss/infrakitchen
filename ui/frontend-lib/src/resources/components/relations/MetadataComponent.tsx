@@ -72,8 +72,8 @@ export function MetadataComponent(props: ResourceMetadataProps) {
         extensions={[json()]}
         readOnly={true}
         style={{
-          border: "1px solid silver",
-          borderRadius: "8px",
+          border: "1px solid var(--template-palette-divider)",
+          borderRadius: "var(--template-surface-radius)",
           overflow: "hidden",
         }}
       />

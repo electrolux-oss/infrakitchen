@@ -2,6 +2,9 @@ import React from "react";
 
 import { Box, Typography, Chip } from "@mui/material";
 
+import { solidChipColorSx } from "../utils/softChip";
+import { PlaceholderDescription } from "./PlaceholderDescription";
+
 interface HclOutputValueProps {
   output: {
     name: string;
@@ -18,7 +21,7 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
         borderColor: "divider",
         p: 2,
         mb: 2,
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
       }}
     >
       <Typography
@@ -32,7 +35,11 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
         {output.name}
       </Typography>
       {output.source && (
-        <Chip label={output.source} size="small" variant="outlined" />
+        <Chip
+          label={output.source}
+          variant="filled"
+          sx={solidChipColorSx("default")}
+        />
       )}
       <Typography
         variant="caption"
@@ -42,7 +49,12 @@ export const HclOutputValue: React.FC<HclOutputValueProps> = ({ output }) => {
           mt: 1,
         }}
       >
-        {output.description || "No description"}
+        {" "}
+        {output.description || (
+          <PlaceholderDescription
+            sx={{ fontSize: "inherit", lineHeight: "inherit" }}
+          />
+        )}
       </Typography>
     </Box>
   );

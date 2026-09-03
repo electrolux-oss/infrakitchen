@@ -20,7 +20,7 @@ import {
   FilterRenderer,
   useLocalStorage,
 } from "../../common";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { useHashParams } from "../../common/hooks/useHashParams";
 import { ENTITY_STATUS } from "../../utils";
 import { SCV_FIELD_MAP } from "../graphql";
@@ -318,7 +318,7 @@ export const SourceCodeRefSection = ({
       params={params}
       entityFieldMap={SCV_FIELD_MAP}
     >
-      <OverviewCard>
+      <BaseCard>
         <Box
           sx={{
             display: "flex",
@@ -359,7 +359,6 @@ export const SourceCodeRefSection = ({
             <FormControlLabel
               control={
                 <Switch
-                  size="small"
                   checked={!!filterValues["enabled_only"]}
                   onChange={(e) =>
                     handleFilterChange("enabled_only", e.target.checked)
@@ -391,7 +390,7 @@ export const SourceCodeRefSection = ({
             defaultOpenRef={initialSearch || undefined}
           />
         </Box>
-      </OverviewCard>
+      </BaseCard>
     </EntityListProvider>
   );
 };

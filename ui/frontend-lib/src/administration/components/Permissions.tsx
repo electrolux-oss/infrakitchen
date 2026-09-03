@@ -1,15 +1,9 @@
 import { useCallback } from "react";
 
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-} from "@mui/material";
+import { Button } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { RELOAD_PERMISSIONS_MUTATION } from "../graphql";
 
@@ -28,69 +22,15 @@ export const PermissionsSection = () => {
   }, [ikApi]);
 
   return (
-    <Box
-      sx={{
-        mt: 4,
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 2,
-        p: 3,
-      }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Permission Configurations
-        </Typography>
-      </Box>
-
-      <Grid container spacing={3}>
-        <Grid
-          size={{
-            xs: 12,
-            sm: 6,
-            md: 3,
-          }}
-        >
-          <Card
-            sx={{
-              position: "relative",
-              width: "fit-content",
-              height: "80px",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <CardContent
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                padding: "16px !important",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                <Typography variant="h6" component="h3">
-                  Reload Permissions
-                </Typography>
-                <Button
-                  onClick={handlePermissionReload}
-                  variant="contained"
-                  size="small"
-                  sx={{ ml: 2 }}
-                >
-                  Reload
-                </Button>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    <BaseCard
+      name="Permission Configurations"
+      description="Reload permission definitions from the backend when they change"
+      sx={{ mt: 4 }}
+      actions={
+        <Button variant="contained" onClick={handlePermissionReload}>
+          Reload
+        </Button>
+      }
+    />
   );
 };

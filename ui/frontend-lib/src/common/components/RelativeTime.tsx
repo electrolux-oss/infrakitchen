@@ -27,11 +27,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
 
   if (isNaN(dateObj.getTime())) {
     return (
-      <Typography
-        component={component}
-        variant={variant}
-        sx={sx || { color: "text.secondary" }}
-      >
+      <Typography component={component} variant={variant} sx={sx}>
         {dateObj.toString()}
       </Typography>
     );
@@ -46,23 +42,17 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
       variant={variant}
       sx={{
         display: "inline-flex",
-        alignItems: "center",
+        // Top-align so the text sits at the same distance below the field
+        // label even when an avatar makes the row taller (centering would
+        // push the text down and vary the label-to-value gap per field).
+        alignItems: "flex-start",
         gap: 1,
-        ...(sx || { color: "text.secondary" }),
+        ...sx,
       }}
     >
       {user && <UserAvatar id={user.id} identifier={user.identifier} />}
       <Tooltip title={exactTimestamp}>
-        <Typography
-          component="span"
-          variant="inherit"
-          sx={{
-            cursor: "pointer",
-            textDecoration: "underline dashed",
-            textDecorationColor: "text.secondary",
-            textUnderlineOffset: "5px",
-          }}
-        >
+        <Typography component="span" variant="inherit">
           {timeAgoText}
         </Typography>
       </Tooltip>

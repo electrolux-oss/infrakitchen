@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_SCHEDULER_MUTATION,
@@ -196,32 +197,14 @@ export const SchedulerJobsSection = () => {
   };
 
   return (
-    <Box
-      sx={{
-        mt: 4,
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 2,
-        p: 3,
-      }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Scheduler Jobs
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Create SQL scheduler jobs and manage reusable SQL templates
-        </Typography>
-      </Box>
-
-      <Grid container spacing={3}>
-        <Grid
-          size={{
-            xs: 12,
-            md: 12,
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 2 }}>
+    <>
+      <BaseCard
+        name="Scheduler Jobs"
+        description="Create SQL scheduler jobs and manage reusable SQL templates"
+        sx={{ mt: 4 }}
+      >
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
             Existing Jobs
           </Typography>
 
@@ -230,7 +213,10 @@ export const SchedulerJobsSection = () => {
               <Card key={job.id} variant="outlined">
                 <CardContent>
                   <Stack spacing={1}>
-                    <Typography variant="subtitle2" color="textSecondary">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ color: "text.secondary" }}
+                    >
                       {job.type} • {job.cron}
                     </Typography>
 
@@ -269,7 +255,6 @@ export const SchedulerJobsSection = () => {
                         />
                         <Stack direction="row" spacing={1}>
                           <Button
-                            size="small"
                             variant="contained"
                             onClick={handleUpdateSchedulerJob}
                             disabled={updatingSchedulerJob}
@@ -277,8 +262,6 @@ export const SchedulerJobsSection = () => {
                             Save
                           </Button>
                           <Button
-                            size="small"
-                            variant="outlined"
                             onClick={handleCancelEditSchedulerJob}
                             disabled={updatingSchedulerJob}
                           >
@@ -299,16 +282,12 @@ export const SchedulerJobsSection = () => {
                         </Typography>
                         <Stack direction="row" spacing={1}>
                           <Button
-                            size="small"
-                            variant="outlined"
                             onClick={() => handleStartEditSchedulerJob(job)}
                           >
                             Edit
                           </Button>
                           <Button
-                            size="small"
                             color="error"
-                            variant="outlined"
                             startIcon={<DeleteIcon />}
                             onClick={() => setDeleteDialogJobId(job.id)}
                           >
@@ -323,7 +302,7 @@ export const SchedulerJobsSection = () => {
             ))}
 
             {!schedulerLoading && schedulerJobs.length === 0 && (
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 No scheduler jobs found.
               </Typography>
             )}
@@ -332,7 +311,7 @@ export const SchedulerJobsSection = () => {
 
         <Grid size={{ xs: 12 }}>
           <Divider sx={{ my: 1 }} />
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
             Create SQL Scheduler Job
           </Typography>
 
@@ -354,8 +333,7 @@ export const SchedulerJobsSection = () => {
             <Box>
               <Typography
                 variant="subtitle2"
-                color="textSecondary"
-                sx={{ mb: 1 }}
+                sx={{ color: "text.secondary", mb: 1 }}
               >
                 SQL examples (click to paste)
               </Typography>
@@ -370,7 +348,10 @@ export const SchedulerJobsSection = () => {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {example.description}
                         </Typography>
-                        <Typography variant="caption" color="textSecondary">
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "text.secondary" }}
+                        >
                           Cron: {example.cron}
                         </Typography>
                         <Typography
@@ -384,8 +365,6 @@ export const SchedulerJobsSection = () => {
                         </Typography>
                         <Box>
                           <Button
-                            variant="outlined"
-                            size="small"
                             onClick={() => {
                               setNewSchedulerScript(example.script);
                               setNewSchedulerCron(example.cron);
@@ -412,7 +391,7 @@ export const SchedulerJobsSection = () => {
             </Box>
           </Stack>
         </Grid>
-      </Grid>
+      </BaseCard>
 
       <Dialog
         open={deleteDialogJobId !== null}
@@ -437,6 +416,6 @@ export const SchedulerJobsSection = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };

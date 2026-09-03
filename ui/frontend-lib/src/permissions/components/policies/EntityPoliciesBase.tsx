@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Icon } from "@iconify/react";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -106,7 +107,6 @@ export const EntityPoliciesBase = ({
 
                 return isInherited ? (
                   <Chip
-                    size="small"
                     label="Inherited from Project"
                     color="info"
                     variant="outlined"
@@ -123,7 +123,7 @@ export const EntityPoliciesBase = ({
                     }}
                   />
                 ) : (
-                  <Chip size="small" label="Direct" variant="outlined" />
+                  <Chip label="Direct" variant="outlined" />
                 );
               },
             },
@@ -134,10 +134,7 @@ export const EntityPoliciesBase = ({
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -187,9 +184,8 @@ export const EntityPoliciesBase = ({
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => setIsDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<AdminPanelSettingsIcon />}
           sx={{ mr: 1 }}
         >
           Add Role
@@ -202,9 +198,8 @@ export const EntityPoliciesBase = ({
           onSuccess={refreshPoliciesTable}
         />
         <Button
-          variant="outlined"
           onClick={() => setIsUserDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<PersonAddIcon />}
         >
           Add User
         </Button>

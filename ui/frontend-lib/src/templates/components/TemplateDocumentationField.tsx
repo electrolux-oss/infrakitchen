@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 
 import { CommonField } from "../../common/components/CommonField";
+import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 
 export interface TemplateDocumentationFieldProps {
@@ -67,27 +69,43 @@ export const TemplateDocumentationField = ({
         value={
           <Box
             sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              width: "100%",
+              display: "inline-flex",
+              alignItems: "flex-start",
+              maxWidth: "100%",
+              // Reveal the edit affordance on hover/focus, like other fields.
+              "&:hover .doc-edit-action, &:focus-within .doc-edit-action": {
+                opacity: 1,
+              },
             }}
           >
-            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Box sx={{ position: "relative", minWidth: 0 }}>
               {documentation ? (
                 <span>Documentation provided</span>
               ) : (
-                <span>No documentation</span>
+                <PlaceholderText />
               )}
+              {/* Overlay the edit affordance just past the end of the value
+                  text, vertically centered on it, so it never makes the value
+                  row taller and the label-to-value gap stays consistent. */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "100%",
+                  transform: "translateY(-50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  pl: 0.5,
+                }}
+              >
+                <EditAffordance
+                  className="doc-edit-action"
+                  onClick={openDialog}
+                  ariaLabel="Edit documentation"
+                  disabled={!canEdit}
+                />
+              </Box>
             </Box>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={openDialog}
-              disabled={!canEdit}
-            >
-              Edit
-            </Button>
           </Box>
         }
         size={size}

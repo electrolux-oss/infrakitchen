@@ -1,13 +1,5 @@
 import FavoriteIcon from "@mui/icons-material/Favorite";
-import {
-  Box,
-  Card,
-  CardContent,
-  CardHeader,
-  CircularProgress,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, CircularProgress, Divider, Typography } from "@mui/material";
 
 import { FavoriteResource } from "../types";
 
@@ -23,20 +15,41 @@ export const MyFavoritesWidget = ({
   loading = false,
 }: MyFavoritesWidgetProps) => {
   return (
-    <Card sx={{ width: "100%" }}>
-      <CardHeader
-        avatar={<FavoriteIcon sx={{ color: "error.main" }} />}
-        title="My Favorites"
-        subheader={`${favorites.length} favorite ${favorites.length !== 1 ? "entities" : "entity"}`}
-      />
-      <CardContent sx={{ maxHeight: 400, overflowY: "auto" }}>
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+        <FavoriteIcon sx={{ color: "primary.main", fontSize: 20 }} />
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          My Favorites
+        </Typography>
+        {!loading && (
+          <Typography
+            variant="caption"
+            sx={{ color: "text.secondary", ml: "auto" }}
+          >
+            {favorites.length}{" "}
+            {favorites.length !== 1 ? "favorites" : "favorite"}
+          </Typography>
+        )}
+      </Box>
+      <Divider sx={{ mb: 1.5 }} />
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          backgroundColor: "background.paper",
+          overflow: "hidden",
+          overflowY: "auto",
+          maxHeight: 400,
+        }}
+      >
         {loading ? (
           <Box
             sx={{
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              py: 2,
+              py: 4,
             }}
           >
             <CircularProgress size={24} />
@@ -47,38 +60,26 @@ export const MyFavoritesWidget = ({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              py: 3,
+              py: 4,
               color: "text.secondary",
             }}
           >
             <FavoriteIcon
-              sx={{ fontSize: 36, mb: 1, opacity: 0.5, color: "error.main" }}
+              sx={{ fontSize: 32, mb: 1, opacity: 0.5, color: "primary.main" }}
             />
-            <Typography
-              variant="body2"
-              sx={{
-                textAlign: "center",
-              }}
-            >
-              No favorites yet.
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                textAlign: "center",
-              }}
-            >
+            <Typography variant="body2">No favorites yet.</Typography>
+            <Typography variant="caption">
               Pin resources for quick access.
             </Typography>
           </Box>
         ) : (
-          <Stack spacing={1}>
+          <Box>
             {favorites.map((favorite) => (
               <FavoriteResourceItem key={favorite.id} resource={favorite} />
             ))}
-          </Stack>
+          </Box>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };

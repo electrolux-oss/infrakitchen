@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Alert, Button, Typography } from "@mui/material";
+import { Alert, Button } from "@mui/material";
 
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { ENTITY_ACTION } from "../../utils";
@@ -19,7 +19,14 @@ export const ResourceReviewView = () => {
       {hasCheckStateDifferencePermission && (
         <Alert
           severity="warning"
-          sx={{ mb: 2 }}
+          sx={{
+            mb: 2,
+            // MUI anchors the action slot to the top; center it on the message.
+            "& .MuiAlert-action": {
+              alignItems: "center",
+              paddingTop: 0,
+            },
+          }}
           action={
             <Button
               color="inherit"
@@ -30,13 +37,9 @@ export const ResourceReviewView = () => {
             </Button>
           }
         >
-          {actions.includes(ENTITY_ACTION.APPROVE) ? (
-            <Typography>Review required before proceeding.</Typography>
-          ) : (
-            <Typography>
-              Temporary changes detected. Awaiting owner confirmation.
-            </Typography>
-          )}
+          {actions.includes(ENTITY_ACTION.APPROVE)
+            ? "Review required before proceeding."
+            : "Temporary changes detected. Awaiting owner confirmation."}
         </Alert>
       )}
       <ResourceStateReviewDialog

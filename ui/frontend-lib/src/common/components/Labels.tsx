@@ -1,21 +1,23 @@
 import { FC } from "react";
 
-import { Box, Chip, Typography } from "@mui/material";
+import { Box, Chip } from "@mui/material";
+
+import { softChipColorSx } from "../utils/softChip";
+import { PlaceholderText } from "./PlaceholderDescription";
 
 interface LabelsProps {
   labels: string[];
+  /** Compact chip size, for dense contexts like datagrid rows. */
+  size?: "small" | "compact";
 }
 
 /**
- * Renders a list of labels as chips. Displays "None" when the list is empty.
+ * Renders a list of labels as chips. Displays the empty-value placeholder when
+ * the list is empty.
  */
-export const Labels: FC<LabelsProps> = ({ labels }) => {
+export const Labels: FC<LabelsProps> = ({ labels, size = "small" }) => {
   if (!labels || labels.length === 0) {
-    return (
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        None
-      </Typography>
-    );
+    return <PlaceholderText />;
   }
 
   return (
@@ -29,7 +31,12 @@ export const Labels: FC<LabelsProps> = ({ labels }) => {
       }}
     >
       {labels.map((label: string) => (
-        <Chip key={label} label={label} size="small" variant="outlined" />
+        <Chip
+          key={label}
+          label={label}
+          variant="filled"
+          sx={softChipColorSx("default", size === "compact")}
+        />
       ))}
     </Box>
   );

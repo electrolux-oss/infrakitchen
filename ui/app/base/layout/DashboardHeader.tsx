@@ -2,8 +2,11 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
-import { ServerInfoDialog } from "@electrolux-oss/infrakitchen";
-import { useConfig } from "@electrolux-oss/infrakitchen";
+import {
+  CODE_FONT_FAMILY,
+  ServerInfoDialog,
+  useConfig,
+} from "@electrolux-oss/infrakitchen";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MuiAppBar from "@mui/material/AppBar";
@@ -15,7 +18,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import SettingsMenu from "./SettingsMenu";
+import { neutralPillSx } from "./mixins";
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserSidebar from "./UserSidebar";
 
@@ -24,6 +27,8 @@ const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderBottomWidth: 1,
   borderStyle: "solid",
   borderColor: (theme.vars ?? theme).palette.divider,
+  // Header shares the grey canvas color with the sidebar and content.
+  backgroundColor: (theme.vars ?? theme).palette.background.default,
   boxShadow: "none",
   zIndex: theme.zIndex.drawer + 1,
 }));
@@ -78,6 +83,16 @@ export default function DashboardHeader({
               size="small"
               aria-label={`${isExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
               onClick={handleMenuOpen}
+              sx={(theme) => ({
+                border: "none",
+                backgroundColor: "transparent",
+                "&:hover": { backgroundColor: "transparent" },
+                ...theme.applyStyles("dark", {
+                  border: "none",
+                  backgroundColor: "transparent",
+                  "&:hover": { backgroundColor: "transparent" },
+                }),
+              })}
             >
               {isExpanded ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
@@ -106,14 +121,16 @@ export default function DashboardHeader({
               alignItems: "center",
             }}
           >
-            <Box sx={{ mr: 1 }}>{getMenuIcon(menuOpen)}</Box>
+            <Box sx={{ mr: 1, display: { xs: "block", md: "none" } }}>
+              {getMenuIcon(menuOpen)}
+            </Box>
             <Link to="/" style={{ textDecoration: "none" }}>
               {logo ? <LogoContainer>{logo}</LogoContainer> : null}
             </Link>
             <Stack
               direction="row"
               sx={{
-                alignItems: "baseline",
+                alignItems: "center",
               }}
             >
               {title ? (
@@ -122,7 +139,9 @@ export default function DashboardHeader({
                     variant="h5"
                     sx={{
                       color: "text.primary",
-                      fontWeight: "700",
+                      fontWeight: 600,
+                      fontSize: "1.25rem", // 20px
+                      letterSpacing: "-0.02em",
                       ml: 1,
                       whiteSpace: "nowrap",
                       lineHeight: 1,
@@ -132,27 +151,49 @@ export default function DashboardHeader({
                   </Typography>
                 </Link>
               ) : null}
-              <Typography
-                variant="caption"
-                component="button"
-                type="button"
-                onClick={handleServerInfoOpen}
-                sx={{
-                  color: "text.disabled",
-                  fontSize: "0.6rem",
-                  ml: 2,
-                  whiteSpace: "nowrap",
-                  background: "none",
-                  border: 0,
-                  padding: 0,
-                  cursor: "pointer",
-                  font: "inherit",
-                }}
-              >
-                {serverInfo
-                  ? `${serverInfo.version}+${serverInfo.sourceCommitShort}`
-                  : ""}
-              </Typography>
+              {serverInfo ? (
+                <Typography
+                  variant="caption"
+                  component="button"
+                  type="button"
+                  onClick={handleServerInfoOpen}
+                  sx={{
+                    // `font: "inherit"` must come before the spread: as a CSS
+                    // shorthand it would otherwise override the pill's font-size.
+                    font: "inherit",
+                    ...neutralPillSx,
+                    gap: "0.4em",
+                    ml: 2,
+                    cursor: "pointer",
+                    transition:
+                      "border-color 120ms ease, background-color 120ms ease",
+                    "&:hover": {
+                      borderColor: "divider",
+                      backgroundColor: "action.selected",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid",
+                      outlineColor: "primary.main",
+                      outlineOffset: "1px",
+                    },
+                  }}
+                >
+                  <Box component="span" sx={{ fontWeight: 600 }}>
+                    {serverInfo.version}
+                  </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontFamily: CODE_FONT_FAMILY,
+                      fontSize: "0.62rem",
+                      color: "text.secondary",
+                      opacity: 0.85,
+                    }}
+                  >
+                    {serverInfo.sourceCommitShort}
+                  </Box>
+                </Typography>
+              ) : null}
             </Stack>
           </Stack>
           <Stack
@@ -171,7 +212,6 @@ export default function DashboardHeader({
                 alignItems: "center",
               }}
             >
-              <SettingsMenu />
               <ThemeSwitcher />
             </Stack>
             <UserSidebar />

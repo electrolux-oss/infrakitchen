@@ -70,10 +70,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -119,7 +116,6 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => handleOpenDialog()}
           startIcon={<Icon icon="icon-park-outline:add" />}
         >

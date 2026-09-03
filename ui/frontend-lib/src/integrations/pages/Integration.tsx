@@ -57,7 +57,7 @@ export const IntegrationPage = () => {
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
-        title={"Integration Overview"}
+        title={"Integration Details"}
         actions={
           <PermissionWrapper
             requiredPermission={"api:integration"}

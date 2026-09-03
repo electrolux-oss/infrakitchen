@@ -1,6 +1,6 @@
-import { MouseEvent, useState } from "react";
+import { useState } from "react";
 
-import { useNavigate } from "react-router";
+import { Link as RouterLink } from "react-router";
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
@@ -12,18 +12,15 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
   alpha,
   Box,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   CircularProgress,
+  Divider,
   IconButton,
   Link,
   Tooltip,
   Typography,
 } from "@mui/material";
 
-import { useConfig } from "../common";
 import { FilterClause } from "../common/components/filter_panel/FilterConfig";
 import {
   GoldenStateProjectReport,
@@ -66,7 +63,7 @@ function buildProjectResourcesUrl(
     ...extraClauses,
   ];
 
-  return `resources?filter=${encodeURIComponent(JSON.stringify(filters))}`;
+  return `/resources?filter=${encodeURIComponent(JSON.stringify(filters))}`;
 }
 
 function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
@@ -74,18 +71,7 @@ function buildProjectPageResourcesUrl(project: GoldenStateProjectReport) {
     return buildProjectResourcesUrl(project);
   }
 
-  return `projects/${project.projectId}/resources`;
-}
-
-function isPlainLeftClick(event: MouseEvent<HTMLElement>) {
-  return !(
-    event.defaultPrevented ||
-    event.button !== 0 ||
-    event.metaKey ||
-    event.altKey ||
-    event.ctrlKey ||
-    event.shiftKey
-  );
+  return `/projects/${project.projectId}/resources`;
 }
 
 function ProjectHeatMapTile({
@@ -93,8 +79,6 @@ function ProjectHeatMapTile({
 }: {
   project: GoldenStateProjectReport;
 }) {
-  const navigate = useNavigate();
-  const { linkPrefix } = useConfig();
   const comparable = project.total - project.noGolden;
   const scoreColor = getScoreChipColor(project.score);
   const resourcesUrl = buildProjectResourcesUrl(project);
@@ -132,28 +116,11 @@ function ProjectHeatMapTile({
     },
   ]);
 
-  const handleNavigate = (url: string) => (event: MouseEvent<HTMLElement>) => {
-    if (!isPlainLeftClick(event)) {
-      return;
-    }
-
-    event.preventDefault();
-    void navigate(`${linkPrefix}${url}`);
-  };
-
   return (
     <Box
-      role="link"
-      tabIndex={0}
-      onClick={handleNavigate(projectPageResourcesUrl)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          void navigate(`${linkPrefix}${projectPageResourcesUrl}`);
-        }
-      }}
+      component={RouterLink}
+      to={projectPageResourcesUrl}
       sx={(theme) => ({
-        cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         gap: 1,
@@ -169,22 +136,14 @@ function ProjectHeatMapTile({
           transform: "translateY(-1px)",
           boxShadow: theme.shadows[2],
         },
-        "&:focus-visible": {
-          outline: `2px solid ${theme.palette.primary.main}`,
-          outlineOffset: 2,
-        },
       })}
     >
       <Link
-        href={resourcesUrl}
-        onClick={handleNavigate(resourcesUrl)}
+        component={RouterLink}
+        to={resourcesUrl}
         underline="hover"
         variant="body2"
-        sx={{
-          fontWeight: 600,
-          color: "inherit",
-          lineHeight: 1.3,
-        }}
+        sx={{ color: "inherit", lineHeight: 1.3, fontWeight: 600 }}
       >
         {project.projectName}
       </Link>
@@ -198,19 +157,14 @@ function ProjectHeatMapTile({
       >
         <Chip
           label={`${project.score}%`}
-          size="small"
           color={scoreColor}
           variant="filled"
         />
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.secondary",
-          }}
-        >
+        <Typography variant="caption" color="text.secondary">
           {project.compliant}/{comparable} at golden state
         </Typography>
       </Box>
+
       <Box
         sx={{
           mt: "auto",
@@ -221,10 +175,9 @@ function ProjectHeatMapTile({
       >
         {project.compliant > 0 && (
           <Chip
-            component="a"
+            component={RouterLink}
             clickable
-            href={activeResourcesUrl}
-            onClick={handleNavigate(activeResourcesUrl)}
+            to={activeResourcesUrl}
             icon={<CheckCircleIcon />}
             label={project.compliant}
             size="small"
@@ -235,10 +188,9 @@ function ProjectHeatMapTile({
         )}
         {project.updateAvailable > 0 && (
           <Chip
-            component="a"
+            component={RouterLink}
             clickable
-            href={previewResourcesUrl}
-            onClick={handleNavigate(previewResourcesUrl)}
+            to={previewResourcesUrl}
             icon={<UpdateIcon />}
             label={project.updateAvailable}
             size="small"
@@ -249,10 +201,9 @@ function ProjectHeatMapTile({
         )}
         {project.deprecated > 0 && (
           <Chip
-            component="a"
+            component={RouterLink}
             clickable
-            href={deprecatedResourcesUrl}
-            onClick={handleNavigate(deprecatedResourcesUrl)}
+            to={deprecatedResourcesUrl}
             icon={<WarningAmberIcon />}
             label={project.deprecated}
             size="small"
@@ -263,10 +214,9 @@ function ProjectHeatMapTile({
         )}
         {project.critical > 0 && (
           <Chip
-            component="a"
+            component={RouterLink}
             clickable
-            href={archivedResourcesUrl}
-            onClick={handleNavigate(archivedResourcesUrl)}
+            to={archivedResourcesUrl}
             icon={<ErrorOutlineIcon />}
             label={project.critical}
             size="small"
@@ -278,7 +228,6 @@ function ProjectHeatMapTile({
         {project.noGolden > 0 && (
           <Chip
             label={`${project.noGolden} no golden`}
-            size="small"
             variant="outlined"
             sx={{ gridColumn: "1 / -1", justifyContent: "flex-start" }}
           />
@@ -298,53 +247,48 @@ export const GoldenStateWidget = ({
   if (!goldenStateReport && !loading) return null;
 
   return (
-    <Card sx={{ width: "100%" }}>
-      <CardHeader
-        avatar={<SecurityIcon sx={{ color: "primary.main" }} />}
-        title="Golden State Compliance"
-        subheader={
-          goldenStateReport
-            ? `Overall score: ${goldenStateReport.overallScore}%`
-            : "Loading..."
-        }
-        action={
-          <Box
-            sx={{ display: "flex", alignItems: "center", gap: 1, mr: 1, mt: 1 }}
-          >
-            {goldenStateReport ? (
-              <Chip
-                label={`${goldenStateReport.overallScore}%`}
-                color={getScoreChipColor(goldenStateReport.overallScore)}
-                size="small"
-                sx={{ fontWeight: 700 }}
-              />
-            ) : null}
-            {expandable ? (
-              <Tooltip title={expanded ? "Collapse" : "Expand"}>
-                <IconButton
-                  size="small"
-                  onClick={() => setExpanded((current) => !current)}
-                  aria-label={
-                    expanded
-                      ? "Collapse golden state widget"
-                      : "Expand golden state widget"
-                  }
-                >
-                  {expanded ? (
-                    <CloseFullscreenIcon fontSize="small" />
-                  ) : (
-                    <OpenInFullIcon fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
-            ) : null}
-          </Box>
-        }
-      />
-      <CardContent
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+        <SecurityIcon sx={{ color: "primary.main", fontSize: 20 }} />
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Golden State Compliance
+        </Typography>
+        {goldenStateReport ? (
+          <Chip
+            label={`${goldenStateReport.overallScore}%`}
+            color={getScoreChipColor(goldenStateReport.overallScore)}
+            sx={{ fontWeight: 700, ml: "auto" }}
+          />
+        ) : null}
+        {expandable ? (
+          <Tooltip title={expanded ? "Collapse" : "Expand"}>
+            <IconButton
+              size="small"
+              onClick={() => setExpanded((current) => !current)}
+              aria-label={
+                expanded
+                  ? "Collapse golden state widget"
+                  : "Expand golden state widget"
+              }
+            >
+              {expanded ? (
+                <CloseFullscreenIcon fontSize="small" />
+              ) : (
+                <OpenInFullIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+        ) : null}
+      </Box>
+      <Divider sx={{ mb: 1.5 }} />
+      <Box
         sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          backgroundColor: "background.paper",
+          p: 2,
           maxHeight: expanded ? "none" : 400,
-          height: expanded ? "100%" : "auto",
           overflowY: expanded ? "visible" : "auto",
         }}
       >
@@ -370,20 +314,10 @@ export const GoldenStateWidget = ({
             }}
           >
             <SecurityIcon sx={{ fontSize: 36, mb: 1, opacity: 0.5 }} />
-            <Typography
-              variant="body2"
-              sx={{
-                textAlign: "center",
-              }}
-            >
+            <Typography variant="body2" sx={{ textAlign: "center" }}>
               No resources to evaluate.
             </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                textAlign: "center",
-              }}
-            >
+            <Typography variant="caption" sx={{ textAlign: "center" }}>
               Create resources with templates that have an Active version to see
               compliance.
             </Typography>
@@ -393,19 +327,16 @@ export const GoldenStateWidget = ({
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
               <Chip
                 label="90-100%"
-                size="small"
                 color="success"
                 variant="outlined"
               />
               <Chip
                 label="70-89%"
-                size="small"
                 color="warning"
                 variant="outlined"
               />
               <Chip
                 label="0-69%"
-                size="small"
                 color="error"
                 variant="outlined"
               />
@@ -430,7 +361,7 @@ export const GoldenStateWidget = ({
             </Box>
           </Box>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Box>
   );
 };

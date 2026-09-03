@@ -1,5 +1,8 @@
 import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
+import { InlineCode } from "../../common/components/InlineCode";
+
 import {
   Checkbox,
   FormControlLabel,
@@ -124,7 +127,7 @@ const GcpProviderFields = ({
                   input: {
                     readOnly: readonly,
                     sx: {
-                      fontFamily: "monospace",
+                      fontFamily: CODE_FONT_FAMILY,
                     },
                   },
                 }}
@@ -187,7 +190,7 @@ const GcpProviderFields = ({
                   input: {
                     readOnly: readonly,
                     sx: {
-                      fontFamily: "monospace",
+                      fontFamily: CODE_FONT_FAMILY,
                     },
                   },
                 }}
@@ -258,8 +261,10 @@ const GcpProviderFields = ({
                 }}
               >
                 Google storage bucket named{" "}
-                <code>infrakitchen-{"{GCP Project ID}"}-bucket</code> will be
-                created in <code>us</code> region.
+                <InlineCode>
+                  infrakitchen-{"{GCP Project ID}"}-bucket
+                </InlineCode>{" "}
+                will be created in <InlineCode>us</InlineCode> region.
               </Typography>
             </>
           )}
@@ -438,8 +443,11 @@ export const renderFieldsForProvider = (
                     }}
                   >
                     S3 bucket named{" "}
-                    <code>infrakitchen-{"{AWS_ACCOUNT_ID}"}-bucket</code> will
-                    be created in <code>us-east-1</code> region.
+                    <InlineCode>
+                      infrakitchen-{"{AWS_ACCOUNT_ID}"}-bucket
+                    </InlineCode>{" "}
+                    will be created in <InlineCode>us-east-1</InlineCode>{" "}
+                    region.
                   </Typography>
                 </>
               )}

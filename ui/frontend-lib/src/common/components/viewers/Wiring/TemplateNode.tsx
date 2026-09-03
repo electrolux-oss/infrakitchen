@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
+import { CODE_FONT_FAMILY } from "../../../theme";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { GetReferenceUrlValue } from "../../CommonField";
 
@@ -55,7 +56,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       sx={{
         background: bg,
         border: `2px ${borderStyle} ${borderColor}`,
-        borderRadius: 2,
+        borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
         maxWidth: 300,
         boxShadow: theme.shadows[2],
@@ -84,7 +85,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         {displayOrder != null && (
           <Chip
             label={displayOrder}
-            size="small"
             sx={{
               fontWeight: 700,
               minWidth: 24,
@@ -111,7 +111,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         {data.status && !canRemove && (
           <Chip
             label={data.status.replace("_", " ").toUpperCase()}
-            size="small"
             color={STATUS_CHIP_COLOR[data.status]}
             sx={{ fontWeight: 600, fontSize: 10, height: 20 }}
           />
@@ -131,12 +130,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       {/* External badge */}
       {isExternal && (
         <Box sx={{ px: 1.5, pt: 1 }}>
-          <Chip
-            label="External"
-            size="small"
-            variant="outlined"
-            color="warning"
-          />
+          <Chip label="External" variant="outlined" color="warning" />
           <Typography
             variant="caption"
             sx={{
@@ -186,9 +180,9 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               p: 0.75,
               bgcolor: "error.main",
               color: "error.contrastText",
-              borderRadius: 0.5,
+              borderRadius: "var(--template-surface-radius)",
               fontSize: 11,
-              fontFamily: "monospace",
+              fontFamily: CODE_FONT_FAMILY,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -230,7 +224,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                 />
                 <Chip
                   label={input}
-                  size="small"
                   variant="outlined"
                   color="info"
                   sx={{ fontSize: 11 }}
@@ -275,7 +268,6 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
               >
                 <Chip
                   label={output}
-                  size="small"
                   variant="outlined"
                   color="success"
                   sx={{ fontSize: 11 }}

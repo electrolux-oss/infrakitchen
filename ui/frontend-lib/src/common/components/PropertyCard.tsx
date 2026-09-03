@@ -1,12 +1,10 @@
 import { ReactNode } from "react";
 
 import {
-  Box,
   Card,
   CardActions,
   CardContent,
   CardHeader,
-  Typography,
 } from "@mui/material";
 
 export const PropertyCard = (props: {
@@ -21,20 +19,10 @@ export const PropertyCard = (props: {
     <Card
       sx={{
         width: "100%",
-        mb: 4,
+        mb: 2,
       }}
     >
-      <CardHeader
-        title={
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography variant="h5" component="h2">
-              {title}
-            </Typography>
-          </Box>
-        }
-        subheader={subtitle}
-        action={action}
-      />
+      <CardHeader title={title} subheader={subtitle} action={action} />
       <CardContent>{children}</CardContent>
       <CardActions sx={{ justifyContent: "center", mt: 2 }}>
         {actions}

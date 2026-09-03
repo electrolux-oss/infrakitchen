@@ -7,12 +7,14 @@ import {
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { PlaceholderText } from "../../common/components/PlaceholderDescription";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import { StringChips } from "../../common/components/editors/StringChips";
 import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
 import { InlineCode } from "../../common/components/InlineCode";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
-import { Labels } from "../../common/components/Labels";
 import { OverviewCard } from "../../common/components/OverviewCard";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
@@ -76,7 +78,6 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
   return (
     <OverviewCard
       name={template.name}
-      description={template.description || "No description"}
       chip={template.abstract ? "Abstract" : undefined}
     >
       <CommonEditableField<string>
@@ -90,7 +91,7 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           <TextField
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Name"
+            slotProps={{ input: { "aria-label": "Name" } }}
             fullWidth
             margin="normal"
             autoFocus
@@ -102,27 +103,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         name={"Status"}
         value={<StatusChip status={template.status} />}
         size={6}
-      />
-      <CommonEditableField<string>
-        name={"Description"}
+      />{" "}
+      <EditableDescriptionField
+        value={template.description}
         canEdit={canEdit}
-        value={template.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{template.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
       <CommonEditableField<string | null>
         name={"Naming Convention"}
@@ -164,24 +149,11 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         name={"Last Updated"}
         value={<RelativeTime date={template.updatedAt} />}
         size={6}
-      />
-      <CommonEditableField<string[]>
-        name={"Labels"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
         value={template.labels || []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
-        display={<Labels labels={template.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
       />
       <Box sx={{ width: "100%", my: 1 }}>
         <Divider />
@@ -218,7 +190,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
             entity_name="templates"
             value={value}
             onChange={onChange}
-            label="Select Parents"
+            ariaLabel="Parents"
+            placeholder="Select parent templates…"
             multiple
           />
         )}
@@ -256,7 +229,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
             entity_name="templates"
             value={value}
             onChange={onChange}
-            label="Select Children"
+            ariaLabel="Children"
+            placeholder="Select child templates…"
             multiple
           />
         )}
@@ -268,7 +242,14 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         value={template.cloudResourceTypes || []}
         ariaLabel="Edit cloud resource types"
         isEqual={sameStringSet}
-        display={<StringChips values={template.cloudResourceTypes || []} />}
+        display={
+          template.cloudResourceTypes &&
+          template.cloudResourceTypes.length > 0 ? (
+            <StringChips values={template.cloudResourceTypes} />
+          ) : (
+            <PlaceholderText />
+          )
+        }
         onSave={(value) => saveField({ cloudResourceTypes: value })}
         renderEditor={({ value, onChange }) => (
           <ArrayReferenceInput
@@ -278,7 +259,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
             entity_name="cloud_resources"
             value={value}
             onChange={onChange}
-            label="Select Cloud Resource Type"
+            ariaLabel="Cloud Resource Types"
+            placeholder="Select cloud resource type…"
             multiple
           />
         )}
@@ -291,10 +273,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         ariaLabel="Edit one resource per integration providers"
         isEqual={sameStringSet}
         display={
-          <StringChips
-            values={template.configuration?.one_resource_per_integration ?? []}
-            format={getProviderDisplayName}
-          />
+          (template.configuration?.one_resource_per_integration ?? [])
+            .length ? (
+            <StringChips
+              values={
+                template.configuration?.one_resource_per_integration ?? []
+              }
+              format={getProviderDisplayName}
+            />
+          ) : (
+            <PlaceholderText />
+          )
         }
         onSave={(value) =>
           saveConfiguration({ one_resource_per_integration: value })
@@ -303,7 +292,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           <MultiSelectEditor<IntegrationProviderType>
             value={value}
             onChange={onChange}
-            label="Integration Providers to filter on"
+            ariaLabel="Integration Providers to filter on"
+            placeholder="Select providers to filter on…"
             helperText="Empty means all providers"
             options={INTEGRATION_PROVIDER_OPTIONS}
             getOptionLabel={getProviderDisplayName}
@@ -318,12 +308,17 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         ariaLabel="Edit allowed integration providers"
         isEqual={sameStringSet}
         display={
-          <StringChips
-            values={
-              template.configuration?.allowed_provider_integration_types ?? []
-            }
-            format={getProviderDisplayName}
-          />
+          (template.configuration?.allowed_provider_integration_types ?? [])
+            .length ? (
+            <StringChips
+              values={
+                template.configuration?.allowed_provider_integration_types ?? []
+              }
+              format={getProviderDisplayName}
+            />
+          ) : (
+            <PlaceholderText />
+          )
         }
         onSave={(value) =>
           saveConfiguration({ allowed_provider_integration_types: value })
@@ -332,7 +327,8 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
           <MultiSelectEditor<IntegrationProviderType>
             value={value}
             onChange={onChange}
-            label="Allowed Integration Providers"
+            ariaLabel="Allowed Integration Providers"
+            placeholder="Select allowed providers…"
             helperText="Empty means all providers"
             options={INTEGRATION_PROVIDER_OPTIONS}
             getOptionLabel={getProviderDisplayName}
@@ -347,11 +343,16 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
         ariaLabel="Edit required configuration variables"
         isEqual={sameStringSet}
         display={
-          <StringChips
-            values={
-              template.configuration?.required_configuration_variables ?? []
-            }
-          />
+          (template.configuration?.required_configuration_variables ?? [])
+            .length ? (
+            <StringChips
+              values={
+                template.configuration?.required_configuration_variables ?? []
+              }
+            />
+          ) : (
+            <PlaceholderText />
+          )
         }
         onSave={(value) =>
           saveConfiguration({ required_configuration_variables: value })

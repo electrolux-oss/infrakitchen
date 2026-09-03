@@ -1,6 +1,6 @@
 import { formatLabel } from "../../common";
 import { CommonField } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { GqlAuthProvider } from "../graphql";
 
@@ -17,7 +17,7 @@ export const AuthProviderConfiguration = ({
   const canEdit = checkActionPermission("api:auth_provider", "write");
 
   return (
-    <OverviewCard name="Auth Provider Configuration">
+    <BaseCard name="Auth Provider Configuration">
       <AuthProviderConfigurationEditor
         authProvider={authProvider}
         canEdit={canEdit}
@@ -42,6 +42,6 @@ export const AuthProviderConfiguration = ({
             />
           );
         })}
-    </OverviewCard>
+    </BaseCard>
   );
 };

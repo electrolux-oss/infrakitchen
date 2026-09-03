@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Box } from "@mui/material";
 
@@ -20,13 +20,8 @@ import { ProjectOverview } from "./ProjectOverview";
 import { ProjectPermissions } from "./ProjectPermissions";
 import { ProjectSettings } from "./ProjectSettings";
 
-interface ProjectContentProps {
-  subscribersRefreshKey?: number;
-}
-
-export const ProjectContent = ({
-  subscribersRefreshKey = 0,
-}: ProjectContentProps) => {
+export const ProjectContent = () => {
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
 
   const fixedFilters = useMemo(
@@ -112,7 +107,12 @@ export const ProjectContent = ({
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
-      <ProjectOverview project={entity} />
+      <ProjectOverview
+        project={entity}
+        onSubscriptionChange={() =>
+          setSubscribersRefreshKey((currentKey) => currentKey + 1)
+        }
+      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}

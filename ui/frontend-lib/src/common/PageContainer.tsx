@@ -1,16 +1,11 @@
 "use client";
 import * as React from "react";
 
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import Container, { ContainerProps } from "@mui/material/Container";
-import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-
-import { useUserSettings } from "./hooks";
 
 const PageContentHeader = styled("div")(({ theme }) => ({
   display: "flex",
@@ -26,7 +21,10 @@ const PageHeaderToolbar = styled("div")(({ theme }) => ({
   marginLeft: "auto",
 }));
 
-export interface PageContainerProps extends Omit<ContainerProps, "title"> {
+export interface PageContainerProps extends Omit<
+  ContainerProps,
+  "title" | "maxWidth"
+> {
   children?: React.ReactNode;
   title?: React.ReactNode;
   description?: React.ReactNode;
@@ -34,65 +32,50 @@ export interface PageContainerProps extends Omit<ContainerProps, "title"> {
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
   bottomActions?: React.ReactNode;
-  onBack?: () => void;
-  backIcon?: React.ReactNode;
-  backAriaLabel?: string;
 }
 
 export default function PageContainer(props: PageContainerProps) {
-  const { settings } = useUserSettings();
   const {
     children,
     title,
     description,
     actions = null,
     bottomActions = null,
-    onBack,
-    backIcon,
-    backAriaLabel = "Back",
-    maxWidth,
-    sx,
-    ...containerProps
   } = props;
 
   return (
     <Container
-      {...containerProps}
-      maxWidth={settings.fullWidthPages ? false : maxWidth}
-      sx={[
-        {
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      maxWidth={false}
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+      }}
     >
       <Stack sx={{ flex: 1, my: 2, minHeight: 0 }} spacing={2}>
         <Stack>
+          {" "}
           <PageContentHeader sx={{ mt: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-              {onBack ? (
-                <Tooltip title={backAriaLabel} arrow disableInteractive>
-                  <IconButton
-                    aria-label={backAriaLabel}
-                    onClick={onBack}
-                    edge="start"
-                  >
-                    {backIcon || <ArrowBackIcon />}
-                  </IconButton>
-                </Tooltip>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              {title ? (
+                <Typography
+                  variant="h5"
+                  component="h1"
+                  sx={{ fontWeight: 600 }}
+                >
+                  {title}
+                </Typography>
               ) : null}
-              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                {title ? (
-                  <Typography variant="h4" component="h1">
-                    {title}
-                  </Typography>
-                ) : null}
-                {description ? (
-                  <Box sx={{ color: "text.secondary" }}>{description}</Box>
-                ) : null}
-              </Box>
+              {description ? (
+                <Typography
+                  sx={{
+                    color: "text.secondary",
+                    mt: 1,
+                  }}
+                >
+                  {description}
+                </Typography>
+              ) : null}
             </Box>
             <PageHeaderToolbar>{actions}</PageHeaderToolbar>
           </PageContentHeader>

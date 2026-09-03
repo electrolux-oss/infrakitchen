@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
@@ -17,13 +19,8 @@ import { ResourceOverview } from "./ResourceOverview";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { TemplateConfiguration } from "./TemplateConfiguration";
 
-interface ResourceContentProps {
-  subscribersRefreshKey?: number;
-}
-
-export const ResourceContent = ({
-  subscribersRefreshKey = 0,
-}: ResourceContentProps) => {
+export const ResourceContent = () => {
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
 
   if (!entity) return null;
@@ -103,7 +100,12 @@ export const ResourceContent = ({
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
-      <ResourceOverview resource={entity} />
+      <ResourceOverview
+        resource={entity}
+        onSubscriptionChange={() =>
+          setSubscribersRefreshKey((currentKey) => currentKey + 1)
+        }
+      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}

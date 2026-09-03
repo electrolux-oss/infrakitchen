@@ -794,10 +794,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fontsource/space-grotesk@npm:^5.3.0":
+"@fontsource/geist-mono@npm:^5.3.0":
   version: 5.3.0
-  resolution: "@fontsource/space-grotesk@npm:5.3.0"
-  checksum: 10/65b3fe5dc5146fd040f787f546dfb7d1b9076c82f6698030376055a7781f6c5302414c6b895c8b363141ab21a3bc33970f6c75aa85fbff05980521461c87f006
+  resolution: "@fontsource/geist-mono@npm:5.3.0"
+  checksum: 10/30f904359589730e3de3bfac941dfa5030ce31e602142189a13fac602426300a5688ef88cb1463d92b5bf72cd18f07e0fa68d067319779d8dc99db1da9e815d4
+  languageName: node
+  linkType: hard
+
+"@fontsource/geist-sans@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource/geist-sans@npm:5.3.0"
+  checksum: 10/09c3c9296351f461bbe63d378cd8ad83796b2abfc11b7630a06970e8d95d53447cb91e9a2e327a7791338f5e6cb21467b522579ea62c83985224380d9af971ee
   languageName: node
   linkType: hard
 
@@ -3946,7 +3953,8 @@ __metadata:
     "@eslint/compat": "npm:^2.1.0"
     "@eslint/eslintrc": "npm:^3.3.1"
     "@eslint/js": "npm:^10.0.1"
-    "@fontsource/space-grotesk": "npm:^5.3.0"
+    "@fontsource/geist-mono": "npm:^5.3.0"
+    "@fontsource/geist-sans": "npm:^5.3.0"
     "@iconify/react": "npm:^6.0.2"
     "@mui/icons-material": "npm:^9.3.1"
     "@mui/material": "npm:^9.3.1"

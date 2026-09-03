@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import BugReportIcon from "@mui/icons-material/BugReport";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import EditIcon from "@mui/icons-material/Edit";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
@@ -11,11 +10,11 @@ import SyncIcon from "@mui/icons-material/Sync";
 import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
 
-import { RESOURCE_DOWNLOAD_QUERY } from "../../resources/graphql/queries";
 import { ENTITY_ACTION } from "../../utils/constants";
+import { buildEntityActionMutation } from "../graphql/entityActionMutation";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
-import { notifyError } from "../hooks/useNotification";
+import { notify, notifyError } from "../hooks/useNotification";
 
 import { ActionButton } from "./buttons/ActionButton";
 import { CommonDialog } from "./CommonDialog";
@@ -28,9 +27,10 @@ export interface EntityActionsProps {
 export function EntityActions(props: EntityActionsProps) {
   const { entity_id, entity_name, showEditAction } = props;
 
-  const { linkPrefix, ikApi } = useConfig();
-  const { actions, refreshActions } = useEntityProvider();
+  const { ikApi, linkPrefix } = useConfig();
+  const { actions, refreshActions, refreshEntity } = useEntityProvider();
   const navigate = useNavigate();
+  const [enabling, setEnabling] = useState(false);
 
   const [dialogValues, setDialogValues] = useState<{
     [key: string]: boolean;
@@ -42,10 +42,26 @@ export function EntityActions(props: EntityActionsProps) {
     retry: false,
     dryrun: false,
     dryrun_with_temp_state: false,
-    enable: false,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const handleEnable = async () => {
+    setEnabling(true);
+    try {
+      await ikApi.graphqlRequest(buildEntityActionMutation(entity_name), {
+        id: entity_id,
+        input: { action: ENTITY_ACTION.ENABLE },
+      });
+      notify("Entity enabled", "success");
+      // Refresh actions and the entity so header/status buttons flip (a
+      // disabled entity becomes enabled).
+      if (refreshActions) refreshActions();
+      if (refreshEntity) refreshEntity();
+    } catch (error) {
+      notifyError(error);
+    } finally {
+      setEnabling(false);
+    }
+  };
 
   const changeDialog = async (dialog: string) => {
     setDialogValues((dialogValues) => {
@@ -55,42 +71,11 @@ export function EntityActions(props: EntityActionsProps) {
 
   const changeDialogWithRefresh = async (dialog: string) => {
     changeDialog(dialog);
+    // Actions drive which header buttons show (e.g. Enable for a disabled
+    // entity), so refresh both the action list and the entity itself — only
+    // refreshing actions leaves entity.status stale.
     if (refreshActions) refreshActions();
-  };
-
-  const handleDownloadClick = async () => {
-    if (!entity_id) return;
-    setIsLoading(true);
-
-    await ikApi
-      .graphqlRequest<{
-        resourceDownload: {
-          filename: string;
-          contentType: string;
-          contentBase64: string;
-        };
-      }>(RESOURCE_DOWNLOAD_QUERY, { id: entity_id })
-      .then((response) => {
-        const bytes = Uint8Array.from(
-          atob(response.resourceDownload.contentBase64),
-          (char) => char.charCodeAt(0),
-        );
-        const blob = new Blob([bytes], {
-          type: response.resourceDownload.contentType,
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.download = response.resourceDownload.filename;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch((e) => {
-        notifyError(e);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    if (refreshEntity) refreshEntity();
   };
 
   return (
@@ -98,7 +83,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("dryrun") && (
         <Tooltip title="Preview what will change before applying">
           <Button
-            variant="outlined"
             onClick={() => changeDialog("dryrun")}
             startIcon={<ContentPasteIcon />}
           >
@@ -109,7 +93,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("dryrun") &&
         actions.includes("has_temporary_state") && (
           <Button
-            variant="outlined"
             onClick={() => changeDialog("dryrun_with_temp_state")}
             startIcon={<PendingActionsIcon />}
           >
@@ -119,7 +102,6 @@ export function EntityActions(props: EntityActionsProps) {
       {actions.includes("execute") && (
         <Tooltip title="Apply changes to infrastructure">
           <Button
-            variant="outlined"
             onClick={() => changeDialog("execute")}
             startIcon={<UpdateIcon />}
           >
@@ -128,24 +110,17 @@ export function EntityActions(props: EntityActionsProps) {
         </Tooltip>
       )}
       {actions.includes("retry") && (
-        <Button variant="outlined" onClick={() => changeDialog("retry")}>
-          Retry
-        </Button>
+        <Button onClick={() => changeDialog("retry")}>Retry</Button>
       )}
 
       {actions.includes("sync") && (
-        <Button
-          variant="outlined"
-          onClick={() => changeDialog("sync")}
-          startIcon={<SyncIcon />}
-        >
+        <Button onClick={() => changeDialog("sync")} startIcon={<SyncIcon />}>
           Sync
         </Button>
       )}
 
       {actions.includes("recreate") && (
         <Button
-          variant="outlined"
           onClick={() => changeDialog("recreate")}
           startIcon={<RedoIcon />}
         >
@@ -153,18 +128,13 @@ export function EntityActions(props: EntityActionsProps) {
         </Button>
       )}
       {actions.includes("enable") && (
-        <Button
-          variant="outlined"
-          color="success"
-          onClick={() => changeDialog("enable")}
-        >
-          Enable
+        <Button onClick={() => void handleEnable()} disabled={enabling}>
+          {enabling ? "Enabling..." : "Enable"}
         </Button>
       )}
       {actions.includes("edit") && showEditAction && (
         <Tooltip title="Edit configuration">
           <Button
-            variant="outlined"
             onClick={() =>
               navigate(`${linkPrefix}${entity_name}s/${entity_id}/edit`)
             }
@@ -174,19 +144,6 @@ export function EntityActions(props: EntityActionsProps) {
           </Button>
         </Tooltip>
       )}
-      {actions.includes("download") && (
-        <Tooltip title="Download source code for debugging">
-          <Button
-            variant="outlined"
-            onClick={() => handleDownloadClick()}
-            loading={isLoading}
-            sx={{ minWidth: 0, px: 1 }}
-          >
-            <BugReportIcon />
-          </Button>
-        </Tooltip>
-      )}
-
       <CommonDialog
         title="Confirmation"
         content="This will apply the changes. Do you want to continue?"
@@ -231,7 +188,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.SYNC}
             onSubmit={() => changeDialog("sync")}
-            variant="contained"
           >
             Sync
           </ActionButton>
@@ -248,8 +204,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.DRYRUN}
             onSubmit={() => changeDialog("dryrun")}
-            color="success"
-            variant="contained"
           >
             Plan
           </ActionButton>
@@ -265,8 +219,6 @@ export function EntityActions(props: EntityActionsProps) {
           <ActionButton
             action={ENTITY_ACTION.DRYRUN_WITH_TEMP_STATE}
             onSubmit={() => changeDialog("dryrun_with_temp_state")}
-            color="success"
-            variant="contained"
           >
             Plan
           </ActionButton>
@@ -289,21 +241,6 @@ export function EntityActions(props: EntityActionsProps) {
         }
         open={dialogValues.recreate}
         onClose={() => changeDialog("recreate")}
-      />
-      <CommonDialog
-        title="Request Enable"
-        content="Do you want to enable this entity?"
-        maxWidth="xs"
-        actions={
-          <ActionButton
-            action={ENTITY_ACTION.ENABLE}
-            onSubmit={() => changeDialogWithRefresh("enable")}
-          >
-            Enable
-          </ActionButton>
-        }
-        open={dialogValues.enable}
-        onClose={() => changeDialog("enable")}
       />
     </>
   );

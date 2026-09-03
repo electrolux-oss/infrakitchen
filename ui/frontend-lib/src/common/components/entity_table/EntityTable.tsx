@@ -1,18 +1,10 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
-import FilterListIcon from "@mui/icons-material/FilterList";
-import InfoOutlined from "@mui/icons-material/InfoOutlined";
+import { useNavigate } from "react-router";
+
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ViewColumnIcon from "@mui/icons-material/ViewColumn";
-import {
-  Box,
-  CardContent,
-  CardHeader,
-  Card,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import {
   DataGrid,
   GridFilterModel,
@@ -20,12 +12,19 @@ import {
   GridPaginationModel,
   GridColDef,
   GridColumnVisibilityModel,
+  GridEventListener,
   useGridApiRef,
 } from "@mui/x-data-grid";
-import type { GridApiCommunity } from "@mui/x-data-grid/models/api/gridApiCommunity";
+import type { GridApi } from "@mui/x-data-grid";
 
-import { useUserSettings } from "../../hooks";
+import { useConfig } from "../../context/ConfigContext";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
+import {
+  dataGridClickableRowSx,
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "./dataGridStyles";
 
 export type EntityTableColumn = GridColDef<any> & {
   field?: string;
@@ -52,19 +51,15 @@ export interface ResourceTableProps {
     model: GridColumnVisibilityModel,
   ) => void;
   onRefresh?: () => void;
-  showFilterToggle?: boolean;
-  isFilterPanelOpen?: boolean;
-  hasActiveFilters?: boolean;
-  onToggleFilterPanel?: () => void;
+  /** Set false to remove the row hover affordance (e.g. no detail page). */
+  rowClickable?: boolean;
 }
 
 type GridPreferencePanelValue = Parameters<
-  NonNullable<GridApiCommunity["showPreferences"]>
+  NonNullable<GridApi["showPreferences"]>
 >[0];
 
 export const EntityTable = ({
-  entityName,
-  subtitle,
   entities,
   columns,
   loading,
@@ -78,13 +73,29 @@ export const EntityTable = ({
   setFilterModel,
   handleColumnVisibilityModelChange,
   onRefresh,
-  showFilterToggle,
-  isFilterPanelOpen,
-  hasActiveFilters,
-  onToggleFilterPanel,
+  rowClickable = true,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
-  const { settings } = useUserSettings();
+  const { linkPrefix } = useConfig();
+  const navigate = useNavigate();
+
+  // Rows with an `entityName` + `id` navigate to their detail page, mirroring
+  // `GetEntityLink` URLs (``${linkPrefix}${entityName}s/${id}``).
+  const handleRowClick: GridEventListener<"rowClick"> = useCallback(
+    (params, event) => {
+      const row = params.row as { entityName?: string; id?: string };
+      const { entityName, id } = row;
+      if (!entityName || !id) return;
+
+      const href = `${linkPrefix}${entityName}s/${id}`;
+      if (event && (event.metaKey || event.ctrlKey || event.button === 1)) {
+        window.open(href, "_blank");
+        return;
+      }
+      void navigate(href);
+    },
+    [linkPrefix, navigate],
+  );
 
   const effectiveColumnVisibilityModel = useMemo(() => {
     if (!columnVisibilityModel) {
@@ -94,12 +105,12 @@ export const EntityTable = ({
     const model: GridColumnVisibilityModel = { ...columnVisibilityModel };
 
     columns.forEach((column) => {
-      if (columns.some((baseColumn) => baseColumn.field === column.field)) {
-        return;
-      }
-
-      if (model[column.field] === undefined) {
-        model[column.field] = false;
+      // `hideable: false` columns must stay visible even if a persisted
+      // visibility model (e.g. stale localStorage) tries to hide them —
+      // otherwise the column can never be shown again (its panel checkbox
+      // is disabled) and the grid degrades to "No columns".
+      if (column.hideable === false && column.field) {
+        model[column.field] = true;
       }
     });
 
@@ -110,164 +121,93 @@ export const EntityTable = ({
     apiRef.current?.showPreferences?.("columns" as GridPreferencePanelValue);
   };
 
+  // Shared grid chrome (header/footer/rows/cells) lives in `dataGridSx`.
+  // Grids whose rows lead to a detail page opt into the pointer affordance.
+  const rowAffordanceSx = rowClickable === false ? {} : dataGridClickableRowSx;
+
   return (
     <Box
       sx={{
         width: "100%",
-        maxWidth: settings.fullWidthPages ? "100%" : 1400,
+        maxWidth: "100%",
       }}
     >
-      <Card sx={{ mt: 2 }}>
-        <CardHeader
-          title={
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-              }}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 0.5,
+          mt: 2,
+          mb: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+          }}
+        >
+          <Tooltip title="Refresh">
+            <IconButton
+              size="small"
+              aria-label="Refresh"
+              onClick={onRefresh}
+              disabled={!onRefresh}
             >
-              {entityName}
-              {subtitle && (
-                <Tooltip title={subtitle} arrow>
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      cursor: "pointer",
-                      color: "info.main",
-                      fontSize: 16,
-                    }}
-                    tabIndex={0}
-                  >
-                    <InfoOutlined fontSize="inherit" />
-                  </Box>
-                </Tooltip>
-              )}
-            </Box>
-          }
-          sx={{ pb: 2 }}
-          action={
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              <Tooltip title="Refresh">
-                <IconButton
-                  size="small"
-                  aria-label="Refresh"
-                  onClick={onRefresh}
-                  disabled={!onRefresh}
-                >
-                  <RefreshIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              {showFilterToggle && (
-                <Tooltip
-                  title={isFilterPanelOpen ? "Hide filters" : "Show filters"}
-                >
-                  <IconButton
-                    size="small"
-                    aria-label={
-                      isFilterPanelOpen ? "Hide filters" : "Show filters"
-                    }
-                    onClick={onToggleFilterPanel}
-                    color={hasActiveFilters ? "primary" : "default"}
-                  >
-                    <FilterListIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-              <Tooltip title="Show or hide columns">
-                <span>
-                  <IconButton
-                    size="small"
-                    aria-label="Toggle column visibility"
-                    onClick={handleColumnVisibilityClick}
-                    disabled={!apiRef.current}
-                  >
-                    <ViewColumnIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Box>
-          }
-        />
-        <CardContent>
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
-            <DataGrid
-              apiRef={apiRef}
-              rows={entities}
-              rowCount={totalRows}
-              paginationMode="server"
-              loading={loading}
-              columns={columns}
-              pagination
-              disableColumnFilter
-              getRowHeight={() => "auto"}
-              sortModel={sortModel}
-              onSortModelChange={handleSortModelChange}
-              paginationModel={paginationModel}
-              onPaginationModelChange={handlePaginationModelChange}
-              pageSizeOptions={[10, 25, 50, 100]}
-              filterModel={filterModel}
-              onFilterModelChange={setFilterModel}
-              columnVisibilityModel={effectiveColumnVisibilityModel}
-              onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
-              sx={{
-                "& .MuiDataGrid-columnHeader": {
-                  "& .MuiDataGrid-columnHeaderTitleContainer": {
-                    justifyContent: "space-between",
-                    flexDirection: "row",
-                  },
-                  "& .MuiButtonBase-root": {
-                    border: "none",
-                  },
-                },
-                "& .MuiDataGrid-row": {
-                  "&:hover": {
-                    backgroundColor: (theme) =>
-                      alpha(theme.palette.primary.main, 0.08),
-                  },
-                },
-                "& .MuiDataGrid-cell": {
-                  alignItems: "flex-start",
-                  py: 1,
-                },
-                "& .MuiDataGrid-cellContent": {
-                  whiteSpace: "normal",
-                  overflow: "visible",
-                  textOverflow: "clip",
-                  lineHeight: 1.4,
-                  wordBreak: "break-word",
-                },
-                "& .MuiTablePagination-root": {
-                  "& .MuiButtonBase-root": {
-                    border: "none",
-                  },
-                },
-              }}
-              slotProps={{
-                pagination: {
-                  SelectProps: {
-                    inputProps: {
-                      "aria-label": "Rows per page",
-                      "aria-labelledby": "entity-pagination-label",
-                    },
-                    "aria-label": "Rows per page",
-                  },
-                  labelRowsPerPage: "Rows per page:",
-                  labelId: "entity-pagination-label",
-                },
-              }}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Show or hide columns">
+            <span>
+              <IconButton
+                size="small"
+                aria-label="Toggle column visibility"
+                onClick={handleColumnVisibilityClick}
+                disabled={!apiRef.current}
+              >
+                <ViewColumnIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          backgroundColor: "background.paper",
+          overflow: "hidden",
+        }}
+      >
+        <Box sx={{ width: "100%", overflowX: "auto" }}>
+          <DataGrid
+            apiRef={apiRef}
+            rows={entities}
+            rowCount={totalRows}
+            paginationMode="server"
+            loading={loading}
+            columns={columns}
+            pagination
+            disableRowSelectionOnClick
+            {...(rowClickable ? { onRowClick: handleRowClick } : {})}
+            {...dataGridDefaultProps}
+            sortModel={sortModel}
+            onSortModelChange={handleSortModelChange}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationModelChange}
+            pageSizeOptions={[10, 25, 50, 100]}
+            filterModel={filterModel}
+            onFilterModelChange={setFilterModel}
+            columnVisibilityModel={effectiveColumnVisibilityModel}
+            onColumnVisibilityModelChange={handleColumnVisibilityModelChange}
+            sx={{ ...dataGridSx, ...rowAffordanceSx }}
+            slotProps={dataGridPaginationSlotProps("entity-pagination-label")}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 };

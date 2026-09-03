@@ -104,12 +104,7 @@ export const IntegrationConfigurationEditor = ({
   return (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={openDialog}
-          disabled={!canEdit}
-        >
+        <Button onClick={openDialog} disabled={!canEdit}>
           Edit Configuration
         </Button>
       </Box>

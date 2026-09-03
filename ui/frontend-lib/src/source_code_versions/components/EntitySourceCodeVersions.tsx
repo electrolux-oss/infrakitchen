@@ -35,7 +35,6 @@ export const EntitySourceCodeVersions = ({
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           startIcon={<ReorderIcon />}
           onClick={() => setDialogOpen(true)}
           sx={{ mb: 2 }}

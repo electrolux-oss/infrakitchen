@@ -7,6 +7,7 @@ import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import CodeMirror from "@uiw/react-codemirror";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { HclCodeViewer } from "../../common/components/viewers/HclCodeViewer";
 
 interface CodeSnapshotTabProps {
@@ -137,20 +138,19 @@ function renderTreeItems(nodes: TreeNode[]) {
             )}
             <Typography
               variant="body2"
-              sx={{ fontFamily: "'Roboto Mono', monospace", fontSize: 13 }}
+              sx={{ fontFamily: CODE_FONT_FAMILY, fontSize: 13 }}
             >
               {isFolder ? node.name : node.name.replace(/@[^/]+$/, "")}
             </Typography>
             {!isFolder && node.file?.ref && (
               <Chip
                 label={displayRef(node.file.ref)}
-                size="small"
                 variant="outlined"
                 sx={{
                   ml: "auto",
                   height: 18,
                   fontSize: 11,
-                  fontFamily: "'Roboto Mono', monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   "& .MuiChip-label": { px: 0.75 },
                 }}
               />
@@ -229,7 +229,7 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
         display: "flex",
         border: 1,
         borderColor: "divider",
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
         overflow: "hidden",
         minHeight: 400,
       }}
@@ -275,16 +275,15 @@ export const CodeSnapshotTab: FC<CodeSnapshotTabProps> = ({
             >
               <Typography
                 variant="subtitle2"
-                sx={{ fontFamily: "'Roboto Mono', monospace" }}
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
               >
                 {selectedFile.filename.replace(/@[^/]+$/, "")}
               </Typography>
               {selectedFile.ref && (
                 <Chip
                   label={displayRef(selectedFile.ref)}
-                  size="small"
                   variant="outlined"
-                  sx={{ fontFamily: "'Roboto Mono', monospace" }}
+                  sx={{ fontFamily: CODE_FONT_FAMILY }}
                 />
               )}
             </Box>

@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         credentials: "same-origin",
       });
 
-      const _ = await response.json();
+      await response.json();
     } finally {
       inMemoryToken.setToken("");
       setUser(null);

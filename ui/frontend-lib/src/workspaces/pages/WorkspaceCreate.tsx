@@ -96,18 +96,10 @@ const WorkspaceCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Workspace"
-      onBack={handleBack}
-      backAriaLabel="Back to workspaces"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>

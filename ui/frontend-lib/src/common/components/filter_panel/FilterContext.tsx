@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 
 import { useConfig } from "../..";
@@ -26,16 +25,8 @@ interface FilterContextValue {
   filterValues: FilterState;
   setFilterValue: (filterId: string, value: any) => void;
   setFilterValues: (values: FilterState) => void;
-  resetFilters: () => void;
-  resetFilter: (filterId: string) => void;
-  hasActiveFilters: boolean;
-  hasUnsavedFilters: boolean;
-  saveFilters?: () => void;
   syncToUrl: boolean;
   hasFilters: boolean;
-  isFilterPanelOpen: boolean;
-  setFilterPanelOpen: (isOpen: boolean) => void;
-  toggleFilterPanel: () => void;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -78,19 +69,7 @@ export function FilterProvider(props: FilterProviderProps) {
     filterConfigs: filters,
     syncToUrl,
   });
-  const [isFilterPanelOpen, setFilterPanelOpen] = useState(false);
   const hasFilters = filters.length > 0;
-
-  useEffect(() => {
-    if (!hasFilters) {
-      setFilterPanelOpen(false);
-      return;
-    }
-
-    if (filterState.hasActiveFilters) {
-      setFilterPanelOpen(true);
-    }
-  }, [hasFilters, filterState.hasActiveFilters]);
 
   useEffect(() => {
     onFilterChange?.(filterState.filterValues);
@@ -102,32 +81,16 @@ export function FilterProvider(props: FilterProviderProps) {
       filterValues: filterState.filterValues,
       setFilterValue: filterState.setFilterValue,
       setFilterValues: filterState.setFilterValues,
-      resetFilters: filterState.resetFilters,
-      resetFilter: filterState.resetFilter,
-      hasActiveFilters: filterState.hasActiveFilters,
-      hasUnsavedFilters: filterState.hasUnsavedFilters,
-      saveFilters: filterState.saveFilters,
       syncToUrl,
       hasFilters,
-      isFilterPanelOpen,
-      setFilterPanelOpen,
-      toggleFilterPanel: () => {
-        setFilterPanelOpen((current) => !current);
-      },
     }),
     [
       filters,
       filterState.filterValues,
       filterState.setFilterValue,
       filterState.setFilterValues,
-      filterState.resetFilters,
-      filterState.resetFilter,
-      filterState.hasActiveFilters,
-      filterState.hasUnsavedFilters,
-      filterState.saveFilters,
       syncToUrl,
       hasFilters,
-      isFilterPanelOpen,
     ],
   );
 

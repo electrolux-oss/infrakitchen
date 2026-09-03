@@ -7,7 +7,7 @@ import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GqlUser, GqlUserShort } from "../graphql";
 
@@ -32,7 +32,7 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
   };
 
   return (
-    <OverviewCard name="User Configuration">
+    <BaseCard name="User Configuration">
       {user.primaryAccount?.length === 0 && (
         <CommonField
           name="Secondary Accounts"
@@ -53,7 +53,6 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
                 </Box>
               )}
               <Button
-                variant="outlined"
                 onClick={() => handleOpenSecondaryAccountsDialog()}
                 startIcon={<Icon icon="carbon:link" />}
                 sx={{ mt: 2 }}
@@ -97,6 +96,6 @@ export const UserConfiguration = ({ user }: TemplateConfigurationProps) => {
           }
         />
       )}
-    </OverviewCard>
+    </BaseCard>
   );
 };

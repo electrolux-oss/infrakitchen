@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GetEntityLink,
   GetReferenceUrlValue,
@@ -52,7 +53,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               : step.status === "done"
                 ? "success.main"
                 : "divider",
-          borderRadius: 2,
+          borderRadius: "var(--template-surface-radius)",
           overflow: "hidden",
         }}
       >
@@ -72,21 +73,22 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={step.position + 1}
-              size="small"
               color="primary"
               sx={{ fontWeight: 700, minWidth: 28 }}
             />
             {templateName ? (
               <GetEntityLink {...(step.template as GqlTemplateShort)} />
             ) : (
-              <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
+              >
                 {step.template?.id.slice(0, 8)}…
               </Typography>
             )}
             {step.template?.abstract && (
               <Chip
                 label="Abstract"
-                size="small"
                 color="warning"
                 variant="outlined"
                 sx={{ fontWeight: 600 }}
@@ -264,7 +266,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         py: 0.75,
                         border: 1,
                         borderColor: "divider",
-                        borderRadius: 1,
+                        borderRadius: "var(--template-surface-radius)",
                         bgcolor: "background.paper",
                       }}
                     >
@@ -288,7 +290,6 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         {resource.template?.abstract && (
                           <Chip
                             label="Abstract"
-                            size="small"
                             color="warning"
                             variant="outlined"
                             sx={{
@@ -359,9 +360,9 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 p: 1.5,
                 bgcolor: "error.main",
                 color: "error.contrastText",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 fontSize: 13,
-                fontFamily: "monospace",
+                fontFamily: CODE_FONT_FAMILY,
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
@@ -381,7 +382,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 mt: 1.5,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 "&:before": { display: "none" },
               }}
             >
@@ -408,7 +409,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                 }}
                               >
@@ -419,7 +420,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                   maxWidth: 400,
                                   wordBreak: "break-all",

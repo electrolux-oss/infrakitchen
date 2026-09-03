@@ -1,9 +1,5 @@
 import React from "react";
 
-import BlockIcon from "@mui/icons-material/Block";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import PendingIcon from "@mui/icons-material/Pending";
-import UpdateIcon from "@mui/icons-material/Update";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Chip, Tooltip } from "@mui/material";
 import { SxProps, Theme } from "@mui/system";
@@ -11,6 +7,7 @@ import { SxProps, Theme } from "@mui/system";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
 import { MuiChipColor } from "./utils";
+import { solidChipColorSx } from "./utils/softChip";
 
 export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
@@ -35,13 +32,6 @@ interface VersionLifecycleStateChipProps {
   breakingChanges?: string;
 }
 
-const iconMap: Record<string, React.ComponentType<any>> = {
-  [VERSION_LIFECYCLE_STATE.ACTIVE]: CheckCircleIcon,
-  [VERSION_LIFECYCLE_STATE.PREVIEW]: UpdateIcon,
-  [VERSION_LIFECYCLE_STATE.DEPRECATED]: BlockIcon,
-  [VERSION_LIFECYCLE_STATE.UNKNOWN]: PendingIcon,
-};
-
 const VersionLifecycleStateChip = ({
   lifecycleState,
   sx,
@@ -49,19 +39,19 @@ const VersionLifecycleStateChip = ({
 }: VersionLifecycleStateChipProps) => {
   const normalizedState =
     lifecycleState?.toLowerCase() || VERSION_LIFECYCLE_STATE.UNKNOWN;
-  const IconComponent = iconMap[normalizedState] || PendingIcon;
   const color = getVersionLifecycleStateColor(normalizedState);
   const hasBreakingChanges = Boolean(breakingChanges?.trim());
 
   return (
     <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
       <Chip
-        icon={<IconComponent fontSize="small" />}
         label={normalizedState}
-        size="small"
-        color={color}
-        variant="outlined"
-        sx={{ textTransform: "uppercase", fontWeight: 500, ...(sx as object) }}
+        sx={(theme) => ({
+          ...solidChipColorSx(color)(theme),
+          textTransform: "uppercase",
+          fontWeight: 500,
+          ...(sx as object),
+        })}
       />
       {hasBreakingChanges ? (
         <Tooltip title={breakingChanges}>

@@ -4,7 +4,7 @@ import {
   getProviderValue,
   GetReferenceUrlValue,
 } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+import { BaseCard } from "../../common/components/BaseCard";
 import { GqlStorage } from "../graphql";
 
 export interface StorageConfigurationProps {
@@ -15,7 +15,7 @@ export const StorageConfiguration = ({
   storage,
 }: StorageConfigurationProps) => {
   return (
-    <OverviewCard name="Storage Configuration">
+    <BaseCard name="Storage Configuration">
       {storage.integration && (
         <CommonField
           name={"Integration"}
@@ -35,6 +35,6 @@ export const StorageConfiguration = ({
       {Object.entries(storage.configuration || {}).map(([k, v]) => {
         return <CommonField key={`${k}${v}`} name={formatLabel(k)} value={v} />;
       })}
-    </OverviewCard>
+    </BaseCard>
   );
 };

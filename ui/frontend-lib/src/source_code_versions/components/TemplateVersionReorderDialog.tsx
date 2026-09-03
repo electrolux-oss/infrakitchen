@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
 import { useConfig } from "../../common";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
@@ -449,7 +450,7 @@ export const TemplateVersionReorderDialog = ({
                     {(item.resourcesCount || 0) === 0 && (
                       <IconButton
                         size="small"
-                        color="error"
+                        sx={deleteIconButtonStyle}
                         disabled={
                           saving ||
                           deletingId === item.id ||
@@ -465,7 +466,6 @@ export const TemplateVersionReorderDialog = ({
                     )}
                     <TextField
                       select
-                      size="small"
                       label="Lifecycle State"
                       value={
                         item.lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN

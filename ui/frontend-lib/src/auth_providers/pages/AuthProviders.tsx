@@ -3,14 +3,13 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Box, Button } from "@mui/material";
+import { Button, Switch, Tooltip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper, useConfig } from "../../common";
 import {
   GetEntityLink,
   getProviderValue,
-  getBooleanLabel,
 } from "../../common/components/CommonField";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
@@ -44,24 +43,21 @@ export const AuthProvidersPage = () => {
         headerName: "Provider",
         flex: 1,
         sortField: "auth_provider",
-        renderCell: (params: GridRenderCellParams) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            {getProviderValue(params.value)}
-          </Box>
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          getProviderValue(params.value),
       },
       {
         field: "enabled",
         headerName: "Enabled",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getBooleanLabel(params.row.enabled),
+        renderCell: (params: GridRenderCellParams) => (
+          <Tooltip title={params.row.enabled ? "Enabled" : "Disabled"}>
+            <Switch
+              checked={Boolean(params.row.enabled)}
+              sx={{ pointerEvents: "none", cursor: "default" }}
+            />
+          </Tooltip>
+        ),
       },
       {
         field: "createdAt",
@@ -69,10 +65,7 @@ export const AuthProvidersPage = () => {
         flex: 1,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} />
         ),
       },
       {
@@ -94,14 +87,13 @@ export const AuthProvidersPage = () => {
   return (
     <PageContainer
       title="Auth Providers"
+      description="Sign-in methods you can enable for your users."
       actions={
         <PermissionWrapper
           requiredPermission="api:auth_provider"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
             startIcon={<AddIcon />}
           >

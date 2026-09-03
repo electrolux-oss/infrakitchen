@@ -36,20 +36,16 @@ export const DashboardPage = () => {
   if (!loading && !hasResources) {
     return (
       <PageContainer>
-        <Box
-          sx={{
-            mb: 4,
-            width: "100%",
-          }}
-        >
+        <Box sx={{ mb: 4, width: "80%", maxWidth: 1000 }}>
           <Box>
+            {" "}
             <Typography
-              variant="h4"
+              variant="h5"
               component="h1"
-              color="primary"
               gutterBottom
+              sx={{ fontWeight: 600 }}
             >
-              Welcome to InfraKitchen
+              Dashboard
             </Typography>
             <Typography
               variant="body1"
@@ -74,22 +70,18 @@ export const DashboardPage = () => {
       title={
         <>
           <Typography
-            variant="h4"
-            component="span"
+            variant="h5"
+            component="h1"
             color="primary"
-            sx={{
-              fontWeight: 600,
-            }}
+            sx={{ fontWeight: 600 }}
           >
-            Welcome to InfraKitchen
+            Dashboard
           </Typography>
         </>
       }
-      description="Here's what's happening with your infrastructure"
+      description="A quick overview of your infrastructure and recent activities"
       actions={
         <Button
-          size="small"
-          variant="outlined"
           startIcon={
             refreshing ? <CircularProgress size={16} /> : <RefreshIcon />
           }
@@ -100,6 +92,7 @@ export const DashboardPage = () => {
         </Button>
       }
     >
+      {" "}
       <Box sx={{ width: "100%", mb: 3 }}>
         <GoldenStateWidget
           goldenStateReport={goldenStateReport}

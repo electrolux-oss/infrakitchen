@@ -1,6 +1,7 @@
 import { FC, ReactNode } from "react";
 
 import { Box, SxProps, Theme } from "@mui/material";
+import { CODE_FONT_FAMILY } from "../theme";
 
 interface InlineCodeProps {
   children: ReactNode;
@@ -15,9 +16,9 @@ export const InlineCode: FC<InlineCodeProps> = ({ children, sx }) => (
     component="code"
     sx={{
       fontSize: "0.85em",
-      fontFamily: "'Roboto Mono', monospace",
-      backgroundColor: "rgba(0, 0, 0, 0.05)",
-      borderRadius: "3px",
+      fontFamily: CODE_FONT_FAMILY,
+      backgroundColor: "var(--template-palette-action-hover)",
+      borderRadius: "var(--template-code-radius)",
       px: 0.75,
       py: 0.25,
       wordBreak: "break-all",

@@ -60,7 +60,9 @@ export const ResourceVariableRow = ({
           }}
         >
           {variable.name}
-          {variable.required && <span style={{ color: "#d32f2f" }}> *</span>}
+          {variable.required && (
+            <span style={{ color: theme.palette.primary.main }}> *</span>
+          )}
         </Typography>
         <Typography
           variant="body2"
@@ -74,23 +76,17 @@ export const ResourceVariableRow = ({
 
         <Chip
           label={variable.type}
-          size="small"
           color="default"
           sx={{
             fontWeight: "bold",
             letterSpacing: 0.5,
           }}
         />
-        {isNew && (
-          <Chip label="Added" size="small" color="info" sx={{ ml: 1 }} />
-        )}
-        {isDeleted && (
-          <Chip label="Deleted" size="small" color="warning" sx={{ ml: 1 }} />
-        )}
+        {isNew && <Chip label="Added" color="info" sx={{ ml: 1 }} />}
+        {isDeleted && <Chip label="Deleted" color="warning" sx={{ ml: 1 }} />}
         {validationSummary && (
           <Chip
             label={validationSummary}
-            size="small"
             color="success"
             variant="outlined"
             sx={{ ml: 1 }}

@@ -2,8 +2,8 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { RelativeTime } from "../../common/components/RelativeTime";
 
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
@@ -95,16 +95,5 @@ export const auditLogColumns: EntityTableColumn[] = [
     flex: 1,
     renderCell: (params: GridRenderCellParams) => params.value,
   },
-  {
-    field: "createdAt",
-    headerName: "Time",
-    flex: 1,
-    sortField: "created_at",
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  relativeTimeColumn("createdAt", "Time", { sortField: "created_at" }),
 ];

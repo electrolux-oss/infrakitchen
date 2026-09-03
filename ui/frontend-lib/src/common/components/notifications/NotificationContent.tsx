@@ -62,7 +62,7 @@ export const NotificationContent = forwardRef<
           p: 1.5,
           minWidth: { xs: "300px", sm: "400px" },
           backgroundColor: config.color,
-          borderRadius: 1,
+          borderRadius: "var(--template-surface-radius)",
           boxShadow: 3,
           color: iconColor,
           display: "flex",

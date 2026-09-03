@@ -31,6 +31,7 @@ import { LogEntity } from "../../types";
 import { ENTITY_ACTION } from "../../utils/constants";
 import { RelativeTime } from "../components/RelativeTime";
 import { useConfig } from "../context";
+import { CODE_FONT_FAMILY } from "../theme";
 
 import { LogLine } from "./LogLine";
 
@@ -608,7 +609,6 @@ export const SummaryView = (props: {
                     <Chip
                       key={action}
                       label={`${count} ${action.charAt(0) + action.slice(1).toLowerCase()}`}
-                      size="small"
                       color={getActionColor(action)}
                       variant="outlined"
                     />
@@ -632,7 +632,7 @@ export const SummaryView = (props: {
               <AlertTitle>Fatal error</AlertTitle>
               <Box
                 sx={{
-                  fontFamily: "monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   fontSize: "0.8rem",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
@@ -703,14 +703,13 @@ export const SummaryView = (props: {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Chip
                         label={change.action}
-                        size="small"
                         color={getActionColor(change.action)}
                         variant="outlined"
                         sx={{ minWidth: 100, fontWeight: 600 }}
                       />
                       <Typography
                         sx={{
-                          fontFamily: "monospace",
+                          fontFamily: CODE_FONT_FAMILY,
                           fontSize: "0.85rem",
                           fontWeight: 500,
                         }}
@@ -729,7 +728,7 @@ export const SummaryView = (props: {
                 <AccordionDetails
                   sx={{
                     p: 1.5,
-                    fontFamily: "monospace",
+                    fontFamily: CODE_FONT_FAMILY,
                     fontSize: "0.8rem",
                     bgcolor: "action.hover",
                     overflowX: "auto",
@@ -742,7 +741,7 @@ export const SummaryView = (props: {
                     <Box
                       sx={{
                         p: 1.5,
-                        fontFamily: "monospace",
+                        fontFamily: CODE_FONT_FAMILY,
                         fontSize: "0.8rem",
                         borderTop: "2px solid",
                         borderColor: "error.main",

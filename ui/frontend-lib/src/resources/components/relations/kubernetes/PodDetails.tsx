@@ -133,7 +133,6 @@ const PodRow = (props: {
           <Chip
             label={pod?.status.phase || "Unknown"}
             color={statusColor(pod?.status.phase)}
-            size="small"
             sx={{ fontWeight: "bold" }}
           />
         </TableCell>
@@ -174,9 +173,7 @@ const PodRow = (props: {
               }}
             >
               <Button
-                variant="outlined"
-                color="success"
-                size="small"
+                variant="contained"
                 startIcon={<CheckIcon />}
                 onClick={() => handleKillPod(pod.metadata.name)}
                 sx={{ textTransform: "none", fontWeight: "bold" }}
@@ -185,9 +182,7 @@ const PodRow = (props: {
                 Approve
               </Button>
               <Button
-                variant="outlined"
                 color="error"
-                size="small"
                 startIcon={<CloseIcon />}
                 onClick={handleCancelKill}
                 sx={{ textTransform: "none", fontWeight: "bold" }}
@@ -222,7 +217,7 @@ const PodRow = (props: {
                 margin: 1.5,
                 p: 2,
                 bgcolor: "background.paper",
-                borderRadius: 2,
+                borderRadius: "var(--template-surface-radius)",
                 boxShadow: 3,
               }}
             >

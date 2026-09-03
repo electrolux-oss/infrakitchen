@@ -67,22 +67,12 @@ export const BatchOperationCreatePage = () => {
   return (
     <PageContainer
       title="Create Batch Operation"
-      onBack={() => navigate(`${linkPrefix}batch_operations`)}
-      backAriaLabel="Back to batch operations"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(`${linkPrefix}batch_operations`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}batch_operations`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

@@ -1,10 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
-import { CloseFullscreen, OpenInFull } from "@mui/icons-material";
-import Alert from "@mui/material/Alert";
+import {
+  CloseFullscreen,
+  FitScreen,
+  Fullscreen,
+  Terminal,
+} from "@mui/icons-material";
 import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Ansi from "ansi-to-react";
 
@@ -12,6 +16,7 @@ import { useLocalStorage } from "../context";
 import { useConfig } from "../context/ConfigContext";
 import { useEntityProvider } from "../context/EntityContext";
 import { useLogStreamSubscription } from "../hooks/useLogStreamSubscription";
+import { CODE_FONT_FAMILY } from "../theme";
 
 const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
@@ -104,7 +109,6 @@ export const LogLiveTail = () => {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", stopResizing);
   }, [handleMouseMove]);
-
   const startResizing = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -114,6 +118,13 @@ export const LogLiveTail = () => {
     },
     [handleMouseMove, stopResizing],
   );
+
+  const applyPresetSize = useCallback((scale: number) => {
+    setDimensions({
+      width: Math.max(300, window.innerWidth * scale),
+      height: Math.max(200, window.innerHeight * scale),
+    });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -166,19 +177,25 @@ export const LogLiveTail = () => {
   return (
     <Box
       ref={containerRef}
+      onClick={isMinimized ? () => setIsMinimized(false) : undefined}
       sx={{
         position: "fixed",
         bottom: 20,
         right: 20,
-        width: isMinimized ? "auto" : dimensions.width,
-        height: isMinimized ? "auto" : dimensions.height,
+        // Minimized collapses to a compact icon-only FAB so it barely covers
+        // page content; expanded uses the user-resizable dimensions.
+        width: isMinimized ? 44 : dimensions.width,
+        height: isMinimized ? 44 : dimensions.height,
         zIndex: 1300,
         display: "flex",
         flexDirection: "column",
-        boxShadow: 6,
-        borderRadius: 1,
+        boxShadow: "0 12px 40px rgba(0, 0, 0, 0.18)",
+        borderRadius: isMinimized ? "50%" : "var(--template-surface-radius)",
+        border: "1px solid",
+        borderColor: "divider",
         bgcolor: "background.paper",
         overflow: "hidden",
+        cursor: isMinimized ? "pointer" : "default",
       }}
     >
       {!isMinimized && (
@@ -211,70 +228,112 @@ export const LogLiveTail = () => {
           }}
         />
       )}
-      <Alert
-        severity="info"
-        icon={false}
-        sx={{
-          p: 0,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          "& .MuiAlert-message": {
-            p: 0,
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-          },
-        }}
-      >
+      {isMinimized ? (
         <Box
+          role="button"
+          aria-label="Open log stream"
           sx={{
+            width: "100%",
+            height: "100%",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            px: 2,
-            py: 1,
-            borderBottom: isMinimized ? 0 : 1,
-            borderColor: "divider",
-            cursor: "default",
+            justifyContent: "center",
           }}
         >
+          <Tooltip title="Log Stream">
+            <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
+          </Tooltip>
+        </Box>
+      ) : (
+        <>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1,
-              paddingRight: 1,
+              justifyContent: "space-between",
+              px: 1.5,
+              py: 0.75,
+              borderBottom: 1,
+              borderColor: "divider",
+              cursor: "default",
             }}
           >
-            <Typography
-              variant="body2"
+            <Box
               sx={{
-                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                minWidth: 0,
               }}
             >
-              Live Log Tail
-            </Typography>
-            {isReceivingLogs && <CircularProgress size={14} thickness={5} />}
-          </Box>
-          <Box>
-            <IconButton
-              size="small"
-              aria-label={isMinimized ? "maximize" : "minimize"}
-              color="inherit"
-              onClick={() => setIsMinimized(!isMinimized)}
-            >
-              {isMinimized ? (
-                <OpenInFull fontSize="small" />
-              ) : (
-                <CloseFullscreen fontSize="small" />
+              <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Log Stream
+              </Typography>
+              {isReceivingLogs && (
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    bgcolor: "success.main",
+                    animation: "log-tail-pulse 1.2s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
               )}
-            </IconButton>
+            </Box>{" "}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.25,
+                borderLeft: "1px solid",
+                borderColor: "divider",
+                pl: 1,
+              }}
+            >
+              <Tooltip title="Medium size">
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={() => applyPresetSize(0.6)}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <FitScreen fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Large size">
+                <IconButton
+                  size="small"
+                  color="inherit"
+                  onClick={() => applyPresetSize(0.85)}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <Fullscreen fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Minimize">
+                <IconButton
+                  size="small"
+                  aria-label="Minimize"
+                  color="inherit"
+                  onClick={() => setIsMinimized(true)}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <CloseFullscreen fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
-        </Box>
-
-        {!isMinimized && (
           <Box
             ref={scrollContainerRef}
             sx={{
@@ -284,7 +343,15 @@ export const LogLiveTail = () => {
               color: "#fff",
             }}
           >
-            <pre style={{ margin: 0, padding: 16, fontSize: "0.8rem" }}>
+            <pre
+              style={{
+                margin: 0,
+                padding: 16,
+                fontSize: "0.8rem",
+                lineHeight: 1.5,
+                fontFamily: CODE_FONT_FAMILY,
+              }}
+            >
               <Ansi>{logMessages.join("\n")}</Ansi>
               <span
                 style={{
@@ -293,22 +360,26 @@ export const LogLiveTail = () => {
                   height: "1em",
                   backgroundColor: "#fff",
                   marginLeft: "2px",
-                  animation: "blink 1s step-end infinite",
+                  animation: "log-tail-blink 1s step-end infinite",
                   verticalAlign: "text-bottom",
                 }}
               />
             </pre>
             <style>
               {`
-                @keyframes blink {
-                  0%, 50% { opacity: 1; }
-                  51%, 100% { opacity: 0; }
-                }
-              `}
+                      @keyframes log-tail-blink {
+                        0%, 50% { opacity: 1; }
+                        51%, 100% { opacity: 0; }
+                      }
+                      @keyframes log-tail-pulse {
+                        0%, 100% { opacity: 1; }
+                        50% { opacity: 0.3; }
+                      }
+                    `}
             </style>
           </Box>
-        )}
-      </Alert>
+        </>
+      )}
     </Box>
   );
 };

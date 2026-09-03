@@ -166,12 +166,44 @@ export const formatTimeAgo = (dateInput: string | Date) => {
     }
     return months === 1 ? "1 month ago" : `${months} months ago`;
   }
-
   const years = Math.floor(diffInDays / 365);
   if (isFuture) {
     return years === 1 ? "in 1 year" : `in ${years} years`;
   }
   return years === 1 ? "1 year ago" : `${years} years ago`;
+};
+
+/**
+ * Seconds-accurate countdown until a future time, e.g. "in 45s",
+ * "in 12m 30s", "in 03h 25m 10s", "in 02d 03h 25m 10s". Every displayed
+ * unit is zero-padded to two digits. Returns "now" once the target time is
+ * reached or passed.
+ */
+export const formatTimeUntil = (dateInput: string | Date, now = Date.now()) => {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  const diffInMs = date.getTime() - now;
+  if (diffInMs <= 0) return "now";
+
+  const totalSeconds = Math.floor(diffInMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${pad(days)}d`);
+  if (days > 0 || hours > 0) parts.push(`${pad(hours)}h`);
+  if (days > 0 || hours > 0 || minutes > 0) parts.push(`${pad(minutes)}m`);
+  parts.push(`${pad(seconds)}s`);
+
+  return `in ${parts.join(" ")}`;
 };
 
 export const getProviderFromLabels = (labels: string[]) => {

@@ -137,7 +137,6 @@ export function WiringCanvasSidebar({
           Available Templates
         </Typography>
         <TextField
-          size="small"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -188,7 +187,7 @@ export function WiringCanvasSidebar({
             onDragStart={(e) => handleDragStart(e, t)}
             onClick={() => onAdd(t as unknown as GenericTemplate)}
             sx={{
-              borderRadius: 1,
+              borderRadius: "var(--template-surface-radius)",
               mb: 0.25,
               cursor: "grab",
               "&:active": { cursor: "grabbing" },
@@ -206,7 +205,6 @@ export function WiringCanvasSidebar({
             {t.abstract && (
               <Chip
                 label="Abstract"
-                size="small"
                 color="warning"
                 variant="outlined"
                 sx={{
@@ -275,7 +273,7 @@ export function WiringCanvasSidebar({
                 onDragStart={(e) => handleExternalDragStart(e, t)}
                 onClick={() => onExternalTemplateAdd(t)}
                 sx={{
-                  borderRadius: 1,
+                  borderRadius: "var(--template-surface-radius)",
                   mb: 0.25,
                   cursor: "grab",
                   "&:active": { cursor: "grabbing" },
@@ -293,7 +291,6 @@ export function WiringCanvasSidebar({
                 {t.abstract && (
                   <Chip
                     label="Abstract"
-                    size="small"
                     color="warning"
                     variant="outlined"
                     sx={{
@@ -340,8 +337,6 @@ export function WiringCanvasSidebar({
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5, mt: 1 }}>
           <Button
-            size="small"
-            variant="outlined"
             color="secondary"
             startIcon={<TextFieldsIcon />}
             onClick={() => onConstantAdd("string")}
@@ -350,8 +345,6 @@ export function WiringCanvasSidebar({
             String
           </Button>
           <Button
-            size="small"
-            variant="outlined"
             color="secondary"
             startIcon={<NumbersIcon />}
             onClick={() => onConstantAdd("number")}

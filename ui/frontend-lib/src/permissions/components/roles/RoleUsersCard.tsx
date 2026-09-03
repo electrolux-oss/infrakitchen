@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Icon } from "@iconify/react";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
@@ -57,10 +57,7 @@ export const RoleUsersCard = (props: { role: string }) => {
         headerName: "Created",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -108,9 +105,8 @@ export const RoleUsersCard = (props: { role: string }) => {
         permissionAction="write"
       >
         <Button
-          variant="outlined"
           onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+          startIcon={<PersonAddIcon />}
         >
           Add User to Role
         </Button>

@@ -18,6 +18,7 @@ import {
 import { alpha } from "@mui/material/styles";
 
 import { useConfig, StyledTab, LabelInput } from "../../common";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
@@ -160,15 +161,11 @@ const IntegrationCreatePage = () => {
 
   if (!providerObject) {
     return (
-      <PageContainer
-        title="Integration Not Found"
-        onBack={() => navigate(`${linkPrefix}integrations`)}
-      >
+      <PageContainer title="Integration Not Found">
         <Typography variant="h5">
           The specified integration provider was not found.
         </Typography>
         <Button
-          variant="outlined"
           onClick={() => navigate(`${linkPrefix}integrations`)}
           sx={{ mt: 2 }}
         >
@@ -179,10 +176,7 @@ const IntegrationCreatePage = () => {
   }
 
   return (
-    <PageContainer
-      title={`Set up ${providerObject?.name} Integration`}
-      onBack={() => navigate(`${linkPrefix}integrations`)}
-    >
+    <PageContainer title={`Set up ${providerObject?.name} Integration`}>
       {hasMultipleAuthMethods && (
         <Box
           sx={{
@@ -228,10 +222,10 @@ const IntegrationCreatePage = () => {
                 <providerObject.icon width="50" height="50" />
               )}
               <Box sx={{ ml: 2 }}>
-                <Typography variant="h5" component="h2">
+                <Typography variant="h6" component="h2">
                   {providerObject.name} Integration Setup
                 </Typography>
-                <Typography variant="body2">
+                <Typography sx={{ color: "text.secondary" }}>
                   {`Connect ${providerObject.name} to integrate with InfraKitchen.`}
                 </Typography>
               </Box>
@@ -241,23 +235,62 @@ const IntegrationCreatePage = () => {
         <CardContent>
           <Box
             sx={{
-              backgroundColor: (t) => alpha(t.palette.grey[600], 0.2),
-              p: "1rem 2rem",
-              m: "0 3rem",
-              borderRadius: 1,
+              backgroundColor: "action.hover",
+              p: 2,
+              mx: 3,
+              borderRadius: "var(--template-surface-radius)",
+              // Inline code inside instruction steps renders through the shared
+              // InlineCode component; block snippets keep the code-font look.
+              "& pre": {
+                fontFamily: CODE_FONT_FAMILY,
+                fontSize: "0.85em",
+                backgroundColor: "var(--template-palette-action-hover)",
+                borderRadius: "var(--template-code-radius)",
+                margin: 0.5,
+                p: 1,
+                overflowX: "auto",
+                whiteSpace: "pre-wrap",
+              },
             }}
           >
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>How to connect to {providerObject.name}:</strong>
+            <Typography sx={{ fontWeight: 600, mb: 1 }}>
+              How to connect to {providerObject.name}:
             </Typography>
-            <Typography variant="body2" component="div">
+            <Box
+              component="div"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+              }}
+            >
               {providerObject.instructions.map((line, index) => (
-                <div key={index}>
-                  {index + 1}.{" "}
-                  <span dangerouslySetInnerHTML={{ __html: line }} />
-                </div>
+                <Box key={index} sx={{ display: "flex", gap: 1.5 }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      flexShrink: 0,
+                      mt: 0.1,
+                      borderRadius: "50%",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "primary.main",
+                      color: "primary.contrastText",
+                      fontSize: "0.75rem",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {index + 1}
+                  </Box>
+                  <Box component="span" sx={{ alignSelf: "center" }}>
+                    {line}
+                  </Box>
+                </Box>
               ))}
-            </Typography>
+            </Box>
             {providerObject.tokenLink && (
               <Link
                 href={providerObject.tokenLink}
@@ -269,11 +302,15 @@ const IntegrationCreatePage = () => {
             )}
           </Box>
         </CardContent>
-      </Card>
+      </Card>{" "}
       <Card
         sx={{
           width: "100%",
           minWidth: 320,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+          boxShadow: "none",
         }}
       >
         <CardHeader
@@ -315,8 +352,8 @@ const IntegrationCreatePage = () => {
                 {...field}
                 label="Description"
                 helperText={
-                  errors.name
-                    ? errors.name.message
+                  errors.description
+                    ? errors.description.message
                     : "Provide a short description"
                 }
                 fullWidth
@@ -347,12 +384,9 @@ const IntegrationCreatePage = () => {
             justifyContent: "center",
           }}
         >
-          <Button variant="outlined" onClick={handleValidation}>
-            Test Connection
-          </Button>
+          <Button onClick={handleValidation}>Test Connection</Button>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave, () =>
               notifyError(new Error("Fix validation errors before saving.")),
             )}

@@ -1,6 +1,5 @@
 import { NavigateFunction } from "react-router";
 
-import { Link } from "@mui/material";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
@@ -8,6 +7,7 @@ import {
 
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
@@ -34,21 +34,14 @@ export const taskColumns = (options: {
       defaultOperator: "in",
       optionsKey: "entities",
     },
-    renderCell: (params: GridRenderCellParams) => {
-      return (
-        <Link
-          onClick={() => {
-            options.navigate(
-              `${options.linkPrefix}${params.row.entity}s/${params.row.entityId}`,
-            );
-          }}
-          rel="noopener"
-          style={{ cursor: "pointer" }}
-        >
-          {params.row.entityData?.name ?? params.row.entity}
-        </Link>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <GetEntityLink
+        id={params.row.entityId}
+        entityName={params.row.entity}
+        name={params.row.entityData?.name}
+        identifier={params.row.entity}
+      />
+    ),
   },
   {
     field: "status",
@@ -59,42 +52,17 @@ export const taskColumns = (options: {
       <StatusChip status={params.row.status} state={params.row.state} />
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    sortField: "created_at",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    sortField: "updated_at",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns({
+    createdSortField: "created_at",
+    updatedSortField: "updated_at",
+  }),
   {
     field: "runAt",
     headerName: "Run At",
     sortField: "run_at",
     flex: 1,
     renderCell: (params: GridRenderCellParams) =>
-      params.value ? (
-        <RelativeTime
-          date={params.value}
-          sx={{ fontSize: "0.75rem", display: "flex" }}
-        />
-      ) : null,
+      params.value ? <RelativeTime date={params.value} /> : null,
   },
   {
     field: "creator",

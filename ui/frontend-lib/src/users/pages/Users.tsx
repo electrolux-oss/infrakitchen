@@ -20,14 +20,13 @@ export const UsersPage = () => {
   return (
     <PageContainer
       title="Users"
+      description="People and service accounts with access to InfraKitchen."
       actions={
         <PermissionWrapper
           requiredPermission="api:user"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}users/create`)}
             startIcon={<AddIcon />}
           >

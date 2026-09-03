@@ -12,6 +12,8 @@ import {
   Stack,
 } from "@mui/material";
 
+import { solidChipColorSx } from "../utils/softChip";
+
 import { HclInputVariable } from "./HclInputVariable";
 import { HclOutputValue } from "./HclOutputValue";
 
@@ -114,29 +116,30 @@ export const HclItemList: React.FC<HclItemListProps> = ({
           >
             {/* Variable counts */}
             <Stack direction="row" spacing={1}>
+              {" "}
               <Chip
                 label={`${variableCounts.required} required`}
-                size="small"
-                color="warning"
-                variant="outlined"
+                color="error"
+                variant="filled"
+                sx={solidChipColorSx("error")}
               />
               <Chip
                 label={`${variableCounts.optional} optional`}
-                size="small"
                 color="info"
-                variant="outlined"
+                variant="filled"
+                sx={solidChipColorSx("info")}
               />
               <Chip
                 label={`${variableCounts.restricted} restricted`}
-                size="small"
-                color="error"
-                variant="outlined"
+                color="warning"
+                variant="filled"
+                sx={solidChipColorSx("warning")}
               />
               <Chip
                 label={`${variableCounts.sensitive} sensitive`}
-                size="small"
                 color="secondary"
-                variant="outlined"
+                variant="filled"
+                sx={solidChipColorSx("secondary")}
               />
             </Stack>
 

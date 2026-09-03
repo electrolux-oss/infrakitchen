@@ -55,7 +55,7 @@ export const SecretPage = () => {
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Secret Overview"}
+        title={"Secret Details"}
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"
