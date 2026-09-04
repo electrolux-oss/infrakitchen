@@ -10,8 +10,9 @@ import {
 } from "../../common/components/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { InlineCode } from "../../common/components/InlineCode";
 import { BaseCard } from "../../common/components/BaseCard";
+import { CodeBlock } from "../../common/components/CodeBlock";
+import { InlineCode } from "../../common/components/InlineCode";
 import { PlaceholderText } from "../../common/components/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { solidChipColorSx } from "../../common/utils/softChip";
@@ -102,7 +103,7 @@ const getSourceCodeVariables = (
                       {variable.name}
                     </Typography>
                     {showType && (variable as VariableInput).type && (
-                      <InlineCode>
+                      <InlineCode disableCopy>
                         {(variable as VariableInput).type}
                       </InlineCode>
                     )}
@@ -137,20 +138,7 @@ const getSourceCodeVariables = (
                 ) : variable.value === null || variable.value === undefined ? (
                   <PlaceholderText />
                 ) : (
-                  <Box
-                    component="pre"
-                    sx={{
-                      m: 0,
-                      p: 1,
-                      fontSize: "0.75rem",
-                      fontFamily: CODE_FONT_FAMILY,
-                      bgcolor: "action.hover",
-                      borderRadius: "var(--template-code-radius)",
-                      overflow: "auto",
-                    }}
-                  >
-                    {formatVariableValue(variable.value)}
-                  </Box>
+                  <CodeBlock>{formatVariableValue(variable.value)}</CodeBlock>
                 )}
               </Grid>
             </Grid>

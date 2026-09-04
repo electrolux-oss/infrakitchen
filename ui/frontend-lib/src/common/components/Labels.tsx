@@ -1,43 +1,65 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 
-import { Box, Chip } from "@mui/material";
+import { Box, ClickAwayListener } from "@mui/material";
 
-import { softChipColorSx } from "../utils/softChip";
+import { Label } from "./Label";
 import { PlaceholderText } from "./PlaceholderDescription";
 
 interface LabelsProps {
   labels: string[];
-  /** Compact chip size, for dense contexts like datagrid rows. */
-  size?: "small" | "compact";
+  /** Maximum number of labels rendered before collapsing the rest behind a "+N" chip. Pass `Infinity` to always render every label. */
+  max?: number;
+  /** Skip the built-in vertical margins when embedding in an already-spaced container. */
+  margins?: boolean;
 }
 
-/**
- * Renders a list of labels as chips. Displays the empty-value placeholder when
- * the list is empty.
- */
-export const Labels: FC<LabelsProps> = ({ labels, size = "small" }) => {
+export const Labels: FC<LabelsProps> = ({
+  labels,
+  max = Infinity,
+  margins = true,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+
   if (!labels || labels.length === 0) {
     return <PlaceholderText />;
   }
 
+  const overflow = labels.slice(max);
+  const overflowCount = overflow.length;
+  // Match the "99+" convention: show the exact count until it would exceed 99.
+  const overflowLabel = overflowCount > 99 ? "99+" : `+${overflowCount}`;
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        gap: 1,
-        flexWrap: "wrap",
-        marginTop: 1,
-        marginBottom: 2,
-      }}
-    >
-      {labels.map((label: string) => (
-        <Chip
-          key={label}
-          label={label}
-          variant="filled"
-          sx={softChipColorSx("default", size === "compact")}
-        />
-      ))}
-    </Box>
+    <ClickAwayListener onClickAway={() => setExpanded(false)}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 0.5,
+          flexWrap: "wrap",
+          ...(margins && { marginTop: 1, marginBottom: 2 }),
+        }}
+      >
+        {labels.slice(0, max).map((label) => (
+          <Label key={label} label={label} />
+        ))}
+        {expanded &&
+          overflow.map((label) => <Label key={label} label={label} />)}
+        {!expanded && overflowCount > 0 && (
+          <Label
+            component="button"
+            label={overflowLabel}
+            onClick={(event) => {
+              // Don't let the click reach a wrapping clickable card/page.
+              event.stopPropagation();
+              setExpanded(true);
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+            aria-expanded={false}
+            aria-label={`Show all ${labels.length} labels`}
+            sx={{ cursor: "pointer" }}
+          />
+        )}
+      </Box>
+    </ClickAwayListener>
   );
 };

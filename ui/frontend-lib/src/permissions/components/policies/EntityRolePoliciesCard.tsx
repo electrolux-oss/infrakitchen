@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { PermissionWrapper } from "../../../common";
+import { Entity, PermissionWrapper } from "../../../common";
 import { GetEntityLink } from "../../../common/components/CommonField";
 import {
   EntityFetchTable,
@@ -39,7 +39,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       {
         field: "entityData",
         fetchFields: ["entityData", "v1", "entityName"],
-        headerName: "Entity Name",
+        headerName: "Resource",
         flex: 1,
         sortable: false,
         hideable: false,
@@ -47,7 +47,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           if (params.row.v1 && params.row.v1.includes("*")) {
             return <span>{params.row.v1}</span>;
           }
-          return <GetEntityLink {...params.row.entityData} />;
+          return <Entity entity={params.row.entityData} />;
         },
       },
       {

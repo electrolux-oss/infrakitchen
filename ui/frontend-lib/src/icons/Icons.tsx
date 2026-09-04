@@ -89,7 +89,7 @@ export const getResourceIcon = (type: string | undefined) => {
   return CloudQueueIcon as any;
 };
 
-export const IconField = (type: string, size?: number) => {
+export const IconField = (type: string | undefined, size?: number) => {
   const LabelIcon: any = getResourceIcon(type);
   const sizeProps = size ? { width: size, height: size } : {};
   return <LabelIcon {...sizeProps} />;

@@ -4,12 +4,9 @@ import { Icon } from "@iconify/react";
 import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { PermissionWrapper } from "../../../common";
+import { Entity, PermissionWrapper } from "../../../common";
 import { BaseCard } from "../../../common/components/BaseCard";
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../../common/components/CommonField";
+import { GetReferenceUrlValue } from "../../../common/components/CommonField";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
@@ -48,13 +45,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return (
-            <GetEntityLink
-              id={params.row.entityData?.id}
-              entityName={params.row.entityData?.entityName}
-              name={params.row.entityData?.name || "Unknown Entity"}
-            />
-          );
+          return <Entity entity={params.row.entityData} />;
         },
       },
       {

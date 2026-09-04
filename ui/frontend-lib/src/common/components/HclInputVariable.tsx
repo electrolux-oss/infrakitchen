@@ -2,8 +2,9 @@ import React from "react";
 
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
 
-import { CODE_FONT_FAMILY } from "../theme";
+import { CodeBlock } from "./CodeBlock";
 import { InlineCode } from "./InlineCode";
+
 import {
   PlaceholderDescription,
   PlaceholderText,
@@ -24,36 +25,18 @@ interface HclInputVariableProps {
 export const HclInputVariable: React.FC<HclInputVariableProps> = ({
   variable,
 }) => {
-  const theme = useTheme();
-
   const validationSummary = getValidationSummary(variable);
   const formatTypeDisplay = (type: string) => {
     // If it's a simple type, display inline as mono text (not a badge)
     if (!type.includes("\n")) {
-      return <InlineCode>{type}</InlineCode>;
+      return <InlineCode disableCopy>{type}</InlineCode>;
     }
 
     // For complex types, display in a code block
     return (
-      <Box
-        component="pre"
-        sx={{
-          fontSize: theme.typography.caption.fontSize,
-          fontFamily: CODE_FONT_FAMILY,
-          margin: 0,
-          p: 1,
-          backgroundColor: theme.palette.action.hover,
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: "var(--template-code-radius)",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          overflow: "auto",
-          maxHeight: "200px",
-          maxWidth: "100%",
-        }}
-      >
+      <CodeBlock disableCopy sx={{ maxHeight: 200, maxWidth: "100%" }}>
         {type}
-      </Box>
+      </CodeBlock>
     );
   };
   const formatDefaultValue = (defaultValue: any) => {
@@ -63,45 +46,22 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
     }
 
     if (typeof defaultValue === "object") {
-      const isEmptyObject = Array.isArray(defaultValue)
-        ? defaultValue.length === 0
-        : Object.keys(defaultValue).length === 0;
-
-      return (
-        <Box
-          component="pre"
-          sx={{
-            fontSize: "0.75rem",
-            fontFamily: CODE_FONT_FAMILY,
-            margin: 0,
-            whiteSpace: "pre",
-            border: isEmptyObject ? "none" : "1px solid",
-            borderColor: "divider",
-            borderRadius: "var(--template-code-radius)",
-            textAlign: isEmptyObject ? "right" : "left",
-            overflow: "auto",
-          }}
-        >
-          {JSON.stringify(defaultValue, null, 2)}
-        </Box>
-      );
+      return <CodeBlock>{JSON.stringify(defaultValue, null, 2)}</CodeBlock>;
     }
 
     if (typeof defaultValue === "string") {
-      return <InlineCode>{`"${defaultValue}"`}</InlineCode>;
+      return <CodeBlock>{defaultValue}</CodeBlock>;
     }
 
     if (typeof defaultValue === "boolean") {
       return (
-        <InlineCode
-          sx={{ color: defaultValue ? "success.main" : "error.main" }}
-        >
+        <CodeBlock sx={{ color: defaultValue ? "success.main" : "error.main" }}>
           {String(defaultValue)}
-        </InlineCode>
+        </CodeBlock>
       );
     }
 
-    return <InlineCode>{String(defaultValue)}</InlineCode>;
+    return <CodeBlock>{String(defaultValue)}</CodeBlock>;
   };
 
   return (
@@ -219,7 +179,7 @@ export const HclInputVariable: React.FC<HclInputVariableProps> = ({
         <Grid
           size={{ xs: 12, md: 4 }}
           sx={{
-            textAlign: { md: "right" },
+            textAlign: "left",
             mt: { xs: 1, md: 0 },
           }}
         >

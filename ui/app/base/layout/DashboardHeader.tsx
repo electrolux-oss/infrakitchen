@@ -4,6 +4,7 @@ import { Link } from "react-router";
 
 import {
   CODE_FONT_FAMILY,
+  Label,
   ServerInfoDialog,
   useConfig,
 } from "@electrolux-oss/infrakitchen";
@@ -18,7 +19,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { neutralPillSx } from "./mixins";
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserSidebar from "./UserSidebar";
 
@@ -140,9 +140,9 @@ export default function DashboardHeader({
                     sx={{
                       color: "text.primary",
                       fontWeight: 600,
-                      fontSize: "1.25rem", // 20px
+                      fontSize: "1.875rem", // 30px
                       letterSpacing: "-0.02em",
-                      ml: 1,
+                      ml: 0,
                       whiteSpace: "nowrap",
                       lineHeight: 1,
                     }}
@@ -152,23 +152,23 @@ export default function DashboardHeader({
                 </Link>
               ) : null}
               {serverInfo ? (
-                <Typography
-                  variant="caption"
+                <Label
                   component="button"
-                  type="button"
                   onClick={handleServerInfoOpen}
+                  label={
+                    <Box
+                      component="span"
+                      sx={{ fontFamily: CODE_FONT_FAMILY }}
+                    >{`v${String(serverInfo.version).replace(
+                      /^v/,
+                      "",
+                    )}-${serverInfo.sourceCommitShort}`}</Box>
+                  }
                   sx={{
-                    // `font: "inherit"` must come before the spread: as a CSS
-                    // shorthand it would otherwise override the pill's font-size.
-                    font: "inherit",
-                    ...neutralPillSx,
-                    gap: "0.4em",
+                    alignSelf: "flex-end",
                     ml: 2,
                     cursor: "pointer",
-                    transition:
-                      "border-color 120ms ease, background-color 120ms ease",
                     "&:hover": {
-                      borderColor: "divider",
                       backgroundColor: "action.selected",
                     },
                     "&:focus-visible": {
@@ -177,22 +177,7 @@ export default function DashboardHeader({
                       outlineOffset: "1px",
                     },
                   }}
-                >
-                  <Box component="span" sx={{ fontWeight: 600 }}>
-                    {serverInfo.version}
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontFamily: CODE_FONT_FAMILY,
-                      fontSize: "0.62rem",
-                      color: "text.secondary",
-                      opacity: 0.85,
-                    }}
-                  >
-                    {serverInfo.sourceCommitShort}
-                  </Box>
-                </Typography>
+                />
               ) : null}
             </Stack>
           </Stack>

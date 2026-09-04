@@ -23,8 +23,9 @@ import {
 } from "@mui/material";
 
 import { PermissionWrapper } from "../wrappers";
-import { solidChipColorSx, softChipColorSx } from "../utils/softChip";
+import { solidChipColorSx } from "../utils/softChip";
 
+import { Labels } from "./Labels";
 import { PlaceholderDescription } from "./PlaceholderDescription";
 
 export interface EntityCardProps {
@@ -35,6 +36,8 @@ export interface EntityCardProps {
   createUrl?: string;
   onCreateClick?: () => void;
   labels: string[];
+  /** Maximum number of labels shown before collapsing into a "+N" chip. */
+  labelsMax?: number;
   createButtonName?: string | undefined;
   entityFields: ReactNode;
   status?: string;
@@ -60,6 +63,7 @@ export const EntityCard = ({
   createUrl,
   onCreateClick,
   labels,
+  labelsMax,
   createButtonName,
   entityFields,
   entity_name,
@@ -192,7 +196,14 @@ export const EntityCard = ({
       )}
       <CardHeader
         title={
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", minWidth: 0 }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1.5,
+              alignItems: "center",
+              minWidth: 0,
+            }}
+          >
             {icon}
             <Tooltip title={isTitleTruncated ? name : ""} arrow>
               <Typography
@@ -269,15 +280,11 @@ export const EntityCard = ({
         >
           {entityFields}
         </Box>
-        <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {labels.map((label) => (
-            <Chip
-              key={label}
-              label={label}
-              sx={softChipColorSx("default")}
-            />
-          ))}
-        </Box>
+        {labels.length > 0 && (
+          <Box sx={{ mt: 1.5 }}>
+            <Labels labels={labels} max={labelsMax} margins={false} />
+          </Box>
+        )}
       </CardContent>
       <CardActions sx={{ pt: 0, px: 1, flexDirection: "column", gap: 1.5 }}>
         <Box

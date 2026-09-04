@@ -1,5 +1,8 @@
 import { Stack } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  GridColumnVisibilityModel,
+  GridRenderCellParams,
+} from "@mui/x-data-grid";
 
 import { getRepoNameFromUrl } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
@@ -12,6 +15,12 @@ import { serverSearchReference } from "../../common/components/filter_panel/refe
 import StatusChip from "../../common/StatusChip";
 import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATUS } from "../../utils/constants";
+
+export const sourceCodeDefaultColumnVisibilityModel: GridColumnVisibilityModel =
+  {
+    description: false,
+    creator: false,
+  };
 
 export const sourceCodeColumns: EntityTableColumn[] = [
   {

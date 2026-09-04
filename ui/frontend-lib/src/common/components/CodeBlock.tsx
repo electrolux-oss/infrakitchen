@@ -6,26 +6,26 @@ import { Box, SxProps, Theme, Tooltip } from "@mui/material";
 
 import { CODE_FONT_FAMILY } from "../theme";
 
-interface InlineCodeProps {
+interface CodeBlockProps {
   children: ReactNode;
   /** Disables the copy button; copy is enabled by default. */
   disableCopy?: boolean;
   sx?: SxProps<Theme>;
 }
 
-export const InlineCode: FC<InlineCodeProps> = ({
+export const CodeBlock: FC<CodeBlockProps> = ({
   children,
   disableCopy = false,
   sx,
 }) => {
-  const textRef = useRef<HTMLSpanElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
   const timerRef = useRef<number | undefined>(undefined);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => () => window.clearTimeout(timerRef.current), []);
 
   const handleCopy = useCallback(async () => {
-    const text = textRef.current?.textContent ?? "";
+    const text = preRef.current?.textContent ?? "";
     if (!text) {
       return;
     }
@@ -40,23 +40,26 @@ export const InlineCode: FC<InlineCodeProps> = ({
   }, []);
 
   return (
-    <Box
-      component="code"
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.5,
-        fontSize: "0.85em",
-        fontFamily: CODE_FONT_FAMILY,
-        backgroundColor: "var(--template-palette-action-hover)",
-        borderRadius: "var(--template-code-radius)",
-        px: 0.75,
-        py: 0.25,
-        wordBreak: "break-all",
-        ...sx,
-      }}
-    >
-      <span ref={textRef}>{children}</span>
+    <Box sx={{ position: "relative" }}>
+      <Box
+        component="pre"
+        ref={preRef}
+        sx={{
+          m: 0,
+          p: 1,
+          pr: 3,
+          fontSize: "0.75rem",
+          fontFamily: CODE_FONT_FAMILY,
+          bgcolor: "action.hover",
+          borderRadius: "var(--template-code-radius)",
+          overflow: "auto",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          ...sx,
+        }}
+      >
+        {children}
+      </Box>
       {!disableCopy && (
         <Tooltip title={copied ? "Copied" : "Copy"}>
           <Box
@@ -65,19 +68,23 @@ export const InlineCode: FC<InlineCodeProps> = ({
             aria-label={copied ? "Copied to clipboard" : "Copy to clipboard"}
             onClick={handleCopy}
             sx={{
+              position: "absolute",
+              top: 4,
+              right: 4,
               display: "inline-flex",
               alignItems: "center",
-              flexShrink: 0,
-              padding: 0,
+              padding: "2px",
               border: "none",
+              borderRadius: "4px",
               background: "none",
-              color: "inherit",
+              color: "text.secondary",
               opacity: 0.65,
               cursor: "pointer",
               lineHeight: 0,
               transition: "opacity 120ms ease",
               "&:hover": {
                 opacity: 1,
+                backgroundColor: "action.selected",
               },
               "&:focus-visible": {
                 outline: "2px solid",
@@ -85,7 +92,7 @@ export const InlineCode: FC<InlineCodeProps> = ({
                 outlineOffset: "1px",
               },
               "& svg": {
-                fontSize: "0.95em",
+                fontSize: "1rem",
               },
             }}
           >

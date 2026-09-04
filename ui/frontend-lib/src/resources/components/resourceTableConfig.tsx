@@ -9,6 +9,7 @@ import {
   createdUpdatedColumns,
   labelsColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { Entity } from "../../common/components/Entity";
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
@@ -72,7 +73,7 @@ export const resourceColumns: EntityTableColumn[] = [
       defaultOperator: "like",
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {

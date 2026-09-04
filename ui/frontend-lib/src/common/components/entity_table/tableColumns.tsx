@@ -79,6 +79,6 @@ export const labelsColumn = (labelsEntity: string): EntityTableColumn => ({
   },
   valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
   renderCell: (params: GridRenderCellParams) => (
-    <Labels labels={params.row.labels || []} size="compact" />
+    <Labels labels={params.row.labels || []} />
   ),
 });

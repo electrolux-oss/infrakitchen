@@ -48,7 +48,8 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
         Resource.status,
         Resource.state,
         Resource.updated_at,
-    ).where(Resource.id.in_(keys))
+        Template.name.label("template_name"),
+    ).outerjoin(Template, Resource.template_id == Template.id).where(Resource.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {
@@ -58,6 +59,7 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
             "state": row.state,
             "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
             "entityName": "resource",
+            "template": {"name": row.template_name} if row.template_name else None,
         }
         for row in result
     }

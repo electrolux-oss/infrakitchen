@@ -208,6 +208,7 @@ export const TemplatesPage = () => {
                   })}
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
                   labels={template.labels || []}
+                  labelsMax={5}
                   chip={template.abstract ? "Abstract" : undefined}
                   lastUpdated={template.updatedAt}
                   entityFields={templateCardFields(template)}

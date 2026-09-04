@@ -17,8 +17,8 @@ export const PermissionContent = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
         gap: 2,
+        width: "100%",
       }}
     >
       <PermissionOverview permission={entity} />
