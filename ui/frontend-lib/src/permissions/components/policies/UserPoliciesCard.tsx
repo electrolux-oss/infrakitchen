@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
+import { BaseCard } from "../../../common/components/BaseCard";
 import {
   GetEntityLink,
   GetReferenceUrlValue,
@@ -13,7 +14,6 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { BaseCard } from "../../../common/components/BaseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -115,19 +115,29 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Resource Policy
-        </Button>
-        <EntityPolicyUserCreateDialog
-          userId={userId}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<Icon icon="icon-park-outline:add" />}
+          >
+            Add Resource Policy
+          </Button>
+        </Box>
       </PermissionWrapper>
+      <EntityPolicyUserCreateDialog
+        userId={userId}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshPoliciesTable}
+      />
       <EntityFetchTable
         ref={tableRef}
         title="User Policies"

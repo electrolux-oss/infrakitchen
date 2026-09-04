@@ -1,36 +1,39 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import { Button, Stack } from "@mui/material";
+import { IconButton } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { BaseCard } from "../../common/components/BaseCard";
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { GetEntityLink } from "../../common/components/CommonField";
+import {
+  EntityFetchTable,
+  EntityFetchTableRef,
+} from "../../common/components/entity_table/EntityFetchTable";
 import { RelativeTime } from "../../common/components/RelativeTime";
-import { notify, notifyError } from "../../common/hooks/useNotification";
+import { notifyError } from "../../common/hooks/useNotification";
 import {
   DELETE_SUBSCRIPTION_MUTATION,
   NOTIFICATION_SUBSCRIPTION_FIELD_MAP,
 } from "../../notifications";
 
-const DeleteSubscriptionButton = ({ id }: { id: string }) => {
+const DeleteSubscriptionButton = ({
+  id,
+  onDeleted,
+}: {
+  id: string;
+  onDeleted?: () => void;
+}) => {
   const { ikApi } = useConfig();
-  const [isConfirming, setIsConfirming] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDelete = async () => {
     setIsLoading(true);
     try {
       await ikApi.graphqlRequest(DELETE_SUBSCRIPTION_MUTATION, { id });
-      notify(
-        "Subscription deleted. Use Refresh to update the list.",
-        "success",
-      );
-      setIsConfirming(false);
+      onDeleted?.();
     } catch (error) {
       notifyError(error);
     } finally {
@@ -38,36 +41,16 @@ const DeleteSubscriptionButton = ({ id }: { id: string }) => {
     }
   };
 
-  if (!isConfirming) {
-    return (
-      <Button
-        color="error"
-        startIcon={<DeleteOutlineIcon />}
-        onClick={() => setIsConfirming(true)}
-      >
-        Delete
-      </Button>
-    );
-  }
-
   return (
-    <Stack direction="row" spacing={1}>
-      <Button
-        startIcon={<CheckIcon />}
-        onClick={handleDelete}
-        disabled={isLoading}
-      >
-        Confirm
-      </Button>
-      <Button
-        color="inherit"
-        startIcon={<CloseIcon />}
-        onClick={() => setIsConfirming(false)}
-        disabled={isLoading}
-      >
-        Cancel
-      </Button>
-    </Stack>
+    <IconButton
+      title="Delete Subscription"
+      onClick={() => void handleDelete()}
+      disabled={isLoading}
+      size="small"
+      sx={deleteIconButtonStyle}
+    >
+      <DeleteOutlineIcon fontSize="small" />
+    </IconButton>
   );
 };
 
@@ -75,6 +58,11 @@ export const UserNotificationSubscriptionsCard = (props: {
   user_id: string;
 }) => {
   const { user_id } = props;
+  const tableRef = useRef<EntityFetchTableRef>(null);
+
+  const refreshSubscriptions = () => {
+    void tableRef.current?.refresh();
+  };
 
   const columns = useMemo(
     () => [
@@ -108,7 +96,10 @@ export const UserNotificationSubscriptionsCard = (props: {
         headerName: "Delete",
         sortable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <DeleteSubscriptionButton id={params.value} />
+          <DeleteSubscriptionButton
+            id={params.value}
+            onDeleted={refreshSubscriptions}
+          />
         ),
       },
     ],
@@ -118,6 +109,7 @@ export const UserNotificationSubscriptionsCard = (props: {
   return (
     <BaseCard>
       <EntityFetchTable
+        ref={tableRef}
         title="User Subscriptions"
         entityName="subscription"
         columns={columns}

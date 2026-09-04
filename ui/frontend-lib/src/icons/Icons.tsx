@@ -2,6 +2,7 @@ import React from "react";
 
 import { Icon } from "@iconify/react";
 import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import { Box } from "@mui/material";
 
 // Wrapper to keep a consistent signature with other MUI SvgIcon-based components.
 // Accept only Iconify props (width/height/color/className/style). Ignore MUI-specific props like sx.
@@ -12,7 +13,7 @@ export const AwsIcon: React.FC<IconProps> = (props) => (
 );
 
 export const AzureIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="vscode-icons:file-type-azure" {...props} />
+  <Icon icon="logos:microsoft-azure" {...props} />
 );
 
 export const MicrosoftIcon: React.FC<IconProps> = (props) => (
@@ -28,7 +29,7 @@ export const GoogleIcon: React.FC<IconProps> = (props) => (
 );
 
 export const GitHubIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="octicon:mark-github-24" {...props} />
+  <Icon icon="logos:github-icon" {...props} />
 );
 
 export const GitLabIcon: React.FC<IconProps> = (props) => (
@@ -36,11 +37,11 @@ export const GitLabIcon: React.FC<IconProps> = (props) => (
 );
 
 export const BitbucketIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="vscode-icons:file-type-bitbucketpipeline" {...props} />
+  <Icon icon="logos:bitbucket" {...props} />
 );
 
 export const GitIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="skill-icons:git" {...props} />
+  <Icon icon="logos:git-icon" {...props} />
 );
 
 export const MongoDBIcon: React.FC<IconProps> = (props) => (
@@ -93,3 +94,32 @@ export const IconField = (type: string, size?: number) => {
   const sizeProps = size ? { width: size, height: size } : {};
   return <LabelIcon {...sizeProps} />;
 };
+
+/**
+ * Provider icon rendered at a fixed size inside a non-shrinking wrapper.
+ * Use inside flex rows/table cells: flexbox cannot rescale or squeeze the SVG,
+ * so the icon renders identically in every row regardless of content length.
+ */
+export const ProviderIcon: React.FC<{
+  provider?: string;
+  size?: number;
+}> = ({ provider, size = 16 }) => (
+  <Box
+    component="span"
+    aria-hidden
+    sx={{
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      lineHeight: 0,
+      "& svg": {
+        width: size,
+        height: size,
+        flexShrink: 0,
+      },
+    }}
+  >
+    {IconField(provider, size)}
+  </Box>
+);

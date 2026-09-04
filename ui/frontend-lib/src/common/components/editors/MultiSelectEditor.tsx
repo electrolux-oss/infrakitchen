@@ -11,6 +11,25 @@ export interface MultiSelectEditorProps<T> {
   getOptionLabel: (option: T) => string;
 }
 
+/**
+ * Stable identity key for an option: its `id` when the option carries one,
+ * otherwise its label. Selected values and options can be separate instances
+ * of the same entity, so reference comparison would let users select the same
+ * entry twice.
+ */
+const getOptionKey = <T,>(
+  option: T,
+  getOptionLabel: (option: T) => string,
+): string => {
+  if (typeof option === "object" && option !== null) {
+    const id = (option as unknown as { id?: unknown }).id;
+    if (id !== undefined && id !== null) {
+      return `id:${String(id)}`;
+    }
+  }
+  return `label:${getOptionLabel(option)}`;
+};
+
 /** Generic multi-select editor with chips, reusable for typed option lists. */
 export const MultiSelectEditor = <T,>({
   value,
@@ -27,8 +46,31 @@ export const MultiSelectEditor = <T,>({
     size="small"
     options={options}
     value={value}
-    onChange={(_event, newValue) => onChange(newValue as T[])}
+    onChange={(_event, newValue) => {
+      const seen = new Set<string>();
+      onChange(
+        (newValue as T[]).filter((option) => {
+          const key = getOptionKey(option, getOptionLabel);
+          if (seen.has(key)) {
+            return false;
+          }
+          seen.add(key);
+          return true;
+        }),
+      );
+    }}
     getOptionLabel={getOptionLabel}
+    getOptionDisabled={(option) =>
+      value.some(
+        (selected) =>
+          getOptionKey(selected, getOptionLabel) ===
+          getOptionKey(option, getOptionLabel),
+      )
+    }
+    isOptionEqualToValue={(option, selected) =>
+      getOptionKey(option, getOptionLabel) ===
+      getOptionKey(selected, getOptionLabel)
+    }
     renderValue={(items: readonly T[], getTagProps) =>
       items.map((option: T, index: number) => {
         const { key, ...rest } = getTagProps({ index });

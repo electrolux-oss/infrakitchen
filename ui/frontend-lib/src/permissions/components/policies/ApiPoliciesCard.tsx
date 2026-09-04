@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
@@ -10,7 +10,6 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
 import { RelativeTime } from "../../../common/components/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -106,28 +105,34 @@ export const ApiPoliciesCard = (props: { role: string }) => {
   );
 
   return (
-    <PropertyCollapseCard
-      title={"Role Api Policy List"}
-      expanded={true}
-      id="role-api-policies"
-    >
+    <>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Api Policy
-        </Button>
-        <PolicyApiCreateDialog
-          role_name={role}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<Icon icon="icon-park-outline:add" />}
+          >
+            Add Api Policy
+          </Button>
+        </Box>
       </PermissionWrapper>
+      <PolicyApiCreateDialog
+        role_name={role}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshPoliciesTable}
+      />
       <EntityFetchTable
         ref={tableRef}
         title="Api Policies"
@@ -136,6 +141,6 @@ export const ApiPoliciesCard = (props: { role: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </PropertyCollapseCard>
+    </>
   );
 };

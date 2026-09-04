@@ -1,3 +1,4 @@
+import { Stack } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { getRepoNameFromUrl } from "../../common";
@@ -10,6 +11,7 @@ import {
 import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
+import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
 export const executorColumns: EntityTableColumn[] = [
@@ -70,10 +72,23 @@ export const executorColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const sourceCodeVersion = params.row.sourceCode;
       return (
-        <GetEntityLink
-          {...sourceCodeVersion}
-          name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
-        />
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            alignItems: "center",
+            minWidth: 0,
+            overflow: "hidden",
+            height: "100%",
+          }}
+        >
+          <ProviderIcon provider={sourceCodeVersion?.sourceCodeProvider} />
+          <GetEntityLink
+            {...sourceCodeVersion}
+            name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
+            noWrap
+          />
+        </Stack>
       );
     },
   },

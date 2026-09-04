@@ -47,7 +47,8 @@ export const dataGridSx: SystemStyleObject<Theme> = {
   // some themes.
   "& .MuiDataGrid-cell": {
     fontSize: "0.875rem",
-    alignItems: "flex-start",
+    display: "flex",
+    alignItems: "center",
     borderTop: "1px solid",
     borderTopColor: "divider",
     py: "10px",

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Box, TextField, Typography } from "@mui/material";
+import { TextField, Typography } from "@mui/material";
 
-import { UserAvatar } from "../../common";
+import { UserAvatarList } from "../../common";
 import { GetReferenceUrlValue } from "../../common/components/CommonField";
 import { CommonField } from "../../common/components/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
@@ -15,17 +15,16 @@ import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import StatusChip from "../../common/StatusChip";
-
+import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
 import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
-import { useProjectNotificationDialog } from "../hooks";
 import { GqlProject } from "../graphql";
 import {
   ProjectUpdateFieldInput,
   UPDATE_PROJECT_MUTATION,
 } from "../graphql/mutations";
+import { useProjectNotificationDialog } from "../hooks";
 
 type UserOption = GqlUserShort & { displayName?: string | null };
 
@@ -47,17 +46,7 @@ const ownersDisplay = (owners: UserOption[] | null) => {
     );
   }
 
-  return (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-      {owners.map((owner) => (
-        <UserAvatar
-          key={owner.id}
-          id={owner.id}
-          identifier={owner.identifier}
-        />
-      ))}
-    </Box>
-  );
+  return <UserAvatarList users={owners} />;
 };
 
 interface ProjectOverviewProps {
@@ -126,10 +115,12 @@ export const ProjectOverview = ({
 
   const ownerValues = useMemo<UserOption[]>(
     () =>
-      (project.owners || []).map((owner) => {
-        const loadedUser = users.find((user) => user.id === owner.id);
-        return loadedUser || owner;
-      }),
+      (project.owners || [])
+        .map((owner) => {
+          const loadedUser = users.find((user) => user.id === owner.id);
+          return loadedUser || owner;
+        })
+        .sort((a, b) => a.identifier.localeCompare(b.identifier)),
     [project.owners, users],
   );
 

@@ -2,8 +2,8 @@ import { useState } from "react";
 
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import {
   Button,
   IconButton,
@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
   CASCADE_DELETE_PERMISSION_MUTATION,
@@ -103,12 +104,12 @@ export const DeletePermissionButton = (
   return (
     <>
       <IconButton
-        title={`Delete Permission`}
+        title={`Delete`}
         onClick={handleOpenDialog}
-        color="error"
         size="small"
+        sx={deleteIconButtonStyle}
       >
-        <DeleteIcon fontSize="small" />
+        <DeleteOutlineIcon fontSize="small" />
       </IconButton>
 
       <Dialog
@@ -125,8 +126,7 @@ export const DeletePermissionButton = (
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Are you sure you want to permanently delete? This action cannot be
-            undone.
+            Are you sure you want to delete this? This action cannot be undone.
           </DialogContentText>
           {enableCascadeDelete && (
             <DialogContentText sx={{ mt: 2 }}>

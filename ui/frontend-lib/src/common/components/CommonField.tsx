@@ -11,8 +11,8 @@ import { IconField } from "../../icons/Icons";
 import { useConfig } from "../context";
 import { getProviderDisplayName } from "../utils";
 
-import { UserAvatar } from "./UserAvatar";
 import { PlaceholderText } from "./PlaceholderDescription";
+import { UserAvatar } from "./UserAvatar";
 
 export const getRemoteUrlValue = (url: string) => {
   // Convert SSH URL to HTTPS URL
@@ -89,6 +89,13 @@ interface GetEntityLinkProps {
   name?: string;
   identifier?: string;
   sx?: SxProps<Theme>;
+  /**
+   * Render the link text on a single line and truncate with an ellipsis when it
+   * doesn't fit. The full text is available as a native tooltip on hover.
+   * Use inside constrained flex/table cells; wrap the cell content in a
+   * container with `overflow: hidden` for best results.
+   */
+  noWrap?: boolean;
 }
 
 export const GetEntityLink: FC<GetEntityLinkProps> = ({
@@ -97,6 +104,7 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
   name,
   identifier,
   sx,
+  noWrap = false,
 }) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
@@ -117,22 +125,39 @@ export const GetEntityLink: FC<GetEntityLinkProps> = ({
     [navigate, fullPath],
   );
 
+  const linkSx = noWrap
+    ? ([{ flex: "1 1 0%", minWidth: 0 }, sx] as SxProps<Theme>)
+    : sx;
+
   return (
     <Box
       sx={{
         display: "inline-flex",
         alignItems: "center",
         gap: 1,
+        ...(noWrap && {
+          display: "flex",
+          flexShrink: 1,
+          minWidth: 0,
+          overflow: "hidden",
+        }),
       }}
     >
       {entityName === "user" && <UserAvatar id={id} identifier={displayText} />}
       <Link
         href={fullPath}
         onClick={handleClick}
-        sx={sx}
+        sx={linkSx}
+        title={noWrap ? displayText : undefined}
         style={{
           cursor: "pointer",
-          whiteSpace: "normal",
+          ...(noWrap
+            ? {
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }
+            : { whiteSpace: "normal" }),
         }}
       >
         {displayText}

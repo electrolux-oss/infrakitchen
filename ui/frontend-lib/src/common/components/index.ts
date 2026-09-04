@@ -21,3 +21,4 @@ export * from "./PendingChangeBadge";
 export * from "./RevisionChip";
 export * from "./ServerInfoDialog";
 export * from "./UserAvatar";
+export * from "./UserAvatarList";

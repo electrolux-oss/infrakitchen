@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import ReorderIcon from "@mui/icons-material/Reorder";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
 import {
@@ -34,13 +34,22 @@ export const EntitySourceCodeVersions = ({
         requiredPermission="api:source_code_version"
         permissionAction="write"
       >
-        <Button
-          startIcon={<ReorderIcon />}
-          onClick={() => setDialogOpen(true)}
-          sx={{ mb: 2 }}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Rearrange Versions
-        </Button>
+          <Button
+            size="small"
+            startIcon={<ReorderIcon />}
+            onClick={() => setDialogOpen(true)}
+          >
+            Rearrange Versions
+          </Button>
+        </Box>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}

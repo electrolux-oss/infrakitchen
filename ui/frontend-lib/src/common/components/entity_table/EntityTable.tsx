@@ -19,6 +19,7 @@ import type { GridApi } from "@mui/x-data-grid";
 
 import { useConfig } from "../../context/ConfigContext";
 import { ColumnFilterSpec } from "../filter_panel/FilterConfig";
+
 import {
   dataGridClickableRowSx,
   dataGridDefaultProps,
@@ -137,41 +138,35 @@ export const EntityTable = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 0.5,
-          mt: 2,
-          mb: 1.5,
+          gap: 0.25,
+          mt: 1,
+          mb: 0.5,
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-          }}
-        >
-          <Tooltip title="Refresh">
+        <Tooltip title="Refresh">
+          <IconButton
+            size="small"
+            sx={{ p: 0.75 }}
+            aria-label="Refresh"
+            onClick={onRefresh}
+            disabled={!onRefresh}
+          >
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Show or hide columns">
+          <span>
             <IconButton
               size="small"
-              aria-label="Refresh"
-              onClick={onRefresh}
-              disabled={!onRefresh}
+              sx={{ p: 0.75 }}
+              aria-label="Toggle column visibility"
+              onClick={handleColumnVisibilityClick}
+              disabled={!apiRef.current}
             >
-              <RefreshIcon fontSize="small" />
+              <ViewColumnIcon fontSize="small" />
             </IconButton>
-          </Tooltip>
-          <Tooltip title="Show or hide columns">
-            <span>
-              <IconButton
-                size="small"
-                aria-label="Toggle column visibility"
-                onClick={handleColumnVisibilityClick}
-                disabled={!apiRef.current}
-              >
-                <ViewColumnIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
+          </span>
+        </Tooltip>
       </Box>
       <Box
         sx={{

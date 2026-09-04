@@ -7,10 +7,10 @@ export const RolePage = () => {
   const { role_id } = useParams();
 
   return (
-    <PageContainer title={role_id || "Role"}>
+    <PageContainer title="Role Details">
       <RoleContent role={role_id} />
     </PageContainer>
   );
 };
 
-RolePage.path = "/roles/:role_id";
+RolePage.path = "/roles/:role_id/:tab?";

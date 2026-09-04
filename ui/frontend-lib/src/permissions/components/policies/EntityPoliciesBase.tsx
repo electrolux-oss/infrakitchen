@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button, Chip } from "@mui/material";
+import { Box, Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
@@ -183,33 +183,30 @@ export const EntityPoliciesBase = ({
         requiredPermission={"api:permission"}
         permissionAction="write"
       >
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          startIcon={<AdminPanelSettingsIcon />}
-          sx={{ mr: 1 }}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            gap: 1,
+            mb: 0.5,
+          }}
         >
-          Add Role
-        </Button>
-        <EntityPolicyRoleCreateDialog
-          entityId={entityId}
-          entityName={entityName}
-          open={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onSuccess={refreshPoliciesTable}
-        />
-        <Button
-          onClick={() => setIsUserDialogOpen(true)}
-          startIcon={<PersonAddIcon />}
-        >
-          Add User
-        </Button>
-        <UserPolicyEntityCreateDialog
-          entityId={entityId}
-          entityName={entityName}
-          open={isUserDialogOpen}
-          onClose={() => setIsUserDialogOpen(false)}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => setIsDialogOpen(true)}
+            startIcon={<AdminPanelSettingsIcon />}
+          >
+            Add Role
+          </Button>
+          <Button
+            size="small"
+            onClick={() => setIsUserDialogOpen(true)}
+            startIcon={<PersonAddIcon />}
+          >
+            Add User
+          </Button>
+        </Box>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}
@@ -222,6 +219,20 @@ export const EntityPoliciesBase = ({
         }
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
+      />
+      <EntityPolicyRoleCreateDialog
+        entityId={entityId}
+        entityName={entityName}
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={refreshPoliciesTable}
+      />
+      <UserPolicyEntityCreateDialog
+        entityId={entityId}
+        entityName={entityName}
+        open={isUserDialogOpen}
+        onClose={() => setIsUserDialogOpen(false)}
+        onSuccess={refreshPoliciesTable}
       />
     </>
   );

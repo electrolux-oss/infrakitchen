@@ -246,7 +246,7 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
   {
-    path: "/roles/:role_id",
+    path: "/roles/:role_id/:tab?",
     Component: lz(() => import("./roles/pages/Role"), "RolePage"),
     requiredPermission: "api:permission",
     permissionAction: "read",

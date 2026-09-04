@@ -1,12 +1,14 @@
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { getRepoNameFromUrl } from "../../common";
 import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATUS, VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 
 export const sourceCodeVersionColumns: EntityTableColumn[] = [
@@ -80,7 +82,23 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const sourceCode = params.row.sourceCode;
       return (
-        <GetEntityLink {...sourceCode} identifier={sourceCode.sourceCodeUrl} />
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            alignItems: "center",
+            minWidth: 0,
+            overflow: "hidden",
+            height: "100%",
+          }}
+        >
+          <ProviderIcon provider={sourceCode?.sourceCodeProvider} />
+          <GetEntityLink
+            {...sourceCode}
+            name={getRepoNameFromUrl(sourceCode?.sourceCodeUrl || "")}
+            noWrap
+          />
+        </Stack>
       );
     },
   },
