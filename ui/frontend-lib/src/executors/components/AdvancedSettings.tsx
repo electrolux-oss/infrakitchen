@@ -34,10 +34,10 @@ const INTEGRATION_STORAGE_WARNING =
 
 export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
+  const { refreshEntity, userEntityPermissions } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:executor", "write");
-  const canEditStorage = checkActionPermission("api:storage", "admin");
+  const canEditStorage = userEntityPermissions.includes("admin");
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
