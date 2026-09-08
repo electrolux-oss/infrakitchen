@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { TextField, Typography } from "@mui/material";
+import { TextField } from "@mui/material";
 
 import { UserAvatarList } from "../../common";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
-import { CommonField } from "../../common/components/fields/CommonField";
+import {
+  CommonField,
+  GetReferenceUrlValue,
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
