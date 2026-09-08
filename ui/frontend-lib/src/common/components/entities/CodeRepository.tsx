@@ -37,7 +37,7 @@ export const CodeRepository = ({
         overflow: "hidden",
       }}
     >
-      <ProviderIcon provider={sourceCodeProvider} />
+      <ProviderIcon provider={sourceCodeProvider} size={18} />
       {id && entityName ? (
         <EntityLink id={id} entityName={entityName} name={repoName} noWrap />
       ) : (

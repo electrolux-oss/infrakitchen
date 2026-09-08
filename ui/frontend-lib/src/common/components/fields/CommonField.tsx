@@ -95,6 +95,12 @@ export const getProviderValue = (provider: string, iconSize: number = 24) => {
         alignItems: "center",
         justifyContent: "flex-start",
         gap: 1,
+        // Force both Iconify and MUI SVGs to the requested size — MUI SvgIcon
+        // ignores width/height attributes (CSS 1em).
+        "& svg": {
+          width: iconSize,
+          height: iconSize,
+        },
       }}
     >
       {IconField(provider, iconSize)}

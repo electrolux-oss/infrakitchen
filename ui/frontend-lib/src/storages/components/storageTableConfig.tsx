@@ -65,7 +65,7 @@ export const storageColumns: EntityTableColumn[] = [
           height: "100%",
         }}
       >
-        {getProviderValue(params.value)}
+        {getProviderValue(params.value, 18)}
       </Box>
     ),
   },

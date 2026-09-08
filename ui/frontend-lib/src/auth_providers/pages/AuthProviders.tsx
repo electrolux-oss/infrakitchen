@@ -42,7 +42,7 @@ export const AuthProvidersPage = () => {
         flex: 1,
         sortField: "auth_provider",
         renderCell: (params: GridRenderCellParams) =>
-          getProviderValue(params.value),
+          getProviderValue(params.value, 18),
       },
       {
         field: "enabled",
