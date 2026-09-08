@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import { Box } from "@mui/material";
 import { SxProps, Theme } from "@mui/system";
@@ -58,13 +58,43 @@ export const Entity = ({
   sx,
   noWrap = false,
 }: EntityProps) => {
+  const displayText = entity?.name || entity?.identifier;
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [labelWrapped, setLabelWrapped] = useState(false);
+
+  // When the name + label chip don't fit on one line, drop the chip to its own
+  // line below the name.
+  useLayoutEffect(() => {
+    if (!entity || !showLabel) {
+      setLabelWrapped(false);
+      return;
+    }
+    const el = rowRef.current;
+    const link = el?.querySelector("a");
+    if (!el || !link) return;
+    const update = () => {
+      const labelEl = el.querySelector(".MuiChip-root");
+      const labelWidth = labelEl?.getBoundingClientRect().width ?? 0;
+      const gapPx = 6; // matches the 0.75 theme spacing between items
+      const available = el.clientWidth - labelWidth - gapPx;
+      const range = document.createRange();
+      range.selectNodeContents(link);
+      const textWidth = range.getBoundingClientRect().width;
+      range.detach();
+      setLabelWrapped(textWidth > available + 1);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [entity, showLabel, displayText]);
+
   if (!entity) {
     return null;
   }
   // Raw entity-data blobs expose the type as `entityName` on the wire;
   // prefer the clearer `entityType` when constructing records directly.
   const entityType = entity.entityType ?? entity.entityName;
-  const displayText = entity.name || entity.identifier;
   let content: ReactNode;
   let tagLabel: string | undefined;
   if (entityType === "source_code") {
@@ -114,17 +144,37 @@ export const Entity = ({
     content = <>{displayText}</>;
     tagLabel = entity.template?.name || humanizeEntityType(entityType);
   }
+  const label = showLabel && tagLabel ? <Label label={tagLabel} /> : null;
+  const contentRow = {
+    display: "flex",
+    alignItems: "center",
+    gap: 0.75,
+    minWidth: 0,
+  } as const;
+
+  if (labelWrapped) {
+    return (
+      <Box
+        ref={rowRef}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          gap: 0.5,
+          minWidth: 0,
+          width: "100%",
+        }}
+      >
+        <Box sx={contentRow}>{content}</Box>
+        {label}
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.75,
-        minWidth: 0,
-      }}
-    >
+    <Box ref={rowRef} sx={contentRow}>
       {content}
-      {showLabel && tagLabel && <Label label={tagLabel} />}
+      {label}
     </Box>
   );
 };
