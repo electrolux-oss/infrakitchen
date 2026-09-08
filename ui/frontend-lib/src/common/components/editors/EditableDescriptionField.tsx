@@ -1,7 +1,7 @@
 import { GridSize, TextField } from "@mui/material";
 import { ReactNode } from "react";
 
-import { PlaceholderDescription } from "../PlaceholderDescription";
+import { PlaceholderDescription } from "../fields/PlaceholderDescription";
 import { CommonEditableField } from "./CommonEditableField";
 
 export interface EditableDescriptionFieldProps {

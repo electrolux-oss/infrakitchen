@@ -13,6 +13,34 @@ import {
   GoldenStateSummary,
 } from "./types";
 
+const PAGE_SIZE = 10;
+
+const AUDIT_LOG_FIELDS = `
+      id
+      action
+      model
+      entityId
+      entityData
+      createdAt
+      creator {
+        ${USER_SHORT_FIELDS}
+      }
+`;
+
+// Fetches just the next page of audit logs, used by the Recent Activities
+// widget's "Load more" button.
+const AUDIT_LOGS_QUERY = `
+  query AuditLogsPage(
+    $auditFilter: JSON
+    $auditSort: [String!]
+    $auditRange: [Int!]
+  ) {
+    auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
+      ${AUDIT_LOG_FIELDS}
+    }
+  }
+`;
+
 const DASHBOARD_QUERY = `
   query Dashboard(
     $auditFilter: JSON
@@ -20,21 +48,14 @@ const DASHBOARD_QUERY = `
     $auditRange: [Int!]
   ) {
     resourcesCount
+    auditLogsCount(filter: $auditFilter)
     favorites {
             componentType
             componentId
             componentData
           }
           auditLogs(filter: $auditFilter, sort: $auditSort, range: $auditRange) {
-            id
-            action
-            model
-            entityId
-            entityData
-            createdAt
-            creator {
-              ${USER_SHORT_FIELDS}
-            }
+            ${AUDIT_LOG_FIELDS}
           }
           goldenStateReport {
             overallScore
@@ -55,6 +76,7 @@ const DASHBOARD_QUERY = `
 
 interface DashboardResponse {
   resourcesCount: number;
+  auditLogsCount: number;
   favorites: GqlFavorite[];
   auditLogs: GqlAuditLog[];
   goldenStateReport: GoldenStateSummary | null;
@@ -73,6 +95,7 @@ function transformFavoriteToResource(
     _component_type: gql.componentType as "resource" | "executor",
     _component_id: gql.componentId,
     entityName: gql.componentData.entityName,
+    template: gql.componentData.template,
   };
 }
 
@@ -80,6 +103,8 @@ export const useDashboardData = () => {
   const { ikApi } = useConfig();
   const [favorites, setFavorites] = useState<FavoriteResource[]>([]);
   const [activities, setActivities] = useState<ActivityLogEntry[]>([]);
+  const [activitiesTotal, setActivitiesTotal] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [goldenStateReport, setGoldenStateReport] =
     useState<GoldenStateSummary | null>(null);
   const [hasResources, setHasResources] = useState(false);
@@ -90,6 +115,7 @@ export const useDashboardData = () => {
     critical: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const initializedRef = useRef(false);
 
   const fetchData = useCallback(async () => {
@@ -113,6 +139,7 @@ export const useDashboardData = () => {
       if (!resourcesExist) {
         setFavorites([]);
         setActivities([]);
+        setActivitiesTotal(0);
         setGoldenStateReport(null);
         setStats({ total: 0, ready: 0, needsUpdate: 0, critical: 0 });
         return;
@@ -126,6 +153,7 @@ export const useDashboardData = () => {
       setActivities(
         Array.isArray(response?.auditLogs) ? response.auditLogs : [],
       );
+      setActivitiesTotal(response?.auditLogsCount ?? 0);
       const goldenStateReport = response?.goldenStateReport ?? null;
       setGoldenStateReport(goldenStateReport);
 
@@ -144,10 +172,48 @@ export const useDashboardData = () => {
     } catch (err) {
       notifyError(err);
     } finally {
-      setLoading(false);
+      if (!initializedRef.current) {
+        setLoading(false);
+      }
       initializedRef.current = true;
     }
   }, [ikApi]);
+
+  const refetch = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchData();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchData]);
+
+  // Appends the next page of audit logs for the Recent Activities widget.
+  const loadMoreActivities = useCallback(async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const current = activities.length;
+      const response = await ikApi.graphqlRequest<{ auditLogs: GqlAuditLog[] }>(
+        AUDIT_LOGS_QUERY,
+        {
+          auditFilter: { model: ["resource", "executor"] },
+          auditSort: ["created_at", "DESC"],
+          auditRange: [current, current + PAGE_SIZE],
+        },
+      );
+      const more = Array.isArray(response?.auditLogs) ? response.auditLogs : [];
+      setActivities((prev) => {
+        const existingIds = new Set(prev.map((a) => a.id));
+        const appended = more.filter((a) => !existingIds.has(a.id));
+        return appended.length ? [...prev, ...appended] : prev;
+      });
+    } catch (err) {
+      notifyError(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [activities.length, ikApi, loadingMore]);
 
   useEffect(() => {
     fetchData();
@@ -155,10 +221,14 @@ export const useDashboardData = () => {
   return {
     favorites,
     activities,
+    activitiesTotal,
+    loadingMore,
     goldenStateReport,
     hasResources,
     stats,
     loading,
-    refetch: fetchData,
+    refreshing,
+    refetch,
+    loadMoreActivities,
   };
 };

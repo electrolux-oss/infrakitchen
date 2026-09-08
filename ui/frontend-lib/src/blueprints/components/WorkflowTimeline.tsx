@@ -15,7 +15,7 @@ import {
 
 import { useConfig } from "../../common";
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import StatusChip from "../../common/StatusChip";
 import { GqlWorkflow } from "../../workflows/graphql";
 
@@ -110,10 +110,12 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                   <TableRow key={step.id}>
                     <TableCell>{step.position + 1}</TableCell>
                     <TableCell>
-                      <GetEntityLink
-                        entityName="template"
-                        id={step.template?.id || ""}
-                        name={step.template?.name || "Template"}
+                      <Entity
+                        entity={{
+                          id: step.template?.id,
+                          entityType: "template",
+                          name: step.template?.name || "Template",
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -121,10 +123,12 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                     </TableCell>
                     <TableCell>
                       {step.resource ? (
-                        <GetEntityLink
-                          entityName="resource"
-                          id={step.resource?.id || ""}
-                          name={step.resource?.name || "Resource"}
+                        <Entity
+                          entity={{
+                            id: step.resource?.id,
+                            entityType: "resource",
+                            name: step.resource?.name || "Resource",
+                          }}
                         />
                       ) : (
                         "-"

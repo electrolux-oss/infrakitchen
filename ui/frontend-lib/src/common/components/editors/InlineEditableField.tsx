@@ -6,7 +6,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
 
 import { LockAffordance } from "./LockAffordance";
-import { PlaceholderText } from "../PlaceholderDescription";
+import { PlaceholderText } from "../fields/PlaceholderDescription";
 
 export interface InlineEditableFieldLock {
   /** Whether the field is currently locked. When locked, the lock icon
@@ -192,7 +192,9 @@ export function InlineEditableField<T>({
                 onClick={lock.onToggle}
                 title={lock.locked ? lock.lockedTitle : lock.unlockedTitle}
                 description={
-                  lock.locked ? lock.lockedDescription : lock.unlockedDescription
+                  lock.locked
+                    ? lock.lockedDescription
+                    : lock.unlockedDescription
                 }
               />
               {canEdit && !lock.locked && (
@@ -240,13 +242,13 @@ export function InlineEditableField<T>({
                   size="small"
                   disabled
                   aria-label={ariaLabel}
-              sx={{
-                opacity: 0,
-                transition: "opacity 0.15s ease-in-out",
-                width: 24,
-                height: 24,
-                padding: 2,
-              }}
+                  sx={{
+                    opacity: 0,
+                    transition: "opacity 0.15s ease-in-out",
+                    width: 24,
+                    height: 24,
+                    padding: 2,
+                  }}
                 >
                   <EditOutlinedIcon fontSize="small" />
                 </IconButton>

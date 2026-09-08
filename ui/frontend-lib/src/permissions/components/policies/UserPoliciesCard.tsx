@@ -5,13 +5,12 @@ import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity, PermissionWrapper } from "../../../common";
-import { BaseCard } from "../../../common/components/BaseCard";
-import { GetReferenceUrlValue } from "../../../common/components/CommonField";
+import { BaseCard } from "../../../common/components/cards/BaseCard";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -45,7 +44,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <Entity entity={params.row.entityData} />;
+          return <Entity entity={params.row.entityData} showLabel />;
         },
       },
       {
@@ -74,10 +73,9 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         headerName: "Creator",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          return creator ? <GetReferenceUrlValue {...creator} /> : "No User";
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
       {
         field: "id",

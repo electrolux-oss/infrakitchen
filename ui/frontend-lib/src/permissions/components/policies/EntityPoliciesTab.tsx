@@ -1,4 +1,4 @@
-import { BaseCard } from "../../../common/components/BaseCard";
+import { BaseCard } from "../../../common/components/cards/BaseCard";
 
 import { EntityPoliciesBase } from "./EntityPoliciesBase";
 

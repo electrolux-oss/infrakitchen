@@ -1,44 +1,27 @@
-import { Box, Stack } from "@mui/material";
-import { GridRenderCellParams } from "@mui/x-data-grid";
+import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import { Box, Typography } from "@mui/material";
+import {
+  GridColumnVisibilityModel,
+  GridRenderCellParams,
+} from "@mui/x-data-grid";
 
-import { getRepoNameFromUrl } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { CODE_FONT_FAMILY } from "../../common/theme";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
-import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATUS, VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 
-export const sourceCodeVersionColumns: EntityTableColumn[] = [
+export const sourceCodeVersionDefaultColumnVisibilityModel: GridColumnVisibilityModel =
   {
-    field: "identifier",
-    headerName: "Name",
-    fetchFields: ["identifier", "id", "entityName", "sourceCodeFolder"],
-    flex: 1,
-    hideable: false,
-    filter: [
-      {
-        field: "source_code_folder",
-        label: "Folder Name",
-        operators: ["like", "not_like", "eq"],
-        valueType: "text",
-        defaultOperator: "like",
-        defaultSelected: true,
-      },
-      {
-        field: "source_code_version",
-        label: "Tag",
-        operators: ["like", "not_like", "eq"],
-        valueType: "text",
-        defaultOperator: "like",
-      },
-    ],
-    renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
-    },
-  },
+    createdAt: false,
+    creator: false,
+  };
+
+export const sourceCodeVersionColumns: EntityTableColumn[] = [
   {
     field: "template",
     headerName: "Template",
@@ -59,13 +42,14 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
-      return <GetEntityLink {...template} />;
+      return <Entity entity={template} />;
     },
   },
   {
     field: "sourceCode",
     headerName: "Code Repository",
     flex: 1,
+    minWidth: 300,
     sortField: "source_code.source_code_url",
     filter: {
       field: "source_code_id",
@@ -82,30 +66,74 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const sourceCode = params.row.sourceCode;
       return (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
-            minWidth: 0,
-            overflow: "hidden",
-            height: "100%",
+        <Entity
+          entity={{
+            ...sourceCode,
+            sourceCodeUrl: sourceCode?.sourceCodeUrl,
+            sourceCodeProvider: sourceCode?.sourceCodeProvider,
           }}
-        >
-          <ProviderIcon provider={sourceCode?.sourceCodeProvider} />
-          <GetEntityLink
-            {...sourceCode}
-            name={getRepoNameFromUrl(sourceCode?.sourceCodeUrl || "")}
-            noWrap
-          />
-        </Stack>
+        />
       );
     },
   },
   {
-    field: "resourcesCount",
-    headerName: "Resource Count",
+    field: "identifier",
+    headerName: "Version",
+    fetchFields: [
+      "identifier",
+      "id",
+      "entityName",
+      "sourceCodeVersion",
+      "sourceCodeBranch",
+    ],
     flex: 1,
+    hideable: false,
+    filter: [
+      {
+        field: "source_code_folder",
+        label: "Folder Name",
+        operators: ["like", "not_like", "eq"],
+        valueType: "text",
+        defaultOperator: "like",
+        defaultSelected: true,
+      },
+      {
+        field: "source_code_version",
+        label: "Tag",
+        operators: ["like", "not_like", "eq"],
+        valueType: "text",
+        defaultOperator: "like",
+      },
+    ],
+    renderCell: (params: GridRenderCellParams) => {
+      const { sourceCodeVersion, sourceCodeBranch } = params.row;
+      // A version is pinned to either a tag or a branch.
+      const refLine = sourceCodeVersion || sourceCodeBranch;
+      const RefIcon = sourceCodeVersion
+        ? LocalOfferOutlinedIcon
+        : CallSplitOutlinedIcon;
+      const codeSx = {
+        fontFamily: CODE_FONT_FAMILY,
+        fontSize: 13,
+        lineHeight: 1.4,
+        minWidth: 0,
+      };
+      return refLine ? (
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}
+        >
+          <RefIcon color="action" sx={{ fontSize: 15, flexShrink: 0 }} />
+          <Typography noWrap variant="body2" sx={codeSx}>
+            {refLine}
+          </Typography>
+        </Box>
+      ) : null;
+    },
+  },
+  {
+    field: "resourcesCount",
+    headerName: "Resources",
+    width: 100,
     renderCell: (params: GridRenderCellParams) => {
       const count = params.row.resourcesCount || 0;
       return (
@@ -125,7 +153,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
   {
     field: "status",
     headerName: "Status",
-    flex: 1,
+    width: 140,
     filter: {
       field: "status",
       operators: ["eq", "in"],
@@ -150,7 +178,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     headerName: "Lifecycle State",
     fetchFields: ["lifecycleState", "breakingChanges"],
     sortField: "lifecycleState",
-    flex: 1,
+    width: 160,
     filter: {
       field: "lifecycle_state",
       operators: ["eq", "in"],
@@ -190,10 +218,8 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

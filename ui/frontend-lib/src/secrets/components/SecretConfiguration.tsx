@@ -17,13 +17,13 @@ import {
   CommonField,
   getProviderValue,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { BaseCard } from "../../common/components/BaseCard";
-import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";

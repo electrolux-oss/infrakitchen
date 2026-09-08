@@ -16,22 +16,22 @@ import {
   CommonField,
   GetReferenceUrlValue,
   getDateValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { Labels } from "../../common/components/Labels";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
+import { Labels } from "../../common/components/labels/Labels";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import {
   PlaceholderDescription,
   PlaceholderText,
-} from "../../common/components/PlaceholderDescription";
-import { RelativeTime } from "../../common/components/RelativeTime";
-import { ScheduleEntityActionDialog } from "../../common/components/ScheduleEntityActionDialog";
+} from "../../common/components/fields/PlaceholderDescription";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -265,9 +265,7 @@ export const ResourceOverview = ({
       />
       <CommonField
         name="Created"
-        value={
-          <RelativeTime date={resource.createdAt} user={resource.creator!} />
-        }
+        value={<RelativeTime date={resource.createdAt} />}
         size={4}
       />
       <CommonField
@@ -410,10 +408,10 @@ export const ResourceOverview = ({
             <CommonField
               name="Owners"
               value={
-                !projectOwners || projectOwners.length === 0 ? (
-                  <PlaceholderText />
-                ) : (
+                projectOwners?.length ? (
                   <UserAvatarList users={projectOwners} />
+                ) : (
+                  <PlaceholderText />
                 )
               }
               size={6}

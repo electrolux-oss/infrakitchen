@@ -1,11 +1,11 @@
-import { Stack } from "@mui/material";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
 import { getRepoNameFromUrl } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { CodeRepository } from "../../common/components/entities/CodeRepository";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   labelsColumn,
@@ -13,7 +13,6 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
-import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATUS } from "../../utils/constants";
 
 export const sourceCodeDefaultColumnVisibilityModel: GridColumnVisibilityModel =
@@ -37,25 +36,9 @@ export const sourceCodeColumns: EntityTableColumn[] = [
     },
     valueGetter: (_value: any, row: any) =>
       getRepoNameFromUrl(row.sourceCodeUrl || ""),
-    renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row;
-      const repoName = getRepoNameFromUrl(sourceCode.sourceCodeUrl || "");
-      return (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
-            minWidth: 0,
-            overflow: "hidden",
-            height: "100%",
-          }}
-        >
-          <ProviderIcon provider={sourceCode.sourceCodeProvider} />
-          <GetEntityLink {...sourceCode} name={repoName} noWrap />
-        </Stack>
-      );
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <CodeRepository {...params.row} />
+    ),
   },
   {
     field: "description",
@@ -104,10 +87,8 @@ export const sourceCodeColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

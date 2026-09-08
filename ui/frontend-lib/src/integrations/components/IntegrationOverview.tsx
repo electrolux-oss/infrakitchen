@@ -2,12 +2,12 @@ import { useCallback } from "react";
 
 import { TextField } from "@mui/material";
 
-import { CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -87,12 +87,7 @@ export const IntegrationOverview = ({ integration }: IntegrationAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime
-            date={integration.createdAt}
-            user={integration.creator}
-          />
-        }
+        value={<RelativeTime date={integration.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

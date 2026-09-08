@@ -81,9 +81,13 @@ export const EntityTable = ({
   const navigate = useNavigate();
 
   // Rows with an `entityName` + `id` navigate to their detail page, mirroring
-  // `GetEntityLink` URLs (``${linkPrefix}${entityName}s/${id}``).
+  // `EntityLink` URLs (``${linkPrefix}${entityName}s/${id}``).
   const handleRowClick: GridEventListener<"rowClick"> = useCallback(
     (params, event) => {
+      // Links inside cells (e.g. Entity links to related entities) handle
+      // their own navigation; don't also navigate the row to its detail page.
+      if ((event?.target as Element | undefined)?.closest("a")) return;
+
       const row = params.row as { entityName?: string; id?: string };
       const { entityName, id } = row;
       if (!entityName || !id) return;

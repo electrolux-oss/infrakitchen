@@ -32,14 +32,14 @@ import {
   ACTIONS_WITH_LOGS,
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import { RevisionChip } from "../RevisionChip";
+import { RevisionChip } from "../labels/RevisionChip";
 import {
   dataGridDefaultProps,
   dataGridPaginationSlotProps,
   dataGridSx,
 } from "../entity_table/dataGridStyles";
-import { GetEntityLink } from "../CommonField";
-import { RelativeTime } from "../RelativeTime";
+import { Entity } from "../entities/Entity";
+import { RelativeTime } from "../fields/RelativeTime";
 
 import { DiffEditor } from "./DiffEditor";
 import { RevisionTimelines } from "./RevisionTimelines";
@@ -245,11 +245,11 @@ export const Audit = ({
         headerName: "User",
         flex: 1,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
-          if (!params.row.creator) {
+          const creator = params.row.creator;
+          if (!creator) {
             return "System";
           }
-          const creatorData = params.row.creator;
-          return <GetEntityLink {...creatorData} />;
+          return <Entity entity={{ ...creator, entityType: "user" }} />;
         },
       },
       {

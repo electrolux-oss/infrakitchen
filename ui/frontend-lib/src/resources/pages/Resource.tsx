@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router";
 import { Button, Tooltip } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
-import { ScheduleApplyButton } from "../../common/components/ScheduleApplyButton";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ResourceContent } from "../components/ResourceContent";
 import { ResourceReviewView } from "../components/ResourceReviewView";

@@ -3,14 +3,13 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
   labelsColumn,
 } from "../../common/components/entity_table/tableColumns";
-import { Entity } from "../../common/components/Entity";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { Entity } from "../../common/components/entities/Entity";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
@@ -26,6 +25,8 @@ import { GqlResourceShort } from "../graphql";
 // --- Column visibility defaults ---
 
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+  template: false,
+  created_at: false,
   creator: false,
   storage: false,
   workspace: false,
@@ -73,7 +74,7 @@ export const resourceColumns: EntityTableColumn[] = [
       defaultOperator: "like",
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <Entity entity={params.row} />;
+      return <Entity entity={params.row} showLabel />;
     },
   },
   {
@@ -96,7 +97,7 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
-      return <GetEntityLink {...template} />;
+      return <Entity entity={template} />;
     },
   },
   {
@@ -118,7 +119,7 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const project = params.row.project;
-      return <GetEntityLink {...project} />;
+      return <Entity entity={project} />;
     },
   },
 
@@ -188,9 +189,8 @@ export const resourceColumns: EntityTableColumn[] = [
                 : "text.primary";
 
       return (
-        <GetEntityLink
-          {...scv}
-          name={ref}
+        <Entity
+          entity={{ ...scv, name: ref }}
           sx={{
             color: textColor,
             fontWeight: color === "warning" ? 600 : 500,
@@ -269,11 +269,9 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
   {
     field: "storage",
@@ -293,7 +291,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const storage = params.row.storage;
       if (!storage) return null;
-      return <GetEntityLink {...storage} />;
+      return <Entity entity={storage} />;
     },
   },
   {
@@ -314,7 +312,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const workspace = params.row.workspace;
       if (!workspace) return null;
-      return <GetEntityLink {...workspace} />;
+      return <Entity entity={workspace} />;
     },
   },
   {
@@ -343,7 +341,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {integrations.map((integration, index) => (
             <span key={integration.id}>
-              <GetEntityLink {...integration} />
+              <Entity entity={integration} />
               {index < integrations.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -375,7 +373,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {secrets.map((secret, index) => (
             <span key={secret.id}>
-              <GetEntityLink {...secret} />
+              <Entity entity={secret} />
               {index < secrets.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -397,7 +395,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {parents.map((parent, index) => (
             <span key={parent.id}>
-              <GetEntityLink {...parent} />
+              <Entity entity={parent} />
               {index < parents.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -419,7 +417,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {children.map((child, index) => (
             <span key={child.id}>
-              <GetEntityLink {...child} />
+              <Entity entity={child} />
               {index < children.length - 1 ? ", " : ""}
             </span>
           ))}

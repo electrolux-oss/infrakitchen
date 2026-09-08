@@ -1,7 +1,7 @@
 import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import { InlineCode } from "../../common/components/InlineCode";
+import { InlineCode } from "../../common/components/code/InlineCode";
 
 import {
   Checkbox,

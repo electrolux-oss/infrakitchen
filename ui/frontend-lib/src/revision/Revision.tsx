@@ -18,7 +18,7 @@ import {
 
 import { useConfig } from "../common";
 import { DiffEditor } from "../common/components/activity/DiffEditor";
-import { getDateValue } from "../common/components/CommonField";
+import { getDateValue } from "../common/components/fields/CommonField";
 import GradientCircularProgress from "../common/GradientCircularProgress";
 
 import {

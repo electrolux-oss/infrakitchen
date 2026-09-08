@@ -11,7 +11,7 @@ import {
   SlackIcon,
 } from "../icons/Icons";
 
-import { InlineCode } from "../common/components/InlineCode";
+import { InlineCode } from "../common/components/code/InlineCode";
 
 import { ConnectionType, IntegrationType, Provider } from "./types";
 

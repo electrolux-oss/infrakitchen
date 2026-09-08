@@ -1,17 +1,14 @@
-import { Stack } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { getRepoNameFromUrl } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
   labelsColumn,
 } from "../../common/components/entity_table/tableColumns";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
-import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
 export const executorColumns: EntityTableColumn[] = [
@@ -49,7 +46,7 @@ export const executorColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -72,23 +69,13 @@ export const executorColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const sourceCodeVersion = params.row.sourceCode;
       return (
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            alignItems: "center",
-            minWidth: 0,
-            overflow: "hidden",
-            height: "100%",
+        <Entity
+          entity={{
+            ...sourceCodeVersion,
+            sourceCodeUrl: params.row.sourceCode?.sourceCodeUrl,
+            sourceCodeProvider: params.row.sourceCode?.sourceCodeProvider,
           }}
-        >
-          <ProviderIcon provider={sourceCodeVersion?.sourceCodeProvider} />
-          <GetEntityLink
-            {...sourceCodeVersion}
-            name={getRepoNameFromUrl(params.row.sourceCode?.sourceCodeUrl)}
-            noWrap
-          />
-        </Stack>
+        />
       );
     },
   },
@@ -155,7 +142,8 @@ export const executorColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) =>
-      params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

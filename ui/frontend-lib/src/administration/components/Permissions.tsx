@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { Button } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { RELOAD_PERMISSIONS_MUTATION } from "../graphql";
 

@@ -8,15 +8,13 @@ import { Box, Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  capitalizeFirstLetter,
-} from "../../../common/components/CommonField";
+import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
+import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { useConfig } from "../../../common/context";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -63,17 +61,22 @@ export const EntityPoliciesBase = ({
         renderCell: (params: GridRenderCellParams) => {
           if (params.row.v0.startsWith("user:")) {
             return (
-              <GetEntityLink
-                id={params.row.v0.split(":")[1]}
-                {...params.row.userData}
+              <Entity
+                entity={{
+                  ...params.row.userData,
+                  id: params.row.v0.split(":")[1],
+                  entityType: "user",
+                }}
               />
             );
           } else {
             return (
-              <GetEntityLink
-                id={params.row.v0}
-                entityName={"role"}
-                name={params.row.v0}
+              <Entity
+                entity={{
+                  id: params.row.v0,
+                  entityType: "role",
+                  name: params.row.v0,
+                }}
               />
             );
           }
@@ -142,10 +145,9 @@ export const EntityPoliciesBase = ({
         headerName: "Creator",
         sortable: false,
         flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          return creator ? <GetEntityLink {...creator} /> : "No User";
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
       {
         field: "id",

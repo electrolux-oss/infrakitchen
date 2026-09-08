@@ -5,18 +5,18 @@ import { Box, Divider, TextField } from "@mui/material";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import { StringChips } from "../../common/components/editors/StringChips";
 import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { InlineCode } from "../../common/components/InlineCode";
+import { InlineCode } from "../../common/components/code/InlineCode";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -140,9 +140,7 @@ export const TemplateOverview = ({ template }: TemplateAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={template.createdAt} user={template.creator} />
-        }
+        value={<RelativeTime date={template.createdAt} />}
         size={6}
       />
       <CommonField

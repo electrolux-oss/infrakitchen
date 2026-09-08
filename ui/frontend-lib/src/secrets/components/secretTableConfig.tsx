@@ -4,10 +4,8 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { getProviderValue } from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
@@ -32,7 +30,7 @@ export const secretColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -108,11 +106,9 @@ export const secretColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
   {
     field: "integration",
@@ -132,7 +128,7 @@ export const secretColumns: EntityTableColumn[] = [
     valueGetter: (_value: any, row: any) => row.integration?.name || "",
     renderCell: (params: GridRenderCellParams) =>
       params.row.integration ? (
-        <GetEntityLink {...params.row.integration} />
+        <Entity entity={params.row.integration} />
       ) : null,
   },
   labelsColumn("secret"),

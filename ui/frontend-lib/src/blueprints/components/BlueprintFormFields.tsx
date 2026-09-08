@@ -3,7 +3,7 @@ import { Control, Controller, FieldErrors } from "react-hook-form";
 import { TextField, Box } from "@mui/material";
 
 import { LabelInput } from "../../common";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import {
   TemplatePorts,

@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { PermissionResponse } from "../types";
 

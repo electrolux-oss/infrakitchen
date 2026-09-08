@@ -14,11 +14,11 @@ import {
 } from "@mui/material";
 
 import { FilterProvider, PermissionWrapper } from "../../common";
-import { EntityCard } from "../../common/components/EntityCard";
+import { EntityCard } from "../../common/components/cards/EntityCard";
 import { entityCardGridSx } from "../../common/utils/entityCardGrid";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";

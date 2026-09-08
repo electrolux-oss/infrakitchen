@@ -5,12 +5,11 @@ import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity, PermissionWrapper } from "../../../common";
-import { GetEntityLink } from "../../../common/components/CommonField";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -47,7 +46,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           if (params.row.v1 && params.row.v1.includes("*")) {
             return <span>{params.row.v1}</span>;
           }
-          return <Entity entity={params.row.entityData} />;
+          return <Entity entity={params.row.entityData} showLabel />;
         },
       },
       {
@@ -76,11 +75,9 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         headerName: "Creator",
         flex: 1,
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} />;
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
       {
         field: "id",

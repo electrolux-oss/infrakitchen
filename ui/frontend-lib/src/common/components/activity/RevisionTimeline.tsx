@@ -3,9 +3,9 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
 import { AuditLogEntity } from "../../../types";
-import { HorizontalTimeline } from "../HorizontalTimeline";
-import { RelativeTime } from "../RelativeTime";
-import { RevisionChip } from "../RevisionChip";
+import { HorizontalTimeline } from "./HorizontalTimeline";
+import { RelativeTime } from "../fields/RelativeTime";
+import { RevisionChip } from "../labels/RevisionChip";
 
 interface RevisionTimelineProps {
   revision: string;
@@ -56,13 +56,7 @@ export const RevisionTimeline = ({
               >
                 {log.action}
               </Typography>
-              <RelativeTime
-                date={log.createdAt}
-                user={
-                  log.creator ? { ...log.creator, entityName: "user" } : null
-                }
-                sx={{ fontSize: "0.7rem" }}
-              />
+              <RelativeTime date={log.createdAt} sx={{ fontSize: "0.7rem" }} />
               {actionsWithLogs.includes(log.action) && (
                 <Stack
                   direction="row"

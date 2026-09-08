@@ -1,7 +1,7 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { Labels } from "../Labels";
-import { RelativeTime } from "../RelativeTime";
+import { Labels } from "../labels/Labels";
+import { RelativeTime } from "../fields/RelativeTime";
 import { EntityTableColumn } from "./EntityTable";
 
 /** Options for a relative-time column (renderer = RelativeTime, size small). */

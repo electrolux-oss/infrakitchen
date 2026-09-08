@@ -1,9 +1,9 @@
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+} from "../../common/components/fields/CommonField";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { PermissionResponse } from "../types";
 
 export interface PermissionAboutProps {
@@ -38,9 +38,7 @@ export const PermissionOverview = ({ permission }: PermissionAboutProps) => {
       <CommonField name={"V5"} value={getPermissionReference(permission.v5)} />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={permission.createdAt} user={permission.creator} />
-        }
+        value={<RelativeTime date={permission.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

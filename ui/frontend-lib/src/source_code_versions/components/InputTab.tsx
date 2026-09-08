@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { CircularProgress, Box } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { HclItemList } from "../../common/components/HclItemList";
+import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ValidationRulesByVariable } from "../../types";
 import {

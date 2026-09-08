@@ -10,8 +10,8 @@ import {
   GridSize,
 } from "@mui/material";
 
-import { CommonField } from "../../common/components/CommonField";
-import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 

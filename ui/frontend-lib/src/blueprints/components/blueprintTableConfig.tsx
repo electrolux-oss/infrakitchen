@@ -1,10 +1,8 @@
 import { Box, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { getDateValue } from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import { solidChipColorSx } from "../../common/utils/softChip";
@@ -25,7 +23,7 @@ export const blueprintColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => (
-      <GetEntityLink {...params.row} />
+      <Entity entity={params.row} />
     ),
   },
   {
@@ -105,10 +103,8 @@ export const blueprintColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

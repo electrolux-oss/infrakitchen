@@ -6,7 +6,7 @@ import ReorderIcon from "@mui/icons-material/Reorder";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import {
   EntityProvider,
   useEntityProvider,

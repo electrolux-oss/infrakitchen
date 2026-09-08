@@ -141,10 +141,19 @@ async def _load_workspaces(keys: list[str], session: AsyncSession) -> list[dict[
 
 
 async def _load_source_codes(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(SourceCode.id, SourceCode.source_code_url).where(SourceCode.id.in_(keys))
+    stmt = select(SourceCode.id, SourceCode.source_code_url, SourceCode.source_code_provider).where(
+        SourceCode.id.in_(keys)
+    )
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.source_code_url, "entityName": "source_code"} for row in result
+        str(row.id): {
+            "id": str(row.id),
+            "name": row.source_code_url,
+            "sourceCodeUrl": row.source_code_url,
+            "sourceCodeProvider": row.source_code_provider,
+            "entityName": "source_code",
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 

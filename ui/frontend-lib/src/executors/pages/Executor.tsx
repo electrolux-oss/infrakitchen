@@ -1,8 +1,8 @@
 import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
-import { ScheduleApplyButton } from "../../common/components/ScheduleApplyButton";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
+import { ScheduleApplyButton } from "../../common/components/buttons/ScheduleApplyButton";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ExecutorContent } from "../components/ExecutorContent";
 import { EXECUTOR_DETAIL_FIELDS } from "../graphql";

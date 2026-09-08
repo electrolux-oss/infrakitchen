@@ -21,10 +21,10 @@ import {
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { CommonDialog } from "../../common/components/CommonDialog";
+import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { BaseCard } from "../../common/components/BaseCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_NOTIFICATION_PREFERENCE_MUTATION,

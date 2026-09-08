@@ -3,15 +3,16 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { TextField, Typography } from "@mui/material";
 
 import { UserAvatarList } from "../../common";
-import { GetReferenceUrlValue } from "../../common/components/CommonField";
-import { CommonField } from "../../common/components/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
+import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -37,17 +38,8 @@ const sameUserSet = (a: UserOption[] | null, b: UserOption[] | null) => {
   return x.length === y.length && x.join("\u0000") === y.join("\u0000");
 };
 
-const ownersDisplay = (owners: UserOption[] | null) => {
-  if (!owners || owners.length === 0) {
-    return (
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        None
-      </Typography>
-    );
-  }
-
-  return <UserAvatarList users={owners} />;
-};
+const ownersDisplay = (owners: UserOption[] | null) =>
+  owners?.length ? <UserAvatarList users={owners} /> : <PlaceholderText />;
 
 interface ProjectOverviewProps {
   project: GqlProject;
@@ -202,7 +194,7 @@ export const ProjectOverview = ({
       />
       <CommonField
         name={"Created"}
-        value={<RelativeTime date={project.createdAt} user={project.creator} />}
+        value={<RelativeTime date={project.createdAt} />}
         size={6}
       />
       <CommonField

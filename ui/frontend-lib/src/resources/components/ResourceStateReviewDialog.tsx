@@ -13,7 +13,7 @@ import {
 
 import { useEntityProvider } from "../../common";
 import { ActionButton } from "../../common/components/buttons/ActionButton";
-import { CommonDialog } from "../../common/components/CommonDialog";
+import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { IkEntity } from "../../types";
 import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils/constants";
 import { GqlResourceTempState } from "../graphql";

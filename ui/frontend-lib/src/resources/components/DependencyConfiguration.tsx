@@ -18,11 +18,11 @@ import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
 import { solidChipColorSx } from "../../common/utils/softChip";
 import TagInput from "../../common/components/inputs/TagInput";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";

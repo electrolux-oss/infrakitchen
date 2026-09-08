@@ -1,8 +1,8 @@
 import { Alert, Box } from "@mui/material";
 
-import { BaseCard } from "../../common/components/BaseCard";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { TabbedContent } from "../../common/components/TabbedContent";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { TabbedContent } from "../../common/components/cards/TabbedContent";
 import { ApiPoliciesCard } from "../../permissions/components/policies/ApiPoliciesCard";
 import { EntityRolePoliciesCard } from "../../permissions/components/policies/EntityRolePoliciesCard";
 import { RoleUsersCard } from "../../permissions/components/roles/RoleUsersCard";

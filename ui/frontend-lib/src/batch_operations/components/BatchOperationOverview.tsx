@@ -1,6 +1,6 @@
-import { CommonField } from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { GqlBatchOperation } from "../graphql";
 
 interface BatchOperationOverviewProps {
@@ -27,12 +27,7 @@ export const BatchOperationOverview = ({
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime
-            date={batchOperation.createdAt}
-            user={batchOperation.creator}
-          />
-        }
+        value={<RelativeTime date={batchOperation.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

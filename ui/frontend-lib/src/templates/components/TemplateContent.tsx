@@ -3,12 +3,13 @@ import { useMemo } from "react";
 import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
-import { MarkdownViewer } from "../../common/components/MarkdownViewer";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -55,7 +56,9 @@ export const TemplateContent = () => {
       : []),
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -65,7 +68,12 @@ export const TemplateContent = () => {
     },
     {
       label: "Template Versions",
-      tabLabel: `Template Versions (${entity.sourceCodeVersionsCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel
+          label="Template Versions"
+          count={entity.sourceCodeVersionsCount ?? 0}
+        />
+      ),
       content: (
         <EntitySourceCodeVersions
           fixedFilters={fixedFilters}

@@ -23,12 +23,12 @@ import {
 } from "@mui/x-data-grid";
 
 import { serverSearchReference } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../../common/components/filter_panel/FilterContext";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
@@ -108,7 +108,7 @@ export const BatchOperationEntitySelector = (
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -118,7 +118,7 @@ export const BatchOperationEntitySelector = (
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
-          return <GetEntityLink {...template} />;
+          return <Entity entity={template} />;
         },
       },
       {
@@ -187,9 +187,8 @@ export const BatchOperationEntitySelector = (
                     : "text.primary";
 
           return (
-            <GetEntityLink
-              {...scv}
-              name={ref}
+            <Entity
+              entity={{ ...scv, name: ref }}
               sx={{
                 color: textColor,
                 fontWeight: color === "warning" ? 600 : 500,
@@ -215,7 +214,7 @@ export const BatchOperationEntitySelector = (
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -226,7 +225,7 @@ export const BatchOperationEntitySelector = (
           row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.sourceCode;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return <Entity entity={sourceCodeVersion} />;
         },
       },
       selectionStateColumn,

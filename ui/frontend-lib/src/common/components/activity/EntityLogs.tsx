@@ -17,7 +17,7 @@ import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import { RelativeTime } from "../RelativeTime";
+import { RelativeTime } from "../fields/RelativeTime";
 
 export interface EntityLogsProps {
   entityId?: string;

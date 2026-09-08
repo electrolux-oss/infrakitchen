@@ -3,12 +3,13 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
-import { HclItemList } from "../../common/components/HclItemList";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { HclItemList } from "../../common/components/hcl/HclItemList";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
@@ -31,10 +32,22 @@ export const SourceCodeVersionContent = () => {
   const tabs: TabDefinition[] = [
     {
       label: "Inputs",
+      tabLabel: (
+        <TabCountLabel
+          label="Inputs"
+          count={source_code_version.variables?.length ?? 0}
+        />
+      ),
       content: <InputTab source_code_version={source_code_version} />,
     },
     {
       label: "Outputs",
+      tabLabel: (
+        <TabCountLabel
+          label="Outputs"
+          count={source_code_version.outputs?.length ?? 0}
+        />
+      ),
       content: (
         <Box sx={{ pt: 0.5 }}>
           {source_code_version.outputs ? (
@@ -63,8 +76,13 @@ export const SourceCodeVersionContent = () => {
       ),
     },
     {
-      label: `Resources`,
-      tabLabel: `Resources (${source_code_version.resourcesCount ?? 0})`,
+      label: "Resources",
+      tabLabel: (
+        <TabCountLabel
+          label="Resources"
+          count={source_code_version.resourcesCount ?? 0}
+        />
+      ),
       content: (
         <EntityResources
           fixedFilters={fixedFilters}

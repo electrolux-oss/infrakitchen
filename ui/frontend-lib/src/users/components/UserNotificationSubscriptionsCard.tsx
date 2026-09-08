@@ -5,14 +5,14 @@ import { IconButton } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
   DELETE_SUBSCRIPTION_MUTATION,
@@ -75,10 +75,12 @@ export const UserNotificationSubscriptionsCard = (props: {
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
-            <GetEntityLink
-              id={params.row.entityData?.id}
-              entityName={params.row.entityData?.entityName}
-              name={params.row.entityData?.name || params.row.v1}
+            <Entity
+              entity={{
+                id: params.row.entityData?.id,
+                entityType: params.row.entityData?.entityName,
+                name: params.row.entityData?.name || params.row.v1,
+              }}
             />
           );
         },

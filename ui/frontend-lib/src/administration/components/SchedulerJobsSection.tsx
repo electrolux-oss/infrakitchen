@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_SCHEDULER_MUTATION,

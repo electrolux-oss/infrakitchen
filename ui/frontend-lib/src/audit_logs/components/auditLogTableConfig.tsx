@@ -1,6 +1,6 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
@@ -31,17 +31,21 @@ export const auditLogColumns: EntityTableColumn[] = [
     field: "entityId",
     fetchFields: ["model", "entityId", "entityData"],
     headerName: "Entity",
-    flex: 1,
+    flex: 2.5,
     sortable: true,
     sortField: "entity_id",
     hideable: false,
     valueGetter: (value: string) => value,
     renderCell: (params: GridRenderCellParams) => {
       return (
-        <GetEntityLink
-          id={params.row.entityId}
-          entityName={params.row.model}
-          name={params.row.entityData?.name ?? params.row.model}
+        <Entity
+          entity={{
+            ...params.row.entityData,
+            id: params.row.entityId,
+            entityType: params.row.model,
+            name: params.row.entityData?.name ?? params.row.model,
+          }}
+          showLabel
         />
       );
     },
@@ -66,10 +70,12 @@ export const auditLogColumns: EntityTableColumn[] = [
       const creator = params.row.creator;
       if (creator?.id) {
         return (
-          <GetEntityLink
-            id={creator.id}
-            entityName="user"
-            name={creator.identifier}
+          <Entity
+            entity={{
+              ...creator,
+              entityType: "user",
+              name: creator.identifier,
+            }}
           />
         );
       }
@@ -87,12 +93,6 @@ export const auditLogColumns: EntityTableColumn[] = [
       defaultOperator: "in",
       options: AUDIT_LOG_ACTION_OPTIONS,
     },
-    renderCell: (params: GridRenderCellParams) => params.value,
-  },
-  {
-    field: "model",
-    headerName: "Model",
-    flex: 1,
     renderCell: (params: GridRenderCellParams) => params.value,
   },
   relativeTimeColumn("createdAt", "Time", { sortField: "created_at" }),

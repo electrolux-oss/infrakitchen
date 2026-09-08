@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 
 import { GridSize } from "@mui/material";
 
-import { CommonField } from "../CommonField";
+import { CommonField } from "../fields/CommonField";
 
 import {
   InlineEditableField,

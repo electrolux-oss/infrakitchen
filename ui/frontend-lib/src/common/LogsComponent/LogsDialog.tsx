@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useState } from "react";
 
-import { CommonDialog } from "../components/CommonDialog";
+import { CommonDialog } from "../components/dialogs/CommonDialog";
 
 import { getDialogTitle } from "./LogActionButtons";
 import { Logs } from "./Logs";

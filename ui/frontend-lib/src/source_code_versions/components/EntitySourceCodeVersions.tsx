@@ -12,7 +12,10 @@ import { buildAdvancedApiFilters } from "../../common/components/filter_panel/bu
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
-import { sourceCodeVersionColumns } from "./sourceCodeVersionTableConfig";
+import {
+  sourceCodeVersionColumns,
+  sourceCodeVersionDefaultColumnVisibilityModel,
+} from "./sourceCodeVersionTableConfig";
 import { TemplateVersionReorderDialog } from "./TemplateVersionReorderDialog";
 
 interface EntitySourceCodeVersionsProps {
@@ -56,6 +59,9 @@ export const EntitySourceCodeVersions = ({
         title="Template Versions"
         entityName="sourceCodeVersion"
         columns={sourceCodeVersionColumns}
+        defaultColumnVisibilityModel={
+          sourceCodeVersionDefaultColumnVisibilityModel
+        }
         entityFieldMap={SCV_FIELD_MAP}
         filterStorageKey={filterStorageKey}
         buildApiFilters={(filterValues) => ({

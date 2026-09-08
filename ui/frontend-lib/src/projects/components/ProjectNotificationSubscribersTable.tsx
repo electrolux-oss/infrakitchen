@@ -2,9 +2,9 @@ import { useMemo } from "react";
 
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 
 interface ProjectNotificationSubscribersTableProps {
@@ -24,7 +24,7 @@ export const ProjectNotificationSubscribersTable = ({
         renderCell: (params: GridRenderCellParams) => {
           const user = params.row.user;
           if (!user) return "Unknown";
-          return <GetEntityLink {...user} name={user.identifier} />;
+          return <Entity entity={{ ...user, entityType: "user" }} />;
         },
       },
       {

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import { CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify } from "../../common/hooks/useNotification";
 import { INTEGRATION_OIDC_QUERY } from "../graphql/queries";

@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Tooltip } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import {
   EntityProvider,
   useEntityProvider,
@@ -35,8 +35,7 @@ const TemplatePageContent = () => {
   // The API serializes status with its display casing (e.g. "DISABLED"); the
   // constants are lowercase, so normalize before comparing.
   const isDisabled =
-    String(entity?.status ?? "").toLocaleLowerCase() ===
-    ENTITY_STATUS.DISABLED;
+    String(entity?.status ?? "").toLocaleLowerCase() === ENTITY_STATUS.DISABLED;
 
   const handleUseTemplate = () => {
     if (entity?.id) {

@@ -11,6 +11,7 @@ export interface FavoriteResource extends Omit<
   state: string;
   updatedAt?: string;
   createdAt?: string;
+  template?: { name?: string } | null;
   _component_type: "resource" | "executor";
   [key: string]: any;
 }
@@ -29,6 +30,9 @@ export interface ActivityLogEntry {
   entityData?: {
     name?: string;
     status?: string;
+    template?: { name?: string } | null;
+    sourceCodeUrl?: string;
+    sourceCodeProvider?: string;
   };
   status?: "success" | "failure" | "pending";
   [key: string]: any;

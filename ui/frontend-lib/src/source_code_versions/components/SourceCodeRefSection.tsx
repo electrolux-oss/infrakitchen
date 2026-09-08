@@ -20,7 +20,7 @@ import {
   FilterRenderer,
   useLocalStorage,
 } from "../../common";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useHashParams } from "../../common/hooks/useHashParams";
 import { ENTITY_STATUS } from "../../utils";
 import { SCV_FIELD_MAP } from "../graphql";
