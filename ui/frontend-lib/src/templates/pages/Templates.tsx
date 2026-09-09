@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -15,14 +15,14 @@ import {
 
 import { FilterProvider, PermissionWrapper } from "../../common";
 import { EntityCard } from "../../common/components/cards/EntityCard";
-import { entityCardGridSx } from "../../common/utils/entityCardGrid";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { entityCardGridSx } from "../../common/utils/entityCardGrid";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { templateColumns } from "../components/templateFilterConfig";
 import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";

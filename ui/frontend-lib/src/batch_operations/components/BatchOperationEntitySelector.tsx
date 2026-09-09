@@ -1,8 +1,3 @@
-import {
-  dataGridDefaultProps,
-  dataGridPaginationSlotProps,
-  dataGridSx,
-} from "../../common/components/entity_table/dataGridStyles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -24,11 +19,17 @@ import {
 
 import { serverSearchReference } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
+import {
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../../common/components/filter_panel/FilterContext";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
@@ -61,7 +62,7 @@ const selectionStateColumn: EntityTableColumn = {
 const selectionCreatedAtColumn: EntityTableColumn = {
   field: "createdAt",
   headerName: "Created",
-  flex: 1,
+  width: RELATIVE_TIME_COLUMN_WIDTH,
   renderCell: (params: GridRenderCellParams) => (
     <RelativeTime date={params.value} sx={{ display: "flex" }} />
   ),

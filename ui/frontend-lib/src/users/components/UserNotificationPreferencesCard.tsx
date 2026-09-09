@@ -21,9 +21,10 @@ import {
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { BaseCard } from "../../common/components/cards/BaseCard";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
@@ -296,7 +297,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),

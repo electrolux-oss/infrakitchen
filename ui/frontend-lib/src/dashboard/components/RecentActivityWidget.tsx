@@ -16,14 +16,14 @@ import {
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
-import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import {
   dataGridClickableRowSx,
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-
 import { ActivityLogEntry } from "../types";
 
 export interface RecentActivityWidgetProps {
@@ -195,7 +195,7 @@ export const RecentActivityWidget = ({
       {
         field: "createdAt",
         headerName: "When",
-        flex: 0.8,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         valueGetter: (_value, row) => new Date(row.createdAt).getTime(),
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
           <RelativeTime date={params.row.createdAt} sx={{ display: "flex" }} />

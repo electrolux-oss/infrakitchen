@@ -4,6 +4,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 
@@ -30,7 +31,7 @@ export const ProjectNotificationSubscribersTable = ({
       {
         field: "createdAt",
         headerName: "Subscribed",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),

@@ -1,5 +1,3 @@
-import { NavigateFunction } from "react-router";
-
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
@@ -7,25 +5,26 @@ import {
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import {
+  createdUpdatedColumns,
+  RELATIVE_TIME_COLUMN_WIDTH,
+} from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 
 export const taskDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   creator: false,
 };
 
-export const taskColumns = (options: {
-  navigate: NavigateFunction;
-  linkPrefix: string;
-  entityOptions: string[];
-}): EntityTableColumn[] => [
+export const taskColumns = (): EntityTableColumn[] => [
   {
     field: "entity",
     fetchFields: ["entity", "entityId", "entityData"],
     headerName: "Entity",
-    flex: 1,
+    // Entity names can be long; give this column most of the remaining space
+    // (matches the audit log table's Entity emphasis).
+    flex: 2.5,
     hideable: false,
     filter: {
       field: "entity",
@@ -63,7 +62,8 @@ export const taskColumns = (options: {
     field: "runAt",
     headerName: "Run At",
     sortField: "run_at",
-    flex: 1,
+    // Same fixed width as the Created / Last Updated time columns.
+    width: RELATIVE_TIME_COLUMN_WIDTH,
     renderCell: (params: GridRenderCellParams) =>
       params.value ? <RelativeTime date={params.value} /> : null,
   },

@@ -1,5 +1,3 @@
-import React from "react";
-
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Chip, Tooltip } from "@mui/material";
 import { SxProps, Theme } from "@mui/system";

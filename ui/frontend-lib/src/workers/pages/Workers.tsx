@@ -5,6 +5,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
@@ -139,7 +140,7 @@ export default function WorkerList() {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
@@ -148,7 +149,7 @@ export default function WorkerList() {
       {
         field: "updatedAt",
         headerName: "Last Updated",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "updated_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />

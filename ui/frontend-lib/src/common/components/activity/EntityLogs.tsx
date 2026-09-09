@@ -8,15 +8,16 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
-import {
-  dataGridDefaultProps,
-  dataGridSx,
-} from "../entity_table/dataGridStyles";
 import { useConfig } from "../../../common";
 import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
+import {
+  dataGridDefaultProps,
+  dataGridSx,
+} from "../entity_table/dataGridStyles";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
 import { RelativeTime } from "../fields/RelativeTime";
 
 export interface EntityLogsProps {
@@ -118,7 +119,7 @@ export const EntityLogs = ({
       {
         field: "createdAt",
         headerName: "Started",
-        flex: 0.2,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params) => <RelativeTime date={params.value} />,
       },
 

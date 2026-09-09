@@ -32,14 +32,15 @@ import {
   ACTIONS_WITH_LOGS,
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import { RevisionChip } from "../labels/RevisionChip";
+import { Entity } from "../entities/Entity";
 import {
   dataGridDefaultProps,
   dataGridPaginationSlotProps,
   dataGridSx,
 } from "../entity_table/dataGridStyles";
-import { Entity } from "../entities/Entity";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
 import { RelativeTime } from "../fields/RelativeTime";
+import { RevisionChip } from "../labels/RevisionChip";
 
 import { DiffEditor } from "./DiffEditor";
 import { RevisionTimelines } from "./RevisionTimelines";
@@ -255,7 +256,7 @@ export const Audit = ({
       {
         field: "createdAt",
         headerName: "Time",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
           <RelativeTime date={params.value} />
         ),

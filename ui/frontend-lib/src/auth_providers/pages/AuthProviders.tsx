@@ -7,9 +7,10 @@ import { Button, Switch, Tooltip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper, useConfig } from "../../common";
-import { getProviderValue } from "../../common/components/fields/CommonField";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
@@ -60,7 +61,7 @@ export const AuthProvidersPage = () => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} />

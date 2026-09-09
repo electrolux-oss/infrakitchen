@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 
 import { useConfig } from "../..";
@@ -42,11 +43,21 @@ export function FilterProvider(props: FilterProviderProps) {
 
   const { ikApi, globalConfig } = useConfig();
 
+  // Reference loaders are created once at derive time; keep the latest filter
+  // values in a ref so those loaders can read the current clauses (e.g. to
+  // scope one field's options by another field's selection) without forcing
+  // the whole filter config to be re-derived on every change.
+  const filterValuesRef = useRef<FilterState>({});
+
   const filters = useMemo<FilterConfig[]>(() => {
     const fields = deriveFilterableFields(columns, {
       ikApi,
       options: {
         entities: globalConfig.entities,
+      },
+      getFilterClauses: () => {
+        const value = filterValuesRef.current["filter"];
+        return Array.isArray(value) ? value : [];
       },
     });
 
@@ -70,6 +81,10 @@ export function FilterProvider(props: FilterProviderProps) {
     syncToUrl,
   });
   const hasFilters = filters.length > 0;
+
+  // Sync during render (not in an effect) so reference loaders invoked from
+  // child mount effects in the same commit already see the latest clauses.
+  filterValuesRef.current = filterState.filterValues;
 
   useEffect(() => {
     onFilterChange?.(filterState.filterValues);

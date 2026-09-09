@@ -8,12 +8,13 @@ import { Box, Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
 import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../../common/components/entity_table/tableColumns";
+import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { useConfig } from "../../../common/context";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
@@ -135,7 +136,7 @@ export const EntityPoliciesBase = ({
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),

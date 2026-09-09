@@ -1,8 +1,16 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { Labels } from "../labels/Labels";
 import { RelativeTime } from "../fields/RelativeTime";
+import { Labels } from "../labels/Labels";
+
 import { EntityTableColumn } from "./EntityTable";
+
+/**
+ * Shared fixed width for every relative-time column (Created, Last Updated,
+ * Time, …). Relative time text (e.g. "5 minutes ago", "12 months ago") is
+ * short, so all time columns use one compact width instead of stretching.
+ */
+export const RELATIVE_TIME_COLUMN_WIDTH = 160;
 
 /** Options for a relative-time column (renderer = RelativeTime, size small). */
 export interface RelativeTimeColumnOptions {
@@ -14,6 +22,8 @@ export interface RelativeTimeColumnOptions {
    * `params.value`, which matches when the field and row property agree.
    */
   value?: (params: GridRenderCellParams) => string | Date | null | undefined;
+  /** Fixed column width; defaults to {@link RELATIVE_TIME_COLUMN_WIDTH}. */
+  width?: number;
 }
 
 /** Options for the Created + Last Updated column pair. */
@@ -38,7 +48,7 @@ export const relativeTimeColumn = (
 ): EntityTableColumn => ({
   field,
   headerName,
-  flex: 1,
+  width: options.width ?? RELATIVE_TIME_COLUMN_WIDTH,
   ...(options.sortField ? { sortField: options.sortField } : {}),
   renderCell: (params: GridRenderCellParams) => {
     const date = options.value

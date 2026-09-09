@@ -5,13 +5,14 @@ import { IconButton } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { Entity } from "../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../common/components/entity_table/EntityFetchTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notifyError } from "../../common/hooks/useNotification";
 import {
@@ -88,7 +89,7 @@ export const UserNotificationSubscriptionsCard = (props: {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),

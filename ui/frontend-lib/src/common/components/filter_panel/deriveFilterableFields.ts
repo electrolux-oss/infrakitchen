@@ -61,6 +61,11 @@ export const deriveFilterableFields = (
         field.loadReferenceOptions = spec.makeReferenceLoader(ctx);
       }
 
+      // Fields whose values scope this field's options
+      if (spec.dependencies) {
+        field.dependencies = spec.dependencies;
+      }
+
       fields.push(field);
     }
   }

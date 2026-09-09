@@ -26,13 +26,14 @@ import {
 } from "@mui/x-data-grid";
 
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
+import { useConfig } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { Entity } from "../../common/components/entities/Entity";
 import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { useConfig } from "../../common";
-import { Entity } from "../../common/components/entities/Entity";
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
@@ -390,7 +391,7 @@ export const BatchOperationEntities = ({
       {
         field: "updated_at",
         headerName: "Last Updated",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
