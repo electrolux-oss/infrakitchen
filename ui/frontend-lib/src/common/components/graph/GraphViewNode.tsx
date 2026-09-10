@@ -1,19 +1,20 @@
 import { Launch } from "@mui/icons-material";
 import { Box, Link, useColorScheme } from "@mui/material";
-import { Handle, NodeProps, Position } from "@xyflow/react";
+import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 
 import { useConfig } from "../..";
 import StatusChip from "../../StatusChip";
 import { Entity } from "../entities/Entity";
 import { TreeResponse } from "../tree/types";
 
-export interface GraphNodeData {
+export interface GraphNodeData extends Record<string, unknown> {
   entity_name: string;
   entity_id: string;
   item: TreeResponse;
   isRoot: boolean;
-  [key: string]: unknown;
 }
+
+export type GraphNode = Node<GraphNodeData, "graphNode">;
 
 /**
  * Read-only graph node for the resource/template dependency graph. Mirrors
@@ -26,7 +27,7 @@ export interface GraphNodeData {
  * from `useTheme()` doesn't update on dark-mode toggle when `cssVariables`
  * is enabled (see WiringDiagram for the same pattern).
  */
-export function GraphViewNode({ data }: NodeProps<GraphNodeData>) {
+export function GraphViewNode({ data }: NodeProps<GraphNode>) {
   const { mode } = useColorScheme();
   const isDark = mode === "dark";
   const { linkPrefix } = useConfig();

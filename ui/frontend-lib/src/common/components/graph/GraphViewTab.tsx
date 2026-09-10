@@ -7,7 +7,6 @@ import {
   Controls,
   Edge,
   MiniMap,
-  Node,
   NodeChange,
   ReactFlow,
 } from "@xyflow/react";
@@ -17,7 +16,7 @@ import { useConfig } from "../../context";
 import { fetchEntityTree } from "../tree/fetchEntityTree";
 import { TreeResponse } from "../tree/types";
 
-import { GraphNodeData, GraphViewNode } from "./GraphViewNode";
+import { GraphNode, GraphViewNode } from "./GraphViewNode";
 
 const COL_WIDTH = 260;
 const ROW_HEIGHT = 140;
@@ -33,8 +32,8 @@ const NODE_TYPES = { graphNode: GraphViewNode };
 function buildGraph(
   root: TreeResponse,
   entity_name: string,
-): { nodes: Node<GraphNodeData>[]; edges: Edge[] } {
-  const nodes: Node<GraphNodeData>[] = [];
+): { nodes: GraphNode[]; edges: Edge[] } {
+  const nodes: GraphNode[] = [];
   const edges: Edge[] = [];
   const levels: TreeResponse[][] = [];
 
@@ -102,7 +101,7 @@ export const EntityGraphViewTab = ({
     [tree, entity_name],
   );
 
-  const [nodes, setNodes] = useState<Node<GraphNodeData>[]>(computedNodes);
+  const [nodes, setNodes] = useState<GraphNode[]>(computedNodes);
 
   // Re-sync local node state whenever the fetched tree changes (e.g. entity
   // navigation), but let onNodesChange own positions afterwards so drags stick.
@@ -111,7 +110,7 @@ export const EntityGraphViewTab = ({
   }, [computedNodes]);
 
   const onNodesChange = useCallback(
-    (changes: NodeChange<Node<GraphNodeData>>[]) =>
+    (changes: NodeChange<GraphNode>[]) =>
       setNodes((current) => applyNodeChanges(changes, current)),
     [],
   );
