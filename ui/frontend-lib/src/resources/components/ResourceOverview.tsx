@@ -486,9 +486,11 @@ export const ResourceOverview = ({
                 borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.parents.map((parent) => (
-                <Entity key={parent.id} entity={parent} showLabel />
-              ))}
+              {[...resource.parents]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((parent) => (
+                  <Entity key={parent.id} entity={parent} showLabel />
+                ))}
             </Box>
           ) : null
         }
@@ -511,9 +513,11 @@ export const ResourceOverview = ({
                 borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.children.map((child) => (
-                <Entity key={child.id} entity={child} showLabel />
-              ))}
+              {[...resource.children]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((child) => (
+                  <Entity key={child.id} entity={child} showLabel />
+                ))}
             </Box>
           ) : null
         }
