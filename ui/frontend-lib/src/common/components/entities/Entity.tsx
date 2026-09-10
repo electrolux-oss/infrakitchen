@@ -30,6 +30,8 @@ export interface EntityProps {
   sx?: SxProps<Theme>;
   /** Truncate the link text on a single line (see EntityLink). */
   noWrap?: boolean;
+  /** Force the label chip onto its own line below the name, instead of auto-detecting based on available width. */
+  stacked?: boolean;
 }
 
 // ``entityName`` is the entity type in snake_case (and EntityLink's
@@ -57,6 +59,7 @@ export const Entity = ({
   showLabel = false,
   sx,
   noWrap = false,
+  stacked = false,
 }: EntityProps) => {
   const displayText = entity?.name || entity?.identifier;
   const rowRef = useRef<HTMLDivElement>(null);
@@ -65,7 +68,7 @@ export const Entity = ({
   // When the name + label chip don't fit on one line, drop the chip to its own
   // line below the name.
   useLayoutEffect(() => {
-    if (!entity || !showLabel) {
+    if (!entity || !showLabel || stacked) {
       setLabelWrapped(false);
       return;
     }
@@ -152,7 +155,7 @@ export const Entity = ({
     minWidth: 0,
   } as const;
 
-  if (labelWrapped) {
+  if (labelWrapped || stacked) {
     return (
       <Box
         ref={rowRef}

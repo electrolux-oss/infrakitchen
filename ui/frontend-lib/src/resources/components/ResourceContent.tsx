@@ -9,6 +9,7 @@ import {
   TabbedContent,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
@@ -38,6 +39,15 @@ export const ResourceContent = () => {
       label: "Tree View",
       content: (
         <EntityTreeViewTab
+          entity_id={entity.id}
+          entity_name={entity.entityName}
+        />
+      ),
+    },
+    {
+      label: "Graph View",
+      content: (
+        <EntityGraphViewTab
           entity_id={entity.id}
           entity_name={entity.entityName}
         />
