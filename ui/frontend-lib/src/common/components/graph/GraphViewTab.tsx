@@ -18,16 +18,17 @@ import { TreeResponse } from "../tree/types";
 
 import { GraphNode, GraphViewNode } from "./GraphViewNode";
 
-const COL_WIDTH = 260;
-const ROW_HEIGHT = 140;
+const LEVEL_WIDTH = 320;
+const NODE_HEIGHT = 90;
 
 const NODE_TYPES = { graphNode: GraphViewNode };
 
 /**
  * Flattens the tree into React Flow nodes/edges with a simple layered
- * (level-order) layout: each depth becomes a row, and nodes within a row are
- * spread out evenly. Good enough for dependency graphs, which are rarely
- * more than a few levels deep or extremely wide.
+ * (level-order) layout: each depth becomes a column (growing left-to-right),
+ * and nodes within a level are stacked vertically. Good enough for
+ * dependency graphs, which are rarely more than a few levels deep, and keeps
+ * wide/bushy trees growing tall instead of very wide.
  */
 function buildGraph(
   root: TreeResponse,
@@ -56,14 +57,14 @@ function buildGraph(
   visit(root, 0);
 
   levels.forEach((levelNodes, depth) => {
-    const rowWidth = levelNodes.length * COL_WIDTH;
+    const columnHeight = levelNodes.length * NODE_HEIGHT;
     levelNodes.forEach((node, index) => {
       nodes.push({
         id: node.nodeId,
         type: "graphNode",
         position: {
-          x: index * COL_WIDTH - rowWidth / 2,
-          y: depth * ROW_HEIGHT,
+          x: depth * LEVEL_WIDTH,
+          y: index * NODE_HEIGHT - columnHeight / 2,
         },
         data: {
           entity_name,

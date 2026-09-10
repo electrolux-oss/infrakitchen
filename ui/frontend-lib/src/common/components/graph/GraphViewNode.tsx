@@ -60,7 +60,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
     >
       <Handle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         style={{ visibility: "hidden" }}
       />
       <Box className="nodrag" sx={{ minWidth: 0, display: "flex" }}>
@@ -106,7 +106,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
       </Box>
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         style={{ visibility: "hidden" }}
       />
     </Box>
