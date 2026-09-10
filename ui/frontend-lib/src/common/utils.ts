@@ -81,9 +81,9 @@ export const getStateColor = (
 
   if (status === WORKER_STATUS.BUSY)
     return {
-      backgroundColor: "info.dark",
-      color: "primary.contrastText",
-      borderColor: "info.dark",
+      backgroundColor: "warning.main",
+      color: "warning.text",
+      borderColor: "warning.main",
     };
 
   if (status === WORKER_STATUS.FREE)

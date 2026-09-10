@@ -186,6 +186,7 @@ export const EntityTable = ({
             apiRef={apiRef}
             rows={entities}
             rowCount={totalRows}
+            autoHeight
             paginationMode="server"
             loading={loading}
             columns={columns}

@@ -73,7 +73,9 @@ export const EntityCard = ({
   secondaryAction,
 }: EntityCardProps) => {
   const navigate = useNavigate();
-  const handleCreateClick = () => {
+  const handleCreateClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+
     if (onCreateClick) {
       onCreateClick();
     } else if (createUrl) {
