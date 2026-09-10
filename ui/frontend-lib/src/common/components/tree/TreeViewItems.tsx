@@ -1,12 +1,13 @@
 import React, { Dispatch } from "react";
 
 import { Launch } from "@mui/icons-material";
-import { Box, Link, Typography } from "@mui/material";
+import { Box, Link } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 
 import { useConfig } from "../..";
 import StatusChip from "../../StatusChip";
+import { Entity } from "../entities/Entity";
 
 import { TreeResponse } from "./types";
 
@@ -57,30 +58,19 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
               minWidth: 0,
             }}
           >
-            {" "}
-            {item.templateName && (
-              <>
-                <Typography
-                  sx={{
-                    color: "text.secondary",
-                    fontSize: "0.8125rem",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {item.templateName}
-                </Typography>
-                <Typography sx={{ color: "text.secondary" }}>/</Typography>
-              </>
-            )}
-            <Typography
-              sx={{
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+            <Entity
+              entity={{
+                id: entity_id,
+                name: item.name,
+                entityName: entity_name,
+                template: item.templateName
+                  ? { name: item.templateName }
+                  : undefined,
               }}
-            >
-              {item.name}
-            </Typography>
+              showLabel
+              noWrap
+              sx={{ minWidth: 0 }}
+            />
             <StatusChip
               status={status}
               state={state}

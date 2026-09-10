@@ -1,5 +1,6 @@
-// Activates MUI X's theme module augmentation (MuiDataGrid in Components<T>).
+// Activates MUI X theme module augmentations.
 import "@mui/x-data-grid/themeAugmentation";
+import "@mui/x-tree-view/themeAugmentation";
 
 import { createTheme, alpha } from "@mui/material/styles";
 import type { Shadows } from "@mui/material/styles";

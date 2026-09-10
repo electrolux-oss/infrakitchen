@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PermissionWrapper, UserAvatarList } from "../../common";
+import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
 import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
 import {
   CommonField,
@@ -487,11 +487,7 @@ export const ResourceOverview = ({
               })}
             >
               {resource.parents.map((parent) => (
-                <GetReferenceUrlValue
-                  key={parent.id}
-                  {...parent}
-                  display_name={`${parent.template.name} (${parent.name})`}
-                />
+                <Entity key={parent.id} entity={parent} showLabel />
               ))}
             </Box>
           ) : null
@@ -516,11 +512,7 @@ export const ResourceOverview = ({
               })}
             >
               {resource.children.map((child) => (
-                <GetReferenceUrlValue
-                  key={child.id}
-                  {...child}
-                  display_name={`${child.template.name} (${child.name})`}
-                />
+                <Entity key={child.id} entity={child} showLabel />
               ))}
             </Box>
           ) : null
