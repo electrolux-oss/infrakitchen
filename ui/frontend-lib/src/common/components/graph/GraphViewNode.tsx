@@ -48,14 +48,18 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
         gap: 1,
         px: 1.5,
         py: 1,
+        width: 280,
         minWidth: 180,
         maxWidth: 280,
+        boxSizing: "border-box",
         backgroundColor,
         border: `1px solid ${isRoot ? highlightColor : borderColor}`,
         borderRadius: "var(--template-surface-radius)",
         boxShadow: isRoot
           ? `0 0 0 2px ${highlightColor}33`
           : "0 1px 2px rgba(0, 0, 0, 0.1)",
+        cursor: "grab",
+        "&:active": { cursor: "grabbing" },
       }}
     >
       <Handle
@@ -63,7 +67,14 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
         position={Position.Left}
         style={{ visibility: "hidden" }}
       />
-      <Box className="nodrag" sx={{ minWidth: 0, display: "flex" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flex: "1 1 auto",
+          minWidth: 0,
+          overflow: "hidden",
+        }}
+      >
         <Entity
           entity={{
             id: entity_id,
@@ -76,6 +87,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
           showLabel
           stacked
           noWrap
+          linkClassName="nodrag"
           sx={{ minWidth: 0, typography: "body2" }}
         />
       </Box>
@@ -86,6 +98,7 @@ export function GraphViewNode({ data }: NodeProps<GraphNode>) {
           gap: 1,
           mt: 0.25,
           ml: "auto",
+          flexShrink: 0,
         }}
       >
         <StatusChip

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Box, useColorScheme } from "@mui/material";
+import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Tooltip,
+  useColorScheme,
+} from "@mui/material";
 import {
   applyNodeChanges,
   Background,
@@ -92,6 +101,7 @@ export const EntityGraphViewTab = ({
   const { ikApi } = useConfig();
   const { mode } = useColorScheme();
   const [tree, setTree] = useState<TreeResponse>();
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     fetchEntityTree(ikApi, entity_name, entity_id, "children").then(setTree);
@@ -116,14 +126,15 @@ export const EntityGraphViewTab = ({
     [],
   );
 
-  return (
+  const graph = (
     <Box
       sx={{
+        position: "relative",
         width: "100%",
-        height: 480,
+        height: fullscreen ? "100vh" : 480,
         border: "1px solid",
         borderColor: "divider",
-        borderRadius: "var(--template-surface-radius)",
+        borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",
         backgroundColor: "background.paper",
         overflow: "hidden",
       }}
@@ -155,6 +166,44 @@ export const EntityGraphViewTab = ({
           )}
         </ReactFlow>
       )}
+      <Tooltip title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
+        <IconButton
+          size="small"
+          aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          onClick={() => setFullscreen((current) => !current)}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            bgcolor: "background.paper",
+            border: "1px solid",
+            borderColor: "divider",
+            "&:hover": { bgcolor: "action.hover" },
+          }}
+        >
+          {fullscreen ? (
+            <CloseFullscreenIcon fontSize="small" />
+          ) : (
+            <FullscreenIcon fontSize="small" />
+          )}
+        </IconButton>
+      </Tooltip>
     </Box>
   );
+
+  if (fullscreen) {
+    return (
+      <Dialog
+        open
+        fullScreen
+        onClose={() => setFullscreen(false)}
+        slotProps={{ paper: { sx: { bgcolor: "background.default" } } }}
+      >
+        <DialogContent sx={{ p: 0, height: "100vh" }}>{graph}</DialogContent>
+      </Dialog>
+    );
+  }
+
+  return graph;
 };

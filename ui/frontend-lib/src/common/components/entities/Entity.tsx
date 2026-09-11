@@ -28,6 +28,8 @@ export interface EntityProps {
   showLabel?: boolean;
   /** Styles forwarded to the rendered link. */
   sx?: SxProps<Theme>;
+  /** Class name forwarded to the rendered link. */
+  linkClassName?: string;
   /** Truncate the link text on a single line (see EntityLink). */
   noWrap?: boolean;
   /** Force the label chip onto its own line below the name, instead of auto-detecting based on available width. */
@@ -58,6 +60,7 @@ export const Entity = ({
   entity,
   showLabel = false,
   sx,
+  linkClassName,
   noWrap = false,
   stacked = false,
 }: EntityProps) => {
@@ -122,6 +125,7 @@ export const Entity = ({
             name={entity.name}
             identifier={entity.identifier}
             sx={sx}
+            className={linkClassName}
             noWrap={noWrap}
           />
         ) : (
@@ -139,6 +143,7 @@ export const Entity = ({
         name={entity.name}
         identifier={entity.identifier}
         sx={sx}
+        className={linkClassName}
         noWrap={noWrap}
       />
     );
@@ -168,7 +173,7 @@ export const Entity = ({
           width: "100%",
         }}
       >
-        <Box sx={contentRow}>{content}</Box>
+        <Box sx={{ ...contentRow, width: "100%" }}>{content}</Box>
         {label}
       </Box>
     );

@@ -13,6 +13,7 @@ interface EntityLinkProps {
   name?: string;
   identifier?: string;
   sx?: SxProps<Theme>;
+  className?: string;
   /** Truncate the link text on a single line with an ellipsis (full text in a tooltip). */
   noWrap?: boolean;
 }
@@ -27,6 +28,7 @@ export const EntityLink: FC<EntityLinkProps> = ({
   name,
   identifier,
   sx,
+  className,
   noWrap = false,
 }) => {
   const { linkPrefix } = useConfig();
@@ -67,6 +69,7 @@ export const EntityLink: FC<EntityLinkProps> = ({
       }}
     >
       <Link
+        className={className}
         href={fullPath}
         onClick={handleClick}
         sx={linkSx}
