@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:17.6-trixie
+    restart: always
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: infrakitchen
+    # ports:
+    #   - 5432:5432
+    networks:
+      - iknetwork
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+  rabbitmq:
+    image: rabbitmq:4.0.9-management
+    user: rabbitmq
+    # ports:
+    #   - "5672:5672"
+    #   - "15672:15672"
+    networks:
+      - iknetwork
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./docs/examples/docker/Frontend
+    environment:
+      BACKEND_HOST: python-backend-server
+    command: >
+      bash -c "yarn install && yarn dev"
+    ports:
+      - "7777:7777"
+    networks:
+      - iknetwork
+    volumes:
+      - ./ui/:/app
+  python-backend-server:
+    environment:
+      BROKER_URL: amqp://guest:guest@rabbitmq:5672
+      POSTGRES_HOST: postgres
+    build:
+      context: ./
+      dockerfile: ./docs/examples/docker/Backend
+    command: >
+      bash -c "/venvs/.venv/bin/watchmedo auto-restart -d ./ -p '*.py' --recursive -- /venvs/.venv/bin/python dev_server.py"
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - iknetwork
+    volumes:
+      - ./server/:/app
+    depends_on:
+      - "postgres"
+      - "rabbitmq"
+volumes:
+  db_data:
+  pg-data:
+  pg-test-data:
+
+networks:
+  iknetwork:
+    name: iknetwork
