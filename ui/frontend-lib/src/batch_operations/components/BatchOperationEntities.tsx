@@ -26,14 +26,15 @@ import {
 } from "@mui/x-data-grid";
 
 import { buildAuditLogsQuery, GqlAuditLog } from "../../audit_logs/graphql";
+import { useConfig } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { Entity } from "../../common/components/entities/Entity";
 import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
-import { PropertyCard } from "../../common/components/PropertyCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { buildEntityActionMutation } from "../../common/graphql/entityActionMutation";
@@ -372,7 +373,7 @@ export const BatchOperationEntities = ({
         headerName: "Name",
         flex: 1,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -390,7 +391,7 @@ export const BatchOperationEntities = ({
       {
         field: "updated_at",
         headerName: "Last Updated",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
@@ -440,7 +441,7 @@ export const BatchOperationEntities = ({
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
-          return <GetEntityLink {...template} />;
+          return <Entity entity={template} />;
         },
       });
     }
@@ -591,7 +592,7 @@ export const BatchOperationEntities = ({
                 return (
                   <ListItem key={key} disableGutters>
                     <ListItemText
-                      primary={entity ? <GetEntityLink {...entity} /> : key}
+                      primary={entity ? <Entity entity={entity} /> : key}
                       secondary={result?.message}
                     />
                     <Stack

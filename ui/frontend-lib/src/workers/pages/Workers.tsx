@@ -3,9 +3,10 @@ import { useMemo } from "react";
 import { Tooltip, Typography } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { CODE_FONT_FAMILY } from "../../common/theme";
@@ -120,10 +121,8 @@ export default function WorkerList() {
               }
               placement="top-start"
             >
-              <GetEntityLink
-                entityName={entity}
-                id={entity_id}
-                identifier={label}
+              <Entity
+                entity={{ id: entity_id, entityType: entity, name: label }}
               />
             </Tooltip>
           );
@@ -141,7 +140,7 @@ export default function WorkerList() {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
@@ -150,7 +149,7 @@ export default function WorkerList() {
       {
         field: "updatedAt",
         headerName: "Last Updated",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "updated_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />

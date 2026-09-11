@@ -7,9 +7,9 @@ import {
 } from "react";
 
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
-import PendingIcon from "@mui/icons-material/Pending";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
+import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
 import {
   Accordion,
   AccordionDetails,
@@ -29,7 +29,7 @@ import Ansi from "ansi-to-react";
 import { GqlLog, buildLogsQuery } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import { ENTITY_ACTION } from "../../utils/constants";
-import { RelativeTime } from "../components/RelativeTime";
+import { RelativeTime } from "../components/fields/RelativeTime";
 import { useConfig } from "../context";
 import { CODE_FONT_FAMILY } from "../theme";
 
@@ -122,9 +122,12 @@ const executionStatusIcons: Record<
   ExecutionStatus,
   { color: "error" | "info" | "success"; icon: ComponentType<SvgIconProps> }
 > = {
-  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorIcon },
-  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingIcon },
-  [ExecutionStatus.COMPLETE]: { color: "success", icon: CheckCircleIcon },
+  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorOutlinedIcon },
+  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingOutlinedIcon },
+  [ExecutionStatus.COMPLETE]: {
+    color: "success",
+    icon: CheckCircleOutlinedIcon,
+  },
 };
 
 const stripBoxPrefix = (s: string): string => s.replace(/^[│╷╵]\s*/, "");

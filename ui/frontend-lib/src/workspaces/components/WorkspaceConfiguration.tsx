@@ -3,8 +3,8 @@ import {
   CommonField,
   getProviderValue,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { BaseCard } from "../../common/components/BaseCard";
+} from "../../common/components/fields/CommonField";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { GqlWorkspace } from "../graphql";
 
 export interface WorkspaceConfigurationProps {

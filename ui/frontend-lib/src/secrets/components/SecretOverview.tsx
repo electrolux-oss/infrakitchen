@@ -1,10 +1,10 @@
 import { useCallback } from "react";
 
-import { CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -51,7 +51,7 @@ export const SecretOverview = ({ secret }: SecretAboutProps) => {
       />
       <CommonField
         name={"Created"}
-        value={<RelativeTime date={secret.createdAt} user={secret.creator} />}
+        value={<RelativeTime date={secret.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

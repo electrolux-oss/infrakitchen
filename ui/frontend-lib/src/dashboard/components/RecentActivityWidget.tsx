@@ -1,34 +1,44 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 import HistoryIcon from "@mui/icons-material/History";
-import PendingIcon from "@mui/icons-material/Pending";
-import { Box, CircularProgress, Divider, Typography } from "@mui/material";
+import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  Typography,
+} from "@mui/material";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { Entity } from "../../common/components/entities/Entity";
 import {
   dataGridClickableRowSx,
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
-
 import { ActivityLogEntry } from "../types";
 
 export interface RecentActivityWidgetProps {
   activities: ActivityLogEntry[];
   loading?: boolean;
+  loadingMore?: boolean;
   hasFavorites?: boolean;
+  /** Total number of matching audit logs (from auditLogsCount), if known. */
+  total?: number;
+  /** Fetches and appends the next page of activities. */
+  onLoadMore?: () => void;
 }
 
-// Maps raw API action values to a friendly past-tense verb so the feed reads
-// like a sentence ("Created resource my-db …") instead of showing internal
-// snake_case action names (e.g. `dryrun_with_temp_state`).
+// Maps internal action names (e.g. `dryrun_with_temp_state`) to friendly
+// past-tense verbs.
 const ACTION_LABELS: Record<string, string> = {
   create: "Created",
   update: "Updated",
@@ -53,22 +63,9 @@ function humanizeAction(action?: string): string {
   if (!action) return "";
   const lower = action.toLowerCase();
   if (ACTION_LABELS[lower]) return ACTION_LABELS[lower];
-  // Fallback for any future action: ``provision_resource`` -> "Provision
-  // resource".
   return lower
     .replace(/_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-// ``resource`` -> "Resource", ``source_code_version`` -> "Source code
-// version".
-function humanizeModel(model?: string): string {
-  if (!model) return "";
-  return model
-    .replace(/_/g, " ")
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 }
 
 type ActivityStatus = "success" | "failure" | "pending";
@@ -104,9 +101,9 @@ function activityStatus(
 }
 
 const STATUS_ICONS = {
-  success: CheckCircleIcon,
-  failure: ErrorIcon,
-  pending: PendingIcon,
+  success: CheckCircleOutlinedIcon,
+  failure: ErrorOutlinedIcon,
+  pending: PendingOutlinedIcon,
 } as const;
 
 const STATUS_COLORS = {
@@ -118,14 +115,21 @@ const STATUS_COLORS = {
 export const RecentActivityWidget = ({
   activities,
   loading = false,
+  loadingMore = false,
   hasFavorites = false,
+  total,
+  onLoadMore,
 }: RecentActivityWidgetProps) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const displayedActivities = useMemo(() => {
-    return activities.slice(0, 10);
-  }, [activities]);
+  const count = activities.length;
+  const showingLabel = hasFavorites
+    ? "Showing most recent activities on your favorites"
+    : "Showing most recent activities across all resources";
+
+  const hasMore =
+    onLoadMore !== undefined && total !== undefined && count < total;
 
   const columns: GridColDef<ActivityLogEntry>[] = useMemo(
     () => [
@@ -154,21 +158,19 @@ export const RecentActivityWidget = ({
       {
         field: "entity",
         headerName: "Entity",
-        flex: 1.2,
+        flex: 2,
         valueGetter: (_value, row) => row.entityData?.name ?? row.entityId,
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <GetEntityLink
-            id={params.row.entityId}
-            entityName={params.row.model}
-            name={params.row.entityData?.name ?? params.row.entityId}
+          <Entity
+            entity={{
+              ...params.row.entityData,
+              id: params.row.entityId,
+              entityType: params.row.model,
+              name: params.row.entityData?.name ?? params.row.entityId,
+            }}
+            showLabel
           />
         ),
-      },
-      {
-        field: "model",
-        headerName: "Type",
-        flex: 1,
-        valueGetter: (_value, row) => humanizeModel(row.model),
       },
       {
         field: "creator",
@@ -180,10 +182,12 @@ export const RecentActivityWidget = ({
           const creator = params.row.creator;
           if (!creator) return <span>System</span>;
           return (
-            <GetEntityLink
-              id={creator.id}
-              entityName="user"
-              name={creator.displayName || creator.identifier}
+            <Entity
+              entity={{
+                ...creator,
+                entityType: "user",
+                name: creator.displayName || creator.identifier,
+              }}
             />
           );
         },
@@ -191,7 +195,7 @@ export const RecentActivityWidget = ({
       {
         field: "createdAt",
         headerName: "When",
-        flex: 0.8,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         valueGetter: (_value, row) => new Date(row.createdAt).getTime(),
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
           <RelativeTime date={params.row.createdAt} sx={{ display: "flex" }} />
@@ -201,7 +205,14 @@ export const RecentActivityWidget = ({
     [],
   );
 
-  const handleRowClick = (params: { row: ActivityLogEntry }) => {
+  const handleRowClick = (
+    params: { row: ActivityLogEntry },
+    event?: React.MouseEvent<HTMLElement>,
+  ) => {
+    // The entity name cell renders its own link (via the shared Entity
+    // component); let it navigate to the entity page instead of also
+    // triggering the row's audit-page navigation.
+    if ((event?.target as Element | undefined)?.closest("a")) return;
     const { row } = params;
     void navigate(`${linkPrefix}${row.model}s/${row.entityId}/audit`);
   };
@@ -218,9 +229,7 @@ export const RecentActivityWidget = ({
             variant="caption"
             sx={{ color: "text.secondary", ml: "auto" }}
           >
-            Showing {displayedActivities.length} most recent{" "}
-            {displayedActivities.length !== 1 ? "activities" : "activity"}{" "}
-            {hasFavorites ? "on your favorites" : "across all resources"}
+            {showingLabel}
           </Typography>
         )}
       </Box>
@@ -245,7 +254,7 @@ export const RecentActivityWidget = ({
           >
             <CircularProgress size={24} />
           </Box>
-        ) : displayedActivities.length === 0 ? (
+        ) : count === 0 ? (
           <Box
             sx={{
               display: "flex",
@@ -263,17 +272,19 @@ export const RecentActivityWidget = ({
           </Box>
         ) : (
           <DataGrid
-            rows={displayedActivities}
+            rows={activities}
             columns={columns}
             autoHeight
             disableRowSelectionOnClick
+            // Rows arrive in small backend batches, so the default pagination
+            // footer is misleading.
+            hideFooter
             onRowClick={handleRowClick}
             {...dataGridDefaultProps}
             sx={{
               ...dataGridSx,
               ...dataGridClickableRowSx,
-              // Compact widget list: hug its rows instead of the shared
-              // min-height.
+              // Compact widget list: hug rows instead of the shared min-height.
               minHeight: "auto",
               border: "none",
               bgcolor: "background.paper",
@@ -281,6 +292,19 @@ export const RecentActivityWidget = ({
           />
         )}
       </Box>
+      {hasMore && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 1.5 }}>
+          <Button
+            size="small"
+            variant="text"
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            startIcon={loadingMore ? <CircularProgress size={14} /> : undefined}
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

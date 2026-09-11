@@ -40,7 +40,7 @@ export const EntityTreeViewTab = ({
     <Box
       sx={{
         width: "100%",
-        minHeight: 320,
+        minHeight: 480,
         textAlign: "left",
         alignSelf: "flex-start",
         border: "1px solid",

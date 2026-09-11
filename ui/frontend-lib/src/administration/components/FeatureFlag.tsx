@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Divider, Grid, Stack } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   FEATURE_FLAGS_QUERY,

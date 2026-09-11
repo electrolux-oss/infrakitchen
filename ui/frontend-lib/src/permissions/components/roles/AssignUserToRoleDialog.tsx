@@ -142,10 +142,10 @@ export const UserRoleCreateDialog = (props: UserRoleCreateProps) => {
     <CommonDialog
       open={open}
       onClose={onClose}
-      title="Assign User Role"
+      title={roleName ? "Assign User to Role" : "Assign Role to User"}
       actions={
         <Button type="submit" form={formId} variant="contained">
-          Submit
+          Assign
         </Button>
       }
       content={

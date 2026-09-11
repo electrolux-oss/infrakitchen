@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -14,15 +14,15 @@ import {
 } from "@mui/material";
 
 import { FilterProvider, PermissionWrapper } from "../../common";
-import { EntityCard } from "../../common/components/EntityCard";
-import { entityCardGridSx } from "../../common/utils/entityCardGrid";
+import { EntityCard } from "../../common/components/cards/EntityCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { entityCardGridSx } from "../../common/utils/entityCardGrid";
 import { ENTITY_STATUS } from "../../utils/constants";
 import { templateColumns } from "../components/templateFilterConfig";
 import { GqlTemplate, TEMPLATE_LIST_FIELDS } from "../graphql";
@@ -208,6 +208,7 @@ export const TemplatesPage = () => {
                   })}
                   {...(enabled ? { createButtonName: "Create Resource" } : {})}
                   labels={template.labels || []}
+                  labelsMax={5}
                   chip={template.abstract ? "Abstract" : undefined}
                   lastUpdated={template.updatedAt}
                   entityFields={templateCardFields(template)}

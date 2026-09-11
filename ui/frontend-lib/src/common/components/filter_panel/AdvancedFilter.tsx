@@ -18,8 +18,9 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
+
 import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
+import { AutocompleteSelect, ReferenceAutocomplete } from "../inputs";
 
 import {
   FilterConfig,
@@ -98,6 +99,7 @@ interface AdvancedFilterProps {
 
 interface ClauseRowProps {
   clause: FilterClause;
+  clauses: FilterClause[];
   fields: FilterableField[];
   usedFields: Set<string>;
   usedFieldOperatorPairs: Set<string>;
@@ -107,6 +109,7 @@ interface ClauseRowProps {
 
 const ClauseRow = ({
   clause,
+  clauses,
   fields,
   usedFields,
   usedFieldOperatorPairs,
@@ -240,7 +243,19 @@ const ClauseRow = ({
     }
 
     const multiValue = isMultiValueOperator(clause.operator);
-    const valueInputKey = `${clause.field}::${clause.operator}`;
+    // Remount the value input when a field this one depends on (e.g. Template
+    // Version depending on Template) changes its value, so its options reload
+    // with the new scope.
+    const dependencyKey = (selectedField?.dependencies || [])
+      .map((dep) => {
+        const depValue = clauses.find((c) => c.field === dep)?.value;
+        const serialized = Array.isArray(depValue)
+          ? depValue.join(",")
+          : String(depValue ?? "");
+        return `${dep}=${serialized}`;
+      })
+      .join("&");
+    const valueInputKey = `${clause.field}::${clause.operator}::${dependencyKey}`;
 
     // Reference field: server-side search autocomplete (handles both single and multi)
     if (
@@ -552,19 +567,58 @@ export const AdvancedFilter = ({
 
   const handleUpdate = useCallback(
     (id: string, updates: Partial<FilterClause>) => {
-      const updated = clauses.map((c) =>
-        c.id === id ? { ...c, ...updates } : c,
-      );
+      const prevClause = clauses.find((c) => c.id === id);
+
+      // Collect fields whose value effectively changed (the field itself was
+      // switched, or its value changed). Any other clause whose field depends
+      // on one of these has its value cleared so it is re-picked against the
+      // new scope (e.g. Template Version cleared when Template changes).
+      const changedFields = new Set<string>();
+      if (prevClause) {
+        const nextField = updates.field ?? prevClause.field;
+        const nextValue = "value" in updates ? updates.value : prevClause.value;
+        if (nextField !== prevClause.field) {
+          if (prevClause.field) changedFields.add(prevClause.field);
+          if (nextField) changedFields.add(nextField);
+        } else if (
+          JSON.stringify(nextValue) !== JSON.stringify(prevClause.value)
+        ) {
+          if (nextField) changedFields.add(nextField);
+        }
+      }
+
+      const updated = clauses.map((c) => {
+        if (c.id === id) return { ...c, ...updates };
+        if (changedFields.size === 0) return c;
+        const spec = fields.find((f) => f.field === c.field);
+        const dependsOnChanged =
+          spec?.dependencies?.some((dep) => changedFields.has(dep)) ?? false;
+        return dependsOnChanged
+          ? { ...c, value: isMultiValueOperator(c.operator) ? [] : "" }
+          : c;
+      });
+
       propagate(updated);
     },
-    [clauses, propagate],
+    [clauses, fields, propagate],
   );
   const handleRemove = useCallback(
     (id: string) => {
-      const remaining = clauses.filter((c) => c.id !== id);
+      const removedField = clauses.find((c) => c.id === id)?.field;
+      const remaining = clauses
+        .filter((c) => c.id !== id)
+        .map((c) => {
+          if (!removedField) return c;
+          const spec = fields.find((f) => f.field === c.field);
+          const dependsOnRemoved =
+            spec?.dependencies?.some((dep) => dep === removedField) ?? false;
+          return dependsOnRemoved
+            ? { ...c, value: isMultiValueOperator(c.operator) ? [] : "" }
+            : c;
+        });
       propagate(remaining);
     },
-    [clauses, propagate],
+    [clauses, fields, propagate],
   );
 
   const handleAdd = useCallback(() => {
@@ -616,6 +670,7 @@ export const AdvancedFilter = ({
           {index === 0 && clauses.length > 1 && <Box sx={{ minWidth: 32 }} />}
           <ClauseRow
             clause={clause}
+            clauses={clauses}
             fields={fields}
             usedFields={usedFields}
             usedFieldOperatorPairs={usedFieldOperatorPairs}

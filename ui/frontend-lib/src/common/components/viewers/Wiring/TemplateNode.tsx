@@ -12,7 +12,7 @@ import { Handle, NodeProps, Position } from "@xyflow/react";
 
 import { CODE_FONT_FAMILY } from "../../../theme";
 import { STATUS_CHIP_COLOR } from "../../../utils";
-import { GetReferenceUrlValue } from "../../CommonField";
+import { GetReferenceUrlValue } from "../../fields/CommonField";
 
 import { DiagramNode, makeHandleStyle } from "./helpers";
 

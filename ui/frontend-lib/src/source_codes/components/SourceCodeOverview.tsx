@@ -7,13 +7,13 @@ import {
   CommonField,
   GetReferenceUrlValue,
   getRemoteUrlValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -116,9 +116,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={sourceCode.createdAt} user={sourceCode.creator} />
-        }
+        value={<RelativeTime date={sourceCode.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

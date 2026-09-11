@@ -5,17 +5,18 @@ import { Box, Button, Chip, Grid, TextField, Typography } from "@mui/material";
 import { useConfig } from "../../common";
 import {
   CommonField,
-  GetEntityLink,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { InlineCode } from "../../common/components/InlineCode";
-import { BaseCard } from "../../common/components/BaseCard";
-import { PlaceholderText } from "../../common/components/PlaceholderDescription";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { CodeBlock } from "../../common/components/code/CodeBlock";
+import { InlineCode } from "../../common/components/code/InlineCode";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { solidChipColorSx } from "../../common/utils/softChip";
-import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
+import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -102,7 +103,7 @@ const getSourceCodeVariables = (
                       {variable.name}
                     </Typography>
                     {showType && (variable as VariableInput).type && (
-                      <InlineCode>
+                      <InlineCode disableCopy>
                         {(variable as VariableInput).type}
                       </InlineCode>
                     )}
@@ -137,20 +138,7 @@ const getSourceCodeVariables = (
                 ) : variable.value === null || variable.value === undefined ? (
                   <PlaceholderText />
                 ) : (
-                  <Box
-                    component="pre"
-                    sx={{
-                      m: 0,
-                      p: 1,
-                      fontSize: "0.75rem",
-                      fontFamily: CODE_FONT_FAMILY,
-                      bgcolor: "action.hover",
-                      borderRadius: "var(--template-code-radius)",
-                      overflow: "auto",
-                    }}
-                  >
-                    {formatVariableValue(variable.value)}
-                  </Box>
+                  <CodeBlock>{formatVariableValue(variable.value)}</CodeBlock>
                 )}
               </Grid>
             </Grid>
@@ -282,13 +270,14 @@ export const TemplateConfiguration = ({
               }}
             >
               {resource.sourceCodeVersion?.sourceCode ? (
-                <GetEntityLink
-                  {...resource.sourceCodeVersion}
-                  name={
-                    resource.sourceCodeVersion?.sourceCodeVersion ||
-                    resource.sourceCodeVersion?.sourceCodeBranch ||
-                    "Unnamed Version"
-                  }
+                <Entity
+                  entity={{
+                    ...resource.sourceCodeVersion,
+                    name:
+                      resource.sourceCodeVersion?.sourceCodeVersion ||
+                      resource.sourceCodeVersion?.sourceCodeBranch ||
+                      "Unnamed Version",
+                  }}
                   sx={{
                     color: sourceCodeVersionTextColor,
                     fontWeight:
@@ -433,7 +422,7 @@ export const TemplateConfiguration = ({
                 </Typography>
                 <Chip
                   label={String(resource.variables?.length ?? 0)}
-                  sx={solidChipColorSx("info", undefined, undefined, true)}
+                  sx={solidChipColorSx("info")}
                 />
                 {hasPendingChange("variables") && <PendingChangeBadge />}
               </Box>
@@ -470,7 +459,7 @@ export const TemplateConfiguration = ({
                 </Typography>
                 <Chip
                   label={String(resource.outputs?.length ?? 0)}
-                  sx={solidChipColorSx("info", undefined, undefined, true)}
+                  sx={solidChipColorSx("info")}
                 />
               </Box>
             }

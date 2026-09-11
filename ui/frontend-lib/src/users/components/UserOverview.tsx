@@ -5,13 +5,13 @@ import { TextField } from "@mui/material";
 import {
   CommonField,
   getProviderValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
-import { UserAvatar } from "../../common/components/UserAvatar";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { UserAvatar } from "../../common/components/entities/UserAvatar";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";

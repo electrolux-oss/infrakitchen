@@ -1,17 +1,18 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import { GetEntityLink } from "../../../common/components/CommonField";
+import { BaseCard } from "../../../common/components/cards/BaseCard";
+import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { BaseCard } from "../../../common/components/BaseCard";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -43,10 +44,12 @@ export const UserRolesCard = (props: { userId: string }) => {
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
-            <GetEntityLink
-              name={params.row.v1}
-              id={params.row.v1}
-              entityName={"role"}
+            <Entity
+              entity={{
+                id: params.row.v1,
+                entityType: "role",
+                name: params.row.v1,
+              }}
             />
           );
         },
@@ -54,7 +57,7 @@ export const UserRolesCard = (props: { userId: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
@@ -65,11 +68,9 @@ export const UserRolesCard = (props: { userId: string }) => {
         flex: 1,
         sortField: "creator.identifier",
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} name={creator.identifier} />;
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
       {
         field: "id",
@@ -97,20 +98,30 @@ export const UserRolesCard = (props: { userId: string }) => {
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          onClick={() => handleOpenDialog()}
-          startIcon={<AdminPanelSettingsIcon />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Role
-        </Button>
-
-        <UserRoleCreateDialog
-          userId={userId}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshUserRolesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<AdminPanelSettingsIcon />}
+          >
+            Assign Role
+          </Button>
+        </Box>
       </PermissionWrapper>
+
+      <UserRoleCreateDialog
+        userId={userId}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshUserRolesTable}
+      />
 
       <EntityFetchTable
         ref={tableRef}

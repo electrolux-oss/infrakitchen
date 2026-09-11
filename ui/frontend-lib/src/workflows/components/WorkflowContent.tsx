@@ -7,12 +7,12 @@ import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useLocalStorage } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import {
   TabbedContent,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GqlWorkflow } from "../graphql";
 

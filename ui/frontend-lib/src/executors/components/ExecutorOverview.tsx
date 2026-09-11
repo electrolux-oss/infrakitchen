@@ -6,13 +6,13 @@ import {
   CommonField,
   GetReferenceUrlValue,
   getDateValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
-import { ScheduleEntityActionDialog } from "../../common/components/ScheduleEntityActionDialog";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
@@ -98,9 +98,7 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
       <SourceCodeConfigEditor executor={executor} canEdit={canEdit} />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={executor.createdAt} user={executor.creator} />
-        }
+        value={<RelativeTime date={executor.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}

@@ -5,12 +5,12 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Box, Button } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import {
   TabbedContent,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { WiringDiagram } from "../../common/components/viewers/Wiring/WiringDiagram";
 import { useEntityProvider } from "../../common/context/EntityContext";

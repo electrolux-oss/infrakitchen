@@ -38,11 +38,11 @@ import {
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
-import { DependencyConfigurationFields } from "../../common/components/DependencyConfigurationFields";
+import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { MarkdownViewer } from "../../common/components/MarkdownViewer";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";

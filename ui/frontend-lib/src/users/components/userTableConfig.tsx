@@ -2,10 +2,8 @@ import { Box, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
@@ -24,7 +22,7 @@ const UserIdentifierCell = (params: GridRenderCellParams) => {
         height: "100%",
       }}
     >
-      <GetEntityLink {...params.row} />
+      <Entity entity={{ ...params.row, entityType: "user" }} />
       {isCurrentUser ? (
         <Chip
           label="You"
@@ -111,7 +109,7 @@ export const userColumns: EntityTableColumn[] = [
           height: "100%",
         }}
       >
-        {getProviderValue(params.value)}
+        {getProviderValue(params.value, 18)}
       </Box>
     ),
   },
@@ -159,7 +157,7 @@ export const userColumns: EntityTableColumn[] = [
         }}
       >
         {(params.row.secondaryAccounts || []).map((u: any) => (
-          <GetEntityLink key={u.id} {...u} />
+          <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
       </Box>
     ),
@@ -182,7 +180,7 @@ export const userColumns: EntityTableColumn[] = [
         }}
       >
         {(params.row.primaryAccount || []).map((u: any) => (
-          <GetEntityLink key={u.id} {...u} />
+          <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
       </Box>
     ),

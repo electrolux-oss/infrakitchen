@@ -1,10 +1,8 @@
 import { Box } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { getProviderValue } from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
@@ -29,7 +27,7 @@ export const storageColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -67,7 +65,7 @@ export const storageColumns: EntityTableColumn[] = [
           height: "100%",
         }}
       >
-        {getProviderValue(params.value)}
+        {getProviderValue(params.value, 18)}
       </Box>
     ),
   },
@@ -134,8 +132,9 @@ export const storageColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) =>
-      params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
   {
     field: "integration",
@@ -155,7 +154,7 @@ export const storageColumns: EntityTableColumn[] = [
     valueGetter: (_value: any, row: any) => row.integration?.name || "",
     renderCell: (params: GridRenderCellParams) =>
       params.row.integration ? (
-        <GetEntityLink {...params.row.integration} />
+        <Entity entity={params.row.integration} />
       ) : null,
   },
   labelsColumn("storage"),

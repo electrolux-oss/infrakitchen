@@ -5,11 +5,11 @@ import { Box, TextField } from "@mui/material";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { BaseCard } from "../../common/components/BaseCard";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";

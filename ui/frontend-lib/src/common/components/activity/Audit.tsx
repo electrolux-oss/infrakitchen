@@ -32,14 +32,15 @@ import {
   ACTIONS_WITH_LOGS,
 } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import { RevisionChip } from "../RevisionChip";
+import { Entity } from "../entities/Entity";
 import {
   dataGridDefaultProps,
   dataGridPaginationSlotProps,
   dataGridSx,
 } from "../entity_table/dataGridStyles";
-import { GetEntityLink } from "../CommonField";
-import { RelativeTime } from "../RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
+import { RelativeTime } from "../fields/RelativeTime";
+import { RevisionChip } from "../labels/RevisionChip";
 
 import { DiffEditor } from "./DiffEditor";
 import { RevisionTimelines } from "./RevisionTimelines";
@@ -245,17 +246,17 @@ export const Audit = ({
         headerName: "User",
         flex: 1,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
-          if (!params.row.creator) {
+          const creator = params.row.creator;
+          if (!creator) {
             return "System";
           }
-          const creatorData = params.row.creator;
-          return <GetEntityLink {...creatorData} />;
+          return <Entity entity={{ ...creator, entityType: "user" }} />;
         },
       },
       {
         field: "createdAt",
         headerName: "Time",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
           <RelativeTime date={params.value} />
         ),

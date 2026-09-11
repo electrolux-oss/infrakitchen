@@ -1,7 +1,6 @@
-import { useState } from "react";
-
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import { Box, Typography, IconButton, Tooltip } from "@mui/material";
 
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
@@ -14,24 +13,15 @@ export const DashboardPage = () => {
   const {
     favorites,
     activities,
+    activitiesTotal,
+    loadingMore,
     goldenStateReport,
     hasResources,
     loading,
+    refreshing,
     refetch,
+    loadMoreActivities,
   } = useDashboardData();
-
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    if (!refreshing) {
-      setRefreshing(true);
-      try {
-        await refetch();
-      } finally {
-        setRefreshing(false);
-      }
-    }
-  };
 
   if (!loading && !hasResources) {
     return (
@@ -81,15 +71,21 @@ export const DashboardPage = () => {
       }
       description="A quick overview of your infrastructure and recent activities"
       actions={
-        <Button
-          startIcon={
-            refreshing ? <CircularProgress size={16} /> : <RefreshIcon />
-          }
-          onClick={handleRefresh}
-          disabled={refreshing || loading}
-        >
-          Refresh
-        </Button>
+        <Tooltip title="Refresh">
+          <IconButton
+            size="small"
+            sx={{ p: 0.75 }}
+            aria-label="Refresh"
+            onClick={() => void refetch()}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <CircularProgress size={16} />
+            ) : (
+              <RefreshIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
       }
     >
       {" "}
@@ -113,7 +109,10 @@ export const DashboardPage = () => {
         <RecentActivityWidget
           activities={activities}
           loading={loading}
+          loadingMore={loadingMore}
           hasFavorites={favorites.length > 0}
+          total={activitiesTotal}
+          onLoadMore={loadMoreActivities}
         />
       </Box>
     </PageContainer>

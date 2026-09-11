@@ -1,17 +1,16 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { PermissionWrapper } from "../../../common";
-import { GetEntityLink } from "../../../common/components/CommonField";
+import { Entity, PermissionWrapper } from "../../../common";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -40,7 +39,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       {
         field: "entityData",
         fetchFields: ["entityData", "v1", "entityName"],
-        headerName: "Entity Name",
+        headerName: "Resource",
         flex: 1,
         sortable: false,
         hideable: false,
@@ -48,7 +47,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
           if (params.row.v1 && params.row.v1.includes("*")) {
             return <span>{params.row.v1}</span>;
           }
-          return <GetEntityLink {...params.row.entityData} />;
+          return <Entity entity={params.row.entityData} showLabel />;
         },
       },
       {
@@ -67,7 +66,7 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
@@ -77,11 +76,9 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         headerName: "Creator",
         flex: 1,
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} />;
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
       {
         field: "id",
@@ -105,28 +102,34 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
   );
 
   return (
-    <PropertyCollapseCard
-      title={"Role Resource Policy List"}
-      expanded={true}
-      id="role-resource-policies-card"
-    >
+    <>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Resource Policy
-        </Button>
-        <RolePolicyEntityCreateDialog
-          roleName={role}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<Icon icon="icon-park-outline:add" />}
+          >
+            Add Resource Policy
+          </Button>
+        </Box>
       </PermissionWrapper>
+      <RolePolicyEntityCreateDialog
+        roleName={role}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshPoliciesTable}
+      />
       <EntityFetchTable
         ref={tableRef}
         title="Role Policies"
@@ -135,6 +138,6 @@ export const EntityRolePoliciesCard = (props: { role: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </PropertyCollapseCard>
+    </>
   );
 };

@@ -1,6 +1,6 @@
 import { GridSize, Switch } from "@mui/material";
 
-import { CommonField } from "../CommonField";
+import { CommonField } from "../fields/CommonField";
 
 export interface BooleanInlineFieldProps {
   /** Field label shown above the value. */

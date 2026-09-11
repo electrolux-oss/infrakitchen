@@ -15,7 +15,7 @@ import {
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";

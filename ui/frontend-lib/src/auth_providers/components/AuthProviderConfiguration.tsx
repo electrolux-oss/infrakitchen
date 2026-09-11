@@ -1,6 +1,6 @@
 import { formatLabel } from "../../common";
-import { CommonField } from "../../common/components/CommonField";
-import { BaseCard } from "../../common/components/BaseCard";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { GqlAuthProvider } from "../graphql";
 

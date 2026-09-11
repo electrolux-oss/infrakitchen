@@ -73,9 +73,10 @@ export const EntityFetchTable = forwardRef<
     savedState?.sortModel || [],
   );
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
-    savedState?.paginationModel || { page: 0, pageSize: 10 },
-  );
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
     useState<GridColumnVisibilityModel>(() => ({
@@ -114,7 +115,6 @@ export const EntityFetchTable = forwardRef<
         column.fetchFields.forEach((field) => {
           if (field) requested.add(field);
         });
-        // Still skip adding column.field itself when column is hidden/non-filterable
         if (isHidden || isNonFilterable) return;
       } else {
         if (isHidden || isNonFilterable) return;
@@ -128,10 +128,9 @@ export const EntityFetchTable = forwardRef<
   useEffect(() => {
     setKey(storageKey, {
       sortModel,
-      paginationModel,
       columnVisibilityModel,
     });
-  }, [sortModel, paginationModel, columnVisibilityModel, storageKey, setKey]);
+  }, [sortModel, columnVisibilityModel, storageKey, setKey]);
 
   return (
     <FilterProvider

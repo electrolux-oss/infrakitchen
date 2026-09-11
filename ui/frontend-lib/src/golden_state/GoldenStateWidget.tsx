@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Link as RouterLink } from "react-router";
 
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
@@ -155,11 +155,7 @@ function ProjectHeatMapTile({
           flexWrap: "wrap",
         }}
       >
-        <Chip
-          label={`${project.score}%`}
-          color={scoreColor}
-          variant="filled"
-        />
+        <Chip label={`${project.score}%`} color={scoreColor} variant="filled" />
         <Typography variant="caption" color="text.secondary">
           {project.compliant}/{comparable} at golden state
         </Typography>
@@ -178,7 +174,7 @@ function ProjectHeatMapTile({
             component={RouterLink}
             clickable
             to={activeResourcesUrl}
-            icon={<CheckCircleIcon />}
+            icon={<CheckCircleOutlinedIcon />}
             label={project.compliant}
             size="small"
             color="success"
@@ -325,21 +321,9 @@ export const GoldenStateWidget = ({
         ) : (
           <Box>
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5 }}>
-              <Chip
-                label="90-100%"
-                color="success"
-                variant="outlined"
-              />
-              <Chip
-                label="70-89%"
-                color="warning"
-                variant="outlined"
-              />
-              <Chip
-                label="0-69%"
-                color="error"
-                variant="outlined"
-              />
+              <Chip label="90-100%" color="success" variant="outlined" />
+              <Chip label="70-89%" color="warning" variant="outlined" />
+              <Chip label="0-69%" color="error" variant="outlined" />
             </Box>
             <Box
               sx={{

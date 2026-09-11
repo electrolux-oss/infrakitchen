@@ -1,7 +1,7 @@
 import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { SourceCodeContent } from "../components/SourceCodeContent";
 import { SOURCE_CODE_DETAIL_FIELDS } from "../graphql";

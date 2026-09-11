@@ -3,11 +3,12 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
@@ -39,13 +40,25 @@ export const IntegrationContent = () => {
     ...(isGit
       ? [
           {
-            label: `Code Repositories (${entity.sourceCodeCount ?? 0})`,
+            label: "Code Repositories",
+            tabLabel: (
+              <TabCountLabel
+                label="Code Repositories"
+                count={entity.sourceCodeCount ?? 0}
+              />
+            ),
             content: (
               <IntegrationSourceCodeDependencies integration_id={entity.id} />
             ),
           },
           {
-            label: `Workspaces (${entity.workspaceCount ?? 0})`,
+            label: "Workspaces",
+            tabLabel: (
+              <TabCountLabel
+                label="Workspaces"
+                count={entity.workspaceCount ?? 0}
+              />
+            ),
             content: (
               <IntegrationWorkspaceDependencies integration_id={entity.id} />
             ),
@@ -55,8 +68,13 @@ export const IntegrationContent = () => {
     ...(isCloud
       ? [
           {
-            label: `Resources`,
-            tabLabel: `Resources (${entity.resourceCount ?? 0})`,
+            label: "Resources",
+            tabLabel: (
+              <TabCountLabel
+                label="Resources"
+                count={entity.resourceCount ?? 0}
+              />
+            ),
             content: (
               <EntityResources
                 fixedFilters={fixedFilters}
@@ -68,7 +86,9 @@ export const IntegrationContent = () => {
       : []),
     {
       label: "Executors",
-      tabLabel: `Executors (${entity.executorCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Executors" count={entity.executorCount ?? 0} />
+      ),
       content: (
         <EntityExecutors
           fixedFilters={{ integration_ids__any: [entity.id] }}
@@ -78,7 +98,9 @@ export const IntegrationContent = () => {
     },
     {
       label: "Storages",
-      tabLabel: `Storages (${entity.storageCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Storages" count={entity.storageCount ?? 0} />
+      ),
       content: (
         <EntityStorages
           fixedFilters={{ integration_id: entity.id }}

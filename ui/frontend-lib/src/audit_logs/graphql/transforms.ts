@@ -28,5 +28,8 @@ export type GqlAuditLog = Pick<
 > & {
   entityData?: {
     name?: string;
+    template?: { name?: string } | null;
+    sourceCodeUrl?: string;
+    sourceCodeProvider?: string;
   };
 };

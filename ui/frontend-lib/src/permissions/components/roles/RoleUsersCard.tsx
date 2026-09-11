@@ -1,17 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import { GetEntityLink } from "../../../common/components/CommonField";
+import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { PropertyCollapseCard } from "../../../common/components/PropertyCollapseCard";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -44,10 +44,11 @@ export const RoleUsersCard = (props: { role: string }) => {
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
-            <GetEntityLink
-              {...params.row.userData}
-              id={params.row.userData?.id}
-              entityName={"user"}
+            <Entity
+              entity={{
+                ...params.row.userData,
+                entityType: "user",
+              }}
             />
           );
         },
@@ -55,7 +56,7 @@ export const RoleUsersCard = (props: { role: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
@@ -69,10 +70,12 @@ export const RoleUsersCard = (props: { role: string }) => {
           const creator = params.row.creator;
           if (!creator) return null;
           return (
-            <GetEntityLink
-              {...creator}
-              name={creator.identifier}
-              entityName="user"
+            <Entity
+              entity={{
+                ...creator,
+                entityType: "user",
+                name: creator.identifier,
+              }}
             />
           );
         },
@@ -99,25 +102,35 @@ export const RoleUsersCard = (props: { role: string }) => {
   );
 
   return (
-    <PropertyCollapseCard title={"Role Users"} expanded={true} id="role-users">
+    <>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          onClick={() => handleOpenDialog()}
-          startIcon={<PersonAddIcon />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add User to Role
-        </Button>
-
-        <UserRoleCreateDialog
-          roleName={role}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshRoleUsersTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<PersonAddIcon />}
+          >
+            Assign User
+          </Button>
+        </Box>
       </PermissionWrapper>
+
+      <UserRoleCreateDialog
+        roleName={role}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshRoleUsersTable}
+      />
 
       <EntityFetchTable
         ref={tableRef}
@@ -127,6 +140,6 @@ export const RoleUsersCard = (props: { role: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </PropertyCollapseCard>
+    </>
   );
 };

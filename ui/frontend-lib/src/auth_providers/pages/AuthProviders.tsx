@@ -7,12 +7,11 @@ import { Button, Switch, Tooltip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper, useConfig } from "../../common";
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
 
@@ -30,7 +29,7 @@ export const AuthProvidersPage = () => {
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -44,7 +43,7 @@ export const AuthProvidersPage = () => {
         flex: 1,
         sortField: "auth_provider",
         renderCell: (params: GridRenderCellParams) =>
-          getProviderValue(params.value),
+          getProviderValue(params.value, 18),
       },
       {
         field: "enabled",
@@ -62,7 +61,7 @@ export const AuthProvidersPage = () => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime date={params.value} />
@@ -74,11 +73,9 @@ export const AuthProvidersPage = () => {
         flex: 1,
         sortField: "creator.identifier",
         valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} />;
-        },
+        renderCell: (params: GridRenderCellParams) => (
+          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+        ),
       },
     ],
     [],

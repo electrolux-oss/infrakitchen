@@ -157,6 +157,14 @@ export const dataDisplayCustomizations: Components<Theme> = {
       },
     },
   },
+  MuiTreeItem: {
+    styleOverrides: {
+      label: ({ theme }) => ({
+        fontSize: theme.typography.body2.fontSize,
+        lineHeight: theme.typography.body2.lineHeight,
+      }),
+    },
+  },
   MuiMenu: {
     styleOverrides: {
       paper: ({ theme }) => ({

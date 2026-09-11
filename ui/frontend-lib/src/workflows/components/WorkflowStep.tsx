@@ -18,14 +18,11 @@ import {
 } from "@mui/material";
 
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { Duration } from "../../common/components/Duration";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
+import { Duration } from "../../common/components/fields/Duration";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { GqlTemplateShort } from "../../templates/graphql";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
@@ -77,7 +74,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               sx={{ fontWeight: 700, minWidth: 28 }}
             />
             {templateName ? (
-              <GetEntityLink {...(step.template as GqlTemplateShort)} />
+              <Entity entity={step.template} />
             ) : (
               <Typography
                 variant="subtitle2"

@@ -26,7 +26,7 @@ import {
 } from "@mui/material";
 
 import { CommonDialog, useConfig } from "../../../../common";
-import { getDateValue } from "../../../../common/components/CommonField";
+import { getDateValue } from "../../../../common/components/fields/CommonField";
 import { notify, notifyError } from "../../../../common/hooks/useNotification";
 import {
   DELETE_KUBERNETES_POD_MUTATION,

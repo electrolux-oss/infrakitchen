@@ -10,45 +10,45 @@ import {
   Typography,
 } from "@mui/material";
 
-import { PermissionWrapper, UserAvatar } from "../../common";
+import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
+import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
 import {
   CommonField,
   GetReferenceUrlValue,
   getDateValue,
-} from "../../common/components/CommonField";
+} from "../../common/components/fields/CommonField";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
+import { Labels } from "../../common/components/labels/Labels";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import {
   PlaceholderDescription,
   PlaceholderText,
-} from "../../common/components/PlaceholderDescription";
-import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
-import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { Labels } from "../../common/components/Labels";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
-import { RelativeTime } from "../../common/components/RelativeTime";
-import { ScheduleEntityActionDialog } from "../../common/components/ScheduleEntityActionDialog";
+} from "../../common/components/fields/PlaceholderDescription";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
-import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
+import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { GqlUserShort } from "../../users/graphql";
 import {
   GqlResource,
   ResourceUpdateFieldInput,
   SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql";
+import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
+
+import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
 
 export interface ResourceAboutProps {
   resource: GqlResource;
@@ -181,7 +181,11 @@ export const ResourceOverview = ({
     },
     [hasPendingChange],
   );
-  const projectOwners = resource.project?.owners || null;
+  const projectOwners = resource.project?.owners
+    ? [...resource.project.owners].sort((a, b) =>
+        a.identifier.localeCompare(b.identifier),
+      )
+    : null;
 
   return (
     <OverviewCard
@@ -261,9 +265,7 @@ export const ResourceOverview = ({
       />
       <CommonField
         name="Created"
-        value={
-          <RelativeTime date={resource.createdAt} user={resource.creator!} />
-        }
+        value={<RelativeTime date={resource.createdAt} />}
         size={4}
       />
       <CommonField
@@ -406,18 +408,10 @@ export const ResourceOverview = ({
             <CommonField
               name="Owners"
               value={
-                !projectOwners || projectOwners.length === 0 ? (
-                  <PlaceholderText />
+                projectOwners?.length ? (
+                  <UserAvatarList users={projectOwners} />
                 ) : (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {projectOwners.map((owner: GqlUserShort) => (
-                      <UserAvatar
-                        key={owner.id}
-                        id={owner.id}
-                        identifier={owner.identifier}
-                      />
-                    ))}
-                  </Box>
+                  <PlaceholderText />
                 )
               }
               size={6}
@@ -492,13 +486,11 @@ export const ResourceOverview = ({
                 borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.parents.map((parent) => (
-                <GetReferenceUrlValue
-                  key={parent.id}
-                  {...parent}
-                  display_name={`${parent.template.name} (${parent.name})`}
-                />
-              ))}
+              {[...resource.parents]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((parent) => (
+                  <Entity key={parent.id} entity={parent} showLabel />
+                ))}
             </Box>
           ) : null
         }
@@ -521,13 +513,11 @@ export const ResourceOverview = ({
                 borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.children.map((child) => (
-                <GetReferenceUrlValue
-                  key={child.id}
-                  {...child}
-                  display_name={`${child.template.name} (${child.name})`}
-                />
-              ))}
+              {[...resource.children]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((child) => (
+                  <Entity key={child.id} entity={child} showLabel />
+                ))}
             </Box>
           ) : null
         }

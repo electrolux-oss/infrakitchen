@@ -216,6 +216,7 @@ export const EntityFetchTableContent = forwardRef<
     buildApiFiltersRef,
     defaultFilterRef,
     defaultFilter,
+    defaultSort,
     columnsRef,
     setLoading,
     setData,

@@ -1,31 +1,30 @@
-import { NavigateFunction } from "react-router";
-
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
+import {
+  createdUpdatedColumns,
+  RELATIVE_TIME_COLUMN_WIDTH,
+} from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 
 export const taskDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   creator: false,
 };
 
-export const taskColumns = (options: {
-  navigate: NavigateFunction;
-  linkPrefix: string;
-  entityOptions: string[];
-}): EntityTableColumn[] => [
+export const taskColumns = (): EntityTableColumn[] => [
   {
     field: "entity",
     fetchFields: ["entity", "entityId", "entityData"],
     headerName: "Entity",
-    flex: 1,
+    // Entity names can be long; give this column most of the remaining space
+    // (matches the audit log table's Entity emphasis).
+    flex: 2.5,
     hideable: false,
     filter: {
       field: "entity",
@@ -35,11 +34,14 @@ export const taskColumns = (options: {
       optionsKey: "entities",
     },
     renderCell: (params: GridRenderCellParams) => (
-      <GetEntityLink
-        id={params.row.entityId}
-        entityName={params.row.entity}
-        name={params.row.entityData?.name}
-        identifier={params.row.entity}
+      <Entity
+        entity={{
+          ...params.row.entityData,
+          id: params.row.entityId,
+          entityType: params.row.entity,
+          name: params.row.entityData?.name ?? params.row.entity,
+        }}
+        showLabel
       />
     ),
   },
@@ -60,7 +62,8 @@ export const taskColumns = (options: {
     field: "runAt",
     headerName: "Run At",
     sortField: "run_at",
-    flex: 1,
+    // Same fixed width as the Created / Last Updated time columns.
+    width: RELATIVE_TIME_COLUMN_WIDTH,
     renderCell: (params: GridRenderCellParams) =>
       params.value ? <RelativeTime date={params.value} /> : null,
   },
@@ -80,7 +83,8 @@ export const taskColumns = (options: {
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) =>
-      params.row.creator ? <GetEntityLink {...params.row.creator} /> : null,
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

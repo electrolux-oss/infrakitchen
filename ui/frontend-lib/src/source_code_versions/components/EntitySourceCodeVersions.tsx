@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import ReorderIcon from "@mui/icons-material/Reorder";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
 import {
@@ -12,7 +12,10 @@ import { buildAdvancedApiFilters } from "../../common/components/filter_panel/bu
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
-import { sourceCodeVersionColumns } from "./sourceCodeVersionTableConfig";
+import {
+  sourceCodeVersionColumns,
+  sourceCodeVersionDefaultColumnVisibilityModel,
+} from "./sourceCodeVersionTableConfig";
 import { TemplateVersionReorderDialog } from "./TemplateVersionReorderDialog";
 
 interface EntitySourceCodeVersionsProps {
@@ -34,19 +37,31 @@ export const EntitySourceCodeVersions = ({
         requiredPermission="api:source_code_version"
         permissionAction="write"
       >
-        <Button
-          startIcon={<ReorderIcon />}
-          onClick={() => setDialogOpen(true)}
-          sx={{ mb: 2 }}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Rearrange Versions
-        </Button>
+          <Button
+            size="small"
+            startIcon={<ReorderIcon />}
+            onClick={() => setDialogOpen(true)}
+          >
+            Rearrange Versions
+          </Button>
+        </Box>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}
         title="Template Versions"
         entityName="sourceCodeVersion"
         columns={sourceCodeVersionColumns}
+        defaultColumnVisibilityModel={
+          sourceCodeVersionDefaultColumnVisibilityModel
+        }
         entityFieldMap={SCV_FIELD_MAP}
         filterStorageKey={filterStorageKey}
         buildApiFilters={(filterValues) => ({

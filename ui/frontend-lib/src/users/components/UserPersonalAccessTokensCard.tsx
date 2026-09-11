@@ -21,10 +21,10 @@ import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
 import { CODE_FONT_FAMILY } from "../../common/theme";
-import { CommonDialog } from "../../common/components/CommonDialog";
-import { BaseCard } from "../../common/components/BaseCard";
-import { InlineCode } from "../../common/components/InlineCode";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { InlineCode } from "../../common/components/code/InlineCode";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { GqlUser } from "../graphql";
 import {

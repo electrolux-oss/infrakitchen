@@ -1,15 +1,17 @@
+import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
   labelsColumn,
 } from "../../common/components/entity_table/tableColumns";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
@@ -25,6 +27,8 @@ import { GqlResourceShort } from "../graphql";
 // --- Column visibility defaults ---
 
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+  template: true,
+  created_at: false,
   creator: false,
   storage: false,
   workspace: false,
@@ -37,6 +41,7 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   labels: false,
   dependency_tags: false,
   dependency_config: false,
+  sourceCodeVersion: true,
 };
 
 export const resourceColumns: EntityTableColumn[] = [
@@ -72,7 +77,7 @@ export const resourceColumns: EntityTableColumn[] = [
       defaultOperator: "like",
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -95,32 +100,9 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
-      return <GetEntityLink {...template} />;
+      return <Entity entity={template} />;
     },
   },
-  {
-    field: "project",
-    headerName: "Project",
-    flex: 1,
-    fetchFields: ["project"],
-    sortField: "project.name",
-    filter: {
-      field: "project_id",
-      operators: ["eq", "in", "is_none"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "projects",
-        labelField: "name",
-      }),
-    },
-    valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const project = params.row.project;
-      return <GetEntityLink {...project} />;
-    },
-  },
-
   {
     field: "sourceCodeVersion",
     headerName: "Template Version",
@@ -138,18 +120,104 @@ export const resourceColumns: EntityTableColumn[] = [
     filter: [
       {
         field: "source_code_version_id",
-        label: "Version",
+        label: "Template Version",
         operators: ["eq", "in"],
         valueType: "reference",
         defaultOperator: "eq",
-        makeReferenceLoader: serverSearchReference({
-          entityPlural: "sourceCodeVersions",
-          labelField: "identifier",
-        }),
+        dependencies: ["template_id"],
+        makeReferenceLoader: (ctx) => {
+          // When a single Template filter is set, scope version options to
+          // that template only. The template tag is then omitted from the
+          // options since the template is implied by the scope.
+          const getTemplateId = (): string | null => {
+            const clauses = ctx.getFilterClauses?.() ?? [];
+            const value = clauses.find((c) => c.field === "template_id")?.value;
+            if (typeof value === "string" && value) return value;
+            if (Array.isArray(value) && value.length === 1) {
+              return String(value[0]);
+            }
+            return null;
+          };
+
+          const toOptions = (
+            entities: Array<Record<string, any>>,
+            templateId: string | null,
+          ) =>
+            entities
+              .filter((e) => e.id && e.identifier)
+              .map((e) => {
+                const ref = e.sourceCodeVersion ?? e.sourceCodeBranch;
+                const RefIcon = e.sourceCodeVersion
+                  ? LocalOfferOutlinedIcon
+                  : CallSplitOutlinedIcon;
+                return {
+                  label: ref || e.identifier,
+                  value: e.id,
+                  icon: <RefIcon sx={{ fontSize: 15 }} color="action" />,
+                  ...(templateId ? {} : { templateName: e.template?.name }),
+                };
+              });
+
+          const withIcons = async (search: string) => {
+            const templateId = getTemplateId();
+            const filter: Record<string, any> = {};
+            if (templateId) {
+              filter["template_id"] = [templateId];
+            }
+            if (search.trim()) {
+              filter["identifier__like"] = search.trim();
+            }
+            const response = await ctx.ikApi.graphqlRequest(
+              `query ReferenceSearch($filter: JSON, $sort: [String!], $range: [Int!]) {
+                sourceCodeVersions(filter: $filter, sort: $sort, range: $range) {
+                  id
+                  identifier
+                  sourceCodeVersion
+                  sourceCodeBranch
+                  template { name }
+                }
+              }`,
+              {
+                filter,
+                sort: ["identifier", "ASC"],
+                range: [0, 50],
+              },
+            );
+            const entities: Array<Record<string, any>> =
+              response.sourceCodeVersions || [];
+            return toOptions(entities, templateId);
+          };
+
+          withIcons.resolveByIds = async (ids: string[]) => {
+            if (ids.length === 0) return [];
+            const templateId = getTemplateId();
+            const response = await ctx.ikApi.graphqlRequest(
+              `query ReferenceResolveByIds($filter: JSON) {
+                sourceCodeVersions(filter: $filter) {
+                  id
+                  identifier
+                  sourceCodeVersion
+                  sourceCodeBranch
+                  template { name }
+                }
+              }`,
+              {
+                filter: {
+                  ...(templateId ? { template_id: [templateId] } : {}),
+                  id__in: ids,
+                },
+              },
+            );
+            const entities: Array<Record<string, any>> =
+              response.sourceCodeVersions || [];
+            return toOptions(entities, templateId);
+          };
+          return withIcons;
+        },
       },
       {
         field: "source_code_version__lifecycle_state",
-        label: "Version Lifecycle State",
+        label: "Template Version Lifecycle State",
         operators: ["eq", "in"],
         valueType: "select",
         defaultOperator: "eq",
@@ -187,9 +255,8 @@ export const resourceColumns: EntityTableColumn[] = [
                 : "text.primary";
 
       return (
-        <GetEntityLink
-          {...scv}
-          name={ref}
+        <Entity
+          entity={{ ...scv, name: ref }}
           sx={{
             color: textColor,
             fontWeight: color === "warning" ? 600 : 500,
@@ -199,6 +266,29 @@ export const resourceColumns: EntityTableColumn[] = [
       );
     },
   },
+  {
+    field: "project",
+    headerName: "Project",
+    flex: 1,
+    fetchFields: ["project"],
+    sortField: "project.name",
+    filter: {
+      field: "project_id",
+      operators: ["eq", "in", "is_none"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "projects",
+        labelField: "name",
+      }),
+    },
+    valueGetter: (value: any) => value?.name || "",
+    renderCell: (params: GridRenderCellParams) => {
+      const project = params.row.project;
+      return <Entity entity={project} />;
+    },
+  },
+
   {
     field: "state",
     fetchFields: ["state", "status"],
@@ -268,11 +358,9 @@ export const resourceColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
   {
     field: "storage",
@@ -292,7 +380,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const storage = params.row.storage;
       if (!storage) return null;
-      return <GetEntityLink {...storage} />;
+      return <Entity entity={storage} />;
     },
   },
   {
@@ -313,7 +401,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const workspace = params.row.workspace;
       if (!workspace) return null;
-      return <GetEntityLink {...workspace} />;
+      return <Entity entity={workspace} />;
     },
   },
   {
@@ -342,7 +430,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {integrations.map((integration, index) => (
             <span key={integration.id}>
-              <GetEntityLink {...integration} />
+              <Entity entity={integration} />
               {index < integrations.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -374,7 +462,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {secrets.map((secret, index) => (
             <span key={secret.id}>
-              <GetEntityLink {...secret} />
+              <Entity entity={secret} />
               {index < secrets.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -396,7 +484,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {parents.map((parent, index) => (
             <span key={parent.id}>
-              <GetEntityLink {...parent} />
+              <Entity entity={parent} />
               {index < parents.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -418,7 +506,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {children.map((child, index) => (
             <span key={child.id}>
-              <GetEntityLink {...child} />
+              <Entity entity={child} />
               {index < children.length - 1 ? ", " : ""}
             </span>
           ))}

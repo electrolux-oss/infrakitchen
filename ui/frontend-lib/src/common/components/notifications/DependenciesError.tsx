@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 import { IkEntity } from "../../../types";
 import { ExpandIconButton } from "../buttons/ExpandIconButton";
-import { GetEntityLink } from "../CommonField";
+import { Entity } from "../entities/Entity";
 
 interface DependencyErrorProps {
   id: string | number;
@@ -97,7 +97,7 @@ export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
                   }}
                 >
                   <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                    <GetEntityLink {...r} />
+                    <Entity entity={r} />
                   </Typography>
                 </Box>
               ))}

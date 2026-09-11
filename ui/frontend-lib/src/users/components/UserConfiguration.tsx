@@ -6,8 +6,8 @@ import { Box, Button } from "@mui/material";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { BaseCard } from "../../common/components/BaseCard";
+} from "../../common/components/fields/CommonField";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GqlUser, GqlUserShort } from "../graphql";
 

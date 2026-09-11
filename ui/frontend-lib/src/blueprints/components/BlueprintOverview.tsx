@@ -6,15 +6,13 @@ import StorageIcon from "@mui/icons-material/Storage";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Chip, TextField } from "@mui/material";
 
-import {
-  CommonField,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -98,7 +96,7 @@ export const BlueprintOverview = () => {
         value={
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {blueprint.templates.map((t) => (
-              <GetEntityLink key={t.id} {...t} />
+              <Entity key={t.id} entity={t} />
             ))}
           </Box>
         }

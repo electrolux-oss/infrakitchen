@@ -1,8 +1,3 @@
-import { useMemo } from "react";
-
-import { useNavigate } from "react-router";
-
-import { useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
 import {
@@ -12,19 +7,7 @@ import {
 import { TASK_FIELD_MAP } from "../graphql";
 
 export const TasksPage = () => {
-  const { linkPrefix, globalConfig } = useConfig();
-
-  const navigate = useNavigate();
-
-  const columns = useMemo(
-    () =>
-      taskColumns({
-        navigate,
-        linkPrefix,
-        entityOptions: globalConfig.entities,
-      }),
-    [navigate, linkPrefix, globalConfig.entities],
-  );
+  const columns = taskColumns();
 
   return (
     <PageContainer

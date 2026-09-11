@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
-import { usePermissionProvider } from "@electrolux-oss/infrakitchen";
+import { Label, usePermissionProvider } from "@electrolux-oss/infrakitchen";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -18,7 +18,6 @@ import Tooltip from "@mui/material/Tooltip";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import { MINI_DRAWER_WIDTH } from "../../constants";
 import DashboardSidebarContext from "../../context/DashboardSidebarContext";
-import { neutralPillSx } from "./mixins";
 
 export interface DashboardSidebarPageItemProps {
   id: string;
@@ -212,18 +211,7 @@ export default function DashboardSidebarPageItem({
               />
             ) : null}
             {label && !mini ? (
-              <Box
-                component="span"
-                sx={{
-                  ...neutralPillSx,
-                  ml: 1,
-                  // Slightly tighter than the header version chip.
-                  fontSize: "0.62rem",
-                  padding: "3px 7px",
-                }}
-              >
-                {label}
-              </Box>
+              <Label label={label} sx={{ ml: 1, flexShrink: 0 }} />
             ) : null}
             {action && !mini && fullyExpanded ? action : null}
             {nestedNavigation ? (

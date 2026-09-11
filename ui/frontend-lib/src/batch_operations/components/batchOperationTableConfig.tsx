@@ -1,6 +1,6 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
@@ -20,7 +20,7 @@ export const batchOperationColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -62,10 +62,8 @@ export const batchOperationColumns: EntityTableColumn[] = [
       }),
     },
     valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
+    ),
   },
 ];

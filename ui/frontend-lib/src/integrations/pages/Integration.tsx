@@ -6,7 +6,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { IntegrationContent } from "../components/IntegrationContent";

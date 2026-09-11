@@ -14,7 +14,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";

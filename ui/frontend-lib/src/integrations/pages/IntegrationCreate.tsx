@@ -15,12 +15,11 @@ import {
   Link,
   Tabs,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 
 import { useConfig, StyledTab, LabelInput } from "../../common";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { CREATE_INTEGRATION_WITH_STORAGE_MUTATION } from "../../use_cases/graphql";
 import { renderFieldsForProvider } from "../components/IntegrationProviderForms";
 import { providers } from "../constants";

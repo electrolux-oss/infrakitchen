@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface BaseFilterConfig {
   id: string;
   label: string;
@@ -23,6 +25,10 @@ export type ValueInputType =
 export interface ReferenceOption {
   label: string;
   value: string;
+  /** Optional icon rendered before the label in autocomplete dropdowns. */
+  icon?: ReactNode;
+  /** Optional template name shown as a Label chip before the label text. */
+  templateName?: string;
 }
 
 export type ReferenceLoader = ((
@@ -54,6 +60,13 @@ export interface FilterableField {
    * @returns list of {label, value} options matching the search
    */
   loadReferenceOptions?: ReferenceLoader;
+  /**
+   * Other filter fields whose current values scope this field's options
+   * (e.g. Template Version scoped by Template). When one of these values
+   * changes, this field's value is cleared and the reference input is
+   * remounted so options reload with the new scope.
+   */
+  dependencies?: string[];
 }
 
 /**
@@ -91,6 +104,13 @@ export interface ColumnFilterSpec {
    * Called once at derive time.
    */
   makeReferenceLoader?: (ctx: FilterDeriveContext) => ReferenceLoader;
+  /**
+   * Other filter fields whose current values scope this field's options
+   * (e.g. Template Version scoped by Template). When one of these values
+   * changes, this field's value is cleared and the reference input is
+   * remounted so options reload with the new scope.
+   */
+  dependencies?: string[];
 }
 
 /**
@@ -102,6 +122,13 @@ export interface FilterDeriveContext {
   ikApi: any;
   /** Dynamic option sets keyed by name (e.g. { labels: string[] }) */
   options?: Record<string, string[]>;
+  /**
+   * Live access to the panel's current advanced filter clauses. Lets a
+   * reference loader scope its options by the value selected in another
+   * field (e.g. Template Version options limited to the selected Template).
+   * Returns the clauses for the panel's filter config.
+   */
+  getFilterClauses?: () => FilterClause[];
 }
 
 export interface FilterClause {
