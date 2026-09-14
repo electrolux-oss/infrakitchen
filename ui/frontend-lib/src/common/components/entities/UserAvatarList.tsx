@@ -16,7 +16,10 @@ const DEFAULT_MAX_AVATARS = 3;
 
 export interface UserAvatarListProps {
   /** Users to show as clickable avatar circles. Nullish entries are skipped. */
-  users?: Array<{ id?: string | null; identifier?: string | null } | null> | null;
+  users?: Array<{
+    id?: string | null;
+    identifier?: string | null;
+  } | null> | null;
   /**
    * Maximum number of avatars rendered before collapsing the rest behind a
    * "+N" toggle. Pass `Infinity` to always render every user.

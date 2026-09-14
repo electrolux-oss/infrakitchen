@@ -88,13 +88,12 @@ const StyledTreeItem = ({
         "& .MuiTreeItem-content": {
           borderRadius: 1,
           py: 0.25,
-          "&[data-selected], &[data-focused], &[data-selected][data-focused]":
-            {
+          "&[data-selected], &[data-focused], &[data-selected][data-focused]": {
+            backgroundColor: "transparent",
+            "&:hover": {
               backgroundColor: "transparent",
-              "&:hover": {
-                backgroundColor: "transparent",
-              },
             },
+          },
         },
       }}
     >

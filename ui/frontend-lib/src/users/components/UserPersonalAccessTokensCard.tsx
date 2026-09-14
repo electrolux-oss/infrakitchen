@@ -20,12 +20,12 @@ import {
 import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { InlineCode } from "../../common/components/code/InlineCode";
+import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlUser } from "../graphql";
 import {
   CREATE_PERSONAL_ACCESS_TOKEN_MUTATION,

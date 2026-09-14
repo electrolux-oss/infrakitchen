@@ -2,8 +2,10 @@ import { ReactNode } from "react";
 
 import { Controller, useFormContext } from "react-hook-form";
 
-import { TableCell, TableRow, Typography, Chip, useTheme } from "@mui/material";
+import { Typography, Chip, useTheme } from "@mui/material";
 
+import { VariableCard } from "../../../common/components/fields/VariableCard";
+import { solidChipColorSx } from "../../../common/utils/softChip";
 import { ValidationRule } from "../../../types";
 import { ResourceVariableSchema } from "../../types";
 import { validateResourceVariableValue } from "../../utils/validationRules";
@@ -38,7 +40,11 @@ export const ResourceVariableRow = ({
   const isNew = status === "new";
 
   return (
-    <TableRow
+    <VariableCard
+      name={variable.name}
+      required={variable.required}
+      type={variable.type}
+      description={variable.description}
       sx={
         hasDefault
           ? {
@@ -49,72 +55,43 @@ export const ResourceVariableRow = ({
             }
           : undefined
       }
-    >
-      <TableCell sx={{ width: "320px" }}>
-        <Typography
-          variant="body1"
-          component="span"
-          sx={{
-            color: "text.primary",
-            fontWeight: "bold",
-          }}
-        >
-          {variable.name}
-          {variable.required && (
-            <span style={{ color: theme.palette.primary.main }}> *</span>
+      chips={
+        <>
+          {isNew && (
+            <Chip
+              label="Added"
+              sx={{ ml: 1, ...solidChipColorSx("info")(theme) }}
+            />
           )}
+          {isDeleted && (
+            <Chip
+              label="Deleted"
+              sx={{ ml: 1, ...solidChipColorSx("warning")(theme) }}
+            />
+          )}
+          {validationSummary && (
+            <Chip
+              label={validationSummary}
+              sx={{ ml: 1, ...solidChipColorSx("success")(theme) }}
+            />
+          )}
+        </>
+      }
+    >
+      {isDeleted && (
+        <Typography variant="body2" sx={{ color: "warning.main", mb: 1 }}>
+          This variable was deleted from the current schema.
         </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            color: "text.secondary",
-            display: "block",
-          }}
-        >
-          {variable.description}
-        </Typography>
-
-        <Chip
-          label={variable.type}
-          color="default"
-          sx={{
-            fontWeight: "bold",
-            letterSpacing: 0.5,
-          }}
+      )}
+      {children ?? (
+        <ResourceVariableInput
+          isDisabled={isDisabled}
+          variable={variable}
+          field={field}
+          fieldState={fieldState}
         />
-        {isNew && <Chip label="Added" color="info" sx={{ ml: 1 }} />}
-        {isDeleted && <Chip label="Deleted" color="warning" sx={{ ml: 1 }} />}
-        {validationSummary && (
-          <Chip
-            label={validationSummary}
-            color="success"
-            variant="outlined"
-            sx={{ ml: 1 }}
-          />
-        )}
-      </TableCell>
-      <TableCell sx={{ width: "300px" }}>
-        {isDeleted && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: "warning.main",
-              mb: 1,
-            }}
-          >
-            This variable was deleted from the current schema.
-          </Typography>
-        )}
-        {children ?? (
-          <ResourceVariableInput
-            isDisabled={isDisabled}
-            variable={variable}
-            field={field}
-            fieldState={fieldState}
-          />
-        )}
-      </TableCell>
-    </TableRow>
+      )}
+    </VariableCard>
   );
 };
 

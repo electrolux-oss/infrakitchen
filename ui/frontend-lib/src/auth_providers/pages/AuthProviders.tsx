@@ -9,7 +9,10 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { PermissionWrapper, useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 import { getProviderValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
@@ -67,16 +70,7 @@ export const AuthProvidersPage = () => {
           <RelativeTime date={params.value} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        sortField: "creator.identifier",
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => (
-          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-        ),
-      },
+      userColumn({ disableFilter: true }),
     ],
     [],
   );

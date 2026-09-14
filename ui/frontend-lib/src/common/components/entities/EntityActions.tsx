@@ -9,10 +9,11 @@ import RedoIcon from "@mui/icons-material/Redo";
 import SyncIcon from "@mui/icons-material/Sync";
 import UpdateIcon from "@mui/icons-material/Update";
 import { Button, Tooltip } from "@mui/material";
+
 import { ENTITY_ACTION } from "../../../utils/constants";
-import { buildEntityActionMutation } from "../../graphql/entityActionMutation";
 import { useConfig } from "../../context/ConfigContext";
 import { useEntityProvider } from "../../context/EntityContext";
+import { buildEntityActionMutation } from "../../graphql/entityActionMutation";
 import { notify, notifyError } from "../../hooks/useNotification";
 import { ActionButton } from "../buttons/ActionButton";
 import { CommonDialog } from "../dialogs/CommonDialog";

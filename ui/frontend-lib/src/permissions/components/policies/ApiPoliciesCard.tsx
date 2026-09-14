@@ -10,7 +10,10 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { RELATIVE_TIME_COLUMN_WIDTH } from "../../../common/components/entity_table/tableColumns";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -49,7 +52,9 @@ export const ApiPoliciesCard = (props: { role: string }) => {
             // API type policy
             return params.row.v1;
           }
-          return <Entity entity={params.row.entityData} />;
+          return (
+            <Entity entity={params.row.entityData} showLifecycleState={false} />
+          );
         },
       },
       {
@@ -73,15 +78,7 @@ export const ApiPoliciesCard = (props: { role: string }) => {
           <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => (
-          <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-        ),
-      },
+      userColumn({ disableFilter: true, sortField: null }),
       {
         field: "id",
         headerName: "Delete",

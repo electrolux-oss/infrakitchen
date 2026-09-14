@@ -1,8 +1,5 @@
 import { Control, Controller, FieldErrors, useWatch } from "react-hook-form";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { InlineCode } from "../../common/components/code/InlineCode";
-
 import {
   Checkbox,
   FormControlLabel,
@@ -14,6 +11,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+
+import { InlineCode } from "../../common/components/code/InlineCode";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 
 interface FormValues {
   configuration: object;

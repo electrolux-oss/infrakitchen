@@ -15,8 +15,9 @@ import {
 } from "../../../resources/graphql";
 import { useConfig } from "../../context/ConfigContext";
 import { notify, notifyError } from "../../hooks/useNotification";
-
+import { useNow } from "../../hooks/useNow";
 import { getDateValue } from "../fields/CommonField";
+
 import { CommonDialog } from "./CommonDialog";
 
 const SCHEDULE_ENTITY_ACTION_MUTATION = `
@@ -73,8 +74,9 @@ export function ScheduleEntityActionDialog({
     );
   }, [open, scheduledAction]);
 
-  const minRunAt = formatDateTimeLocal(new Date());
-  const isPast = Boolean(runAt) && new Date(runAt).getTime() <= Date.now();
+  const now = useNow();
+  const minRunAt = formatDateTimeLocal(new Date(now));
+  const isPast = Boolean(runAt) && new Date(runAt).getTime() <= now;
   const canSubmit = Boolean(runAt) && !isPast && !isSaving && !isCancelling;
 
   const handleClose = () => {

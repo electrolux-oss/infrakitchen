@@ -11,7 +11,9 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
+
 import { solidChipColorSx } from "../../utils/softChip";
+
 import { HclInputVariable } from "./HclInputVariable";
 import { HclOutputValue } from "./HclOutputValue";
 

@@ -13,11 +13,12 @@ import {
 } from "@mui/material";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
-import { DiagramNode, makeHandleStyle } from "./helpers";
+import { DiagramNode, makeHandleStyle, useCanvasPalette } from "./helpers";
 
 export function ConstantNode({ data }: NodeProps<DiagramNode>) {
   const theme = useTheme();
-  const bg = theme.palette.background.paper;
+  const palette = useCanvasPalette();
+  const bg = palette.background.paper;
   const canRemove = typeof data.onRemove === "function";
   const canEdit = typeof data.onUpdate === "function" && !!data.constantId;
   const hasOutputs = Array.isArray(data.outputs) && data.outputs.length > 0;
@@ -27,7 +28,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
     <Box
       sx={{
         background: bg,
-        border: `2px solid ${theme.palette.secondary.main}`,
+        border: `2px solid ${palette.secondary.main}`,
         borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
         boxShadow: theme.shadows[2],
@@ -40,8 +41,8 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
           justifyContent: "space-between",
           px: 1.5,
           py: 1,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          background: theme.palette.secondary.main,
+          borderBottom: `1px solid ${palette.divider}`,
+          background: palette.secondary.main,
           borderTopLeftRadius: 6,
           borderTopRightRadius: 6,
           gap: 1,
@@ -52,14 +53,14 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
         >
           <TuneIcon
             fontSize="small"
-            sx={{ color: theme.palette.secondary.contrastText }}
+            sx={{ color: palette.secondary.contrastText }}
           />
           <Typography
             variant="subtitle2"
             noWrap
             sx={{
               fontWeight: 700,
-              color: theme.palette.secondary.contrastText,
+              color: palette.secondary.contrastText,
             }}
           >
             {canEdit ? "Constant" : data.label}
@@ -72,7 +73,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
               onClick={() =>
                 data.onRemove?.(data.constantId ?? data.templateId)
               }
-              sx={{ color: theme.palette.secondary.contrastText, ml: 0.5 }}
+              sx={{ color: palette.secondary.contrastText, ml: 0.5 }}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -133,17 +134,13 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
                   my: 0.4,
                 }}
               >
-                <Chip
-                  label={output}
-                  variant="outlined"
-                  color="secondary"
-                />
+                <Chip label={output} variant="outlined" color="secondary" />
                 <Handle
                   type="source"
                   position={Position.Right}
                   id={`output-${output}`}
                   style={{
-                    ...makeHandleStyle(theme.palette.secondary.main, bg),
+                    ...makeHandleStyle(palette.secondary.main, bg),
                     marginLeft: 4,
                   }}
                 />
@@ -161,17 +158,13 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
               mt: 0.5,
             }}
           >
-            <Chip
-              label={valueLabel}
-              variant="outlined"
-              color="secondary"
-            />
+            <Chip label={valueLabel} variant="outlined" color="secondary" />
             <Handle
               type="source"
               position={Position.Right}
               id="output-value"
               style={{
-                ...makeHandleStyle(theme.palette.secondary.main, bg),
+                ...makeHandleStyle(palette.secondary.main, bg),
                 marginLeft: 4,
               }}
             />

@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 import { Alert, Box, CircularProgress } from "@mui/material";
+
 import { NotFoundPage } from "../../../dashboard/pages/NotFound";
 import { useEntityProvider } from "../../context/EntityContext";
 import PageContainer from "../../PageContainer";

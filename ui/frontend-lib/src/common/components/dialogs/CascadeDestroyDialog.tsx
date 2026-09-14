@@ -19,9 +19,9 @@ import {
 import { useConfig } from "../../context";
 import StatusChip from "../../StatusChip";
 import { getStateColor } from "../../utils";
+import { ConfirmNameField } from "../fields/ConfirmNameField";
 
 import { CommonDialog } from "./CommonDialog";
-import { ConfirmNameField } from "../fields/ConfirmNameField";
 
 interface CascadeDestroyDialogProps {
   open: boolean;

@@ -28,17 +28,61 @@ interface VersionLifecycleStateChipProps {
   lifecycleState: VERSION_LIFECYCLE_STATE | string;
   sx?: SxProps<Theme>;
   breakingChanges?: string;
+  /**
+   * `chip` is the full labelled pill; `dot` is a small colored dot with the
+   * state in a tooltip, for dense contexts like grid rows.
+   */
+  variant?: "chip" | "dot";
 }
 
 const VersionLifecycleStateChip = ({
   lifecycleState,
   sx,
   breakingChanges,
+  variant = "chip",
 }: VersionLifecycleStateChipProps) => {
   const normalizedState =
     lifecycleState?.toLowerCase() || VERSION_LIFECYCLE_STATE.UNKNOWN;
   const color = getVersionLifecycleStateColor(normalizedState);
   const hasBreakingChanges = Boolean(breakingChanges?.trim());
+
+  if (variant === "dot") {
+    return (
+      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+        <Tooltip
+          title={
+            hasBreakingChanges
+              ? `${normalizedState} — ${breakingChanges}`
+              : normalizedState
+          }
+        >
+          <Box
+            component="span"
+            aria-label={normalizedState}
+            sx={(theme) => ({
+              width: 8,
+              height: 8,
+              flexShrink: 0,
+              borderRadius: "50%",
+              // `default` resolves to a light grey that is nearly invisible on
+              // white, so unknown states get a ring instead of a solid fill.
+              ...(color === "default"
+                ? {
+                    border: `1.5px solid ${theme.palette.grey[400]}`,
+                  }
+                : { bgcolor: theme.palette[color].main }),
+              ...(sx as object),
+            })}
+          />
+        </Tooltip>
+        {hasBreakingChanges ? (
+          <Tooltip title={breakingChanges}>
+            <WarningAmberIcon color="warning" fontSize="small" />
+          </Tooltip>
+        ) : null}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>

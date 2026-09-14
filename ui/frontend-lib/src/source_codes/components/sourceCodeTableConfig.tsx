@@ -5,13 +5,12 @@ import {
 
 import { getRepoNameFromUrl } from "../../common";
 import { CodeRepository } from "../../common/components/entities/CodeRepository";
-import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   labelsColumn,
   relativeTimeColumn,
+  userColumn,
 } from "../../common/components/entity_table/tableColumns";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -71,24 +70,5 @@ export const sourceCodeColumns: EntityTableColumn[] = [
   relativeTimeColumn("updatedAt", "Last Updated", {
     sortField: "updated_at",
   }),
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
 ];

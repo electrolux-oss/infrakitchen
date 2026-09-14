@@ -4,13 +4,14 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { getProviderValue } from "../../common/components/fields/CommonField";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   createdUpdatedColumns,
   labelsColumn,
+  userColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
@@ -90,26 +91,7 @@ export const secretColumns: EntityTableColumn[] = [
     ),
   },
   ...createdUpdatedColumns(),
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
   {
     field: "integration",
     headerName: "Integration",

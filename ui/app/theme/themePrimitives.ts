@@ -2,10 +2,9 @@
 import "@mui/x-data-grid/themeAugmentation";
 import "@mui/x-tree-view/themeAugmentation";
 
+import { CODE_FONT_FAMILY } from "@electrolux-oss/infrakitchen";
 import { createTheme, alpha } from "@mui/material/styles";
 import type { Shadows } from "@mui/material/styles";
-
-import { CODE_FONT_FAMILY } from "@electrolux-oss/infrakitchen";
 
 declare module "@mui/material/Paper" {
   interface PaperPropsVariantOverrides {

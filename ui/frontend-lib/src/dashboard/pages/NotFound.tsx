@@ -50,7 +50,6 @@ export const NotFoundPage = () => {
           <br />
           Don&apos;t worry, even the best explorers get lost sometimes.
         </Typography>
-
       </Box>
     </Container>
   );

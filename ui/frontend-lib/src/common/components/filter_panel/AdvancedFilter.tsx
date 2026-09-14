@@ -319,6 +319,12 @@ const ClauseRow = ({
           freeSolo={false}
           placeholder={`Select ${selectedField.label.toLowerCase()}...`}
           sx={MULTI_VALUE_AUTOCOMPLETE_SX}
+          renderOptionContent={
+            selectedField.renderSelectOption
+              ? (option) =>
+                  selectedField.renderSelectOption!(option.value, option.label)
+              : undefined
+          }
         />
       );
     }
@@ -349,6 +355,12 @@ const ClauseRow = ({
           freeSolo={false}
           placeholder="Select..."
           sx={SINGLE_VALUE_INPUT_SX}
+          renderOptionContent={
+            selectedField.renderSelectOption
+              ? (option) =>
+                  selectedField.renderSelectOption!(option.value, option.label)
+              : undefined
+          }
         />
       );
     }

@@ -6,6 +6,7 @@ import {
   IconButton,
   Tooltip,
   Typography,
+  useColorScheme,
   useTheme,
 } from "@mui/material";
 import { Handle, NodeProps, Position } from "@xyflow/react";
@@ -14,41 +15,45 @@ import { CODE_FONT_FAMILY } from "../../../theme";
 import { STATUS_CHIP_COLOR } from "../../../utils";
 import { GetReferenceUrlValue } from "../../fields/CommonField";
 
-import { DiagramNode, makeHandleStyle } from "./helpers";
+import {
+  DiagramNode,
+  makeHandleStyle,
+  NODE_ACCENT,
+  useCanvasPalette,
+} from "./helpers";
 
 export function TemplateNode({ data }: NodeProps<DiagramNode>) {
   const theme = useTheme();
-  const bg = theme.palette.background.paper;
+  const palette = useCanvasPalette();
+  const { mode } = useColorScheme();
+  const bg = palette.background.paper;
   const isExternal = data.kind === "external";
   const displayOrder =
     data.order ??
     (data.stepPosition != null ? data.stepPosition + 1 : undefined);
   const canRemove = typeof data.onRemove === "function";
 
-  // External nodes always use warning palette; template nodes derive from status or fall back to primary.
-  let headerBg = isExternal
-    ? theme.palette.warning.main
-    : theme.palette.primary.main;
-  let headerText = isExternal
-    ? theme.palette.warning.contrastText
-    : theme.palette.primary.contrastText;
+  // External nodes always use warning palette; template nodes use the blue
+  // accent (see NODE_ACCENT) unless a workflow status overrides it.
+  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
+  let headerBg = isExternal ? palette.warning.main : accent;
+  let headerText = isExternal ? palette.warning.contrastText : "#ffffff";
   let borderStyle = isExternal ? "dashed" : "solid";
-  let borderColor = isExternal
-    ? theme.palette.warning.main
-    : theme.palette.divider;
+  let borderColor = isExternal ? palette.warning.main : accent;
 
   if (!isExternal && data.status && data.status !== "pending") {
     const p =
       data.status === "done"
-        ? theme.palette.success
+        ? palette.success
         : data.status === "error"
-          ? theme.palette.error
+          ? palette.error
           : data.status === "in_progress"
-            ? theme.palette.info
-            : theme.palette.warning;
-    headerBg = p.main;
-    headerText = p.contrastText;
-    borderColor = p.main;
+            ? null
+            : palette.warning;
+    // `info` is monochrome here, so in-progress keeps the accent.
+    headerBg = p ? p.main : accent;
+    headerText = p ? p.contrastText : "#ffffff";
+    borderColor = p ? p.main : accent;
   }
 
   return (
@@ -67,7 +72,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         sx={{
           px: 1.5,
           py: 1,
-          borderBottom: `1px solid ${theme.palette.divider}`,
+          borderBottom: `1px solid ${palette.divider}`,
           background: headerBg,
           borderTopLeftRadius: 6,
           borderTopRightRadius: 6,
@@ -83,17 +88,27 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           />
         )}
         {displayOrder != null && (
-          <Chip
-            label={displayOrder}
+          // Not a Chip: the theme's dark-mode Chip background out-specifies
+          // `sx` and would force a grey badge onto the coloured header.
+          <Box
             sx={{
-              fontWeight: 700,
-              minWidth: 24,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minWidth: 20,
               height: 20,
-              bgcolor: "rgba(255,255,255,0.25)",
+              px: 0.5,
+              borderRadius: "10px",
+              bgcolor: "rgba(255, 255, 255, 0.25)",
               color: headerText,
               fontSize: 11,
+              fontWeight: 700,
+              lineHeight: 1,
             }}
-          />
+          >
+            {displayOrder}
+          </Box>
         )}
         <Typography
           variant="subtitle2"
@@ -218,7 +233,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   position={Position.Left}
                   id={`input-${input}`}
                   style={{
-                    ...makeHandleStyle(theme.palette.info.main, bg),
+                    ...makeHandleStyle(palette.info.main, bg),
                     marginRight: 4,
                   }}
                 />
@@ -233,7 +248,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   position={Position.Right}
                   id={`input-source-${input}`}
                   style={{
-                    ...makeHandleStyle(theme.palette.info.light, bg, 7),
+                    ...makeHandleStyle(palette.info.light, bg, 7),
                     marginLeft: 4,
                   }}
                 />
@@ -277,7 +292,7 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   position={Position.Right}
                   id={`output-${output}`}
                   style={{
-                    ...makeHandleStyle(theme.palette.success.main, bg),
+                    ...makeHandleStyle(palette.success.main, bg),
                     marginLeft: 4,
                   }}
                 />

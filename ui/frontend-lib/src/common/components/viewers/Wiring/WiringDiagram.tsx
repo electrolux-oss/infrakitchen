@@ -16,6 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
+import { useCanvasPalette } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import {
@@ -159,6 +160,7 @@ export const WiringDiagram = ({
   allowFullscreen = false,
 }: WiringDiagramProps) => {
   const theme = useTheme();
+  const palette = useCanvasPalette();
   const { mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -218,9 +220,18 @@ export const WiringDiagram = ({
         externalTemplates,
         constants,
         theme,
+        mode: mode === "dark" ? "dark" : "light",
         stepByTemplate,
       }),
-    [wiring, templates, externalTemplates, constants, theme, stepByTemplate],
+    [
+      wiring,
+      templates,
+      externalTemplates,
+      constants,
+      theme,
+      mode,
+      stepByTemplate,
+    ],
   );
 
   const useStore = useMemo(() => createWiringCanvasStore(), []);
@@ -243,7 +254,7 @@ export const WiringDiagram = ({
         width: "100%",
         height: fullscreen ? "100%" : height,
         position: "relative",
-        border: fullscreen ? "none" : `1px solid ${theme.palette.divider}`,
+        border: fullscreen ? "none" : `1px solid ${palette.divider}`,
         borderRadius: fullscreen ? 0 : "var(--template-surface-radius)",
         overflow: "hidden",
       }}
@@ -254,6 +265,8 @@ export const WiringDiagram = ({
         edges={edges}
         nodeTypes={NODE_TYPES}
         fitView
+        // Cap at 1: React Flow's fitView otherwise upscales to 2x.
+        fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
         nodesDraggable={isWorkflowMode}
         nodesConnectable={false}
         elementsSelectable={isWorkflowMode}
@@ -275,7 +288,7 @@ export const WiringDiagram = ({
             right: 8,
             zIndex: 10,
             bgcolor: "background.paper",
-            border: `1px solid ${theme.palette.divider}`,
+            border: `1px solid ${palette.divider}`,
             "&:hover": { bgcolor: "action.hover" },
           }}
         >

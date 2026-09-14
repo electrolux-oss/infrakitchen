@@ -10,8 +10,8 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notifyError } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GqlSourceConfig,
   GqlSourceOutputConfigTemplate,

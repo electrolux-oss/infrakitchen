@@ -2,18 +2,17 @@ import { useCallback, useState } from "react";
 
 import { Box } from "@mui/material";
 
-import { IconField } from "../../common";
-import {
-  CommonField,
-  GetReferenceUrlValue,
-  getRemoteUrlValue,
-} from "../../common/components/fields/CommonField";
+import { Entity, IconField } from "../../common";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import {
+  CommonField,
+  getRemoteUrlValue,
+} from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -89,13 +88,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         ariaLabel="Edit integration"
         display={
           sourceCode.integration ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {IconField(sourceCode.sourceCodeProvider)}
-              <GetReferenceUrlValue
-                {...sourceCode.integration}
-                urlProvider={sourceCode.integration.integrationProvider}
-              />
-            </Box>
+            <Entity entity={sourceCode.integration} providerIconSize={24} />
           ) : null
         }
         onSave={(value) => saveField({ integrationId: value })}

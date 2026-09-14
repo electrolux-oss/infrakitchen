@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   Autocomplete,
@@ -25,6 +25,8 @@ interface AsyncAutocompleteMultiProps {
   freeSolo?: boolean;
   placeholder?: string;
   sx?: SxProps<Theme>;
+  /** Custom rendering for an option's label, used in the dropdown list and the selected value/chip. */
+  renderOptionContent?: (option: AsyncAutocompleteOption) => ReactNode;
 }
 
 export const AutocompleteSelect = ({
@@ -36,6 +38,7 @@ export const AutocompleteSelect = ({
   freeSolo = true,
   placeholder,
   sx,
+  renderOptionContent,
 }: AsyncAutocompleteMultiProps) => {
   const [options, setOptions] =
     useState<AsyncAutocompleteOption[]>(staticOptions);
@@ -72,6 +75,11 @@ export const AutocompleteSelect = ({
     selected: AutocompleteValue,
   ) => option.value === toStoredValue(selected);
 
+  const getContent = (option: AutocompleteValue): ReactNode => {
+    if (typeof option === "string") return option;
+    return renderOptionContent ? renderOptionContent(option) : option.label;
+  };
+
   if (multiple) {
     const selectedValues = Array.isArray(value) ? value : value ? [value] : [];
     const selectedOptions = selectedValues.map(
@@ -91,6 +99,15 @@ export const AutocompleteSelect = ({
         onChange={(_e, newValue) =>
           onChange((newValue as AutocompleteValue[]).map(toStoredValue))
         }
+        renderOption={
+          renderOptionContent
+            ? (props, option) => (
+                <li {...props} key={getOptionLabel(option)}>
+                  {getContent(option)}
+                </li>
+              )
+            : undefined
+        }
         renderValue={(
           tagValue: AutocompleteRenderValue<
             AsyncAutocompleteOption,
@@ -101,13 +118,7 @@ export const AutocompleteSelect = ({
         ) =>
           tagValue.map((option, index) => {
             const { key, ...rest } = getItemProps({ index });
-            return (
-              <Chip
-                key={key}
-                label={getOptionLabel(option)}
-                {...rest}
-              />
-            );
+            return <Chip key={key} label={getContent(option)} {...rest} />;
           })
         }
         renderInput={(params) => (
@@ -136,6 +147,28 @@ export const AutocompleteSelect = ({
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={isSameOption}
       onChange={(_e, newValue) => onChange(toStoredValue(newValue))}
+      renderOption={
+        renderOptionContent
+          ? (props, option) => (
+              <li {...props} key={getOptionLabel(option)}>
+                {getContent(option)}
+              </li>
+            )
+          : undefined
+      }
+      renderValue={
+        renderOptionContent
+          ? (option, getItemProps) => {
+              if (!option) return null;
+              const { onDelete: _onDelete, ...itemProps } = getItemProps();
+              return (
+                <span {...itemProps} style={{ display: "inline-flex" }}>
+                  {getContent(option)}
+                </span>
+              );
+            }
+          : undefined
+      }
       renderInput={(params) => (
         <TextField {...params} placeholder={placeholder} />
       )}

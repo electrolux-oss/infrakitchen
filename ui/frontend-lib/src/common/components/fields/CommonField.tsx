@@ -5,9 +5,11 @@ import { useNavigate } from "react-router";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import { Box, Typography, Grid, GridSize, Link } from "@mui/material";
+
 import { IconField } from "../../../icons/Icons";
 import { useConfig } from "../../context";
 import { getProviderDisplayName } from "../../utils";
+
 import { PlaceholderText } from "./PlaceholderDescription";
 
 export const getRemoteUrlValue = (url: string) => {
@@ -27,7 +29,6 @@ export const getRemoteUrlValue = (url: string) => {
 interface GetReferenceUrlValueProps {
   id: string;
   entityName: string;
-  urlProvider?: string;
   name?: string;
   display_name?: string;
   identifier?: string;
@@ -36,7 +37,6 @@ interface GetReferenceUrlValueProps {
 export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   id,
   entityName,
-  urlProvider,
   name,
   display_name,
   identifier,
@@ -44,10 +44,7 @@ export const GetReferenceUrlValue: FC<GetReferenceUrlValueProps> = ({
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
 
-  const basePath = `${linkPrefix}${entityName}s`;
-  const fullPath = urlProvider
-    ? `${basePath}/${urlProvider}/${id}`
-    : `${basePath}/${id}`;
+  const fullPath = `${linkPrefix}${entityName}s/${id}`;
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {

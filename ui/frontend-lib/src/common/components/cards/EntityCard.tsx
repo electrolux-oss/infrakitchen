@@ -21,10 +21,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { PermissionWrapper } from "../../wrappers";
+
 import { solidChipColorSx } from "../../utils/softChip";
-import { Labels } from "../labels/Labels";
+import { PermissionWrapper } from "../../wrappers";
 import { PlaceholderDescription } from "../fields/PlaceholderDescription";
+import { Labels } from "../labels/Labels";
 
 export interface EntityCardProps {
   name: string;

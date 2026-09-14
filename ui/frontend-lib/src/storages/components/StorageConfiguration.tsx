@@ -1,10 +1,9 @@
-import { formatLabel } from "../../common";
+import { Entity, formatLabel } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
   getProviderValue,
-  GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { GqlStorage } from "../graphql";
 
 export interface StorageConfigurationProps {
@@ -19,12 +18,7 @@ export const StorageConfiguration = ({
       {storage.integration && (
         <CommonField
           name={"Integration"}
-          value={
-            <GetReferenceUrlValue
-              {...storage.integration}
-              urlProvider={storage.integration.integrationProvider}
-            />
-          }
+          value={<Entity entity={storage.integration} providerIconSize={24} />}
         />
       )}
       <CommonField

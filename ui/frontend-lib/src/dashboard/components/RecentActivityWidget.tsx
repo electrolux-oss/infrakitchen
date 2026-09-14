@@ -21,7 +21,10 @@ import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  USER_AVATAR_COLUMN_WIDTH,
+} from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { ActivityLogEntry } from "../types";
@@ -168,6 +171,7 @@ export const RecentActivityWidget = ({
               entityType: params.row.model,
               name: params.row.entityData?.name ?? params.row.entityId,
             }}
+            showLifecycleState={false}
             showLabel
           />
         ),
@@ -175,7 +179,8 @@ export const RecentActivityWidget = ({
       {
         field: "creator",
         headerName: "User",
-        flex: 1,
+        // Avatar-only cell, so the column only needs to fit the avatar.
+        width: USER_AVATAR_COLUMN_WIDTH,
         valueGetter: (_value, row) =>
           row.creator?.displayName ?? row.creator?.identifier ?? "System",
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => {
@@ -188,6 +193,7 @@ export const RecentActivityWidget = ({
                 entityType: "user",
                 name: creator.displayName || creator.identifier,
               }}
+              hideName
             />
           );
         },

@@ -12,17 +12,16 @@ import {
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
-import { formatLabel } from "../../common";
-import {
-  CommonField,
-  getProviderValue,
-  GetReferenceUrlValue,
-} from "../../common/components/fields/CommonField";
+import { Entity, formatLabel } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import { BaseCard } from "../../common/components/cards/BaseCard";
+import {
+  CommonField,
+  getProviderValue,
+} from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
@@ -254,10 +253,7 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
         name={"Integration"}
         value={
           secret.integration ? (
-            <GetReferenceUrlValue
-              {...secret.integration}
-              urlProvider={secret.integration.integrationProvider}
-            />
+            <Entity entity={secret.integration} providerIconSize={24} />
           ) : null
         }
       />

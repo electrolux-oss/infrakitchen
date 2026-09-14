@@ -54,6 +54,8 @@ export interface FilterableField {
   options?: string[] | (() => Promise<string[]>);
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
+  /** Custom rendering for a select option's value (e.g. a colored chip), used in the dropdown list and the selected value. */
+  renderSelectOption?: (value: string, label: string) => ReactNode;
   /**
    * Async loader for reference fields (valueType "reference").
    * @param search - user-typed search string (empty = load defaults)
@@ -90,6 +92,8 @@ export interface ColumnFilterSpec {
   defaultSelected?: boolean;
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
+  /** Custom rendering for a select option's value (e.g. a colored chip), used in the dropdown list and the selected value. */
+  renderSelectOption?: (value: string, label: string) => ReactNode;
   /** Static string options for autocomplete-multiple inputs. */
   options?: string[];
   /** Entity name for the common labels autocomplete loader. */

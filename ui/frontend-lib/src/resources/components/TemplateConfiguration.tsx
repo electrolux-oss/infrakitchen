@@ -3,23 +3,24 @@ import { ReactNode, useCallback, useMemo, useState } from "react";
 import { Box, Button, Chip, Grid, TextField, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { CodeBlock } from "../../common/components/code/CodeBlock";
+import { InlineCode } from "../../common/components/code/InlineCode";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
+import { Entity } from "../../common/components/entities/Entity";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { Entity } from "../../common/components/entities/Entity";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { BaseCard } from "../../common/components/cards/BaseCard";
-import { CodeBlock } from "../../common/components/code/CodeBlock";
-import { InlineCode } from "../../common/components/code/InlineCode";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { solidChipColorSx } from "../../common/utils/softChip";
 import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
+import { solidChipColorSx } from "../../common/utils/softChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { IkEntity } from "../../types";
@@ -32,7 +33,6 @@ import {
 import { VariableInput, VariableOutput } from "../types";
 
 import { ResourceVariablesEditDialog } from "./variables/ResourceVariablesEditDialog";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 
 export interface TemplateConfigurationProps {
   resource: GqlResource;

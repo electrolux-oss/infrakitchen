@@ -77,6 +77,11 @@ export const dataDisplayCustomizations: Components<Theme> = {
         display: "flex",
         flexDirection: "column",
         gap: 0,
+        // The column layout above turns MUI's `flexGrow: 1` on ListItemButton
+        // into vertical stretching. Buttons inside a ListItem are unaffected.
+        "& > .MuiListItemButton-root": {
+          flexGrow: 0,
+        },
       },
     },
   },

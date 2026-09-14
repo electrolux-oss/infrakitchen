@@ -1,12 +1,12 @@
 import { Box, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { getDateValue } from "../../common/components/fields/CommonField";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { solidChipColorSx } from "../../common/utils/softChip";
+import { userColumn } from "../../common/components/entity_table/tableColumns";
+import { getDateValue } from "../../common/components/fields/CommonField";
 import StatusChip from "../../common/StatusChip";
+import { solidChipColorSx } from "../../common/utils/softChip";
 
 export const blueprintColumns: EntityTableColumn[] = [
   {
@@ -87,24 +87,5 @@ export const blueprintColumns: EntityTableColumn[] = [
     flex: 1,
     renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
   },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
 ];

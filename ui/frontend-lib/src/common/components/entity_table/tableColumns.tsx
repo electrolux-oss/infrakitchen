@@ -1,6 +1,8 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
+import { Entity } from "../entities/Entity";
 import { RelativeTime } from "../fields/RelativeTime";
+import { serverSearchReference } from "../filter_panel/referenceLoaders";
 import { Labels } from "../labels/Labels";
 
 import { EntityTableColumn } from "./EntityTable";
@@ -92,3 +94,77 @@ export const labelsColumn = (labelsEntity: string): EntityTableColumn => ({
     <Labels labels={params.row.labels || []} />
   ),
 });
+
+/** Shared width for avatar-only user columns: just the avatar plus padding. */
+export const USER_AVATAR_COLUMN_WIDTH = 80;
+
+/** Options for the shared creator/user column. */
+export interface UserColumnOptions {
+  /** Column field; defaults to "creator". */
+  field?: string;
+  /** Header label; defaults to "Creator". */
+  headerName?: string;
+  /** Row accessor for the user object; defaults to `row.creator`. */
+  value?: (row: any) => any;
+  /** API sort field; pass null to omit (tables whose API can't sort by user). */
+  sortField?: string | null;
+  /** Filter field on the API; defaults to "created_by". */
+  filterField?: string;
+  /** Disable client/server sorting entirely. */
+  sortable?: boolean;
+  /** Omit the reference filter (for tables that can't filter by created_by). */
+  disableFilter?: boolean;
+}
+
+/**
+ * The recurring Creator / User column, rendered as an avatar only — it already
+ * links to the user and shows the identifier in a tooltip, so the name would
+ * just repeat it. Sorting and filtering still use the full identifier.
+ */
+export const userColumn = (
+  options: UserColumnOptions = {},
+): EntityTableColumn => {
+  const field = options.field ?? "creator";
+  const getUser = options.value ?? ((row: any) => row?.creator);
+  const sortField =
+    options.sortField === undefined ? `${field}.identifier` : options.sortField;
+
+  return {
+    field,
+    headerName: options.headerName ?? "Creator",
+    width: USER_AVATAR_COLUMN_WIDTH,
+    ...(options.sortable === false ? { sortable: false } : {}),
+    ...(sortField ? { sortField } : {}),
+    ...(options.disableFilter
+      ? {}
+      : {
+          filter: {
+            field: options.filterField ?? "created_by",
+            operators: ["eq", "in"],
+            valueType: "reference",
+            defaultOperator: "eq",
+            makeReferenceLoader: serverSearchReference({
+              entityPlural: "users",
+              labelField: "identifier",
+            }),
+          },
+        }),
+    valueGetter: (_value: any, row: any) => getUser(row)?.identifier || "",
+    renderCell: (params: GridRenderCellParams) => {
+      const user = getUser(params.row);
+      if (!user?.id) return null;
+      return <Entity entity={{ ...user, entityType: "user" }} hideName />;
+    },
+  };
+};
+
+/**
+ * Right alignment for columns whose value is a number, following the usual
+ * convention that digits line up by place value. Spread into a column def
+ * rather than using DataGrid's `type: "number"`, which would also swap in
+ * numeric filter operators that these server-side filters don't use.
+ */
+export const NUMERIC_COLUMN_ALIGN = {
+  align: "right",
+  headerAlign: "right",
+} as const;

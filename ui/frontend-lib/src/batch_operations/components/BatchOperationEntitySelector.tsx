@@ -35,7 +35,7 @@ import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
@@ -164,6 +164,9 @@ export const BatchOperationEntitySelector = (
               },
               { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
             ],
+            renderSelectOption: (value) => (
+              <VersionLifecycleStateChip lifecycleState={value} />
+            ),
           },
         ],
         valueGetter: (_value: any, row: any) => {
@@ -174,29 +177,7 @@ export const BatchOperationEntitySelector = (
         renderCell: (params: GridRenderCellParams) => {
           const scv = params.row.sourceCodeVersion;
           if (!scv) return null;
-          const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-          const color = getVersionLifecycleStateColor(scv.lifecycleState);
-          const textColor =
-            color === "success"
-              ? "success.main"
-              : color === "info"
-                ? "info.main"
-                : color === "warning"
-                  ? "warning.main"
-                  : color === "error"
-                    ? "error.main"
-                    : "text.primary";
-
-          return (
-            <Entity
-              entity={{ ...scv, name: ref }}
-              sx={{
-                color: textColor,
-                fontWeight: color === "warning" ? 600 : 500,
-                textDecorationColor: textColor,
-              }}
-            />
-          );
+          return <Entity entity={scv} lifecycleVariant="dot" />;
         },
       },
 

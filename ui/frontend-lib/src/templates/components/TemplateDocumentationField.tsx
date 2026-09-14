@@ -10,9 +10,9 @@ import {
   GridSize,
 } from "@mui/material";
 
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { CommonField } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 
 export interface TemplateDocumentationFieldProps {

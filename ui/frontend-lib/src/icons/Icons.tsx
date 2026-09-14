@@ -29,7 +29,7 @@ export const GoogleIcon: React.FC<IconProps> = (props) => (
 );
 
 export const GitHubIcon: React.FC<IconProps> = (props) => (
-  <Icon icon="logos:github-icon" {...props} />
+  <Icon icon="mdi:github" color="currentColor" {...props} />
 );
 
 export const GitLabIcon: React.FC<IconProps> = (props) => (

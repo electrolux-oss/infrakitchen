@@ -8,7 +8,6 @@ import {
   Tooltip,
   Typography,
   useColorScheme,
-  useTheme,
 } from "@mui/material";
 import {
   Background,
@@ -22,7 +21,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
-import { DiagramNode } from "./helpers";
+import { DiagramNode, NODE_ACCENT, useCanvasPalette } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { useWiringCanvasGraph } from "./useWiringCanvasGraph";
 import {
@@ -63,7 +62,8 @@ function WiringCanvasInner({
   onConstantDefaultValueUpdate,
 }: WiringCanvasProps) {
   const { mode } = useColorScheme();
-  const theme = useTheme();
+  const palette = useCanvasPalette();
+  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // One Zustand store per WiringCanvas instance
@@ -107,7 +107,7 @@ function WiringCanvasInner({
         width: "100%",
         height: isFullscreen ? "100vh" : 600,
         display: "flex",
-        border: isFullscreen ? "none" : `1px solid ${theme.palette.divider}`,
+        border: isFullscreen ? "none" : `1px solid ${palette.divider}`,
         borderRadius: isFullscreen ? 0 : "var(--template-surface-radius)",
         overflow: "hidden",
         "& .react-flow__handle": {
@@ -122,7 +122,7 @@ function WiringCanvasInner({
           right: 0,
           bottom: 0,
           zIndex: 1300,
-          background: theme.palette.background.default,
+          background: palette.background.default,
         }),
       }}
     >
@@ -147,9 +147,11 @@ function WiringCanvasInner({
           nodeTypes={nodeTypes}
           deleteKeyCode={["Backspace", "Delete"]}
           fitView
+          // Cap at 1: React Flow's fitView otherwise upscales to 2x.
+          fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
           nodeDragThreshold={2}
           connectionLineStyle={{
-            stroke: theme.palette.primary.main,
+            stroke: accent,
             strokeWidth: 2,
           }}
           proOptions={{ hideAttribution: true }}
@@ -160,10 +162,10 @@ function WiringCanvasInner({
           <Panel
             position="top-left"
             style={{
-              background: theme.palette.background.paper,
+              background: palette.background.paper,
               padding: "6px 12px",
               borderRadius: "var(--template-surface-radius)",
-              border: `1px solid ${theme.palette.divider}`,
+              border: `1px solid ${palette.divider}`,
               display: "flex",
               alignItems: "center",
               gap: 8,

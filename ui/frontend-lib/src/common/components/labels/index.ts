@@ -1,3 +1,4 @@
+export * from "./AbstractChip";
 export * from "./Label";
 export * from "./Labels";
 export * from "./PendingChangeBadge";

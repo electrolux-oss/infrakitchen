@@ -1,7 +1,9 @@
 import { useContext } from "react";
+
 import { EntityContext } from "../../context/EntityContext";
-import { BaseCard, BaseCardProps } from "./BaseCard";
 import { EntityRefreshButton } from "../buttons/EntityRefreshButton";
+
+import { BaseCard, BaseCardProps } from "./BaseCard";
 
 /**
  * BaseCard variant used as the lead card on entity overview pages. Rendering is

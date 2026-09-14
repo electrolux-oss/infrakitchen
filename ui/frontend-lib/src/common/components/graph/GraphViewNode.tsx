@@ -17,9 +17,8 @@ export interface GraphNodeData extends Record<string, unknown> {
 export type GraphNode = Node<GraphNodeData, "graphNode">;
 
 /**
- * Read-only graph node for the resource/template dependency graph. Mirrors
- * the Tree View's node content (Entity + status + launch link) so both views
- * stay visually consistent.
+ * Graph node for the resource/template dependency graph. Mirrors the Tree
+ * View's node content so both views stay visually consistent.
  *
  * Colors are picked explicitly from `useColorScheme()` rather than theme
  * tokens (`background.paper`/`divider`) because React Flow nodes render

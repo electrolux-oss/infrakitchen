@@ -5,8 +5,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
 
-import { LockAffordance } from "./LockAffordance";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
+
+import { LockAffordance } from "./LockAffordance";
 
 export interface InlineEditableFieldLock {
   /** Whether the field is currently locked. When locked, the lock icon

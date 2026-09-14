@@ -1,11 +1,16 @@
 import { ReactNode, useLayoutEffect, useRef, useState } from "react";
 
+import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import { Box } from "@mui/material";
 import { SxProps, Theme } from "@mui/system";
 
+import { ProviderIcon } from "../../../icons/Icons";
+import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
+import { Label } from "../labels/Label";
+
 import { CodeRepository } from "./CodeRepository";
 import { EntityLink } from "./EntityLink";
-import { Label } from "../labels/Label";
 import { UserAvatar } from "./UserAvatar";
 
 export interface EntityRecord {
@@ -16,6 +21,13 @@ export interface EntityRecord {
   entityType?: string;
   /** Wire alias for ``entityType`` — raw entity-data blobs use this name. */
   entityName?: string;
+  /** Provider route segment used by integration detail links. */
+  integrationProvider?: string;
+  /** Nullable: the GraphQL layer returns `null` for the unused ref kind. */
+  sourceCodeVersion?: string | null;
+  sourceCodeBranch?: string | null;
+  lifecycleState?: string | null;
+  breakingChanges?: string | null;
   template?: { name?: string } | null;
   /** Populated for code repositories (``entityType === "source_code"``). */
   sourceCodeUrl?: string;
@@ -30,10 +42,20 @@ export interface EntityProps {
   sx?: SxProps<Theme>;
   /** Class name forwarded to the rendered link. */
   linkClassName?: string;
+  /** Size of the provider icon shown for integration entities. */
+  providerIconSize?: number;
+  /** Render the entity name without a navigational link. */
+  disableLink?: boolean;
   /** Truncate the link text on a single line (see EntityLink). */
   noWrap?: boolean;
   /** Force the label chip onto its own line below the name, instead of auto-detecting based on available width. */
   stacked?: boolean;
+  /** Show the lifecycle chip for Template Version entities when lifecycle data is available. */
+  showLifecycleState?: boolean;
+  /** Labelled chip, or a compact dot for dense contexts like grid rows. */
+  lifecycleVariant?: "chip" | "dot";
+  /** Render only the icon/avatar, omitting the name. For dense columns. */
+  hideName?: boolean;
 }
 
 // ``entityName`` is the entity type in snake_case (and EntityLink's
@@ -61,10 +83,22 @@ export const Entity = ({
   showLabel = false,
   sx,
   linkClassName,
+  providerIconSize,
+  disableLink = false,
   noWrap = false,
   stacked = false,
+  showLifecycleState = true,
+  lifecycleVariant = "chip",
+  hideName = false,
 }: EntityProps) => {
-  const displayText = entity?.name || entity?.identifier;
+  const isSourceCodeVersion =
+    (entity?.entityType || entity?.entityName) === "source_code_version";
+  const displayText = isSourceCodeVersion
+    ? entity?.sourceCodeVersion ||
+      entity?.sourceCodeBranch ||
+      entity?.name ||
+      entity?.identifier
+    : entity?.name || entity?.identifier;
   const rowRef = useRef<HTMLDivElement>(null);
   const [labelWrapped, setLabelWrapped] = useState(false);
 
@@ -79,7 +113,7 @@ export const Entity = ({
     const link = el?.querySelector("a");
     if (!el || !link) return;
     const update = () => {
-      const labelEl = el.querySelector(".MuiChip-root");
+      const labelEl = el.querySelector(".Entity-typeLabel");
       const labelWidth = labelEl?.getBoundingClientRect().width ?? 0;
       const gapPx = 6; // matches the 0.75 theme spacing between items
       const available = el.clientWidth - labelWidth - gapPx;
@@ -93,7 +127,7 @@ export const Entity = ({
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [entity, showLabel, displayText]);
+  }, [entity, showLabel, stacked, displayText]);
 
   if (!entity) {
     return null;
@@ -110,6 +144,7 @@ export const Entity = ({
         entityName={entityType}
         sourceCodeUrl={entity.sourceCodeUrl ?? entity.name}
         sourceCodeProvider={entity.sourceCodeProvider}
+        disableLink={disableLink}
       />
     );
     tagLabel = "Code Repository";
@@ -117,42 +152,102 @@ export const Entity = ({
     content = (
       <>
         <UserAvatar id={entity.id} identifier={displayText} />
-        {entity.id ? (
-          // EntityLink handles the name → identifier fallback.
-          <EntityLink
-            id={entity.id}
-            entityName={entityType}
-            name={entity.name}
-            identifier={entity.identifier}
-            sx={sx}
-            className={linkClassName}
-            noWrap={noWrap}
-          />
-        ) : (
-          <>{displayText}</>
-        )}
+        {/* The avatar links to the user and shows the identifier on hover. */}
+        {!hideName &&
+          (entity.id ? (
+            <EntityLink
+              id={entity.id}
+              entityName={entityType}
+              name={entity.name}
+              identifier={entity.identifier}
+              sx={sx}
+              className={linkClassName}
+              noWrap={noWrap}
+            />
+          ) : (
+            <>{displayText}</>
+          ))}
       </>
     );
     tagLabel = "User";
   } else if (entity.id) {
-    // EntityLink handles the name → identifier fallback.
-    content = (
+    const SourceCodeRefIcon =
+      entityType === "source_code_version"
+        ? entity.sourceCodeVersion
+          ? LocalOfferOutlinedIcon
+          : CallSplitOutlinedIcon
+        : null;
+    const entityName = disableLink ? (
+      <Box
+        component="span"
+        sx={[
+          noWrap
+            ? {
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }
+            : {},
+          ...(Array.isArray(sx) ? sx : [sx]),
+        ]}
+      >
+        {displayText}
+      </Box>
+    ) : (
       <EntityLink
         id={entity.id}
         entityName={entityType}
-        name={entity.name}
+        urlProvider={
+          entityType === "integration" ? entity.integrationProvider : undefined
+        }
+        name={displayText}
         identifier={entity.identifier}
         sx={sx}
         className={linkClassName}
         noWrap={noWrap}
       />
     );
+
+    const lifecycleIndicator = entityType === "source_code_version" &&
+      showLifecycleState &&
+      entity.lifecycleState && (
+        <VersionLifecycleStateChip
+          lifecycleState={entity.lifecycleState}
+          breakingChanges={entity.breakingChanges ?? undefined}
+          variant={lifecycleVariant}
+        />
+      );
+
+    content = (
+      <>
+        {/* The dot leads the row; the labelled chip trails the name. */}
+        {lifecycleVariant === "dot" && lifecycleIndicator}
+        {entityType === "integration" && (
+          <ProviderIcon
+            provider={entity.integrationProvider}
+            size={providerIconSize}
+          />
+        )}
+        {SourceCodeRefIcon && (
+          <SourceCodeRefIcon
+            color="action"
+            sx={{ fontSize: 18, flexShrink: 0 }}
+          />
+        )}
+        {entityName}
+        {lifecycleVariant !== "dot" && lifecycleIndicator}
+      </>
+    );
     tagLabel = entity.template?.name || humanizeEntityType(entityType);
   } else {
     content = <>{displayText}</>;
     tagLabel = entity.template?.name || humanizeEntityType(entityType);
   }
-  const label = showLabel && tagLabel ? <Label label={tagLabel} /> : null;
+  const label =
+    showLabel && tagLabel ? (
+      <Label className="Entity-typeLabel" label={tagLabel} />
+    ) : null;
   const contentRow = {
     display: "flex",
     alignItems: "center",

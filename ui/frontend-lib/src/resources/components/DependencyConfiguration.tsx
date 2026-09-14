@@ -14,20 +14,20 @@ import {
 } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
-import { solidChipColorSx } from "../../common/utils/softChip";
 import TagInput from "../../common/components/inputs/TagInput";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
+import { solidChipColorSx } from "../../common/utils/softChip";
 import {
   ResourceUpdateFieldInput,
   UPDATE_RESOURCE_MUTATION,

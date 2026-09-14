@@ -1,8 +1,10 @@
-import { GridSize } from "@mui/material";
 import { ReactNode } from "react";
+
+import { GridSize } from "@mui/material";
 
 import { sameStringSet } from "../../utils";
 import { Labels } from "../labels/Labels";
+
 import { CommonEditableField } from "./CommonEditableField";
 import { StringTagEditor } from "./StringTagEditor";
 

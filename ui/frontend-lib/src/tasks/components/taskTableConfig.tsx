@@ -6,11 +6,11 @@ import {
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
-  createdUpdatedColumns,
   RELATIVE_TIME_COLUMN_WIDTH,
+  createdUpdatedColumns,
+  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 
 export const taskDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
@@ -41,6 +41,7 @@ export const taskColumns = (): EntityTableColumn[] => [
           entityType: params.row.entity,
           name: params.row.entityData?.name ?? params.row.entity,
         }}
+        showLifecycleState={false}
         showLabel
       />
     ),
@@ -67,24 +68,5 @@ export const taskColumns = (): EntityTableColumn[] => [
     renderCell: (params: GridRenderCellParams) =>
       params.value ? <RelativeTime date={params.value} /> : null,
   },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
 ];

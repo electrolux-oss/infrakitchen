@@ -2,11 +2,11 @@ import { useCallback } from "react";
 
 import { TextField } from "@mui/material";
 
-import { CommonField } from "../../common/components/fields/CommonField";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
@@ -15,11 +15,11 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
 import { IconField } from "../../icons/Icons";
 import { GqlIntegration } from "../graphql";
-import { integrationTypeChipColor } from "../types";
 import {
   IntegrationUpdateFieldInput,
   UPDATE_INTEGRATION_MUTATION,
 } from "../graphql/mutations";
+import { integrationTypeChipColor } from "../types";
 
 export interface IntegrationAboutProps {
   integration: GqlIntegration;
