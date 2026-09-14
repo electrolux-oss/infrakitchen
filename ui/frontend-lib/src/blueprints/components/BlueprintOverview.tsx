@@ -6,19 +6,18 @@ import StorageIcon from "@mui/icons-material/Storage";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Chip, TextField } from "@mui/material";
 
-import { CommonField } from "../../common/components/fields/CommonField";
-import { Entity } from "../../common/components/entities/Entity";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { Entity } from "../../common/components/entities/Entity";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 

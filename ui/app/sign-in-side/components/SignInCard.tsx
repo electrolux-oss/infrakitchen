@@ -4,7 +4,12 @@ import { useEffectOnce } from "react-use";
 
 import { notify } from "@electrolux-oss/infrakitchen";
 import { Icon } from "@iconify/react";
-import { CircularProgress, Menu, MenuItem, menuItemClasses } from "@mui/material";
+import {
+  CircularProgress,
+  Menu,
+  MenuItem,
+  menuItemClasses,
+} from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";

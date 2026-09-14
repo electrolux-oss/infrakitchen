@@ -1,24 +1,27 @@
-import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
-import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
-import { Box, Typography } from "@mui/material";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
+import {
+  NUMERIC_COLUMN_ALIGN,
+  relativeTimeColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
+import { getRepoNameFromUrl } from "../../common/utils";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
+import { ProviderIcon } from "../../icons/Icons";
 import { ENTITY_STATUS, VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 
 export const sourceCodeVersionDefaultColumnVisibilityModel: GridColumnVisibilityModel =
   {
     createdAt: false,
     creator: false,
+    lifecycleState: false,
   };
 
 export const sourceCodeVersionColumns: EntityTableColumn[] = [
@@ -33,6 +36,7 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
       operators: ["eq", "in"],
       valueType: "reference",
       defaultOperator: "eq",
+      defaultSelected: true,
       makeReferenceLoader: serverSearchReference({
         entityPlural: "templates",
         labelField: "name",
@@ -43,37 +47,6 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
       return <Entity entity={template} />;
-    },
-  },
-  {
-    field: "sourceCode",
-    headerName: "Code Repository",
-    flex: 1,
-    minWidth: 300,
-    sortField: "source_code.source_code_url",
-    filter: {
-      field: "source_code_id",
-      label: "Code Repository",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "sourceCodes",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row.sourceCode;
-      return (
-        <Entity
-          entity={{
-            ...sourceCode,
-            sourceCodeUrl: sourceCode?.sourceCodeUrl,
-            sourceCodeProvider: sourceCode?.sourceCodeProvider,
-          }}
-        />
-      );
     },
   },
   {
@@ -91,11 +64,10 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     filter: [
       {
         field: "source_code_folder",
-        label: "Folder Name",
+        label: "Directory",
         operators: ["like", "not_like", "eq"],
         valueType: "text",
         defaultOperator: "like",
-        defaultSelected: true,
       },
       {
         field: "source_code_version",
@@ -107,48 +79,58 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
     ],
     renderCell: (params: GridRenderCellParams) => {
       const { sourceCodeVersion, sourceCodeBranch } = params.row;
-      // A version is pinned to either a tag or a branch.
-      const refLine = sourceCodeVersion || sourceCodeBranch;
-      const RefIcon = sourceCodeVersion
-        ? LocalOfferOutlinedIcon
-        : CallSplitOutlinedIcon;
-      const codeSx = {
-        fontFamily: CODE_FONT_FAMILY,
-        fontSize: 13,
-        lineHeight: 1.4,
-        minWidth: 0,
-      };
-      return refLine ? (
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}
-        >
-          <RefIcon color="action" sx={{ fontSize: 15, flexShrink: 0 }} />
-          <Typography noWrap variant="body2" sx={codeSx}>
-            {refLine}
-          </Typography>
-        </Box>
+      return sourceCodeVersion || sourceCodeBranch ? (
+        <Entity
+          entity={{ ...params.row, entityType: "source_code_version" }}
+          lifecycleVariant="dot"
+          noWrap
+        />
       ) : null;
+    },
+  },
+  {
+    field: "sourceCode",
+    headerName: "Code Repository",
+    flex: 1,
+    minWidth: 300,
+    sortField: "source_code.source_code_url",
+    filter: {
+      field: "source_code_id",
+      label: "Code Repository",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "sourceCodes",
+        labelField: "identifier",
+        fields: ["sourceCodeUrl", "sourceCodeProvider"],
+        mapOption: (sourceCode) => ({
+          label: getRepoNameFromUrl(sourceCode.sourceCodeUrl),
+          value: sourceCode.id,
+          icon: <ProviderIcon provider={sourceCode.sourceCodeProvider} />,
+        }),
+      }),
+    },
+    valueGetter: (value: any) => value?.name || "",
+    renderCell: (params: GridRenderCellParams) => {
+      const sourceCode = params.row.sourceCode;
+      return (
+        <Entity
+          entity={{
+            ...sourceCode,
+            sourceCodeUrl: sourceCode?.sourceCodeUrl,
+            sourceCodeProvider: sourceCode?.sourceCodeProvider,
+          }}
+        />
+      );
     },
   },
   {
     field: "resourcesCount",
     headerName: "Resources",
     width: 100,
-    renderCell: (params: GridRenderCellParams) => {
-      const count = params.row.resourcesCount || 0;
-      return (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-          }}
-        >
-          {count}
-        </Box>
-      );
-    },
+    ...NUMERIC_COLUMN_ALIGN,
+    valueGetter: (_value: any, row: any) => row.resourcesCount || 0,
   },
   {
     field: "status",
@@ -191,6 +173,9 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
         { label: "Deprecated", value: VERSION_LIFECYCLE_STATE.DEPRECATED },
         { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
       ],
+      renderSelectOption: (value) => (
+        <VersionLifecycleStateChip lifecycleState={value} />
+      ),
     },
     renderCell: (params: GridRenderCellParams) => (
       <VersionLifecycleStateChip
@@ -202,24 +187,5 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
   relativeTimeColumn("createdAt", "Created", {
     value: (params) => params.row.createdAt,
   }),
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
 ];

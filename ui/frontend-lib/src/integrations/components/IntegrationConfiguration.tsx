@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { formatLabel } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
   getProviderValue,
 } from "../../common/components/fields/CommonField";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlIntegration } from "../graphql";
 
 import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";

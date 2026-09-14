@@ -14,6 +14,7 @@ import { IkEntity } from "../../../types";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
+import { getReferenceQueryFields, ReferenceContent } from "./referenceContent";
 import { getOptionLabel } from "./utils";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
@@ -41,6 +42,7 @@ interface ArrayReferenceInputProps {
   error?: boolean;
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
+  renderOptionContent?: (option: IkEntity) => React.ReactNode;
   tooltip?: string;
   options?: IkEntity[];
   [key: string]: any; // Allow additional props
@@ -64,6 +66,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       singleLine,
       value,
       optionFilter,
+      renderOptionContent,
       tooltip,
       options: externalOptions,
       ...otherProps
@@ -71,6 +74,10 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
 
     const graphqlEntityName = pluralEntityToGraphql(entity_name);
     const graphqlCountName = `${graphqlEntityName}Count`;
+    const queryFields = getReferenceQueryFields(
+      entity_name,
+      fields || showFields,
+    );
 
     const handleEntityChange = (
       _event: React.SyntheticEvent,
@@ -107,7 +114,7 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
         .graphqlRequest(
           `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
                   ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-                    ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
+                    ${buildGraphqlFields(["id", "status", ...queryFields])}
                   }
                   ${graphqlCountName}(filter: $filter)
                 }`,
@@ -191,7 +198,15 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
             const { key, ...rest } = props;
             return (
               <li key={key} {...rest}>
-                {`${getOptionLabel(option, showFields)}`}
+                {renderOptionContent ? (
+                  renderOptionContent(option)
+                ) : (
+                  <ReferenceContent
+                    entityName={entity_name}
+                    entity={option}
+                    fallback={getOptionLabel(option, showFields)}
+                  />
+                )}
               </li>
             );
           }}
@@ -201,7 +216,13 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
             return [
               ...visible.map((option: IkEntity, index: number) => (
                 <Chip
-                  label={`${option.name || option.identifier}`}
+                  label={
+                    <ReferenceContent
+                      entityName={entity_name}
+                      entity={option}
+                      fallback={option.name || option.identifier}
+                    />
+                  }
                   {...getTagProps({ index })}
                   key={option.id}
                   variant="outlined"
@@ -222,6 +243,8 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
               {...params}
               label={label ? label : undefined}
               placeholder={placeholder}
+              required={otherProps.required}
+              error={props.error}
               slotProps={{
                 ...params.slotProps,
                 htmlInput: {

@@ -3,9 +3,10 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
 import { AuditLogEntity } from "../../../types";
-import { HorizontalTimeline } from "./HorizontalTimeline";
 import { RelativeTime } from "../fields/RelativeTime";
 import { RevisionChip } from "../labels/RevisionChip";
+
+import { HorizontalTimeline } from "./HorizontalTimeline";
 
 interface RevisionTimelineProps {
   revision: string;

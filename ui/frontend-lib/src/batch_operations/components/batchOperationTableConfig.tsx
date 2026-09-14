@@ -2,8 +2,11 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import {
+  createdUpdatedColumns,
+  NUMERIC_COLUMN_ALIGN,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 
 export const batchOperationColumns: EntityTableColumn[] = [
   {
@@ -43,27 +46,9 @@ export const batchOperationColumns: EntityTableColumn[] = [
     field: "entityIds",
     headerName: "# of Entities",
     flex: 0.5,
+    ...NUMERIC_COLUMN_ALIGN,
     valueGetter: (value: any) => (value ? value.length : 0),
   },
   ...createdUpdatedColumns(),
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
 ];

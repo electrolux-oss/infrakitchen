@@ -17,12 +17,13 @@ import {
   Typography,
 } from "@mui/material";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
-import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { Entity } from "../../common/components/entities/Entity";
+import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { AbstractChip } from "../../common/components/labels/AbstractChip";
 import StatusChip from "../../common/StatusChip";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
@@ -83,14 +84,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 {step.template?.id.slice(0, 8)}…
               </Typography>
             )}
-            {step.template?.abstract && (
-              <Chip
-                label="Abstract"
-                color="warning"
-                variant="outlined"
-                sx={{ fontWeight: 600 }}
-              />
-            )}
+            {step.template?.abstract && <AbstractChip />}
             <StatusChip status={step.status} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -164,13 +158,14 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                   Source Code Version
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
-                  <GetReferenceUrlValue
-                    id={step.sourceCodeVersion.id}
-                    entityName="source_code_version"
-                    identifier={
-                      step.sourceCodeVersion?.identifier ??
-                      step.sourceCodeVersion.id.slice(0, 8) + "…"
-                    }
+                  <Entity
+                    entity={{
+                      ...step.sourceCodeVersion,
+                      entityType: "source_code_version",
+                      identifier:
+                        step.sourceCodeVersion.identifier ??
+                        step.sourceCodeVersion.id.slice(0, 8) + "…",
+                    }}
                   />
                 </Box>
               </Box>
@@ -284,18 +279,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                             resource.template?.id ??
                             "External"}
                         </Typography>
-                        {resource.template?.abstract && (
-                          <Chip
-                            label="Abstract"
-                            color="warning"
-                            variant="outlined"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: "0.65rem",
-                              height: 18,
-                            }}
-                          />
-                        )}
+                        {resource.template?.abstract && <AbstractChip />}
                       </Box>
                       <GetReferenceUrlValue
                         id={resource.id}
@@ -333,13 +317,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                   {step.integrationIds.map((integration) => (
                     <Chip
                       key={integration.id}
-                      label={
-                        <GetReferenceUrlValue
-                          id={integration.id}
-                          entityName="integration"
-                          name={integration.name}
-                        />
-                      }
+                      label={<Entity entity={integration} />}
                       size="small"
                       variant="outlined"
                     />

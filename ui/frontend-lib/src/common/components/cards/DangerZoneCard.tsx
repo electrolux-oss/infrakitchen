@@ -13,6 +13,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+
 import { CASCADE_DESTROY_RESOURCE_MUTATION } from "../../../resources/graphql";
 import { ENTITY_ACTION } from "../../../utils";
 import { useConfig } from "../../context";
@@ -20,10 +21,10 @@ import { useEntityProvider } from "../../context/EntityContext";
 import { notify, notifyError } from "../../hooks/useNotification";
 import { ActionButton } from "../buttons/ActionButton";
 import { DeleteButton } from "../buttons/DeleteEntityButton";
+import { InlineCode } from "../code/InlineCode";
 import { CascadeDestroyDialog } from "../dialogs/CascadeDestroyDialog";
 import { CommonDialog } from "../dialogs/CommonDialog";
 import { ConfirmNameField } from "../fields/ConfirmNameField";
-import { InlineCode } from "../code/InlineCode";
 
 export type DangerZoneSeverity = "destructive" | "warning";
 

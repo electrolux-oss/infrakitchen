@@ -14,9 +14,9 @@ import {
 } from "@mui/material";
 
 import { LabelInput, MultiSelectEditor } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";

@@ -13,9 +13,9 @@ import {
 } from "@mui/material";
 
 import { LabelInput } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";

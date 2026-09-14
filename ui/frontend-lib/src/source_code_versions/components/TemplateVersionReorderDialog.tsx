@@ -1,10 +1,8 @@
 import type { DragEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import ToggleOffIcon from "@mui/icons-material/ToggleOff";
-import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import {
   Box,
   Button,
@@ -16,19 +14,20 @@ import {
   DialogTitle,
   List,
   MenuItem,
-  ListItemButton,
   ListItemText,
   Paper,
   Stack,
+  Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 
-import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
 import { useConfig } from "../../common";
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { Entity } from "../../common/components/entities/Entity";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import {
   ENTITY_ACTION,
   ENTITY_STATUS,
@@ -53,6 +52,9 @@ const SOURCE_CODE_VERSIONS_BY_TEMPLATE_QUERY = `
       lifecycleState
       breakingChanges
       resourcesCount
+      sourceCodeVersion
+      sourceCodeBranch
+      sourceCodeFolder
     }
     sourceCodeVersionsCount(filter: $filter)
   }
@@ -83,45 +85,6 @@ function normalizeLifecycleState(lifecycleState: string | null | undefined) {
   ).toLocaleLowerCase();
 }
 
-function getLifecycleRowSx(lifecycleState: string | null | undefined) {
-  const color = getVersionLifecycleStateColor(lifecycleState || undefined);
-
-  return (theme: any) => {
-    if (color === "error") {
-      return {
-        backgroundColor: alpha(theme.palette.error.main, 0.08),
-        borderColor: alpha(theme.palette.error.main, 0.3),
-      };
-    }
-
-    if (color === "success") {
-      return {
-        backgroundColor: alpha(theme.palette.success.main, 0.08),
-        borderColor: alpha(theme.palette.success.main, 0.3),
-      };
-    }
-
-    if (color === "info") {
-      return {
-        backgroundColor: alpha(theme.palette.info.main, 0.08),
-        borderColor: alpha(theme.palette.info.main, 0.3),
-      };
-    }
-
-    if (color === "warning") {
-      return {
-        backgroundColor: alpha(theme.palette.warning.main, 0.08),
-        borderColor: alpha(theme.palette.warning.main, 0.3),
-      };
-    }
-
-    return {
-      backgroundColor: alpha(theme.palette.grey[500], 0.12),
-      borderColor: alpha(theme.palette.grey[500], 0.28),
-    };
-  };
-}
-
 export const TemplateVersionReorderDialog = ({
   open,
   templateId,
@@ -142,6 +105,7 @@ export const TemplateVersionReorderDialog = ({
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const rowRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const loadVersions = useCallback(async () => {
     if (!open || !templateId) return;
@@ -183,9 +147,22 @@ export const TemplateVersionReorderDialog = ({
     [initialItems, items],
   );
 
-  const handleDragStart = useCallback((id: string) => {
-    setDraggedId(id);
-  }, []);
+  const handleDragStart = useCallback(
+    (event: DragEvent, id: string, rowElement: HTMLElement | null) => {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", id);
+      if (rowElement) {
+        const bounds = rowElement.getBoundingClientRect();
+        event.dataTransfer.setDragImage(
+          rowElement,
+          event.clientX - bounds.left,
+          event.clientY - bounds.top,
+        );
+      }
+      setDraggedId(id);
+    },
+    [],
+  );
 
   const handleDragEnd = useCallback(() => {
     setDraggedId(null);
@@ -343,7 +320,7 @@ export const TemplateVersionReorderDialog = ({
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>Rearrange Template Versions</DialogTitle>
+      <DialogTitle>Manage Template Versions</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography
@@ -352,8 +329,12 @@ export const TemplateVersionReorderDialog = ({
               color: "text.secondary",
             }}
           >
-            Drag and drop versions for `{templateName}`. The saved order updates
-            each version&apos;s index.
+            Reorder, update lifecycle state, enable/disable, or delete versions
+            for{" "}
+            <Box component="span" sx={{ fontWeight: "bold" }}>
+              {templateName}
+            </Box>
+            .
           </Typography>
 
           {loading ? (
@@ -367,103 +348,111 @@ export const TemplateVersionReorderDialog = ({
               {items.map((item, index) => (
                 <Paper
                   key={item.id}
+                  ref={(el: HTMLDivElement | null) => {
+                    if (el) rowRefs.current.set(item.id, el);
+                    else rowRefs.current.delete(item.id);
+                  }}
                   variant="outlined"
-                  draggable
-                  onDragStart={() => handleDragStart(item.id)}
-                  onDragEnd={handleDragEnd}
                   onDragOver={(event) => handleDragOver(event, index)}
                   onDrop={handleDrop}
                   sx={[
                     {
-                      overflow: "hidden",
                       position: "relative",
-                      transition: "box-shadow 120ms ease",
+                      transition: "opacity 120ms ease",
                     },
-                    dropIndicatorIndex === index
+                    draggedId === item.id
                       ? {
-                          boxShadow: (theme) =>
-                            `0 -4px 0 ${theme.palette.primary.main}`,
+                          opacity: 0.4,
                         }
-                      : dropIndicatorIndex === index + 1
-                        ? {
-                            boxShadow: (theme) =>
-                              `0 4px 0 ${theme.palette.primary.main}`,
-                          }
-                        : {},
+                      : {},
                   ]}
                 >
-                  <ListItemButton
-                    sx={[
-                      {
-                        width: "100%",
-                        minHeight: 70,
-                        alignItems: "center",
-                        gap: 1.5,
-                      },
-                      getLifecycleRowSx(item.lifecycleState),
-                      draggedId === item.id
-                        ? {
-                            bgcolor: "action.selected",
-                            borderColor: "primary.main",
-                          }
-                        : {},
-                    ]}
-                  >
-                    <DragIndicatorIcon
+                  {(dropIndicatorIndex === index ||
+                    (dropIndicatorIndex === index + 1 &&
+                      index === items.length - 1)) && (
+                    <Box
                       sx={{
-                        mr: 1.5,
-                        color: "text.secondary",
-                        alignSelf: "center",
+                        position: "absolute",
+                        left: 0,
+                        right: 0,
+                        ...(dropIndicatorIndex === index
+                          ? { top: -5 }
+                          : { bottom: -5 }),
+                        height: 2,
+                        borderRadius: 1,
+                        bgcolor: "primary.main",
+                        zIndex: 1,
+                        pointerEvents: "none",
                       }}
                     />
+                  )}
+                  <Box
+                    sx={{
+                      width: "100%",
+                      minHeight: 70,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      px: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 24,
+                        height: 24,
+                        mr: 1.5,
+                        borderRadius: "50%",
+                        bgcolor: "action.selected",
+                        color: "text.secondary",
+                        fontSize: 12,
+                        fontWeight: 600,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {index + 1}
+                    </Box>
+                    <Box
+                      component="span"
+                      draggable
+                      onDragStart={(event) =>
+                        handleDragStart(
+                          event,
+                          item.id,
+                          rowRefs.current.get(item.id) || null,
+                        )
+                      }
+                      onDragEnd={handleDragEnd}
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        mr: 1.5,
+                        cursor: draggedId ? "grabbing" : "grab",
+                      }}
+                    >
+                      <DragIndicatorIcon
+                        sx={{
+                          color: "text.secondary",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    </Box>
                     <ListItemText
-                      primary={item.identifier}
-                      secondary={`Position ${index + 1} • ${item.resourcesCount || 0} resources`}
+                      primary={
+                        <Entity
+                          entity={{
+                            ...item,
+                            entityType: "source_code_version",
+                          }}
+                          showLifecycleState={false}
+                          disableLink
+                        />
+                      }
+                      secondary={`${item.resourcesCount || 0} resources`}
                       sx={{ my: 0 }}
                     />
-                    {item.status !== ENTITY_STATUS.DISABLED && (
-                      <IconButton
-                        size="small"
-                        color="warning"
-                        disabled={saving || togglingId === item.id}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleToggleEnabled(item);
-                        }}
-                      >
-                        <ToggleOnIcon fontSize="small" />
-                      </IconButton>
-                    )}
-                    {item.status === ENTITY_STATUS.DISABLED && (
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        disabled={saving || togglingId === item.id}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleToggleEnabled(item);
-                        }}
-                      >
-                        <ToggleOffIcon fontSize="small" />
-                      </IconButton>
-                    )}
-                    {(item.resourcesCount || 0) === 0 && (
-                      <IconButton
-                        size="small"
-                        sx={deleteIconButtonStyle}
-                        disabled={
-                          saving ||
-                          deletingId === item.id ||
-                          togglingId === item.id
-                        }
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleDelete(item.id);
-                        }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    )}
                     <TextField
                       select
                       label="Lifecycle State"
@@ -478,14 +467,83 @@ export const TemplateVersionReorderDialog = ({
                         ml: 2,
                         minWidth: 180,
                       }}
+                      slotProps={{
+                        select: {
+                          renderValue: (value) => (
+                            <VersionLifecycleStateChip
+                              lifecycleState={value as string}
+                            />
+                          ),
+                        },
+                      }}
                     >
                       {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
                         <MenuItem key={option} value={option}>
-                          {option}
+                          <VersionLifecycleStateChip lifecycleState={option} />
                         </MenuItem>
                       ))}
                     </TextField>
-                  </ListItemButton>
+                    <Tooltip
+                      title={
+                        item.status === ENTITY_STATUS.DISABLED
+                          ? "Enable version"
+                          : "Disable version"
+                      }
+                    >
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          position: "relative",
+                        }}
+                      >
+                        <Switch
+                          size="small"
+                          checked={item.status !== ENTITY_STATUS.DISABLED}
+                          disabled={saving || togglingId === item.id}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={() => void handleToggleEnabled(item)}
+                        />
+                        {togglingId === item.id && (
+                          <CircularProgress
+                            size={16}
+                            sx={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              marginTop: "-8px",
+                              marginLeft: "-8px",
+                            }}
+                          />
+                        )}
+                      </span>
+                    </Tooltip>
+                    {(item.resourcesCount || 0) === 0 && (
+                      <Tooltip title="Delete version">
+                        <span>
+                          <IconButton
+                            size="small"
+                            sx={deleteIconButtonStyle}
+                            disabled={
+                              saving ||
+                              deletingId === item.id ||
+                              togglingId === item.id
+                            }
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void handleDelete(item.id);
+                            }}
+                          >
+                            {deletingId === item.id ? (
+                              <CircularProgress size={16} color="inherit" />
+                            ) : (
+                              <DeleteOutlineIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </Paper>
               ))}
             </List>
@@ -501,7 +559,7 @@ export const TemplateVersionReorderDialog = ({
           variant="contained"
           disabled={saving || loading || !isDirty}
         >
-          Save Order
+          Save
         </Button>
       </DialogActions>
     </Dialog>

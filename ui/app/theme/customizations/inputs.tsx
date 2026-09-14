@@ -404,34 +404,35 @@ export const inputsCustomizations: Components<Theme> = {
         // autocomplete rules (e.g. `padding: 6px` on the input root) use the
         // size-small class, so an equal-specificity selector here wins for
         // them as well.
-        "& .MuiOutlinedInput-root, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall": {
-          display: "flex",
-          alignItems: "center",
-          // Same compact 32px standard as every other input. Multi-select
-          // stays `height: auto` so tag rows can wrap and grow beyond it.
-          minHeight: "2rem",
-          height: "auto",
-          // Tight vertical padding + the standard 12px text indent: a single
-          // line of 14px text then pins the box to exactly 32px like
-          // OutlinedInput, while chip rows keep their natural height.
-          padding: "1px 12px",
-          "& .MuiAutocomplete-input, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall .MuiAutocomplete-input": {
-            padding: 0,
-          },
-          "& .MuiAutocomplete-endAdornment": {
-            right: 0,
-            "& .MuiButtonBase-root": {
-              border: 0,
-              height: "90%",
-              backgroundColor: "transparent",
-              color: (theme.vars || theme).palette.text.secondary,
-              "&:hover": {
+        "& .MuiOutlinedInput-root, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall":
+          {
+            display: "flex",
+            alignItems: "center",
+            // Same compact 32px standard as every other input. Multi-select
+            // stays `height: auto` so tag rows can wrap and grow beyond it.
+            minHeight: "2rem",
+            height: "auto",
+            // Pins a single line of 14px text to 32px like OutlinedInput,
+            // while chip rows keep their natural height.
+            padding: "1px 12px",
+            "& .MuiAutocomplete-input, & .MuiOutlinedInput-root.MuiInputBase-sizeSmall .MuiAutocomplete-input":
+              {
+                padding: 0,
+              },
+            "& .MuiAutocomplete-endAdornment": {
+              right: 0,
+              "& .MuiButtonBase-root": {
+                border: 0,
+                height: "90%",
                 backgroundColor: "transparent",
-                color: (theme.vars || theme).palette.text.primary,
+                color: (theme.vars || theme).palette.text.secondary,
+                "&:hover": {
+                  backgroundColor: "transparent",
+                  color: (theme.vars || theme).palette.text.primary,
+                },
               },
             },
           },
-        },
       }),
       paper: dropdownPaperStyle,
       listbox: ({ theme }) => ({
@@ -440,10 +441,9 @@ export const inputsCustomizations: Components<Theme> = {
           ...dropdownItemStyle({ theme }),
           // MUI renders options at 16px body1 with a 48px min-height and
           // never touches them for compact UIs — pin them to the same
-          // 14px/500 list typography as Menu/Select items and the compact
-          // 32px row standard.
+          // 14px body2 typography as Menu/Select items and the compact 32px
+          // row standard.
           fontSize: theme.typography.body2.fontSize,
-          fontWeight: 500,
           lineHeight: theme.typography.body2.lineHeight,
           minHeight: "2rem",
           paddingTop: 0,
@@ -543,11 +543,11 @@ export const inputsCustomizations: Components<Theme> = {
   MuiFormLabel: {
     styleOverrides: {
       root: ({ theme }) => ({
-        typography: theme.typography.caption,
-        // Space only standalone labels (rendered above an input), not the
-        // floating InputLabel used by TextField/Autocomplete — marginBottom
-        // there would push the label down and make it overlap the field.
+        // Standalone labels only: on a floating InputLabel the marginBottom
+        // would overlap the field, and it has its own shrink sizing.
         "&:not(.MuiInputLabel-root)": {
+          ...theme.typography.caption,
+          display: "block",
           marginBottom: 8,
         },
       }),

@@ -1,6 +1,6 @@
+import type { ChipProps } from "@mui/material/Chip";
 import { alpha } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
-import type { ChipProps } from "@mui/material/Chip";
 import type { SystemStyleObject } from "@mui/system";
 
 // Soft informational blue for the "optional" badges. The global `info` palette

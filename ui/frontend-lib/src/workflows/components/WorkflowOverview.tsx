@@ -2,9 +2,9 @@ import { useNavigate } from "react-router";
 
 import { Box, Chip } from "@mui/material";
 
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { CommonField } from "../../common/components/fields/CommonField";
 import { Duration } from "../../common/components/fields/Duration";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";

@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 
 import { InfrakitchenLogo } from "../../../icons/InfrakitchenLogo";
-import { CODE_FONT_FAMILY } from "../../theme";
 import { useConfig } from "../../context/ConfigContext";
+import { CODE_FONT_FAMILY } from "../../theme";
 
 const flattenObject = (object: Record<string, unknown>) => {
   const result: Record<string, unknown> = {};

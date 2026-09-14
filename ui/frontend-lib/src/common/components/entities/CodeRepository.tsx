@@ -1,8 +1,9 @@
-import { Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 
 import { ProviderIcon } from "../../../icons/Icons";
-import { EntityLink } from "./EntityLink";
 import { getRepoNameFromUrl } from "../../utils";
+
+import { EntityLink } from "./EntityLink";
 
 export interface CodeRepositoryProps {
   id?: string;
@@ -11,6 +12,7 @@ export interface CodeRepositoryProps {
   name?: string;
   sourceCodeUrl?: string;
   sourceCodeProvider?: string;
+  disableLink?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ export const CodeRepository = ({
   name,
   sourceCodeUrl,
   sourceCodeProvider,
+  disableLink = false,
 }: CodeRepositoryProps) => {
   const repoName = name ?? getRepoNameFromUrl(sourceCodeUrl || "");
 
@@ -38,10 +41,20 @@ export const CodeRepository = ({
       }}
     >
       <ProviderIcon provider={sourceCodeProvider} size={18} />
-      {id && entityName ? (
+      {id && entityName && !disableLink ? (
         <EntityLink id={id} entityName={entityName} name={repoName} noWrap />
       ) : (
-        <span>{repoName}</span>
+        <Box
+          component="span"
+          sx={{
+            minWidth: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {repoName}
+        </Box>
       )}
     </Stack>
   );

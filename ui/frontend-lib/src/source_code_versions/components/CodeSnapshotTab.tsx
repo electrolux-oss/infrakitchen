@@ -7,8 +7,8 @@ import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import CodeMirror from "@uiw/react-codemirror";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { HclCodeViewer } from "../../common/components/viewers/HclCodeViewer";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 
 interface CodeSnapshotTabProps {
   codeSnapshot: string | null | undefined;

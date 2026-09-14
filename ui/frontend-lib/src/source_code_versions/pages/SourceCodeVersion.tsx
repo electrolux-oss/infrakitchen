@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { useParams } from "react-router";
 
-import ReorderIcon from "@mui/icons-material/Reorder";
+import TuneIcon from "@mui/icons-material/Tune";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper } from "../../common";
@@ -45,10 +45,10 @@ const SourceCodeVersionPageContent = () => {
               permissionAction="write"
             >
               <Button
-                startIcon={<ReorderIcon />}
+                startIcon={<TuneIcon />}
                 onClick={() => setDialogOpen(true)}
               >
-                Rearrange Versions
+                Manage Versions
               </Button>
             </PermissionWrapper>
           ) : undefined

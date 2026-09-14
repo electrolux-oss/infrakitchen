@@ -11,8 +11,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Table,
-  TableBody,
   Typography,
 } from "@mui/material";
 
@@ -395,49 +393,47 @@ export const ResourceVariablesEditDialog = ({
         {!loadingSchema && (
           <FormProvider {...methods}>
             {(schema.length > 0 || fields.length > 0) && (
-              <Table>
-                <TableBody>
-                  {fields.map((field, index) =>
-                    (() => {
-                      const variableStatus = variableStatusByName[field.name];
-                      const schemaVariable = schemaObject[field.name] || {
-                        name: field.name,
-                        type: field.type || "string",
-                        description: field.description || "",
-                        options: [],
-                        required: false,
-                        restricted: false,
-                        sensitive: field.sensitive || false,
-                        frozen: false,
-                        unique: false,
-                        value: field.value ?? null,
-                        index,
-                      };
+              <Box>
+                {fields.map((field, index) =>
+                  (() => {
+                    const variableStatus = variableStatusByName[field.name];
+                    const schemaVariable = schemaObject[field.name] || {
+                      name: field.name,
+                      type: field.type || "string",
+                      description: field.description || "",
+                      options: [],
+                      required: false,
+                      restricted: false,
+                      sensitive: field.sensitive || false,
+                      frozen: false,
+                      unique: false,
+                      value: field.value ?? null,
+                      index,
+                    };
 
-                      return (
-                        <ResourceVariableForm
-                          key={field.id}
-                          index={index}
-                          edit_mode={!allowFrozenVariableChanges}
-                          variable={schemaVariable}
-                          status={variableStatus}
-                          validationSummary={
-                            variableStatus === "deleted"
-                              ? null
-                              : validationRuleSummaryByVariable[field.name] ||
-                                null
-                          }
-                          validationRule={
-                            variableStatus === "deleted"
-                              ? null
-                              : validationRuleByVariable[field.name] || null
-                          }
-                        />
-                      );
-                    })(),
-                  )}
-                </TableBody>
-              </Table>
+                    return (
+                      <ResourceVariableForm
+                        key={field.id}
+                        index={index}
+                        edit_mode={!allowFrozenVariableChanges}
+                        variable={schemaVariable}
+                        status={variableStatus}
+                        validationSummary={
+                          variableStatus === "deleted"
+                            ? null
+                            : validationRuleSummaryByVariable[field.name] ||
+                              null
+                        }
+                        validationRule={
+                          variableStatus === "deleted"
+                            ? null
+                            : validationRuleByVariable[field.name] || null
+                        }
+                      />
+                    );
+                  })(),
+                )}
+              </Box>
             )}
             {!loadingSchema &&
               schema.length === 0 &&

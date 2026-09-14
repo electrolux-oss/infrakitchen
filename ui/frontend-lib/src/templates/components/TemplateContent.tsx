@@ -4,7 +4,6 @@ import { Box, Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
-import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import {
   TabbedContent,
   TabCountLabel,
@@ -12,6 +11,7 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
+import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";

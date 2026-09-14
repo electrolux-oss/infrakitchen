@@ -415,7 +415,6 @@ export default function DashboardSidebar({
       configurationsExpanded,
       operationsExpanded,
       managementExpanded,
-      nestedExpanded,
     ],
   );
 

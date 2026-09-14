@@ -9,7 +9,6 @@ import TuneIcon from "@mui/icons-material/Tune";
 import {
   Box,
   Button,
-  Chip,
   Divider,
   InputAdornment,
   List,
@@ -18,7 +17,6 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
 
 import {
@@ -26,7 +24,9 @@ import {
   GqlTemplateShort,
 } from "../../../../templates/graphql";
 import { useConfig } from "../../../context";
+import { AbstractChip } from "../../labels/AbstractChip";
 
+import { useCanvasPalette } from "./helpers";
 import { GenericTemplate } from "./types";
 import {
   ConstantType,
@@ -35,6 +35,26 @@ import {
 
 export const DRAG_TYPE = "application/ik-template";
 export const DRAG_TYPE_EXTERNAL = "application/ik-external-template";
+
+/**
+ * Compact styling for the draggable palette entries: `ListItemButton` inherits
+ * app-navigation geometry that is far too roomy for a 220px palette.
+ */
+const PALETTE_ITEM_SX = {
+  borderRadius: "var(--template-surface-radius)",
+  m: 0,
+  mb: 0.5,
+  px: 1,
+  py: 0.25,
+  minHeight: 0,
+  gap: 0.5,
+  cursor: "grab",
+  "&:active": { cursor: "grabbing" },
+  border: "1px dashed",
+  borderColor: "divider",
+  bgcolor: "action.hover",
+  "&:hover": { bgcolor: "action.selected" },
+} as const;
 
 interface WiringCanvasSidebarProps {
   selectedIds: Set<string>;
@@ -53,7 +73,7 @@ export function WiringCanvasSidebar({
   onExternalTemplateAdd,
   onConstantAdd,
 }: WiringCanvasSidebarProps) {
-  const theme = useTheme();
+  const palette = useCanvasPalette();
   const { ikApi } = useConfig();
 
   const [templates, setTemplates] = useState<GenericTemplate[]>([]);
@@ -119,7 +139,7 @@ export function WiringCanvasSidebar({
       sx={{
         width: 220,
         minWidth: 220,
-        borderRight: `1px solid ${theme.palette.divider}`,
+        borderRight: `1px solid ${palette.divider}`,
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -186,35 +206,13 @@ export function WiringCanvasSidebar({
             draggable
             onDragStart={(e) => handleDragStart(e, t)}
             onClick={() => onAdd(t as unknown as GenericTemplate)}
-            sx={{
-              borderRadius: "var(--template-surface-radius)",
-              mb: 0.25,
-              cursor: "grab",
-              "&:active": { cursor: "grabbing" },
-              border: "1px dashed",
-              borderColor: "divider",
-              py: 0.5,
-              bgcolor: "action.hover",
-              "&:hover": { bgcolor: "action.selected" },
-            }}
+            sx={PALETTE_ITEM_SX}
           >
             <ListItemText
               primary={t.name}
               slotProps={{ primary: { variant: "body2", noWrap: true } }}
             />
-            {t.abstract && (
-              <Chip
-                label="Abstract"
-                color="warning"
-                variant="outlined"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: "0.6rem",
-                  height: 18,
-                  mr: 0.5,
-                }}
-              />
-            )}
+            {t.abstract && <AbstractChip />}
             <Tooltip title="Add to canvas" arrow>
               <AddIcon
                 fontSize="small"
@@ -272,35 +270,13 @@ export function WiringCanvasSidebar({
                 draggable
                 onDragStart={(e) => handleExternalDragStart(e, t)}
                 onClick={() => onExternalTemplateAdd(t)}
-                sx={{
-                  borderRadius: "var(--template-surface-radius)",
-                  mb: 0.25,
-                  cursor: "grab",
-                  "&:active": { cursor: "grabbing" },
-                  border: "1px dashed",
-                  borderColor: "warning.dark",
-                  py: 0.5,
-                  bgcolor: "action.hover",
-                  "&:hover": { bgcolor: "action.selected" },
-                }}
+                sx={{ ...PALETTE_ITEM_SX, borderColor: "warning.dark" }}
               >
                 <ListItemText
                   primary={t.name}
                   slotProps={{ primary: { variant: "body2", noWrap: true } }}
                 />
-                {t.abstract && (
-                  <Chip
-                    label="Abstract"
-                    color="warning"
-                    variant="outlined"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: "0.6rem",
-                      height: 18,
-                      mr: 0.5,
-                    }}
-                  />
-                )}
+                {t.abstract && <AbstractChip />}
                 <Tooltip title="Add as input" arrow>
                   <AddIcon
                     fontSize="small"

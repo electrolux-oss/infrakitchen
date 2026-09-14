@@ -4,12 +4,12 @@ import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
-import { HclItemList } from "../../common/components/hcl/HclItemList";
 import {
   TabbedContent,
   TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";

@@ -2,8 +2,10 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { relativeTimeColumn } from "../../common/components/entity_table/tableColumns";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import {
+  relativeTimeColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
@@ -45,43 +47,13 @@ export const auditLogColumns: EntityTableColumn[] = [
             entityType: params.row.model,
             name: params.row.entityData?.name ?? params.row.model,
           }}
+          showLifecycleState={false}
           showLabel
         />
       );
     },
   },
-  {
-    field: "creator",
-    headerName: "User",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "user_id",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (creator?.id) {
-        return (
-          <Entity
-            entity={{
-              ...creator,
-              entityType: "user",
-              name: creator.identifier,
-            }}
-          />
-        );
-      }
-      return null;
-    },
-  },
+  userColumn({ headerName: "User", filterField: "user_id" }),
   {
     field: "action",
     headerName: "Event",

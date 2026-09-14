@@ -14,9 +14,9 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { Entity } from "../../common/components/entities/Entity";
 import StatusChip from "../../common/StatusChip";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflow } from "../../workflows/graphql";
 
 interface WorkflowTimelineProps {

@@ -2,23 +2,22 @@ import { useCallback } from "react";
 
 import { TextField } from "@mui/material";
 
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
   getProviderValue,
 } from "../../common/components/fields/CommonField";
-import { BooleanInlineField } from "../../common/components/editors/BooleanInlineField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { Labels } from "../../common/components/labels/Labels";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Labels } from "../../common/components/labels/Labels";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
-
 import { GqlAuthProvider } from "../graphql";
 import {
   AuthProviderUpdateFieldInput,

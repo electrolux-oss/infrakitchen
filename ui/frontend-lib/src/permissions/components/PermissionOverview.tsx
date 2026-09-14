@@ -1,8 +1,8 @@
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { PermissionResponse } from "../types";
 

@@ -2,8 +2,9 @@ import { FC, useState } from "react";
 
 import { Box, ClickAwayListener } from "@mui/material";
 
-import { Label } from "./Label";
 import { PlaceholderText } from "../fields/PlaceholderDescription";
+
+import { Label } from "./Label";
 
 interface LabelsProps {
   labels: string[];

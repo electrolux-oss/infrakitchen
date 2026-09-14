@@ -1,3 +1,4 @@
+import { InlineCode } from "../common/components/code/InlineCode";
 import {
   AwsIcon,
   AzureIcon,
@@ -10,8 +11,6 @@ import {
   MongoDBIcon,
   SlackIcon,
 } from "../icons/Icons";
-
-import { InlineCode } from "../common/components/code/InlineCode";
 
 import { ConnectionType, IntegrationType, Provider } from "./types";
 
@@ -255,7 +254,9 @@ export const providers: Provider[] = [
       <>
         Generate an <strong>Access Key</strong> for the IAM user
       </>,
-      <i>Optional - For enhanced security using role assumption:</i>,
+      <>
+        <i>Optional - For enhanced security using role assumption:</i>
+      </>,
       <>
         Create an <strong>IAM role</strong> with the necessary permissions
         instead of attaching policies directly to the IAM user

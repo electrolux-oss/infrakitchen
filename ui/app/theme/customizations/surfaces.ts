@@ -1,6 +1,5 @@
-import { alpha, Theme, Components } from "@mui/material/styles";
-
 import { CODE_FONT_FAMILY } from "@electrolux-oss/infrakitchen";
+import { alpha, Theme, Components } from "@mui/material/styles";
 
 import { grey, shape } from "../themePrimitives";
 

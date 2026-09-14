@@ -11,10 +11,11 @@ import { EntityTableColumn } from "../../common/components/entity_table/EntityTa
 import {
   createdUpdatedColumns,
   labelsColumn,
+  userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import {
@@ -231,6 +232,9 @@ export const resourceColumns: EntityTableColumn[] = [
           },
           { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
         ],
+        renderSelectOption: (value) => (
+          <VersionLifecycleStateChip lifecycleState={value} />
+        ),
       },
     ],
     valueGetter: (_value: any, row: any) => {
@@ -241,29 +245,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const scv = params.row.sourceCodeVersion;
       if (!scv) return null;
-      const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-      const color = getVersionLifecycleStateColor(scv.lifecycleState);
-      const textColor =
-        color === "success"
-          ? "success.main"
-          : color === "info"
-            ? "info.main"
-            : color === "warning"
-              ? "warning.main"
-              : color === "error"
-                ? "error.main"
-                : "text.primary";
-
-      return (
-        <Entity
-          entity={{ ...scv, name: ref }}
-          sx={{
-            color: textColor,
-            fontWeight: color === "warning" ? 600 : 500,
-            textDecorationColor: textColor,
-          }}
-        />
-      );
+      return <Entity entity={scv} lifecycleVariant="dot" />;
     },
   },
   {
@@ -342,26 +324,7 @@ export const resourceColumns: EntityTableColumn[] = [
     createdValue: (params: GridRenderCellParams) => params.row.createdAt,
     updatedValue: (params: GridRenderCellParams) => params.row.updatedAt,
   }),
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => (
-      <Entity entity={{ ...params.row.creator, entityType: "user" }} />
-    ),
-  },
+  userColumn(),
   {
     field: "storage",
     headerName: "Storage",

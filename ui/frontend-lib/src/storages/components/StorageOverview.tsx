@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 
-import { CommonField } from "../../common/components/fields/CommonField";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";

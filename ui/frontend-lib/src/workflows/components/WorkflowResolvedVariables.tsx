@@ -14,8 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 
-import { CODE_FONT_FAMILY } from "../../common/theme";
 import { notify } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowResolvedVariablesProps {

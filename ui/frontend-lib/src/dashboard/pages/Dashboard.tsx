@@ -1,6 +1,6 @@
 import RefreshIcon from "@mui/icons-material/Refresh";
-import CircularProgress from "@mui/material/CircularProgress";
 import { Box, Typography, IconButton, Tooltip } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";

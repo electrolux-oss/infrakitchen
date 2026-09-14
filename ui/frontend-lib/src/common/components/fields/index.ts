@@ -3,3 +3,4 @@ export * from "./ConfirmNameField";
 export * from "./Duration";
 export * from "./PlaceholderDescription";
 export * from "./RelativeTime";
+export * from "./VariableCard";

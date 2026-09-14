@@ -30,8 +30,31 @@ export const dataGridSx: SystemStyleObject<Theme> = {
       border: "none",
     },
   },
-  // No vertical separators between headers.
+  // The separator is also the drag-to-resize handle, so it stays in the layout
+  // (a `display: none` here silently disables column resizing). Instead the
+  // chunky default icon is swapped for a hairline via ::after, keeping the 10px
+  // drag target intact.
   "& .MuiDataGrid-columnSeparator": {
+    opacity: 1,
+    "& .MuiDataGrid-iconSeparator": {
+      display: "none",
+    },
+    "&::after": {
+      content: '""',
+      width: "1px",
+      height: "16px",
+      backgroundColor: "divider",
+    },
+    // Only resizable columns get the hover affordance, so the cue matches
+    // what dragging will actually do.
+    "&.MuiDataGrid-columnSeparator--resizable:hover::after, &.MuiDataGrid-columnSeparator--resizing::after":
+      {
+        backgroundColor: "primary.main",
+        height: "60%",
+      },
+  },
+  // No trailing rule against the grid's right edge.
+  "& .MuiDataGrid-columnHeader--last .MuiDataGrid-columnSeparator::after": {
     display: "none",
   },
   // Rows are neutral by default: grids whose rows actually navigate (or opt in

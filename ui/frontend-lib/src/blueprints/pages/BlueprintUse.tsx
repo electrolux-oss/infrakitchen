@@ -18,16 +18,14 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Table,
-  TableBody,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { WiringRule } from "../../common/components/viewers/Wiring/types";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -907,82 +905,80 @@ export const BlueprintUsePage = () => {
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <Table size="small">
-                      <TableBody>
-                        {visibleVars.map((variable) => {
-                          const isWired = !!wired[variable.name];
-                          const wiredInfo = wired[variable.name];
-                          const isConstantWired =
-                            isWired && wiredInfo.isConstantWire;
-                          const constantVal =
-                            isConstantWired && wiredInfo.constantId
-                              ? constantValues[wiredInfo.constantId] || ""
-                              : undefined;
-                          const hasDefault =
-                            !isWired &&
-                            variable.value !== null &&
-                            variable.value !== undefined &&
-                            variable.value !== "";
+                    <Box>
+                      {visibleVars.map((variable) => {
+                        const isWired = !!wired[variable.name];
+                        const wiredInfo = wired[variable.name];
+                        const isConstantWired =
+                          isWired && wiredInfo.isConstantWire;
+                        const constantVal =
+                          isConstantWired && wiredInfo.constantId
+                            ? constantValues[wiredInfo.constantId] || ""
+                            : undefined;
+                        const hasDefault =
+                          !isWired &&
+                          variable.value !== null &&
+                          variable.value !== undefined &&
+                          variable.value !== "";
 
-                          return (
-                            <ResourceVariableRow
-                              key={variable.name}
-                              variable={variable}
-                              hasDefault={hasDefault}
-                              field={{
-                                value: isConstantWired
-                                  ? constantVal
-                                  : (vals[variable.name] ?? variable.value),
-                                name: `${t.id}.${variable.name}`,
-                                onChange: isConstantWired
-                                  ? () => {} // value set via constant input above
-                                  : (value: any) =>
-                                      handleVariableChange(
-                                        t.id,
-                                        variable.name,
-                                        value,
-                                      ),
-                              }}
-                              isDisabled={isConstantWired}
-                            >
-                              {isWired ? (
-                                <Tooltip
-                                  title={
-                                    wiredInfo.isConstantWire
-                                      ? `Value set by constant "${wiredInfo.sourceTemplateName}" in General Configuration`
-                                      : `This variable will receive its value from the output of "${wiredInfo.sourceTemplateName}"`
+                        return (
+                          <ResourceVariableRow
+                            key={variable.name}
+                            variable={variable}
+                            hasDefault={hasDefault}
+                            field={{
+                              value: isConstantWired
+                                ? constantVal
+                                : (vals[variable.name] ?? variable.value),
+                              name: `${t.id}.${variable.name}`,
+                              onChange: isConstantWired
+                                ? () => {} // value set via constant input above
+                                : (value: any) =>
+                                    handleVariableChange(
+                                      t.id,
+                                      variable.name,
+                                      value,
+                                    ),
+                            }}
+                            isDisabled={isConstantWired}
+                          >
+                            {isWired ? (
+                              <Tooltip
+                                title={
+                                  wiredInfo.isConstantWire
+                                    ? `Value set by constant "${wiredInfo.sourceTemplateName}" in General Configuration`
+                                    : `This variable will receive its value from the output of "${wiredInfo.sourceTemplateName}"`
+                                }
+                                arrow
+                              >
+                                <Chip
+                                  icon={
+                                    wiredInfo.isConstantWire ? (
+                                      <TuneIcon />
+                                    ) : (
+                                      <LinkIcon />
+                                    )
                                   }
-                                  arrow
-                                >
-                                  <Chip
-                                    icon={
-                                      wiredInfo.isConstantWire ? (
-                                        <TuneIcon />
-                                      ) : (
-                                        <LinkIcon />
-                                      )
-                                    }
-                                    label={
-                                      wiredInfo.isConstantWire
-                                        ? `Constant: ${wiredInfo.sourceTemplateName}`
-                                        : `Wired: ${wiredInfo.sourceTemplateName} -> ${wiredInfo.sourceOutput}`
-                                    }
-                                    size="small"
-                                    color={
-                                      wiredInfo.isConstantWire
-                                        ? "secondary"
-                                        : "info"
-                                    }
-                                    variant="outlined"
-                                    sx={{ mt: 1 }}
-                                  />
-                                </Tooltip>
-                              ) : undefined}
-                            </ResourceVariableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                                  label={
+                                    wiredInfo.isConstantWire
+                                      ? `Constant: ${wiredInfo.sourceTemplateName}`
+                                      : `Wired: ${wiredInfo.sourceTemplateName} -> ${wiredInfo.sourceOutput}`
+                                  }
+                                  size="small"
+                                  color={
+                                    wiredInfo.isConstantWire
+                                      ? "secondary"
+                                      : "info"
+                                  }
+                                  variant="outlined"
+                                  sx={{ mt: 1 }}
+                                />
+                              </Tooltip>
+                            ) : undefined}
+                          </ResourceVariableRow>
+                        );
+                      })}
+                    </Box>
                   </AccordionDetails>
                 </Accordion>
               ) : currentScv ? (

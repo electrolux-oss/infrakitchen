@@ -11,11 +11,12 @@ import { useNavigate } from "react-router";
 import { Box, TextField, Button, MenuItem } from "@mui/material";
 
 import { LabelInput } from "../../common";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
 import { VERSION_LIFECYCLE_STATE } from "../../utils";
@@ -400,11 +401,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   label="Lifecycle State"
                   fullWidth
                   margin="normal"
-                  autoFocus
                 >
                   {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
                     <MenuItem key={option} value={option}>
-                      {option}
+                      <VersionLifecycleStateChip lifecycleState={option} />
                     </MenuItem>
                   ))}
                 </TextField>

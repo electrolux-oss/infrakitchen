@@ -11,8 +11,7 @@ export const deleteIconButtonStyle = {
   border: "none",
   backgroundColor: "transparent",
   "&:hover": {
-    backgroundColor: (theme: Theme) =>
-      alpha(theme.palette.error.main, 0.08),
+    backgroundColor: (theme: Theme) => alpha(theme.palette.error.main, 0.08),
     color: "error.main",
   },
 } as const;

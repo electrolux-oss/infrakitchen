@@ -38,7 +38,10 @@ import {
   dataGridPaginationSlotProps,
   dataGridSx,
 } from "../entity_table/dataGridStyles";
-import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  USER_AVATAR_COLUMN_WIDTH,
+} from "../entity_table/tableColumns";
 import { RelativeTime } from "../fields/RelativeTime";
 import { RevisionChip } from "../labels/RevisionChip";
 
@@ -244,13 +247,16 @@ export const Audit = ({
       {
         field: "creator",
         headerName: "User",
-        flex: 1,
+        // Avatar-only cell, so the column only needs to fit the avatar.
+        width: USER_AVATAR_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => {
           const creator = params.row.creator;
           if (!creator) {
             return "System";
           }
-          return <Entity entity={{ ...creator, entityType: "user" }} />;
+          return (
+            <Entity entity={{ ...creator, entityType: "user" }} hideName />
+          );
         },
       },
       {

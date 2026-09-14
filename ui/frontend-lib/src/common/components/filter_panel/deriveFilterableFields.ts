@@ -42,6 +42,10 @@ export const deriveFilterableFields = (
         field.selectOptions = spec.selectOptions;
       }
 
+      if (spec.renderSelectOption) {
+        field.renderSelectOption = spec.renderSelectOption;
+      }
+
       if (spec.options) {
         field.options = spec.options;
       }

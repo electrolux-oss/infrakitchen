@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Box, TextField } from "@mui/material";
 
+import { Entity } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
@@ -135,12 +136,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
           executor.integrationIds && executor.integrationIds.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.integrationIds.map((parent) => (
-                <span key={parent.id}>
-                  <GetReferenceUrlValue
-                    {...parent}
-                    urlProvider={parent.integrationProvider}
-                  />
-                </span>
+                <Entity key={parent.id} entity={parent} providerIconSize={24} />
               ))}
             </Box>
           ) : null

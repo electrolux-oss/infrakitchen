@@ -10,8 +10,8 @@ import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { toast } from "sonner";
 
-import { ExpandIconButton } from "../buttons/ExpandIconButton";
 import { CODE_FONT_FAMILY } from "../../theme";
+import { ExpandIconButton } from "../buttons/ExpandIconButton";
 
 interface ErrorWithCodeProps {
   id: string | number;

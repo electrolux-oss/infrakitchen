@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import ReorderIcon from "@mui/icons-material/Reorder";
+import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Button } from "@mui/material";
 
 import { PermissionWrapper } from "../../common";
@@ -47,10 +47,10 @@ export const EntitySourceCodeVersions = ({
         >
           <Button
             size="small"
-            startIcon={<ReorderIcon />}
+            startIcon={<TuneIcon />}
             onClick={() => setDialogOpen(true)}
           >
-            Rearrange Versions
+            Manage Versions
           </Button>
         </Box>
       </PermissionWrapper>

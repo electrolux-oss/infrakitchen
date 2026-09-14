@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
 import { GqlScheduledResourceAction } from "../../resources/graphql";
-
 import { useEntityProvider } from "../context/EntityContext";
 
 /**

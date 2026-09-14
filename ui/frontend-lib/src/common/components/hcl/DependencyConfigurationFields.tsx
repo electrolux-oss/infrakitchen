@@ -11,8 +11,8 @@ import {
 
 import { Box } from "@mui/material";
 
-import TagInput from "../inputs/TagInput";
 import { PropertyCard } from "../cards/PropertyCard";
+import TagInput from "../inputs/TagInput";
 
 export interface DependencyEntry {
   name: string;

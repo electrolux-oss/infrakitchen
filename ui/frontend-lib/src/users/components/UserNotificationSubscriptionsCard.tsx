@@ -78,10 +78,12 @@ export const UserNotificationSubscriptionsCard = (props: {
           return (
             <Entity
               entity={{
+                ...params.row.entityData,
                 id: params.row.entityData?.id,
                 entityType: params.row.entityData?.entityName,
                 name: params.row.entityData?.name || params.row.v1,
               }}
+              showLifecycleState={false}
             />
           );
         },

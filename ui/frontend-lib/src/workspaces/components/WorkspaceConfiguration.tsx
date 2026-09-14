@@ -1,10 +1,9 @@
-import { formatLabel } from "../../common";
+import { Entity, formatLabel } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
   getProviderValue,
-  GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { BaseCard } from "../../common/components/cards/BaseCard";
 import { GqlWorkspace } from "../graphql";
 
 export interface WorkspaceConfigurationProps {
@@ -20,10 +19,7 @@ export const WorkspaceConfiguration = ({
         <CommonField
           name={"Integration"}
           value={
-            <GetReferenceUrlValue
-              {...workspace.integration}
-              urlProvider={workspace.integration.integrationProvider}
-            />
+            <Entity entity={workspace.integration} providerIconSize={24} />
           }
         />
       )}

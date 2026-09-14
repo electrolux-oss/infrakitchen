@@ -16,20 +16,14 @@ import {
 } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Box,
-  Typography,
   TextField,
-  AccordionDetails,
-  Accordion,
-  AccordionSummary,
-  Table,
-  TableBody,
   Button,
   Alert,
+  Grid,
   IconButton,
   InputAdornment,
   Card,
@@ -38,16 +32,16 @@ import {
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
-import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlTemplateShort } from "../../templates/graphql";
 import { IkEntity } from "../../types";
 import { ValidationRule } from "../../types";
@@ -84,7 +78,6 @@ const ResourceCreatePageInner = () => {
     name: "variables",
   });
 
-  const [variablesOpen, setVariablesOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
@@ -136,7 +129,6 @@ const ResourceCreatePageInner = () => {
       };
 
       if (rootField === "variables") {
-        setVariablesOpen(true);
         scrollTo(inputVariablesSectionRef);
         return;
       }
@@ -149,7 +141,7 @@ const ResourceCreatePageInner = () => {
 
       scrollTo(templateConfigSectionRef);
     },
-    [setVariablesOpen],
+    [],
   );
 
   useEffect(() => {
@@ -1175,25 +1167,6 @@ const ResourceCreatePageInner = () => {
                         sort={["index", "ASC"]}
                         value={field.value}
                         label="Template Version"
-                        renderOptionContent={(option: any) => (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 1,
-                              width: "100%",
-                            }}
-                          >
-                            <Typography variant="body2">
-                              {option.identifier}
-                            </Typography>
-                            <VersionLifecycleStateChip
-                              lifecycleState={option.lifecycleState}
-                              breakingChanges={option.breakingChanges}
-                            />
-                          </Box>
-                        )}
                         required
                         disabled={!watchedTemplateId}
                       />
@@ -1209,50 +1182,34 @@ const ResourceCreatePageInner = () => {
                 </Box>
 
                 {Array.isArray(schema) && schema.length > 0 && (
-                  <Accordion
-                    ref={inputVariablesSectionRef}
-                    expanded={variablesOpen}
-                    onChange={() => setVariablesOpen(!variablesOpen)}
-                    elevation={0}
-                    sx={{
-                      borderRadius: "var(--template-surface-radius)",
-                      mt: 2,
-                      "&:before": {
-                        display: "none",
-                      },
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h5" component="h4">
-                        Input Variables ({schema?.length || 0})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table>
-                        <TableBody>
-                          {fields.map((field, index) =>
-                            schema && schema[index] ? (
-                              <ResourceVariableForm
-                                key={field.id}
-                                index={index}
-                                variable={schema[index]}
-                                validationSummary={
-                                  validationRuleSummaryByVariable[
-                                    schema[index].name
-                                  ] || null
-                                }
-                                validationRule={
-                                  validationRuleByVariable[
-                                    schema[index].name
-                                  ] || null
-                                }
-                              />
-                            ) : null,
-                          )}
-                        </TableBody>
-                      </Table>
-                    </AccordionDetails>
-                  </Accordion>
+                  <Box ref={inputVariablesSectionRef} sx={{ mt: 2 }}>
+                    <BaseCard
+                      name="Input Variables"
+                      chip={String(schema?.length || 0)}
+                      chipVariant="solid"
+                    >
+                      <Grid size={12}>
+                        {fields.map((field, index) =>
+                          schema && schema[index] ? (
+                            <ResourceVariableForm
+                              key={field.id}
+                              index={index}
+                              variable={schema[index]}
+                              validationSummary={
+                                validationRuleSummaryByVariable[
+                                  schema[index].name
+                                ] || null
+                              }
+                              validationRule={
+                                validationRuleByVariable[schema[index].name] ||
+                                null
+                              }
+                            />
+                          ) : null,
+                        )}
+                      </Grid>
+                    </BaseCard>
+                  </Box>
                 )}
                 {isLoading && <GradientCircularProgress />}
               </PropertyCard>

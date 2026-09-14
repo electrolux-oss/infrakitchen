@@ -3,9 +3,9 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
-import { getProviderValue } from "../../common/components/fields/CommonField";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
 import { solidChipColorSx } from "../../common/utils/softChip";
 

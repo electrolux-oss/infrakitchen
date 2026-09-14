@@ -5,16 +5,16 @@ import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import { Box, MenuItem, TextField } from "@mui/material";
 
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { InlineCode } from "../../common/components/code/InlineCode";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { CodeRepository } from "../../common/components/entities/CodeRepository";
 import {
   CommonField,
   GetReferenceUrlValue,
 } from "../../common/components/fields/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
-import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
-import { InlineCode } from "../../common/components/code/InlineCode";
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";

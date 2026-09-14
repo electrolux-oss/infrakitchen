@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useTheme } from "@mui/material";
 import { Node } from "@xyflow/react";
 
 import { ENTITY_STATUS } from "../../../../utils";
@@ -27,6 +28,26 @@ export interface DiagramNodeData {
 }
 
 export type DiagramNode = Node<DiagramNodeData>;
+
+/**
+ * Explicit blue for node headers, matching `GraphViewNode`. The app palette is
+ * monochrome, so a palette-driven header would read as a black bar.
+ */
+export const NODE_ACCENT = {
+  light: "#0969da",
+  dark: "#1f6feb",
+} as const;
+
+/**
+ * Mode-aware palette. Under `cssVariables`, `theme.palette` holds the light
+ * scheme's literal values; only `theme.vars` follows the active scheme. `sx`
+ * handles this itself, but the canvas passes plain strings to React Flow, so
+ * canvas colours must come from here.
+ */
+export function useCanvasPalette() {
+  const theme = useTheme();
+  return (theme.vars ?? theme).palette;
+}
 
 export function makeHandleStyle(
   color: string,

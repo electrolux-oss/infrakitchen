@@ -16,9 +16,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
 import { dashedAddButtonSx } from "../../utils/dashedAddButtonSx";
 import { solidChipColorSx } from "../../utils/softChip";
+import { deleteIconButtonStyle } from "../buttons/deleteIconButtonStyle";
 
 interface Tag {
   name: string;

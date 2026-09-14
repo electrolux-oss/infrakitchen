@@ -42,14 +42,18 @@ async def _load_projects(keys: list[str], session: AsyncSession) -> list[dict[st
 
 
 async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(
-        Resource.id,
-        Resource.name,
-        Resource.status,
-        Resource.state,
-        Resource.updated_at,
-        Template.name.label("template_name"),
-    ).outerjoin(Template, Resource.template_id == Template.id).where(Resource.id.in_(keys))
+    stmt = (
+        select(
+            Resource.id,
+            Resource.name,
+            Resource.status,
+            Resource.state,
+            Resource.updated_at,
+            Template.name.label("template_name"),
+        )
+        .outerjoin(Template, Resource.template_id == Template.id)
+        .where(Resource.id.in_(keys))
+    )
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {
@@ -171,6 +175,8 @@ async def _load_source_code_versions(keys: list[str], session: AsyncSession) -> 
             "id": str(row.id),
             "name": f"{row.source_code_folder}:{row.source_code_version or row.source_code_branch}",
             "entityName": "source_code_version",
+            "sourceCodeVersion": row.source_code_version,
+            "sourceCodeBranch": row.source_code_branch,
         }
         for row in result
     }
