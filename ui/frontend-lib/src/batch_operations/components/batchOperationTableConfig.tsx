@@ -23,7 +23,11 @@ export const batchOperationColumns: EntityTableColumn[] = [
       defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <Entity entity={params.row} />;
+      return (
+        <Entity
+          entity={{ ...params.row, entityType: "batch_operation" }}
+        />
+      );
     },
   },
   {
@@ -45,7 +49,8 @@ export const batchOperationColumns: EntityTableColumn[] = [
   {
     field: "entityIds",
     headerName: "# of Entities",
-    flex: 0.5,
+    width: 120,
+    sortable: false,
     ...NUMERIC_COLUMN_ALIGN,
     valueGetter: (value: any) => (value ? value.length : 0),
   },

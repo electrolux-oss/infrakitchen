@@ -137,7 +137,7 @@ export const EntityFetchTableContent = forwardRef<
 
       let sort: NonNullable<GridSortModel[number]>;
       if (sortModel.length === 0) {
-        sort = defaultSort ?? { field: "created_at", sort: "desc" };
+        sort = defaultSort ?? { field: "updated_at", sort: "desc" };
       } else {
         sort = sortModel[0] as NonNullable<GridSortModel[number]>;
       }

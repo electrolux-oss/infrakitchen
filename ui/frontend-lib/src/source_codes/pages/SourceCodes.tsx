@@ -43,7 +43,6 @@ export const SourceCodesPage = () => {
         defaultColumnVisibilityModel={sourceCodeDefaultColumnVisibilityModel}
         entityFieldMap={SOURCE_CODE_FIELD_MAP}
         syncFiltersToUrl
-        defaultSort={{ field: "updated_at", sort: "desc" }}
       />
     </PageContainer>
   );
