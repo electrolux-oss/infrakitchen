@@ -5,7 +5,16 @@ import { SxProps, Theme } from "@mui/system";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
 import { MuiChipColor } from "./utils";
-import { solidChipColorSx } from "./utils/softChip";
+import { resolveChipColor, solidChipColorSx } from "./utils/softChip";
+
+const VERSION_LIFECYCLE_STATE_COLORS: Partial<
+  Record<VERSION_LIFECYCLE_STATE, MuiChipColor>
+> = {
+  [VERSION_LIFECYCLE_STATE.ACTIVE]: "success",
+  [VERSION_LIFECYCLE_STATE.PREVIEW]: "info",
+  [VERSION_LIFECYCLE_STATE.DEPRECATED]: "warning",
+  [VERSION_LIFECYCLE_STATE.ARCHIVED]: "error",
+};
 
 export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
@@ -13,15 +22,9 @@ export const getVersionLifecycleStateColor = (
   const lifecycleState = lifecycleStateValue?.toLocaleLowerCase() as
     VERSION_LIFECYCLE_STATE | undefined;
 
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.ACTIVE) return "success";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.PREVIEW) return "info";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.DEPRECATED) return "warning";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.ARCHIVED) return "error";
-
-  return "default";
+  return lifecycleState
+    ? (VERSION_LIFECYCLE_STATE_COLORS[lifecycleState] ?? "default")
+    : "default";
 };
 
 interface VersionLifecycleStateChipProps {
@@ -60,17 +63,11 @@ const VersionLifecycleStateChip = ({
             component="span"
             aria-label={normalizedState}
             sx={(theme) => ({
-              width: 8,
-              height: 8,
+              width: 10,
+              height: 10,
               flexShrink: 0,
               borderRadius: "50%",
-              // `default` resolves to a light grey that is nearly invisible on
-              // white, so unknown states get a ring instead of a solid fill.
-              ...(color === "default"
-                ? {
-                    border: `1.5px solid ${theme.palette.grey[400]}`,
-                  }
-                : { bgcolor: theme.palette[color].main }),
+              bgcolor: resolveChipColor(color, theme),
               ...(sx as object),
             })}
           />

@@ -3,8 +3,8 @@ import { alpha } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
 import type { SystemStyleObject } from "@mui/system";
 
-// Soft informational blue for the "optional" badges. The global `info` palette
-// is deliberately monochrome (near-black), so chips get their own hue here.
+// Informational blue. The global `info` palette is deliberately monochrome
+// (near-black), so informational indicators use a distinct hue.
 export const SOFT_BLUE = "hsl(211, 92%, 50%)";
 
 // Sizing shared by the pill chip styles. `compact` is for chips rendered inside
@@ -22,11 +22,9 @@ const chipSize = (compact: boolean) =>
         letterSpacing: "0.06em",
       };
 
-// Soft pill chip style used across cards (e.g. the "Abstract" chip and the
-// tag chips). Single centralized definition; callers only supply the tint
-// color (e.g. theme.palette.info.main or theme.palette.grey[600]). Uses a
-// translucent tinted fill, which reads as a light pastel pill on any surface.
-// Chips that need to overlap a border must add an opaque background on top.
+// Soft pill chip style. Callers supply the tint color. Uses a translucent
+// tinted fill, which reads as a light pastel pill on any surface. Chips that
+// need to overlap a border must add an opaque background on top.
 export const softChipSx = (
   main: string,
   compact = false,
@@ -45,7 +43,7 @@ export const softChipSx = (
 // Resolves a MUI chip `color` name to the tint color used by the pill styles.
 // `default` (or an unknown color) falls back to the neutral grey; `info` uses
 // the soft blue instead of the monochrome info palette.
-const resolveChipMain = (
+export const resolveChipColor = (
   color: ChipProps["color"] | undefined,
   theme: Theme,
 ): string => {
@@ -66,7 +64,7 @@ const resolveChipMain = (
 export const softChipColorSx =
   (color: ChipProps["color"] = "default", compact = false) =>
   (theme: Theme): SystemStyleObject<Theme> =>
-    softChipSx(resolveChipMain(color, theme), compact);
+    softChipSx(resolveChipColor(color, theme), compact);
 
 // Solid filled pill (white text on the tint color), matching the style of the
 // "Updated" badge. Used for badges that need an opaque fill — e.g. one that
@@ -80,7 +78,9 @@ export const solidChipColorSx =
     compact = false,
   ) =>
   (theme: Theme): SystemStyleObject<Theme> => {
-    const main = customMain ? customMain(theme) : resolveChipMain(color, theme);
+    const main = customMain
+      ? customMain(theme)
+      : resolveChipColor(color, theme);
     const labelColor = customLabelColor ? customLabelColor(theme) : "#fff";
 
     return {
