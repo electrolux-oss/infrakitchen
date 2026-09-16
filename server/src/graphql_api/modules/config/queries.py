@@ -19,6 +19,7 @@ class GlobalConfigType:
     approval_flow: bool
     demo_mode: bool
     websocket: bool
+    services: bool
     cloud_provider_registry: list[str]
     git_provider_registry: list[str]
     notification_provider_registry: list[str]
@@ -132,6 +133,7 @@ class ConfigQuery:
             approval_flow=config.approval_flow,
             demo_mode=config.demo_mode,
             websocket=config.websocket,
+            services=config.services,
             cloud_provider_registry=cloud_provider_registry,
             git_provider_registry=git_provider_registry,
             notification_provider_registry=notification_provider_registry,

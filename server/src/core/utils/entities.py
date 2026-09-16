@@ -32,6 +32,7 @@ DEFAULT_ENTITIES = [
     "subscription",
     "notification_preference",
     "project",
+    "service",
 ]
 
 ADMIN_ENTITIES = [

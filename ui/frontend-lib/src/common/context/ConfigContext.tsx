@@ -83,6 +83,7 @@ export const ConfigProvider = ({
             approvalFlow
             demoMode
             websocket
+            services
             cloudProviderRegistry
             gitProviderRegistry
             notificationProviderRegistry
@@ -113,6 +114,7 @@ export const ConfigProvider = ({
         approval_flow: gql.approvalFlow,
         demo_mode: gql.demoMode,
         websocket: gql.websocket,
+        services: gql.services,
         cloud_provider_registry: gql.cloudProviderRegistry,
         git_provider_registry: gql.gitProviderRegistry,
         storage_provider_registry: gql.storageProviderRegistry,

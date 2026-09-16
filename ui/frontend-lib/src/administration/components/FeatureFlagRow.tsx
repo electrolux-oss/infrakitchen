@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 
-import { Box, Switch, Typography } from "@mui/material";
+import { Box, Chip, Switch, Tooltip, Typography } from "@mui/material";
+
+import { softChipColorSx } from "../../common/utils/softChip";
 
 export interface FeatureFlagDTO {
   name: string;
@@ -13,6 +15,7 @@ interface FeatureFlagRowProps {
   flagName: string;
   displayName: string;
   description?: string;
+  experimental?: boolean;
   featureFlags: FeatureFlagDTO[];
   loading: boolean;
   onToggle?: (flagName: string, enabled: boolean, displayName?: string) => void;
@@ -22,6 +25,7 @@ export const FeatureFlagRow: React.FC<FeatureFlagRowProps> = ({
   flagName,
   displayName,
   description,
+  experimental = false,
   featureFlags,
   loading,
   onToggle,
@@ -58,9 +62,20 @@ export const FeatureFlagRow: React.FC<FeatureFlagRowProps> = ({
       }}
     >
       <Box sx={{ minWidth: 0 }}>
-        <Typography variant="subtitle2" sx={{ color: "text.primary" }}>
-          {displayName}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography variant="subtitle2" sx={{ color: "text.primary" }}>
+            {displayName}
+          </Typography>
+          {experimental && (
+            <Tooltip title="This feature is still being tested and may change or be removed.">
+              <Chip
+                label="EXPERIMENTAL"
+                size="small"
+                sx={softChipColorSx("warning")}
+              />
+            </Tooltip>
+          )}
+        </Box>
         {description && (
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             {description}

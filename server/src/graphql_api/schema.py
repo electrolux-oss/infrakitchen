@@ -17,6 +17,8 @@ from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.blueprint.mutations import BlueprintMutation
 from graphql_api.modules.project.queries import ProjectQuery
 from graphql_api.modules.project.mutations import ProjectMutation
+from graphql_api.modules.service.queries import ServiceQuery
+from graphql_api.modules.service.mutations import ServiceMutation
 from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
 from graphql_api.modules.template.mutations import TemplateMutation
@@ -80,6 +82,7 @@ class Query(
     BlueprintQuery,
     ProjectQuery,
     ResourceQuery,
+    ServiceQuery,
     TemplateQuery,
     IntegrationQuery,
     LabelQuery,
@@ -123,6 +126,7 @@ class Mutation(
     NotificationMutation,
     ProjectMutation,
     ResourceMutation,
+    ServiceMutation,
     TemplateMutation,
     BlueprintMutation,
     IntegrationMutation,

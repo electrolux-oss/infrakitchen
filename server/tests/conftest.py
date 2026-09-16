@@ -13,6 +13,12 @@ from .fixtures.test_project_fixtures import (
     project_response,
     mocked_project,
 )
+from .fixtures.test_service_fixtures import (
+    mock_service_crud,
+    mock_service_service,
+    service_response,
+    mocked_service,
+)
 from .fixtures.test_template_fixtures import (
     mock_template_crud,
     mock_template_service,
@@ -212,6 +218,10 @@ __all__ = [
     "mock_project_service",
     "project_response",
     "mocked_project",
+    "mock_service_crud",
+    "mock_service_service",
+    "service_response",
+    "mocked_service",
     "mock_permission_crud",
     "mock_permission_service",
     "mocked_permission_response",
