@@ -90,7 +90,7 @@ class GitHubRepository(BaseModel):
     watchers: int  # Duplicates watchers_count, but often present
     default_branch: str
     permissions: GitHubRepositoryPermissions  # Nested Pydantic model
-    custom_properties: dict[Any, Any]  # Can be an arbitrary dict
+    custom_properties: dict[Any, Any] | None = None  # Can be an arbitrary dict
 
 
 class RepoReference(BaseModel):
