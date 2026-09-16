@@ -22,6 +22,8 @@ export const RouterSnackbarWrapper = () => {
       <Toaster
         id="errors"
         position="bottom-right"
+        richColors
+        closeButton
         theme={mode ?? "system"}
         visibleToasts={3}
         style={{ ["--width" as any]: "520px" }}

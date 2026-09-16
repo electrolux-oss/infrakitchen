@@ -30,6 +30,7 @@ async def insert_workspaces(session: AsyncSession, env: str, user: UserDTO):
             html_url=HttpUrl(f"https://github.com/test-org/{env}"),
             git_url=f"git://github.com/test-org/{env}.git",
             ssh_url=f"git@github.com:test-org/{env}.git",
+            clone_url=HttpUrl(f"https://github.com/test-org/{env}.git"),
             url=HttpUrl(f"https://api.github.com/repos/test-org/{env}"),
             created_at="2024-01-01T00:00:00Z",
             updated_at="2024-01-01T00:00:00Z",

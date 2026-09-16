@@ -3,25 +3,6 @@ from pydantic import BaseModel, HttpUrl
 from datetime import datetime
 
 
-class GithubOrganization(BaseModel):
-    """
-    Pydantic model representing a GitHub Organization.
-    """
-
-    login: str
-    id: int
-    node_id: str
-    url: HttpUrl
-    repos_url: HttpUrl
-    events_url: HttpUrl
-    hooks_url: HttpUrl
-    issues_url: HttpUrl
-    members_url: str
-    public_members_url: str
-    avatar_url: HttpUrl
-    description: str | None = None
-
-
 class GitHubOwner(BaseModel):
     """
     Pydantic model representing the owner (User or Organization) of a GitHub repository.

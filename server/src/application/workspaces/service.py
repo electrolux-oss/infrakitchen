@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 from typing import Any
 
+from application.providers.github.github_integration import get_github_client
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.errors import DependencyError, EntityNotFound
@@ -18,6 +19,7 @@ from .model import Workspace
 from .schema import (
     AzureDevOpsWorkspaceMeta,
     BitbucketWorkspaceMeta,
+    GitHubOwner,
     GithubWorkspaceMeta,
     RoleWorkspacesResponse,
     UserWorkspaceResponse,
@@ -159,6 +161,50 @@ class WorkspaceService:
         await self.crud.refresh(existing_workspace)
         await self.event_sender.send_event(WorkspaceResponse.model_validate(existing_workspace), ModelActions.UPDATE)
         return existing_workspace
+
+    async def sync_workspace(self, workspace_id: str, requester: UserDTO) -> Workspace:
+        """
+        Re-fetches the repository metadata from the provider (GitHub only for now) and
+        refreshes the stored configuration (default branch, description, URLs, etc).
+        The workspace name is left untouched even if the repository was renamed upstream.
+        """
+        workspace = await self.crud.get_by_id(workspace_id)
+        if not workspace:
+            raise EntityNotFound("Workspace not found")
+
+        if workspace.workspace_provider != "github":
+            raise ValueError(f"Sync is not supported yet for provider '{workspace.workspace_provider}'")
+
+        organization = (workspace.configuration or {}).get("organization")
+        if not organization:
+            raise ValueError("Workspace is missing an organization; cannot sync")
+
+        client = await get_github_client(workspace.integration_id, self.crud.session)
+        repo = await client.get_repo(org=organization, repo=workspace.name)
+
+        github_meta = GithubWorkspaceMeta(
+            name=repo.name,
+            html_url=repo.html_url,
+            git_url=repo.git_url,
+            ssh_url=repo.ssh_url,
+            clone_url=repo.clone_url,
+            url=repo.url,
+            created_at=repo.created_at.isoformat(),
+            updated_at=repo.updated_at.isoformat(),
+            pushed_at=repo.pushed_at.isoformat() if repo.pushed_at else None,
+            description=repo.description,
+            owner=GitHubOwner(login=repo.owner.login),
+            id=repo.id,
+            default_branch=repo.default_branch,
+        )
+        configuration = WorkspaceMeta.from_github_meta(github_meta)
+
+        await self.crud.update(workspace, {"configuration": model_db_dump(configuration)})
+
+        await self.audit_log_handler.create_log(workspace.id, requester.id, ModelActions.UPDATE)
+        await self.crud.refresh(workspace)
+        await self.event_sender.send_event(WorkspaceResponse.model_validate(workspace), ModelActions.UPDATE)
+        return workspace
 
     async def delete(self, workspace_id: str) -> None:
         existing_workspace = await self.crud.get_by_id(workspace_id)

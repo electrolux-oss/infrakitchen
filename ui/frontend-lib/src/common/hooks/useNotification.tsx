@@ -49,6 +49,9 @@ interface NotifyOptions {
 }
 
 function getMessage(message: any) {
+  if (typeof message === "string") {
+    return message;
+  }
   try {
     return JSON.stringify(message, null, 2);
   } catch {
@@ -102,6 +105,12 @@ export const notify = (
 };
 
 export const notifyError = (error: unknown, options?: NotifyOptions) => {
+  const toastOptions = {
+    duration: options?.duration ?? Infinity,
+    toasterId: "errors" as const,
+    id: options?.id,
+  };
+
   if (error instanceof ApiClientError) {
     const displayMessage = `${error.status} ${getMessage(error.message)}`;
     const showDetailedToast = hasErrorDetails(error.metadata);
@@ -115,40 +124,46 @@ export const notifyError = (error: unknown, options?: NotifyOptions) => {
             metadata={error.metadata}
           />
         ),
-        { duration: Infinity, toasterId: "errors" },
+        toastOptions,
       );
       return;
     }
 
-    if (
-      showDetailedToast &&
-      error.error_code &&
-      error.error_code.toUpperCase() !== "UNKNOWN_ERROR"
-    ) {
-      toast.custom(
-        (id) => (
-          <ErrorWithStatusCode
-            id={id}
-            message={displayMessage}
-            metadata={error.metadata}
-          />
-        ),
-        { duration: Infinity, toasterId: "errors" },
-      );
-      return;
-    }
-
-    toast.error(displayMessage, { toasterId: "errors", ...options });
+    toast.custom(
+      (id) => (
+        <ErrorWithStatusCode
+          id={id}
+          message={displayMessage}
+          metadata={showDetailedToast ? error.metadata : undefined}
+        />
+      ),
+      toastOptions,
+    );
     return;
   }
 
   if (error instanceof Error) {
-    toast.error(error.message, { toasterId: "errors", ...options });
+    toast.custom(
+      (id) => (
+        <ErrorWithStatusCode
+          id={id}
+          message="Error"
+          metadata={{ message: error.message }}
+        />
+      ),
+      toastOptions,
+    );
     return;
   }
 
-  toast.error("Request failed due to an unknown error.", {
-    toasterId: "errors",
-    ...options,
-  });
+  toast.custom(
+    (id) => (
+      <ErrorWithStatusCode
+        id={id}
+        message="Error"
+        metadata={{ message: "Request failed due to an unknown error." }}
+      />
+    ),
+    toastOptions,
+  );
 };

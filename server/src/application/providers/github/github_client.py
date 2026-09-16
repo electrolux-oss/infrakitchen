@@ -34,19 +34,38 @@ class GithubClient:
         }
 
     @staticmethod
+    def _parse_error_body(response: httpx.Response) -> Any:
+        try:
+            return response.json()
+        except ValueError:
+            return response.text
+
+    @staticmethod
+    def _raise_with_metadata(exc_cls: type[Exception], message: str, response: httpx.Response) -> None:
+        body = GithubClient._parse_error_body(response)
+        metadata = [body] if isinstance(body, dict) else [{"response": body}]
+        exc = exc_cls(message)
+        exc.metadata = metadata  # type: ignore[attr-defined]
+        raise exc
+
+    @staticmethod
     def _error_handling(response: httpx.Response) -> None:
         if response.status_code == 403:
-            raise AccessUnauthorized(f"Unauthorized {response.status_code}: {response.text}")
+            GithubClient._raise_with_metadata(AccessUnauthorized, "Access denied by GitHub", response)
         elif response.status_code == 404:
-            raise EntityNotFound(f"Not found: {response.text}")
+            GithubClient._raise_with_metadata(EntityNotFound, "GitHub resource not found", response)
         elif response.status_code == 409:
-            raise EntityExistsError(f"Entity already exists: {response.text}")
+            GithubClient._raise_with_metadata(EntityExistsError, "GitHub resource already exists", response)
         elif response.status_code == 422:
-            raise ValueError(f"Unprocessable Entity: {response.text}")
+            GithubClient._raise_with_metadata(
+                ValueError, "GitHub rejected the request (unprocessable entity)", response
+            )
         elif response.status_code in [201, 202]:
             pass
         elif response.status_code != 200:
-            raise ValueError(f"Error {response.status_code}: {response.text}")
+            GithubClient._raise_with_metadata(
+                ValueError, f"GitHub API request failed ({response.status_code})", response
+            )
 
     async def make_response(self, response: httpx.Response) -> GithubResponse:
         self._error_handling(response)

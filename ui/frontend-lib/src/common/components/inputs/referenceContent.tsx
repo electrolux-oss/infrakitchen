@@ -17,6 +17,11 @@ const REFERENCE_ENTITY_CONFIG: Record<
     fields: ["integrationProvider"],
     providerIconSize: 24,
   },
+  workspaces: {
+    entityType: "workspace",
+    fields: ["workspaceProvider"],
+    providerIconSize: 24,
+  },
   source_codes: {
     entityType: "source_code",
     fields: ["sourceCodeUrl", "sourceCodeProvider"],

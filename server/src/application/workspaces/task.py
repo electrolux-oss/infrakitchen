@@ -118,9 +118,9 @@ class WorkspaceTask:
         # Determine the Git URL based on the integration type
         integration_type = workspace.integration.integration_provider
         if "ssh" in integration_type.lower():
-            git_url = workspace.configuration.ssh_url
+            git_url = workspace.configuration.ssh_clone_url
         else:
-            git_url = workspace.configuration.https_url
+            git_url = workspace.configuration.https_clone_url
 
         try:
             self.git_client = await self.integration_provider.get_git_client(

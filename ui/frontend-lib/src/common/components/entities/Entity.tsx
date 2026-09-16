@@ -32,6 +32,8 @@ export interface EntityRecord {
   /** Populated for code repositories (``entityType === "source_code"``). */
   sourceCodeUrl?: string;
   sourceCodeProvider?: string;
+  /** Populated for workspaces (``entityType === "workspace"``). */
+  workspaceProvider?: string;
 }
 
 export interface EntityProps {
@@ -226,6 +228,12 @@ export const Entity = ({
         {entityType === "integration" && (
           <ProviderIcon
             provider={entity.integrationProvider}
+            size={providerIconSize}
+          />
+        )}
+        {entityType === "workspace" && (
+          <ProviderIcon
+            provider={entity.workspaceProvider}
             size={providerIconSize}
           />
         )}
