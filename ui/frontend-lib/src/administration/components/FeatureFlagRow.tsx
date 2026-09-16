@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
-import { Box, Chip, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, Switch, Tooltip, Typography } from "@mui/material";
 
-import { softChipColorSx } from "../../common/utils/softChip";
+import { Label } from "../../common/components/labels/Label";
 
 export interface FeatureFlagDTO {
   name: string;
@@ -68,11 +68,7 @@ export const FeatureFlagRow: React.FC<FeatureFlagRowProps> = ({
           </Typography>
           {experimental && (
             <Tooltip title="This feature is still being tested and may change or be removed.">
-              <Chip
-                label="EXPERIMENTAL"
-                size="small"
-                sx={softChipColorSx("warning")}
-              />
+              <Label label="Experimental" />
             </Tooltip>
           )}
         </Box>
