@@ -103,7 +103,7 @@ export const IconField = (type: string | undefined, size?: number) => {
 export const ProviderIcon: React.FC<{
   provider?: string;
   size?: number;
-}> = ({ provider, size = 16 }) => (
+}> = ({ provider, size = 18 }) => (
   <Box
     component="span"
     aria-hidden

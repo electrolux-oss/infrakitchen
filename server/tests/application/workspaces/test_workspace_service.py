@@ -1,3 +1,6 @@
+from datetime import datetime, UTC
+from types import SimpleNamespace
+
 import pytest
 from unittest.mock import ANY, AsyncMock, Mock
 
@@ -184,10 +187,10 @@ class TestCreate:
 
         expected_workspace_configuration = {
             "name": "TestWorkspace",
-            "url": "http://url.example.com/",
+            "web_url": "http://example.com/",
             "description": "Test description",
-            "ssh_url": "ssh://example.com",
-            "https_url": "http://example.com/",
+            "ssh_clone_url": "ssh://example.com",
+            "https_clone_url": "http://clone.example.com/",
             "default_branch": "main",
             "organization": "test_owner",
         }
@@ -271,10 +274,10 @@ class TestCreate:
 
         expected_workspace_configuration = {
             "name": "ik-workspace",
-            "url": "https://example.org/org/ik-workspace",
+            "web_url": "https://example.org/org/ik-workspace",
             "description": "test description",
-            "ssh_url": "git@example.org:org/ik-workspace.git",
-            "https_url": "https://example.org/org/ik-workspace.git",
+            "ssh_clone_url": "git@example.org:org/ik-workspace.git",
+            "https_clone_url": "https://example.org/org/ik-workspace.git",
             "default_branch": "develop",
             "organization": "org",
         }
@@ -417,6 +420,88 @@ class TestUpdate:
             )
 
         assert exc.value is error
+
+
+class TestSync:
+    @pytest.mark.asyncio
+    async def test_sync_workspace_success(
+        self,
+        mock_workspace_service,
+        mock_workspace_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        monkeypatch,
+        workspace,
+        workspace_response,
+    ):
+        repo = SimpleNamespace(
+            id=123456,
+            name=workspace.name,
+            owner=SimpleNamespace(login="test-org"),
+            html_url="https://github.com/test-org/TestWorkspace",
+            git_url="git://github.com/test-org/TestWorkspace.git",
+            ssh_url="git@github.com:test-org/TestWorkspace.git",
+            clone_url="https://github.com/test-org/TestWorkspace.git",
+            url="https://api.github.com/repos/test-org/TestWorkspace",
+            created_at=datetime(2024, 1, 1, tzinfo=UTC),
+            updated_at=datetime(2024, 1, 2, tzinfo=UTC),
+            pushed_at=datetime(2024, 1, 3, tzinfo=UTC),
+            description="Synced description",
+            default_branch="develop",
+        )
+        mock_client = Mock()
+        mock_client.get_repo = AsyncMock(return_value=repo)
+        mock_get_github_client = AsyncMock(return_value=mock_client)
+        monkeypatch.setattr("application.workspaces.service.get_github_client", mock_get_github_client)
+
+        mock_workspace_crud.get_by_id.return_value = workspace
+        monkeypatch.setattr(WorkspaceResponse, "model_validate", Mock(return_value=workspace_response))
+
+        requester = Mock(spec=UserDTO)
+        requester.id = uuid4()
+
+        result = await mock_workspace_service.sync_workspace(workspace_id=str(workspace.id), requester=requester)
+
+        mock_get_github_client.assert_awaited_once_with(workspace.integration_id, mock_workspace_crud.session)
+        mock_client.get_repo.assert_awaited_once_with(org="test-org", repo=workspace.name)
+
+        mock_workspace_crud.update.assert_awaited_once()
+        called_workspace, called_body = mock_workspace_crud.update.call_args.args
+        assert called_workspace is workspace
+        assert called_body["configuration"]["default_branch"] == "develop"
+        assert called_body["configuration"]["description"] == "Synced description"
+        assert called_body["configuration"]["web_url"] == "https://github.com/test-org/TestWorkspace"
+        assert called_body["configuration"]["https_clone_url"] == "https://github.com/test-org/TestWorkspace.git"
+        # Name is intentionally left untouched even though the workspace is renamed.
+        assert workspace.name == "TestWorkspace"
+
+        mock_audit_log_handler.create_log.assert_awaited_once_with(workspace.id, requester.id, ModelActions.UPDATE)
+        mock_workspace_crud.refresh.assert_awaited_once_with(workspace)
+        mock_event_sender.send_event.assert_awaited_once_with(workspace_response, ModelActions.UPDATE)
+        assert result is workspace
+
+    @pytest.mark.asyncio
+    async def test_sync_workspace_not_found(self, mock_workspace_service, mock_workspace_crud):
+        mock_workspace_crud.get_by_id.return_value = None
+
+        with pytest.raises(EntityNotFound):
+            await mock_workspace_service.sync_workspace(workspace_id=WORKSPACE_ID, requester=Mock(spec=UserDTO))
+
+    @pytest.mark.asyncio
+    async def test_sync_workspace_unsupported_provider(self, mock_workspace_service, mock_workspace_crud, workspace):
+        workspace.workspace_provider = "bitbucket"
+        mock_workspace_crud.get_by_id.return_value = workspace
+
+        with pytest.raises(ValueError, match="Sync is not supported"):
+            await mock_workspace_service.sync_workspace(workspace_id=str(workspace.id), requester=Mock(spec=UserDTO))
+
+    @pytest.mark.asyncio
+    async def test_sync_workspace_missing_organization(self, mock_workspace_service, mock_workspace_crud, workspace):
+        workspace.configuration = {"name": workspace.name}
+        mock_workspace_crud.get_by_id.return_value = workspace
+
+        with pytest.raises(ValueError, match="missing an organization"):
+            await mock_workspace_service.sync_workspace(workspace_id=str(workspace.id), requester=Mock(spec=UserDTO))
 
 
 class TestDelete:

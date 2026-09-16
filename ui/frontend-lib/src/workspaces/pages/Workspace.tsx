@@ -3,6 +3,7 @@ import { useParams } from "react-router";
 import { LogLiveTail } from "../../common";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
+import { WorkspaceActions } from "../components/WorkspaceActions";
 import { WorkspaceContent } from "../components/WorkspaceContent";
 import { WORKSPACE_DETAIL_FIELDS } from "../graphql";
 
@@ -15,7 +16,10 @@ export const WorkspacePage = () => {
       entity_id={workspace_id || ""}
       entityFields={WORKSPACE_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Workspace Details"}>
+      <EntityContainer
+        title={"Workspace Details"}
+        actions={<WorkspaceActions />}
+      >
         <WorkspaceContent />
         <LogLiveTail />
       </EntityContainer>

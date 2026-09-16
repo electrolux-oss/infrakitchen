@@ -84,9 +84,7 @@ export const EntityFetchTable = forwardRef<
             normalizedDefaultField.toLowerCase()),
     );
 
-    return column
-      ? [{ field: column.field, sort: effectiveDefault.sort }]
-      : [];
+    return column ? [{ field: column.field, sort: effectiveDefault.sort }] : [];
   }, [columns, defaultSort]);
 
   const [sortModel, setSortModel] = useState<GridSortModel>(() => {

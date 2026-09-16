@@ -8,10 +8,8 @@ import { CommonEditableField } from "../../common/components/editors/CommonEdita
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEditor";
-import {
-  CommonField,
-  GetReferenceUrlValue,
-} from "../../common/components/fields/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
@@ -172,9 +170,8 @@ export const ProjectOverview = ({
         ariaLabel="Edit workspace"
         display={
           project.workspace ? (
-            <GetReferenceUrlValue
-              {...project.workspace}
-              entityName="workspaces"
+            <Entity
+              entity={{ ...project.workspace, entityType: "workspace" }}
             />
           ) : null
         }

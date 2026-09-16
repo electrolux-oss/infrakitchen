@@ -1,18 +1,12 @@
-import { useState, forwardRef, useCallback } from "react";
+import { useCallback } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box, Collapse, Paper } from "@mui/material";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import IconButton from "@mui/material/IconButton";
-import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
+import { Box, Typography } from "@mui/material";
 import { toast } from "sonner";
 
 import { IkEntity } from "../../../types";
-import { ExpandIconButton } from "../buttons/ExpandIconButton";
 import { Entity } from "../entities/Entity";
+
+import { ErrorCardShell } from "./ErrorCardShell";
 
 interface DependencyErrorProps {
   id: string | number;
@@ -20,93 +14,35 @@ interface DependencyErrorProps {
   metadata?: Record<string, any>;
 }
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  color: theme.palette.primary.dark,
-  backgroundColor: theme.palette.background.paper,
-  width: "100%",
-}));
+export const DependencyError = ({
+  id,
+  message,
+  metadata,
+}: DependencyErrorProps) => {
+  const handleDismiss = useCallback(() => {
+    toast.dismiss(id);
+  }, [id]);
 
-const StyledCardActions = styled(CardActions)({
-  padding: "8px 8px 8px 16px",
-  justifyContent: "space-between",
-});
-
-export const DependencyError = forwardRef<HTMLDivElement, DependencyErrorProps>(
-  (props, ref) => {
-    const { id, message, metadata } = props;
-    const [expanded, setExpanded] = useState(true);
-
-    const handleExpandClick = useCallback(() => {
-      setExpanded((oldExpanded) => !oldExpanded);
-    }, []);
-
-    const handleDismiss = useCallback(() => {
-      toast.dismiss(id);
-    }, [id]);
-
-    return (
-      <div ref={ref} role="alert">
-        <StyledCard
+  return (
+    <ErrorCardShell title={message} onDismiss={handleDismiss}>
+      {metadata?.map((r: IkEntity) => (
+        <Box
+          key={r.id}
           sx={{
-            border: `1px solid`,
-            borderColor: "error.main",
-            boxShadow: 3,
+            border: 1,
+            borderColor: "divider",
+            p: 1.5,
+            mb: 1,
+            borderRadius: "var(--template-surface-radius)",
           }}
         >
-          <StyledCardActions>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold" }}
-              color="error"
-            >
-              {message}
-            </Typography>
-
-            <ExpandIconButton
-              aria-label="Show details"
-              expanded={expanded}
-              onClick={handleExpandClick}
-            >
-              <ExpandMoreIcon />
-            </ExpandIconButton>
-
-            <IconButton
-              size="small"
-              sx={{ padding: "8px 8px" }}
-              onClick={handleDismiss}
-            >
-              <CloseIcon />
-            </IconButton>
-          </StyledCardActions>
-
-          <Collapse in={expanded} timeout="auto" unmountOnExit>
-            <Paper sx={{ padding: 2, overflowY: "auto", maxHeight: 400 }}>
-              <Typography gutterBottom>Entity dependencies</Typography>
-              {metadata?.map((r: IkEntity) => (
-                <Box
-                  key={r.id}
-                  sx={{
-                    border: 1,
-                    borderColor: "divider",
-                    p: 2,
-                    mb: 2,
-                    borderRadius: "var(--template-surface-radius)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 0.5,
-                  }}
-                >
-                  <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                    <Entity entity={r} />
-                  </Typography>
-                </Box>
-              ))}
-            </Paper>
-          </Collapse>
-        </StyledCard>
-      </div>
-    );
-  },
-);
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            <Entity entity={r} />
+          </Typography>
+        </Box>
+      ))}
+    </ErrorCardShell>
+  );
+};
 
 DependencyError.displayName = "DependencyError";

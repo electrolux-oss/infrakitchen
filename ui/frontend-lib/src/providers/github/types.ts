@@ -71,4 +71,11 @@ export interface GithubRepo {
   } | null;
   default_branch: string;
   topics?: string[]; // GitHub API v3 includes topics, useful for display
+  permissions: {
+    admin: boolean;
+    maintain: boolean;
+    push: boolean;
+    triage: boolean;
+    pull: boolean;
+  };
 }

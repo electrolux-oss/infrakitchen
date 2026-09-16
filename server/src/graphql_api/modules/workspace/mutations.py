@@ -50,6 +50,17 @@ class WorkspaceMutation:
         return await service.update_workspace(workspace_id=str(id), workspace=input.to_pydantic(), requester=requester)
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def sync_workspace_metadata(self, info: Info, id: uuid.UUID) -> WorkspaceType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_workspace_service(session)
+
+        if ModelActions.EDIT not in await service.get_actions(workspace_id=id, requester=requester):
+            raise AccessDenied(f"Access denied for action {ModelActions.EDIT.value}")
+
+        return await service.sync_workspace(workspace_id=str(id), requester=requester)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_workspace(self, info: Info, id: uuid.UUID) -> bool:
         session = info.context["session"]
         requester = info.context["request"].state.user

@@ -20,8 +20,7 @@ import AzureDevopsProjects from "../../providers/azure_devops/Projects";
 import AzureDevopsRepos from "../../providers/azure_devops/Repos";
 import BitbucketOrganizations from "../../providers/bitbucket/Organizations";
 import BitbucketRepos from "../../providers/bitbucket/Repos";
-import GithubOrganizations from "../../providers/github/Organizations";
-import GithubRepos from "../../providers/github/Repos";
+import GithubRepoInput from "../../providers/github/RepoInput";
 import { IkEntity } from "../../types";
 import { CREATE_WORKSPACE_MUTATION } from "../graphql";
 import { WorkspaceCreate } from "../types";
@@ -43,6 +42,9 @@ const WorkspaceCreatePageInner = () => {
   const selectedProvider = watch("workspaceProvider");
   const selectedIntegration = watch("integrationId");
   const selectedOrg = watch("configuration.organization");
+  const configuration = watch("configuration");
+  const isGithubRepoValidated =
+    selectedProvider !== "github" || !!configuration?.id;
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
   );
@@ -99,7 +101,11 @@ const WorkspaceCreatePageInner = () => {
       bottomActions={
         <>
           <Button onClick={handleBack}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit(handleSave)}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit(handleSave)}
+            disabled={saving || !isGithubRepoValidated}
+          >
             {saving ? "Saving..." : "Save"}
           </Button>
         </>
@@ -158,6 +164,7 @@ const WorkspaceCreatePageInner = () => {
                   select
                   label="Workspace Provider"
                   variant="outlined"
+                  required
                   error={!!errors.workspaceProvider}
                   helperText={
                     errors.workspaceProvider
@@ -252,26 +259,23 @@ const WorkspaceCreatePageInner = () => {
               )}
               {selectedProvider === "github" && (
                 <Controller
-                  name="configuration.organization"
+                  name="configuration"
                   control={control}
-                  defaultValue=""
                   render={({ field }) => (
-                    <GithubOrganizations
+                    <GithubRepoInput
                       ikApi={ikApi}
-                      buffer={buffer}
-                      setBuffer={setBuffer}
                       queryParams={{
                         integration_id: getValues("integrationId"),
                       }}
                       {...field}
-                      error={!!errors.configuration?.organization}
+                      error={!!errors.configuration}
                       helpertext={
-                        errors.configuration?.organization
-                          ? errors.configuration?.organization.message
-                          : "Select organization for the workspace"
+                        errors.configuration
+                          ? errors.configuration.message
+                          : undefined
                       }
                       value={field.value}
-                      label="Select Organization"
+                      label="Repository URL"
                     />
                   )}
                 />
@@ -305,32 +309,6 @@ const WorkspaceCreatePageInner = () => {
 
               {selectedOrg && (
                 <>
-                  {selectedProvider === "github" && (
-                    <Controller
-                      name="configuration"
-                      control={control}
-                      render={({ field }) => (
-                        <GithubRepos
-                          ikApi={ikApi}
-                          buffer={buffer}
-                          org={selectedOrg}
-                          queryParams={{
-                            integration_id: getValues("integrationId"),
-                          }}
-                          setBuffer={setBuffer}
-                          {...field}
-                          error={!!errors.configuration}
-                          helpertext={
-                            errors.configuration
-                              ? errors.configuration.message
-                              : "Select github_repo for the workspace"
-                          }
-                          value={field.value}
-                          label="Select Repository"
-                        />
-                      )}
-                    />
-                  )}
                   {selectedProvider === "bitbucket" && (
                     <Controller
                       name="configuration"

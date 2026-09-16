@@ -279,6 +279,8 @@ export const formatLabel = (key: string): string => {
       const lowerWord = word.toLowerCase();
       if (lowerWord === "id") return "ID";
       if (lowerWord === "ssh") return "SSH";
+      if (lowerWord === "url") return "URL";
+      if (lowerWord === "https") return "HTTPS";
 
       if (PROVIDER_DISPLAY_NAMES[lowerWord]) {
         return PROVIDER_DISPLAY_NAMES[lowerWord];

@@ -24,9 +24,7 @@ export const batchOperationColumns: EntityTableColumn[] = [
     },
     renderCell: (params: GridRenderCellParams) => {
       return (
-        <Entity
-          entity={{ ...params.row, entityType: "batch_operation" }}
-        />
+        <Entity entity={{ ...params.row, entityType: "batch_operation" }} />
       );
     },
   },

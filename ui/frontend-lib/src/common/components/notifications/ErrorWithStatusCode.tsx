@@ -1,17 +1,14 @@
-import { useState, forwardRef, useCallback } from "react";
+import { forwardRef, useCallback } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box, Collapse, Paper } from "@mui/material";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import IconButton from "@mui/material/IconButton";
-import { styled } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
+import { Box, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { toast } from "sonner";
 
-import { CODE_FONT_FAMILY } from "../../theme";
-import { ExpandIconButton } from "../buttons/ExpandIconButton";
+import { CodeBlock } from "../code/CodeBlock";
+
+import { ErrorCardShell } from "./ErrorCardShell";
+import { summarizeMetadata } from "./summarizeMetadata";
 
 interface ErrorWithCodeProps {
   id: string | number;
@@ -19,97 +16,46 @@ interface ErrorWithCodeProps {
   metadata?: Record<string, any>;
 }
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  color: theme.palette.primary.dark,
-  backgroundColor: theme.palette.background.paper,
-  width: "100%",
-}));
-
-const StyledCardActions = styled(CardActions)({
-  padding: "8px 8px 8px 16px",
-  justifyContent: "space-between",
-});
-
 export const ErrorWithStatusCode = forwardRef<
   HTMLDivElement,
   ErrorWithCodeProps
 >((props, ref) => {
   const { id, message, metadata } = props;
-  const [expanded, setExpanded] = useState(true);
-
-  const handleExpandClick = useCallback(() => {
-    setExpanded((oldExpanded) => !oldExpanded);
-  }, []);
+  const { text, raw } = summarizeMetadata(metadata);
 
   const handleDismiss = useCallback(() => {
     toast.dismiss(id);
   }, [id]);
 
   return (
-    <div ref={ref} role="alert">
-      <StyledCard
-        sx={{
-          border: `1px solid`,
-          borderColor: "error.main",
-          boxShadow: 3,
-        }}
-      >
-        <StyledCardActions style={{ minWidth: 360 }}>
-          <Typography variant="body1" sx={{ fontWeight: "bold" }} color="error">
-            {message}
-          </Typography>
-
-          <Box sx={{ display: "flex", gap: 1, marginLeft: "auto" }}>
-            <ExpandIconButton
-              aria-label="Show details"
-              expanded={expanded}
-              onClick={handleExpandClick}
-            >
-              <ExpandMoreIcon />
-            </ExpandIconButton>
-
-            <IconButton
-              size="small"
-              sx={{ padding: "8px 8px" }}
-              onClick={handleDismiss}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </StyledCardActions>
-
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <Paper
-            sx={{
-              padding: 2,
-              overflowY: "auto",
-              overflowX: "auto",
-              maxHeight: 400,
-              maxWidth: 800,
-            }}
+    <ErrorCardShell ref={ref} title={message} onDismiss={handleDismiss}>
+      {text && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1,
+            p: 1.5,
+            borderRadius: "var(--template-surface-radius)",
+            bgcolor: (theme) => alpha(theme.palette.error.main, 0.08),
+          }}
+        >
+          <ErrorOutlineIcon color="error" fontSize="small" sx={{ mt: "1px" }} />
+          <Typography
+            variant="body2"
+            color="error.dark"
+            sx={{ wordBreak: "break-word", minWidth: 0 }}
           >
-            <Typography gutterBottom>Error details</Typography>
-            {metadata && (
-              <Box
-                component="pre"
-                sx={{
-                  fontFamily: CODE_FONT_FAMILY,
-                  whiteSpace: "pre-wrap",
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "light"
-                      ? "rgba(0, 0, 0, 0.05)"
-                      : "rgba(255, 255, 255, 0.05)",
-                  padding: 1,
-                  borderRadius: "var(--template-code-radius)",
-                }}
-              >
-                {JSON.stringify(metadata, null, 2)}
-              </Box>
-            )}
-          </Paper>
-        </Collapse>
-      </StyledCard>
-    </div>
+            {text}
+          </Typography>
+        </Box>
+      )}
+
+      {raw && (
+        <Box sx={{ mt: 1.5 }}>
+          <CodeBlock>{raw}</CodeBlock>
+        </Box>
+      )}
+    </ErrorCardShell>
   );
 });
 
