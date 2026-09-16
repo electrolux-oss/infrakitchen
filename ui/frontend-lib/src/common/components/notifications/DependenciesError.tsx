@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { IkEntity } from "../../../types";
 import { Entity } from "../entities/Entity";
+
 import { ErrorCardShell } from "./ErrorCardShell";
 
 interface DependencyErrorProps {
@@ -13,7 +14,11 @@ interface DependencyErrorProps {
   metadata?: Record<string, any>;
 }
 
-export const DependencyError = ({ id, message, metadata }: DependencyErrorProps) => {
+export const DependencyError = ({
+  id,
+  message,
+  metadata,
+}: DependencyErrorProps) => {
   const handleDismiss = useCallback(() => {
     toast.dismiss(id);
   }, [id]);

@@ -45,7 +45,7 @@ class GithubClient:
         body = GithubClient._parse_error_body(response)
         metadata = [body] if isinstance(body, dict) else [{"response": body}]
         exc = exc_cls(message)
-        setattr(exc, "metadata", metadata)
+        exc.metadata = metadata  # pyright: ignore[reportAttributeAccessIssue]
         raise exc
 
     @staticmethod

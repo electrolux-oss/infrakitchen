@@ -6,6 +6,7 @@ import { alpha } from "@mui/material/styles";
 import { toast } from "sonner";
 
 import { CodeBlock } from "../code/CodeBlock";
+
 import { ErrorCardShell } from "./ErrorCardShell";
 import { summarizeMetadata } from "./summarizeMetadata";
 

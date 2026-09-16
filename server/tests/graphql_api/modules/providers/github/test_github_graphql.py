@@ -104,4 +104,3 @@ class TestGithubGraphql:
 
         assert result.errors is None
         assert result.data == {"githubRepo": repo.model_dump(mode="json")}
-

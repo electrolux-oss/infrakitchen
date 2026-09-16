@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from types import SimpleNamespace
 
 import pytest
@@ -443,9 +443,9 @@ class TestSync:
             ssh_url="git@github.com:test-org/TestWorkspace.git",
             clone_url="https://github.com/test-org/TestWorkspace.git",
             url="https://api.github.com/repos/test-org/TestWorkspace",
-            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            updated_at=datetime(2024, 1, 2, tzinfo=timezone.utc),
-            pushed_at=datetime(2024, 1, 3, tzinfo=timezone.utc),
+            created_at=datetime(2024, 1, 1, tzinfo=UTC),
+            updated_at=datetime(2024, 1, 2, tzinfo=UTC),
+            pushed_at=datetime(2024, 1, 3, tzinfo=UTC),
             description="Synced description",
             default_branch="develop",
         )
@@ -488,9 +488,7 @@ class TestSync:
             await mock_workspace_service.sync_workspace(workspace_id=WORKSPACE_ID, requester=Mock(spec=UserDTO))
 
     @pytest.mark.asyncio
-    async def test_sync_workspace_unsupported_provider(
-        self, mock_workspace_service, mock_workspace_crud, workspace
-    ):
+    async def test_sync_workspace_unsupported_provider(self, mock_workspace_service, mock_workspace_crud, workspace):
         workspace.workspace_provider = "bitbucket"
         mock_workspace_crud.get_by_id.return_value = workspace
 
@@ -498,9 +496,7 @@ class TestSync:
             await mock_workspace_service.sync_workspace(workspace_id=str(workspace.id), requester=Mock(spec=UserDTO))
 
     @pytest.mark.asyncio
-    async def test_sync_workspace_missing_organization(
-        self, mock_workspace_service, mock_workspace_crud, workspace
-    ):
+    async def test_sync_workspace_missing_organization(self, mock_workspace_service, mock_workspace_crud, workspace):
         workspace.configuration = {"name": workspace.name}
         mock_workspace_crud.get_by_id.return_value = workspace
 

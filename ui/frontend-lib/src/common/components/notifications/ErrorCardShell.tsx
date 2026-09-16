@@ -40,7 +40,11 @@ export const ErrorCardShell = forwardRef<HTMLDivElement, ErrorCardShellProps>(
             >
               {title}
             </Typography>
-            <IconButton size="small" onClick={onDismiss} sx={{ p: 0.25, mt: -0.25, mr: -0.5 }}>
+            <IconButton
+              size="small"
+              onClick={onDismiss}
+              sx={{ p: 0.25, mt: -0.25, mr: -0.5 }}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>

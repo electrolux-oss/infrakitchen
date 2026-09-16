@@ -29,117 +29,122 @@ const parseGithubUrl = (url: string): { org: string; repo: string } | null => {
   return { org, repo };
 };
 
-const GithubRepoInput = forwardRef<any, GithubRepoInputProps>(
-  (props, _ref) => {
-    const { ikApi, onChange, value, queryParams, error, helpertext, ...otherProps } =
-      props;
-    const [urlDraft, setUrlDraft] = useState(value?.html_url ?? "");
-    const [validatedUrl, setValidatedUrl] = useState(value?.html_url ?? null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasFailed, setHasFailed] = useState(false);
+const GithubRepoInput = forwardRef<any, GithubRepoInputProps>((props, _ref) => {
+  const {
+    ikApi,
+    onChange,
+    value,
+    queryParams,
+    error,
+    helpertext,
+    ...otherProps
+  } = props;
+  const [urlDraft, setUrlDraft] = useState(value?.html_url ?? "");
+  const [validatedUrl, setValidatedUrl] = useState(value?.html_url ?? null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
 
-    const isValidated = !!value && urlDraft.trim() === validatedUrl;
+  const isValidated = !!value && urlDraft.trim() === validatedUrl;
 
-    const handleDraftChange = (newValue: string) => {
-      setUrlDraft(newValue);
-      if (value) onChange(null);
-      setValidatedUrl(null);
-      setHasFailed(false);
-    };
+  const handleDraftChange = (newValue: string) => {
+    setUrlDraft(newValue);
+    if (value) onChange(null);
+    setValidatedUrl(null);
+    setHasFailed(false);
+  };
 
-    const validateUrl = async () => {
-      const trimmed = urlDraft.trim();
-      if (!trimmed || trimmed === validatedUrl) return;
+  const validateUrl = async () => {
+    const trimmed = urlDraft.trim();
+    if (!trimmed || trimmed === validatedUrl) return;
 
-      const parsed = parseGithubUrl(trimmed);
-      if (!parsed) {
+    const parsed = parseGithubUrl(trimmed);
+    if (!parsed) {
+      setHasFailed(true);
+      onChange(null);
+      notifyError(
+        new Error(
+          "Invalid GitHub repository URL. Expected format: https://github.com/org/repo",
+        ),
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = (await ikApi.graphqlRequest(GITHUB_REPO_QUERY, {
+        integrationId: queryParams?.integration_id,
+        org: parsed.org,
+        repo: parsed.repo,
+      })) as { githubRepo: GithubRepo };
+
+      if (response.githubRepo.archived) {
         setHasFailed(true);
         onChange(null);
         notifyError(
           new Error(
-            "Invalid GitHub repository URL. Expected format: https://github.com/org/repo",
+            `${response.githubRepo.full_name} is archived and read-only. Archived repositories cannot accept pull requests.`,
           ),
         );
         return;
       }
 
-      setIsLoading(true);
-      try {
-        const response = (await ikApi.graphqlRequest(GITHUB_REPO_QUERY, {
-          integrationId: queryParams?.integration_id,
-          org: parsed.org,
-          repo: parsed.repo,
-        })) as { githubRepo: GithubRepo };
-
-        if (response.githubRepo.archived) {
-          setHasFailed(true);
-          onChange(null);
-          notifyError(
-            new Error(
-              `${response.githubRepo.full_name} is archived and read-only. Archived repositories cannot accept pull requests.`,
-            ),
-          );
-          return;
-        }
-
-        if (!response.githubRepo.permissions?.push) {
-          setHasFailed(true);
-          onChange(null);
-          notifyError(
-            new Error(
-              `The integration does not have write access to ${response.githubRepo.full_name}. Write access is required to create pull requests.`,
-            ),
-          );
-          return;
-        }
-
-        onChange(response.githubRepo);
-        setValidatedUrl(trimmed);
-        setHasFailed(false);
-        notify(`Verified ${response.githubRepo.full_name}`, "success");
-      } catch (err: any) {
+      if (!response.githubRepo.permissions?.push) {
         setHasFailed(true);
         onChange(null);
-        notifyError(err);
-      } finally {
-        setIsLoading(false);
+        notifyError(
+          new Error(
+            `The integration does not have write access to ${response.githubRepo.full_name}. Write access is required to create pull requests.`,
+          ),
+        );
+        return;
       }
-    };
 
-    return (
-      <Box>
-        <TextField
-          value={urlDraft}
-          onChange={(e) => handleDraftChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              validateUrl();
-            }
-          }}
-          variant="outlined"
-          error={hasFailed || error}
-          helperText={
-            helpertext ||
-            "The URL of the repository, e.g., https://github.com/org/repo"
+      onChange(response.githubRepo);
+      setValidatedUrl(trimmed);
+      setHasFailed(false);
+      notify(`Verified ${response.githubRepo.full_name}`, "success");
+    } catch (err: any) {
+      setHasFailed(true);
+      onChange(null);
+      notifyError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Box>
+      <TextField
+        value={urlDraft}
+        onChange={(e) => handleDraftChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            validateUrl();
           }
-          fullWidth
-          margin="normal"
-          disabled={isLoading}
-          {...otherProps}
-        />
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={validateUrl}
-          disabled={isLoading || !urlDraft.trim() || isValidated}
-        >
-          {isLoading ? "Validating..." : "Validate"}
-        </Button>
-      </Box>
-    );
-  },
-);
+        }}
+        variant="outlined"
+        error={hasFailed || error}
+        helperText={
+          helpertext ||
+          "The URL of the repository, e.g., https://github.com/org/repo"
+        }
+        fullWidth
+        margin="normal"
+        disabled={isLoading}
+        {...otherProps}
+      />
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={validateUrl}
+        disabled={isLoading || !urlDraft.trim() || isValidated}
+      >
+        {isLoading ? "Validating..." : "Validate"}
+      </Button>
+    </Box>
+  );
+});
 
 GithubRepoInput.displayName = "GithubRepoInput";
 export default GithubRepoInput;
