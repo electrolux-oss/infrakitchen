@@ -21,10 +21,7 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { solidChipColorSx } from "../../common/utils/softChip";
-import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { IkEntity } from "../../types";
-import { VERSION_LIFECYCLE_STATE } from "../../utils/constants";
 import { GqlResource } from "../graphql";
 import {
   ResourceUpdateFieldInput,
@@ -53,14 +50,7 @@ const getSourceCodeVariables = (
     options ?? {};
 
   if (!variables || variables.length === 0) {
-    return (
-      <Typography
-        variant="body2"
-        sx={{ color: "text.secondary", ml: 3, mr: 3 }}
-      >
-        {emptyMessage}
-      </Typography>
-    );
+    return <PlaceholderText text={emptyMessage} sx={{ ml: 3, mr: 3 }} />;
   }
 
   return (
@@ -157,24 +147,6 @@ export const TemplateConfiguration = ({
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:resource", "write");
   const canEditStorage = userEntityPermissions.includes("admin");
-  const sourceCodeVersionLifecycleState =
-    resource.sourceCodeVersion?.lifecycleState?.toLowerCase();
-  const showSourceCodeVersionLifecycleState =
-    !!sourceCodeVersionLifecycleState &&
-    sourceCodeVersionLifecycleState !== VERSION_LIFECYCLE_STATE.UNKNOWN;
-  const sourceCodeVersionLifecycleColor = getVersionLifecycleStateColor(
-    sourceCodeVersionLifecycleState,
-  );
-  const sourceCodeVersionTextColor =
-    sourceCodeVersionLifecycleColor === "success"
-      ? "success.main"
-      : sourceCodeVersionLifecycleColor === "info"
-        ? "info.main"
-        : sourceCodeVersionLifecycleColor === "warning"
-          ? "warning.main"
-          : sourceCodeVersionLifecycleColor === "error"
-            ? "error.main"
-            : "text.primary";
   const [isStorageUnlocked, setIsStorageUnlocked] = useState(false);
   const [isStoragePathUnlocked, setIsStoragePathUnlocked] = useState(false);
   const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
@@ -269,30 +241,11 @@ export const TemplateConfiguration = ({
                   },
               }}
             >
-              {resource.sourceCodeVersion?.sourceCode ? (
-                <Entity
-                  entity={{
-                    ...resource.sourceCodeVersion,
-                    name:
-                      resource.sourceCodeVersion?.sourceCodeVersion ||
-                      resource.sourceCodeVersion?.sourceCodeBranch ||
-                      "Unnamed Version",
-                  }}
-                  sx={{
-                    color: sourceCodeVersionTextColor,
-                    fontWeight:
-                      sourceCodeVersionLifecycleColor === "warning" ? 600 : 500,
-                    textDecorationColor: sourceCodeVersionTextColor,
-                  }}
-                />
+              {resource.sourceCodeVersion ? (
+                <Entity entity={resource.sourceCodeVersion} />
               ) : (
                 <PlaceholderText />
               )}
-              {showSourceCodeVersionLifecycleState ? (
-                <VersionLifecycleStateChip
-                  lifecycleState={sourceCodeVersionLifecycleState}
-                />
-              ) : null}
               {canEdit && (
                 <EditAffordance
                   className="inline-edit-action"

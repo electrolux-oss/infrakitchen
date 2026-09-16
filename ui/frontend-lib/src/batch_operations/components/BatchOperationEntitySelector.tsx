@@ -17,7 +17,6 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
-import { serverSearchReference } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import {
   dataGridDefaultProps,
@@ -35,13 +34,11 @@ import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
-import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { BatchOperationCreate } from "../types";
 
 // State + Created columns are identical across the resource and executor
@@ -136,39 +133,6 @@ export const BatchOperationEntitySelector = (
           "sourceCodeVersion.id",
         ],
         sortField: "source_code_version.source_code_version",
-        filter: [
-          {
-            field: "source_code_version_id",
-            label: "Version",
-            operators: ["eq", "in"],
-            valueType: "reference",
-            defaultOperator: "eq",
-            makeReferenceLoader: serverSearchReference({
-              entityPlural: "sourceCodeVersions",
-              labelField: "identifier",
-            }),
-          },
-          {
-            field: "source_code_version__lifecycle_state",
-            label: "Version Lifecycle State",
-            operators: ["eq", "in"],
-            valueType: "select",
-            defaultOperator: "eq",
-            selectOptions: [
-              { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
-              { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
-              { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
-              {
-                label: "Deprecated",
-                value: VERSION_LIFECYCLE_STATE.DEPRECATED,
-              },
-              { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
-            ],
-            renderSelectOption: (value) => (
-              <VersionLifecycleStateChip lifecycleState={value} />
-            ),
-          },
-        ],
         valueGetter: (_value: any, row: any) => {
           const scv = row.sourceCodeVersion;
           if (!scv) return "";

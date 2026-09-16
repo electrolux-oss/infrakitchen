@@ -16,6 +16,7 @@ import {
   Theme,
 } from "@mui/material";
 
+import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 import { ReferenceLoader, ReferenceOption } from "../filter_panel/FilterConfig";
 import { Label } from "../labels/Label";
 
@@ -53,6 +54,17 @@ const ReferenceOptionContent = ({
     <Box component="span" sx={labelSx}>
       {option.label}
     </Box>
+    {option.lifecycleState && (
+      <Box
+        component="span"
+        sx={{ ml: 1, display: "inline-flex", alignItems: "center" }}
+      >
+        <VersionLifecycleStateChip
+          lifecycleState={option.lifecycleState}
+          breakingChanges={option.breakingChanges ?? undefined}
+        />
+      </Box>
+    )}
   </>
 );
 
