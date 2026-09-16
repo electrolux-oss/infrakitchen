@@ -45,7 +45,7 @@ class GithubClient:
         body = GithubClient._parse_error_body(response)
         metadata = [body] if isinstance(body, dict) else [{"response": body}]
         exc = exc_cls(message)
-        exc.metadata = metadata  # type: ignore[attr-defined]
+        setattr(exc, "metadata", metadata)
         raise exc
 
     @staticmethod
