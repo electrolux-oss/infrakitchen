@@ -10,11 +10,11 @@ import BadgeIcon from "@mui/icons-material/Badge";
 import CodeIcon from "@mui/icons-material/Code";
 import ConstructionIcon from "@mui/icons-material/Construction";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import DiscountOutlinedIcon from "@mui/icons-material/DiscountOutlined";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import FolderIcon from "@mui/icons-material/Folder";
-import HistoryIcon from "@mui/icons-material/History";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import KeyIcon from "@mui/icons-material/Key";
 import LanIcon from "@mui/icons-material/Lan";
@@ -237,7 +237,7 @@ export default function DashboardSidebar({
                   <DashboardSidebarPageItem
                     id="source_code_versions"
                     title="Template Versions"
-                    icon={<HistoryIcon />}
+                    icon={<DiscountOutlinedIcon />}
                     href="/source_code_versions"
                     selected={!!matchPath("/source_code_versions/*", pathname)}
                     permissionKey="source_code_version"
