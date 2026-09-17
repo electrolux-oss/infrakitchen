@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { matchPath, useLocation } from "react-router";
 
+import { useConfig } from "@electrolux-oss/infrakitchen";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -17,6 +18,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import KeyIcon from "@mui/icons-material/Key";
 import LanIcon from "@mui/icons-material/Lan";
+import LayersIcon from "@mui/icons-material/Layers";
 import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
 import MemoryIcon from "@mui/icons-material/Memory";
 import PeopleIcon from "@mui/icons-material/People";
@@ -59,6 +61,7 @@ export default function DashboardSidebar({
   const theme = useTheme();
 
   const { pathname } = useLocation();
+  const { globalConfig } = useConfig();
 
   const isOverSmViewport = useMediaQuery(theme.breakpoints.up("sm"));
   const isOverMdViewport = useMediaQuery(theme.breakpoints.up("md"));
@@ -211,6 +214,16 @@ export default function DashboardSidebar({
               selected={!!matchPath("/projects/*", pathname)}
               permissionKey="project"
             />
+            {globalConfig?.services && (
+              <DashboardSidebarPageItem
+                id="services"
+                title="Services"
+                icon={<LayersIcon />}
+                href="/services"
+                selected={!!matchPath("/services/*", pathname)}
+                permissionKey="service"
+              />
+            )}
             <DashboardSidebarPageItem
               id="templates"
               title="Templates"
@@ -415,6 +428,7 @@ export default function DashboardSidebar({
       configurationsExpanded,
       operationsExpanded,
       managementExpanded,
+      globalConfig?.services,
     ],
   );
 

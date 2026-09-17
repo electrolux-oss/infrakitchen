@@ -2,12 +2,14 @@ import React, { lazy } from "react";
 
 import { RouteObject } from "react-router";
 
-import { usePermissionProvider } from "./common";
+import { useConfig, usePermissionProvider } from "./common";
 import { NotFoundPage } from "./dashboard/pages/NotFound";
 
 type LazyRouteDefinition = RouteObject & {
   requiredPermission?: string;
   permissionAction?: string;
+  /** Key in `globalConfig`; the route only exists while that flag is enabled. */
+  featureFlag?: string;
 };
 
 const lz = <T extends Record<string, React.ComponentType<any>>>(
@@ -386,6 +388,32 @@ const allRoutes: LazyRouteDefinition[] = [
     permissionAction: "read",
   },
 
+  // ── Services ──────────────────────────────────────────────────────────────────
+  {
+    path: "/services",
+    Component: lz(() => import("./services/pages/Services"), "ServicesPage"),
+    requiredPermission: "api:service",
+    permissionAction: "read",
+    featureFlag: "services",
+  },
+  {
+    path: "/services/create",
+    Component: lz(
+      () => import("./services/pages/ServiceCreate"),
+      "ServiceCreatePage",
+    ),
+    requiredPermission: "api:service",
+    permissionAction: "write",
+    featureFlag: "services",
+  },
+  {
+    path: "/services/:service_id/:tab?",
+    Component: lz(() => import("./services/pages/Service"), "ServicePage"),
+    requiredPermission: "api:service",
+    permissionAction: "read",
+    featureFlag: "services",
+  },
+
   // ── Templates ─────────────────────────────────────────────────────────────────
   {
     path: "/templates",
@@ -506,6 +534,7 @@ const DashboardPageLazy = lz(
 
 export const useFilteredProtectedRoutes = (): RouteObject[] => {
   const { permissions } = usePermissionProvider();
+  const { globalConfig } = useConfig();
 
   return React.useMemo(() => {
     const checkActionPermission = (
@@ -538,6 +567,9 @@ export const useFilteredProtectedRoutes = (): RouteObject[] => {
     };
 
     const accessibleRoutes = allRoutes.filter((route) => {
+      if (route.featureFlag && !globalConfig?.[route.featureFlag]) {
+        return false;
+      }
       if (route.requiredPermission && route.permissionAction) {
         return checkActionPermission(
           route.requiredPermission,
@@ -553,5 +585,5 @@ export const useFilteredProtectedRoutes = (): RouteObject[] => {
       { path: "*", Component: NotFoundPage },
     ];
     // `loading` is included so consumers re-run once permissions resolve.
-  }, [permissions]);
+  }, [permissions, globalConfig]);
 };

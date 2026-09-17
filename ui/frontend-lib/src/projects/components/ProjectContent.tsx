@@ -9,11 +9,13 @@ import {
   TabCountLabel,
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
+import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { ProjectServices } from "../../services/components/ProjectServices";
 import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
 
 import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
@@ -24,6 +26,7 @@ import { ProjectSettings } from "./ProjectSettings";
 export const ProjectContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
+  const { globalConfig } = useConfig();
 
   const fixedFilters = useMemo(
     () => ({ project_id: [entity?.id] }),
@@ -44,6 +47,20 @@ export const ProjectContent = () => {
         />
       ),
     },
+    ...(globalConfig?.services
+      ? [
+          {
+            label: "Services",
+            tabLabel: (
+              <TabCountLabel
+                label="Services"
+                count={entity.servicesCount ?? 0}
+              />
+            ),
+            content: <ProjectServices projectId={entity.id} />,
+          },
+        ]
+      : []),
     {
       label: "Resources",
       tabLabel: (

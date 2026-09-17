@@ -11,6 +11,7 @@ from application.integrations.model import Integration
 from application.projects.model import Project
 from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
+from application.services.model import Service
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
 from application.source_code_versions.model import SourceCodeVersion
@@ -37,6 +38,15 @@ async def _load_projects(keys: list[str], session: AsyncSession) -> list[dict[st
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {"id": str(row.id), "name": row.name, "entityName": "project"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_services(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Service.id, Service.name).where(Service.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "service"} for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -268,6 +278,7 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
             load_fn=lambda keys: _load_integrations(list(keys), session)
         ),
         "project": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_projects(list(keys), session)),
+        "service": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_services(list(keys), session)),
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
         "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)

@@ -32,6 +32,7 @@ type GqlProjectDetailFieldTypes = {
   status: string;
   revisionNumber: number;
   resourcesCount: number;
+  servicesCount: number;
   createdAt: string;
   updatedAt: string;
   entityName: string;

@@ -10,5 +10,9 @@
   {
     "name": "Websocket",
     "enabled": true
+  },
+  {
+    "name": "Services",
+    "enabled": false
   }
 ]

@@ -23,7 +23,11 @@ const FEATURE_FLAG_DESCRIPTIONS: Record<string, string> = {
     "When enabled, applies and destroys are skipped so no real changes are made.",
   Websocket:
     "When enabled, real-time events and logs stream over WebSocket subscriptions.",
+  Services:
+    "When enabled, the Services catalog appears in the sidebar and on project pages.",
 };
+
+const EXPERIMENTAL_FEATURE_FLAGS = new Set(["Services"]);
 
 export const FeatureFlagSection = () => {
   const { ikApi } = useConfig();
@@ -142,6 +146,7 @@ export const FeatureFlagSection = () => {
               flagName={flag.name}
               displayName={flag.name}
               description={FEATURE_FLAG_DESCRIPTIONS[flag.name]}
+              experimental={EXPERIMENTAL_FEATURE_FLAGS.has(flag.name)}
               featureFlags={featureFlags}
               loading={loading}
               onToggle={handleFeatureFlagToggle}
