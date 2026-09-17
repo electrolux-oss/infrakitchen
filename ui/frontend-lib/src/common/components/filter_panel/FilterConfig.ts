@@ -29,6 +29,10 @@ export interface ReferenceOption {
   icon?: ReactNode;
   /** Optional template name shown as a Label chip before the label text. */
   templateName?: string;
+  /** Optional lifecycle state (e.g. Template Version options) rendered as a trailing chip. */
+  lifecycleState?: string | null;
+  /** Optional breaking-changes note shown alongside the lifecycle chip. */
+  breakingChanges?: string | null;
 }
 
 export type ReferenceLoader = ((

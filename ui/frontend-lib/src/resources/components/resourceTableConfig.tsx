@@ -155,6 +155,8 @@ export const resourceColumns: EntityTableColumn[] = [
                   label: ref || e.identifier,
                   value: e.id,
                   icon: <RefIcon sx={{ fontSize: 15 }} color="action" />,
+                  lifecycleState: e.lifecycleState,
+                  breakingChanges: e.breakingChanges,
                   ...(templateId ? {} : { templateName: e.template?.name }),
                 };
               });
@@ -175,6 +177,8 @@ export const resourceColumns: EntityTableColumn[] = [
                   identifier
                   sourceCodeVersion
                   sourceCodeBranch
+                  lifecycleState
+                  breakingChanges
                   template { name }
                 }
               }`,
@@ -199,6 +203,8 @@ export const resourceColumns: EntityTableColumn[] = [
                   identifier
                   sourceCodeVersion
                   sourceCodeBranch
+                  lifecycleState
+                  breakingChanges
                   template { name }
                 }
               }`,

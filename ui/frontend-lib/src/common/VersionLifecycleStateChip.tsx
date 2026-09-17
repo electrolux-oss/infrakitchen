@@ -36,6 +36,11 @@ interface VersionLifecycleStateChipProps {
    * state in a tooltip, for dense contexts like grid rows.
    */
   variant?: "chip" | "dot";
+  /**
+   * Suppress the built-in breaking-changes warning icon so the caller can
+   * position it separately (e.g. trailing the entity name in dot layouts).
+   */
+  hideBreakingChangesWarning?: boolean;
 }
 
 const VersionLifecycleStateChip = ({
@@ -43,11 +48,13 @@ const VersionLifecycleStateChip = ({
   sx,
   breakingChanges,
   variant = "chip",
+  hideBreakingChangesWarning = false,
 }: VersionLifecycleStateChipProps) => {
   const normalizedState =
     lifecycleState?.toLowerCase() || VERSION_LIFECYCLE_STATE.UNKNOWN;
   const color = getVersionLifecycleStateColor(normalizedState);
-  const hasBreakingChanges = Boolean(breakingChanges?.trim());
+  const hasBreakingChanges =
+    !hideBreakingChangesWarning && Boolean(breakingChanges?.trim());
 
   if (variant === "dot") {
     return (

@@ -18,7 +18,6 @@ import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
 import { useEntityProvider } from "../../../common/context/EntityContext";
 import { notifyError } from "../../../common/hooks/useNotification";
-import VersionLifecycleStateChip from "../../../common/VersionLifecycleStateChip";
 import { IkEntity, ValidationRule } from "../../../types";
 import {
   ENTITY_STATE,
@@ -349,23 +348,6 @@ export const ResourceVariablesEditDialog = ({
             value={selectedVersionId}
             onChange={(value: string | null) => setSelectedVersionId(value)}
             label="Template Version"
-            renderOptionContent={(option: any) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                  width: "100%",
-                }}
-              >
-                <Typography variant="body2">{option.identifier}</Typography>
-                <VersionLifecycleStateChip
-                  lifecycleState={option.lifecycleState}
-                  breakingChanges={option.breakingChanges}
-                />
-              </Box>
-            )}
           />
           {isDeprecatedVersion ? (
             <Alert severity="warning" sx={{ mt: 1 }}>
