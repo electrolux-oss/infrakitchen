@@ -252,7 +252,7 @@ export const colorSchemes = {
 
 export const typography = {
   fontFamily:
-    '"Geist", -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
+    '"Geist Sans", -apple-system, "system-ui", "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif',
   // Fixed-width stack for code-like content (IDs, config values, logs). Kept
   // as its own token so the code font is changeable in one place. No mono font
   // is bundled, so this resolves to the OS default monospace glyphs today.
