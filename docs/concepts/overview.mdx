@@ -1,0 +1,184 @@
+---
+title: Overview
+---
+
+InfraKitchen introduces several key concepts that work together to enable self-service infrastructure provisioning. This page explains each concept and how they relate to each other.
+
+## Integration
+
+An **Integration** stores the credentials and configuration needed to connect to external systems.
+
+### Types of Integrations
+
+- **Cloud Providers:** AWS, Azure, Google Cloud, MongoDB Atlas, Datadog
+
+- **Git Providers:** GitHub, GitLab, Bitbucket, Azure DevOps
+
+- **Auth Providers:** GitHub OAuth, Google OAuth, Microsoft OAuth, Backstage integration, Service Accounts, Guest access
+
+**Learn more:** [Integrations Documentation](../integrations/overview)
+
+## Template
+
+A **Template** defines a logical unit of infrastructure. Templates are organized hierarchically and represent components like AWS Accounts, VPCs, EKS Clusters, or RDS databases.
+
+### Template Hierarchy Example
+
+```
+AWS Account (abstract)
+├── AWS Region (abstract)
+│   ├── VPC (concrete)
+│   │   ├── EKS Cluster (concrete)
+│   │   ├── RDS Database (concrete)
+│   │   └── Application Load Balancer (concrete)
+│   └── S3 Bucket (concrete)
+```
+
+**Learn more:** [Template Documentation](./template)
+
+## Project
+
+A **Project** groups related resources under shared ownership, access rules, inherited defaults, and an optional shared workspace.
+
+Projects are useful when you want to organize infrastructure by team, product, or environment without creating an abstract resource just for governance. They can provide shared dependency tags, dependency config defaults, and a common workspace boundary for resources in the project.
+
+**Learn more:** [Project Documentation](./project)
+
+## Code Repository
+
+InfraKitchen embraces Infrastructure-as-Code (IaC). A **Code Repository** is a Git repository containing Terraform/OpenTofu modules, registered in InfraKitchen so its code can be used by templates and executors.
+
+### Code Repository Components
+
+1. **Repository URL** - Where the IaC code is stored
+2. **Git Provider Integration** - Credentials to access the repository
+3. **Multiple Modules** - One repository can contain multiple infrastructure modules
+
+**Example:**
+
+```
+Repository: github.com/myorg/terraform-modules
+├── aws-vpc/
+├── aws-eks/
+└── aws-rds/
+```
+
+## Storage
+
+A **Storage** is a remote backend where Terraform/OpenTofu state files are kept, so that state
+lives in your cloud account — not in InfraKitchen.
+
+Supported providers:
+
+- **AWS** — S3 bucket (+ region)
+- **Azure** — storage account, resource group, and container
+- **Google Cloud** — GCS bucket (+ region)
+
+Each storage is backed by one of your cloud [integrations](#integration), which supplies the
+credentials InfraKitchen needs to read and write state. Provider-specific settings (bucket
+names, regions, containers) are configured once and cannot be changed afterwards — create a
+new storage instead.
+
+Resources and executors reference a storage when they are created, and each instance gets an
+isolated state path, so parallel provisioning never conflicts.
+
+**Learn more:** see the [Resource](./resource) and [Executor](./executor)
+pages for how storage is used in practice.
+
+## Secret
+
+A **Secret** securely stores sensitive values — API keys, passwords, certificates — and injects
+them into provisioning runs as environment variables. Secrets can live in AWS Secrets Manager,
+GCP Secret Manager, or be managed as encrypted key-value pairs inside InfraKitchen.
+
+**Learn more:** [Secrets Documentation](../secrets/overview)
+
+## Executor
+
+An **Executor** is a specialized component for running infrastructure modules that perform specific, non-reusable tasks.
+
+### Use Cases
+
+Unlike Templates that define reusable infrastructure patterns, Executors are designed for:
+
+- **One-time operations** - Database migrations, data imports, cleanup tasks
+- **Specialized workflows** - Custom scripts that don't fit the template model
+- **Utility tasks** - Infrastructure operations that aren't meant to be templated
+
+### Key Differences from Resources
+
+- **Not templated** - Executors run specific modules directly
+- **Task-oriented** - Designed for single-purpose operations
+- **No hierarchy** - Executors don't follow parent-child relationships
+
+**Learn more:** [Executor Documentation](./executor)
+
+## Blueprint
+
+A **Blueprint** is a reusable definition that combines multiple Templates into a single, executable plan. Blueprints define which infrastructure components to provision and how their outputs wire together — turning a multi-resource stack into a one-click operation.
+
+### What a Blueprint Contains
+
+- **Templates** — ordered list of infrastructure components to provision
+- **Wiring Rules** — output → input mappings between templates
+- **Default Variables** — pre-configured values per template
+- **Configuration** — general blueprint settings
+- **Labels** — tags for organizing and filtering
+
+### How Blueprints Work
+
+1. Select templates that make up your infrastructure stack
+2. Define wiring rules to connect outputs to inputs across templates
+3. Set default variables for consistent values across executions
+4. Execute the blueprint — a Workflow is created with steps in topological order
+5. Each step provisions a resource, passing outputs from completed steps to downstream steps
+
+### Key Features
+
+- **Multi-resource orchestration** — provision entire environments in one click
+- **Automatic dependency resolution** — wiring rules define the execution graph
+- **Reusable definitions** — execute the same blueprint for dev, staging, and production
+- **Variable overrides** — customize each execution without modifying the blueprint
+
+**Learn more:** [Blueprint Documentation](./blueprint)
+
+## Workflow
+
+A **Workflow** is an automated execution plan that orchestrates the provisioning of multiple resources in dependency order. Workflows are created from Blueprints.
+
+### Key Features
+
+- **Automatic dependency resolution** via topological sort
+- **Output wiring** — upstream outputs feed into downstream inputs
+- **Parallel execution** — independent steps run simultaneously
+- **Step-level tracking** — monitor progress per resource
+
+**Learn more:** [Workflow Documentation](./workflow)
+
+## Resource
+
+A **Resource** is an actual instance of infrastructure, created from a Template and Template Version.
+
+**Learn more:** [Resource Documentation](./resource)
+
+## Workspace
+
+A **Workspace** is a Git repository where InfraKitchen can automatically sync generated Terraform code.
+
+### Structure
+
+<FileTree>
+
+- workspace-repo/
+  - production-vpc/
+    - main.tf
+    - variables.tf
+    - outputs.tf
+  - production-eks/
+    - main.tf
+    - variables.tf
+    - outputs.tf
+
+</FileTree>
+
+**Learn more:** [Workspace Documentation](./workspace)

@@ -1,0 +1,222 @@
+---
+title: Authentication Providers
+---
+
+This section provides an overview of the various **Authentication Providers** integrated into our project, enabling users and services to securely access resources. These providers allow you to leverage existing identity systems, often referred to as **Single Sign-On (SSO)**, to manage authentication.
+
+## Available Integrations
+
+We support a variety of authentication methods tailored to different use cases:
+
+**Third-Party SSO Integrations:** For external users and developers, we support popular identity platforms:
+
+- **[GitHub](#github)**:
+  Allows authentication using existing GitHub accounts.
+
+- **[Google](#google)**:
+  Enables login via Google accounts.
+
+- **[Microsoft](#microsoft)**:
+  Enables login via Microsoft accounts (e.g., Azure AD, personal accounts).
+
+- **[Backstage](#backstage)**:
+  Integration for users coming from a Backstage environment, ensuring seamless identity flow.
+
+- **[Personal Access Token](../references/personal-access-token)**:
+  Used for API and CLI access on behalf of an existing InfraKitchen user, without an interactive browser login.
+
+- **[Service Account](#service-account)**:
+  Used for **non-interactive authentication**, typically for automated tasks, services, or machine-to-machine communication, using long-lived credentials.
+
+- **[Guest](#guest)**:
+  Provides a simple, **unauthenticated** way to access public or restricted-read resources without requiring a formal login.
+
+## Enabling SSO or Disabling Authentication Methods
+
+To enable Single Sign-On (SSO) or disable authentication entirely, you need to configure the auth provider in InfraKitchen UI. This typically involves specifying the desired authentication provider and its parameters.
+
+## Backstage
+
+Setting up an **Identity Provider (IdP)** for **Backstage** involves a few key steps across your external IdP, your Backstage configuration (`app-config.yaml`).
+
+### Backstage Configuration
+
+Add the auth key to your `app-config.yaml` (or `app-config.local.yaml`):
+
+```yaml
+
+...
+backend:
+  auth:
+    keys:
+      - secret: <your-secret> # secret for InfraKitchen, replace with your own
+
+...
+
+```
+
+### InfraKitchen Configuration
+
+To configure InfraKitchen to use the Backstage Identity Provider, you need to provide the following parameters in the auth provider settings:
+
+1. **Private Key**: The private key used to sign the JWT tokens. This should match the secret configured in Backstage.
+2. **JWKs URL**: The URL where Backstage exposes its JWKs. This is typically in the format: `http://<BACKSTAGE_URL>/api/auth/.well-known/jwks.json`.
+
+## GitHub
+
+GitHub SSO requires a GitHub App to be created. You can [create a GitHub App](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps) in your organization or user account.
+Put the following settings in the GitHub App:
+
+- **Homepage URL**: The URL of your InfraKitchen instance, e.g. `http://localhost:7777`.
+- **Authorization callback URL**: The URL to authorize the GitHub App, e.g. `http://localhost:7777/api/auth/github/callback`.
+
+### InfraKitchen Configuration
+
+To configure InfraKitchen to use the GitHub App, you need to provide the following parameters in auth provider settings:
+
+1. **Client ID**: The Client ID of the GitHub App.
+2. **Client Secret**: The Client Secret of the GitHub App.
+3. **Redirect URL**: The URL to authorize the GitHub App. e.g. `http://localhost:7777/api/auth/github/callback`
+4. **Filter by domain**: If you want to restrict access to users with a specific email domain, you can set this parameter. For example, if you want to allow only users with `@example.com` email addresses, set this parameter to `example.com`.
+
+## Google
+
+Google SSO requires an OAuth 2.0 Client ID to be created in Google Cloud.
+[Check out the official documentation](https://developers.google.com/identity/protocols/oauth2)
+Put the following settings in the Google Cloud OAuth client:
+
+- **Application type**: Web application.
+- **Authorized JavaScript origins**: The URL of your InfraKitchen instance, e.g. `http://localhost:7777`.
+- **Authorized redirect URIs**: The URL to authorize the Google OAuth client, e.g. `http://localhost:7777/api/auth/google/callback`.
+
+Google must return a refresh token for InfraKitchen session refresh. The InfraKitchen Google login flow already requests offline access and consent during login.
+
+### InfraKitchen Configuration
+
+To configure InfraKitchen to use the Google OAuth client, you need to provide the following parameters in auth provider settings:
+
+1. **Client ID**: The Client ID of the Google OAuth client.
+2. **Client Secret**: The Client Secret of the Google OAuth client.
+3. **Redirect URL**: The URL to authorize the Google OAuth client. e.g. `http://localhost:7777/api/auth/google/callback`
+4. **Filter by domain** (optional): A list of email domains allowed to sign in. When set, login only succeeds if the user's email ends with `@` followed by one of the configured domains. For example, adding `example.com` allows users with `@example.com` email addresses; multiple domains can be added.
+
+## Microsoft
+
+### Microsoft Entra ID Application Registration
+
+To enable Microsoft Single Sign-On (SSO), you must register a new application in the Azure Portal. This application will represent InfraKitchen to Microsoft Entra ID, allowing it to request authentication tokens.
+
+1. **Log in to the Azure Portal:** Navigate to the Azure Portal and search for **Microsoft Entra ID**.
+2. **Create a New App Registration:**
+    * Go to **App registrations** > **+ New registration**.
+    * Enter a **Name** for your application (e.g., `InfraKitchen SSO`).
+    * For **Supported account types**, select the option that best fits your organization (e.g., *Accounts in this organizational directory only - Single tenant*).
+3. **Configure Redirect URI:**
+    * Under the **Redirect URI** section, select **Web** as the platform.
+    * Enter the **Authorization callback URL** for your InfraKitchen instance.
+        * **Example:** `http://localhost:7777/api/auth/microsoft/callback`
+4. **Register the Application:** Click <kbd>Register</kbd>.
+5. **Gather Application Details:** From the application's **Overview** page, copy and save the following values, which you will use in the InfraKitchen configuration:
+    * **Application (Client) ID**
+    * **Directory (Tenant) ID**
+6. **Create a Client Secret:**
+    * Navigate to **Certificates & secrets** in the left menu.
+    * Click <kbd>+ New client secret</kbd>.
+    * Add a **Description** and choose an expiration period. Click <kbd>Add</kbd>.
+    * **Crucially, copy the **Value** of the generated secret immediately.** This value is your **Client Secret** and will be hidden once you navigate away from the page.
+
+### InfraKitchen Configuration
+
+To configure InfraKitchen to use the Microsoft Entra ID App Registration, you need to provide the following parameters in the auth provider settings, using the values you gathered from the Azure Portal:
+
+1. **Client ID**: The **Application (Client) ID** from the App Registration Overview.
+2. **Client Secret**: The **Value** of the Client Secret you generated and copied (not the Secret ID).
+3. **Tenant ID**: The **Directory (Tenant) ID** from the App Registration Overview.
+    * *Note: Providing the Tenant ID is a common way to scope the login to a specific Entra ID tenant (Single Tenant setup).*
+4. **Redirect URL**: The URL to authorize the Microsoft App, which must match the **Redirect URI** you configured in the Azure Portal. e.g., `http://localhost:7777/api/auth/microsoft/callback`
+5. **Filter by domain**: If you want to restrict access to users with a specific email domain, you can set this parameter. For example, if you want to allow only users with `@infrakitchen.io` email addresses, set this parameter to `infrakitchen.io`.
+
+## Service Account
+
+Service accounts in InfraKitchen are designed to facilitate machine-to-machine communication and automation within the InfraKitchen ecosystem.
+They provide a mechanism for external tools, scripts, and CI/CD pipelines to interact with InfraKitchen APIs without requiring an interactive user session.
+
+### Setup Steps
+
+<Steps>
+
+<Step title="Create the auth provider">
+
+Navigate to **auth providers** and create an authProvider with type `ik_service_account`.
+
+</Step>
+
+<Step title="Create a user">
+
+Navigate to **users** and create a user.
+
+</Step>
+
+<Step title="Grant permissions">
+
+Navigate to the newly created user and add desired permissions.
+
+</Step>
+
+</Steps>
+
+### Generate Token
+
+To generate the token, call the GraphQL API:
+
+```bash
+curl --location 'https://INFRA_KITCHEN_URL/api/graphql' \
+--header 'Content-Type: application/json' \
+--data '{
+  "query": "mutation ServiceAccountToken($identifier: String!, $password: String!) { serviceAccountToken(identifier: $identifier, password: $password) { token expiresAt } }",
+  "variables": {
+    "identifier": "username",
+    "password": "password"
+  }
+}'
+```
+
+The legacy `POST /api/auth/service_account/token` endpoint remains available but is deprecated.
+
+### Using the Token
+
+You can then call the API as the service account by adding the authorization bearer token header to your requests:
+
+```bash
+curl --location 'https://INFRA_KITCHEN_URL/api/your-endpoint' \
+--header 'Authorization: Bearer YOUR_TOKEN_HERE' \
+--header 'Content-Type: application/json'
+```
+
+## Guest
+
+The InfraKitchen Guest Authentication Provider is a non-production, development-focused identity solution. It allows users to gain access to the InfraKitchen UI and API with a predefined, shared identity without requiring external credentials (like GitHub or Microsoft).
+
+### Purpose of Guest Authentication
+
+The Guest Provider is intended for local development, testing, and demonstration environments where rapid, simplified access is needed.
+
+For your Infrakitchen project, the Guest Provider can be configured to map to different identity roles, which, when combined with the Permission System (RBAC), simulates different access levels without needing real user accounts.
+
+In production environments, you should set up proper authentication providers (like GitHub, Microsoft, Backstage, etc.) to ensure secure and individualized access control.
+
+:::warning[Security Warning]
+The Guest Provider is inherently **insecure** for production use. It grants all users who select it a single, shared identity. Its primary purpose is to quickly test permission policies and UI behavior during development.
+:::
+
+### Use Cases for InfraKitchen Roles (in Development)
+
+By configuring the Guest Provider's default identity to be a member of specific Catalog **Groups**, you can effectively simulate your `default`, `infra`, and `super` roles.
+
+1. Simulating the `default` User Role (Base Access)
+   This is the standard use case for the Guest Provider.
+
+2. Simulating the `infra` Role (Platform Engineers)
+   This simulates a user with permissions for infrastructure operations.
+3. Simulating the `super` Role (Admin/SRE)
+   This simulates the highest level of access for administrative tasks.

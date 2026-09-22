@@ -1,0 +1,45 @@
+---
+title: Execution Logs
+---
+
+Execution logs capture the detailed output (stdout/stderr) from operations performed on entities. These logs provide real-time visibility into what happens during provisioning, synchronization, and other operations.
+
+## Overview
+
+When you execute operations like provisioning a resource or syncing resource code to a workspace, InfraKitchen captures all output in execution logs. Each execution is timestamped and correlated with an audit log entry through a `trace_id`.
+
+## Viewing Execution Logs
+
+Open the entity whose operations you want to inspect, click the <kbd>Activity</kbd> button, switch to the **Logs** tab, and pick an execution from the dropdown to view its logs.
+
+The logs interface shows:
+
+- **Execution dropdown** — Select from recent executions (displays timestamp and action)
+- **Revision button** — View the entity configuration at the time of execution
+- **Log viewer** — Real-time scrollable log output with ANSI color support
+
+## Log Structure
+
+Each log entry contains:
+
+| Field | Description |
+|-------|-------------|
+| **Entity ID** | The entity that generated the log |
+| **Entity Type** | The type of entity (resource, source_code, etc.) |
+| **Revision** | The configuration revision used during execution |
+| **Level** | Log severity (info, warning, error, header) |
+| **Data** | The actual log message or output |
+| **Created At** | When the log entry was created |
+| **Execution Start** | Timestamp identifying the execution session |
+| **Trace ID** | Links the log to its originating audit log entry |
+
+## Log Retention
+
+Logs have different retention policies:
+
+- **Standard logs** — Retained indefinitely for historical reference
+- **Dry run logs** — Automatically expire after 5 days to save storage
+
+:::tip[Viewing Historical Executions]
+Use the execution dropdown to navigate through previous operations. Each execution shows the timestamp and action (e.g., "sync", "execute") to help identify the operation you're looking for.
+:::

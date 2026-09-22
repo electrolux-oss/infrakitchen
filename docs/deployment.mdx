@@ -1,0 +1,73 @@
+---
+title: Deployment
+sidebar:
+  order: 3
+---
+
+## Requirements
+
+To successfully deploy InfraKitchen, ensure that your system meets the following minimum requirements:
+
+- **Python**: Version 3.14
+- **Node.js**: Version 24
+- **PostgreSQL**: Version 17
+- **RabbitMQ**: Version 4.0.9
+- **Nginx**: Version 1.28
+- **OpenTofu (Terraform)**: Version 1.10
+- **Yarn**: Version 1.22
+- **Git Client**: Latest stable version
+
+## Docker Image
+
+InfraKitchen provides a multi-stage Dockerfile that builds the backend (Python + OpenTofu + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
+
+The example file also references the Nginx configs and entrypoint script shipped in the same directory:
+
+- [`docs/examples/docker/Dockerfile`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/Dockerfile)
+- [`docs/examples/docker/nginx.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/nginx.conf)
+- [`docs/examples/docker/websocket-map.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/websocket-map.conf)
+- [`docs/examples/docker/entrypoint.sh`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/entrypoint.sh)
+
+To build the docker image, run the following command from the root directory of the project:
+
+```bash
+docker build -f docs/examples/docker/Dockerfile -t your-image-name:tag .
+```
+
+## Kubernetes
+
+For running InfraKitchen on Kubernetes, use the example manifest:
+
+- [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml) — Service, backend/scheduler/worker Deployments, and an Nginx Ingress.
+
+Before applying it:
+
+- Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
+- RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
+- Create the Kubernetes Secret for InfraKitchen as described below.
+
+### Create Namespace if Needed and Switch Context to the Namespace
+
+```bash
+kubectl create namespace infrakitchen
+kubectl config set-context --current --namespace=infrakitchen
+```
+
+### Generate Secrets for JWT and Encryption Keys
+
+You can use the following commands to generate base64 encoded secrets:
+
+```bash
+python server/generate_encryption_key.py
+```
+
+### Create the Secret and Apply the Manifest
+
+```bash
+kubectl create secret generic infrakitchen-secrets \
+                --from-literal="enc-secret=<REPLACE_VALUE>" \
+                --from-literal="jwt-secret=<REPLACE_VALUE>" \
+                --from-literal="postgres-password=<REPLACE_VALUE>"
+
+kubectl apply -f docs/examples/docker/k8s-manifest.yaml
+```

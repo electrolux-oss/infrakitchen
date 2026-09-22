@@ -1,0 +1,200 @@
+---
+title: MCP Support
+---
+
+InfraKitchen supports the [Model Context Protocol](https://modelcontextprotocol.io) (MCP),
+exposing a stateless, streamable HTTP endpoint at `/api/mcp` so AI agents can inspect and manage
+your infrastructure. MCP tools call the REST and GraphQL APIs with the client's own bearer token,
+so an agent can do exactly what its service account is allowed to do — the protocol grants no
+additional privileges.
+
+## Enabling MCP
+
+MCP is disabled by default, and the `MCP_ENABLED` flag is only checked once when the server
+starts — a restart is required for changes to take effect. To enable it, set the flag in your
+environment or `.env` file:
+
+```env
+MCP_ENABLED=true
+```
+
+When MCP is enabled, the endpoint is mounted at `/api/mcp`; when it is disabled, the route is
+never registered and requests to `/api/mcp` return `404 Not Found`.
+
+## Authentication
+
+The MCP endpoint requires authentication on every request. The data and actions available
+through MCP mirror the permissions of the authenticating service account.
+
+<Steps>
+
+<Step title="Create the service account">
+
+Create an auth provider with type `ik_service_account` and a user with the permissions the
+agent should have. See [Service Account](../integrations/auth#service-account).
+
+</Step>
+
+<Step title="Generate a token">
+
+Generate a token with the `serviceAccountToken` GraphQL mutation.
+
+</Step>
+
+<Step title="Send the token with every request">
+
+Configure your MCP client to send the token as a bearer header on every request:
+
+```text
+Authorization: Bearer <service-account-token>
+```
+
+</Step>
+
+</Steps>
+
+:::warning[Renew tokens before they expire]
+Service account tokens carry an expiry (`expiresAt`). When the token expires, MCP requests
+fail with `401 Unauthorized` — generate a new token and update your client configuration.
+:::
+
+## Connecting an MCP client
+
+Any MCP client that supports streamable HTTP can connect to the endpoint.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http infrakitchen https://<your-infrakitchen-host>/api/mcp \
+  --header "Authorization: Bearer <service-account-token>"
+```
+
+### VS Code / GitHub Copilot
+
+Add the server to `.vscode/mcp.json` (workspace) or your user-level `mcp.json`. Copilot agent
+mode picks up the server automatically; with the `inputs` block below, VS Code prompts for the
+token on first use instead of storing it in the file:
+
+```json
+{
+  "servers": {
+    "infrakitchen": {
+      "type": "http",
+      "url": "https://<your-infrakitchen-host>/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:infrakitchen-token}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "infrakitchen-token",
+      "description": "InfraKitchen service account token",
+      "password": true
+    }
+  ]
+}
+```
+
+### Generic client configuration
+
+Most clients (Cursor, Windsurf, and others) accept a JSON configuration:
+
+```json
+{
+  "mcpServers": {
+    "infrakitchen": {
+      "url": "https://<your-infrakitchen-host>/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <service-account-token>"
+      }
+    }
+  }
+}
+```
+
+### MCP Inspector
+
+To explore the server interactively, run the
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) and connect to the URL with
+the `Authorization` header:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+## Tool catalog
+
+### Schema discovery and reads
+
+| Tool | Description |
+| ---- | ----------- |
+| `list_schema_types` | Lists all top-level GraphQL query fields with their argument and return types. The entry point for schema discovery. |
+| `get_schema` | Returns the SDL of a single GraphQL type plus the input and enum types it references. |
+| `graphql_query` | Executes a read-only GraphQL query against the API. Mutations and subscriptions are rejected. Returns partial data alongside errors when available. |
+| `resource_tree` | Fetches a resource's full hierarchy as a nested tree in a single call, expanding children (or ancestors with `direction: "parents"`) to a fixed depth. |
+
+### Writes
+
+Every writable entity exposes up to three tools:
+
+| Entity | Create | Patch | Lifecycle action |
+| ------ | ------ | ----- | ---------------- |
+| Resource | `create_resource` | `patch_resource` | `patch_action_resource` |
+| Template | `create_template` | `patch_template` | `patch_action_template` |
+| Code repository | `create_source_code` | `patch_source_code` | `patch_action_source_code` |
+| Template version | `create_source_code_version` | `patch_source_code_version` | `patch_action_source_code_version` |
+| Storage | `create_storage` | `patch_storage` | `patch_action_storage` |
+| Integration | `create_integration` | `patch_integration` | `patch_action_integration` |
+| Executor | `create_executor` | `patch_executor` | `patch_action_executor` |
+
+Notes on the write tools:
+
+- Request bodies prefer `snake_case` keys; they are translated to GraphQL `camelCase`
+  automatically. Provider-specific `configuration` is passed through as raw JSON.
+- `patch_*` requires at least one field in the body.
+- `patch_action_*` runs a lifecycle action on an existing entity. Query the entity's
+  `*Actions` query first (for example `resourceActions(id: ...)`) to see which actions are
+  allowed for its current state, then pass one of those values.
+
+### Documentation
+
+| Tool / resource | Description |
+| --------------- | ----------- |
+| `list_docs` | Lists available documentation files, optionally filtered by filename. |
+| `read_doc` | Reads the content of a documentation file. |
+| `docs://<path>` resources | The documentation is also exposed as MCP resources, so clients can list and read it natively. |
+
+## Safety model
+
+:::danger[Some writes take effect immediately]
+Resource changes go through the approval flow, but writes to templates, code repositories,
+storages, integrations, and executors take effect immediately — there is no approval gate.
+:::
+
+- **Resources are gated.** New resources land in the approval-pending state and wait for a
+  human to approve before any cloud provisioning happens. Patches to live resources are staged
+  and also require approval. MCP cannot bypass this gate.
+- **Other entities are not gated.** Creating or modifying templates, code repositories,
+  template versions, storages, integrations, and executors takes effect immediately.
+- **Lifecycle actions change state immediately.** `patch_action_*` tools can trigger actions
+  such as approve, reject, destroy, recreate, or disable when those actions are allowed for
+  the entity's current state.
+- **Use a least-privilege service account.** Give the agent's service account only the
+  permissions it needs; MCP is subject to the same authorization checks as the REST and
+  GraphQL APIs.
+- **Everything is auditable.** Changes made through MCP appear in the
+  [Audit Logs](activity/audit) like any other API activity.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| ------- | ------------- |
+| `404 Not Found` on `/api/mcp` | MCP is not enabled. Set `MCP_ENABLED=true` and restart the server. |
+| `401 Missing Authorization header` | The client is not sending the bearer header. Configure it as shown in [Authentication](#authentication). |
+| `401 Invalid or expired token` | The token expired or was revoked. Generate a new one and update the client configuration. |
+| `503 Auth service unavailable` | The server could not validate the token against the auth service. Check the server logs. |
+| `list_docs` returns an empty list | The documentation directory is not bundled in the deployment (for example the Docker image). The docs tools are available in source/dev deployments. |
+| Repeated GraphQL errors when composing queries | Call `list_schema_types` and `get_schema` first to discover exact field names — field names are `camelCase` and some fields are JSON scalars rather than objects. |
+| `patch_action_*` reports no allowed actions | The entity's current state does not permit the action. Query the entity's `*Actions` query to see what is currently allowed. |

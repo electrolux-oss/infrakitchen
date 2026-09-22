@@ -143,7 +143,7 @@ export const TemplatesPage = () => {
       description={
         <>
           <Link
-            href="https://opensource.electrolux.one/infrakitchen/core-concepts/templates/overview/"
+            href="https://opensource.electrolux.one/infrakitchen/concepts/template"
             target="_blank"
             rel="noopener"
             sx={{ color: "inherit", textDecoration: "underline" }}

@@ -1,0 +1,120 @@
+---
+title: Quick Start
+sidebar:
+  order: 1
+---
+
+Set up InfraKitchen for local development using one of the following environments. Pick the option that matches your machine.
+
+{/* Fragment-link targets for #nix|#docker|#podman deep links. */}
+<span id="nix"></span>
+<span id="docker"></span>
+<span id="podman"></span>
+<span id="podman-compose"></span>
+
+<Tabs>
+
+<Tab title="Nix">
+
+```bash
+# If no Nix is installed, run the official installer first:
+# curl -L https://nixos.org/nix/install | sh -s -- --daemon
+
+nix develop
+```
+
+</Tab>
+
+<Tab title="Docker">
+
+```bash
+cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
+docker compose up -d
+```
+
+</Tab>
+
+<Tab title="Podman">
+
+```bash
+cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
+podman compose up -d
+```
+
+</Tab>
+
+<Tab title="Podman Compose">
+
+```bash
+cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
+podman-compose up -d
+```
+
+</Tab>
+
+</Tabs>
+
+Once the services are up, open [http://localhost:7777](http://localhost:7777) and log in as **Guest**.
+
+InfraKitchen has a backend and frontend codebase. This repo (`electrolux-oss/infrakitchen` on [GitHub](https://github.com/electrolux-oss/infrakitchen)) contains both parts:
+
+- `server/` contains the backend (Python/FastAPI)
+- `ui/` contains the frontend (React/TypeScript)
+
+Try InfraKitchen right away with the [example templates repository](https://github.com/electrolux-oss/infrakitchen-example-templates). It includes ready-to-use templates that help you get a proof of concept running quickly.
+
+The following services are automatically set up for you:
+
+- [RabbitMQ Broker](https://www.rabbitmq.com/) for driving the events
+- [PostgreSQL](https://www.postgresql.org/) for storing the data
+
+### What each option provides
+
+- **Nix** — the dev shell automatically sets up Python 3.14 with backend dependencies, Node.js with frontend dependencies, PostgreSQL, RabbitMQ, and development tools (ruff, pyright, prettier, eslint). All isolated from your system. To exit the Nix shell, type `exit` or press <kbd>Ctrl</kbd>+<kbd>D</kbd>.
+- **Docker / Podman / Podman Compose** — containers provide the backend, frontend, PostgreSQL, and RabbitMQ from the compose file.
+
+### Enable Experimental Features (Nix only)
+
+If you see `error: experimental Nix feature 'nix-command' is disabled`, add the following to `/etc/nix/nix.conf` (or `~/.config/nix/nix.conf` on macOS):
+
+```
+experimental-features = nix-command flakes
+```
+
+Then restart the Nix daemon or run with flag:
+
+```bash
+nix --extra-experimental-features 'nix-command flakes' develop
+```
+
+### Troubleshooting
+
+**Networking issues between containers** (Podman and Podman Compose): if containers cannot reach each other, stop and restart them:
+
+```bash
+podman compose down && podman compose up -d
+# or, with podman-compose:
+podman-compose down && podman-compose up -d
+```
+
+## Default Settings
+
+Encryption keys will be automatically generated on first run in the `server/.env_local` file.
+
+All data will be stored in the `ik_data/` folder. You can delete this folder to start the project from scratch.
+
+## Add fake data
+
+To populate InfraKitchen with fake data for testing purposes, you can run the following command:
+
+```bash
+make fixtures
+```
+
+## Generate Secret Keys
+
+You can generate secret keys for backend by running the following commands:
+
+```bash
+python server/generate_encryption_key.py
+```

@@ -156,7 +156,7 @@ export const ProjectsPage = () => {
       description={
         <>
           <Link
-            href="https://opensource.electrolux.one/infrakitchen/core-concepts/projects/overview/"
+            href="https://opensource.electrolux.one/infrakitchen/concepts/project"
             target="_blank"
             rel="noopener"
             sx={{ color: "inherit", textDecoration: "underline" }}

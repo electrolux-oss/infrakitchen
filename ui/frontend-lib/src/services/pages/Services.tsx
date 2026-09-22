@@ -8,7 +8,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Link,
   Typography,
 } from "@mui/material";
 
@@ -115,19 +114,7 @@ export const ServicesPage = () => {
   return (
     <PageContainer
       title="Services"
-      description={
-        <>
-          <Link
-            href="https://opensource.electrolux.one/infrakitchen/core-concepts/projects/overview/"
-            target="_blank"
-            rel="noopener"
-            sx={{ color: "inherit", textDecoration: "underline" }}
-          >
-            Services
-          </Link>{" "}
-          describe what runs inside a project and who owns it.
-        </>
-      }
+      description="Services describe what runs inside a project and who owns it."
       actions={actions}
     >
       <Box sx={{ width: "100%" }}>
