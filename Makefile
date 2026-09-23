@@ -23,5 +23,12 @@ fixtures:
 format:
 	cd server && uv run ruff format && uv run ruff check --fix
 
-mkdocs: server-install
-	./server/.venv/bin/python -m mkdocs serve
+# --- Docs (Blume) ---
+docs-dev:
+	npm run dev
+
+docs-build:
+	npm run build
+
+docs-validate:
+	npx blume validate --isolated

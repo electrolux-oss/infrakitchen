@@ -1,0 +1,108 @@
+---
+title: Notification Preferences
+---
+
+Notification Preferences let you control which event types trigger notifications and which delivery channels are used. Each preference maps one event type to one or more channels. InfraKitchen checks your preferences every time an event fires on an entity you are subscribed to.
+
+## Overview
+
+A **Notification Preference** answers the question: *"When event X happens, how should I be notified?"*
+
+You can have multiple preferences — one per event type — and each can enable different channel combinations. If no preference exists for an event type, that event will not generate a notification for you even if you are subscribed to the entity.
+
+:::tip[Preferences and Subscriptions work together]
+Preferences define the rules; [Subscriptions](subscriptions) define the scope. Both must be in place to receive a notification.
+:::
+
+## Viewing Your Preferences
+
+<Steps>
+
+<Step title="Open your User Profile">
+
+Navigate to your **User Profile**.
+
+</Step>
+
+<Step title="Find the Notification Preferences card">
+
+Scroll to the **Notification Preferences** card.
+
+</Step>
+
+<Step title="Review your preferences">
+
+The table shows all your configured preferences with their event type, enabled channels, and creation date.
+
+</Step>
+
+</Steps>
+
+## Adding a Notification Preference
+
+<Steps>
+
+<Step title="Click Add Preference">
+
+In the **Notification Preferences** card, click <kbd>Add Preference</kbd>. A dialog opens with two fields.
+
+</Step>
+
+<Step title="Configure the preference">
+
+- **Event Type** — Select the infrastructure event you want to be notified about
+- **Integration Type** — Check one or more delivery channels
+
+</Step>
+
+<Step title="Create">
+
+Click <kbd>Create</kbd>.
+
+</Step>
+
+</Steps>
+
+### Event Types
+
+| Event Type | Description |
+|---|---|
+| `create` | An entity was created |
+| `update` | An entity was modified |
+| `destroy` | Resource infrastructure was destroyed |
+| `execute` | An operation was executed on an entity |
+| `sync` | An entity was synchronized |
+
+### Delivery Channels
+
+| Channel | Description |
+|---|---|
+| **IN_APP** | Notification appears inside the InfraKitchen UI |
+| **SLACK** | Notification is sent to Slack via the configured [Slack integration](../../integrations/notification#slack) |
+
+:::info[At least one channel required]
+You must select at least one delivery channel when creating or editing a preference. A preference with no channels cannot be saved.
+:::
+
+## Editing a Preference
+
+In the **Notification Preferences** table, click <kbd>Edit</kbd> on the row you want to change, update the **Event Type** or **Integration Type** selections, and save.
+
+:::note[Edit behaviour]
+Editing a preference deletes the existing record and creates a new one. The creation timestamp will reflect the edit time.
+:::
+
+## Deleting a Preference
+
+In the **Notification Preferences** table, click <kbd>Delete</kbd> on the row you want to remove and confirm.
+
+After deletion, events of that type will no longer generate notifications for you, regardless of your active subscriptions.
+
+## Preference Properties
+
+| Property | Description |
+|---|---|
+| **Event Type** | The event that triggers the notification (e.g., `update`, `execute`) |
+| **Channels** | The delivery channels enabled for this preference |
+| **User** | The user who owns this preference |
+| **Created At** | When the preference was created |

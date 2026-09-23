@@ -135,7 +135,7 @@ dev = [
   "pytest>=9.1.1",
   "ruff>=0.15.20",
   "black>=26.5.1",
-  "click==8.2.1",                                                                                # hard pin to avoid bug with mkdocs
+  "click==8.2.1",
   "setuptools>=82.0.1",
   "uvicorn>=0.49.0",
   "pytest-asyncio>=1.4.0",
@@ -146,6 +146,4 @@ dev = [
   "boto3-stubs[essential]>=1.43.39",
   "basedpyright>=1.39.9",
   "kubernetes_asyncio-stubs @ git+https://github.com/kialo/kubernetes_asyncio-stubs.git@29.0.1",
-  "mkdocs-material>=9.7.6",
-  "mkdocs-glightbox>=0.5.2",
 ]

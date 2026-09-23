@@ -1,0 +1,293 @@
+---
+title: Template
+---
+
+**Templates** define the organizational structure and meta-information for your infrastructure components. They establish hierarchical relationships between different infrastructure elements and provide the framework for provisioning actual resources.
+
+Templates are abstract definitions that become concrete when you create **Resources** from them using **Template Versions**. Think of templates as recipes in your infrastructure kitchen—they define what can be built, but not the actual infrastructure itself.
+
+## Template Properties
+
+Each template in InfraKitchen contains the following core properties:
+
+| Property                 | Description                             | Notes                                     |
+| :----------------------- | :-------------------------------------- | :---------------------------------------- |
+| **Name**                 | Human-readable display name             | E.g., "AWS VPC", "EKS Cluster"            |
+| **Template Key**         | Unique, immutable identifier            | Lowercase, alphanumeric with underscores  |
+| **Description**          | Detailed information about the template | Markdown supported                        |
+| **Status**               | Current state of the template           | `enabled` or `disabled`                   |
+| **Abstract**             | Whether template can be instantiated    | If true, serves only as a parent          |
+| **Parents**              | Templates this template depends on      | Hierarchical relationships                |
+| **Children**             | Templates that depend on this template  | Hierarchical relationships                |
+| **Cloud Resource Types** | Types of cloud resources managed        | E.g., `aws_vpc`, `azurerm_resource_group` |
+| **Configuration**        | Runtime constraints for resource creation | Provider restrictions and integration limits |
+| **Labels**               | Tags for organizing and filtering       | E.g., `aws`, `networking`, `production`   |
+| **Revision Number**      | Version tracking for template changes   | Auto-incremented on updates               |
+
+## Template Configuration
+
+Templates support a `configuration` object that controls how resources can be created from that template.
+
+| Option                                   | Description                                                                 | Notes                                                                                         |
+| :--------------------------------------- | :-------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **Allowed Integration Providers**        | Restricts which integration providers can be attached to template resources | Empty list means all providers are allowed                                                    |
+| **One Resource Per Integration**         | Enforces uniqueness of resource+integration for selected providers          | Applies only to providers listed in this option; other providers can still be reused          |
+
+### Allowed Integration Providers
+
+Use this option when a template should only work with specific providers.
+
+- If configured, resource creation/update requires integrations that match the allowed providers
+- Resource integration count must match the number of configured allowed providers
+- If no providers are configured, InfraKitchen does not apply provider-type restrictions
+
+### One Resource Per Integration
+
+Use this option when the same integration must not be reused across multiple resources of the same template.
+
+- Configure a list of providers where uniqueness must be enforced
+- During resource creation, InfraKitchen checks existing resources for the same template
+- If a matching integration is already used, resource creation is rejected with a dependency error
+
+:::info[How These Options Work Together]
+You can use both options at the same time. In this case, provider allow-list validation is applied first,
+then per-provider uniqueness is enforced for providers listed in **One Resource Per Integration**.
+:::
+
+## Template Hierarchies
+
+Templates support **parent-child relationships** that mirror your infrastructure dependencies. This allows you to establish logical groupings and enforce provisioning order.
+
+**Example Hierarchy:**
+
+```
+AWS Account (abstract)
+  ↓
+AWS Regional Environment
+  ↓
+AWS VPC
+  ↓
+EKS Cluster
+  ↓
+Kubernetes Namespace
+```
+
+**Hierarchy Rules:**
+
+- A template cannot be both a parent and child of the same template (no circular dependencies)
+- Abstract templates can only serve as parents and cannot be instantiated as resources
+- Disabled templates cannot be used as parents or children
+- Deleting a template with children is not allowed
+
+## Creating Templates
+
+Templates can be created in two primary ways:
+
+### Import from Repository
+
+Import a template directly from a Git repository containing Infrastructure as Code. InfraKitchen will automatically analyze the code and create both the template and its first template version.
+
+<Steps>
+
+<Step title="Navigate to Templates">
+
+Go to **Templates** in the sidebar and click <kbd>Import</kbd>.
+
+</Step>
+
+<Step title="Select template type">
+
+Currently OpenTofu/Terraform.
+
+</Step>
+
+<Step title="Configure Git source">
+
+Integration, repository, folder, branch.
+
+</Step>
+
+<Step title="Add metadata">
+
+Name, description, labels, parents.
+
+</Step>
+
+<Step title="Import">
+
+Click <kbd>Import</kbd>.
+
+</Step>
+
+</Steps>
+
+:::info[Import Process]
+Importing may take a few minutes as InfraKitchen clones the repository, analyzes the code, extracts variables and outputs, and creates the template with its template version.
+:::
+
+### Manual Creation
+
+Create a template from scratch by defining all properties manually. This is useful when you want to establish the organizational structure before adding infrastructure code.
+
+<Steps>
+
+<Step title="Navigate to Templates">
+
+Go to **Templates** in the sidebar and click <kbd>Create</kbd>.
+
+</Step>
+
+<Step title="Fill in required fields">
+
+Name, template key, description.
+
+</Step>
+
+<Step title="Configure optional properties">
+
+Parents, children, labels, cloud resource types, template configuration.
+
+</Step>
+
+<Step title="Mark abstract if needed">
+
+Check **Abstract** if the template should not be instantiated directly.
+
+</Step>
+
+<Step title="Save">
+
+Click <kbd>Save</kbd>.
+
+</Step>
+
+</Steps>
+
+## Managing Templates
+
+### Template Details
+
+Click <kbd>View Details</kbd> on any template to see comprehensive information organized into sections:
+
+| Section             | Content                                                                    |
+| :------------------ | :------------------------------------------------------------------------- |
+| **Overview**        | Status, abstract flag, creation info, labels, parent/child relationships   |
+| **Resources**       | All resource instances created from this template                          |
+| **Input Variables** | Aggregated variables from template versions with types and descriptions |
+| **Output Values**   | Available outputs after resource provisioning                              |
+| **Tree View**       | Visual hierarchy showing parents (upward) or children (downward)           |
+
+### Updating Templates
+
+Template metadata can be modified after creation, with some important constraints:
+
+- Updates increment the revision number
+- Template key is immutable and cannot be changed
+- Parent/child relationship changes affect hierarchy but not existing resources
+
+### Disabling Templates
+
+Disabling prevents new resources from being created but doesn't affect existing ones.
+
+**Effects of disabling:**
+
+- Cannot create new resources from this template
+- Cannot be selected as parent or child for other templates
+- Can be re-enabled later
+- Existing resources remain functional
+
+### Deleting Templates
+
+Templates must be disabled before deletion and cannot be deleted if they have:
+
+- Child templates
+- Existing resources
+- Associated template versions
+
+:::danger[Permanent Deletion]
+Template deletion is permanent and cannot be undone. Handle all dependencies first.
+:::
+
+## Integration with Other Features
+
+### Template Variables and Template Versions
+
+Templates don't contain executable code directly. Instead, they're associated with **Template Versions** that contain:
+
+- Infrastructure as Code (OpenTofu/Terraform) modules
+- Variable definitions
+- Output definitions
+- Provisioning logic
+
+A single template can have multiple template versions, allowing you to:
+
+- Support different implementations
+- Version infrastructure code independently
+- Test new versions before making them default
+
+### Templates and Resources
+
+[Resource](./resource) is a concrete instance of a template. Each resource:
+
+- References exactly one template
+- Uses a template version associated with that template
+- Inherits the template's hierarchical structure
+- Can only have parents matching the template's parent templates
+
+## Template Permissions
+
+Template actions are controlled by user permissions:
+
+| Action             | Permission Required              |
+| :----------------- | :------------------------------- |
+| **View**           | All authenticated users          |
+| **Create**         | Template create permission       |
+| **Edit**           | Admin permission on the template |
+| **Disable/Enable** | Admin permission on the template |
+| **Delete**         | Admin permission on the template |
+
+Permissions are inherited from the organization's role-based access control (RBAC) configuration.
+
+## Version Lifecycle
+
+**Version Lifecycle State** describes where a **Template Version** sits in its life—from an early preview, through active use, to eventual deprecation and archival. It gives platform teams a clear signal about which versions are safe to use for new resources and which should be avoided.
+
+Each Template Version carries a single lifecycle state. The state is visualized throughout the UI as a colored chip, helping developers pick the right version at a glance when creating or updating resources.
+
+### Lifecycle States
+
+InfraKitchen supports the following lifecycle states:
+
+| State          | Meaning                                                           | Chip Color | Typical Use                                              |
+| :------------- | :---------------------------------------------------------------- | :--------- | :------------------------------------------------------- |
+| **Unknown**    | Default state; no explicit lifecycle has been assigned            | Default    | Newly created versions before curation                   |
+| **Preview**    | Early or experimental version, not yet recommended for production | Info       | Testing new implementations before promoting them        |
+| **Active**     | Recommended, production-ready version                             | Success    | The version developers should use for new resources      |
+| **Deprecated** | Still usable, but discouraged; a newer version is preferred       | Warning    | Signaling a planned migration away from this version     |
+| **Archived**   | No longer in use; typically set when a version is disabled        | Error      | Retiring a version from active selection                 |
+
+:::info[Default State]
+Every Template Version starts in the **Unknown** state. Assign a meaningful lifecycle state as part of curating a template's versions.
+:::
+
+### State Transitions
+
+Lifecycle state can be set explicitly when updating a Template Version, and it is also adjusted automatically by certain actions:
+
+- **Disabling a version** sets its lifecycle state to **Archived**.
+- **Enabling a previously disabled version** resets its lifecycle state to **Unknown**.
+- All other transitions (**Preview**, **Active**, **Deprecated**) are set explicitly by editing the version.
+
+### Breaking Changes
+
+Alongside the lifecycle state, a version can carry an optional **Breaking Changes** note. When present, the UI displays a warning indicator next to the lifecycle chip with the details in a tooltip.
+
+Use this field to communicate incompatibilities-such as changed variables, removed outputs, or required migration steps-so developers understand the impact before adopting the version.
+
+### Setting the Lifecycle State
+
+The lifecycle state is a property of a Template Version and can be changed when editing that version: open the template's **Template Versions**, select the version to curate, update the **Lifecycle State**, and optionally add a **Breaking Changes** note.
+
+:::note[Automatic Overrides]
+Disabling or enabling a version will override the lifecycle state as described in [State Transitions](#state-transitions).
+:::

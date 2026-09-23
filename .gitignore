@@ -6,3 +6,7 @@ erl_crash.dump
 .claude/
 .opencode/
 server/build-info.json
+node_modules/
+.blume/
+dist/
+.blume-verify/

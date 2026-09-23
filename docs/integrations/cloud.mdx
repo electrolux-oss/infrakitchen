@@ -1,0 +1,382 @@
+---
+title: Cloud Providers
+---
+
+This section provides an overview of how the platform integrates with leading cloud providers.
+Each integration allows you to connect, manage, and automate workloads across different cloud environments using a consistent interface and unified tooling.
+
+## AWS
+
+Follow these steps to create and configure an AWS integration. Fill the required fields in the integration form (see **Required fields** at the end) and use **Test Connection** before saving.
+
+### Prepare an IAM Principal
+
+Follow AWS's official guide to [create an IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html).
+
+(Recommended) Create a dedicated **IAM user** for InfraKitchen integrations rather than using a personal or root account, with **Programmatic access** so you can generate an Access Key.
+
+### Attach Permissions
+
+Attach AWS managed policies or a custom policy that grants the permissions InfraKitchen needs:
+
+- If you plan to let the platform create/manage S3 buckets for remote state, include S3 permissions.
+- If InfraKitchen will manage EC2/CloudFormation/Lambda/etc., include those permissions as required.
+
+For a least-privilege setup, create and attach a custom policy scoped to only the resources InfraKitchen will manage.
+
+> Tip: If you want InfraKitchen to create an S3 bucket for Terraform/OpenTofu remote state, ensure the policy allows `s3:CreateBucket`, `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, etc., scoped to the bucket name pattern you will use.
+
+### (Recommended) Use Role Assumption for Better Security
+
+- Create an **IAM role** in the target AWS account with the permissions InfraKitchen requires.
+- In the role’s **trust policy**, allow the IAM user (or another account/principal) to assume the role. Example trust relationship snippet:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "arn:aws:iam::ACCOUNT_ID:user/InfraKitchenUser" },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+```
+
+- On the IAM user that InfraKitchen will use, attach a policy allowing `sts:AssumeRole` for that role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::TARGET_ACCOUNT_ID:role/RoleNameToAssume"
+    }
+  ]
+}
+```
+
+- When configured, supply the **AWS Assumed Role Name** (the role's name) in the integration form so InfraKitchen will assume that role at runtime.
+
+### Generate Access Keys
+
+Follow AWS's official guide to [manage access keys for IAM users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html): for the IAM user you created (or the user designated to assume roles), create an access key and copy both values — **AWS Access Key ID** and **AWS Secret Access Key**. Store them securely — you will paste them into InfraKitchen’s integration form.
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/aws/setup`
+
+| Field | Description | Example/Notes |
+| :--- | :--- | :--- |
+| **Integration Name** | A unique, descriptive name for the integration. | E.g., `aws-production` |
+| **Description** | (Optional) A short text describing this integration. | |
+| **Labels** | (Optional) Tags to categorize the integration. | E.g., `production`, `dev`, `billing` |
+| **AWS Account ID** | The 12-digit AWS account number. | E.g., `123456789012` |
+| **AWS Access Key ID** | Paste the generated Access Key ID. | |
+| **AWS Secret Access Key** | Paste the generated Secret Access Key. (Will be stored encrypted). |  |
+| **AWS Assumed Role Name** | (Optional) The role name to assume if role assumption is set up. | E.g., `InfraKitchenRole` |
+| **Automatically create S3 bucket for OpenTofu/Terraform remote state** | Check this to automatically create an S3 bucket for remote state. | Default bucket name: `infrakitchen-<AWS_ACCOUNT_ID>-bucket`. Default region: `us-east-1`. |
+
+### Test the Connection
+
+After completing the fields, click <kbd>Test Connection</kbd>. If the test succeeds, the credentials and permissions are valid. If it fails:
+
+- Re-check the **Access Key ID / Secret** for typos.
+- Verify the IAM user/role has the required permissions (including `sts:AssumeRole` if using a role).
+- Confirm the **AWS Account ID** is correct and matches the account where the role/user exists.
+
+Save the integration once the test passes.
+
+## Azure
+
+Follow these steps to integrate **Microsoft Azure** with InfraKitchen.
+This integration allows InfraKitchen to authenticate securely with Azure Resource Manager (ARM) to manage and automate your Azure infrastructure.
+
+### Create an App Registration
+
+Follow Microsoft's official guide to [register an application in Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app). Register the app with a descriptive name such as `InfraKitchen-Integration`, keep the default **Accounts in this organizational directory only**, and leave the redirect URI blank (not required for this integration).
+
+Once created, the overview page will show the following identifiers:
+
+* **Application (client) ID**
+* **Directory (tenant) ID**
+
+**Note:** Copy both the **Client ID** and **Tenant ID** — you will need them later in the InfraKitchen setup form.
+
+### Create a Client Secret
+
+Follow Microsoft's official guide to [add and manage application credentials](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials): under **Certificates & secrets → Client secrets**, create a new secret with a description (e.g., “InfraKitchen access key”) and an expiration (recommended: 1 or 2 years).
+
+Copy the **Value** of the client secret immediately — this value will only be shown once, and **you will need it for the `Client Secret` field** in InfraKitchen.
+
+### Assign Roles and Permissions
+
+To allow InfraKitchen to manage Azure resources, the App Registration must have appropriate permissions. In the **Azure Portal**, navigate to **Subscriptions** (or the specific resource group you want to manage), open **Access control (IAM) → Add role assignment**, and assign a role appropriate to the level of access required, such as:
+
+- **Contributor** (recommended for full management)
+- **Reader** (for read-only access)
+
+In the **Members** tab, select **User, group, or service principal**, search for your App Registration name and select it.
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/azurerm/setup`
+
+You should now have the following four key values ready:
+
+| Field               | Description                                            | Example                                |
+| ------------------- | ------------------------------------------------------ | -------------------------------------- |
+| **Client ID**       | The Application (client) ID from your App Registration | `11111111-2222-3333-4444-555555555555` |
+| **Subscription ID** | The Azure subscription ID where you assigned the role  | `66666666-7777-8888-9999-000000000000` |
+| **Tenant ID**       | The Directory (tenant) ID from your App Registration   | `aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee` |
+| **Client Secret**   | The secret value generated in Certificates & Secrets   | `xYz12345SecretValueOnlyShownOnce`     |
+
+### Test the Connection
+
+1. After filling out all required fields, click <kbd>Test Connection</kbd>.
+2. InfraKitchen will attempt to authenticate to Azure Resource Manager using your credentials.
+3. If successful, a confirmation message will appear.
+4. If it fails:
+
+    * Verify that the **Client ID**, **Tenant ID**, and **Client Secret** are correct.
+    * Ensure the App Registration has the proper IAM role on the target subscription.
+    * Check that the secret has not expired.
+
+## Google Cloud
+
+Follow these steps to integrate **Google Cloud Platform (GCP)** with InfraKitchen.
+This integration enables InfraKitchen to manage your GCP resources, automate deployments, and optionally create remote storage for OpenTofu/Terraform state management.
+
+### Create a Service Account
+
+Follow Google Cloud's official guide to [create service accounts](https://docs.cloud.google.com/iam/docs/service-accounts-create). In the Google Cloud Console, create a service account named e.g. `infrakitchen-integration` (optionally with a description like “InfraKitchen GCP integration account”), and note down your **Project ID** — you’ll need it later in the setup form.
+
+### Assign Permissions to the Service Account
+
+On the “Grant this service account access” step, assign roles that match what InfraKitchen should manage. Common roles include:
+
+- **Viewer** – read-only access
+- **Editor** – full project-level management
+- **Storage Admin** – required if InfraKitchen will manage or create GCS buckets (for Terraform remote state)
+- **Compute Admin** – if InfraKitchen will manage compute instances
+- **Service Account User** – if InfraKitchen needs to deploy or impersonate other service accounts
+
+_You can add or modify roles later in the IAM permissions page if needed._
+
+### Choose an Authentication Method
+
+InfraKitchen supports two authentication methods for GCP integrations:
+
+- **Service Account Key** - paste a service account JSON key.
+- **Workload Identity Federation (OIDC)** - InfraKitchen acts as the OIDC identity provider and mints the federation token for you. You only provide the provider audience (and optionally a service account to impersonate).
+
+Choose the method that matches your setup and follow the relevant section below.
+
+### Option A: Generate a Service Account Key (JSON)
+
+Follow Google Cloud's official guide to [create and delete service account keys](https://docs.cloud.google.com/iam/docs/keys-create-delete): open the service account’s **Keys** tab, create a new **JSON** key, and it will be downloaded automatically — **store it securely**. You’ll need the full JSON content for the InfraKitchen configuration.
+
+### Option B: Workload Identity Federation via InfraKitchen-issued OIDC
+
+Use this option to let InfraKitchen issue the OIDC token itself — you don't paste any credential config or manage a subject token source. InfraKitchen generates a dedicated signing keypair per integration, publishes the public keys as a JWKS, and mints a short-lived signed token at run time.
+
+:::info[Prerequisite]
+The `INFRAKITCHEN_URL` setting must be configured with the externally-visible base URL of InfraKitchen (e.g. `https://infrakitchen.example.com`). It is used as the OIDC issuer.
+:::
+
+<Steps>
+
+<Step title="Create the integration in InfraKitchen">
+
+In InfraKitchen, create the GCP integration with **Authentication Method = Workload Identity Federation (OIDC)**, fill in the **GCP Project ID** and **GCP WIF Pool Provider Audience**, and save it. Saving generates the signing keypair.
+
+</Step>
+
+<Step title="Copy the OIDC Issuer URL">
+
+Open the saved integration page and copy the **OIDC Issuer URL** shown in the configuration.
+
+</Step>
+
+<Step title="Create the Workload Identity Pool and OIDC provider">
+
+In Google Cloud IAM, create a **Workload Identity Pool**, then add an **OIDC** provider:
+
+- **Issuer (URL):** paste the InfraKitchen **OIDC Issuer URL**.
+- **JWK file (JSON):** leave empty if InfraKitchen is publicly reachable by GCP (GCP fetches the keys from the issuer). If InfraKitchen is **not** publicly reachable, click <kbd>Download JWKS</kbd> on the integration page and upload that file here.
+- **Audiences:** use the default audience, or add an allowed audience that matches the value you entered in **GCP WIF Pool Provider Audience**.
+- Configure attribute mapping, e.g. `google.subject = assertion.sub`.
+
+</Step>
+
+<Step title="Grant access to the federated principal">
+
+- Grant IAM roles directly to the principal, **or**
+- Set **GCP Service Account Email** in the InfraKitchen form and grant that principal `roles/iam.workloadIdentityUser` on the service account (InfraKitchen will impersonate it).
+
+</Step>
+
+<Step title="Verify">
+
+Click <kbd>Test Connection</kbd> on the integration page to verify.
+
+</Step>
+
+</Steps>
+
+Notes:
+
+- The **GCP WIF Pool Provider Audience** is the full canonical provider resource name, e.g. `//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID`.
+- InfraKitchen mints the token per host at run time, so this works for validation, GCS remote state, Secret Manager, and OpenTofu runs.
+- For direct federation (no **GCP Service Account Email**), grant IAM roles directly to the federated principal. For example:
+
+```bash
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="principal://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/subject/SUBJECT" \
+  --role="roles/browser"
+```
+
+- To grant the role to the whole pool instead of one subject:
+
+```bash
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/*" \
+  --role="roles/browser"
+```
+
+- `roles/browser` includes `resourcemanager.projects.get`, which InfraKitchen uses during **Test Connection**.
+- If you enable automatic OpenTofu/Terraform remote state storage with WIF, the federated principal or impersonated service account also needs Cloud Storage create and read permissions so InfraKitchen can create and inspect the GCS bucket.
+
+  Grant those permissions with `gcloud`, for example:
+
+```bash
+# Direct federation: grant project-level Cloud Storage permissions to the whole WIF pool
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/*" \
+  --role="roles/storage.admin"
+
+# Or grant them to the impersonated service account used by InfraKitchen
+gcloud projects add-iam-policy-binding PROJECT_ID \
+  --member="serviceAccount:SERVICE_ACCOUNT_EMAIL" \
+  --role="roles/storage.admin"
+```
+
+  `roles/storage.admin` covers bucket creation and read access required for automatic remote state bucket setup.
+
+### Enable Required APIs
+
+InfraKitchen requires certain GCP APIs to be enabled for management tasks.
+In the Google Cloud Console, navigate to **APIs & Services → Library** and enable at least:
+
+- **Cloud Resource Manager API**
+- **Compute Engine API** (if managing compute resources)
+- **Cloud Storage API** (if using remote state storage)
+- **IAM API**
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/gcp/setup`
+
+In InfraKitchen, go to **Integrations → Cloud → Google Cloud** and complete the fields:
+
+| Field                                                                | Description                                                          |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Integration Name**                                                 | A unique name for this integration (e.g., `gcp-production`)          |
+| **Description**                                                      | A short description of your integration                              |
+| **Labels**                                                           | Add labels such as `production`, `gcp`, `terraform`                  |
+| **Authentication Method**                                            | Choose `Service Account Key` or `Workload Identity Federation (OIDC)` |
+| **GCP Project ID**                                                   | Your GCP project's unique ID                                         |
+| **GCP Service Account Key**                                          | Paste the full service account JSON key when using key auth          |
+| **GCP WIF Pool Provider Audience**                                   | (OIDC) Full provider resource name used as the token audience       |
+| **GCP Service Account Email**                                        | (OIDC, optional) Service account to impersonate after federation    |
+| **Service Account Impersonation URL**                                | (OIDC, optional) Exact `service_account_impersonation_url` override |
+| **Automatically create storage for OpenTofu/Terraform remote state** | When enabled, InfraKitchen will create a GCS bucket for remote state |
+
+### Test the Connection
+
+After entering all required fields, click <kbd>Test Connection</kbd>. InfraKitchen will verify the provided GCP credentials and API access. If successful, you’ll see a confirmation message. If it fails:
+
+- Ensure the **Service Account Key JSON** or **WIF Credential Config JSON** is correctly formatted and valid.
+- Confirm that the **required APIs** are enabled.
+- Check that the assigned **roles** include the necessary permissions.
+- For WIF, confirm that the referenced token source is available from the InfraKitchen runtime environment.
+
+## MongoDB Atlas
+
+Follow these steps to integrate **MongoDB** with InfraKitchen.
+This integration allows InfraKitchen to connect to your MongoDB databases — hosted either on **MongoDB Atlas** or **self-managed clusters** — to monitor, automate, and manage database-related operations.
+
+### Create an API Key
+
+Follow MongoDB's official guide to [configure API access](https://www.mongodb.com/docs/atlas/configure-api-access/): create an API key with a description (e.g., `InfraKitchen Integration Key`) and copy the **Public Key** and **Private Key** when shown.
+
+Assign the following roles to the API key:
+
+- **Organization Owner or Project Owner** – full administrative control (use with caution).
+
+(Recommended) Restrict the key by IP: add Access List Entries limited to the IP address or CIDR block for InfraKitchen (or `0.0.0.0/0` for testing only).
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/mongodb_atlas/setup`
+
+| Field                           | Description                                             |
+| ------------------------------- | ------------------------------------------------------- |
+| **Integration Name**            |  Unique name for this integration (e.g., `mongodb-prod`) |
+| **Description**                 | Short description of your MongoDB environment           |
+| **Labels**                      | Add labels such as `production`, `mongodb`, `atlas`     |
+| **MongoDB Atlas Org ID**    | Paste your MongoDB Organization ID               |
+| **MongoDB Atlas Public Key**         | Public KEY copied in previous step  |
+| **MongoDB Atlas Private Key**         | Private KEY copied in previous step  |
+
+### Test the Connection
+
+InfraKitchen will attempt to connect using your provided credentials and URI. If it fails:
+
+- Verify your **Public/Private** keys are correct.
+- Ensure your IP or network is whitelisted in **API Access List**.
+
+## Datadog
+
+Follow these steps to integrate **Datadog** with **InfraKitchen**.
+This integration allows InfraKitchen to use Datadog provider in your terraform/OpenTofu modules.
+
+### Create API and Application Keys
+
+Follow Datadog's official guide to [API and Application Keys](https://docs.datadoghq.com/account_management/api-app-keys/): in **Organization Settings**, create an **API Key** (e.g., `infrakitchen-api-key`) and an **Application Key** (e.g., `infrakitchen-app-key`, optionally assigned to a specific user — recommended for auditing). You’ll need **Admin** or API-access privileges in your Datadog account.
+
+### Collect Required Information
+
+### Collect Required Information
+
+Before proceeding, make sure you have:
+
+| Required Value       | Description                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| **API Key**          | Used for authenticating API requests from InfraKitchen to Datadog                      |
+| **APP Key**  | Allows InfraKitchen to access dashboards, monitors, and metric data                    |
+| **Datadog API URL** | Usually `https://datadoghq.com` (but may vary, e.g. `https://datadoghq.eu`, `https://us3.datadoghq.com`, etc.) |
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/datadog/setup`
+
+Then fill in the following fields:
+
+| Field                | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| **Integration Name** |  A unique name for this integration (e.g., `datadog-prod`) |
+| **Description**      | Brief description of your Datadog environment             |
+| **Labels**           | Add tags like `observability`, `monitoring`, or `prod`    |
+| **Datadog Site URL** |  Domain of your Datadog instance (e.g. `https://datadoghq.com`)    |
+| **API Key**          |  The API key you created above                              |
+| **Application Key**  |  The Application key you created above                      |### Test the Connection
+
+InfraKitchen will attempt to connect to Datadog’s API endpoint using the keys provided. If successful, you’ll see a confirmation message. If it fails, verify that:
+
+- The **API Key** and **Application Key** are correct.
+- The **Datadog Site URL** matches your region.
+- The Application Key user has sufficient permissions.

@@ -1,0 +1,247 @@
+---
+import PageLayout from "blume/components/layout/PageLayout.astro";
+import Card from "blume/components/content/Card.astro";
+import CardGroup from "blume/components/content/CardGroup.astro";
+import { withBase } from "blume/components/islands/base-path.ts";
+import data from "blume:data";
+
+import awsSvg from "../images/icons/aws.svg?raw";
+import azureSvg from "../images/icons/azure.svg?raw";
+import googlecloudSvg from "../images/icons/googlecloud.svg?raw";
+import mongodbSvg from "../images/icons/mongodb.svg?raw";
+import githubSvg from "../images/icons/github.svg?raw";
+import gitlabSvg from "../images/icons/gitlab.svg?raw";
+import bitbucketSvg from "../images/icons/bitbucket.svg?raw";
+import terraformSvg from "../images/icons/terraform.svg?raw";
+import opentofuSvg from "../images/icons/opentofu.svg?raw";
+import kubernetesSvg from "../images/icons/kubernetes.svg?raw";
+import backstageSvg from "../images/icons/backstage.svg?raw";
+import mainImage from "../images/ik-main.png";
+
+const { config } = data;
+
+// Inline brand SVGs (mkdocs-material icon set) recolored via currentColor.
+const vendors = [
+  { name: "AWS", svg: awsSvg },
+  { name: "Azure", svg: azureSvg },
+  { name: "Google Cloud", svg: googlecloudSvg },
+  { name: "MongoDB", svg: mongodbSvg },
+  { name: "GitHub", svg: githubSvg },
+  { name: "GitLab", svg: gitlabSvg },
+  { name: "Bitbucket", svg: bitbucketSvg },
+  { name: "Terraform", svg: terraformSvg },
+  { name: "OpenTofu", svg: opentofuSvg },
+  { name: "Kubernetes", svg: kubernetesSvg },
+  { name: "Backstage", svg: backstageSvg },
+].map(({ name, svg }) => ({
+  name,
+  svg: svg.replace(
+    "<svg ",
+    '<svg fill="currentColor" class="h-6 w-6" ',
+  ),
+}));
+
+const features = [
+  {
+    icon: "layout-template",
+    title: "Reusable templates",
+    description:
+      "Platform teams define infrastructure once as code. Developers deploy approved templates through a guided interface — no IaC expertise required.",
+    href: withBase("/concepts/template"),
+  },
+  {
+    icon: "blocks",
+    title: "One-click blueprints",
+    description:
+      "Combine templates into multi-resource stacks with automatic dependency resolution and output wiring, from dev to production.",
+    href: withBase("/concepts/blueprint"),
+  },
+  {
+    icon: "cloud",
+    title: "Multi-cloud",
+    description:
+      "AWS, Azure, and Google Cloud out of the box. State stays in your cloud, never in InfraKitchen.",
+    href: withBase("/integrations/cloud/overview"),
+  },
+  {
+    icon: "git-pull-request",
+    title: "Version-controlled by default",
+    description:
+      "Every change is tracked with revisions and audit history. Optionally sync generated code to a Git workspace to review it as pull requests.",
+    href: withBase("/concepts/workspace"),
+  },
+  {
+    icon: "network",
+    title: "Infrastructure graph",
+    description:
+      "See your infrastructure and services as one connected graph.",
+    href: withBase("/concepts/overview"),
+  },
+  {
+    icon: "bot",
+    title: "Built for AI agents",
+    description:
+      "The MCP server gives your AI agents the full picture of your infrastructure, so they can act with confidence.",
+    href: withBase("/operations/mcp"),
+  },
+];
+---
+
+<PageLayout
+  site={{ title: config.title, description: config.description }}
+  logo={config.logo}
+  banner={config.banner}
+  analytics={config.analytics}
+  navigation={data.navigation}
+  favicon={config.favicon}
+  fontCssVars={data.fontCssVars}
+  themeMode={config.theme.mode}
+  searchEnabled={config.search.enabled}
+  siteUrl={config.site}
+  ogEnabled={config.og.enabled}
+  page={{
+    title: "InfraKitchen — the open-source developer platform for humans and agents",
+    description: config.description,
+  }}
+>
+  <!-- Hero -->
+  <section>
+    <div class="mx-auto max-w-4xl px-6 pt-10 pb-10 text-center sm:pt-14">
+      <h1 class="text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+        The Open-Source<br />Developer Platform<br />for Humans and Agents
+      </h1>
+      <p class="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg italic">
+        Built for Platform Engineering, giving developers and AI agents the
+        context to act.
+      </p>
+      <p class="text-foreground mx-auto mt-4 max-w-2xl text-lg leading-8">
+        <strong>InfraKitchen</strong> connects infrastructure and services into a unified view,
+        giving developers and AI agents the context to understand and operate
+        their systems.
+      </p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <a
+          href={withBase("/introduction")}
+          class="hover:border-foreground inline-flex items-center gap-2 rounded-blume border border-border px-5 py-2.5 font-semibold text-foreground text-base transition-colors"
+        >
+          Get Started
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product screenshot -->
+  <section class="mx-auto max-w-6xl px-6 pb-10">
+    <div class="border-border shadow-2xl overflow-hidden rounded-xl border">
+      <div class="flex items-center gap-1.5 bg-[#e8e8ea] px-4 py-3">
+        <span class="h-3 w-3 rounded-full bg-red-400"></span>
+        <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
+        <span class="h-3 w-3 rounded-full bg-green-400"></span>
+      </div>
+      <img
+        src={mainImage.src}
+        alt="The InfraKitchen dashboard — templates, resources, and activity in one view"
+        width="1600"
+        height="900"
+        class="bg-background w-full"
+        loading="eager"
+      />
+    </div>
+  </section>
+
+  <!-- Vendor icon strip -->
+  <section class="mx-auto max-w-4xl px-6 pb-10">
+    <div class="flex flex-wrap items-center justify-center gap-6">
+      {
+        vendors.map(({ name, svg }) => (
+          <span
+            class="border-border bg-background text-muted-foreground hover:text-foreground flex h-12 w-12 items-center justify-center rounded-lg border shadow-sm transition-colors"
+            title={name}
+          >
+            <Fragment set:html={svg} />
+          </span>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Video -->
+  <section class="border-border border-t">
+    <div class="mx-auto max-w-4xl px-6 py-10 text-center">
+      <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">
+        Why we built InfraKitchen
+      </h2>
+      <p class="text-muted-foreground mt-4 text-lg">
+        The story behind the project and the problems we're solving.
+      </p>
+      <div class="border-border shadow-xl mt-10 overflow-hidden rounded-xl border">
+        <iframe
+          class="aspect-video w-full"
+          src="https://www.youtube-nocookie.com/embed/uMD8Sx81dz8"
+          title="Why we built InfraKitchen"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature grid -->
+  <section class="border-border border-t">
+    <div class="mx-auto max-w-6xl px-6 py-10">
+      <h2 class="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+        Everything platform teams need
+      </h2>
+      <p class="text-muted-foreground mx-auto mt-4 max-w-2xl text-center text-lg">
+        Governance for the platform team, self-service for developers — on top
+        of the Terraform and OpenTofu modules you already have.
+      </p>      <CardGroup cols={3}>
+        {
+          features.map((feature) => (
+            <Card title={feature.title} href={feature.href} icon={feature.icon}>
+              <span class="text-muted-foreground text-sm">
+                {feature.description}
+              </span>
+            </Card>
+          ))
+        }
+      </CardGroup>
+    </div>
+  </section>
+
+  <footer slot="footer" class="border-border border-t">
+    <div
+      class="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-sm sm:flex-row"
+    >
+      <p>&copy; 2026 Electrolux Group</p>
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/electrolux-oss/infrakitchen" class="hover:text-foreground transition">
+          GitHub
+        </a>
+        <a
+          href="https://www.linkedin.com/company/infrakitchen"
+          class="hover:text-foreground transition"
+        >
+          LinkedIn
+        </a>
+        <a href="https://discord.gg/HAk7caCMf9" class="hover:text-foreground transition">
+          Discord
+        </a>
+      </div>
+    </div>
+  </footer>
+</PageLayout>

@@ -1,0 +1,13 @@
+{
+  "name": "infrakitchen-docs",
+  "private": true,
+  "scripts": {
+    "dev": "blume dev",
+    "build": "blume build",
+    "validate": "blume validate",
+    "check": "blume check"
+  },
+  "dependencies": {
+    "blume": "^1.7.3"
+  }
+}
