@@ -25,6 +25,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import StorageIcon from "@mui/icons-material/Storage";
+import TerminalIcon from "@mui/icons-material/Terminal";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -143,9 +144,12 @@ export default function DashboardSidebar({
     "/storages/*",
     "/secrets/*",
   ].some((pattern) => matchPath(pattern, pathname));
-  const isOperationsActive = ["/tasks/*", "/workflows/*", "/workers/*"].some(
-    (pattern) => matchPath(pattern, pathname),
-  );
+  const isOperationsActive = [
+    "/tasks/*",
+    "/workflows/*",
+    "/workers/*",
+    "/tools/*",
+  ].some((pattern) => matchPath(pattern, pathname));
   const isManagementActive = [
     "/users/*",
     "/roles/*",
@@ -364,6 +368,14 @@ export default function DashboardSidebar({
                     href="/workers"
                     selected={!!matchPath("/workers/*", pathname)}
                     permissionKey="worker"
+                  />
+                  <DashboardSidebarPageItem
+                    id="tools"
+                    title="IaC Tools"
+                    icon={<TerminalIcon />}
+                    href="/tools"
+                    selected={!!matchPath("/tools/*", pathname)}
+                    permissionKey="tool"
                   />
                 </Box>
               }

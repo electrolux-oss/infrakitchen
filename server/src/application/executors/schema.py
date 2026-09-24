@@ -1,16 +1,20 @@
 from datetime import datetime, UTC
-from typing import Literal
+from typing import Annotated, Any, Literal, cast
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
+from pydantic_core import MISSING
 
 from application.secrets.schema import SecretShort
 from application.source_codes.schema import SourceCodeShort
 from application.integrations.schema import IntegrationShort
 from application.types import IacToolType
+from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
+
+OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 
 class ExecutorShort(BaseModel):
@@ -79,6 +83,7 @@ class ExecutorResponse(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
+    tool: ToolShort | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
     revision_number: int = Field(default=1)
 
@@ -119,6 +124,7 @@ class ExecutorCreate(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
+    tool_id: uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
 
 
@@ -144,6 +150,9 @@ class ExecutorUpdate(BaseModel):
     storage_path: str | None = Field(
         default=None,
     )
+    tool_id: OptionalUUID = Field(
+        default=cast(Any, MISSING),
+    )
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -153,6 +162,8 @@ class ExecutorUpdate(BaseModel):
     @classmethod
     def at_least_one_field_present(cls, values):
         if not isinstance(values, dict):
+            return values
+        if "tool_id" in values:
             return values
         if not any(values.get(field) not in (None, [], "") for field in ExecutorUpdate.model_fields):
             raise ValueError("At least one field must be provided in Executor update.")

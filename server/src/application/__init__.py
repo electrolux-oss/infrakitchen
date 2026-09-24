@@ -21,6 +21,7 @@ from .batch_operations import BatchOperationDTO
 from .blueprints import BlueprintShort
 from .workflows import Workflow
 from .favorites import Favorite
+from .services import ServiceDTO
 
 __all__ = [
     "ExecutorDTO",
@@ -47,4 +48,5 @@ __all__ = [
     "BlueprintShort",
     "Workflow",
     "Favorite",
+    "ServiceDTO",
 ]

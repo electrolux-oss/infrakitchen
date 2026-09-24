@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+
+import { useNavigate, useParams } from "react-router";
 
 import { Box, Tab, Tabs } from "@mui/material";
 
+import { useConfig } from "../../common";
 import PageContainer from "../../common/PageContainer";
 import {
   FeatureFlagSection,
@@ -9,11 +12,37 @@ import {
   SchedulerJobsSection,
 } from "../components";
 
-export const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState(0);
+const ADMIN_TABS = [
+  { path: "permissions", label: "Permissions" },
+  { path: "feature-flags", label: "Feature Flags" },
+  { path: "scheduler", label: "Scheduler" },
+] as const;
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+type AdminTab = (typeof ADMIN_TABS)[number]["path"];
+
+const DEFAULT_TAB: AdminTab = "permissions";
+
+const isAdminTab = (value: string | undefined): value is AdminTab =>
+  ADMIN_TABS.some((tab) => tab.path === value);
+
+export const AdminPage = () => {
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  const { linkPrefix } = useConfig();
+
+  const activeTab: AdminTab = isAdminTab(tab) ? tab : DEFAULT_TAB;
+
+  useEffect(() => {
+    if (!isAdminTab(tab)) {
+      navigate(`${linkPrefix}admin/${DEFAULT_TAB}`, { replace: true });
+    }
+  }, [tab, navigate, linkPrefix]);
+
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: AdminTab,
+  ) => {
+    navigate(`${linkPrefix}admin/${newValue}`);
   };
 
   return (
@@ -34,19 +63,19 @@ export const AdminPage = () => {
               "& .MuiTab-root": { textTransform: "none" },
             }}
           >
-            <Tab label="Permissions" />
-            <Tab label="Feature Flags" />
-            <Tab label="Scheduler" />
+            {ADMIN_TABS.map((item) => (
+              <Tab key={item.path} value={item.path} label={item.label} />
+            ))}
           </Tabs>
         </Box>
 
-        <Box role="tabpanel" hidden={activeTab !== 0}>
+        <Box role="tabpanel" hidden={activeTab !== "permissions"}>
           <PermissionsSection />
         </Box>
-        <Box role="tabpanel" hidden={activeTab !== 1}>
+        <Box role="tabpanel" hidden={activeTab !== "feature-flags"}>
           <FeatureFlagSection />
         </Box>
-        <Box role="tabpanel" hidden={activeTab !== 2}>
+        <Box role="tabpanel" hidden={activeTab !== "scheduler"}>
           <SchedulerJobsSection />
         </Box>
       </Box>
@@ -54,4 +83,4 @@ export const AdminPage = () => {
   );
 };
 
-AdminPage.path = "/admin";
+AdminPage.path = "/admin/:tab?";

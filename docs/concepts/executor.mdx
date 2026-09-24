@@ -47,6 +47,7 @@ Each executor in InfraKitchen contains the following core properties:
 | **Secrets**              | Sensitive data for execution                   | Database passwords, API keys, etc.       |
 | **Storage**              | Backend for Terraform/OpenTofu state           | S3, Azure Blob, GCS, etc.                |
 | **Storage Path**         | Path to state file in storage                  | Auto-generated or custom                 |
+| **IaC Tool**           | OpenTofu/Terraform version used to run it      | Global default when empty, see [IaC Tools](../operations/iac_tools) |
 | **Labels**               | Tags for organizing and filtering              | E.g., `migration`, `cleanup`, `one-time` |
 | **Revision Number**      | Version tracking for executor changes          | Auto-incremented on updates              |
 | **Creator**              | User who created the executor                  | Used for permissions and audit           |

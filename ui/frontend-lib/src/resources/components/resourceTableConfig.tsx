@@ -18,6 +18,7 @@ import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
+import { toolColumn } from "../../tools/components/toolColumn";
 import {
   ENTITY_STATE,
   ENTITY_STATUS,
@@ -32,6 +33,7 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   created_at: false,
   creator: false,
   storage: false,
+  tool: true,
   workspace: false,
   integration_ids: false,
   secret_ids: false,
@@ -352,6 +354,7 @@ export const resourceColumns: EntityTableColumn[] = [
       return <Entity entity={storage} />;
     },
   },
+  toolColumn(),
   {
     field: "workspace",
     headerName: "Workspace",

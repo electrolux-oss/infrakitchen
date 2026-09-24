@@ -10,6 +10,7 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
+import { toolColumn } from "../../tools/components/toolColumn";
 import { ENTITY_STATE, ENTITY_STATUS } from "../../utils/constants";
 
 export const executorColumns: EntityTableColumn[] = [
@@ -126,6 +127,7 @@ export const executorColumns: EntityTableColumn[] = [
       />
     ),
   },
+  toolColumn(),
   ...createdUpdatedColumns(),
   labelsColumn("executor"),
   userColumn({ sortField: null }),

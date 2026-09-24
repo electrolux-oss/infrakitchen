@@ -21,6 +21,8 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { solidChipColorSx } from "../../common/utils/softChip";
+import { ProviderIcon } from "../../icons/Icons";
+import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import { GqlResource } from "../graphql";
 import {
@@ -361,6 +363,33 @@ export const TemplateConfiguration = ({
               value={withPendingChange(resource.storagePath, "storage_path")}
             />
           </>
+        )}
+        {resource.storage && (
+          <CommonEditableField<string | null>
+            name="IaC Tool"
+            canEdit={canEdit}
+            value={resource.tool?.id ?? null}
+            ariaLabel="Edit IaC tool"
+            display={withPendingChange(
+              resource.tool ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <ProviderIcon provider={resource.tool.name} />
+                  <GetReferenceUrlValue
+                    id={resource.tool.id}
+                    entityName="tool"
+                    display_name={toolLabel(resource.tool)}
+                  />
+                </Box>
+              ) : (
+                <span>Global default</span>
+              ),
+              "tool_id",
+            )}
+            onSave={(value) => saveField({ toolId: value })}
+            renderEditor={({ value, onChange }) => (
+              <ToolSelect value={value} onChange={onChange} />
+            )}
+          />
         )}{" "}
       </BaseCard>
       {resource.abstract === false && (

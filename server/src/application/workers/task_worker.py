@@ -25,6 +25,7 @@ from application.workers.utils import (
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
 from core import BaseMessagesWorker, MessageHandler, MessageModel
+from core.tools.task import ToolTask, get_tool_task
 from core.constants.model import EventType, ModelActions
 from core.notifications.controller import NotificationEvent, publish_notification_event
 from core.errors import (
@@ -168,6 +169,7 @@ class TaskWorker(BaseMessagesWorker):
         | WorkspaceTask
         | ExecutorTask
         | WorkflowTask
+        | ToolTask
     ):
         match entity_controller:
             case "source_code":
@@ -233,6 +235,15 @@ class TaskWorker(BaseMessagesWorker):
                     trace_id=trace_id,
                     step_id=step_id,
                     resource_id=resource_id,
+                )
+            case "tool":
+                return await get_tool_task(
+                    session=self.session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
                 )
             case _:
                 raise CannotProceed(f"Unknown entity controller: {entity_controller}")

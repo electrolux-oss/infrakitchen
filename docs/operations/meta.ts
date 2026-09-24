@@ -10,6 +10,7 @@ export default defineMeta({
     "mcp",
     "notifications",
     "feature_flags",
+    "iac_tools",
     "batch_operations",
   ],
 });

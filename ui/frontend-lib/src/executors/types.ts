@@ -11,6 +11,7 @@ export interface ExecutorCreate {
   integrationIds: string[];
   secretIds: string[];
   storagePath: string | null;
+  toolId?: string | null;
   labels: string[];
 }
 
@@ -26,4 +27,5 @@ export interface ExecutorUpdate {
   labels: string[];
   storagePath: string | null;
   storageId: string | null;
+  toolId?: string | null;
 }
