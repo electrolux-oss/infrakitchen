@@ -1,4 +1,5 @@
 import os
+import tempfile
 from typing import Any
 
 from dotenv import load_dotenv
@@ -40,6 +41,8 @@ class Settings(BaseSettings):
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
     MCP_ENABLED: bool = False
+    # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
+    TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
 
     class ConfigDict:
         env_file = ".env"

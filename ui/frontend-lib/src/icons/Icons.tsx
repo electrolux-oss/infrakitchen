@@ -56,6 +56,10 @@ export const OpenTofuIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-opentofu" {...props} />
 );
 
+export const TerraformIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="logos:terraform-icon" {...props} />
+);
+
 export const SlackIcon: React.FC<IconProps> = (props) => (
   <Icon icon="logos:slack-icon" {...props} />
 );
@@ -78,6 +82,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["mongodb_atlas", MongoDBIcon],
   ["datadog", DatadogIcon],
   ["opentofu", OpenTofuIcon],
+  ["terraform", TerraformIcon],
   ["slack", SlackIcon],
 ]);
 

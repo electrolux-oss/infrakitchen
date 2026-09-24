@@ -13,6 +13,8 @@ from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
 from graphql_api.modules.batch_operation.mutations import BatchOperationMutation
+from graphql_api.modules.tool.queries import ToolQuery
+from graphql_api.modules.tool.mutations import ToolMutation
 from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.blueprint.mutations import BlueprintMutation
 from graphql_api.modules.project.queries import ProjectQuery
@@ -79,6 +81,7 @@ class Query(
     AuthProviderQuery,
     AuditLogQuery,
     BatchOperationQuery,
+    ToolQuery,
     BlueprintQuery,
     ProjectQuery,
     ResourceQuery,
@@ -128,6 +131,7 @@ class Mutation(
     ResourceMutation,
     ServiceMutation,
     TemplateMutation,
+    ToolMutation,
     BlueprintMutation,
     IntegrationMutation,
     SourceCodeMutation,

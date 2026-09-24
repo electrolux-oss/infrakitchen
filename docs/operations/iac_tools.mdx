@@ -1,0 +1,132 @@
+---
+title: IaC Tools
+---
+
+## Overview
+
+IaC tools let platform teams choose which **OpenTofu** or **Terraform** version runs a resource or an executor.
+Instead of relying on the single `tofu` installed in the worker image, super admins download official releases into
+InfraKitchen, and every resource and executor can select the version its code needs.
+
+Tools are managed in **Operations → IaC Tools** (`/tools`). Each tool has its own page (`/tools/<id>`) that shows its
+details and lists the resources and executors using it.
+
+Supported tools:
+
+- **OpenTofu** - releases from [get.opentofu.org](https://get.opentofu.org/tofu/api.json)
+- **Terraform** - releases from [releases.hashicorp.com](https://releases.hashicorp.com/terraform/)
+
+## How a Tool Is Chosen
+
+When a task runs, the worker picks the tool in this order:
+
+1. The tool selected on the resource or executor
+2. The **global default** tool
+3. The `tofu` installed on the worker, when no default is set
+
+The task log shows which one is used, for example `Initiating OpenTofu 1.13.0...` or
+`Initiating tofu installed on the worker...`.
+
+## Adding a Tool
+
+<Steps>
+
+<Step title="Open the tools page">
+
+Go to **Operations → IaC Tools** and click <kbd>Add tool</kbd>.
+
+</Step>
+
+<Step title="Select the tool and architecture">
+
+- Choose **OpenTofu** or **Terraform**
+- Choose `amd64` or `arm64`, or keep **Server default** to use the architecture of the InfraKitchen server
+
+</Step>
+
+<Step title="Select the version">
+
+Pick a version from the list of official releases. Enable **Include pre-releases** to also list alpha, beta and
+release candidate versions.
+
+</Step>
+
+<Step title="Download">
+
+Click <kbd>Download</kbd>. The download runs in the background and the tool appears in the list with the `queued`
+status, then `in_progress` and `done`.
+
+</Step>
+
+</Steps>
+
+The worker downloads the release archive, verifies it against the official `SHA256SUMS` file and stores it in the
+database, so all workers share the same tools.
+
+## Tool Statuses
+
+| Status          | Description                                                          | Available actions       |
+| :-------------- | :------------------------------------------------------------------- | :---------------------- |
+| **queued**      | Waiting for a worker to download it                                  | -                       |
+| **in_progress** | Being downloaded and verified                                        | -                       |
+| **done**        | Ready to be used                                                     | Set default, Disable    |
+| **error**       | Download or checksum verification failed                             | Retry download, Disable |
+| **disabled**    | Cannot be selected anymore, see [Disabling](#disabling-and-deleting) | Enable, Delete          |
+
+The error message of a failed download is shown on the tool page and in the status tooltip of the list.
+
+## Global Default
+
+One tool can be marked as the **global default**. It is used by every resource and executor that does not select a
+tool, which makes it possible to upgrade the IaC version for all of them in one place.
+
+- **Set default** - available on a `done` tool, in the list or on its page. The previous default is replaced.
+- **Clear default** - available in the **IaC Tools** page header and in the danger zone of the default tool.
+  Resources and executors without a selected tool go back to the `tofu` installed on the worker.
+
+The global default cannot be disabled or deleted, clear it or select another default first.
+
+## Selecting a Tool
+
+Resources and executors have an **IaC Tool** field in their configuration. Leave it empty to use the global
+default. Only `done` tools can be selected.
+
+The resources and executors lists have an **IaC Tool** column that can be used to filter entities by tool, or to
+find the ones using the global default with the `is none` operator.
+
+## Disabling and Deleting
+
+Disabling a tool retires it without breaking anything:
+
+- It can no longer be selected by resources and executors, or set as the global default
+- Resources and executors already using it keep working with it
+- It can be enabled again at any time
+
+A tool must be disabled before it can be deleted. Deleting is refused while resources or executors still use it,
+and the error lists them, so they can be moved to another tool first.
+
+Both actions are available in the **Settings** tab (danger zone) of the tool page, and in the tools list.
+
+## Workers
+
+Workers unpack the executable from the stored archive on first use and keep it in a local cache, so later tasks start
+without loading the archive again. The archive is verified against the stored checksum before it is unpacked.
+
+| Setting          | Description                              | Default                                |
+| :--------------- | :--------------------------------------- | :------------------------------------- |
+| `TOOL_CACHE_DIR` | Local directory where tools are unpacked | `<system temp dir>/infrakitchen/tools` |
+
+A tool only runs on workers with the same operating system and architecture. A task using a tool built for
+another platform fails with a message naming the worker platform.
+
+The InfraKitchen server (to list the available versions) and the workers (to download them) need outbound HTTPS
+access to the release sites listed above.
+
+## Permissions and Audit
+
+- Users who can edit a resource or an executor can select any `done` tool for it
+- The tools list and tool pages are visible to every user with the `tool` read permission (granted by the `default` role)
+- Only **super admins** can add, retry, set or clear the default, disable, enable and delete tools
+
+Every change made by a user is recorded in the [audit log](activity/audit), and the download task log is available in
+the **Logs** tab of the tool page.

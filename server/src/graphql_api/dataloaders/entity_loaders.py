@@ -20,6 +20,7 @@ from application.templates.model import Template
 from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
+from core.tools.model import Tool
 from core.tasks.model import TaskEntity
 from core.users.model import User
 
@@ -118,6 +119,21 @@ async def _load_storages(keys: list[str], session: AsyncSession) -> list[dict[st
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {"id": str(row.id), "name": row.name, "entityName": "storage"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_tools(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Tool.id, Tool.name, Tool.version, Tool.os, Tool.arch).where(Tool.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {
+            "id": str(row.id),
+            "name": f"{row.name} {row.version} ({row.os}/{row.arch})",
+            "tool": row.name,
+            "entityName": "tool",
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -288,6 +304,7 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         ),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),
+        "tool": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_tools(list(keys), session)),
         "scheduled_actions_by_executor": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "executor")
         ),

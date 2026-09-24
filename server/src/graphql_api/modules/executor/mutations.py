@@ -1,6 +1,8 @@
 import uuid
+from typing import Any
 
 import strawberry
+from strawberry import Maybe
 from strawberry.experimental import pydantic as strawberry_pydantic
 from strawberry.types import Info
 
@@ -34,10 +36,11 @@ class ExecutorCreateInput:
     secret_ids: list[uuid.UUID] = strawberry.field(default_factory=list)
     storage_id: uuid.UUID | None = None
     storage_path: str | None = None
+    tool_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
 
 
-@strawberry_pydantic.input(model=ExecutorUpdate, all_fields=False)
+@strawberry.input
 class ExecutorUpdateInput:
     description: str | None = None
     command_args: str | None = None
@@ -50,6 +53,18 @@ class ExecutorUpdateInput:
     storage_id: uuid.UUID | None = None
     storage_path: str | None = None
     labels: list[str] | None = None
+    # explicit null resets to the runtime default tool
+    tool_id: Maybe[uuid.UUID | None] = None
+
+    def to_pydantic(self) -> ExecutorUpdate:
+        data: dict[str, Any] = {
+            field_name: value
+            for field_name, value in vars(self).items()
+            if field_name != "tool_id" and value is not None
+        }
+        if self.tool_id is not None:
+            data["tool_id"] = self.tool_id.value
+        return ExecutorUpdate(**data)
 
 
 @strawberry.input

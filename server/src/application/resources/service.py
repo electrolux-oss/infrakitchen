@@ -30,6 +30,7 @@ from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
+from core.tools.service import ToolService
 from core.caches.functions import cache_decorator
 from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
@@ -95,6 +96,7 @@ class ResourceService:
         favorite_service: FavoriteService,
         subscription_service: SubscriptionService,
         project_service: ProjectService,
+        tool_service: ToolService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -113,6 +115,7 @@ class ResourceService:
         self.favorite_service: FavoriteService = favorite_service
         self.subscription_service: SubscriptionService = subscription_service
         self.project_service: ProjectService = project_service
+        self.tool_service: ToolService = tool_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -374,6 +377,9 @@ class ResourceService:
                     resource, fields=["name", "storage_path"], parents=parents
                 )
 
+        if resource.tool_id is not None:
+            _ = await self.tool_service.validate_ready(resource.tool_id)
+
         body = resource.model_dump(exclude_unset=True)
         if template.abstract is True:
             body["abstract"] = True
@@ -581,6 +587,14 @@ class ResourceService:
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:
                     raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
 
+        # a disabled tool stays valid for entities already using it
+        if (
+            resource.tool_id is not None
+            and "tool_id" in resource.model_fields_set
+            and resource.tool_id != existing_resource.tool_id
+        ):
+            _ = await self.tool_service.validate_ready(resource.tool_id)
+
         if not has_field_changes(body, existing_resource):
             raise ValueError("No changes detected; the resource is already up to date.")
 
@@ -666,6 +680,12 @@ class ResourceService:
                 return False
 
             if resource_temp_state.value.get("source_code_version_id"):
+                return True
+
+            # running the code with another tofu/terraform tool requires a new execution
+            if "tool_id" in resource_temp_state.value and str(resource_temp_state.value["tool_id"] or "") != str(
+                pydantic_resource.tool_id or ""
+            ):
                 return True
 
             input_variables = resource_temp_state.value.get("variables", [])

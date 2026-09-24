@@ -4,6 +4,7 @@ import { GqlSecret } from "../../secrets/graphql";
 import { GqlSourceCodeVersionShort } from "../../source_code_versions/graphql";
 import { GqlStorage } from "../../storages/graphql";
 import { GqlTemplateShort } from "../../templates/graphql";
+import type { ToolShort } from "../../tools/types";
 import { GqlUserShort } from "../../users/graphql";
 import { GqlWorkspaceShort } from "../../workspaces/graphql";
 
@@ -55,6 +56,7 @@ type GqlResourceRelationFieldTypes = {
   integrationIds: GqlIntegrationShort[] | null;
   secretIds: GqlSecret[] | null;
   storage: GqlStorage | null;
+  tool: ToolShort | null;
   creator: GqlUserShort | null;
   tempState: GqlResourceTempState | null;
   scheduledActions: GqlScheduledResourceAction[] | null;

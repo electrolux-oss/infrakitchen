@@ -12,6 +12,7 @@ from graphql_api.dataloaders.entity_loaders import (
     get_scheduled_action_loader,
     get_resource_temp_state_loader,
 )
+from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
@@ -34,6 +35,8 @@ class ResourceType:
         "template",
         "storage",
         "storage_id",
+        "tool",
+        "tool_id",
         "integration_ids",
         "secret_ids",
         "parents",
@@ -48,6 +51,7 @@ class ResourceType:
     id: uuid.UUID = strawberry.UNSET
     template: TemplateType | None = None
     storage: StorageType | None = None
+    tool: ToolType | None = None
     workspace: WorkspaceType | None = None
     project: ProjectType | None = None
     source_code_version: SourceCodeVersionType | None = None

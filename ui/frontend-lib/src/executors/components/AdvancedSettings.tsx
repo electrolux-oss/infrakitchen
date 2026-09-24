@@ -16,6 +16,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { sameStringSet } from "../../common/utils";
+import { ProviderIcon } from "../../icons/Icons";
+import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import {
   ExecutorUpdateFieldInput,
@@ -231,6 +233,31 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
             autoFocus
             helperText="Frozen field used as the OpenTofu/Terraform state path. Make sure the path is unique within the selected storage."
           />
+        )}
+        size={12}
+      />
+      <CommonEditableField<string | null>
+        name={"IaC Tool"}
+        canEdit={canEdit}
+        value={executor.tool?.id ?? null}
+        ariaLabel="Edit IaC tool"
+        display={
+          executor.tool ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ProviderIcon provider={executor.tool.name} />
+              <GetReferenceUrlValue
+                id={executor.tool.id}
+                entityName="tool"
+                display_name={toolLabel(executor.tool)}
+              />
+            </Box>
+          ) : (
+            <span>Global default</span>
+          )
+        }
+        onSave={(value) => saveField({ toolId: value })}
+        renderEditor={({ value, onChange }) => (
+          <ToolSelect value={value} onChange={onChange} />
         )}
         size={12}
       />

@@ -19,6 +19,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
 import { RefFolders } from "../../source_codes/types";
+import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { ExecutorCreate } from "../types";
@@ -146,7 +147,7 @@ const ExecutorCreatePageInner = () => {
       ikApi
         .graphqlRequest<{ createExecutor: { id: string; name: string } }>(
           EXECUTOR_CREATE_MUTATION,
-          { input: data },
+          { input: { ...data, toolId: data.toolId || null } },
         )
         .then((response) => {
           const created = response.createExecutor;
@@ -525,6 +526,16 @@ const ExecutorCreatePageInner = () => {
                 )}
               />
             )}
+
+            {watchedStorage && (
+              <Controller
+                name="toolId"
+                control={control}
+                render={({ field }) => (
+                  <ToolSelect value={field.value} onChange={field.onChange} />
+                )}
+              />
+            )}
           </Box>
         </PropertyCard>
       </Box>
@@ -544,6 +555,7 @@ const ExecutorCreatePage = () => {
       sourceCodeId: "",
       storageId: "",
       storagePath: "",
+      toolId: "",
     },
     mode: "onChange",
   });

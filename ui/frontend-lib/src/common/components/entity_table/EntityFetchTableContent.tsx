@@ -39,6 +39,7 @@ interface EntityFetchTableContentProps {
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
   rowClickable?: boolean;
+  onDataChange?: (data: any[]) => void;
   buildApiFiltersRef: MutableRefObject<
     ((filterValues: Record<string, any>) => Record<string, any>) | undefined
   >;
@@ -78,6 +79,7 @@ export const EntityFetchTableContent = forwardRef<
     entityFieldMap,
     transformFn,
     rowClickable,
+    onDataChange,
     buildApiFiltersRef,
     defaultFilterRef,
     columnsRef,
@@ -102,6 +104,8 @@ export const EntityFetchTableContent = forwardRef<
     useFilterContext();
 
   const appliedInitialFiltersRef = useRef<string | null>(null);
+  const onDataChangeRef = useRef(onDataChange);
+  onDataChangeRef.current = onDataChange;
 
   useEffect(() => {
     if (!initialFilters || Object.keys(initialFilters).length === 0) {
@@ -194,6 +198,7 @@ export const EntityFetchTableContent = forwardRef<
               : listData;
 
             setData(transformedData);
+            onDataChangeRef.current?.(transformedData);
             setTotalRows(nextTotalRows);
           });
       } catch (e) {
