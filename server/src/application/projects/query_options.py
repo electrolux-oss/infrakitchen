@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload, selectinload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.workspaces.query_options import build_workspace_query_options
 from core.database import FieldSpec, build_load_only
@@ -24,18 +24,18 @@ def build_project_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["workspace"]
         opts.append(joinedload(Project.workspace).options(*build_workspace_query_options(nested)))
     else:
-        opts.append(noload(Project.workspace))
+        opts.append(raiseload(Project.workspace))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(Project.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Project.creator))
+        opts.append(raiseload(Project.creator))
 
     if "owners" in fields:
         nested = fields["owners"]
         opts.append(selectinload(Project.owners).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Project.owners))
+        opts.append(raiseload(Project.owners))
 
     return opts

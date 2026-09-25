@@ -20,7 +20,7 @@ class Subscription(Base):
     __tablename__: str = "subscriptions"
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    user: Mapped[User] = relationship("User", lazy="noload")
+    user: Mapped[User] = relationship("User", lazy="raise")
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 
@@ -37,7 +37,7 @@ class NotificationPreference(Base):
     __tablename__: str = "notification_preferences"
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    user: Mapped[User] = relationship("User", lazy="noload")
+    user: Mapped[User] = relationship("User", lazy="raise")
     event_type: Mapped[str] = mapped_column(String(150), nullable=False)
     channels: Mapped[list[str]] = mapped_column(
         ARRAY(SQLAlchemyEnum(NotificationChannel, name="notification_channel", native_enum=False)),

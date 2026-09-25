@@ -76,7 +76,7 @@ class Blueprint(BaseRevision):
     workflows: Mapped[list["Workflow"]] = relationship(
         "Workflow",
         secondary=blueprint_workflows,
-        lazy="noload",
+        lazy="raise",
     )
 
     # Wiring config: maps template outputs → template inputs
