@@ -60,6 +60,16 @@ class TestToolTask:
             await tool_task.start_pipeline()
         assert mocked_tool.error_message == "no network"
 
+    async def test_event_publish_failure_keeps_status(self, tool_task, mocked_tool, mock_event_sender, monkeypatch):
+        content = b"archive"
+        sha = hashlib.sha256(content).hexdigest()
+        monkeypatch.setattr(tool_task_module, "download_release", AsyncMock(return_value=(content, sha)))
+        mock_event_sender.flush = AsyncMock(side_effect=RuntimeError("broker unavailable"))
+
+        await tool_task.start_pipeline()
+
+        assert mocked_tool.status == ModelStatus.DONE
+
     async def test_already_downloaded(self, tool_task, mocked_tool, monkeypatch):
         mocked_tool.status = ModelStatus.DONE
         download = AsyncMock()

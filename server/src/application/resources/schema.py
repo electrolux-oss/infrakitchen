@@ -3,10 +3,10 @@ from typing import Annotated, Any, Literal, TypeVar, cast
 import re
 import uuid
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, computed_field
 from pydantic_core import MISSING
 
-from application.common.schema import DependencyConfig, DependencyTag
+from application.common.schema import DependencyConfig, DependencyTag, OptionalUUID
 from application.projects.schema import ProjectShort
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
@@ -18,8 +18,6 @@ from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
-
-OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 _PATTERN_PLACEHOLDER_RE = re.compile(r"\{([^}]*)\}")
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z0-9_-]+$")

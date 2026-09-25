@@ -72,7 +72,11 @@ class ToolTask:
         await self.session.commit()
         await self.crud_tool.refresh(self.tool_instance)
         await self.event_sender.send_event(ToolResponse.model_validate(self.tool_instance), ModelActions.UPDATE)
-        await self.event_sender.flush()
+        try:
+            await self.event_sender.flush()
+        except Exception as e:
+            # the status is committed already, a lost UI event must not fail the task and overwrite it with ERROR
+            logger.warning(f"Failed to publish status event for tool {self.tool_instance.id}: {e}")
 
     async def make_failed(self) -> None:
         await self.change_status(ModelStatus.ERROR)

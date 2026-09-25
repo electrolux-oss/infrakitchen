@@ -117,4 +117,21 @@ class ToolCRUD:
                 ).where(column == existing_tool.id)
                 result = await self.session.execute(statement)
                 dependencies.extend(result.fetchall())
+
+        # pending (not yet approved) resource changes keep the tool_id in a JSON blob without a foreign key
+        temp_state = Base.metadata.tables.get("resources_temp_state")
+        resources = Base.metadata.tables.get("resources")
+        if temp_state is not None and resources is not None:
+            statement = (
+                select(
+                    resources.c["id"].label("id"),
+                    literal("resource").label("type"),
+                    resources.c["name"].label("name"),
+                )
+                .join(temp_state, temp_state.c["resource_id"] == resources.c["id"])
+                .where(temp_state.c["value"]["tool_id"].as_string() == str(existing_tool.id))
+            )
+            result = await self.session.execute(statement)
+            known = {dependency.id for dependency in dependencies}
+            dependencies.extend(row for row in result.fetchall() if row.id not in known)
         return dependencies
