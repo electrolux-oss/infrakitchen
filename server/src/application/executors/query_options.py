@@ -7,6 +7,7 @@ from application.integrations.query_options import build_integration_query_optio
 from application.secrets.query_options import build_secret_query_options
 from application.source_codes.query_options import build_source_code_query_options
 from application.storages.query_options import build_storage_query_options
+from core.tools.query_options import build_tool_query_options
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
 
@@ -19,6 +20,7 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
             selectinload(Executor.secret_ids),
             joinedload(Executor.source_code),
             joinedload(Executor.storage),
+            joinedload(Executor.tool),
             joinedload(Executor.creator),
         ]
 
@@ -47,6 +49,12 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Executor.storage).options(*build_storage_query_options(nested)))
     else:
         opts.append(noload(Executor.storage))
+
+    if "tool" in fields:
+        nested = fields["tool"]
+        opts.append(joinedload(Executor.tool).options(*build_tool_query_options(nested)))
+    else:
+        opts.append(noload(Executor.tool))
 
     if "creator" in fields:
         nested = fields["creator"]

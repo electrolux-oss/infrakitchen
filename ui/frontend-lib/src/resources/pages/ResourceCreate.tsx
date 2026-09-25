@@ -43,6 +43,7 @@ import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { GqlTemplateShort } from "../../templates/graphql";
+import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { ValidationRule } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
@@ -159,6 +160,7 @@ const ResourceCreatePageInner = () => {
       const payload: ResourceCreate = {
         ...data,
         storageId: data.storageId || null,
+        toolId: data.toolId || null,
         workspaceId: data.workspaceId || null,
         projectId: data.projectId || null,
         sourceCodeVersionId: data.sourceCodeVersionId || null,
@@ -1079,6 +1081,19 @@ const ResourceCreatePageInner = () => {
                     />
                   )}
 
+                  {watchedStorage && (
+                    <Controller
+                      name="toolId"
+                      control={control}
+                      render={({ field }) => (
+                        <ToolSelect
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                  )}
+
                   <Controller
                     name="projectId"
                     control={control}
@@ -1240,6 +1255,7 @@ const ResourceCreatePage = () => {
       dependencyConfig: [],
       storageId: "",
       storagePath: "",
+      toolId: "",
     },
     mode: "onChange",
   });

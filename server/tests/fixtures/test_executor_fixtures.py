@@ -39,6 +39,7 @@ def mock_executor_service(
     mock_log_service,
     mock_task_entity_service,
     mock_favorite_service,
+    mock_tool_service,
 ):
     return ExecutorService(
         crud=mock_executor_crud,
@@ -52,6 +53,7 @@ def mock_executor_service(
         log_service=mock_log_service,
         task_service=mock_task_entity_service,
         favorite_service=mock_favorite_service,
+        tool_service=mock_tool_service,
     )
 
 

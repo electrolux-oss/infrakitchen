@@ -18,6 +18,7 @@ DEFAULT_ENTITIES = [
     "constant",
     "cloud_resource",
     "worker",
+    "tool",
     "workspace",
     "scheduler_job",
     "entitie",

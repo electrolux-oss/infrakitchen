@@ -10,6 +10,7 @@ from application.source_code_versions.service import SourceCodeService
 from application.storages.service import StorageService
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
+from core.tools.service import ToolService
 from core.constants import ModelStatus, ModelState
 from core.constants.model import ModelActions
 from core.database import FieldSpec, to_dict
@@ -57,6 +58,7 @@ class ExecutorService:
         log_service: LogService,
         task_service: TaskEntityService,
         favorite_service: FavoriteService,
+        tool_service: ToolService,
     ):
         self.crud: ExecutorCRUD = crud
         self.integration_service: IntegrationService = integration_service
@@ -69,6 +71,7 @@ class ExecutorService:
         self.log_service: LogService = log_service
         self.task_service: TaskEntityService = task_service
         self.favorite_service: FavoriteService = favorite_service
+        self.tool_service: ToolService = tool_service
 
     async def get_dto_by_id(self, executor_id: str | UUID) -> ExecutorDTO | None:
         if not is_valid_uuid(executor_id):
@@ -153,6 +156,9 @@ class ExecutorService:
             if executor.storage_path is None or executor.storage_path == "":
                 raise ValueError("Storage path is required for executors with storage")
 
+        if executor.tool_id is not None:
+            _ = await self.tool_service.validate_ready(executor.tool_id)
+
         body = executor.model_dump(exclude_unset=True)
 
         body["created_by"] = requester.id
@@ -220,6 +226,13 @@ class ExecutorService:
         existing_executor_pydantic = ExecutorResponse.model_validate(existing_executor)
 
         body = model_db_dump(executor, exclude_defaults=True, exclude_none=True)
+        if "tool_id" in executor.model_fields_set:
+            # tool can be reset to the runtime default, so None is a valid change
+            # a disabled tool stays valid for entities already using it
+            if executor.tool_id is not None and executor.tool_id != existing_executor.tool_id:
+                _ = await self.tool_service.validate_ready(executor.tool_id)
+            body["tool_id"] = executor.tool_id
+
         if not body:
             raise ValueError("No fields to update")
 

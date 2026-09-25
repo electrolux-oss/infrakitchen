@@ -23,13 +23,27 @@ const lz = <T extends Record<string, React.ComponentType<any>>>(
 const allRoutes: LazyRouteDefinition[] = [
   // ── Settings ────────────────────────────────────────────────────────────────
   {
-    path: "/admin",
+    path: "/admin/:tab?",
     Component: lz(
       () => import("./administration/pages/AdminPage"),
       "AdminPage",
     ),
     requiredPermission: "api:admin",
     permissionAction: "admin",
+  },
+
+  // ── IaC Tools ────────────────────────────────────────────────────────────────
+  {
+    path: "/tools",
+    Component: lz(() => import("./tools/pages/ToolsPage"), "ToolsPage"),
+    requiredPermission: "api:tool",
+    permissionAction: "read",
+  },
+  {
+    path: "/tools/:tool_id/:tab?",
+    Component: lz(() => import("./tools/pages/Tool"), "ToolPage"),
+    requiredPermission: "api:tool",
+    permissionAction: "read",
   },
 
   // ── Audit Logs ───────────────────────────────────────────────────────────────

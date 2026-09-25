@@ -12,6 +12,7 @@ from application.source_code_versions.query_options import build_source_code_ver
 from application.storages.query_options import build_storage_query_options
 from application.templates.query_options import build_template_query_options
 from application.workspaces.query_options import build_workspace_query_options
+from core.tools.query_options import build_tool_query_options
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
 
@@ -28,6 +29,7 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(Resource.workspace),
             joinedload(Resource.source_code_version),
             joinedload(Resource.storage),
+            joinedload(Resource.tool),
             joinedload(Resource.creator),
             joinedload(Resource.project),
         ]
@@ -81,6 +83,12 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
         opts.append(joinedload(Resource.storage).options(*build_storage_query_options(nested)))
     else:
         opts.append(noload(Resource.storage))
+
+    if "tool" in fields:
+        nested = fields["tool"]
+        opts.append(joinedload(Resource.tool).options(*build_tool_query_options(nested)))
+    else:
+        opts.append(noload(Resource.tool))
 
     if "creator" in fields:
         nested = fields["creator"]

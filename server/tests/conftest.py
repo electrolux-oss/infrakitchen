@@ -7,6 +7,12 @@ from .fixtures.test_auth_provider_fixtures import (
     auth_provider,
 )
 from .fixtures.test_casbin_fixtures import mock_casbin
+from .fixtures.test_tool_fixtures import (
+    mock_tool_crud,
+    mock_tool_service,
+    tool_service,
+    mocked_tool,
+)
 from .fixtures.test_project_fixtures import (
     mock_project_crud,
     mock_project_service,
@@ -272,4 +278,8 @@ __all__ = [
     "mock_blueprint_service",
     "mocked_blueprint",
     "blueprint_response",
+    "mock_tool_crud",
+    "mock_tool_service",
+    "tool_service",
+    "mocked_tool",
 ]

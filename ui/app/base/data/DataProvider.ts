@@ -80,7 +80,7 @@ const parseGraphqlError = (errors: GraphqlErrorResponse[]): never => {
   const apiError = toApiClientError(GRAPHQL_ERROR_STATUS, {
     message: firstError.message || "GraphQL request failed",
     error_code:
-      firstError.extensions?.code ?? firstError.extensions?.error_code,
+      firstError.extensions?.error_code ?? firstError.extensions?.code,
     metadata: firstError.extensions?.metadata || {},
   });
 

@@ -1104,3 +1104,117 @@ class TestPatchAction:
         mock_event_sender.send_event.assert_awaited_once_with(response, ModelActions.RETRY)
         assert result.status == ModelStatus.QUEUED
         assert result.state == ModelState.PROVISIONED
+
+
+class TestToolSelection:
+    @pytest.fixture
+    def editable_resource(self, mock_resource_service, mock_resource_crud, mocked_resource):
+        mock_resource_service.publish_notification_event = AsyncMock()
+        mocked_resource.id = uuid4()
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_resource.abstract = True
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        return mocked_resource
+
+    @pytest.mark.asyncio
+    async def test_patch_tool_is_validated(
+        self,
+        mock_resource_service,
+        mock_tool_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        tool_id = uuid4()
+
+        await mock_resource_service.update_resource(
+            resource_id=editable_resource.id,
+            resource=ResourceUpdate(tool_id=tool_id),
+            requester=mocked_user_response,
+        )
+
+        mock_tool_service.validate_ready.assert_awaited_once_with(tool_id)
+        value = mocked_resource_temp_state_handler.set_resource_temp_state.call_args.kwargs["value"]
+        assert value == {"tool_id": tool_id}
+
+    @pytest.mark.asyncio
+    async def test_patch_tool_not_ready(
+        self,
+        mock_resource_service,
+        mock_tool_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        mock_tool_service.validate_ready.side_effect = EntityWrongState("Tool is not downloaded")
+
+        with pytest.raises(EntityWrongState, match="not downloaded"):
+            await mock_resource_service.update_resource(
+                resource_id=editable_resource.id,
+                resource=ResourceUpdate(tool_id=uuid4()),
+                requester=mocked_user_response,
+            )
+
+        mocked_resource_temp_state_handler.set_resource_temp_state.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_keeps_disabled_tool(
+        self,
+        mock_resource_service,
+        mock_tool_service,
+        editable_resource,
+        mocked_user_response,
+    ):
+        # a disabled tool fails validate_ready, but the resource already uses it
+        editable_resource.tool_id = uuid4()
+        mock_tool_service.validate_ready.side_effect = EntityWrongState("Tool is not downloaded")
+
+        await mock_resource_service.update_resource(
+            resource_id=editable_resource.id,
+            resource=ResourceUpdate(tool_id=editable_resource.tool_id, description="new"),
+            requester=mocked_user_response,
+        )
+
+        mock_tool_service.validate_ready.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_reset_tool(
+        self,
+        mock_resource_service,
+        mock_tool_service,
+        mocked_resource_temp_state_handler,
+        editable_resource,
+        mocked_user_response,
+    ):
+        editable_resource.tool_id = uuid4()
+
+        await mock_resource_service.update_resource(
+            resource_id=editable_resource.id, resource=ResourceUpdate(tool_id=None), requester=mocked_user_response
+        )
+
+        mock_tool_service.validate_ready.assert_not_awaited()
+        value = mocked_resource_temp_state_handler.set_resource_temp_state.call_args.kwargs["value"]
+        assert value == {"tool_id": None}
+
+    @pytest.mark.asyncio
+    async def test_approve_tool_change_requires_execution(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_resource_temp_state_handler,
+        mocked_resource_temp_state,
+        editable_resource,
+        mocked_user,
+    ):
+        editable_resource.abstract = False
+        mocked_resource_temp_state.value = {"tool_id": str(uuid4())}
+        mocked_resource_temp_state_handler.get_by_resource_id.return_value = mocked_resource_temp_state
+        mock_resource_crud.update.return_value = editable_resource
+
+        result = await mock_resource_service.patch_action(
+            resource_id=editable_resource.id, body=PatchBodyModel(action=ModelActions.APPROVE), requester=mocked_user
+        )
+
+        assert result.state == ModelState.PROVISIONED
+        assert result.status == ModelStatus.READY

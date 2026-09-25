@@ -3,10 +3,10 @@ from typing import Annotated, Any, Literal, TypeVar, cast
 import re
 import uuid
 
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, computed_field
 from pydantic_core import MISSING
 
-from application.common.schema import DependencyConfig, DependencyTag
+from application.common.schema import DependencyConfig, DependencyTag, OptionalUUID
 from application.projects.schema import ProjectShort
 from application.secrets.schema import SecretShort
 from application.templates.schema import TemplateShort
@@ -14,11 +14,10 @@ from application.integrations.schema import IntegrationShort
 from application.source_code_versions.schema import SourceCodeVersionShort
 from application.validation_rules.schema import ValidationRuleResponse
 from application.workspaces.schema import WorkspaceShort
+from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
-
-OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 _PATTERN_PLACEHOLDER_RE = re.compile(r"\{([^}]*)\}")
 _IDENTIFIER_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
@@ -138,6 +137,7 @@ class ResourceResponse(BaseModel):
     storage_path: StringWithPattern | None = Field(
         default=None,
     )
+    tool: ToolShort | None = Field(default=None)
     variables: list[Variables] = Field(default=[])
     outputs: list[Outputs] = Field(default=[])
     dependency_tags: list[DependencyTag] = Field(default_factory=list)
@@ -187,6 +187,7 @@ class ResourceCreate(BaseModel):
     storage_path: StringWithPattern | None = Field(
         default=None,
     )
+    tool_id: uuid.UUID | None = Field(default=None)
     variables: list[Variables] = Field(default=[])
     dependency_tags: list[DependencyTag] = Field(default_factory=list)
     dependency_config: list[DependencyConfig] = Field(default_factory=list)
@@ -225,6 +226,9 @@ class ResourceUpdate(BaseModel):
         default=cast(Any, MISSING),
     )
     project_id: OptionalUUID = Field(
+        default=cast(Any, MISSING),
+    )
+    tool_id: OptionalUUID = Field(
         default=cast(Any, MISSING),
     )
 

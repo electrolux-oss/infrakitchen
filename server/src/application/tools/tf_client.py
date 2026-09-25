@@ -25,12 +25,15 @@ class OtfClient:
         variables: dict[str, Any],
         backend_storage_config: str,
         logger: EntityLogger,
+        tool_path: str | None = None,
     ):
         self.workspace_path: str = workspace_path
         self.environment_variables: dict[str, str] = environment_variables
         self.backend_storage_config: str = backend_storage_config
         self.logger: EntityLogger = logger
         self.variables: dict[str, Any] = variables
+        # path to a specific tofu/terraform executable, the runtime `tofu` is used when not set
+        self.tool_path: str | None = tool_path
 
     async def init_tf_workspace(self):
         await self._generate_tfvar()
@@ -71,7 +74,7 @@ class OtfClient:
 
         self.logger.info(f"Running Tofu command: {command_args}")
         ssp = ShellScriptClient(
-            command="tofu",
+            command=self.tool_path or "tofu",
             command_args=command_args,
             workspace_path=self.workspace_path,
             environment_variables=self.environment_variables,

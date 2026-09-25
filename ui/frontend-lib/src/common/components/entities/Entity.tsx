@@ -35,6 +35,8 @@ export interface EntityRecord {
   sourceCodeProvider?: string;
   /** Populated for workspaces (``entityType === "workspace"``). */
   workspaceProvider?: string;
+  /** IaC tool name of a tool entity (``entityType === "tool"``), when ``name`` holds a display label. */
+  tool?: string;
 }
 
 export interface EntityProps {
@@ -244,6 +246,12 @@ export const Entity = ({
         {entityType === "integration" && (
           <ProviderIcon
             provider={entity.integrationProvider}
+            size={providerIconSize}
+          />
+        )}
+        {entityType === "tool" && (
+          <ProviderIcon
+            provider={entity.tool ?? entity.name}
             size={providerIconSize}
           />
         )}
