@@ -1,10 +1,11 @@
 from datetime import datetime, UTC
-from typing import Annotated, Any, Literal, cast
+from typing import Any, Literal, cast
 import uuid
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from pydantic_core import MISSING
 
+from application.common.schema import OptionalUUID
 from application.secrets.schema import SecretShort
 from application.source_codes.schema import SourceCodeShort
 from application.integrations.schema import IntegrationShort
@@ -13,8 +14,6 @@ from core.tools.schema import ToolShort
 from core.constants.model import ModelState, ModelStatus
 from core.users.schema import UserShort
 from ..storages.schema import StorageShort
-
-OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 
 class ExecutorShort(BaseModel):

@@ -58,7 +58,11 @@ class ToolService:
 
     async def validate_ready(self, tool_id: str | UUID) -> ToolResponse:
         """Ensure the tool exists and has been downloaded, so it can be assigned to an entity."""
-        tool = await self.get_by_id(tool_id)
+        tool = self._ensure_ready(await self.crud.get_by_id(tool_id))
+        return ToolResponse.model_validate(tool)
+
+    @staticmethod
+    def _ensure_ready(tool: Tool | None) -> Tool:
         if tool is None:
             raise EntityNotFound("Tool not found")
         if tool.status != ModelStatus.DONE:
@@ -136,10 +140,7 @@ class ToolService:
                 await self.event_sender.send_event(ToolResponse.model_validate(previous), ModelActions.UPDATE)
             return None
 
-        _ = await self.validate_ready(tool_id)
-        tool = await self.crud.get_by_id(tool_id)
-        if tool is None:
-            raise EntityNotFound("Tool not found")
+        tool = self._ensure_ready(await self.crud.get_by_id(tool_id))
         previous = await self.crud.get_default()
         await self.crud.set_default(tool)
         await self.audit_log_handler.create_log(tool.id, requester.id, ModelActions.UPDATE)
