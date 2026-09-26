@@ -77,6 +77,8 @@ export const RESOURCE_SCHEDULED_ACTION_FIELDS = `
   entity
   action
   runAt
+  cron
+  timezone
   status
   error
   createdAt

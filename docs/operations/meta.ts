@@ -11,5 +11,6 @@ export default defineMeta({
     "notifications",
     "feature_flags",
     "batch_operations",
+    "scheduled_applies",
   ],
 });

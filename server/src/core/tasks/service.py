@@ -7,6 +7,7 @@ from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
 from .crud import TaskEntityCRUD
+from .functions import next_cron_run
 from .model import TaskEntity
 from .schema import TaskEntityResponse, TaskScheduleCreate
 
@@ -98,6 +99,15 @@ class TaskEntityService:
         await self.event_sender.send_reload_event("reload_scheduler_jobs")
 
     async def upsert_scheduled(self, scheduled_task: TaskScheduleCreate, requester: UserDTO) -> TaskEntity:
+        if scheduled_task.cron is not None:
+            schedule = {
+                "run_at": next_cron_run(scheduled_task.cron, scheduled_task.timezone),
+                "cron": scheduled_task.cron,
+                "timezone": scheduled_task.timezone,
+            }
+        else:
+            schedule = {"run_at": scheduled_task.run_at, "cron": None, "timezone": None}
+
         existing_pending = await self.crud.get_one(
             filter={"entity_id": scheduled_task.entity_id, "entity": scheduled_task.entity}
         )
@@ -106,7 +116,7 @@ class TaskEntityService:
             updated = await self.crud.update(
                 existing_pending,
                 {
-                    "run_at": scheduled_task.run_at,
+                    **schedule,
                     "error": None,
                     "action": scheduled_task.action,
                     "status": ModelStatus.PENDING,
@@ -118,7 +128,10 @@ class TaskEntityService:
 
         created = await self.crud.create(
             {
-                **scheduled_task.model_dump(),
+                "entity_id": scheduled_task.entity_id,
+                "entity": scheduled_task.entity,
+                "action": scheduled_task.action,
+                **schedule,
                 "created_by": requester.id,
                 "state": None,
                 "status": ModelStatus.PENDING,
@@ -130,7 +143,16 @@ class TaskEntityService:
 
     async def cancel_scheduled(self, task_id: UUID) -> TaskEntity | None:
         task = await self.crud.get_by_id(task_id)
-        if task is None or task.run_at is None:
+        if task is None:
+            return None
+
+        if task.cron is not None:
+            # Recurring schedule: the row status reflects the last real execution, so keep it.
+            updated = await self.crud.update(task, {"cron": None, "timezone": None, "run_at": None})
+            await self._notify_reload()
+            return updated
+
+        if task.run_at is None:
             return None
 
         if task.status != ModelStatus.PENDING:
