@@ -105,7 +105,8 @@ export const dataGridSx: SystemStyleObject<Theme> = {
   // respectable footprint (the "No rows" overlay expands instead of huddling
   // at the top). Embedded grids that intentionally hug their content
   // (autoHeight, compact read-only tables) reset this with minHeight: "auto".
-  minHeight: 380,
+  // Small screens skip the floor: it just leaves a tall blank area.
+  minHeight: { xs: "auto", md: 380 },
   // Footer: keep the flush control look (no focus boxes/swallows), default
   // MUI heights.
   "& .MuiDataGrid-footerContainer": {
@@ -122,6 +123,14 @@ export const dataGridSx: SystemStyleObject<Theme> = {
     "& .MuiTablePagination-select": {
       paddingTop: "3px",
       paddingBottom: "3px",
+    },
+    // On phones the "Rows per page" control doesn't fit next to the range and
+    // arrows; drop it so the footer stays on one line.
+    "& .MuiTablePagination-toolbar": {
+      px: { xs: 1, sm: 2 },
+    },
+    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-input": {
+      display: { xs: "none", sm: "flex" },
     },
   },
 };

@@ -11,12 +11,14 @@ const PageContentHeader = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
   justifyContent: "space-between",
+  flexWrap: "wrap",
   gap: theme.spacing(2),
 }));
 
 const PageHeaderToolbar = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
+  flexWrap: "wrap",
   gap: theme.spacing(1),
   marginLeft: "auto",
 }));
@@ -56,7 +58,14 @@ export default function PageContainer(props: PageContainerProps) {
         <Stack>
           {" "}
           <PageContentHeader sx={{ mt: 2 }}>
-            <Box sx={{ display: "flex", flexDirection: "column" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+                overflowWrap: "anywhere",
+              }}
+            >
               {title ? (
                 <Typography
                   variant="h5"
@@ -84,6 +93,7 @@ export default function PageContainer(props: PageContainerProps) {
           sx={{
             overflowY: "auto",
             minHeight: 0,
+            minWidth: 0,
             display: "flex",
             alignItems: "center",
             flexDirection: "column",

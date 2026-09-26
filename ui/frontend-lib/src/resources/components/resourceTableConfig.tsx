@@ -282,6 +282,7 @@ export const resourceColumns: EntityTableColumn[] = [
     fetchFields: ["state", "status"],
     headerName: "State",
     flex: 1,
+    mobile: "badge",
     filter: [
       {
         field: "state",

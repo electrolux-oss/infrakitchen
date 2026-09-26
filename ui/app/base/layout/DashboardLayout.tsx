@@ -84,7 +84,10 @@ export default function DashboardLayout() {
         position: "relative",
         display: "flex",
         overflow: "hidden",
+        // 100vh on mobile browsers includes the area behind the address bar;
+        // dvh tracks the actually visible viewport.
         height: "100vh",
+        "@supports (height: 100dvh)": { height: "100dvh" },
         width: "100%",
       }}
     >
