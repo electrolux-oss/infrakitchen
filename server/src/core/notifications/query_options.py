@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import joinedload, raiseload
 
 from .model import Subscription, NotificationPreference
 from core.database import FieldSpec, build_load_only
@@ -26,7 +26,7 @@ def build_subscription_query_options(fields: FieldSpec | None = None) -> list[An
         nested = fields["user"]
         opts.append(joinedload(Subscription.user).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Subscription.user))
+        opts.append(raiseload(Subscription.user))
 
     return opts
 
@@ -48,6 +48,6 @@ def build_notification_preference_query_options(fields: FieldSpec | None = None)
         nested = fields["user"]
         opts.append(joinedload(NotificationPreference.user).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(NotificationPreference.user))
+        opts.append(raiseload(NotificationPreference.user))
 
     return opts

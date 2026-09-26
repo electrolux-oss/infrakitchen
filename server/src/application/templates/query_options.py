@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload, selectinload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
@@ -29,18 +29,18 @@ def build_template_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["children"]
         opts.append(selectinload(Template.children).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(Template.children))
+        opts.append(raiseload(Template.children))
 
     if "parents" in fields:
         nested = fields["parents"]
         opts.append(selectinload(Template.parents).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(Template.parents))
+        opts.append(raiseload(Template.parents))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(Template.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Template.creator))
+        opts.append(raiseload(Template.creator))
 
     return opts

@@ -64,11 +64,11 @@ def is_column_relationship(model: type, attr_name: str) -> bool:
     return is_relationship
 
 
-def evaluate_sqlalchemy_sorting(
+def evaluate_sqlalchemy_sorting[*Ts](
     model: type,
-    statement: Select[Any],
+    statement: Select[*Ts],
     sort: tuple[str, str] | None = None,
-) -> Select[Any]:
+) -> Select[*Ts]:
     """
     Converts a generic API sorting tuple into SQLAlchemy sorting.
     Supports dot-notation for relationship fields (e.g. "template.name").
@@ -130,7 +130,7 @@ def evaluate_sqlalchemy_sorting(
     return statement
 
 
-def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int] | None = None) -> Select[Any]:
+def evaluate_sqlalchemy_pagination[*Ts](statement: Select[*Ts], range: tuple[int, int] | None = None) -> Select[*Ts]:
     """
     Applies pagination to a SQLAlchemy statement.
     """
@@ -144,7 +144,7 @@ def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int
     return statement
 
 
-def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[str, Any] | None) -> Select[Any]:
+def evaluate_sqlalchemy_filters[*Ts](model: type, statement: Select[*Ts], body: dict[str, Any] | None) -> Select[*Ts]:
     """
     Converts a generic API filter dict with operators into SQLAlchemy filters.
     Supports nested relationship filtering using double underscore notation.

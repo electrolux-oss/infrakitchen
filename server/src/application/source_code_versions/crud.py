@@ -216,7 +216,7 @@ class SourceCodeVersionCRUD:
                 template_references.append(reference)
 
         # Attach the list to a new attribute on the retrieved ORM object
-        scv.template_refs = template_references
+        scv.template_refs = template_references  # pyright: ignore[reportAttributeAccessIssue]
         return scv
 
     # Batch methods for blueprint optimization
