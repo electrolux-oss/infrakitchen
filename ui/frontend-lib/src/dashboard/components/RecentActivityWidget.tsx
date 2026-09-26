@@ -12,10 +12,15 @@ import {
   CircularProgress,
   Divider,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
-import { Entity } from "../../common/components/entities/Entity";
+import {
+  Entity,
+  humanizeEntityType,
+} from "../../common/components/entities/Entity";
 import {
   dataGridClickableRowSx,
   dataGridDefaultProps,
@@ -26,6 +31,7 @@ import {
   USER_AVATAR_COLUMN_WIDTH,
 } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Label } from "../../common/components/labels/Label";
 import { useConfig } from "../../common/context/ConfigContext";
 import { ActivityLogEntry } from "../types";
 
@@ -115,6 +121,121 @@ const STATUS_COLORS = {
   pending: "warning.main",
 } as const;
 
+const ActivityEvent = ({ activity }: { activity: ActivityLogEntry }) => {
+  const status = activityStatus(activity.action, activity.entityData?.status);
+  const Icon = STATUS_ICONS[status];
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Icon
+        fontSize="small"
+        sx={{ color: STATUS_COLORS[status], flexShrink: 0 }}
+      />
+      <span>{humanizeAction(activity.action)}</span>
+    </Box>
+  );
+};
+
+const ActivityEntity = ({
+  activity,
+  showLabel,
+}: {
+  activity: ActivityLogEntry;
+  showLabel: boolean;
+}) => (
+  <Entity
+    entity={{
+      ...activity.entityData,
+      id: activity.entityId,
+      entityType: activity.model,
+      name: activity.entityData?.name ?? activity.entityId,
+    }}
+    showLifecycleState={false}
+    showLabel={showLabel}
+  />
+);
+
+const ActivityCreator = ({ activity }: { activity: ActivityLogEntry }) => {
+  const creator = activity.creator;
+  if (!creator) return <span>System</span>;
+  return (
+    <Entity
+      entity={{
+        ...creator,
+        entityType: "user",
+        name: creator.displayName || creator.identifier,
+      }}
+      hideName
+    />
+  );
+};
+
+// Phone layout: the entity name gets the whole first line; event, entity
+// type, user and time share a secondary line below it.
+const ActivityCardList = ({
+  activities,
+  onRowClick,
+}: {
+  activities: ActivityLogEntry[];
+  onRowClick: (row: ActivityLogEntry, event: React.MouseEvent) => void;
+}) => (
+  <Box role="list">
+    {activities.map((activity, index) => {
+      const typeLabel =
+        activity.entityData?.template?.name ||
+        humanizeEntityType(activity.model);
+      return (
+        <Box
+          key={activity.id}
+          role="listitem"
+          onClick={(event) => onRowClick(activity, event)}
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderTop: index === 0 ? "none" : "1px solid",
+            borderTopColor: "divider",
+            fontSize: "0.875rem",
+            cursor: "pointer",
+            "&:hover": { backgroundColor: "action.hover" },
+          }}
+        >
+          <Box sx={{ fontWeight: 500, minWidth: 0, overflowWrap: "anywhere" }}>
+            <ActivityEntity activity={activity} showLabel={false} />
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              columnGap: 1.5,
+              rowGap: 0.5,
+              mt: 0.75,
+              color: "text.secondary",
+              fontSize: "0.8125rem",
+            }}
+          >
+            <ActivityEvent activity={activity} />
+            {typeLabel && <Label label={typeLabel} />}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                ml: "auto",
+              }}
+            >
+              <ActivityCreator activity={activity} />
+              <RelativeTime
+                date={activity.createdAt}
+                sx={{ display: "flex" }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      );
+    })}
+  </Box>
+);
+
 export const RecentActivityWidget = ({
   activities,
   loading = false,
@@ -125,6 +246,12 @@ export const RecentActivityWidget = ({
 }: RecentActivityWidgetProps) => {
   const { linkPrefix } = useConfig();
   const navigate = useNavigate();
+  const theme = useTheme();
+  // Same breakpoint as EntityTable: a 4-column grid doesn't fit a phone, so
+  // rows become stacked cards.
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"), {
+    noSsr: true,
+  });
 
   const count = activities.length;
   const showingLabel = hasFavorites
@@ -141,22 +268,9 @@ export const RecentActivityWidget = ({
         headerName: "Event",
         flex: 1.2,
         valueGetter: (_value, row) => humanizeAction(row.action),
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => {
-          const status = activityStatus(
-            params.row.action,
-            params.row.entityData?.status,
-          );
-          const Icon = STATUS_ICONS[status];
-          return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Icon
-                fontSize="small"
-                sx={{ color: STATUS_COLORS[status], flexShrink: 0 }}
-              />
-              <span>{humanizeAction(params.row.action)}</span>
-            </Box>
-          );
-        },
+        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+          <ActivityEvent activity={params.row} />
+        ),
       },
       {
         field: "entity",
@@ -164,16 +278,7 @@ export const RecentActivityWidget = ({
         flex: 2,
         valueGetter: (_value, row) => row.entityData?.name ?? row.entityId,
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <Entity
-            entity={{
-              ...params.row.entityData,
-              id: params.row.entityId,
-              entityType: params.row.model,
-              name: params.row.entityData?.name ?? params.row.entityId,
-            }}
-            showLifecycleState={false}
-            showLabel
-          />
+          <ActivityEntity activity={params.row} showLabel />
         ),
       },
       {
@@ -183,20 +288,9 @@ export const RecentActivityWidget = ({
         width: USER_AVATAR_COLUMN_WIDTH,
         valueGetter: (_value, row) =>
           row.creator?.displayName ?? row.creator?.identifier ?? "System",
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => {
-          const creator = params.row.creator;
-          if (!creator) return <span>System</span>;
-          return (
-            <Entity
-              entity={{
-                ...creator,
-                entityType: "user",
-                name: creator.displayName || creator.identifier,
-              }}
-              hideName
-            />
-          );
-        },
+        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+          <ActivityCreator activity={params.row} />
+        ),
       },
       {
         field: "createdAt",
@@ -211,21 +305,33 @@ export const RecentActivityWidget = ({
     [],
   );
 
-  const handleRowClick = (
-    params: { row: ActivityLogEntry },
-    event?: React.MouseEvent<HTMLElement>,
+  const navigateToAudit = (
+    row: ActivityLogEntry,
+    event?: React.MouseEvent<Element>,
   ) => {
     // The entity name cell renders its own link (via the shared Entity
     // component); let it navigate to the entity page instead of also
     // triggering the row's audit-page navigation.
     if ((event?.target as Element | undefined)?.closest("a")) return;
-    const { row } = params;
     void navigate(`${linkPrefix}${row.model}s/${row.entityId}/audit`);
   };
 
+  const handleRowClick = (
+    params: { row: ActivityLogEntry },
+    event?: React.MouseEvent<HTMLElement>,
+  ) => navigateToAudit(params.row, event);
+
   return (
     <Box sx={{ width: "100%", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
         <HistoryIcon sx={{ color: "info.main", fontSize: 20 }} />
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Recent Activities
@@ -276,6 +382,11 @@ export const RecentActivityWidget = ({
               No recent activities {hasFavorites ? "on your favorites." : "."}
             </Typography>
           </Box>
+        ) : isMobile ? (
+          <ActivityCardList
+            activities={activities}
+            onRowClick={navigateToAudit}
+          />
         ) : (
           <DataGrid
             rows={activities}

@@ -78,7 +78,11 @@ export const DashboardPage = () => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "minmax(300px, 30%) 1fr",
+          // Stack the widgets on small screens; side by side from md up.
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            md: "minmax(300px, 30%) minmax(0, 1fr)",
+          },
           gap: 3,
           alignItems: "start",
           width: "100%",
