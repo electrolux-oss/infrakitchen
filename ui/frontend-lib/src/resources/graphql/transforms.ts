@@ -99,6 +99,8 @@ export interface GqlScheduledResourceAction {
   entity: string;
   action: string;
   runAt: string;
+  cron: string | null;
+  timezone: string | null;
   status: string;
   error: string | null;
   createdAt: string;

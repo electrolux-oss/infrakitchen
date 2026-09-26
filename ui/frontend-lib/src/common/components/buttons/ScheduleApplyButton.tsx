@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import RepeatIcon from "@mui/icons-material/Repeat";
 import ScheduleIcon from "@mui/icons-material/Schedule";
 import { Box, Button, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
@@ -21,7 +22,8 @@ export interface ScheduleApplyButtonProps {
  * run actions (Plan / Apply / …). Stays compact when a schedule is pending —
  * the label shows a live seconds-accurate countdown (e.g. "in 3h 25m 10s")
  * and the exact timestamp is available on hover — and owns the
- * schedule/reschedule/cancel dialog.
+ * schedule/reschedule/cancel dialog. Recurring (cron) schedules show a repeat
+ * icon and count down to their next run; the tooltip adds the cron expression.
  */
 export const ScheduleApplyButton = ({
   entityType,
@@ -33,10 +35,12 @@ export const ScheduleApplyButton = ({
 
   if (!entity || !actions.includes("execute")) return null;
 
+  const cron = pendingScheduledAction?.cron ?? null;
+
   const button = (
     <Button
       color="inherit"
-      startIcon={<ScheduleIcon />}
+      startIcon={cron ? <RepeatIcon /> : <ScheduleIcon />}
       onClick={() => setIsDialogOpen(true)}
       sx={
         pendingScheduledAction
@@ -57,7 +61,7 @@ export const ScheduleApplyButton = ({
       {" "}
       {pendingScheduledAction ? (
         <>
-          {"Scheduled ("}
+          {cron ? "Recurring (" : "Scheduled ("}
           {/* Countdown in the code font so digits stay uniform while ticking. */}
           <Box component="span" sx={{ fontFamily: CODE_FONT_FAMILY }}>
             {formatTimeUntil(pendingScheduledAction.runAt, now)}
@@ -73,7 +77,13 @@ export const ScheduleApplyButton = ({
   return (
     <>
       {pendingScheduledAction ? (
-        <Tooltip title={getDateValue(pendingScheduledAction.runAt)}>
+        <Tooltip
+          title={
+            cron
+              ? `Next run ${getDateValue(pendingScheduledAction.runAt)} · ${cron} (${pendingScheduledAction.timezone ?? "UTC"})`
+              : getDateValue(pendingScheduledAction.runAt)
+          }
+        >
           {button}
         </Tooltip>
       ) : (
