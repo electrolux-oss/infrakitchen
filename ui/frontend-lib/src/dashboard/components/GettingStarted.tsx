@@ -71,6 +71,8 @@ export const GettingStartedContent = () => {
             sx={{
               display: "flex",
               alignItems: "center",
+              // On phones the button drops below the step text.
+              flexWrap: { xs: "wrap", sm: "nowrap" },
               gap: 1.5,
               px: 2,
               py: 2,
@@ -99,7 +101,7 @@ export const GettingStartedContent = () => {
             >
               {idx + 1}
             </Box>
-            <Box>
+            <Box sx={{ flex: "1 1 0", minWidth: 0 }}>
               <Typography
                 variant="body2"
                 sx={{
@@ -123,7 +125,11 @@ export const GettingStartedContent = () => {
               variant="outlined"
               size="small"
               startIcon={step.icon}
-              sx={{ width: "200px", flexShrink: 0, ml: "auto" }}
+              sx={{
+                width: { xs: "100%", sm: "200px" },
+                flexShrink: 0,
+                ml: { xs: 0, sm: "auto" },
+              }}
               onClick={() => navivate(`${linkPrefix}${step.navigateTo}`)}
             >
               {step.button}

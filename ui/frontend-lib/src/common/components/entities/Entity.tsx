@@ -69,7 +69,7 @@ const ENTITY_TYPE_DISPLAY_NAMES: Record<string, string> = {
   source_code_version: "Template Version",
 };
 
-function humanizeEntityType(entityName?: string): string {
+export function humanizeEntityType(entityName?: string): string {
   if (!entityName) return "";
   if (ENTITY_TYPE_DISPLAY_NAMES[entityName]) {
     return ENTITY_TYPE_DISPLAY_NAMES[entityName];

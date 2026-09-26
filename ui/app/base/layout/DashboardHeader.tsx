@@ -111,14 +111,15 @@ export default function DashboardHeader({
           sx={{
             justifyContent: "space-between",
             alignItems: "center",
-            flexWrap: "wrap",
             width: "100%",
+            minWidth: 0,
           }}
         >
           <Stack
             direction="row"
             sx={{
               alignItems: "center",
+              minWidth: 0,
             }}
           >
             <Box sx={{ mr: 1, display: { xs: "block", md: "none" } }}>
@@ -140,7 +141,7 @@ export default function DashboardHeader({
                     sx={{
                       color: "text.primary",
                       fontWeight: 600,
-                      fontSize: "1.875rem", // 30px
+                      fontSize: { xs: "1.375rem", sm: "1.875rem" }, // 22px / 30px
                       letterSpacing: "-0.02em",
                       ml: 0,
                       whiteSpace: "nowrap",
@@ -165,6 +166,7 @@ export default function DashboardHeader({
                     )}-${serverInfo.sourceCommitShort}`}</Box>
                   }
                   sx={{
+                    display: { xs: "none", sm: "inline-flex" },
                     alignSelf: "flex-end",
                     ml: 2,
                     cursor: "pointer",
@@ -187,7 +189,7 @@ export default function DashboardHeader({
             sx={{
               alignItems: "center",
               marginLeft: "auto",
-              minWidth: 0,
+              flexShrink: 0,
             }}
           >
             <Stack
