@@ -14,6 +14,7 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlWorkflow } from "../graphql";
 
 import { WorkflowOverview } from "./WorkflowOverview";
@@ -131,6 +132,7 @@ export const WorkflowContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <WorkflowOverview />
       <TabbedContent tabs={tabs} />
     </Box>

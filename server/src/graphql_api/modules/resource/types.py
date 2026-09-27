@@ -7,6 +7,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from application.resources.model import Resource
 from application.validation_rules.schema import ValidationRuleResponse
 
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.dataloaders.entity_loaders import (
     get_favorite_status_loader,
     get_scheduled_action_loader,
@@ -64,6 +65,10 @@ class ResourceType:
     @strawberry.field
     def entity_name(self) -> str:
         return "resource"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "resource", self.id)
 
     @strawberry.field
     async def is_favorite(self, info: Info) -> bool:

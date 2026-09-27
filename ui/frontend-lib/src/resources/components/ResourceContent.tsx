@@ -13,6 +13,7 @@ import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
+import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
@@ -110,6 +111,7 @@ export const ResourceContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <ResourceOverview
         resource={entity}
         onSubscriptionChange={() =>

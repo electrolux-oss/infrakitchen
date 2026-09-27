@@ -10,6 +10,8 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
+import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
 import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
@@ -164,6 +166,15 @@ export default function WorkerList() {
     <PageContainer
       title="Workers"
       description="The processes that pick up and execute infrastructure tasks."
+      actions={
+        // The queue is task data, so it needs task read access on top of worker access
+        <PermissionWrapper
+          requiredPermission="api:task"
+          permissionAction="read"
+        >
+          <TaskQueueButton />
+        </PermissionWrapper>
+      }
     >
       <EntityFetchTable
         title="Workers"

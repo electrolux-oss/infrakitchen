@@ -7,6 +7,7 @@ from application.source_code_versions.model import (
     SourceConfigTemplateReference,
     SourceOutputConfig,
 )
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.modules.source_code.types import SourceCodeType
 from graphql_api.modules.template.types import TemplateType
 from graphql_api.modules.user.types import UserType
@@ -51,6 +52,10 @@ class SourceCodeVersionType:
     @strawberry.field
     def entity_name(self) -> str:
         return "source_code_version"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "source_code_version", self.id)
 
     @strawberry.field
     def identifier(self) -> str:

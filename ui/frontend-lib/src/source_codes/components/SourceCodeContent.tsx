@@ -11,6 +11,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
 import { RefType } from "../../source_code_versions/types";
+import { EntityTaskQueueStatus } from "../../workers/components";
 import { RefFolders } from "../types";
 
 import { SourceCodeOverview } from "./SourceCodeOverview";
@@ -90,6 +91,7 @@ export const SourceCodeContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <SourceCodeOverview sourceCode={entity} />
       <TabbedContent tabs={tabs} />
     </Box>
