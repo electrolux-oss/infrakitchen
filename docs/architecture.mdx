@@ -18,8 +18,8 @@ InfraKitchen follows a modern web application architecture with separated fronte
 - **Frontend (React/TypeScript)** - User interface for managing infrastructure
 - **Backend (Python/FastAPI)** - REST API, GraphQL API, and business logic
 - **PostgreSQL** - Relational database for storing infrastructure state
-- **RabbitMQ** - Message broker for asynchronous task processing
-- **Worker** - Execute infrastructure provisioning tasks
+- **RabbitMQ** - Message broker for live events, logs and notifications
+- **Worker** - Pulls infrastructure provisioning tasks from the task queue in PostgreSQL and executes them. Workers only connect outwards to the database, so any number of them can run on any node.
 - **OpenTofu/Terraform** - Infrastructure-as-Code execution engine
 
 ## Request Flow
@@ -48,17 +48,17 @@ sequenceDiagram
     participant User
     participant Frontend
     participant Backend
-    participant RabbitMQ
+    participant Database
     participant Worker
     participant OpenTofu
     participant Cloud
 
     User->>Frontend: Click "Provision"
     Frontend->>Backend: POST /api/resources/{id}/provision
-    Backend->>RabbitMQ: Queue provisioning task
+    Backend->>Database: Insert task into task_queue (NOTIFY workers)
     Backend->>Frontend: Return task queued
 
-    Worker->>RabbitMQ: Pick up task
+    Worker->>Database: Claim task (FOR UPDATE SKIP LOCKED) and hold a lease
     Worker->>OpenTofu: Execute tofu apply
     OpenTofu->>Cloud: Create infrastructure
     Cloud->>OpenTofu: Return outputs
@@ -67,6 +67,19 @@ sequenceDiagram
     Backend->>Frontend: WebSocket update
     Frontend->>User: Show provisioned
 ```
+
+### Task queue
+
+Tasks live in the `task_queue` table. A worker claims the next queued task with `SELECT ... FOR UPDATE SKIP LOCKED`, which guarantees each task is taken by exactly one worker. At most one task runs per entity at a time.
+
+- **Lease:** the worker holds the task with a lease (`WORKER_LEASE_SECONDS`) and extends it with heartbeats (`WORKER_HEARTBEAT_SECONDS`).
+- **Worker crash:** when the lease expires, another worker reaps the task. It marks the task and its entity as failed instead of re-running a half-finished apply, so the user can retry from the UI.
+- **Repeated actions:** if a user acts on an entity again while its previous task is still waiting for a worker, the waiting task is cancelled and replaced by the new one, so only the latest request runs. The user gets an in-app notification that an action was already queued. If a different user queued the replaced action, that user is notified too. Running tasks are never cancelled; the new task waits for them. Workflow tasks that target different steps don't replace each other.
+- **Entity pages:** the page of a resource, executor, storage, source code, template version or workflow shows its queued and running tasks. That covers who requested each task, which worker runs it, its position in the queue, and why it is still waiting: busy workers, no online workers, a retry delay, or another task running on the same entity. This data comes in the same GraphQL request as the entity (`taskQueueStatus` field) and refreshes when the entity status changes.
+- **Dependency not ready:** the task is re-queued with an increasing delay.
+- **Wake-up:** idle workers wake up immediately through Postgres `LISTEN/NOTIFY`. If no notification arrives, they poll every `WORKER_POLL_INTERVAL` seconds.
+- **Monitoring and scaling:** the `taskQueueStats` GraphQL query reports the backlog and worker availability.
+- **Shutdown:** on `SIGTERM` a worker finishes its current task, marks itself offline and exits, which makes scaling down safe.
 
 ## Backend Module Relations
 

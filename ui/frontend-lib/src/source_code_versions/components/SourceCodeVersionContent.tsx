@@ -13,6 +13,7 @@ import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlSourceCodeVersion } from "../graphql";
 
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
@@ -114,6 +115,7 @@ export const SourceCodeVersionContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <SourceCodeVersionOverview source_code_version={source_code_version} />
       <TabbedContent tabs={tabs} />
     </Box>

@@ -1,32 +1,18 @@
-import json
 import re
 from typing import Any, TypeVar
 
 from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import RelationshipProperty, aliased, load_only
 from sqlalchemy.orm.query import inspect
 from sqlalchemy.sql.selectable import Select
 
 from core.base_models import Base
-from core.utils.json_encoder import JsonEncoder
 from core.utils.model_tools import is_valid_uuid, valid_uuid
 from core.utils.event_sender import flush_all_pending_senders
 
-from core.config import setup_service_environment
-
-setup_service_environment()
-
-from core.config import Settings  # noqa: E402
-
-
-engine = create_async_engine(
-    str(Settings().db_url),
-    pool_size=20,
-    max_overflow=40,
-    json_serializer=lambda obj: json.dumps(obj, cls=JsonEncoder),
-)
+from core.db_engine import engine
 
 
 class EventFlushingSession(AsyncSession):

@@ -19,6 +19,16 @@ async def _read_stream(stream: asyncio.StreamReader, cb):
             break
 
 
+async def _terminate(process: asyncio.subprocess.Process, grace_seconds: float = 10) -> None:
+    """SIGTERM first so tofu can release its state lock, then SIGKILL if it doesn't exit."""
+    process.terminate()
+    try:
+        _ = await asyncio.wait_for(asyncio.shield(process.wait()), timeout=grace_seconds)
+    except TimeoutError:
+        process.kill()
+        _ = await process.wait()
+
+
 async def _stream_subprocess(
     cmd: list[str], stdout_cb, stderr_cb, cwd: str | None = None, env: dict[str, str] | None = None
 ) -> tuple[int, int | None]:
@@ -54,6 +64,11 @@ async def _stream_subprocess(
 
         rc = process.returncode
         return process.pid, rc
+    except asyncio.CancelledError:
+        # The task was aborted (e.g. the worker lost its lease): don't leave tofu/git running
+        if process and process.returncode is None:
+            await _terminate(process)
+        raise
     except OSError as e:
         log.error(f"Failed to execute command '{' '.join(cmd)}': {e}")
         # In this case, the process might not have even started, so pid is unknown

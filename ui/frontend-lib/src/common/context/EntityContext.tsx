@@ -6,6 +6,7 @@ import {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 
 import { ApiClientError, isNotFoundError } from "../../errors";
@@ -91,16 +92,31 @@ export const EntityProvider = ({
 
   const { event } = useEventProvider();
 
-  useEffect(() => {
-    if (event && event.id === entity_id) {
-      setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
-    }
-  }, [event, entity_id]);
+  // Pages that show the entity's task queue refetch silently on status events:
+  // events carry the entity fields only, so the queue section would go stale.
+  const tracksTaskQueue = !!entityFields?.includes("taskQueueStatus");
+  const entityStatusRef = useRef<string | undefined>(undefined);
+  const [silentRefresh, setSilentRefresh] = useState<number>(0);
 
   useEffect(() => {
-    const getEntity = async () => {
+    entityStatusRef.current = entity?.status;
+  }, [entity]);
+
+  useEffect(() => {
+    if (event && event.id === entity_id) {
+      const statusChanged =
+        event.status !== undefined && event.status !== entityStatusRef.current;
+      setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
+      if (tracksTaskQueue && statusChanged) {
+        setSilentRefresh((prev) => prev + 1);
+      }
+    }
+  }, [event, entity_id, tracksTaskQueue]);
+
+  const fetchEntity = useCallback(
+    async (silent: boolean) => {
       if (!entity_id) return;
-      setLoading(true);
+      if (!silent) setLoading(true);
       try {
         await ikApi
           .graphqlRequest(
@@ -135,9 +151,10 @@ export const EntityProvider = ({
             setEntity(response);
             setNotFound(false);
             setError(null);
-            // userActionsHandler();
           });
       } catch (e: any) {
+        // A failed background refresh keeps the page as it is
+        if (silent) return;
         const entityNotFound = isNotFoundError(e);
         if (!entityNotFound) {
           notifyError(e);
@@ -145,21 +162,21 @@ export const EntityProvider = ({
         setNotFound(entityNotFound);
         setError(e.message);
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
-    };
+    },
+    [ikApi, entity_name, entity_id, entityFields, transformFn],
+  );
 
-    getEntity();
-  }, [
-    ikApi,
-    entity_name,
-    entity_id,
-    refresh,
-    entityFields,
-    transformFn,
-    setLoading,
-    setError,
-  ]);
+  useEffect(() => {
+    fetchEntity(false);
+  }, [fetchEntity, refresh]);
+
+  useEffect(() => {
+    if (silentRefresh > 0) {
+      fetchEntity(true);
+    }
+  }, [fetchEntity, silentRefresh]);
 
   const refreshEntity = useCallback((updatedEntity?: IkEntity) => {
     if (updatedEntity) {

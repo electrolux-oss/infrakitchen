@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import sys
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from alembic.command import upgrade
@@ -14,6 +15,7 @@ from core.casbin.enforcer import CasbinEnforcer
 from core.config import setup_service_environment
 from core.dependencies import get_async_session
 from core.rabbitmq import RabbitMQConnection
+from core.task_queue import enqueue as task_queue_enqueue
 
 from core.base_models import Base, MessageModel
 from core.database import engine
@@ -39,8 +41,13 @@ async def send_message(message: MessageModel, confirm: bool = False):
     pass
 
 
-# Monkey patching the send_task method
+async def enqueue_tasks(items: list[dict[str, Any]]):
+    pass
+
+
+# Monkey patching message publishing and task enqueueing so seeding doesn't trigger workers
 RabbitMQConnection.send_message = send_message  # type: ignore[method-assign]
+task_queue_enqueue.enqueue_tasks = enqueue_tasks
 
 # Mock the CasbinEnforcer to bypass validation during fixture creation
 _mock_enforcer = MagicMock()

@@ -6,6 +6,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.executors.model import Executor
 
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.dataloaders.entity_loaders import (
     get_favorite_status_loader,
     get_scheduled_action_loader,
@@ -37,6 +38,10 @@ class ExecutorType:
     @strawberry.field
     def entity_name(self) -> str:
         return "executor"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "executor", self.id)
 
     @strawberry.field
     async def is_favorite(self, info: Info) -> bool:

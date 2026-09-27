@@ -66,6 +66,8 @@ class TestRunRecurringEntityAction:
             requester=mock_user_dto,
             action="execute",
             extra_metadata={"entity_controller": "resource"},
+            # Scheduled runs skip the cancel window and start on time
+            delay_seconds=0,
         )
         next_run = patched.update.call_args.args[1]["run_at"]
         assert next_run > datetime.now(UTC)

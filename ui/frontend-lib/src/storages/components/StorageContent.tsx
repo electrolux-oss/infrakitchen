@@ -13,6 +13,7 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { StorageConfiguration } from "./StorageConfiguration";
 import { StorageOverview } from "./StorageOverview";
@@ -76,6 +77,7 @@ export const StorageContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <StorageOverview storage={entity} />
       <TabbedContent tabs={tabs} />
     </Box>

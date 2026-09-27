@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,8 +22,12 @@ from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
 from core.tools.model import Tool
+from core.task_queue.crud import TaskQueueCRUD
+from core.task_queue.model import EntityQueueStatus
+from core.task_queue.service import TaskQueueService, worker_alive_seconds
 from core.tasks.model import TaskEntity
 from core.users.model import User
+from core.workers.model import Worker
 
 
 async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
@@ -112,6 +117,23 @@ async def _load_scheduled_actions_by_entity(
     result = await session.execute(stmt)
     mapping: dict[str, TaskEntity] = {str(row.entity_id): row for row in result.scalars()}
     return [mapping.get(key) for key in keys]
+
+
+# Entity pages also show tasks queued under other controllers for the same id
+# (workspace syncs are queued with the resource id).
+TASK_QUEUE_ENTITIES: dict[str, tuple[str, ...]] = {"resource": ("resource", "workspace")}
+
+
+async def _load_task_queue_status(
+    keys: list[str], session: AsyncSession, entity_type: str
+) -> list[EntityQueueStatus | None]:
+    service = TaskQueueService(crud=TaskQueueCRUD(session=session))
+    statuses = await service.get_entity_queue_status(
+        list(TASK_QUEUE_ENTITIES.get(entity_type, (entity_type,))),
+        [UUID(key) for key in keys],
+        worker_alive_seconds(),
+    )
+    return [statuses.get(UUID(key)) for key in keys]
 
 
 async def _load_storages(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
@@ -286,6 +308,34 @@ def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any]
 
 def get_scheduled_action_loader(info: Info, entity_type: str) -> DataLoader[str, TaskEntity | None]:
     return info.context["loaders"][f"scheduled_actions_by_{entity_type}"]
+
+
+async def _load_worker_hosts(keys: list[str], session: AsyncSession) -> list[str | None]:
+    stmt = select(Worker.id, Worker.host).where(Worker.id.in_(keys))
+    mapping = {str(row.id): row.host for row in await session.execute(stmt)}
+    return [mapping.get(key) for key in keys]
+
+
+def get_worker_host_loader(info: Info) -> DataLoader[str, str | None]:
+    loaders = info.context["loaders"]
+    if "worker_host" not in loaders:
+        session = info.context["session"]
+        loaders["worker_host"] = DataLoader[str, str | None](
+            load_fn=lambda keys: _load_worker_hosts(list(keys), session)
+        )
+    return loaders["worker_host"]
+
+
+def get_task_queue_status_loader(info: Info, entity_type: str) -> DataLoader[str, EntityQueueStatus | None]:
+    """Get or create a DataLoader for the queued/running tasks of an entity type."""
+    loaders = info.context["loaders"]
+    loader_key = f"task_queue_status:{entity_type}"
+    if loader_key not in loaders:
+        session = info.context["session"]
+        loaders[loader_key] = DataLoader[str, EntityQueueStatus | None](
+            load_fn=lambda keys: _load_task_queue_status(list(keys), session, entity_type)
+        )
+    return loaders[loader_key]
 
 
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:

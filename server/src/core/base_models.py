@@ -66,7 +66,6 @@ class MessageModel(PydanticBaseModel):
         "broadcast",
         "task",
         "event",
-        "scheduler_job",
     ] = Field(default="user")
     exchange: str = Field(default="ik_tasks")
     exchange_type: ExchangeType = Field(default=ExchangeType.DIRECT)
