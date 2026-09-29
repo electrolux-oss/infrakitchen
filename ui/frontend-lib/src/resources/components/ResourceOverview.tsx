@@ -1,14 +1,7 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 
 import SyncIcon from "@mui/icons-material/Sync";
-import {
-  Box,
-  Divider,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Divider, IconButton, TextField, Tooltip } from "@mui/material";
 
 import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
 import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
@@ -21,13 +14,13 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import {
   CommonField,
   GetReferenceUrlValue,
-  getDateValue,
 } from "../../common/components/fields/CommonField";
 import {
   PlaceholderDescription,
   PlaceholderText,
 } from "../../common/components/fields/PlaceholderDescription";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { Labels } from "../../common/components/labels/Labels";
@@ -236,20 +229,15 @@ export const ResourceOverview = ({
         value={<StatusChip status={resource.status} state={resource.state} />}
         size={4}
       />
-      <CommonField
-        name="Next Scheduled Apply"
-        value={
-          pendingScheduledAction ? (
-            <Typography
-              variant="body2"
-              sx={{ color: "warning.main", fontWeight: 500 }}
-            >
-              {getDateValue(pendingScheduledAction.runAt)}
-            </Typography>
-          ) : null
-        }
-        size={4}
-      />
+      {pendingScheduledAction && (
+        <CommonField
+          name="Next Scheduled Apply"
+          value={
+            <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
+          }
+          size={4}
+        />
+      )}
       <EditableDescriptionField
         value={resource.description}
         canEdit={canEdit}

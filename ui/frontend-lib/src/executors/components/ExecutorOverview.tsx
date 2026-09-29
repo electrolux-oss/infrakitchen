@@ -1,7 +1,5 @@
 import { useCallback, useState } from "react";
 
-import { Typography } from "@mui/material";
-
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
@@ -10,9 +8,9 @@ import { EditableTagsField } from "../../common/components/editors/EditableTagsF
 import {
   CommonField,
   GetReferenceUrlValue,
-  getDateValue,
 } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -69,19 +67,14 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
         name={"State"}
         value={<StatusChip status={executor.status} state={executor.state} />}
       />
-      <CommonField
-        name={"Next Scheduled Apply"}
-        value={
-          pendingScheduledAction ? (
-            <Typography
-              variant="body2"
-              sx={{ color: "warning.main", fontWeight: 500 }}
-            >
-              {getDateValue(pendingScheduledAction.runAt)}
-            </Typography>
-          ) : null
-        }
-      />
+      {pendingScheduledAction && (
+        <CommonField
+          name={"Next Scheduled Apply"}
+          value={
+            <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
+          }
+        />
+      )}
       <EditableDescriptionField
         value={executor.description}
         canEdit={canEdit}

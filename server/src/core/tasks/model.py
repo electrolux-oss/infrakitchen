@@ -21,6 +21,8 @@ class TaskEntity(Base):
         SQLAlchemyEnum(ModelActions, name="model_actions", native_enum=False), nullable=True
     )
     run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cron: Mapped[str | None] = mapped_column(nullable=True)
+    timezone: Mapped[str | None] = mapped_column(nullable=True)
     error: Mapped[str | None] = mapped_column(nullable=True)
 
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
@@ -61,6 +63,8 @@ class TaskEntityModel(BaseModel):
     ] = Field(default=ModelStatus.QUEUED)
     action: ModelActions | None = Field(default=None)
     run_at: datetime | None = Field(default=None)
+    cron: str | None = Field(default=None)
+    timezone: str | None = Field(default=None)
     error: str | None = Field(default=None)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)

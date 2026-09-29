@@ -22,7 +22,9 @@ class ScheduledEntityActionCreateInput:
     entity_id: uuid.UUID = strawberry.UNSET
     entity: str = strawberry.UNSET
     action: str = strawberry.UNSET
-    run_at: datetime = strawberry.UNSET
+    run_at: datetime | None = strawberry.UNSET
+    cron: str | None = strawberry.UNSET
+    timezone: str | None = strawberry.UNSET
 
 
 @strawberry.type
@@ -36,11 +38,16 @@ class TaskMutation:
         session = info.context["session"]
         requester = info.context["request"].state.user
         task_service = get_task_service(session=session)
+        schedule_fields = {
+            "run_at": input.run_at,  # pyright: ignore[reportAttributeAccessIssue]
+            "cron": input.cron,  # pyright: ignore[reportAttributeAccessIssue]
+            "timezone": input.timezone,  # pyright: ignore[reportAttributeAccessIssue]
+        }
         schedule = TaskScheduleCreate(
             entity_id=input.entity_id,  # pyright: ignore[reportAttributeAccessIssue]
             entity=input.entity,  # pyright: ignore[reportAttributeAccessIssue]
             action=ModelActions(input.action),  # pyright: ignore[reportAttributeAccessIssue]
-            run_at=input.run_at,  # pyright: ignore[reportAttributeAccessIssue]
+            **{key: value for key, value in schedule_fields.items() if value not in (None, strawberry.UNSET)},
         )
 
         match schedule.entity:

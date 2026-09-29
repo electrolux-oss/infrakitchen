@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.constants.model import ModelStatus
@@ -67,7 +67,7 @@ class TaskEntityCRUD:
         result = await self.session.execute(statement)
         return result.scalar_one() or 0
 
-    async def create(self, task: dict[str, str | UUID | None]) -> TaskEntity:
+    async def create(self, task: dict[str, Any]) -> TaskEntity:
         db_task = TaskEntity(**task)
         self.session.add(db_task)
         await self.session.flush()
@@ -77,8 +77,10 @@ class TaskEntityCRUD:
         statement = (
             select(TaskEntity)
             .where(
-                TaskEntity.run_at.is_not(None),
-                TaskEntity.status == ModelStatus.PENDING,
+                or_(
+                    and_(TaskEntity.run_at.is_not(None), TaskEntity.status == ModelStatus.PENDING),
+                    TaskEntity.cron.is_not(None),
+                )
             )
             .order_by(TaskEntity.run_at.asc())
         )

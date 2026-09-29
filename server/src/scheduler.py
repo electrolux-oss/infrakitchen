@@ -12,13 +12,15 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from application.logger import change_logger
 
-from core.constants.model import ModelStatus
+from core.constants.model import ModelState, ModelStatus
 from core.dependencies import get_async_session
 from core.errors import EntityNotFound
 from core.rabbitmq import RabbitMQConnection
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.tasks.crud import TaskEntityCRUD
+from core.tasks.functions import build_cron_trigger, next_cron_run
+from core.tasks.model import TaskEntity
 from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
@@ -36,6 +38,11 @@ ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 # never mutate the APScheduler job store concurrently.
 _reconcile_lock = asyncio.Lock()
 
+# A recurring occurrence is skipped while the previous run is still in flight or
+# the entity is being destroyed.
+RECURRING_BUSY_STATUSES = {ModelStatus.QUEUED, ModelStatus.IN_PROGRESS, ModelStatus.APPROVAL_PENDING}
+RECURRING_SKIP_STATES = {ModelState.DESTROY, ModelState.DESTROYED}
+
 
 async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender: EventSender):
     logger.info(f"Sending scheduler job {job_id} to worker")
@@ -51,26 +58,62 @@ async def run_entity_action(action_id: UUID, event_sender: EventSender):
         if scheduled_action is None:
             raise EntityNotFound("Scheduled action not found")
 
-        if scheduled_action.run_at is None or scheduled_action.status != ModelStatus.PENDING:
-            logger.info(f"Skipping scheduled action {action_id}: no longer pending")
+        entity_id = scheduled_action.entity_id
+        entity = scheduled_action.entity
+        action = scheduled_action.action.value if scheduled_action.action else "execute"
+        created_by = scheduled_action.created_by
+        skip_reason: str | None = None
+
+        if scheduled_action.cron is None:
+            if scheduled_action.run_at is None or scheduled_action.status != ModelStatus.PENDING:
+                logger.info(f"Skipping scheduled action {action_id}: no longer pending")
+                return
+        else:
+            if scheduled_action.status in RECURRING_BUSY_STATUSES:
+                skip_reason = f"previous run is {scheduled_action.status}"
+            elif scheduled_action.state in RECURRING_SKIP_STATES:
+                skip_reason = f"{entity} state is {scheduled_action.state}"
+
+            # Advance the next run time shown in the UI regardless of whether this occurrence runs.
+            await scheduled_action_crud.update(
+                scheduled_action,
+                {"run_at": next_cron_run(scheduled_action.cron, scheduled_action.timezone)},
+            )
+            await session.commit()
+
+        if skip_reason is not None:
+            logger.info(f"Skipping recurring action {action_id} for {entity} {entity_id}: {skip_reason}")
             return
 
         user_service = UserService(crud=UserCRUD(session=session))
-        user = await user_service.get_dto_by_id(scheduled_action.created_by)
+        user = await user_service.get_dto_by_id(created_by)
         if user is None:
-            raise EntityNotFound(f"User {scheduled_action.created_by} not found")
+            raise EntityNotFound(f"User {created_by} not found")
 
-    logger.info(
-        f"Sending scheduled action {action_id} for {scheduled_action.entity} {scheduled_action.entity_id} to worker"
-    )
+    logger.info(f"Sending scheduled action {action_id} for {entity} {entity_id} to worker")
     await event_sender.send_task(
-        entity_id=scheduled_action.entity_id,
+        entity_id=entity_id,
         requester=user,
-        action=scheduled_action.action.value if scheduled_action.action else "execute",
-        extra_metadata={"entity_controller": scheduled_action.entity},
+        action=action,
+        extra_metadata={"entity_controller": entity},
     )
     await event_sender.flush()
     logger.info(f"Scheduled action {action_id} sent successfully to worker")
+
+
+def _entity_action_trigger(scheduled_action: TaskEntity) -> CronTrigger | DateTrigger:
+    if scheduled_action.cron is not None:
+        return build_cron_trigger(scheduled_action.cron, scheduled_action.timezone)
+    return DateTrigger(run_date=scheduled_action.run_at)
+
+
+def _entity_action_signature(scheduled_action: TaskEntity) -> str:
+    """Job name encoding everything that defines the trigger, so a reconcile can detect changes."""
+    base = f"{scheduled_action.action}:{scheduled_action.entity}:{scheduled_action.entity_id}"
+    if scheduled_action.cron is not None:
+        return f"{base}|cron={scheduled_action.cron}|tz={scheduled_action.timezone}"
+    run_at = scheduled_action.run_at.isoformat() if scheduled_action.run_at else None
+    return f"{base}|at={run_at}"
 
 
 def _add_or_replace_job(scheduler: AsyncIOScheduler, job, event_sender: EventSender) -> None:
@@ -145,24 +188,25 @@ async def schedule_jobs(scheduler: AsyncIOScheduler, event_sender: EventSender):
             job_id = f"{ENTITY_ACTION_JOB_PREFIX}{scheduled_action.id}"
             db_action_job_ids.add(job_id)
             existing = scheduler.get_job(job_id)
-            if existing is None:
-                scheduler.add_job(
-                    run_entity_action,
-                    trigger=DateTrigger(run_date=scheduled_action.run_at),
-                    kwargs={"action_id": scheduled_action.id, "event_sender": event_sender},
-                    id=job_id,
-                    name=f"{scheduled_action.action}:{scheduled_action.entity}:{scheduled_action.entity_id}",
-                    replace_existing=True,
-                )
-                logger.info(f"Scheduled action {scheduled_action.id} at {scheduled_action.run_at}")
-            else:
-                # If the scheduled action's run_at has changed, reschedule it.
-                if existing.trigger.run_date != scheduled_action.run_at:
-                    scheduler.reschedule_job(
-                        job_id,
-                        trigger=DateTrigger(run_date=scheduled_action.run_at),
-                    )
-                    logger.info(f"Rescheduled action {scheduled_action.id} to {scheduled_action.run_at}")
+            signature = _entity_action_signature(scheduled_action)
+            if existing is not None and existing.name == signature:
+                continue
+
+            scheduler.add_job(
+                run_entity_action,
+                trigger=_entity_action_trigger(scheduled_action),
+                kwargs={"action_id": scheduled_action.id, "event_sender": event_sender},
+                id=job_id,
+                name=signature,
+                replace_existing=True,
+            )
+            when = (
+                f"cron '{scheduled_action.cron}' ({scheduled_action.timezone})"
+                if scheduled_action.cron
+                else scheduled_action.run_at
+            )
+            verb = "Scheduled" if existing is None else "Rescheduled"
+            logger.info(f"{verb} action {scheduled_action.id} at {when}")
 
         for existing in scheduler.get_jobs():
             if not existing.id.startswith(ENTITY_ACTION_JOB_PREFIX):
