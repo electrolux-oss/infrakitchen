@@ -336,6 +336,14 @@ export default function DashboardSidebar({
                     selected={!!matchPath("/secrets/*", pathname)}
                     permissionKey="secret"
                   />
+                  <DashboardSidebarPageItem
+                    id="tools"
+                    title="IaC Tools"
+                    icon={<TerminalIcon />}
+                    href="/tools"
+                    selected={!!matchPath("/tools/*", pathname)}
+                    permissionKey="tool"
+                  />
                 </Box>
               }
             />
@@ -372,14 +380,6 @@ export default function DashboardSidebar({
                     href="/workers"
                     selected={!!matchPath("/workers/*", pathname)}
                     permissionKey="worker"
-                  />
-                  <DashboardSidebarPageItem
-                    id="tools"
-                    title="IaC Tools"
-                    icon={<TerminalIcon />}
-                    href="/tools"
-                    selected={!!matchPath("/tools/*", pathname)}
-                    permissionKey="tool"
                   />
                 </Box>
               }

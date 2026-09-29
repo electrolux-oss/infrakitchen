@@ -34,7 +34,7 @@ class TestToolTask:
 
         await tool_task.start_pipeline()
 
-        assert mocked_tool.status == ModelStatus.DONE
+        assert mocked_tool.status == ModelStatus.READY
         assert mocked_tool.content == content
         assert mocked_tool.sha256 == sha
         assert mocked_tool.size == len(content)
@@ -68,10 +68,10 @@ class TestToolTask:
 
         await tool_task.start_pipeline()
 
-        assert mocked_tool.status == ModelStatus.DONE
+        assert mocked_tool.status == ModelStatus.READY
 
     async def test_already_downloaded(self, tool_task, mocked_tool, monkeypatch):
-        mocked_tool.status = ModelStatus.DONE
+        mocked_tool.status = ModelStatus.READY
         download = AsyncMock()
         monkeypatch.setattr(tool_task_module, "download_release", download)
 

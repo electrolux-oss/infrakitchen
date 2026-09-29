@@ -89,7 +89,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
       selectOptions: [
         { label: "queued", value: "queued" },
         { label: "in progress", value: "in_progress" },
-        { label: "done", value: "done" },
+        { label: "ready", value: "ready" },
         { label: "error", value: "error" },
         { label: "disabled", value: "disabled" },
       ],
@@ -156,12 +156,12 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
               Retry
             </Button>
           )}
-          {status === "done" && !tool.isDefault && (
+          {status === "ready" && !tool.isDefault && (
             <Button size="small" onClick={() => actions.onSetDefault(tool)}>
               Set default
             </Button>
           )}
-          {["done", "error"].includes(status) && !tool.isDefault && (
+          {["ready", "error"].includes(status) && !tool.isDefault && (
             <Button
               size="small"
               color="warning"

@@ -42,7 +42,7 @@ class ToolResponse(BaseModel):
     status: Literal[
         ModelStatus.QUEUED,
         ModelStatus.IN_PROGRESS,
-        ModelStatus.DONE,
+        ModelStatus.READY,
         ModelStatus.ERROR,
         ModelStatus.DISABLED,
     ] = Field(default=ModelStatus.QUEUED)

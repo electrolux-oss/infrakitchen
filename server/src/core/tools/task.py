@@ -44,7 +44,7 @@ class ToolTask:
             raise CannotProceed(f"Unknown action: {self.action}")
 
         tool = self.tool_instance
-        if tool.status == ModelStatus.DONE:
+        if tool.status == ModelStatus.READY:
             self.logger.info(f"{tool.name} {tool.version} is already downloaded")
             return
 
@@ -64,7 +64,7 @@ class ToolTask:
         tool.size = len(content)
         tool.error_message = ""
         self.logger.info(f"Downloaded {tool.name} {tool.version}, {len(content)} bytes, sha256 {sha256}")
-        await self.change_status(ModelStatus.DONE)
+        await self.change_status(ModelStatus.READY)
 
     async def change_status(self, new_status: ModelStatus) -> None:
         self.tool_instance.status = new_status

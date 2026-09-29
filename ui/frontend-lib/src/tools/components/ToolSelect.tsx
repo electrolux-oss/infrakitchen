@@ -34,7 +34,7 @@ export const ToolSelect = forwardRef<HTMLDivElement, ToolSelectProps>(
         .then((response) => {
           setTools(
             response.tools.filter(
-              (tool) => toolStatus(tool) === "done" || tool.id === value,
+              (tool) => toolStatus(tool) === "ready" || tool.id === value,
             ),
           );
           setDefaultTool(response.tools.find((tool) => tool.isDefault) ?? null);

@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import joinedload, raiseload
 
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
@@ -19,6 +19,6 @@ def build_tool_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["creator"]
         opts.append(joinedload(Tool.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Tool.creator))
+        opts.append(raiseload(Tool.creator))
 
     return opts

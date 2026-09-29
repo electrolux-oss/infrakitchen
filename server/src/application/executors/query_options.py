@@ -54,7 +54,7 @@ def build_executor_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["tool"]
         opts.append(joinedload(Executor.tool).options(*build_tool_query_options(nested)))
     else:
-        opts.append(noload(Executor.tool))
+        opts.append(raiseload(Executor.tool))
 
     if "creator" in fields:
         nested = fields["creator"]

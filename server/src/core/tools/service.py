@@ -65,7 +65,7 @@ class ToolService:
     def _ensure_ready(tool: Tool | None) -> Tool:
         if tool is None:
             raise EntityNotFound("Tool not found")
-        if tool.status != ModelStatus.DONE:
+        if tool.status != ModelStatus.READY:
             raise EntityWrongState(f"Tool {tool.name} {tool.version} is not downloaded, status: {tool.status}")
         return tool
 
@@ -82,7 +82,7 @@ class ToolService:
 
         actions: list[str] = []
         match tool.status:
-            case ModelStatus.DONE:
+            case ModelStatus.READY:
                 actions.extend(["set_default", ModelActions.DISABLE])
             case ModelStatus.ERROR:
                 actions.extend([ModelActions.DOWNLOAD, ModelActions.DISABLE])
@@ -105,14 +105,14 @@ class ToolService:
             case ModelActions.DISABLE:
                 if tool.is_default:
                     raise EntityWrongState("Tool is the global default, select another default or clear it first")
-                if tool.status not in [ModelStatus.DONE, ModelStatus.ERROR]:
+                if tool.status not in [ModelStatus.READY, ModelStatus.ERROR]:
                     raise EntityWrongState(f"Tool has wrong status for disabling: {tool.status}")
                 status = ModelStatus.DISABLED
             case ModelActions.ENABLE:
                 if tool.status != ModelStatus.DISABLED:
                     raise EntityWrongState("Tool is already enabled")
                 # back to the state before it was disabled
-                status = ModelStatus.DONE if tool.sha256 else ModelStatus.ERROR
+                status = ModelStatus.READY if tool.sha256 else ModelStatus.ERROR
             case _:
                 raise ValueError(f"Action {action} is not supported")
 

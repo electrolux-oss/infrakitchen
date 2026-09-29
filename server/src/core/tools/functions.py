@@ -116,7 +116,7 @@ async def ensure_local_tool(session: AsyncSession, tool_id: str | UUID) -> str:
 
     label = f"{tool.name} {tool.version} ({tool.os}/{tool.arch})"
     # disabled tools can't be selected anymore, but entities already using them keep working
-    if tool.status not in [ModelStatus.DONE, ModelStatus.DISABLED]:
+    if tool.status not in [ModelStatus.READY, ModelStatus.DISABLED]:
         raise CannotProceed(f"Tool {label} is not downloaded yet, status: {tool.status}")
 
     if tool.os != host_os() or tool.arch != host_arch():

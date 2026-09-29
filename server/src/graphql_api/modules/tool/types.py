@@ -14,10 +14,11 @@ tool_mapper = StrawberrySQLAlchemyMapper()
 
 @tool_mapper.type(Tool)
 class ToolType:
-    __exclude__ = ["content", "created_by"]
+    __exclude__ = ["content", "created_by", "size"]
 
     id: uuid.UUID = strawberry.UNSET
     creator: UserType | None = None
+    size: int = strawberry.UNSET
 
     @strawberry.field
     def entity_name(self) -> str:

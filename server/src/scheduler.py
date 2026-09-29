@@ -25,7 +25,6 @@ from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
 
-change_logger()
 
 logger = logging.getLogger("scheduler")
 
@@ -320,4 +319,5 @@ async def start_scheduler():
 
 
 if __name__ == "__main__":
+    change_logger()
     asyncio.run(start_scheduler())

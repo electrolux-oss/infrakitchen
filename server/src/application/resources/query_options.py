@@ -88,7 +88,7 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["tool"]
         opts.append(joinedload(Resource.tool).options(*build_tool_query_options(nested)))
     else:
-        opts.append(noload(Resource.tool))
+        opts.append(raiseload(Resource.tool))
 
     if "creator" in fields:
         nested = fields["creator"]

@@ -1,8 +1,8 @@
 """add tool model
 
-Revision ID: 69f0743c5399
-Revises: b7e41c9d2f08
-Create Date: 2026-09-25 00:14:43.860978
+Revision ID: 2612e39a8694
+Revises: 7c943fcdd9c7
+Create Date: 2026-09-29 12:04:44.826522
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "69f0743c5399"
-down_revision: str | None = "b7e41c9d2f08"
+revision: str = "2612e39a8694"
+down_revision: str | None = "7c943fcdd9c7"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

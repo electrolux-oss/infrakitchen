@@ -52,7 +52,7 @@ def mocked_tool():
         source_url="https://github.com/opentofu/opentofu/releases/download/v1.13.0/tofu_1.13.0_linux_amd64.zip",
         sha256="",
         size=0,
-        status=ModelStatus.DONE,
+        status=ModelStatus.READY,
         error_message="",
         is_default=False,
         created_by=None,

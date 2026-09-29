@@ -8,7 +8,7 @@ IaC tools let platform teams choose which **OpenTofu** or **Terraform** version 
 Instead of relying on the single `tofu` installed in the worker image, super admins download official releases into
 InfraKitchen, and every resource and executor can select the version its code needs.
 
-Tools are managed in **Operations → IaC Tools** (`/tools`). Each tool has its own page (`/tools/<id>`) that shows its
+Tools are managed in **Configurations → IaC Tools** (`/tools`). Each tool has its own page (`/tools/<id>`) that shows its
 details and lists the resources and executors using it.
 
 Supported tools:
@@ -33,7 +33,7 @@ The task log shows which one is used, for example `Initiating OpenTofu 1.13.0...
 
 <Step title="Open the tools page">
 
-Go to **Operations → IaC Tools** and click <kbd>Add tool</kbd>.
+Go to **Configurations → IaC Tools** and click <kbd>Add tool</kbd>.
 
 </Step>
 
@@ -54,7 +54,7 @@ release candidate versions.
 <Step title="Download">
 
 Click <kbd>Download</kbd>. The download runs in the background and the tool appears in the list with the `queued`
-status, then `in_progress` and `done`.
+status, then `in_progress` and `ready`.
 
 </Step>
 
@@ -69,7 +69,7 @@ database, so all workers share the same tools.
 | :-------------- | :------------------------------------------------------------------- | :---------------------- |
 | **queued**      | Waiting for a worker to download it                                  | -                       |
 | **in_progress** | Being downloaded and verified                                        | -                       |
-| **done**        | Ready to be used                                                     | Set default, Disable    |
+| **ready**        | Ready to be used                                                     | Set default, Disable    |
 | **error**       | Download or checksum verification failed                             | Retry download, Disable |
 | **disabled**    | Cannot be selected anymore, see [Disabling](#disabling-and-deleting) | Enable, Delete          |
 
@@ -80,7 +80,7 @@ The error message of a failed download is shown on the tool page and in the stat
 One tool can be marked as the **global default**. It is used by every resource and executor that does not select a
 tool, which makes it possible to upgrade the IaC version for all of them in one place.
 
-- **Set default** - available on a `done` tool, in the list or on its page. The previous default is replaced.
+- **Set default** - available on a `ready` tool, in the list or on its page. The previous default is replaced.
 - **Clear default** - available in the **IaC Tools** page header and in the danger zone of the default tool.
   Resources and executors without a selected tool go back to the `tofu` installed on the worker.
 
@@ -89,7 +89,7 @@ The global default cannot be disabled or deleted, clear it or select another def
 ## Selecting a Tool
 
 Resources and executors have an **IaC Tool** field in their configuration. Leave it empty to use the global
-default. Only `done` tools can be selected.
+default. Only `ready` tools can be selected.
 
 The resources and executors lists have an **IaC Tool** column that can be used to filter entities by tool, or to
 find the ones using the global default with the `is none` operator.
@@ -124,7 +124,7 @@ access to the release sites listed above.
 
 ## Permissions and Audit
 
-- Users who can edit a resource or an executor can select any `done` tool for it
+- Users who can edit a resource or an executor can select any `ready` tool for it
 - The tools list and tool pages are visible to every user with the `tool` read permission (granted by the `default` role)
 - Only **super admins** can add, retry, set or clear the default, disable, enable and delete tools
 

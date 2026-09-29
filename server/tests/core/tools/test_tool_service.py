@@ -151,7 +151,7 @@ class TestDelete:
         assert exc.value.metadata == [{"id": dependency.id, "name": "vpc", "entityName": "resource"}]
         mock_tool_crud.delete.assert_not_awaited()
 
-    @pytest.mark.parametrize("status", [ModelStatus.DONE, ModelStatus.ERROR, ModelStatus.IN_PROGRESS])
+    @pytest.mark.parametrize("status", [ModelStatus.READY, ModelStatus.ERROR, ModelStatus.IN_PROGRESS])
     async def test_not_disabled(self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, status):
         mocked_tool.status = status
         mock_tool_crud.get_by_id.return_value = mocked_tool
@@ -235,7 +235,7 @@ class TestGetActions:
         monkeypatch.setattr(tool_service_module, "user_is_super_admin", is_super_admin)
         return is_super_admin
 
-    async def test_done(self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, super_admin):
+    async def test_ready(self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, super_admin):
         mock_tool_crud.get_by_id.return_value = mocked_tool
         actions = await tool_service.get_actions(mocked_tool.id, requester=mock_user_dto)
         assert actions == ["set_default", ModelActions.DISABLE]
@@ -284,7 +284,7 @@ class TestPatchAction:
 
         mock_tool_crud.update.side_effect = update
 
-    @pytest.mark.parametrize("status", [ModelStatus.DONE, ModelStatus.ERROR])
+    @pytest.mark.parametrize("status", [ModelStatus.READY, ModelStatus.ERROR])
     async def test_disable(
         self,
         tool_service,
@@ -319,7 +319,7 @@ class TestPatchAction:
         with pytest.raises(EntityWrongState):
             _ = await tool_service.patch_action(mocked_tool.id, ModelActions.DISABLE, requester=mock_user_dto)
 
-    @pytest.mark.parametrize(("sha256", "expected"), [("abc", ModelStatus.DONE), ("", ModelStatus.ERROR)])
+    @pytest.mark.parametrize(("sha256", "expected"), [("abc", ModelStatus.READY), ("", ModelStatus.ERROR)])
     async def test_enable(self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, sha256, expected):
         mocked_tool.status = ModelStatus.DISABLED
         mocked_tool.sha256 = sha256
