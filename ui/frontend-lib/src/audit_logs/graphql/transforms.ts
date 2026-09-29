@@ -31,5 +31,6 @@ export type GqlAuditLog = Pick<
     template?: { name?: string } | null;
     sourceCodeUrl?: string;
     sourceCodeProvider?: string;
+    deleted?: boolean;
   };
 };

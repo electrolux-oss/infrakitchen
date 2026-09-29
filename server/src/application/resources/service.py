@@ -13,6 +13,7 @@ from core.notifications.service import SubscriptionService
 from application.resources.functions import (
     add_resource_parent_policy,
     add_resource_parent_subscriptions,
+    build_resource_audit_snapshot,
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_actions,
@@ -930,7 +931,13 @@ class ResourceService:
         await self.favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
 
         await delete_entity(existing_resource)
-        await self.audit_log_handler.create_log(resource_id, requester.id, ModelActions.DELETE)
+        entity_snapshot = build_resource_audit_snapshot(existing_resource)
+        await self.audit_log_handler.create_log(
+            resource_id,
+            requester.id,
+            ModelActions.DELETE,
+            entity_snapshot=entity_snapshot,
+        )
         await self.revision_handler.delete_revisions(resource_id)
         await self.log_service.delete_by_entity_id(resource_id)
         await self.task_service.delete_by_entity_id(resource_id)

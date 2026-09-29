@@ -1119,9 +1119,15 @@ class TestDelete:
         mock_resource_crud.delete.assert_awaited_once_with(existing_resource)
         mock_log_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
         mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_resource.id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mock_user_dto.id, ModelActions.DELETE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once()
+        audit_args, audit_kwargs = mock_audit_log_handler.create_log.await_args
+        assert audit_args == (existing_resource.id, mock_user_dto.id, ModelActions.DELETE)
+        entity_snapshot = audit_kwargs["entity_snapshot"]
+        assert entity_snapshot["id"] == str(existing_resource.id)
+        assert entity_snapshot["name"] == existing_resource.name
+        assert entity_snapshot["entityName"] == "resource"
+        assert entity_snapshot["state"] == state
+        assert entity_snapshot["status"] == status
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
         mock_permission_crud.delete_entity_permissions.assert_awaited_once_with("resource", existing_resource.id)
         mock_subscription_crud.delete_many_by_entity_id.assert_awaited_once_with("resource", existing_resource.id)

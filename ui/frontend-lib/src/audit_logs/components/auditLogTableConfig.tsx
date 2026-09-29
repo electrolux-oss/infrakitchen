@@ -49,6 +49,7 @@ export const auditLogColumns: EntityTableColumn[] = [
           }}
           showLifecycleState={false}
           showLabel
+          disableLink={Boolean(params.row.entityData?.deleted)}
         />
       );
     },

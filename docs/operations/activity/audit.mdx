@@ -24,6 +24,20 @@ Each audit log entry contains the following information:
 | **Model** | The entity type (e.g., resource, template, integration) |
 | **Audit Log ID** | Unique identifier for the audit log entry itself |
 
+## Deleted Entities
+
+Deleting a resource removes its record from InfraKitchen, but the audit trail must still show *what* was deleted—not just an opaque ID.
+
+To make this possible, InfraKitchen stores a **snapshot** of the entity on the audit log entry at the moment the delete is recorded. The snapshot captures identifying and contextual details such as name, state, status, description, labels, revision number, and the related template, source code version, project, and workspace.
+
+The **Entity** column keeps rendering the entity name after deletion by falling back to this snapshot. Since the entity no longer exists, the name is not a link.
+
+:::note[Sensitive values]
+Snapshots never include variable values. Only variable *names* are stored, so secrets and sensitive inputs are not persisted into the audit trail.
+:::
+
+Snapshots are captured going forward. Entries recorded before this behavior existed have no snapshot and continue to display the entity ID only.
+
 ## Viewing Audit Logs
 
 ### Global Audit Logs
