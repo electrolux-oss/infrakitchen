@@ -1,0 +1,21 @@
+---
+title: Contributing
+---
+
+This page collects conventions for developers contributing code to **InfraKitchen**.
+
+## Database Migrations
+
+Whenever you add or change a SQLAlchemy model, generate a migration with Alembic autogenerate. Do not write migration files by hand or copy existing ones.
+
+Run the command from the `server/` folder:
+
+```bash
+cd server
+alembic -c src/alembic.ini revision --autogenerate -m "add tool model"
+```
+
+- If your virtual environment is not activated, prefix the command with `uv run` (`uv run alembic -c src/alembic.ini revision --autogenerate -m "..."`).
+- Use a short, descriptive message — it becomes part of the migration file name.
+- Review the generated file in `server/src/alembic/versions/` before committing. Autogenerate can miss or misdetect some changes (for example, renames, enum changes, or server defaults).
+- Commit the migration in the same pull request as the model change.

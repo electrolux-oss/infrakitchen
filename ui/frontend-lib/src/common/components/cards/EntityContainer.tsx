@@ -62,6 +62,7 @@ export const EntityContainer = (props: EntityContainerProps) => {
   return (
     <PageContainer
       title={title || entity?.name || entity?.identifier || "Entity"}
+      documentTitle={entity.name || entity.identifier || title}
       actions={
         <>
           <EntityActions
