@@ -7,6 +7,8 @@ import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
+
 const PageContentHeader = styled("div")(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
@@ -30,6 +32,8 @@ export interface PageContainerProps extends Omit<
   children?: React.ReactNode;
   title?: React.ReactNode;
   description?: React.ReactNode;
+  /** Browser tab title; defaults to `title` when it is a string */
+  documentTitle?: string;
   /** Actions/buttons to render at the right side of the page header */
   actions?: React.ReactNode;
   /** Actions/buttons to render at the bottom of the page, centered */
@@ -41,9 +45,14 @@ export default function PageContainer(props: PageContainerProps) {
     children,
     title,
     description,
+    documentTitle,
     actions = null,
     bottomActions = null,
   } = props;
+
+  useDocumentTitle(
+    documentTitle ?? (typeof title === "string" ? title : undefined),
+  );
 
   return (
     <Container
