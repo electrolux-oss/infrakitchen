@@ -1,4 +1,10 @@
-from pydantic import BaseModel, Field
+from typing import Annotated
+import uuid
+
+from pydantic import BaseModel, BeforeValidator, Field
+
+# empty string from forms means "no value"
+OptionalUUID = Annotated[None | uuid.UUID, BeforeValidator(lambda v: None if v == "" else v)]
 
 
 class DependencyTag(BaseModel):

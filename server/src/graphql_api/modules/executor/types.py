@@ -10,6 +10,7 @@ from graphql_api.dataloaders.entity_loaders import (
     get_favorite_status_loader,
     get_scheduled_action_loader,
 )
+from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code.types import SourceCodeType
@@ -23,13 +24,14 @@ executor_mapper = StrawberrySQLAlchemyMapper()
 
 @executor_mapper.type(Executor)
 class ExecutorType:
-    __exclude__ = ["integration_ids", "secret_ids", "created_by"]
+    __exclude__ = ["integration_ids", "secret_ids", "created_by", "tool_id"]
 
     id: uuid.UUID = strawberry.UNSET
     integration_ids: list[IntegrationType] | None = None
     secret_ids: list[SecretType] | None = None
     source_code: SourceCodeType | None = None
     storage: StorageType | None = None
+    tool: ToolType | None = None
     creator: UserType | None = None
 
     @strawberry.field

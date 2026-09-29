@@ -3,9 +3,12 @@ import os
 import shutil
 import tempfile
 from typing import Any
+from unittest.mock import AsyncMock, Mock
 
 import aiofiles
 import pytest
+
+from application.tools import tf_client as tf_client_module
 
 from application.tools.tf_client import OtfClient
 
@@ -104,3 +107,25 @@ async def test_tf_client(mock_entity_logger):
     assert output["network_id"]["value"] == "123456789"
 
     shutil.rmtree(workspace, ignore_errors=True)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool_path", "expected_command"), [(None, "tofu"), ("/cache/abc/terraform", "/cache/abc/terraform")]
+)
+async def test_tf_client_runs_selected_tool(monkeypatch, mock_entity_logger, tool_path, expected_command):
+    shell_client = Mock()
+    shell_client.return_value.run_shell_command = AsyncMock(return_value="{}")
+    monkeypatch.setattr(tf_client_module, "ShellScriptClient", shell_client)
+
+    otf_client = OtfClient(
+        workspace_path=tempfile.mkdtemp(),
+        environment_variables={},
+        variables={},
+        backend_storage_config="",
+        logger=mock_entity_logger,
+        tool_path=tool_path,
+    )
+    _ = await otf_client.get_output()
+
+    assert shell_client.call_args.kwargs["command"] == expected_command

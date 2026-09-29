@@ -20,6 +20,7 @@ from application.storages.model import Storage
 from application.tools.cloud_api_manager import CloudApiManager
 from application.tools.secret_manager import SecretManager
 from core.adapters.provider_adapters import IntegrationProvider
+from core.tools.functions import ResolvedTool, resolve_tool, resolve_tool_to_run
 from core.config import InfrakitchenConfig
 from core.constants import ModelState, ModelStatus
 from core.constants.model import ModelActions
@@ -280,7 +281,8 @@ class ResourceTask:
                         variables.update({v["name"]: v["value"]})
 
         if self.tf_client is None and code_language == "opentofu":
-            self.logger.info("Initiating Tofu...")
+            tool = await self.get_tool()
+            self.logger.info(f"Initiating {tool.label}...")
             assert self.resource_instance.storage_path is not None, "Storage path is not defined"
             assert self.resource_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.resource_instance.storage_id)
@@ -298,12 +300,29 @@ class ResourceTask:
                 variables=variables,
                 backend_storage_config=get_tf_storage_config(storage, self.resource_instance.storage_path),
                 logger=self.logger,
+                tool_path=tool.path,
             )
 
             assert self.tf_client is not None, "Tofu client is not defined"
 
             self.tf_client.variables = variables
             await self.tf_client.init_tf_workspace()
+
+    async def get_tool(self) -> ResolvedTool:
+        """
+        The tofu/terraform tool selected for the resource or the global default one,
+        without a path the tofu installed in the runtime is used.
+        """
+        tool_id = self.resource_instance.tool_id
+        if (
+            self.resource_temp_state_dto
+            and self.action == ModelActions.DRYRUN_WITH_TEMP_STATE
+            and "tool_id" in self.resource_temp_state_dto.value
+        ):
+            # dry run of pending changes uses the tool from the changes
+            tool_id = self.resource_temp_state_dto.value["tool_id"]
+
+        return await resolve_tool_to_run(self.session, tool_id)
 
     async def post_create_task_run(self):
         assert self.workspace_path is not None, "Workspace path is not defined"
@@ -526,12 +545,14 @@ class ResourceTask:
     async def create_makefile(self):
         assert self.workspace_path is not None, "Workspace path is not defined"
         async with aiofiles.open(os.path.join(self.workspace_path, "Makefile"), "w") as f:
+            tool = await resolve_tool(self.session, self.resource_instance.tool_id)
+            command = tool.executable if tool else "tofu"
             _ = await f.write(
                 "init:\n\t{}\nplan:\n\t{}\napply:\n\t{}\ndestroy:\n\t{}\n".format(
-                    "tofu init -force-copy -upgrade -reconfigure -backend-config=backend.tfvars",
-                    "tofu plan",
-                    "tofu apply",
-                    "tofu destroy",
+                    f"{command} init -force-copy -upgrade -reconfigure -backend-config=backend.tfvars",
+                    f"{command} plan",
+                    f"{command} apply",
+                    f"{command} destroy",
                 )
             )
 

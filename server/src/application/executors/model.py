@@ -11,6 +11,7 @@ from application.source_codes.model import SourceCode, SourceCodeDTO
 from application.integrations.model import Integration, IntegrationDTO
 from application.types import IacToolType
 from core.base_models import Base, BaseEntity
+from core.tools.model import Tool
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import User, UserDTO
 from ..storages.model import Storage, StorageDTO
@@ -58,6 +59,10 @@ class Executor(BaseEntity):
     storage_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("storages.id"), nullable=True)
     storage: Mapped[Storage] = relationship("Storage", lazy="joined")
     storage_path: Mapped[str | None] = mapped_column(nullable=True)
+    tool_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tools.id", ondelete="RESTRICT", name="fk_executors_tool_id"), nullable=True
+    )
+    tool: Mapped[Tool | None] = relationship("Tool", lazy="joined")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
@@ -107,6 +112,7 @@ class ExecutorDTO(BaseModel):
     secret_ids: list[uuid.UUID | SecretDTO] = Field(default_factory=list)
     storage_id: uuid.UUID | StorageDTO | None = Field(default=None)
     storage_path: str | None = Field(default=None)
+    tool_id: uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
     revision_number: int = Field(default=1)
 

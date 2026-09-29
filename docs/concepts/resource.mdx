@@ -40,6 +40,7 @@ Each resource in InfraKitchen contains the following core properties:
 | **Cloud Integrations**  | Cloud provider credentials                  | Required for provisioning                           |
 | **Storage**             | Backend for Terraform/OpenTofu state        | S3, Azure Blob, GCS, etc.                           |
 | **Storage Path**        | Path to state file in storage               | Immutable after creation                            |
+| **IaC Tool**          | OpenTofu/Terraform version used to run it   | Global default when empty, see [IaC Tools](../operations/iac_tools) |
 | **Workspace**           | Terraform/OpenTofu workspace                | Optional, for workspace isolation                   |
 | **Variables**           | Input variables for the infrastructure code | Values for Terraform/OpenTofu variables             |
 | **Outputs**             | Exported values after provisioning          | Available after successful provision                |

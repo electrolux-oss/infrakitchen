@@ -5,6 +5,7 @@ from application.integrations.dependencies import get_integration_service
 from application.source_codes.dependencies import get_source_code_service
 from application.storages.dependencies import get_storage_service
 from core.audit_logs.handler import AuditLogHandler
+from core.tools.dependencies import get_tool_service
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
 from core.permissions.dependencies import get_permission_service
@@ -37,4 +38,5 @@ def get_executor_service(
         log_service=get_log_service(session=session),
         task_service=get_task_service(session=session),
         favorite_service=favorite_service,
+        tool_service=get_tool_service(session=session),
     )

@@ -16,6 +16,7 @@ from application.storages.model import Storage
 from application.tools.cloud_api_manager import CloudApiManager
 from application.tools.secret_manager import SecretManager
 from core.adapters.provider_adapters import IntegrationProvider
+from core.tools.functions import resolve_tool_to_run
 from core.config import InfrakitchenConfig
 from core.constants import ModelState, ModelStatus
 from core.constants.model import ModelActions
@@ -196,7 +197,8 @@ class ExecutorTask:
         code_language = self.source_code_instance.source_code_language
 
         if self.tf_client is None and code_language == "opentofu":
-            self.logger.info("Initiating Tofu...")
+            tool = await resolve_tool_to_run(self.session, self.executor_instance.tool_id)
+            self.logger.info(f"Initiating {tool.label}...")
             assert self.executor_instance.storage_path is not None, "Storage path is not defined"
             assert self.executor_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.executor_instance.storage_id)
@@ -214,6 +216,7 @@ class ExecutorTask:
                 variables={},
                 backend_storage_config=get_tf_storage_config(storage, self.executor_instance.storage_path),
                 logger=self.logger,
+                tool_path=tool.path,
             )
 
             assert self.tf_client is not None, "Tofu client is not defined"

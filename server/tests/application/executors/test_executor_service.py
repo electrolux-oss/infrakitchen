@@ -8,6 +8,7 @@ from application.executors.model import Executor
 from application.executors.schema import (
     ExecutorResponse,
     ExecutorCreate,
+    ExecutorUpdate,
 )
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelState, ModelStatus
@@ -1061,3 +1062,122 @@ class TestPatchAction:
             await mock_executor_service.patch_action_executor(
                 executor_id=existing_executor.id, body=patch_body, requester=mocked_user
             )
+
+
+class TestToolSelection:
+    @pytest.fixture
+    def executor_create(self, mocked_executor, mocked_source_code, storage_response):
+        def _create(tool_id):
+            return ExecutorCreate(
+                name=mocked_executor.name,
+                source_code_id=mocked_source_code.id,
+                source_code_version="v1.0.0",
+                storage_id=storage_response.id,
+                storage_path="path/to/storage",
+                tool_id=tool_id,
+            )
+
+        return _create
+
+    @pytest.fixture
+    def editable_executor(self, mocked_executor, mock_executor_crud):
+        mocked_executor.state = ModelState.PROVISIONED
+        mocked_executor.status = ModelStatus.DONE
+        mock_executor_crud.get_by_id.return_value = mocked_executor
+        mock_executor_crud.refresh = AsyncMock()
+        return mocked_executor
+
+    @pytest.mark.asyncio
+    async def test_create_with_tool(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_tool_service,
+        mock_source_code_crud,
+        mock_storage_crud,
+        mocked_source_code,
+        mocked_storage,
+        mocked_executor,
+        mocked_user_response,
+        executor_create,
+    ):
+        tool_id = uuid4()
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+        mocked_executor.state = ModelState.PROVISION
+        mocked_executor.status = ModelStatus.READY
+        mock_executor_crud.create.return_value = mocked_executor
+        mock_executor_crud.get_by_id.return_value = mocked_executor
+
+        _ = await mock_executor_service.create_executor(executor_create(tool_id), mocked_user_response)
+
+        mock_tool_service.validate_ready.assert_awaited_once_with(tool_id)
+        assert mock_executor_crud.create.call_args.args[0]["tool_id"] == tool_id
+
+    @pytest.mark.asyncio
+    async def test_create_with_tool_not_ready(
+        self,
+        mock_executor_service,
+        mock_executor_crud,
+        mock_tool_service,
+        mock_source_code_crud,
+        mock_storage_crud,
+        mocked_source_code,
+        mocked_storage,
+        mocked_user_response,
+        executor_create,
+    ):
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+        mock_tool_service.validate_ready.side_effect = EntityWrongState("Tool is not downloaded")
+
+        with pytest.raises(EntityWrongState, match="not downloaded"):
+            _ = await mock_executor_service.create_executor(executor_create(uuid4()), mocked_user_response)
+
+        mock_executor_crud.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_sets_tool(
+        self, mock_executor_service, mock_executor_crud, mock_tool_service, editable_executor, mocked_user_response
+    ):
+        tool_id = uuid4()
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id), ExecutorUpdate(tool_id=tool_id), mocked_user_response
+        )
+
+        mock_tool_service.validate_ready.assert_awaited_once_with(tool_id)
+        assert mock_executor_crud.update.call_args.args[1] == {"tool_id": tool_id}
+
+    @pytest.mark.asyncio
+    async def test_update_keeps_disabled_tool(
+        self, mock_executor_service, mock_executor_crud, mock_tool_service, editable_executor, mocked_user_response
+    ):
+        # a disabled tool fails validate_ready, but the executor already uses it
+        editable_executor.tool_id = uuid4()
+        mock_tool_service.validate_ready.side_effect = EntityWrongState("Tool is not downloaded")
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id),
+            ExecutorUpdate(tool_id=editable_executor.tool_id, description="new"),
+            mocked_user_response,
+        )
+
+        mock_tool_service.validate_ready.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_update_resets_tool(
+        self, mock_executor_service, mock_executor_crud, mock_tool_service, editable_executor, mocked_user_response
+    ):
+        editable_executor.tool_id = uuid4()
+
+        _ = await mock_executor_service.update_executor(
+            str(editable_executor.id), ExecutorUpdate(tool_id=None), mocked_user_response
+        )
+
+        mock_tool_service.validate_ready.assert_not_awaited()
+        assert mock_executor_crud.update.call_args.args[1] == {"tool_id": None}
+
+    def test_update_without_tool_keeps_it_unset(self):
+        update = ExecutorUpdate(description="new")
+        assert "tool_id" not in update.model_fields_set
