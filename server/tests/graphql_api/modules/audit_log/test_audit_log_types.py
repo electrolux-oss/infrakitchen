@@ -27,7 +27,8 @@ def _info(loaders: dict[str, Any]):
 
 
 def _audit_log(entity_snapshot=None):
-    return SimpleNamespace(model="resource", entity_id=ENTITY_ID, entity_snapshot=entity_snapshot)
+    action_metadata = {"entity_snapshot": entity_snapshot} if entity_snapshot is not None else None
+    return SimpleNamespace(model="resource", entity_id=ENTITY_ID, action_metadata=action_metadata)
 
 
 class TestEntityData:

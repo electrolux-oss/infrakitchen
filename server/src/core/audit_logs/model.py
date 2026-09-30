@@ -16,6 +16,7 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column()
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     revision_number: Mapped[int | None] = mapped_column(default=1, nullable=True)
-    entity_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True, default=None)
+    # "metadata" is reserved on SQLAlchemy declarative models, so the attribute is named differently
+    action_metadata: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     creator: Mapped[User] = relationship("User", lazy="joined")

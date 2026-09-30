@@ -1122,7 +1122,7 @@ class TestDelete:
         mock_audit_log_handler.create_log.assert_awaited_once()
         audit_args, audit_kwargs = mock_audit_log_handler.create_log.await_args
         assert audit_args == (existing_resource.id, mock_user_dto.id, ModelActions.DELETE)
-        entity_snapshot = audit_kwargs["entity_snapshot"]
+        entity_snapshot = audit_kwargs["action_metadata"]["entity_snapshot"]
         assert entity_snapshot["id"] == str(existing_resource.id)
         assert entity_snapshot["name"] == existing_resource.name
         assert entity_snapshot["entityName"] == "resource"

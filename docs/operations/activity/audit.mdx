@@ -28,7 +28,7 @@ Each audit log entry contains the following information:
 
 Deleting a resource removes its record from InfraKitchen, but the audit trail must still show *what* was deleted—not just an opaque ID.
 
-To make this possible, InfraKitchen stores a **snapshot** of the entity on the audit log entry at the moment the delete is recorded. The snapshot captures identifying and contextual details such as name, state, status, description, labels, revision number, and the related template, source code version, project, and workspace.
+To make this possible, InfraKitchen stores a **snapshot** of the entity in the audit log entry's `metadata` (under the `entity_snapshot` key) at the moment the delete is recorded. The `metadata` field is a generic JSON object for additional action details, so other actions can record extra context there too. The snapshot captures identifying and contextual details such as name, state, status, description, labels, revision number, and the related template, source code version, project, and workspace.
 
 The **Entity** column keeps rendering the entity name after deletion by falling back to this snapshot. Since the entity no longer exists, the name is not a link.
 

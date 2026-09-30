@@ -13,7 +13,7 @@ audit_log_mapper = StrawberrySQLAlchemyMapper()
 
 @audit_log_mapper.type(AuditLog)
 class AuditLogType:
-    __exclude__ = ["entity_snapshot"]
+    __exclude__ = ["action_metadata"]
 
     creator: UserType | None = None
     model: str = ""
@@ -27,7 +27,8 @@ class AuditLogType:
             if entity_data is not None:
                 return entity_data
 
-        snapshot: dict[str, Any] | None = getattr(self, "entity_snapshot", None)
+        action_metadata: dict[str, Any] | None = getattr(self, "action_metadata", None)
+        snapshot: dict[str, Any] | None = (action_metadata or {}).get("entity_snapshot")
         if not snapshot:
             return None
         deleted_entity_data: dict[str, Any] = {**snapshot, "deleted": True}

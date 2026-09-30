@@ -19,7 +19,7 @@ class AuditLogHandler:
         requester_id: str | UUID,
         action: str,
         revision_number: int | None = None,
-        entity_snapshot: dict[str, Any] | None = None,
+        action_metadata: dict[str, Any] | None = None,
     ) -> None:
         audit_log = AuditLog(
             model=self.entity_name,
@@ -27,7 +27,7 @@ class AuditLogHandler:
             action=action,
             entity_id=entity_id,
             revision_number=revision_number,
-            entity_snapshot=entity_snapshot,
+            action_metadata=action_metadata,
         )
         self.session.add(audit_log)
         await self.session.flush()

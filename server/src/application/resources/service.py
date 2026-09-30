@@ -936,7 +936,7 @@ class ResourceService:
             resource_id,
             requester.id,
             ModelActions.DELETE,
-            entity_snapshot=entity_snapshot,
+            action_metadata={"entity_snapshot": entity_snapshot},
         )
         await self.revision_handler.delete_revisions(resource_id)
         await self.log_service.delete_by_entity_id(resource_id)
