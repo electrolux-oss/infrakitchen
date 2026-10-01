@@ -931,12 +931,11 @@ class ResourceService:
         await self.favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
 
         await delete_entity(existing_resource)
-        entity_snapshot = build_resource_audit_snapshot(existing_resource)
         await self.audit_log_handler.create_log(
             resource_id,
             requester.id,
             ModelActions.DELETE,
-            action_metadata={"entity_snapshot": entity_snapshot},
+            action_metadata=build_resource_audit_snapshot(existing_resource),
         )
         await self.revision_handler.delete_revisions(resource_id)
         await self.log_service.delete_by_entity_id(resource_id)

@@ -15,6 +15,6 @@ class AuditLogResponse(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     creator: UserShort | None = Field(default=None)
     revision_number: int | None = Field(default=None)
-    action_metadata: dict[str, Any] | None = Field(default=None, title="Action metadata")
+    metadata: dict[str, Any] | None = Field(default=None, title="Metadata", validation_alias="action_metadata")
 
     model_config = ConfigDict(from_attributes=True)

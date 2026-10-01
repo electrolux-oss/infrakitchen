@@ -6,6 +6,8 @@ import {
   relativeTimeColumn,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { GqlAuditLog } from "../graphql";
+import { getAuditLogEntity } from "../utils/auditLogEntity";
 
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
@@ -31,25 +33,26 @@ const AUDIT_LOG_ACTION_OPTIONS = [
 export const auditLogColumns: EntityTableColumn[] = [
   {
     field: "entityId",
-    fetchFields: ["model", "entityId", "entityData"],
+    fetchFields: ["model", "entityId", "entityData", "action", "metadata"],
     headerName: "Entity",
     flex: 2.5,
     sortable: true,
     sortField: "entity_id",
     hideable: false,
     valueGetter: (value: string) => value,
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+      const { entity, isDeleted } = getAuditLogEntity(params.row);
       return (
         <Entity
           entity={{
-            ...params.row.entityData,
+            ...entity,
             id: params.row.entityId,
             entityType: params.row.model,
-            name: params.row.entityData?.name ?? params.row.model,
+            name: entity?.name ?? params.row.model,
           }}
           showLifecycleState={false}
           showLabel
-          disableLink={Boolean(params.row.entityData?.deleted)}
+          disableLink={isDeleted}
         />
       );
     },

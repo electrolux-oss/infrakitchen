@@ -15,8 +15,8 @@ def build_audit_log_query_options(fields: FieldSpec | None = None) -> list[Any]:
         ]
 
     requested: set[str] = set(fields.keys())
-    if "entityData" in requested or "entity_data" in requested:
-        requested.update({"model", "entity_id", "action_metadata"})
+    if "metadata" in requested:
+        requested.add("action_metadata")
 
     opts: list[Any] = build_load_only(AuditLog, requested)
 

@@ -1,7 +1,7 @@
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from strawberry.scalars import JSON
 from strawberry.types import Info
-from typing import Any, cast
+from typing import cast
 import strawberry
 
 from core.audit_logs.model import AuditLog
@@ -22,17 +22,13 @@ class AuditLogType:
     @strawberry.field
     async def entity_data(self, info: Info) -> JSON | None:
         loader = info.context["loaders"].get(self.model)
-        if loader is not None:
-            entity_data = await loader.load(str(self.entity_id))
-            if entity_data is not None:
-                return entity_data
-
-        action_metadata: dict[str, Any] | None = getattr(self, "action_metadata", None)
-        snapshot: dict[str, Any] | None = (action_metadata or {}).get("entity_snapshot")
-        if not snapshot:
+        if loader is None:
             return None
-        deleted_entity_data: dict[str, Any] = {**snapshot, "deleted": True}
-        return cast(JSON, cast(object, deleted_entity_data))
+        return await loader.load(str(self.entity_id))
+
+    @strawberry.field(name="metadata")
+    def resolve_metadata(self) -> JSON | None:
+        return cast(JSON | None, getattr(self, "action_metadata", None))
 
 
 audit_log_mapper.finalize()
