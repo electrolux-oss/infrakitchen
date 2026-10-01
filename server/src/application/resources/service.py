@@ -849,6 +849,9 @@ class ResourceService:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
                 await self.publish_notification_event(existing_resource, "destroy")
             case ModelActions.EXECUTE:
+                if existing_resource.abstract is True:
+                    raise ValueError("Apply action is not allowed for abstract resources")
+
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
                     pydantic_resource.id,
@@ -866,6 +869,10 @@ class ResourceService:
                     raise EntityWrongState(
                         "Dry run is only allowed for resources in READY, ERROR, APPROVAL_PENDING, or DONE",
                     )
+
+                if existing_resource.abstract is True:
+                    raise ValueError("Dry run action is not allowed for abstract resources")
+
                 await self.event_sender.send_task(
                     existing_resource.id,
                     requester=requester,
@@ -879,6 +886,9 @@ class ResourceService:
                 )
                 if resource_temp_state is None:
                     raise ValueError("Resource has no temporary state for dry run with temp state")
+
+                if existing_resource.abstract is True:
+                    raise ValueError("Dry run action is not allowed for abstract resources")
 
                 if existing_resource.status not in [
                     ModelStatus.READY,

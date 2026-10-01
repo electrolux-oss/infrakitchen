@@ -57,6 +57,12 @@ class TaskMutation:
                     resource_id=schedule.entity_id, requester=requester
                 ):
                     raise AccessDenied(f"Access denied for action {ModelActions.EXECUTE.value}")
+                resource = await service.get_by_id(schedule.entity_id)
+                if not resource:
+                    raise EntityNotFound(f"Resource with id {schedule.entity_id} not found")
+                if resource.abstract:
+                    raise AccessDenied("Cannot schedule actions for abstract resources")
+
             case "executor":
                 service = get_executor_service(
                     session=session,
@@ -66,6 +72,9 @@ class TaskMutation:
                     executor_id=schedule.entity_id, requester=requester
                 ):
                     raise AccessDenied(f"Access denied for action {ModelActions.EXECUTE.value}")
+                executor = await service.get_by_id(schedule.entity_id)
+                if not executor:
+                    raise EntityNotFound(f"Executor with id {schedule.entity_id} not found")
             case _:
                 raise EntityNotFound(f"Unsupported entity type: {schedule.entity}")
 
