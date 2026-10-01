@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 
 import {
   CloseFullscreen,
@@ -8,6 +14,7 @@ import {
 } from "@mui/icons-material";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
+import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Ansi from "ansi-to-react";
@@ -21,8 +28,14 @@ import { CODE_FONT_FAMILY } from "../theme";
 const MAX_LOG_MESSAGES = 1000;
 const BATCH_INTERVAL = 100; // milliseconds
 
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 export const LogLiveTail = () => {
   const { ikApi, webSocketEnabled, globalConfig } = useConfig();
+  const theme = useTheme();
   const { entity } = useEntityProvider();
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
   const isMinimizedSaved = get("log_live_tail_minimized") as
@@ -138,6 +151,18 @@ export const LogLiveTail = () => {
     };
   }, [flushPendingMessages]);
 
+  // Expanding ring around the minimized icon while logs are arriving.
+  const activityColor = theme.palette.success.main;
+  const ripple = useMemo(
+    () => keyframes`
+      0% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 0 ${alpha(activityColor, 0.55)}; }
+      70% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 12px ${alpha(activityColor, 0)}; }
+      100% { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), 0 0 0 0 ${alpha(activityColor, 0)}; }
+    `,
+    [activityColor],
+  );
+  const showActivity = isMinimized && isReceivingLogs;
+
   const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
 
   const handleLogMessage = useCallback(
@@ -192,10 +217,14 @@ export const LogLiveTail = () => {
         boxShadow: "0 12px 40px rgba(0, 0, 0, 0.18)",
         borderRadius: isMinimized ? "50%" : "var(--template-surface-radius)",
         border: "1px solid",
-        borderColor: "divider",
+        borderColor: showActivity ? "success.main" : "divider",
         bgcolor: "background.paper",
         overflow: "hidden",
         cursor: isMinimized ? "pointer" : "default",
+        animation: showActivity
+          ? `${ripple} 1.6s ease-out infinite`
+          : undefined,
+        "@media (prefers-reduced-motion: reduce)": { animation: "none" },
       }}
     >
       {!isMinimized && (
@@ -238,10 +267,38 @@ export const LogLiveTail = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            position: "relative",
           }}
         >
-          <Tooltip title="Log Stream">
-            <Terminal fontSize="small" sx={{ color: "text.secondary" }} />
+          {showActivity && (
+            <Box
+              aria-hidden
+              sx={{
+                position: "absolute",
+                inset: 2,
+                borderRadius: "50%",
+                border: "2px solid transparent",
+                borderTopColor: "success.main",
+                borderRightColor: "success.main",
+                animation: `${spin} 1s linear infinite`,
+                "@media (prefers-reduced-motion: reduce)": {
+                  animation: "none",
+                },
+              }}
+            />
+          )}
+          <Tooltip
+            title={
+              isReceivingLogs ? "Log Stream — receiving logs" : "Log Stream"
+            }
+          >
+            <Terminal
+              fontSize="small"
+              sx={{
+                color: showActivity ? "success.main" : "text.secondary",
+                transition: "color 0.3s",
+              }}
+            />
           </Tooltip>
         </Box>
       ) : (

@@ -80,7 +80,7 @@ export function EntityActions(props: EntityActionsProps) {
 
   return (
     <>
-      {actions.includes("dryrun") && entity?.abstract === false && (
+      {actions.includes("dryrun") && !entity?.abstract && (
         <Tooltip title="Preview what will change before applying">
           <Button
             onClick={() => changeDialog("dryrun")}
@@ -91,7 +91,7 @@ export function EntityActions(props: EntityActionsProps) {
         </Tooltip>
       )}
       {actions.includes("dryrun") &&
-        entity?.abstract === false &&
+        !entity?.abstract &&
         actions.includes("has_temporary_state") && (
           <Button
             onClick={() => changeDialog("dryrun_with_temp_state")}
@@ -100,7 +100,7 @@ export function EntityActions(props: EntityActionsProps) {
             Plan (Temp State)
           </Button>
         )}
-      {actions.includes("execute") && entity?.abstract === false && (
+      {actions.includes("execute") && !entity?.abstract && (
         <Tooltip title="Apply changes to infrastructure">
           <Button
             onClick={() => changeDialog("execute")}
