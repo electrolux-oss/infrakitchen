@@ -28,6 +28,7 @@ export function EntityActions(props: EntityActionsProps) {
 
   const { ikApi, linkPrefix } = useConfig();
   const { actions, refreshActions, refreshEntity } = useEntityProvider();
+  const { entity } = useEntityProvider();
   const navigate = useNavigate();
   const [enabling, setEnabling] = useState(false);
 
@@ -79,7 +80,7 @@ export function EntityActions(props: EntityActionsProps) {
 
   return (
     <>
-      {actions.includes("dryrun") && (
+      {actions.includes("dryrun") && entity?.abstract === false && (
         <Tooltip title="Preview what will change before applying">
           <Button
             onClick={() => changeDialog("dryrun")}
@@ -90,6 +91,7 @@ export function EntityActions(props: EntityActionsProps) {
         </Tooltip>
       )}
       {actions.includes("dryrun") &&
+        entity?.abstract === false &&
         actions.includes("has_temporary_state") && (
           <Button
             onClick={() => changeDialog("dryrun_with_temp_state")}
@@ -98,7 +100,7 @@ export function EntityActions(props: EntityActionsProps) {
             Plan (Temp State)
           </Button>
         )}
-      {actions.includes("execute") && (
+      {actions.includes("execute") && entity?.abstract === false && (
         <Tooltip title="Apply changes to infrastructure">
           <Button
             onClick={() => changeDialog("execute")}

@@ -34,6 +34,7 @@ export const ScheduleApplyButton = ({
   const now = useNow();
 
   if (!entity || !actions.includes("execute")) return null;
+  if (entity?.abstract) return null;
 
   const cron = pendingScheduledAction?.cron ?? null;
 
