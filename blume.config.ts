@@ -27,6 +27,7 @@ export default defineConfig({
     base: "/infrakitchen",
   },
   theme: {
+    accent: "blue",
     fonts: {
       display: "geist",
       body: "geist",
