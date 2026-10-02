@@ -30,7 +30,6 @@ export default defineConfig({
     ],
     socials: {
       linkedin: "https://www.linkedin.com/company/infrakitchen",
-      discord: "https://discord.gg/HAk7caCMf9",
     },
   },
   content: {
