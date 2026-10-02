@@ -7,7 +7,7 @@ export default defineConfig({
     text: "InfraKitchen",
   },
   description:
-    "Self-service infrastructure provisioning platform built for platform engineering. Reusable templates, blueprints, and AI-agent-ready infrastructure.",
+    "The Open-Source Developer Platform for Humans and Agents.",
   feedback: false,
   github: {
     owner: "electrolux-oss",
