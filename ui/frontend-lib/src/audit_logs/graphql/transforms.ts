@@ -32,4 +32,5 @@ export type GqlAuditLog = Pick<
     sourceCodeUrl?: string;
     sourceCodeProvider?: string;
   };
+  metadata?: Record<string, unknown> | null;
 };

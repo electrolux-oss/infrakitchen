@@ -1,4 +1,5 @@
 from datetime import datetime, UTC
+from typing import Any
 import uuid
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -14,5 +15,6 @@ class AuditLogResponse(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
     creator: UserShort | None = Field(default=None)
     revision_number: int | None = Field(default=None)
+    metadata: dict[str, Any] | None = Field(default=None, title="Metadata", validation_alias="action_metadata")
 
     model_config = ConfigDict(from_attributes=True)

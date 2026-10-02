@@ -8,6 +8,7 @@ from uuid import UUID
 
 from application.projects.functions import requester_is_project_owner
 from application.projects.model import Project
+from application.resources.model import Resource
 from application.resources.schema import (
     DependencyType,
     ResourceCreate,
@@ -635,3 +636,46 @@ async def convert_field_by_naming_convention_pattern(
             )
 
         setattr(resource, field, resource_field_value)
+
+
+def build_resource_audit_snapshot(resource: Resource) -> dict[str, Any]:
+    template = getattr(resource, "template", None)
+    project = getattr(resource, "project", None)
+    workspace = getattr(resource, "workspace", None)
+    source_code_version = getattr(resource, "source_code_version", None)
+
+    def _variable_name(variable: Any) -> str | None:
+        if isinstance(variable, dict):
+            return variable.get("name")
+        return getattr(variable, "name", None)
+
+    variable_names = [name for name in (_variable_name(var) for var in resource.variables or []) if name]
+
+    source_code_version_snapshot = None
+    if source_code_version:
+        version_ref = source_code_version.source_code_version or source_code_version.source_code_branch
+        source_code_version_snapshot = {
+            "id": str(source_code_version.id),
+            "name": f"{source_code_version.source_code_folder}:{version_ref}",
+            "sourceCodeVersion": source_code_version.source_code_version,
+            "sourceCodeBranch": source_code_version.source_code_branch,
+        }
+
+    return {
+        "id": str(resource.id),
+        "name": resource.name,
+        "entityName": "resource",
+        "status": resource.status,
+        "state": resource.state,
+        "description": resource.description,
+        "abstract": resource.abstract,
+        "labels": list(resource.labels or []),
+        "variableNames": variable_names,
+        "createdAt": resource.created_at.isoformat() if resource.created_at else None,
+        "updatedAt": resource.updated_at.isoformat() if resource.updated_at else None,
+        "revisionNumber": resource.revision_number,
+        "template": {"id": str(template.id), "name": template.name} if template else None,
+        "templateVersion": source_code_version_snapshot,
+        "project": {"id": str(project.id), "name": project.name} if project else None,
+        "workspace": {"id": str(workspace.id), "name": workspace.name} if workspace else None,
+    }

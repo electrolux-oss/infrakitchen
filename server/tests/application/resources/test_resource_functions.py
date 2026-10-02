@@ -3,7 +3,9 @@ from typing import Any
 from uuid import uuid4
 import pytest
 
+from application.projects.model import Project
 from application.resources.functions import (
+    build_resource_audit_snapshot,
     check_required_variables,
     check_unique_variables,
     check_variable_type,
@@ -12,6 +14,7 @@ from application.resources.functions import (
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
 )
+from application.resources.model import Resource
 from application.resources.schema import (
     DependencyConfig,
     DependencyTag,
@@ -20,8 +23,12 @@ from application.resources.schema import (
     ResourceVariableSchema,
     Variables,
 )
+from application.source_code_versions.model import SourceCodeVersion
+from application.templates.model import Template
 from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import ValidationRuleResponse
+from application.workspaces.model import Workspace
+from core.constants.model import ModelState, ModelStatus
 
 
 def test_get_merged_tags_with_project_uses_project_as_default(many_resource_response):
@@ -429,3 +436,73 @@ async def test_validate_resource_variables_patch_enforces_rules(resource_respons
 
     with pytest.raises(ValueError, match=r"does not match required pattern"):
         await update_resource_variables_on_patch(schema, old, update)
+
+
+def test_build_resource_audit_snapshot_captures_related_entities_without_variable_values():
+    template = Template(id=uuid4(), name="AWS Redis")
+    source_code_version = SourceCodeVersion(
+        id=uuid4(), source_code_folder="redis", source_code_version="v1.2.0", source_code_branch=None
+    )
+    project = Project(id=uuid4(), name="payments")
+    workspace = Workspace(id=uuid4(), name="payments-ws")
+    resource = Resource(
+        id=uuid4(),
+        name="redis-prod",
+        description="cache",
+        state=ModelState.DESTROYED,
+        status=ModelStatus.DONE,
+        abstract=False,
+        labels=["team-a"],
+        revision_number=3,
+        variables=[
+            {"name": "region", "value": "eu-west-1", "sensitive": False},
+            {"name": "password", "value": "super-secret", "sensitive": True},
+        ],
+        template=template,
+        source_code_version=source_code_version,
+        project=project,
+        workspace=workspace,
+    )
+
+    snapshot = build_resource_audit_snapshot(resource)
+
+    assert snapshot["id"] == str(resource.id)
+    assert snapshot["name"] == "redis-prod"
+    assert snapshot["entityName"] == "resource"
+    assert snapshot["state"] == ModelState.DESTROYED
+    assert snapshot["status"] == ModelStatus.DONE
+    assert snapshot["labels"] == ["team-a"]
+    assert snapshot["revisionNumber"] == 3
+    assert snapshot["template"] == {"id": str(template.id), "name": "AWS Redis"}
+    assert snapshot["templateVersion"] == {
+        "id": str(source_code_version.id),
+        "name": "redis:v1.2.0",
+        "sourceCodeVersion": "v1.2.0",
+        "sourceCodeBranch": None,
+    }
+    assert snapshot["project"] == {"id": str(project.id), "name": "payments"}
+    assert snapshot["workspace"] == {"id": str(workspace.id), "name": "payments-ws"}
+    assert snapshot["variableNames"] == ["region", "password"]
+    assert "super-secret" not in repr(snapshot)
+    assert "eu-west-1" not in repr(snapshot)
+
+
+def test_build_resource_audit_snapshot_uses_branch_when_version_is_missing():
+    source_code_version = SourceCodeVersion(
+        id=uuid4(), source_code_folder="redis", source_code_version=None, source_code_branch="main"
+    )
+    resource = Resource(
+        id=uuid4(),
+        name="redis-dev",
+        state=ModelState.PROVISION,
+        status=ModelStatus.APPROVAL_PENDING,
+        source_code_version=source_code_version,
+    )
+
+    snapshot = build_resource_audit_snapshot(resource)
+
+    assert snapshot["templateVersion"]["name"] == "redis:main"
+    assert snapshot["template"] is None
+    assert snapshot["project"] is None
+    assert snapshot["workspace"] is None
+    assert snapshot["variableNames"] == []
