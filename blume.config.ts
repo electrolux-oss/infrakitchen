@@ -13,6 +13,26 @@ export default defineConfig({
     owner: "electrolux-oss",
     repo: "infrakitchen",
   },
+  footer: {
+    links: [
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/releases",
+        label: "Changelog",
+      },
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/issues/new",
+        label: "Report an issue",
+      },
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/blob/main/LICENSE",
+        label: "Apache License 2.0",
+      },
+    ],
+    socials: {
+      linkedin: "https://www.linkedin.com/company/infrakitchen",
+      discord: "https://discord.gg/HAk7caCMf9",
+    },
+  },
   content: {
     pages: "docs/pages",
   },
