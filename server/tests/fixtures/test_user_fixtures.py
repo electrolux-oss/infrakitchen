@@ -16,6 +16,7 @@ def mock_user_crud():
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.get_one = AsyncMock()
+    crud.get_by_identifier = AsyncMock()
     crud.count = AsyncMock()
     crud.create = AsyncMock()
     crud.update = AsyncMock()

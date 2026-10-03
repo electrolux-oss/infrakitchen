@@ -48,6 +48,13 @@ class UserCRUD:
         result = await self.session.execute(statement)
         return result.scalars().first()
 
+    async def get_by_identifier(self, identifier: str) -> User | None:
+        # Identifiers are emails for SSO providers, which are case-insensitive
+        statement = select(User).where(func.lower(User.identifier) == identifier.lower())
+        statement = statement.options(selectinload(User.secondary_accounts), selectinload(User.primary_account))
+        result = await self.session.execute(statement)
+        return result.scalars().first()
+
     async def get_all(
         self,
         filter: dict[str, Any] | None = None,
