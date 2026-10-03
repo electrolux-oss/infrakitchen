@@ -157,10 +157,12 @@ export const TemplateConfiguration = ({
     {},
   );
 
+  // without integrations any storage can be used, the backend is accessed with the storage integration
   const storageFilter = useMemo(
-    () => ({
-      integration_id: resource.integrationIds?.map((i) => i.id),
-    }),
+    () =>
+      resource.integrationIds && resource.integrationIds.length > 0
+        ? { integration_id: resource.integrationIds.map((i) => i.id) }
+        : {},
     [resource.integrationIds],
   );
 
@@ -259,94 +261,92 @@ export const TemplateConfiguration = ({
             "source_code_version_id",
           )}
         />
-        {canEditStorage &&
-          resource.integrationIds &&
-          resource.integrationIds?.length > 0 && (
-            <>
+        {canEditStorage && resource.abstract === false && (
+          <>
+            <CommonEditableField<string | null>
+              name="Storage"
+              canEdit={canEditStorage && isStorageUnlocked}
+              lock={{
+                locked: !isStorageUnlocked,
+                onToggle: () => setIsStorageUnlocked((unlocked) => !unlocked),
+                lockedTitle: "Storage is locked",
+                lockedDescription:
+                  "Changing storage can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
+                unlockedTitle: "Storage editing is enabled",
+                unlockedDescription:
+                  "Click the lock to lock it again when you are done.",
+              }}
+              value={resource.storage?.id ?? null}
+              ariaLabel="Edit storage"
+              display={withPendingChange(
+                resource.storage ? (
+                  <GetReferenceUrlValue {...resource.storage} />
+                ) : null,
+                "storage_id",
+              )}
+              onSave={(value) => saveField({ storageId: value })}
+              renderEditor={({ value, onChange }) => (
+                <ReferenceInput
+                  ikApi={ikApi}
+                  entity_name="storages"
+                  buffer={buffer}
+                  bufferKey="storages"
+                  showFields={["name", "storage_provider"]}
+                  fields={["name", "storage_provider", "state"]}
+                  setBuffer={setBuffer}
+                  filter={storageFilter}
+                  value={value}
+                  onChange={onChange}
+                  getOptionDisabled={(option: any) =>
+                    option.state !== "PROVISIONED"
+                  }
+                  ariaLabel="Storage"
+                  placeholder="Select storage for TF state…"
+                  required
+                  helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                />
+              )}
+            />
+
+            {resource.storage && (
               <CommonEditableField<string | null>
-                name="Storage"
-                canEdit={canEditStorage && isStorageUnlocked}
+                name="Storage Path"
+                canEdit={canEditStorage && isStoragePathUnlocked}
                 lock={{
-                  locked: !isStorageUnlocked,
-                  onToggle: () => setIsStorageUnlocked((unlocked) => !unlocked),
-                  lockedTitle: "Storage is locked",
+                  locked: !isStoragePathUnlocked,
+                  onToggle: () =>
+                    setIsStoragePathUnlocked((unlocked) => !unlocked),
+                  lockedTitle: "Storage path is locked",
                   lockedDescription:
-                    "Changing storage can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                  unlockedTitle: "Storage editing is enabled",
+                    "Changing the storage path can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
+                  unlockedTitle: "Storage path editing is enabled",
                   unlockedDescription:
                     "Click the lock to lock it again when you are done.",
                 }}
-                value={resource.storage?.id ?? null}
-                ariaLabel="Edit storage"
+                value={resource.storagePath ?? null}
+                ariaLabel="Edit storage path"
                 display={withPendingChange(
-                  resource.storage ? (
-                    <GetReferenceUrlValue {...resource.storage} />
+                  resource.storagePath ? (
+                    <span>{resource.storagePath}</span>
                   ) : null,
-                  "storage_id",
+                  "storage_path",
                 )}
-                onSave={(value) => saveField({ storageId: value })}
+                onSave={(value) => saveField({ storagePath: value })}
                 renderEditor={({ value, onChange }) => (
-                  <ReferenceInput
-                    ikApi={ikApi}
-                    entity_name="storages"
-                    buffer={buffer}
-                    bufferKey="storages"
-                    showFields={["name", "storage_provider"]}
-                    fields={["name", "storage_provider", "state"]}
-                    setBuffer={setBuffer}
-                    filter={storageFilter}
-                    value={value}
-                    onChange={onChange}
-                    getOptionDisabled={(option: any) =>
-                      option.state !== "PROVISIONED"
-                    }
-                    ariaLabel="Storage"
-                    placeholder="Select storage for TF state…"
-                    required
-                    helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
+                  <TextField
+                    value={value ?? ""}
+                    onChange={(e) => onChange(e.target.value || null)}
+                    slotProps={{ input: { "aria-label": "Storage Path" } }}
+                    fullWidth
+                    margin="normal"
+                    autoFocus
+                    helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
                   />
                 )}
               />
-
-              {resource.storage && (
-                <CommonEditableField<string | null>
-                  name="Storage Path"
-                  canEdit={canEditStorage && isStoragePathUnlocked}
-                  lock={{
-                    locked: !isStoragePathUnlocked,
-                    onToggle: () =>
-                      setIsStoragePathUnlocked((unlocked) => !unlocked),
-                    lockedTitle: "Storage path is locked",
-                    lockedDescription:
-                      "Changing the storage path can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                    unlockedTitle: "Storage path editing is enabled",
-                    unlockedDescription:
-                      "Click the lock to lock it again when you are done.",
-                  }}
-                  value={resource.storagePath ?? null}
-                  ariaLabel="Edit storage path"
-                  display={withPendingChange(
-                    resource.storagePath ? (
-                      <span>{resource.storagePath}</span>
-                    ) : null,
-                    "storage_path",
-                  )}
-                  onSave={(value) => saveField({ storagePath: value })}
-                  renderEditor={({ value, onChange }) => (
-                    <TextField
-                      value={value ?? ""}
-                      onChange={(e) => onChange(e.target.value || null)}
-                      slotProps={{ input: { "aria-label": "Storage Path" } }}
-                      fullWidth
-                      margin="normal"
-                      autoFocus
-                      helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
-                    />
-                  )}
-                />
-              )}
-            </>
-          )}
+            )}
+          </>
+        )}
         {!canEditStorage && (
           <>
             <CommonField

@@ -174,6 +174,8 @@ class ResourceTask:
                     repo_name="source_code_repo",
                 )
 
+        await self.authenticate_storage_backend()
+
         # get secrets
         for secret in self.resource_instance.secret_ids:
             pydantic_secret = SecretDTO.model_validate(secret)
@@ -307,6 +309,26 @@ class ResourceTask:
 
             self.tf_client.variables = variables
             await self.tf_client.init_tf_workspace()
+
+    async def authenticate_storage_backend(self):
+        """
+        Resources without a cloud integration of the storage provider
+        access the tf backend with the integration of the storage.
+        """
+        storage = self.resource_instance.storage
+        if not storage or not storage.integration:
+            return
+
+        cloud_providers = {
+            i.integration_provider for i in self.resource_instance.integration_ids if i.integration_type == "cloud"
+        }
+        if storage.integration.integration_provider in cloud_providers:
+            return
+
+        self.logger.info(f"Using integration of storage {storage.name} for the backend")
+        await self.cloud_api_manager.get_cloud_credentials(
+            IntegrationDTO.model_validate(storage.integration), self.environment_variables
+        )
 
     async def get_tool(self) -> ResolvedTool:
         """
