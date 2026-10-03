@@ -1,14 +1,16 @@
 from datetime import datetime
 import pytest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 from pydantic import PydanticUserError
+from sqlalchemy.dialects import postgresql
 from uuid import uuid4
 
 from core.constants.model import ModelActions
 from core.errors import EntityNotFound
 from core.users.model import User
 from core.users.schema import UserResponse, UserCreate, UserUpdate
+from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core import UserDTO
 
@@ -146,6 +148,42 @@ class TestCount:
 
         assert exc.value is error
         mock_user_crud.count.assert_awaited_once_with(filter={"key": "value"})
+
+
+class TestGetUserByIdentifier:
+    @pytest.mark.asyncio
+    async def test_get_user_by_identifier_not_found(self, mock_user_service, mock_user_crud):
+        mock_user_crud.get_by_identifier.return_value = None
+
+        result = await mock_user_service.get_user_by_identifier("John.Doe@example.com")
+
+        assert result is None
+        mock_user_crud.get_by_identifier.assert_awaited_once_with("John.Doe@example.com")
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_identifier_success(self, mock_user_service, mock_user_crud, monkeypatch, mocked_user):
+        mock_user_crud.get_by_identifier.return_value = mocked_user
+        mocked_dto = Mock()
+        monkeypatch.setattr(UserDTO, "model_validate", Mock(return_value=mocked_dto))
+
+        result = await mock_user_service.get_user_by_identifier("John.Doe@example.com")
+
+        assert result is mocked_dto
+        mock_user_crud.get_by_identifier.assert_awaited_once_with("John.Doe@example.com")
+
+
+class TestUserCRUDGetByIdentifier:
+    @pytest.mark.asyncio
+    async def test_get_by_identifier_is_case_insensitive(self):
+        session = Mock()
+        session.execute = AsyncMock(return_value=Mock())
+        crud = UserCRUD(session)
+
+        await crud.get_by_identifier("John.Doe@Example.com")
+
+        statement = session.execute.await_args.args[0]
+        compiled = statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+        assert "lower(users.identifier) = 'john.doe@example.com'" in str(compiled)
 
 
 class TestCreate:
