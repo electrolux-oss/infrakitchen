@@ -4,7 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.integrations.dependencies import get_integration_service
 from application.storages.dependencies import get_storage_service
 from application.storages.model import Storage
-from application.storages.schema import AWSStorageConfig, AzureRMStorageConfig, GCPStorageConfig, StorageCreate
+from application.storages.schema import (
+    AWSStorageConfig,
+    AzureRMStorageConfig,
+    GCPStorageConfig,
+    PostgreSQLStorageConfig,
+    StorageCreate,
+)
 from core.constants.model import ModelState, ModelStatus
 from core.users.model import UserDTO
 from fixtures.utils import change_state
@@ -28,7 +34,12 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
             gcp_region="US",
             storage_provider="gcp",
         ),
+        "postgresql": PostgreSQLStorageConfig(
+            pg_schema_name=f"{env}_states",
+            storage_provider="postgresql",
+        ),
     }
+    integration_names = {"postgresql": f"POSTGRESQL {env.capitalize()} States"}
 
     storage_service = get_storage_service(session=session)
     integration_service = get_integration_service(session=session)
@@ -37,7 +48,7 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
         integration = await integration_service.get_all(
             filter={
                 "integration_type": "cloud",
-                "name": f"{provider.upper()} {env.capitalize()} Account",
+                "name": integration_names.get(provider, f"{provider.upper()} {env.capitalize()} Account"),
                 "integration_provider": provider,
             }
         )
@@ -49,7 +60,7 @@ async def insert_storages(session: AsyncSession, env: str, user: UserDTO):
             description=get_sentence(),
             storage_type="tofu",
             storage_provider=cast(
-                Literal["aws", "azurerm"],
+                Literal["aws", "azurerm", "gcp", "postgresql"],
                 provider,
             ),
             integration_id=integration[0].id,
