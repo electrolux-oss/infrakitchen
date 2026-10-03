@@ -7,11 +7,30 @@ export default defineConfig({
     text: "InfraKitchen",
   },
   description:
-    "Self-service infrastructure provisioning platform built for platform engineering. Reusable templates, blueprints, and AI-agent-ready infrastructure.",
+    "The Open-Source Developer Platform for Humans and Agents.",
   feedback: false,
   github: {
     owner: "electrolux-oss",
     repo: "infrakitchen",
+  },
+  footer: {
+    links: [
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/releases",
+        label: "Changelog",
+      },
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/issues/new",
+        label: "Report an issue",
+      },
+      {
+        href: "https://github.com/electrolux-oss/infrakitchen/blob/main/LICENSE",
+        label: "Apache License 2.0",
+      },
+    ],
+    socials: {
+      linkedin: "https://www.linkedin.com/company/infrakitchen",
+    },
   },
   content: {
     pages: "docs/pages",
@@ -27,6 +46,7 @@ export default defineConfig({
     base: "/infrakitchen",
   },
   theme: {
+    accent: "blue",
     fonts: {
       display: "geist",
       body: "geist",

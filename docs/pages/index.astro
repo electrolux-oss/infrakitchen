@@ -122,7 +122,7 @@ const features = [
       <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
         <a
           href={withBase("/introduction")}
-          class="hover:border-foreground inline-flex items-center gap-2 rounded-blume border border-border px-5 py-2.5 font-semibold text-foreground text-base transition-colors"
+          class="inline-flex items-center gap-2 rounded-blume bg-accent px-5 py-2.5 font-semibold text-accent-foreground text-base transition-opacity hover:opacity-90"
         >
           Get Started
           <svg
@@ -222,26 +222,4 @@ const features = [
       </CardGroup>
     </div>
   </section>
-
-  <footer slot="footer" class="border-border border-t">
-    <div
-      class="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-sm sm:flex-row"
-    >
-      <p>&copy; 2026 Electrolux Group</p>
-      <div class="flex items-center gap-6">
-        <a href="https://github.com/electrolux-oss/infrakitchen" class="hover:text-foreground transition">
-          GitHub
-        </a>
-        <a
-          href="https://www.linkedin.com/company/infrakitchen"
-          class="hover:text-foreground transition"
-        >
-          LinkedIn
-        </a>
-        <a href="https://discord.gg/HAk7caCMf9" class="hover:text-foreground transition">
-          Discord
-        </a>
-      </div>
-    </div>
-  </footer>
 </PageLayout>

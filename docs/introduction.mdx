@@ -1,46 +1,40 @@
 ---
 title: Introduction
+description: Self-service cloud infrastructure with platform-engineering guardrails.
 sidebar:
   order: 0
 ---
 
-**InfraKitchen** is a self-service infrastructure provisioning platform that bridges the gap between platform engineering and development teams. It enables developers to deploy cloud infrastructure through a guided interface, while platform engineers maintain control, consistency, and compliance.
+**InfraKitchen** is a self-service infrastructure provisioning platform. Platform engineers define reusable, standardized infrastructure as code; developers provision it through a guided interface — without needing deep knowledge of cloud platforms or IaC tools.
 
-Built on Infrastructure-as-Code (IaC) principles, InfraKitchen provides a structured, scalable approach to managing cloud infrastructure across multiple environments and accounts.
-
-Platform engineers define standardized templates and best practices, while developers can deploy approved infrastructure components — without needing deep knowledge of cloud platforms or IaC tools.
+Under the hood, InfraKitchen generates Terraform/OpenTofu code for every Resource, and can publish it to your Git repositories as pull requests for review. Every change is audit-logged.
 
 ## How InfraKitchen Helps
 
-### **For Platform Teams**
+### For Platform Teams
 
-InfraKitchen enables platform teams to:
+- **Define infrastructure once** and reuse it across environments and accounts through a template hierarchy.
+- **Enforce standards** with versioned templates and variable validation rules.
+- **Audit every change** for compliance, visibility, and traceability.
 
-- **Define infrastructure once** and reuse it across multiple environments and accounts.
-- **Enforce standards and best practices** through controlled templates and validated variables.
-- **Maintain consistency and scalability** across projects with versioned infrastructure modules.
-- **Audit and log** all changes to ensure compliance, visibility, and traceability.
+### For Developers
 
-### **For Developers**
+- **Provision approved infrastructure** by selecting a template and filling out a form.
+- **Work independently** — governance stays with the platform team.
+- **Stay informed** — every change is version-controlled and auditable.
 
-InfraKitchen enables developers to:
+## Getting Started
 
-- **Provision infrastructure easily** without needing deep knowledge of cloud providers or IaC tools.
-- **Select from approved templates** to deploy resources that meet organizational standards.
-- **Reduce dependency on platform teams** while maintaining security and governance.
-- **Work transparently** within a version-controlled and auditable workflow.
+**Platform engineers** set up the foundation once:
 
-## Quick Setup Overview
+1. Set up [Integrations](concepts/overview) (e.g., AWS, GitHub).
+2. Register Code Repositories and define Templates in a parent/child hierarchy.
+3. Add Template Versions and configure variable validation rules.
 
-### 1. Platform Engineers
+**Developers** then provision self-service, with no setup of their own:
 
-- Set up Integrations (e.g., AWS, GitHub).
-- Define Templates and their relationships.
-- Register Code Repositories and add Template Versions.
-- Configure Variables and provisioning rules.
+1. Select a [Template](concepts/template) and Template Version.
+2. Fill out the form generated from the template's variables.
+3. Provision — InfraKitchen runs the plan and apply, and reports progress.
 
-### 2. Developers
-
-- Select a Template and Template Version.
-- Fill out a dynamic form generated from the Template's variables.
-- Provision infrastructure with confidence.
+To see it in practice, continue to the [Quick Start](quick-start).

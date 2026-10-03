@@ -1,0 +1,17 @@
+.blume-nav-link[aria-current="page"],
+.blume-nav-summary-link[aria-current="page"],
+.blume-nav-heading-link[aria-current="page"] {
+  color: var(--blume-accent);
+}
+
+.prose :where(a) {
+  color: var(--blume-accent);
+}
+
+blume-toc a[href^="#"][aria-current="location"] {
+  color: var(--blume-accent);
+}
+
+[data-blume-page-actions] a[href*="/edit/"] {
+  display: none;
+}

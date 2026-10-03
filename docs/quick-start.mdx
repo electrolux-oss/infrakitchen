@@ -1,5 +1,6 @@
 ---
 title: Quick Start
+description: Set up InfraKitchen for local development with Nix, Docker, or Podman.
 sidebar:
   order: 1
 ---
@@ -23,6 +24,20 @@ Set up InfraKitchen for local development using one of the following environment
 nix develop
 ```
 
+:::tip[Seeing an "experimental Nix feature ... is disabled" error?]
+`nix develop` requires both the `nix-command` and `flakes` experimental features — you may see this error for either one. Add the following to `/etc/nix/nix.conf` (or `~/.config/nix/nix.conf` on macOS) to enable both:
+
+```
+experimental-features = nix-command flakes
+```
+
+Then restart the Nix daemon, or run with the flag directly:
+
+```bash
+nix --extra-experimental-features 'nix-command flakes' develop
+```
+:::
+
 </Tab>
 
 <Tab title="Docker">
@@ -41,6 +56,14 @@ cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
 podman compose up -d
 ```
 
+:::tip[Containers can't reach each other?]
+If containers cannot reach each other, stop and restart them:
+
+```bash
+podman compose down && podman compose up -d
+```
+:::
+
 </Tab>
 
 <Tab title="Podman Compose">
@@ -49,6 +72,14 @@ podman compose up -d
 cp docs/examples/docker/docker-compose.yml ./docker-compose.yml
 podman-compose up -d
 ```
+
+:::tip[Containers can't reach each other?]
+If containers cannot reach each other, stop and restart them:
+
+```bash
+podman-compose down && podman-compose up -d
+```
+:::
 
 </Tab>
 
@@ -68,52 +99,29 @@ The following services are automatically set up for you:
 - [RabbitMQ Broker](https://www.rabbitmq.com/) for driving the events
 - [PostgreSQL](https://www.postgresql.org/) for storing the data
 
-### What each option provides
+## What Each Option Provides
 
 - **Nix** — the dev shell automatically sets up Python 3.14 with backend dependencies, Node.js with frontend dependencies, PostgreSQL, RabbitMQ, and development tools (ruff, pyright, prettier, eslint). All isolated from your system. To exit the Nix shell, type `exit` or press <kbd>Ctrl</kbd>+<kbd>D</kbd>.
 - **Docker / Podman / Podman Compose** — containers provide the backend, frontend, PostgreSQL, and RabbitMQ from the compose file.
 
-### Enable Experimental Features (Nix only)
-
-If you see `error: experimental Nix feature 'nix-command' is disabled`, add the following to `/etc/nix/nix.conf` (or `~/.config/nix/nix.conf` on macOS):
-
-```
-experimental-features = nix-command flakes
-```
-
-Then restart the Nix daemon or run with flag:
-
-```bash
-nix --extra-experimental-features 'nix-command flakes' develop
-```
-
-### Troubleshooting
-
-**Networking issues between containers** (Podman and Podman Compose): if containers cannot reach each other, stop and restart them:
-
-```bash
-podman compose down && podman compose up -d
-# or, with podman-compose:
-podman-compose down && podman-compose up -d
-```
-
 ## Default Settings
 
-Encryption keys will be automatically generated on first run in the `server/.env_local` file.
+For local development, InfraKitchen automatically configures the following on first run — no manual setup needed:
 
-All data will be stored in the `ik_data/` folder. You can delete this folder to start the project from scratch.
+- **Encryption & signing keys** — `ENCRYPTION_KEY` encrypts sensitive data at rest (e.g. stored integration credentials), and `JWT_KEY` signs auth tokens. Generated into `server/.env_local`.
+- **Data storage** (Nix only) — PostgreSQL data, RabbitMQ data/logs, and other local state are stored in the `ik_data/` directory. Delete this directory to start the project from scratch. (Docker/Podman store data in their own named volumes instead.)
 
-## Add fake data
+## Add Mock Data
 
-To populate InfraKitchen with fake data for testing purposes, you can run the following command:
+By default, a fresh local instance starts with an empty database — no Integrations, Templates, or Resources to explore. Running the fixtures script populates the database with realistic mock data (Integrations, Templates, Template Versions, Storages, Secrets, and Resources), so the UI has something to look at right away:
 
 ```bash
 make fixtures
 ```
 
-## Generate Secret Keys
+## Rotate Keys
 
-You can generate secret keys for backend by running the following commands:
+The `ENCRYPTION_KEY` and `JWT_KEY` described in [Default Settings](#default-settings) are generated automatically on first run. Use this command to **rotate** them manually instead. Note that rotating the encryption key invalidates previously encrypted secrets.
 
 ```bash
 python server/generate_encryption_key.py
