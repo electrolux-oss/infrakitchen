@@ -129,3 +129,35 @@ async def test_tf_client_runs_selected_tool(monkeypatch, mock_entity_logger, too
     _ = await otf_client.get_output()
 
     assert shell_client.call_args.kwargs["command"] == expected_command
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("workspace", "expected_commands"),
+    [
+        (None, ["init -force-copy -reconfigure -backend-config=backend.tfvars"]),
+        (
+            "service-catalog__vpc__main",
+            [
+                "init -force-copy -reconfigure -backend-config=backend.tfvars",
+                ["workspace", "select", "-or-create=true", "service-catalog__vpc__main"],
+            ],
+        ),
+    ],
+)
+async def test_tf_client_init_selects_workspace(monkeypatch, mock_entity_logger, workspace, expected_commands):
+    shell_client = Mock()
+    shell_client.return_value.run_shell_command = AsyncMock(return_value="")
+    monkeypatch.setattr(tf_client_module, "ShellScriptClient", shell_client)
+
+    otf_client = OtfClient(
+        workspace_path=tempfile.mkdtemp(),
+        environment_variables={},
+        variables={},
+        backend_storage_config="",
+        logger=mock_entity_logger,
+        workspace=workspace,
+    )
+    await otf_client.init()
+
+    assert [call.kwargs["command_args"] for call in shell_client.call_args_list] == expected_commands

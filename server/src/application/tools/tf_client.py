@@ -26,6 +26,7 @@ class OtfClient:
         backend_storage_config: str,
         logger: EntityLogger,
         tool_path: str | None = None,
+        workspace: str | None = None,
     ):
         self.workspace_path: str = workspace_path
         self.environment_variables: dict[str, str] = environment_variables
@@ -34,6 +35,8 @@ class OtfClient:
         self.variables: dict[str, Any] = variables
         # path to a specific tofu/terraform executable, the runtime `tofu` is used when not set
         self.tool_path: str | None = tool_path
+        # tofu workspace for backends keyed by workspace instead of a state path (pg)
+        self.workspace: str | None = workspace
 
     async def init_tf_workspace(self):
         await self._generate_tfvar()
@@ -94,6 +97,9 @@ class OtfClient:
         """
         self.logger.info("Initializing Tofu...")
         await self._run_command("init -force-copy -reconfigure -backend-config=backend.tfvars")
+        if self.workspace:
+            # TF_WORKSPACE can't be used, init fails when the workspace doesn't exist yet
+            await self._run_command(["workspace", "select", "-or-create=true", self.workspace])
 
     async def apply(self, command_args: str = "-auto-approve=true"):
         """

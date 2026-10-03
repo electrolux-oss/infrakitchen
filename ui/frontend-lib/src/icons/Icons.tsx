@@ -48,6 +48,10 @@ export const MongoDBIcon: React.FC<IconProps> = (props) => (
   <Icon icon="devicon:mongodb" {...props} />
 );
 
+export const PostgreSQLIcon: React.FC<IconProps> = (props) => (
+  <Icon icon="devicon:postgresql" {...props} />
+);
+
 export const DatadogIcon: React.FC<IconProps> = (props) => (
   <Icon icon="vscode-icons:file-type-datadog" {...props} />
 );
@@ -81,6 +85,7 @@ const resourceIcons = new Map<string, React.ElementType>([
   ["gcp", GoogleCloudIcon],
   ["mongodb_atlas", MongoDBIcon],
   ["datadog", DatadogIcon],
+  ["postgresql", PostgreSQLIcon],
   ["opentofu", OpenTofuIcon],
   ["terraform", TerraformIcon],
   ["slack", SlackIcon],

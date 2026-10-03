@@ -5,7 +5,7 @@ from core import StorageProviderAdapter
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import EntityNotFound
 
-from ...storages.model import AzureRMStorageConfig
+from ...storages.schema import AzureRMStorageConfig
 from ..azurerm import AzureResourceGroup, AzureStorage, AzureStorageAccount
 
 logger = logging.getLogger("azure_tf_backend_provider")

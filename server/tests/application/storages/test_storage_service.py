@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 import pytest
 from unittest.mock import ANY, Mock
 
@@ -195,6 +196,50 @@ class TestCreate:
 
         assert result.state == ModelState.PROVISION
         assert result.status == ModelStatus.READY
+
+    @pytest.mark.asyncio
+    async def test_create_postgresql_success(
+        self,
+        mock_storage_service,
+        mock_storage_crud,
+        mocked_storage,
+        mock_integration_crud,
+        mocked_integration,
+        mocked_user,
+    ):
+        mocked_integration.status = ModelStatus.ENABLED
+        mock_integration_crud.get_by_id.return_value = mocked_integration
+
+        storage_create = StorageCreate.model_validate(
+            {
+                "name": "Test PG Storage",
+                "storage_type": "tofu",
+                "storage_provider": "postgresql",
+                "integration_id": mocked_integration.id,
+                "configuration": {"pg_schema_name": "ik_states", "storage_provider": "postgresql"},
+            }
+        )
+        expected_storage_body = storage_create.model_dump(exclude_unset=True)
+        expected_storage_body["created_by"] = mocked_user.id
+
+        mock_storage_crud.create.return_value = mocked_storage
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+
+        _ = await mock_storage_service.create_storage(storage_create, mocked_user)
+
+        mock_storage_crud.create.assert_awaited_once_with(expected_storage_body)
+
+    def test_create_postgresql_invalid_schema_name(self, mocked_integration):
+        with pytest.raises(ValidationError):
+            _ = StorageCreate.model_validate(
+                {
+                    "name": "Test PG Storage",
+                    "storage_type": "tofu",
+                    "storage_provider": "postgresql",
+                    "integration_id": mocked_integration.id,
+                    "configuration": {"pg_schema_name": "Bad-Schema", "storage_provider": "postgresql"},
+                }
+            )
 
     @pytest.mark.asyncio
     async def test_create_invalid_integration_state(

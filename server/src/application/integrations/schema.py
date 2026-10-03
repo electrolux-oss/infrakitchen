@@ -185,6 +185,21 @@ class DatadogIntegrationConfig(BaseModel):
         return secrets
 
 
+class PostgreSQLIntegrationConfig(BaseModel):
+    pg_host: str = Field(...)
+    pg_port: int = Field(default=5432, ge=1, le=65535)
+    pg_database: str = Field(...)
+    # existing database used to create pg_database when it does not exist
+    pg_maintenance_database: str = Field(default="postgres")
+    pg_user: str = Field(...)
+    pg_password: EncryptedSecretStr = Field(...)
+    pg_sslmode: Literal["disable", "allow", "prefer", "require", "verify-ca", "verify-full"] = Field(default="require")
+    integration_provider: Literal["postgresql"] = Field(default="postgresql", frozen=True)
+
+    def get_secrets(self) -> list[tuple[str, EncryptedSecretStr]]:
+        return [("pg_password", self.pg_password)]
+
+
 class GithubIntegrationConfig(BaseModel):
     github_client_id: str | None = Field(default=None)
     github_client_secret: EncryptedSecretStr = Field(...)
@@ -256,6 +271,7 @@ type IntegrationConfigType = Annotated[
     | BitbucketIntegrationConfig
     | BitbucketSshIntegrationConfig
     | DatadogIntegrationConfig
+    | PostgreSQLIntegrationConfig
     | GitPublicIntegrationConfig
     | SlackIntegrationConfig,
     Field(discriminator="integration_provider"),

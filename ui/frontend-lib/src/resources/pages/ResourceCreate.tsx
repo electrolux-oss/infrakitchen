@@ -239,12 +239,18 @@ const ResourceCreatePageInner = () => {
     [buffer, watchedProjectId],
   );
 
-  // without integrations any storage can be used, the backend is accessed with the storage integration
+  // postgresql storages can always be used, cloud storages only with the resource integrations;
+  // the backend is accessed with the storage integration
   const filter_storage = useMemo(
     () =>
       watchedIntegrationIds?.length > 0
-        ? { integration_id: watchedIntegrationIds }
-        : {},
+        ? {
+            or: [
+              { integration_id: watchedIntegrationIds },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
     [watchedIntegrationIds],
   );
 
@@ -970,7 +976,10 @@ const ResourceCreatePageInner = () => {
                         {...field}
                         ikApi={ikApi}
                         entity_name="integrations"
-                        filter={{ integration_type: "cloud" }}
+                        filter={{
+                          integration_type: "cloud",
+                          integration_provider__not_eq: "postgresql",
+                        }}
                         showFields={["integrationProvider", "name"]}
                         buffer={buffer}
                         setBuffer={setBuffer}

@@ -36,6 +36,7 @@ InfraKitchen supports standard Terraform backend configurations:
 - **AWS S3** with DynamoDB locking
 - **Azure Storage** with blob storage
 - **GCP Storage** with GCS buckets
+- **PostgreSQL** with the `pg` backend (one schema per storage)
 
 State files are stored in your configured backend, not in InfraKitchen itself. This ensures compatibility with existing Terraform workflows.
 

@@ -338,7 +338,10 @@ export const ResourceOverview = ({
                 buffer={buffer}
                 setBuffer={setBuffer}
                 entity_name="integrations"
-                filter={{ integration_type: "cloud" }}
+                filter={{
+                  integration_type: "cloud",
+                  integration_provider__not_eq: "postgresql",
+                }}
                 showFields={["integrationProvider", "name"]}
                 optionFilter={integrationOptionFilter}
                 value={value}

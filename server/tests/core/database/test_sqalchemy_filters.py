@@ -129,3 +129,30 @@ class TestEvaluateSqlalchemyFilters:
         assert "mock_model.name = 'Specific Name'" in sql
         assert "CAST(mock_model.tags AS JSONB) ? 'critical'" in sql
         assert f"mock_model.template_id = '{TEST_UUID_1.hex}'" in sql
+
+    def test_or_filter(self):
+        """Should combine filter objects in "or" with OR and each object's conditions with AND."""
+        body = {
+            "or": [
+                {"template_id": [str(TEST_UUID_1), str(TEST_UUID_2)]},
+                {"name": "postgresql", "tags__is_none": True},
+            ]
+        }
+        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), body)
+        filter_str = _get_compiled_filter_str(statement)
+        assert " OR " in filter_str
+        assert "mock_model.template_id IN" in filter_str
+        assert "mock_model.name = 'postgresql' AND mock_model.tags IS NULL" in filter_str
+
+    def test_or_filter_combined_with_other_filters(self):
+        """Should AND the "or" group with the other filters."""
+        body = {"name__like": "pg", "or": [{"name": "a"}, {"name": "b"}]}
+        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), body)
+        filter_str = _get_compiled_filter_str(statement)
+        assert "LIKE lower('%pg%') AND (mock_model.name = 'a' OR mock_model.name = 'b')" in filter_str
+
+    @pytest.mark.parametrize("value", [{"name": "a"}, [{}], ["name"]])
+    def test_or_filter_invalid(self, value):
+        """Should reject "or" values that are not a list of non-empty filter objects."""
+        with pytest.raises(ValueError, match="Filter 'or' must be a list"):
+            evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"or": value})

@@ -68,6 +68,7 @@ Supported providers:
 - **AWS** — S3 bucket (+ region)
 - **Azure** — storage account, resource group, and container
 - **Google Cloud** — GCS bucket (+ region)
+- **PostgreSQL** — schema in the database of a PostgreSQL integration ([`pg` backend](https://opentofu.org/docs/language/settings/backends/pg/))
 
 Each storage is backed by one of your cloud [integrations](#integration), which supplies the
 credentials InfraKitchen needs to read and write state. Provider-specific settings (bucket
@@ -76,6 +77,12 @@ new storage instead.
 
 [Resources](./resource) and [executors](./executor) reference a storage when they are created, and each instance gets an
 isolated state path, so parallel provisioning never conflicts.
+
+The PostgreSQL backend has no state path: all states of a storage live in one `states` table of its schema, one
+row per workspace. InfraKitchen runs each resource in its own workspace named after the state path
+(`service-catalog/vpc/main/terraform.tfstate` → `service-catalog__vpc__main`, selected with `tofu workspace select -or-create`), so
+`terraform.workspace` in templates returns that name instead of `default`. Destroying a PostgreSQL storage drops its
+schema with all states in it.
 
 ## Secret
 

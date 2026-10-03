@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any, TypeVar
 
-from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
+from sqlalchemy import BinaryExpression, ColumnElement, and_, cast, or_
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import RelationshipProperty, aliased, load_only
@@ -149,13 +149,29 @@ def evaluate_sqlalchemy_filters[*Ts](model: type, statement: Select[*Ts], body: 
     Converts a generic API filter dict with operators into SQLAlchemy filters.
     Supports nested relationship filtering using double underscore notation.
     Example: template__name__in will filter by the template's name field using has() for relationships.
+    The "or" key takes a list of filter dicts and matches rows satisfying any of them.
+    Example: {"or": [{"integration_id": [...]}, {"storage_provider": "postgresql"}]}
     """
-    filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
-
     if body is None:
         return statement
 
+    filters = _build_sqlalchemy_filters(model, body)
+    if filters:
+        statement = statement.where(*filters)
+    return statement
+
+
+def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryExpression[Any] | ColumnElement[Any]]:
+    filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
+
     for key, value in body.items():
+        if key == "or":
+            if not isinstance(value, list) or not all(isinstance(v, dict) and v for v in value):
+                raise ValueError("Filter 'or' must be a list of non-empty filter objects")
+            if value:
+                filters.append(or_(*[and_(*_build_sqlalchemy_filters(model, sub_body)) for sub_body in value]))
+            continue
+
         operator = "eq"
         column = None
 
@@ -300,9 +316,7 @@ def evaluate_sqlalchemy_filters[*Ts](model: type, statement: Select[*Ts], body: 
             case _:
                 raise ValueError(f"Unsupported operator: {operator} in filter")
 
-    if filters:
-        statement = statement.where(*filters)
-    return statement
+    return filters
 
 
 _CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")

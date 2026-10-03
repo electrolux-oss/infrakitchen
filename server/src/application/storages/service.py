@@ -83,10 +83,10 @@ class StorageService:
         :param requester: User who creates the storage
         :return: Created storage ORM instance
         """
-        storage_providers = ["aws", "azurerm", "gcp"]
+        storage_providers = ["aws", "azurerm", "gcp", "postgresql"]
         if storage.storage_type == "tofu":
             if storage.storage_provider not in storage_providers:
-                raise ValueError("Invalid storage provider, must be one of 'aws', 'azurerm', 'gcp'")
+                raise ValueError(f"Invalid storage provider, must be one of {', '.join(storage_providers)}")
 
         body = storage.model_dump(exclude_unset=True)
 

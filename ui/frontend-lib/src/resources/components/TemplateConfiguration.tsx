@@ -157,12 +157,18 @@ export const TemplateConfiguration = ({
     {},
   );
 
-  // without integrations any storage can be used, the backend is accessed with the storage integration
+  // postgresql storages can always be used, cloud storages only with the resource integrations;
+  // the backend is accessed with the storage integration
   const storageFilter = useMemo(
     () =>
       resource.integrationIds && resource.integrationIds.length > 0
-        ? { integration_id: resource.integrationIds.map((i) => i.id) }
-        : {},
+        ? {
+            or: [
+              { integration_id: resource.integrationIds.map((i) => i.id) },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
     [resource.integrationIds],
   );
 
