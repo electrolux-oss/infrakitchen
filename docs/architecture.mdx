@@ -17,8 +17,7 @@ InfraKitchen follows a modern web application architecture with separated fronte
 
 - **Frontend (React/TypeScript)** - User interface for managing infrastructure
 - **Backend (Python/FastAPI)** - REST API, GraphQL API, and business logic
-- **PostgreSQL** - Relational database for storing infrastructure state
-- **RabbitMQ** - Message broker for live events, logs and notifications
+- **PostgreSQL** - Relational database for storing infrastructure state. It also carries the task queue, the notification outbox and live updates (`LISTEN/NOTIFY`), so no separate message broker is needed
 - **Worker** - Pulls infrastructure provisioning tasks from the task queue in PostgreSQL and executes them. Workers only connect outwards to the database, so any number of them can run on any node.
 - **OpenTofu/Terraform** - Infrastructure-as-Code execution engine
 
@@ -32,7 +31,6 @@ sequenceDiagram
     participant Frontend
     participant Backend
     participant Database
-    participant RabbitMQ
 
     User->>Frontend: Fill resource form
     Frontend->>Backend: POST /api/resources
@@ -79,6 +77,24 @@ Tasks live in the `task_queue` table. A worker claims the next queued task with 
 - **Dependency not ready:** the task is re-queued with an increasing delay.
 - **Wake-up:** idle workers wake up immediately through Postgres `LISTEN/NOTIFY`. If no notification arrives, they poll every `WORKER_POLL_INTERVAL` seconds.
 - **Monitoring and scaling:** the `taskQueueStats` GraphQL query reports the backlog and worker availability.
+
+### Live updates
+
+Entity changes, log lines and in-app notifications reach the browser over GraphQL subscriptions (`eventStream`, `logStream`, `notificationStream`). They travel through Postgres `NOTIFY` on the `ik_pubsub` channel:
+
+- **One listener per process:** each API, scheduler and worker process holds a single `LISTEN` connection and fans messages out to its local subscribers, so an open browser tab costs no database connection.
+- **Broadcasts reach every process:** reload signals such as `reload_policies` and `reload_scheduler_jobs` are delivered to every API replica and scheduler.
+- **Logs:** workers save log lines to the database first, then stream them in batches. A line too long for one notification (Postgres limits a payload to 8000 bytes) is split into consecutive pieces.
+- **Large events:** an entity change too large for one notification is cut down to its small top-level fields (id, status, state, ...) and marked `truncated`.
+- **At-most-once:** live updates published while a process is reconnecting are missed. Saved state, such as logs or the entity itself, is always available through regular queries.
+
+### Notifications
+
+Notification events are stored in the `notification_outbox` table after the change they report is committed. Every API process runs a notification dispatcher (`NOTIFICATION_DISPATCHERS` concurrent routers) that claims outbox rows with `SELECT ... FOR UPDATE SKIP LOCKED`, resolves subscriptions and preferences, and delivers in-app or Slack messages.
+
+- **Exactly one router per event** across replicas, and never blocked by long-running IaC tasks.
+- **Retries:** a failed routing is retried with an increasing delay, up to 5 attempts. If a dispatcher dies mid-routing, its lease (`NOTIFICATION_LEASE_SECONDS`) expires and another dispatcher picks the event up.
+- **Cleanup:** finished rows are purged with the task queue after `TASK_QUEUE_RETENTION_DAYS`.
 - **Shutdown:** on `SIGTERM` a worker finishes its current task, marks itself offline and exits, which makes scaling down safe.
 
 ## Backend Module Relations

@@ -31,7 +31,6 @@ from .users import UserDTO
 from .users.functions import user_has_access_to_entity
 from .revisions.model import Revision
 from .workers import WorkerDTO
-from .rabbitmq import RabbitMQConnection
 from .utils.json_encoder import JsonEncoder
 from .base_models import MessageModel
 from .models.encrypted_secret import EncryptedSecretStr
@@ -55,7 +54,6 @@ __all__ = [
     "JsonEncoder",
     "LogDTO",
     "MessageModel",
-    "RabbitMQConnection",
     "TaskEntityModel",
     "TaskQueueItemDTO",
     "Revision",

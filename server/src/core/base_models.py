@@ -6,11 +6,8 @@ from datetime import datetime
 from sqlalchemy import UUID, DateTime, ForeignKey, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 
-import json
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal
 
-from aio_pika import ExchangeType
-from .utils.json_encoder import JsonEncoder
 from .constants import ModelState, ModelStatus
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Enum as SQLAlchemyEnum
@@ -54,10 +51,9 @@ class PatchBodyModel(PydanticBaseModel):
     action: str
 
 
-TMessageModel = TypeVar("TMessageModel", bound="MessageModel")
-
-
 class MessageModel(PydanticBaseModel):
+    """A pubsub message: ``body`` plus ``_metadata``, published to ``topic`` (see ``core.pubsub``)."""
+
     body: dict[str, Any] = Field(default_factory=dict)
     message_type: Literal[
         "user",
@@ -67,32 +63,8 @@ class MessageModel(PydanticBaseModel):
         "task",
         "event",
     ] = Field(default="user")
-    exchange: str = Field(default="ik_tasks")
-    exchange_type: ExchangeType = Field(default=ExchangeType.DIRECT)
-    routing_key: str | None = Field(default="")
+    topic: str = Field(default="")
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    def to_bytes(self) -> bytes:
-        result = self.body
-        result["_metadata"] = self.metadata
-        result["_metadata"].update({"_message_type": self.message_type})
-        result["_metadata"].update({"_routing_key": self.routing_key})
-        return bytes(json.dumps(result, cls=JsonEncoder), "utf-8")
-
-    @classmethod
-    def load_from_bytes(cls: type[TMessageModel], data: bytes) -> TMessageModel:
-        json_data = json.loads(data)
-        metadata: dict[str, Any] = {}
-        routing_key = ""
-
-        if "_metadata" in json_data:
-            metadata = json_data.pop("_metadata")
-
-        message_type = "user"  # Default value for message_type
-        if "_message_type" in metadata:
-            message_type = metadata.pop("_message_type")
-
-        if "_routing_key" in metadata:
-            routing_key = metadata.pop("_routing_key")
-
-        return cls(body=json_data, metadata=metadata, message_type=message_type, routing_key=routing_key)
+    def to_data(self) -> dict[str, Any]:
+        return {**self.body, "_metadata": {**self.metadata, "_message_type": self.message_type}}
