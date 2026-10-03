@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from prometheus_async.aio import web
 import uvicorn
@@ -14,13 +15,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
 from core.config import setup_service_environment
-from core.rabbitmq import RabbitMQConnection
 from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job, start_reload_consumer
+from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
 from worker import run_task_worker
 
 from src.app import app
 from cryptography.fernet import Fernet
+
+logger = logging.getLogger("dev_server")
 
 
 def generate_env_local():
@@ -55,11 +57,25 @@ def run_sql_migrations():
     upgrade(config, "head")
 
 
-async def start_task_worker():
-    """Initializes and runs the TaskWorker indefinitely."""
+def dev_worker_count() -> int:
+    """Number of task workers to run in-process, from DEV_WORKERS (default 1)."""
+    value = os.getenv("DEV_WORKERS", "1")
+    try:
+        count = int(value)
+    except ValueError:
+        logger.warning(f"Invalid DEV_WORKERS={value!r}, running 1 worker")
+        return 1
+    return max(count, 1)
+
+
+async def start_task_workers(count: int):
+    """Runs ``count`` TaskWorkers indefinitely, like separate worker nodes sharing the queue."""
     await web.start_http_server(port=8001)
-    rabbitmq = RabbitMQConnection()
-    await run_task_worker(rabbitmq)
+    # Workers register by name + host, so each one needs its own name to get its own worker row
+    names = ["task_worker"] if count == 1 else [f"task_worker_{i}" for i in range(1, count + 1)]
+    logger.info(f"Starting {count} task worker(s): {', '.join(names)}")
+    # uvicorn owns the process signals in dev mode
+    _ = await asyncio.gather(*(run_task_worker(handle_signals=False, name=name) for name in names))
 
 
 async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
@@ -74,6 +90,7 @@ async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
 
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
+    schedule_task_queue_cleanup_job(scheduler=scheduler)
 
     scheduler.start()
 
@@ -90,7 +107,7 @@ async def run_server_and_worker():
     change_logger()
 
     scheduler, reload_task = await setup_scheduler()
-    worker_task = asyncio.create_task(start_task_worker())
+    worker_task = asyncio.create_task(start_task_workers(dev_worker_count()))
 
     uvicorn_log_config = get_uvicorn_log_config()
     server_config = uvicorn.Config(

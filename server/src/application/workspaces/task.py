@@ -154,12 +154,13 @@ class WorkspaceTask:
         self.workspace_root = self.resource_task_controller.workspace_root
 
     # change entity state depends on task state
-    def make_failed(self) -> None:
-        self.workspace_instance.status = ModelStatus.ERROR
+    # change_state commits, so the status survives the worker rolling back the failed task's session
+    async def make_failed(self) -> None:
+        await self.change_state(ModelStatus.ERROR)
 
-    def make_retry(self, retry: int, max_retries: int):
+    async def make_retry(self, retry: int, max_retries: int):
         if self.workspace_instance.status == ModelStatus.IN_PROGRESS:
-            self.workspace_instance.status = ModelStatus.ERROR
+            await self.change_state(ModelStatus.ERROR)
 
     # sync source code with workspace and create PR
     async def change_state(self, new_state: ModelStatus, event_type: str = ModelActions.SYNC) -> None:

@@ -7,17 +7,14 @@ from core.casbin.enforcer import CasbinEnforcer
 
 class TestCasbinEnforcer:
     mock_adapter: MagicMock = MagicMock()
-    mock_rabbitmq: MagicMock = MagicMock()
     enforcer: CasbinEnforcer  # pyright: ignore[reportUninitializedInstanceVariable]
 
     def setup_method(self):
         self.mock_adapter = MagicMock()
-        self.mock_rabbitmq = MagicMock()
-        self.mock_rabbitmq.send_task = AsyncMock()
 
         # Create a new instance each time to avoid singleton side effects
         CasbinEnforcer._instances.clear()
-        self.enforcer = CasbinEnforcer(adapter=self.mock_adapter, rabbitmq=self.mock_rabbitmq)
+        self.enforcer = CasbinEnforcer(adapter=self.mock_adapter)
 
     @pytest.mark.asyncio
     async def test_init_enforcer(self, monkeypatch):
@@ -53,16 +50,13 @@ class TestCasbinEnforcer:
 
 class TestGetUserRoles:
     mock_adapter: MagicMock = MagicMock()
-    mock_rabbitmq: MagicMock = MagicMock()
     enforcer: CasbinEnforcer  # pyright: ignore[reportUninitializedInstanceVariable]
 
     def setup_method(self):
         self.mock_adapter = MagicMock()
-        self.mock_rabbitmq = MagicMock()
-        self.mock_rabbitmq.send_task = AsyncMock()
 
         CasbinEnforcer._instances.clear()
-        self.enforcer = CasbinEnforcer(adapter=self.mock_adapter, rabbitmq=self.mock_rabbitmq)
+        self.enforcer = CasbinEnforcer(adapter=self.mock_adapter)
 
     async def test_get_user_roles_success(self):
         user_id = uuid.uuid4()

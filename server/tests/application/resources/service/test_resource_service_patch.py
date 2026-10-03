@@ -1026,10 +1026,10 @@ class TestPatchAction:
     @pytest.mark.parametrize(
         "state,status,expected_state,expected_status",
         [
-            (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.QUEUED),
-            (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.QUEUED),
-            (ModelState.PROVISIONED, ModelStatus.ERROR, ModelState.PROVISIONED, ModelStatus.QUEUED),
-            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.QUEUED),
+            (ModelState.PROVISION, ModelStatus.READY, ModelState.PROVISION, ModelStatus.READY),
+            (ModelState.PROVISIONED, ModelStatus.READY, ModelState.PROVISIONED, ModelStatus.READY),
+            (ModelState.PROVISIONED, ModelStatus.ERROR, ModelState.PROVISIONED, ModelStatus.ERROR),
+            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.READY),
         ],
     )
     async def test_patch_execute_action(

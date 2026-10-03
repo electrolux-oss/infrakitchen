@@ -82,7 +82,6 @@
             pkgs.git
             pkgs.nodejs_26
             pkgs.opentofu
-            pkgs.rabbitmq-server
           ];
           # Environment variables for the shell
           shellHook = ''
@@ -118,35 +117,6 @@
               echo "Stopping PostgreSQL..."
               ${pkgs.postgresql_17}/bin/pg_ctl -D $PGDATA stop
             }
-
-            # Start RabbitMQ server
-            # Set RabbitMQ environment variables
-            export RABBITMQ_LOGS=$PWD/ik_data/rabbitmqdata/logs
-            export RABBITMQ_MNESIA_BASE=$PWD/ik_data/rabbitmqdata/mnesia
-            export RABBITMQ_PLUGINS_DIR=${pkgs.rabbitmq-server}/plugins
-            export RABBITMQ_ENABLED_PLUGINS_FILE=$PWD/ik_data/rabbitmqdata/enabled_plugins
-            export RABBITMQ_NODENAME=rabbit@localhost
-            export RABBITMQ_PID_FILE=$RABBITMQ_MNESIA_BASE/$RABBITMQ_NODENAME.pid
-            echo "Starting RabbitMQ server..."
-            ${pkgs.beamPackages.erlang}/bin/epmd -daemon
-            ${pkgs.rabbitmq-server}/sbin/rabbitmq-server -detached
-            ${pkgs.rabbitmq-server}/sbin/rabbitmqctl wait $RABBITMQ_PID_FILE --timeout 240
-            ${pkgs.rabbitmq-server}/sbin/rabbitmq-plugins enable rabbitmq_management
-
-            echo ""
-            echo "RabbitMQ is ready!"
-            echo "Management Dashboard: http://localhost:15672"
-            echo "PID file: $RABBITMQ_PID_FILE"
-            echo "Base folder: $RABBITMQ_MNESIA_BASE"
-            echo "Log folder: $RABBITMQ_LOGS"
-            echo ""
-
-            stop_rabbitmq() {
-              echo "Stopping RabbitMQ server..."
-              ${pkgs.rabbitmq-server}/sbin/rabbitmqctl stop
-              ${pkgs.beamPackages.erlang}/bin/epmd -kill
-            }
-
 
             # Init InfraKitchen Python server
             export UV_PYTHON_INSTALL_DIR=${UV_PYTHON_INSTALL_DIR}
@@ -209,7 +179,6 @@
             stop_server() {
               echo "Stopping InfraKitchen services..."
               stop_ik_services
-              stop_rabbitmq
               stop_db
             }
 

@@ -4,7 +4,6 @@ from .adapters.provider_adapters import (
     SecretProviderAdapter,
     NotificationProviderAdapter,
 )
-from .base_worker import BaseMessagesWorker
 from .feature_flags.model import FeatureFlag
 
 from .sso.functions import (
@@ -27,13 +26,12 @@ from .permissions import PermissionDTO
 from .cloud_resources import CloudResourceModel
 from .logs import LogDTO
 from .tasks import TaskEntityModel
+from .task_queue import TaskQueueItemDTO
 from .users import UserDTO
 from .users.functions import user_has_access_to_entity
 from .revisions.model import Revision
 from .workers import WorkerDTO
-from .rabbitmq import RabbitMQConnection
 from .utils.json_encoder import JsonEncoder
-from .utils.message_handler import MessageHandler
 from .base_models import MessageModel
 from .models.encrypted_secret import EncryptedSecretStr
 from .notifications import SubscriptionDTO, NotificationPreferenceDTO
@@ -47,7 +45,6 @@ __all__ = [
     "GithubProviderConfig",
     "BackstageProviderConfig",
     "IKServiceAccountProviderConfig",
-    "BaseMessagesWorker",
     "CacheDTO",
     "cache_decorator",
     "CloudResourceAdapter",
@@ -56,10 +53,9 @@ __all__ = [
     "CustomEntityLoggerType",
     "JsonEncoder",
     "LogDTO",
-    "MessageHandler",
     "MessageModel",
-    "RabbitMQConnection",
     "TaskEntityModel",
+    "TaskQueueItemDTO",
     "Revision",
     "WorkerDTO",
     "StorageProviderAdapter",

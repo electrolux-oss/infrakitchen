@@ -5,6 +5,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.storages.model import Storage
 
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.user.types import UserType
 
@@ -23,6 +24,10 @@ class StorageType:
     @strawberry.field
     def entity_name(self) -> str:
         return "storage"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "storage", self.id)
 
     @strawberry.field
     async def resources_count(self, info: Info) -> int:

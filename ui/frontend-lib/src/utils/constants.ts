@@ -48,6 +48,7 @@ export enum INTEGRATION_STATUS {
 export enum WORKER_STATUS {
   FREE = "free",
   BUSY = "busy",
+  OFFLINE = "offline",
 }
 
 export enum EVENT_TYPE {

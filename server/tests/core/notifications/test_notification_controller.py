@@ -1,5 +1,4 @@
 # pyright: reportAttributeAccessIssue=false
-from typing import Any
 from uuid import uuid4
 from unittest.mock import AsyncMock, Mock
 
@@ -55,16 +54,9 @@ class TestRouteNotificationEvent:
             lambda session: mock_notification_preference_service,
         )
 
-        created_messages: list[dict[str, Any]] = []
-
-        def mock_create_message(body):
-            created_messages.append(body)
-            return body
-
         mock_send_message = AsyncMock()
         mock_dispatch_notification = AsyncMock()
-        monkeypatch.setattr(notification_manager_module, "create_in_app_message", mock_create_message)
-        monkeypatch.setattr(notification_manager_module, "send_message", mock_send_message)
+        monkeypatch.setattr(notification_manager_module.pubsub, "publish", mock_send_message)
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
@@ -153,7 +145,7 @@ class TestRouteNotificationEvent:
 
         mock_send_message = AsyncMock()
         mock_dispatch_notification = AsyncMock()
-        monkeypatch.setattr(notification_manager_module, "send_message", mock_send_message)
+        monkeypatch.setattr(notification_manager_module.pubsub, "publish", mock_send_message)
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
@@ -206,7 +198,7 @@ class TestRouteNotificationEvent:
 
         mock_send_message = AsyncMock()
         mock_dispatch_notification = AsyncMock()
-        monkeypatch.setattr(notification_manager_module, "send_message", mock_send_message)
+        monkeypatch.setattr(notification_manager_module.pubsub, "publish", mock_send_message)
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(
@@ -262,7 +254,7 @@ class TestRouteNotificationEvent:
 
         mock_send_message = AsyncMock()
         mock_dispatch_notification = AsyncMock()
-        monkeypatch.setattr(notification_manager_module, "send_message", mock_send_message)
+        monkeypatch.setattr(notification_manager_module.pubsub, "publish", mock_send_message)
         monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
 
         event = NotificationEvent(

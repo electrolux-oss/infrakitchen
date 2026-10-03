@@ -12,7 +12,6 @@ To successfully deploy InfraKitchen, ensure that your system meets the following
 - **Python**: Version 3.14
 - **Node.js**: Version 24
 - **PostgreSQL**: Version 17
-- **RabbitMQ**: Version 4.0.9
 - **Nginx**: Version 1.28
 - **OpenTofu (Terraform)**: Version 1.10
 - **Yarn**: Version 1.22
@@ -43,8 +42,8 @@ For running InfraKitchen on Kubernetes, use the example manifest:
 
 Before applying it:
 
-- Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
-- RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
+- Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>` and `<HOST_NAME>` with your actual values.
+- PostgreSQL is assumed to be running and accessible from the Kubernetes cluster. It is the only external service InfraKitchen needs: it also carries the task queue, live updates and notifications.
 - Create the Kubernetes Secret for InfraKitchen as described below.
 
 ### Create Namespace if Needed and Switch Context to the Namespace

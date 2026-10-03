@@ -9,6 +9,7 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
+import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { AdvancedSettings } from "./AdvancedSettings";
 import { ExecutorOverview } from "./ExecutorOverview";
@@ -62,6 +63,7 @@ export const ExecutorContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <ExecutorOverview executor={entity} />
       <TabbedContent tabs={tabs} />
     </Box>

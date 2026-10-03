@@ -336,6 +336,7 @@ class WorkflowTask:
                 requester=self.user,
                 action=ModelActions.EXECUTE,
                 extra_metadata={"step_id": str(step.id)},
+                delay_seconds=0,
             )
             self.logger.info(f"Sent task to process step {step.id}")
 

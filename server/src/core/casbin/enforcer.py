@@ -10,9 +10,9 @@ from core.permissions.model import Permission
 from core.singleton_meta import SingletonMeta
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import is_valid_uuid
-from ..base_models import ExchangeType, MessageModel
+import core.pubsub as pubsub
+from ..base_models import MessageModel
 from ..config import Settings
-from ..rabbitmq import RabbitMQConnection
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +21,10 @@ class CasbinEnforcer(metaclass=SingletonMeta):
     enforcer: casbin.AsyncEnforcer | None
     db_adapter: Any
 
-    def __init__(self, adapter: Any = None, rabbitmq: RabbitMQConnection | None = None):
+    def __init__(self, adapter: Any = None):
         sql_adapter = casbin_async_sqlalchemy_adapter.Adapter(Settings().db_url, db_class=Permission)
         self.enforcer = None
         self.db_adapter = adapter or sql_adapter
-        self.rabbitmq: RabbitMQConnection = rabbitmq or RabbitMQConnection()
 
     async def init_enforcer(self):
         model_path = os.path.join(os.path.dirname(__file__), "model.conf")
@@ -42,11 +41,8 @@ class CasbinEnforcer(metaclass=SingletonMeta):
 
     async def send_reload_event(self):
         event_sender = EventSender(entity_name="enforcer")
-        event_message = MessageModel()
-        event_message.message_type = "event"
+        event_message = MessageModel(message_type="event", topic=pubsub.EVENTS_TOPIC)
         event_message.metadata["event"] = "reload_policies"
-        event_message.exchange = "ik_event_messages"
-        event_message.exchange_type = ExchangeType.FANOUT
         await event_sender.send_message(event_message)
 
     async def get_user_roles(self, user_id: str | uuid.UUID) -> list[str]:

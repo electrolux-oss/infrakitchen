@@ -96,13 +96,12 @@ Try InfraKitchen right away with the [example templates repository](https://gith
 
 The following services are automatically set up for you:
 
-- [RabbitMQ Broker](https://www.rabbitmq.com/) for driving the events
-- [PostgreSQL](https://www.postgresql.org/) for storing the data
+- [PostgreSQL](https://www.postgresql.org/) for storing the data, queueing tasks and streaming live updates
 
 ## What Each Option Provides
 
-- **Nix** — the dev shell automatically sets up Python 3.14 with backend dependencies, Node.js with frontend dependencies, PostgreSQL, RabbitMQ, and development tools (ruff, pyright, prettier, eslint). All isolated from your system. To exit the Nix shell, type `exit` or press <kbd>Ctrl</kbd>+<kbd>D</kbd>.
-- **Docker / Podman / Podman Compose** — containers provide the backend, frontend, PostgreSQL, and RabbitMQ from the compose file.
+- **Nix** — the dev shell automatically sets up Python 3.14 with backend dependencies, Node.js with frontend dependencies, PostgreSQL, and development tools (ruff, pyright, prettier, eslint). All isolated from your system. To exit the Nix shell, type `exit` or press <kbd>Ctrl</kbd>+<kbd>D</kbd>.
+- **Docker / Podman / Podman Compose** — containers provide the backend, frontend, and PostgreSQL from the compose file.
 
 ## Default Settings
 
