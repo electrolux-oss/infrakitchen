@@ -47,6 +47,7 @@ const PALETTE_ITEM_SX = {
   px: 1,
   py: 0.25,
   minHeight: 0,
+  flexShrink: 0,
   gap: 0.5,
   cursor: "grab",
   "&:active": { cursor: "grabbing" },
