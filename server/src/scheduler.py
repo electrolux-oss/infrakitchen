@@ -1,10 +1,8 @@
 import asyncio
-import json
 import logging
 from typing import Any
 from uuid import UUID
 
-import aio_pika
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -15,7 +13,7 @@ from application.logger import change_logger
 from core.constants.model import ModelState, ModelStatus
 from core.dependencies import get_async_session
 from core.errors import EntityNotFound
-from core.rabbitmq import RabbitMQConnection
+from core.notifications.outbox import NotificationOutboxCRUD
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
 from core.config import Settings
@@ -26,6 +24,7 @@ from core.tasks.model import TaskEntity
 from core.users.crud import UserCRUD
 from core.users.service import UserService
 from core.utils.event_sender import EventSender
+from core.utils.event_stream_manager import consume_events
 
 
 logger = logging.getLogger("scheduler")
@@ -250,9 +249,14 @@ async def purge_task_queue():
         deleted = await service.purge_finished(older_than_days=retention_days)
     logger.info(f"Purged {deleted} finished task queue items older than {retention_days} days")
 
+    async with get_async_session() as session:
+        deleted = await NotificationOutboxCRUD(session).purge_finished(older_than_days=retention_days)
+        await session.commit()
+    logger.info(f"Purged {deleted} finished notification outbox items older than {retention_days} days")
+
 
 def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
-    """Schedules a daily job that removes old finished items from the task queue."""
+    """Schedules a daily job that removes old finished items from the task queue and notification outbox."""
     scheduler.add_job(
         purge_task_queue,
         trigger=IntervalTrigger(days=1),
@@ -261,62 +265,15 @@ def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
     )
 
 
-async def reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
-    """Subscribe to the FANOUT event exchange and re-sync jobs on demand.
-
-    Mirrors core.utils.event_stream_manager.rabbitmq_consumer but binds its own
-    dedicated queue so the scheduler receives its own copy of every broadcast
-    event (FANOUT delivers to each bound queue).
-    """
-
-    async def callback(message: aio_pika.abc.AbstractIncomingMessage) -> None:
-        async with message.process(ignore_processed=True):
-            try:
-                decoded: dict[str, Any] = json.loads(message.body.decode())
-            except (ValueError, UnicodeDecodeError):
-                logger.warning("Received malformed event message, ignoring")
-                return
-
-            if decoded.get("_metadata", {}).get("event") == "reload_scheduler_jobs":
-                logger.info("Got reload_scheduler_jobs event, re-syncing jobs")
-                await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
-
-    async with RabbitMQConnection() as connection:
-        channel = await connection.get_channel()
-        if channel is None:
-            raise RuntimeError("Failed to create a channel. Connection might not be established.")
-
-        events_exchange = await channel.declare_exchange(
-            "ik_event_messages",
-            aio_pika.ExchangeType.FANOUT,
-            auto_delete=False,
-            durable=True,
-        )
-
-        queue = await channel.declare_queue(name="scheduler_reload_consumer", auto_delete=False)
-        _ = await queue.bind(events_exchange)
-
-        consumer_tag = await queue.consume(callback)
-        logger.info("Subscribed RabbitMQ ik_event_messages for scheduler reloads")
-
-        try:
-            await asyncio.Future()
-        except asyncio.CancelledError:
-            if consumer_tag:
-                await queue.cancel(consumer_tag)
-            raise
-
-
 async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
-    """Run the reload consumer, restarting it if it stops unexpectedly."""
-    try:
-        await reload_consumer(scheduler=scheduler, event_sender=event_sender)
-    except asyncio.CancelledError:
-        raise
-    except Exception as e:
-        logger.error(f"Scheduler reload consumer stopped unexpectedly: {e}, restarting in 5 seconds")
-        await asyncio.sleep(5)
-        await start_reload_consumer(scheduler=scheduler, event_sender=event_sender)
+    """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
+
+    async def on_event(event: str) -> None:
+        if event == "reload_scheduler_jobs":
+            logger.info("Got reload_scheduler_jobs event, re-syncing jobs")
+            await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
+
+    await consume_events(on_event, name="Scheduler reload consumer")
 
 
 async def start_scheduler():

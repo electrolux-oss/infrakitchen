@@ -14,10 +14,11 @@ from application.projects.dependencies import get_project_service
 from core.casbin.enforcer import CasbinEnforcer
 from core.config import setup_service_environment
 from core.dependencies import get_async_session
-from core.rabbitmq import RabbitMQConnection
+import core.pubsub as pubsub
+from core.notifications import outbox as notification_outbox
 from core.task_queue import enqueue as task_queue_enqueue
 
-from core.base_models import Base, MessageModel
+from core.base_models import Base
 from core.database import engine
 
 from fixtures.auth_providers import create_auth_provider
@@ -37,7 +38,7 @@ from fixtures.validation_rules import insert_validation_rules
 logger = logging.getLogger("alembic")
 
 
-async def send_message(message: MessageModel, confirm: bool = False):
+async def publish_many(messages: Any):
     pass
 
 
@@ -45,9 +46,14 @@ async def enqueue_tasks(items: list[dict[str, Any]]):
     pass
 
 
-# Monkey patching message publishing and task enqueueing so seeding doesn't trigger workers
-RabbitMQConnection.send_message = send_message  # type: ignore[method-assign]
+async def enqueue_notifications(events: list[Any]):
+    pass
+
+
+# Monkey patching message publishing, task and notification enqueueing so seeding doesn't trigger workers
+pubsub.publish_many = publish_many
 task_queue_enqueue.enqueue_tasks = enqueue_tasks
+notification_outbox.enqueue_notifications = enqueue_notifications
 
 # Mock the CasbinEnforcer to bypass validation during fixture creation
 _mock_enforcer = MagicMock()

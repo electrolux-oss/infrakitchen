@@ -15,8 +15,6 @@ from application.workers import TaskWorker
 
 change_logger()
 
-logging.getLogger("aiormq").setLevel(logging.WARNING)
-logging.getLogger("aio_pika").setLevel(logging.WARNING)
 logger = logging.getLogger("worker")
 
 

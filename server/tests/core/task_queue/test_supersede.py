@@ -65,28 +65,27 @@ class TestNotifySuperseded:
 
     async def test_notifies_requester_once_when_same_user(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.RabbitMQConnection, "send_message", send)
+        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
         user = uuid4()
 
         await notify_superseded(self.superseded(created_by=user, replaced_by_user=user))
 
         send.assert_awaited_once()
-        message = send.await_args_list[0].args[0]
-        assert message.routing_key == f"notifications.in_app.{user}"
-        assert message.exchange == "ik_notification_messages"
-        assert message.body["status"] == "warning"
-        assert message.body["title"] == "Resource action already queued"
-        assert "'execute'" in message.body["msg"] and "'dryrun'" in message.body["msg"]
+        topic, body = send.await_args_list[0].args
+        assert topic == f"notifications.in_app.{user}"
+        assert body["status"] == "warning"
+        assert body["title"] == "Resource action already queued"
+        assert "'execute'" in body["msg"] and "'dryrun'" in body["msg"]
 
     async def test_notifies_both_users_when_different(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.RabbitMQConnection, "send_message", send)
+        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
         old_user, new_user = uuid4(), uuid4()
 
         await notify_superseded(self.superseded(created_by=old_user, replaced_by_user=new_user))
 
-        routing_keys = [call.args[0].routing_key for call in send.await_args_list]
-        assert routing_keys == [f"notifications.in_app.{new_user}", f"notifications.in_app.{old_user}"]
+        topics = [call.args[0] for call in send.await_args_list]
+        assert topics == [f"notifications.in_app.{new_user}", f"notifications.in_app.{old_user}"]
 
 
 class TestToRow:

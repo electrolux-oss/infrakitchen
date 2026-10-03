@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
 from application.projects.service import ProjectService
-from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.controller import NotificationEvent
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
 from application.resources.functions import (
@@ -1422,4 +1422,5 @@ class ResourceService:
             message=f"Resource {resource.name} status has been changed ({title.upper()})\n"
             f"New status: {resource.status}, new state: {resource.state}",
         )
-        await publish_notification_event(event)
+        # Buffered until the request commits, so a rolled-back change notifies nobody
+        await self.event_sender.send_notification(event)

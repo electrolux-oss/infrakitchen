@@ -1,10 +1,7 @@
 import uuid
 from typing import Any
 
-from aio_pika import ExchangeType
-
-from core.base_models import MessageModel
-from core.rabbitmq import RabbitMQConnection
+import core.pubsub as pubsub
 
 from .model import SupersededTask
 
@@ -25,15 +22,7 @@ async def _send_in_app(user_id: uuid.UUID, title: str, message: str, task: Super
         "provider": "in_app",
         "user_id": str(user_id),
     }
-    await RabbitMQConnection.send_message(
-        MessageModel(
-            body=body,
-            message_type="notification",
-            exchange="ik_notification_messages",
-            routing_key=f"notifications.in_app.{user_id}",
-            exchange_type=ExchangeType.TOPIC,
-        )
-    )
+    await pubsub.publish(pubsub.in_app_notifications_topic(user_id), body)
 
 
 async def notify_superseded(task: SupersededTask) -> None:
