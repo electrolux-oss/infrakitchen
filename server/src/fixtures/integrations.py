@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.integrations.dependencies import get_integration_service
 from application.integrations.schema import IntegrationCreate
 from application.types import IntegrationProviderType, IntegrationType
+from core.config import Settings
 from core.users.model import UserDTO
 
 
@@ -136,7 +137,31 @@ def get_env_integration_fixtures(env: str) -> list[IntegrationFixture]:
             },
             "labels": ["gcp", "integration", "cloud"],
         },
+        get_postgresql_integration_fixture(env),
     ]
+
+
+def get_postgresql_integration_fixture(env: str) -> IntegrationFixture:
+    # points to the local InfraKitchen database server, so the TF state storages work out of the box;
+    # the database of each env is created with the integration
+    settings = Settings()
+    return {
+        "name": f"POSTGRESQL {env.capitalize()} States",
+        "description": get_sentence(),
+        "integration_type": "cloud",
+        "integration_provider": "postgresql",
+        "configuration": {
+            "integration_provider": "postgresql",
+            "pg_host": settings.POSTGRES_HOST,
+            "pg_port": int(settings.POSTGRES_PORT),
+            "pg_database": f"ik_tf_states_{env}",
+            "pg_maintenance_database": settings.POSTGRES_DB,
+            "pg_user": settings.POSTGRES_USER,
+            "pg_password": settings.POSTGRES_PASSWORD,
+            "pg_sslmode": "disable",
+        },
+        "labels": ["postgresql", "integration", "state"],
+    }
 
 
 async def insert_integrations(session: AsyncSession, user: UserDTO):

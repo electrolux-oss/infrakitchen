@@ -1,9 +1,19 @@
-from application.storages.schema import GCPStorageConfig
+import re
+
+from application.integrations.schema import PostgreSQLIntegrationConfig
+from application.providers.postgresql import build_pg_conn_str
+from application.storages.schema import (
+    AWSStorageConfig,
+    AzureRMStorageConfig,
+    GCPStorageConfig,
+    PostgreSQLStorageConfig,
+)
 from core.constants.model import ModelActions, ModelState, ModelStatus
+from core.errors import CannotProceed
 from core.users.functions import user_api_permission
 from core.users.model import UserDTO
 
-from .model import AWSStorageConfig, AzureRMStorageConfig, Storage, StorageDTO
+from .model import Storage, StorageDTO
 
 
 def get_tf_storage_config(storage: Storage, tf_state_path: str) -> str:
@@ -26,8 +36,41 @@ def get_tf_storage_config(storage: Storage, tf_state_path: str) -> str:
         backend_config += f'bucket = "{serialized_storage.configuration.gcp_bucket_name}"\n'
         backend_config += f'prefix = "{tf_state_path}"\n'
         return backend_config
+    elif isinstance(serialized_storage.configuration, PostgreSQLStorageConfig):
+        # connection string is passed via PG_CONN_STR (see get_tf_storage_environment), never written to the file
+        backend_config += f'schema_name = "{serialized_storage.configuration.pg_schema_name}"\n'
+        return backend_config
     else:
         raise NotImplementedError(f"{serialized_storage.storage_provider} storage provider is not supported")
+
+
+def tf_workspace_name(tf_state_path: str) -> str:
+    """
+    Workspace name for backends keyed by workspace instead of a state path (pg).
+    Must stay deterministic, a changed name points the resource to an empty state.
+    """
+    path = re.sub(r"(^|/)terraform\.tfstate$", "", tf_state_path.strip().strip("/"))
+    path = re.sub(r"\.tfstate$", "", path)
+    path = path.replace("/", "__")
+    return re.sub(r"[^A-Za-z0-9_-]", "_", path) or "default"
+
+
+def get_tf_storage_environment(storage: Storage) -> dict[str, str]:
+    """Environment variables required by the backend, kept out of backend.tfvars because they contain secrets."""
+    serialized_storage = StorageDTO(**storage.__dict__)
+    if isinstance(serialized_storage.configuration, PostgreSQLStorageConfig):
+        integration_config = serialized_storage.integration.configuration
+        if not isinstance(integration_config, PostgreSQLIntegrationConfig):
+            raise CannotProceed("PostgreSQL storage requires a PostgreSQL integration")
+        return {"PG_CONN_STR": build_pg_conn_str(integration_config)}
+    return {}
+
+
+def get_tf_workspace(storage: Storage, tf_state_path: str) -> str | None:
+    """Workspace to run in, None keeps the default one (backends with a state path)."""
+    if storage.storage_provider == "postgresql":
+        return tf_workspace_name(tf_state_path)
+    return None
 
 
 async def get_storage_actions(requester: UserDTO, status: ModelStatus, state: ModelState) -> list[str]:

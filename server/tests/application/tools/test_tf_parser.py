@@ -3,7 +3,7 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 
-from application.tools.tf_parser import OtfProvider
+from application.tools.tf_parser import get_backend_content, OtfProvider
 
 test_tf_data = """
 resource "iam_user" "my-iam-user" {
@@ -239,6 +239,9 @@ class TestTfBackendSetup:
             await tf.setup_tf_backend(tf_data_no_backend, "azurerm")
             mock_open.assert_called_once_with(backend_tf_path, "w")
             mock_file.write.assert_awaited_once()
+
+    def test_get_backend_content_postgresql(self):
+        assert 'backend "pg"' in get_backend_content("postgresql")
 
     @pytest.mark.asyncio
     async def test_setup_tf_backend_unsupported_provider(self):

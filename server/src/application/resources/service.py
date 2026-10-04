@@ -20,6 +20,7 @@ from application.resources.functions import (
     get_resource_variable_schema,
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
+    validate_not_state_backend_integrations,
 )
 from application.resources.model import Resource, ResourceDTO
 from application.source_code_versions.service import SourceCodeVersionService
@@ -236,6 +237,12 @@ class ResourceService:
                     if "write" not in integration_permissions and "admin" not in integration_permissions:
                         raise AccessDenied(f"You don't have write access to integration {integration_id}")
 
+                integrations = await self.integration_service.get_all_dto(
+                    filter={"id": [i for i in resource.integration_ids]}
+                )
+
+                validate_not_state_backend_integrations(integrations)
+
                 # if template allows only specific integration types,
                 # check that number of integrations is equal to number of allowed types.
                 if template.configuration.allowed_provider_integration_types:
@@ -247,9 +254,6 @@ class ResourceService:
                             f"got {len(resource.integration_ids)}"
                         )
 
-                integrations = await self.integration_service.get_all_dto(
-                    filter={"id": [i for i in resource.integration_ids]}
-                )
                 for integration in integrations:
                     if integration.status != ModelStatus.ENABLED:
                         raise EntityWrongState(
@@ -560,6 +564,7 @@ class ResourceService:
                     integrations = await self.integration_service.get_all_dto(
                         filter={"id": [i for i in resource.integration_ids]}
                     )
+                    validate_not_state_backend_integrations(integrations)
                     for integration in integrations:
                         if integration.status != ModelStatus.ENABLED:
                             raise EntityWrongState(

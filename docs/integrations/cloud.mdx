@@ -339,6 +339,60 @@ InfraKitchen will attempt to connect using your provided credentials and URI. If
 - Verify your **Public/Private** keys are correct.
 - Ensure your IP or network is whitelisted in **API Access List**.
 
+## PostgreSQL
+
+Follow these steps to integrate **PostgreSQL** with InfraKitchen.
+This integration is used by [PostgreSQL storages](../concepts/overview#storage) to keep OpenTofu/Terraform state in a database
+(the [`pg` backend](https://opentofu.org/docs/language/settings/backends/pg/)). It is used only through the storage and
+cannot be selected as a resource integration. PostgreSQL storages can be used by any resource, with or without cloud integrations.
+
+### Prepare the Database
+
+One integration owns one database: two integrations cannot point to the same host, port and database, and
+these fields cannot be changed after the integration is created.
+
+When the integration is created, InfraKitchen connects to the database and creates it (through the maintenance
+database, `postgres` by default) when it does not exist. The integration does not create any schema, schemas are
+created by the storages. Either let InfraKitchen create it:
+
+```sql
+CREATE USER infrakitchen WITH PASSWORD '<password>' CREATEDB;
+```
+
+or create it upfront and grant access:
+
+```sql
+CREATE DATABASE infrakitchen_states;
+CREATE USER infrakitchen WITH PASSWORD '<password>';
+GRANT CREATE, CONNECT ON DATABASE infrakitchen_states TO infrakitchen;
+-- the backend keeps the state ID sequence in the public schema
+GRANT USAGE, CREATE ON SCHEMA public TO infrakitchen;
+```
+
+Each [PostgreSQL storage](../concepts/overview#storage) that uses the integration gets its own schema in this
+database; the schema is created when the storage is executed, the same as buckets for the other storages.
+
+### Add the Credentials to InfraKitchen
+
+InfraKitchen path: `/integrations/postgresql/setup`
+
+| Field                | Description                                                         |
+| -------------------- | ------------------------------------------------------------------- |
+| **Integration Name** | Unique name for this integration (e.g., `pg-states`)                |
+| **Host** / **Port**  | PostgreSQL server address (port defaults to `5432`)                 |
+| **Database**         | Database name, created when it does not exist                       |
+| **Maintenance Database** | Existing database used to create the database, defaults to `postgres` |
+| **User**             | PostgreSQL user                                                     |
+| **Password**         | Password of the user, stored encrypted                              |
+| **SSL Mode**         | libpq `sslmode`, defaults to `require`                              |
+
+### Test the Connection
+
+InfraKitchen connects to the database and runs `SELECT 1`. If it fails:
+
+- Verify the host is reachable from InfraKitchen workers and the SSL mode matches the server.
+- Verify the user, password and database name.
+
 ## Datadog
 
 Follow these steps to integrate **Datadog** with **InfraKitchen**.

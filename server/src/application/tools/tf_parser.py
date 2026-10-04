@@ -391,6 +391,8 @@ def get_backend_content(integration_provider: str) -> str:
         file_path = os.path.join(configs_dir, "backend_gcp.tf")
     elif integration_provider == "azurerm":
         file_path = os.path.join(configs_dir, "backend_azurerm.tf")
+    elif integration_provider == "postgresql":
+        file_path = os.path.join(configs_dir, "backend_postgresql.tf")
     else:
         raise ValueError(f"Unsupported integration provider: {integration_provider}")
 

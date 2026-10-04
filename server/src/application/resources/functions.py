@@ -6,6 +6,7 @@ from typing import Any, cast
 from uuid import UUID
 
 
+from application.integrations.model import IntegrationDTO
 from application.projects.functions import requester_is_project_owner
 from application.projects.model import Project
 from application.resources.model import Resource
@@ -29,11 +30,22 @@ from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
+from application.types import STATE_BACKEND_INTEGRATION_PROVIDERS
 from application.validation_rules.model import ValidationRuleTargetType
 from application.validation_rules.schema import ValidationRuleResponse
 from application.validation_rules.validators import validate_number_rule, validate_string_rule
 
 logger = logging.getLogger(__name__)
+
+
+def validate_not_state_backend_integrations(integrations: Sequence[IntegrationDTO]) -> None:
+    """State backend integrations are used only through the storage, they cannot be attached to a resource."""
+    for integration in integrations:
+        if integration.integration_provider in STATE_BACKEND_INTEGRATION_PROVIDERS:
+            raise ValueError(
+                f"Integration {integration.id} has provider {integration.integration_provider} "
+                "which can be used only for TF state storage and cannot be assigned to resource"
+            )
 
 
 async def get_resource_actions(

@@ -11,7 +11,11 @@ from application.executors.service import ExecutorService
 from application.secrets.model import SecretDTO
 from application.source_codes.model import SourceCodeDTO
 from application.source_codes.service import SourceCodeService
-from application.storages.functions import get_tf_storage_config
+from application.storages.functions import (
+    get_tf_storage_config,
+    get_tf_storage_environment,
+    get_tf_workspace,
+)
 from application.storages.model import Storage
 from application.tools.cloud_api_manager import CloudApiManager
 from application.tools.secret_manager import SecretManager
@@ -209,6 +213,7 @@ class ExecutorTask:
 
             tf_data = await otf_provider.parse_tf_directory_to_json()
             await otf_provider.setup_tf_backend(tf_data, self.executor_instance.storage.storage_provider)
+            self.environment_variables.update(get_tf_storage_environment(storage))
 
             self.tf_client = OtfClient(
                 self.workspace_path,
@@ -217,6 +222,7 @@ class ExecutorTask:
                 backend_storage_config=get_tf_storage_config(storage, self.executor_instance.storage_path),
                 logger=self.logger,
                 tool_path=tool.path,
+                workspace=get_tf_workspace(storage, self.executor_instance.storage_path),
             )
 
             assert self.tf_client is not None, "Tofu client is not defined"

@@ -15,7 +15,11 @@ from application.secrets.model import SecretDTO
 from application.source_code_versions.model import SourceCodeVersionDTO
 from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.model import SourceCodeDTO
-from application.storages.functions import get_tf_storage_config
+from application.storages.functions import (
+    get_tf_storage_config,
+    get_tf_storage_environment,
+    get_tf_workspace,
+)
 from application.storages.model import Storage
 from application.tools.cloud_api_manager import CloudApiManager
 from application.tools.secret_manager import SecretManager
@@ -174,6 +178,8 @@ class ResourceTask:
                     repo_name="source_code_repo",
                 )
 
+        await self.authenticate_storage_backend()
+
         # get secrets
         for secret in self.resource_instance.secret_ids:
             pydantic_secret = SecretDTO.model_validate(secret)
@@ -293,6 +299,7 @@ class ResourceTask:
 
             tf_data = await otf_provider.parse_tf_directory_to_json()
             await otf_provider.setup_tf_backend(tf_data, self.resource_instance.storage.storage_provider)
+            self.environment_variables.update(get_tf_storage_environment(storage))
 
             self.tf_client = OtfClient(
                 self.workspace_path,
@@ -301,12 +308,33 @@ class ResourceTask:
                 backend_storage_config=get_tf_storage_config(storage, self.resource_instance.storage_path),
                 logger=self.logger,
                 tool_path=tool.path,
+                workspace=get_tf_workspace(storage, self.resource_instance.storage_path),
             )
 
             assert self.tf_client is not None, "Tofu client is not defined"
 
             self.tf_client.variables = variables
             await self.tf_client.init_tf_workspace()
+
+    async def authenticate_storage_backend(self):
+        """
+        Resources without a cloud integration of the storage provider
+        access the tf backend with the integration of the storage.
+        """
+        storage = self.resource_instance.storage
+        if not storage or not storage.integration:
+            return
+
+        cloud_providers = {
+            i.integration_provider for i in self.resource_instance.integration_ids if i.integration_type == "cloud"
+        }
+        if storage.integration.integration_provider in cloud_providers:
+            return
+
+        self.logger.info(f"Using integration of storage {storage.name} for the backend")
+        await self.cloud_api_manager.get_cloud_credentials(
+            IntegrationDTO.model_validate(storage.integration), self.environment_variables
+        )
 
     async def get_tool(self) -> ResolvedTool:
         """

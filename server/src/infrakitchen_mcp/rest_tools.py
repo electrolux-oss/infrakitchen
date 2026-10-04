@@ -157,7 +157,9 @@ ENTITIES: list[EntityWrites] = [
             "and provider-specific `configuration`. For AWS use `configuration: {storage_provider: "
             '"aws", aws_bucket_name, aws_region}`; for GCP use `gcp_bucket_name`, `gcp_region`; '
             "for AzureRM use `azurerm_resource_group_name`, `azurerm_storage_account_name`, "
-            "and `azurerm_container_name`. Query existing storages to copy the exact shape: "
+            "and `azurerm_container_name`; for PostgreSQL use `pg_schema_name` with a `postgresql` "
+            "integration (states are stored per resource as workspaces in that schema). "
+            "Query existing storages to copy the exact shape: "
             "`{ storages(range: [0, 20]) { id name storageType storageProvider integration { id name } } }`. "
             "WARNING: storage changes take effect immediately — there is no approval gate."
         ),

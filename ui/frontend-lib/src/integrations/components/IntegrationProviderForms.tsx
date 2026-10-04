@@ -733,6 +733,176 @@ export const renderFieldsForProvider = (
         </>
       );
 
+    case "postgresql":
+      return (
+        <>
+          <Controller
+            name="configuration.pg_host"
+            control={control}
+            defaultValue={""}
+            rules={{ required: "Host is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Host"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.pg_host}
+                helperText={
+                  (errors.configuration as any)?.pg_host?.message ||
+                  "PostgreSQL server hostname"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_port"
+            control={control}
+            defaultValue={5432}
+            rules={{ required: "Port is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Port"
+                fullWidth
+                margin="normal"
+                type="number"
+                error={!!(errors.configuration as FieldErrors)?.pg_port}
+                helperText={
+                  (errors.configuration as any)?.pg_port?.message ||
+                  "PostgreSQL server port"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_database"
+            control={control}
+            defaultValue={""}
+            rules={{ required: "Database is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Database"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.pg_database}
+                helperText={
+                  (errors.configuration as any)?.pg_database?.message ||
+                  "Created if it does not exist, one database per integration"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_maintenance_database"
+            control={control}
+            defaultValue="postgres"
+            rules={{ required: "Maintenance database is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Maintenance Database"
+                fullWidth
+                margin="normal"
+                error={
+                  !!(errors.configuration as FieldErrors)
+                    ?.pg_maintenance_database
+                }
+                helperText={
+                  (errors.configuration as any)?.pg_maintenance_database
+                    ?.message ||
+                  "Existing database used to create the database when it does not exist"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_user"
+            control={control}
+            defaultValue={""}
+            rules={{ required: "User is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="User"
+                fullWidth
+                margin="normal"
+                error={!!(errors.configuration as FieldErrors)?.pg_user}
+                helperText={
+                  (errors.configuration as any)?.pg_user?.message ||
+                  "PostgreSQL user"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_password"
+            control={control}
+            defaultValue={""}
+            rules={{ required: "Password is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Password"
+                fullWidth
+                margin="normal"
+                type="password"
+                error={!!(errors.configuration as FieldErrors)?.pg_password}
+                helperText={
+                  (errors.configuration as any)?.pg_password?.message ||
+                  "PostgreSQL user password"
+                }
+                required
+                slotProps={{ input: { readOnly: readonly } }}
+              />
+            )}
+          />
+          <Controller
+            name="configuration.pg_sslmode"
+            control={control}
+            defaultValue="require"
+            render={({ field }) => (
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="pg-sslmode-label">SSL Mode</InputLabel>
+                <Select
+                  {...field}
+                  labelId="pg-sslmode-label"
+                  label="SSL Mode"
+                  disabled={readonly}
+                >
+                  {[
+                    "disable",
+                    "allow",
+                    "prefer",
+                    "require",
+                    "verify-ca",
+                    "verify-full",
+                  ].map((mode) => (
+                    <MenuItem key={mode} value={mode}>
+                      {mode}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>
+                  libpq sslmode for the connection
+                </FormHelperText>
+              </FormControl>
+            )}
+          />
+        </>
+      );
+
     case "datadog":
       return (
         <>

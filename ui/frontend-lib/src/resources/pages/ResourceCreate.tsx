@@ -239,12 +239,24 @@ const ResourceCreatePageInner = () => {
     [buffer, watchedProjectId],
   );
 
+  // postgresql storages can always be used, cloud storages only with the resource integrations;
+  // the backend is accessed with the storage integration
   const filter_storage = useMemo(
-    () => ({
-      integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
-    }),
+    () =>
+      watchedIntegrationIds?.length > 0
+        ? {
+            or: [
+              { integration_id: watchedIntegrationIds },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
     [watchedIntegrationIds],
   );
+
+  const integrationRequired =
+    (watchedTemplate?.configuration.allowedProviderIntegrationTypes?.length ??
+      0) > 0;
 
   const filter_template = useMemo(
     () => ({
@@ -954,7 +966,8 @@ const ResourceCreatePageInner = () => {
                     rules={{
                       validate: {
                         required: (value: string[]) => {
-                          if (value.length === 0) return "*Required";
+                          if (integrationRequired && value.length === 0)
+                            return "*Required";
                         },
                       },
                     }}
@@ -963,7 +976,10 @@ const ResourceCreatePageInner = () => {
                         {...field}
                         ikApi={ikApi}
                         entity_name="integrations"
-                        filter={{ integration_type: "cloud" }}
+                        filter={{
+                          integration_type: "cloud",
+                          integration_provider__not_eq: "postgresql",
+                        }}
                         showFields={["integrationProvider", "name"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
@@ -991,7 +1007,7 @@ const ResourceCreatePageInner = () => {
                             ? `Only ${watchedTemplate.configuration.allowedProviderIntegrationTypes.join(", ")} integrations are allowed for this template.`
                             : ""
                         }`}
-                        required
+                        required={integrationRequired}
                         multiple
                         fullWidth
                       />
@@ -1023,35 +1039,33 @@ const ResourceCreatePageInner = () => {
                     )}
                   />
 
-                  {watchedIntegrationIds.length > 0 && (
-                    <Controller
-                      name="storageId"
-                      control={control}
-                      rules={{ required: "*Required" }}
-                      render={({ field }) => (
-                        <ReferenceInput
-                          {...field}
-                          ikApi={ikApi}
-                          entity_name="storages"
-                          buffer={buffer}
-                          showFields={["name", "storageProvider"]}
-                          fields={["name", "storageProvider", "state"]}
-                          getOptionDisabled={(option: any) =>
-                            option.state !== "PROVISIONED"
-                          }
-                          setBuffer={setBuffer}
-                          error={!!errors.storageId}
-                          helpertext={
-                            errors.storageId ? errors.storageId.message : ""
-                          }
-                          filter={filter_storage}
-                          value={field.value}
-                          label="Select Storage for storing TF state"
-                          required
-                        />
-                      )}
-                    />
-                  )}
+                  <Controller
+                    name="storageId"
+                    control={control}
+                    rules={{ required: "*Required" }}
+                    render={({ field }) => (
+                      <ReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="storages"
+                        buffer={buffer}
+                        showFields={["name", "storageProvider"]}
+                        fields={["name", "storageProvider", "state"]}
+                        getOptionDisabled={(option: any) =>
+                          option.state !== "PROVISIONED"
+                        }
+                        setBuffer={setBuffer}
+                        error={!!errors.storageId}
+                        helpertext={
+                          errors.storageId ? errors.storageId.message : ""
+                        }
+                        filter={filter_storage}
+                        value={field.value}
+                        label="Select Storage for storing TF state"
+                        required
+                      />
+                    )}
+                  />
 
                   {watchedStorage && (
                     <Controller

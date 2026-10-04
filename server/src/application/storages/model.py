@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 from application.integrations.model import Integration, IntegrationDTO
-from application.storages.schema import AWSStorageConfig, GCPStorageConfig, AzureRMStorageConfig
+from application.storages.schema import StorageConfigType
 from application.types import StorageProviderType, IacToolType
 from core.base_models import BaseEntity
 
@@ -72,8 +72,6 @@ class StorageDTO(BaseModel):
     storage_provider: StorageProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID | str = Field(..., frozen=True)
     integration: IntegrationDTO = Field(frozen=True)
-    configuration: Annotated[
-        AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig, Field(discriminator="storage_provider")
-    ] = Field(...)
+    configuration: StorageConfigType = Field(...)
 
     model_config = ConfigDict(from_attributes=True)

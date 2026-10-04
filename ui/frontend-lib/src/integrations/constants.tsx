@@ -9,6 +9,7 @@ import {
   GitLabIcon,
   GoogleCloudIcon,
   MongoDBIcon,
+  PostgreSQLIcon,
   SlackIcon,
 } from "../icons/Icons";
 
@@ -381,6 +382,18 @@ export const providers: Provider[] = [
     icon: DatadogIcon,
     slug: "datadog",
     instructions: [],
+    tokenLink: "",
+  },
+  {
+    type: IntegrationType.CLOUD,
+    name: "PostgreSQL",
+    icon: PostgreSQLIcon,
+    slug: "postgresql",
+    instructions: [
+      "One integration owns one database. It is created with the integration when missing (the user needs CREATEDB), an existing database is reused",
+      "For an existing database the user needs CREATE on it and USAGE/CREATE on its public schema (OpenTofu/Terraform keeps the state ID sequence there)",
+      "Host, port and database cannot be changed after creation",
+    ],
     tokenLink: "",
   },
   {
