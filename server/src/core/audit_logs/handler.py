@@ -2,8 +2,23 @@ from typing import Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.dependencies import get_async_session
 
 from .model import AuditLog
+
+
+async def set_audit_log_execution(audit_log_id: str | UUID, execution: dict[str, Any]) -> None:
+    """
+    Store the result of the task triggered by the audit log action in its metadata under "execution".
+    A separate session is used, the task session can be in a failed state.
+    """
+    async with get_async_session() as session:
+        audit_log = await session.get(AuditLog, audit_log_id)
+        if audit_log is None:
+            return
+        # reassign the dict, in-place changes of a JSON column are not tracked
+        audit_log.action_metadata = {**(audit_log.action_metadata or {}), "execution": execution}
+        await session.commit()
 
 
 class AuditLogHandler:

@@ -21,6 +21,7 @@ const AUDIT_LOG_FIELDS = `
       model
       entityId
       entityData
+      metadata
       createdAt
       creator {
         ${USER_SHORT_FIELDS}

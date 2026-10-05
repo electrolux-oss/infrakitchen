@@ -34,7 +34,8 @@ export interface ActivityLogEntry {
     sourceCodeUrl?: string;
     sourceCodeProvider?: string;
   };
-  status?: "success" | "failure" | "pending";
+  status?: "success" | "failure" | "warning" | "pending";
+  metadata?: Record<string, unknown> | null;
   [key: string]: any;
 }
 

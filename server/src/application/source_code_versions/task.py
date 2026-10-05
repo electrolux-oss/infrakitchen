@@ -118,6 +118,14 @@ class SourceCodeVersionTask:
             previous_variables=previous_variables,
         )
         self._log_config_sync_summary(summary)
+        self.logger.add_result(
+            configs_added=len(summary.added_configs),
+            configs_updated=len(summary.updated_configs),
+            configs_removed=len(summary.removed_configs),
+            outputs_added=len(summary.added_outputs),
+            outputs_updated=len(summary.updated_outputs),
+            outputs_removed=len(summary.removed_outputs),
+        )
 
     def _log_config_sync_summary(self, summary: ConfigSyncSummary) -> None:
         for name in summary.added_configs:
@@ -190,6 +198,7 @@ class SourceCodeVersionTask:
             raise CannotProceed("Branch is not specified for the source code version")
 
         await self.git_client.clone_branch(branch=branch)
+        self.logger.add_result(ref=branch)
         code_language = self.source_code_instance.source_code_language
 
         if code_language == "opentofu":
@@ -233,6 +242,10 @@ class SourceCodeVersionTask:
                 self.source_code_version_instance.code_snapshot = snapshot_otf.tf_string_data
             self.logger.info(f"Variables found: {len(self.source_code_version_instance.variables)}")
             self.logger.info(f"Outputs found: {len(self.source_code_version_instance.outputs)}")
+            self.logger.add_result(
+                variables=len(self.source_code_version_instance.variables),
+                outputs=len(self.source_code_version_instance.outputs),
+            )
 
             await self.sync_configs_and_outputs(vars, outpts, previous_variables)
             await self.session.commit()
@@ -242,14 +255,18 @@ class SourceCodeVersionTask:
         old_files = _parse_snapshot_files(old_snapshot)
         new_files = _parse_snapshot_files(new_snapshot)
         all_filenames = sorted(set(old_files) | set(new_files))
+        drift: dict[str, list[str]] = {"added": [], "removed": [], "changed": []}
 
         for filename in all_filenames:
             if filename not in old_files:
                 self.logger.warning(f"[DRIFT] New file added: {filename}")
+                drift["added"].append(filename)
             elif filename not in new_files:
                 self.logger.warning(f"[DRIFT] File removed: {filename}")
+                drift["removed"].append(filename)
             elif old_files[filename] != new_files[filename]:
                 self.logger.warning(f"[DRIFT] File changed: {filename}")
+                drift["changed"].append(filename)
                 diff_lines = difflib.unified_diff(
                     old_files[filename].splitlines(),
                     new_files[filename].splitlines(),
@@ -259,6 +276,9 @@ class SourceCodeVersionTask:
                 )
                 for line in diff_lines:
                     self.logger.warning(line)
+
+        if any(drift.values()):
+            self.logger.add_result(drift={kind: files for kind, files in drift.items() if files})
 
     # change entity state depends on task state
     async def change_entity_status(self, new_state: ModelStatus) -> None:

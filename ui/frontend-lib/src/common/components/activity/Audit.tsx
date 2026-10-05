@@ -21,6 +21,7 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
+import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
 import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
@@ -190,6 +191,7 @@ export const Audit = ({
           "creator",
           "created_at",
           "revision_number",
+          "metadata",
         ]),
         {
           filter: { entity_id: entityId },
@@ -243,6 +245,15 @@ export const Audit = ({
         field: "action",
         headerName: "Event",
         flex: 1,
+      },
+      {
+        field: "result",
+        headerName: "Result",
+        flex: 2,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
+          <AuditExecutionResult log={params.row} />
+        ),
       },
       {
         field: "creator",

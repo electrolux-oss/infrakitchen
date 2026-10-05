@@ -203,6 +203,7 @@ class ExecutorTask:
         if self.tf_client is None and code_language == "opentofu":
             tool = await resolve_tool_to_run(self.session, self.executor_instance.tool_id)
             self.logger.info(f"Initiating {tool.label}...")
+            self.logger.add_result(tool=tool.label)
             assert self.executor_instance.storage_path is not None, "Storage path is not defined"
             assert self.executor_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.executor_instance.storage_id)
@@ -343,6 +344,7 @@ class ExecutorTask:
 
     async def create_state(self):
         make_in_progress(self.executor_instance)
+        self.logger.add_result(operation="create")
         await self.change_entity_status(event_type=ModelActions.CREATE)
         await self.init_provision_tool()
         await self.create()
@@ -353,6 +355,7 @@ class ExecutorTask:
 
     async def update_state(self):
         make_in_progress(self.executor_instance)
+        self.logger.add_result(operation="update")
         await self.change_entity_status(event_type=ModelActions.UPDATE)
         await self.init_provision_tool()
         await self.update()
@@ -364,6 +367,7 @@ class ExecutorTask:
 
     async def destroy_state(self):
         make_in_progress(self.executor_instance)
+        self.logger.add_result(operation="destroy")
         await self.change_entity_status(event_type=ModelActions.DESTROY)
         await self.init_provision_tool()
         await self.destroy()
@@ -373,6 +377,9 @@ class ExecutorTask:
         await self.clean_workspace()
 
     async def dry_run(self):
+        self.logger.add_result(
+            operation="destroy_plan" if self.executor_instance.state == ModelState.DESTROY else "plan",
+        )
         # dry run should not change the state of the executor
         if hasattr(self.logger, "add_dry_run"):
             self.logger.add_dry_run()

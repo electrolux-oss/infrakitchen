@@ -6,6 +6,7 @@ import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import {
   Box,
   Button,
@@ -16,6 +17,11 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+
+import {
+  AuditExecutionResult,
+  getAuditExecution,
+} from "../../audit_logs/components/AuditExecutionResult";
 
 import {
   Entity,
@@ -77,12 +83,25 @@ function humanizeAction(action?: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-type ActivityStatus = "success" | "failure" | "pending";
+type ActivityStatus = "success" | "failure" | "warning" | "pending";
+
+const EXECUTION_STATUS: Record<string, ActivityStatus> = {
+  success: "success",
+  failed: "failure",
+  warning: "warning",
+  retry: "pending",
+  running: "pending",
+};
 
 function activityStatus(
   action?: string,
   entityStatus?: string,
+  executionStatus?: string,
 ): ActivityStatus {
+  // the result of the task triggered by this event, the entity status is its current one
+  if (executionStatus && EXECUTION_STATUS[executionStatus]) {
+    return EXECUTION_STATUS[executionStatus];
+  }
   if (entityStatus) {
     if (["error"].includes(entityStatus)) return "failure";
     if (
@@ -112,17 +131,23 @@ function activityStatus(
 const STATUS_ICONS = {
   success: CheckCircleOutlinedIcon,
   failure: ErrorOutlinedIcon,
+  warning: WarningAmberOutlinedIcon,
   pending: PendingOutlinedIcon,
 } as const;
 
 const STATUS_COLORS = {
   success: "success.main",
   failure: "error.main",
+  warning: "warning.main",
   pending: "warning.main",
 } as const;
 
 const ActivityEvent = ({ activity }: { activity: ActivityLogEntry }) => {
-  const status = activityStatus(activity.action, activity.entityData?.status);
+  const status = activityStatus(
+    activity.action,
+    activity.entityData?.status,
+    getAuditExecution(activity)?.status,
+  );
   const Icon = STATUS_ICONS[status];
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -215,6 +240,7 @@ const ActivityCardList = ({
           >
             <ActivityEvent activity={activity} />
             {typeLabel && <Label label={typeLabel} />}
+            <AuditExecutionResult log={activity} />
             <Box
               sx={{
                 display: "flex",
@@ -279,6 +305,16 @@ export const RecentActivityWidget = ({
         valueGetter: (_value, row) => row.entityData?.name ?? row.entityId,
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
           <ActivityEntity activity={params.row} showLabel />
+        ),
+      },
+      {
+        field: "result",
+        headerName: "Result",
+        flex: 1.8,
+        sortable: false,
+        valueGetter: (_value, row) => getAuditExecution(row)?.status ?? "",
+        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
+          <AuditExecutionResult log={params.row} />
         ),
       },
       {

@@ -1721,6 +1721,7 @@ class TestSyncWorkspace:
         mock_resource_service,
         mock_resource_crud,
         mock_event_sender,
+        mock_audit_log_handler,
         mocked_resource,
         mock_user_dto,
     ):
@@ -1733,7 +1734,16 @@ class TestSyncWorkspace:
         )
 
         mock_resource_crud.get_by_id.assert_awaited_once_with(str(mocked_resource.id))
+        mock_audit_log_handler.create_log.assert_awaited_once_with(
+            mocked_resource.id,
+            mock_user_dto.id,
+            ModelActions.SYNC,
+            revision_number=mocked_resource.revision_number,
+        )
         mock_event_sender.send_task.assert_awaited_once_with(
-            mocked_resource.id, requester=mock_user_dto, action=ModelActions.SYNC
+            mocked_resource.id,
+            requester=mock_user_dto,
+            action=ModelActions.SYNC,
+            audit_log_id=mock_audit_log_handler.audit_log_id,
         )
         assert result == mocked_resource

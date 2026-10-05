@@ -1397,7 +1397,18 @@ class ResourceService:
         if existing_resource.workspace_id is None:
             raise EntityNotFound("Resource doesn't have assigned workspace")
 
-        await self.workspace_event_sender.send_task(existing_resource.id, requester=requester, action=ModelActions.SYNC)
+        await self.audit_log_handler.create_log(
+            existing_resource.id,
+            requester.id,
+            ModelActions.SYNC,
+            revision_number=existing_resource.revision_number,
+        )
+        await self.workspace_event_sender.send_task(
+            existing_resource.id,
+            requester=requester,
+            action=ModelActions.SYNC,
+            audit_log_id=self.audit_log_handler.audit_log_id,
+        )
 
         return existing_resource
 
