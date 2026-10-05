@@ -326,7 +326,7 @@ Create another resource, this time from the **AWS VPC** template. Give it a name
 
 <Step title="Dry run, then provision">
 
-Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd> and <kbd>Approve</kbd>. Click <kbd>Apply</kbd> to provision it. When the status turns `PROVISIONED`, check the resource's **Outputs** — your VPC is live in AWS, created entirely through InfraKitchen.
+Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd> and <kbd>Approve</kbd>. Click <kbd>Apply</kbd> to provision it. When the status turns `PROVISIONED`, check the resource's **Outputs** — your VPC is live in AWS, created entirely through InfraKitchen!
 
 </Step>
 
@@ -334,7 +334,7 @@ Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd>
 
 ### 5. Clean Up
 
-Avoid unnecessary charges: **Destroy** the VPC resource first, then the account resource (children before parents). Stop InfraKitchen with `docker compose down`, or exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>.
+Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first). Stop InfraKitchen with `docker compose down`, or exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>.
 
 :::tip[Just want a quick look?]
 Run `make fixtures` to populate the instance with realistic mock data. It runs on the host, so use the Nix dev shell (or an environment with `uv` and PostgreSQL reachable on `localhost`). Everything above also works on an empty instance.
