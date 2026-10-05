@@ -113,7 +113,13 @@ class ResourceTask:
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
-    async def init_workspace(self):
+    async def init_workspace(self, git_auth_only: bool = False):
+        """
+        Fetch the source code and set up credentials for the tofu run.
+        With `git_auth_only` only git is authenticated, e.g. to sync the code to a workspace or
+        download it, cloud, storage backend and cloud secret credentials are needed only to run tofu.
+        Custom secrets don't need authentication and are always exported.
+        """
         self.logger.info(f"Init workspace at {self.workspace_root}")
 
         if self.source_code_version_instance is None:
@@ -154,7 +160,7 @@ class ResourceTask:
         for integration in integrations:
             integration_pydantic = IntegrationDTO.model_validate(integration)
 
-            if integration.integration_type == "cloud":
+            if integration.integration_type == "cloud" and not git_auth_only:
                 await self.cloud_api_manager.get_cloud_credentials(integration_pydantic, self.environment_variables)
 
             if integration.integration_type == "git":
@@ -178,11 +184,15 @@ class ResourceTask:
                     repo_name="source_code_repo",
                 )
 
-        await self.authenticate_storage_backend()
+        if not git_auth_only:
+            await self.authenticate_storage_backend()
 
         # get secrets
         for secret in self.resource_instance.secret_ids:
             pydantic_secret = SecretDTO.model_validate(secret)
+            # custom secrets are stored values, the other providers need cloud authentication
+            if git_auth_only and pydantic_secret.secret_provider != "custom":
+                continue
             await self.secret_manager.get_credentials(pydantic_secret, self.environment_variables)
 
         if not self.source_code_instance.integration:
@@ -585,7 +595,7 @@ class ResourceTask:
             )
 
     async def debug(self):
-        await self.init_workspace()
+        await self.init_workspace(git_auth_only=True)
         await self.init_provision_tool()
         await self.create_makefile()
 

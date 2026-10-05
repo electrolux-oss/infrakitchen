@@ -285,7 +285,7 @@ class WorkspaceTask:
 
         assert self.git_client, "Git client is not initialized"
         # get resource source code
-        await self.resource_task_controller.init_workspace()
+        await self.resource_task_controller.init_workspace(git_auth_only=True)
 
         await self.git_client.clone()
         await self.resource_task_controller.init_provision_tool()
