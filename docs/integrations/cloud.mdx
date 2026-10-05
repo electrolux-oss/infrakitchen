@@ -24,7 +24,7 @@ Attach AWS managed policies or a custom policy that grants the permissions Infra
 
 For a least-privilege setup, create and attach a custom policy scoped to only the resources InfraKitchen will manage.
 
-> Tip: If you want InfraKitchen to create an S3 bucket for Terraform/OpenTofu remote state, ensure the policy allows `s3:CreateBucket`, `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, etc., scoped to the bucket name pattern you will use.
+> Tip: If you want InfraKitchen to create an S3 bucket for OpenTofu/Terraform remote state, ensure the policy allows `s3:CreateBucket`, `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, etc., scoped to the bucket name pattern you will use.
 
 ### (Recommended) Use Role Assumption for Better Security
 
@@ -160,7 +160,7 @@ On the “Grant this service account access” step, assign roles that match wha
 
 - **Viewer** – read-only access
 - **Editor** – full project-level management
-- **Storage Admin** – required if InfraKitchen will manage or create GCS buckets (for Terraform remote state)
+- **Storage Admin** – required if InfraKitchen will manage or create GCS buckets (for OpenTofu/Terraform remote state)
 - **Compute Admin** – if InfraKitchen will manage compute instances
 - **Service Account User** – if InfraKitchen needs to deploy or impersonate other service accounts
 
@@ -230,7 +230,7 @@ Click <kbd>Test Connection</kbd> on the integration page to verify.
 Notes:
 
 - The **GCP WIF Pool Provider Audience** is the full canonical provider resource name, e.g. `//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID`.
-- InfraKitchen mints the token per host at run time, so this works for validation, GCS remote state, Secret Manager, and OpenTofu runs.
+- InfraKitchen mints the token per host at run time, so this works for validation, GCS remote state, Secret Manager, and OpenTofu/Terraform runs.
 - For direct federation (no **GCP Service Account Email**), grant IAM roles directly to the federated principal. For example:
 
 ```bash
@@ -396,7 +396,7 @@ InfraKitchen connects to the database and runs `SELECT 1`. If it fails:
 ## Datadog
 
 Follow these steps to integrate **Datadog** with **InfraKitchen**.
-This integration allows InfraKitchen to use Datadog provider in your terraform/OpenTofu modules.
+This integration allows InfraKitchen to use Datadog provider in your OpenTofu/Terraform modules.
 
 ### Create API and Application Keys
 

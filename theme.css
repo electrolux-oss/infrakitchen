@@ -15,3 +15,55 @@ blume-toc a[href^="#"][aria-current="location"] {
 [data-blume-page-actions] a[href*="/edit/"] {
   display: none;
 }
+
+/* Row and header separators inside not-prose components (<Steps>, <Card>,
+   <Callout>, ...). Typography draws those lines with .prose-scoped rules that
+   exclude not-prose subtrees, so a table inside <Steps> gets blume's unscoped
+   .blume-table-scroll frame (border + radius + padding) but no interior
+   lines. Restore the same lines Typography would give the table, unscoped. */
+/* Typography's `table { width: 100% }` is prose-scoped too, so inside
+   not-prose the table shrink-wraps its content while the .blume-table-scroll
+   frame around it always spans the full column — the row lines then stop well
+   short of the frame's right edge. Make the table fill its frame, as prose
+   tables (which get width from Typography) already do. */
+.blume-table-scroll > table {
+  width: 100%;
+}
+.blume-table-scroll thead {
+  border-bottom: 1px solid var(--blume-border);
+}
+/* And the header cells' text styling, which Typography also scopes to .prose:
+   without it, <th> inside <Steps> falls back to the browser default (bold,
+   centered) instead of the theme's header look. Alignment is inline from GFM. */
+.blume-table-scroll thead th {
+  color: var(--blume-foreground);
+  font-weight: 600;
+  vertical-align: bottom;
+}
+.blume-table-scroll tbody tr {
+  border-bottom: 1px solid var(--blume-border);
+}
+.blume-table-scroll tbody tr:last-child {
+  border-bottom: 0;
+}
+/* Cell **bold** matches prose tables (600, not the browser default 700). */
+.blume-table-scroll strong {
+  font-weight: 600;
+}
+
+/* Typography's inline-code pill (background, padding, mono font, smaller
+   font-size, and foreground color instead of the surrounding muted text) is
+   scoped with :not(:where([class~="not-prose"] *)), so it never reaches code
+   inside <Steps>, <Callout>, <Card>, or any other not-prose component — the
+   same gap blume's own kbd rule works around by being deliberately unscoped
+   from that exclusion. Restore the identical code styling here so inline
+   code looks the same everywhere in the content column. */
+.prose :where([class~="not-prose"] *) :not(pre) > code {
+  background: var(--blume-code-background);
+  border-radius: 0.3rem;
+  color: var(--blume-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  font-weight: 500;
+  padding: 0.15em 0.35em;
+}

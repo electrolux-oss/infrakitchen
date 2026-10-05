@@ -12,7 +12,7 @@ A resource combines:
 - A **template version** (how to build it)
 - **Variables** (configuration values)
 - **Cloud integrations** (credentials)
-- **Storage** (for Terraform/OpenTofu state)
+- **Storage** (for OpenTofu/Terraform state)
 - **Parent resources** (dependencies)
 
 Once provisioned, resources run real infrastructure in your cloud accounts.
@@ -38,11 +38,11 @@ Each resource in InfraKitchen contains the following core properties:
 | **State**               | Lifecycle state                             | `provision`, `provisioned`, `destroy`, `destroyed`  |
 | **Status**              | Current operation status                    | `queued`, `in_progress`, `done`, `error`, etc.      |
 | **Cloud Integrations**  | Cloud provider credentials                  | Required for provisioning                           |
-| **Storage**             | Backend for Terraform/OpenTofu state        | S3, Azure Blob, GCS, etc.                           |
+| **Storage**             | Backend for OpenTofu/Terraform state        | S3, Azure Blob, GCS, etc.                           |
 | **Storage Path**        | Path to state file in storage               | Immutable after creation                            |
 | **IaC Tool**          | OpenTofu/Terraform version used to run it   | Global default when empty, see [IaC Tools](../operations/iac_tools) |
-| **Workspace**           | Terraform/OpenTofu workspace                | Optional, for workspace isolation                   |
-| **Variables**           | Input variables for the infrastructure code | Values for Terraform/OpenTofu variables             |
+| **Workspace**           | OpenTofu/Terraform workspace                | Optional, for workspace isolation                   |
+| **Variables**           | Input variables for the infrastructure code | Values for OpenTofu/Terraform variables             |
 | **Outputs**             | Exported values after provisioning          | Available after successful provision                |
 | **Dependency Tags**     | Tags inherited by cloud resources           | Automatically applied to provisioned infrastructure |
 | **Dependency Config**   | Configuration shared with child resources   | For passing values down the hierarchy               |
@@ -208,7 +208,7 @@ After successful provisioning, resources export output values that can be:
 - Displayed in the UI
 - Retrieved via API
 
-Outputs are automatically extracted from Terraform/OpenTofu state files after provisioning completes.
+Outputs are automatically extracted from OpenTofu/Terraform state files after provisioning completes.
 
 ## Dependency Management
 
@@ -358,7 +358,7 @@ Template versions contain the actual infrastructure code. Resources:
 - Must select a template version to provision
 - Can be updated to newer versions
 - Extract variables from the selected version
-- Use the version's Terraform/OpenTofu modules
+- Use the version's OpenTofu/Terraform modules
 
 ### Resources and Integrations
 
@@ -373,7 +373,7 @@ Learn more about [Cloud Providers](../integrations/cloud).
 
 ### Resources and Storage
 
-Storage backends persist Terraform/OpenTofu state:
+Storage backends persist OpenTofu/Terraform state:
 
 - S3 for AWS
 - Azure Blob Storage for Azure
@@ -383,7 +383,7 @@ Storage backends persist Terraform/OpenTofu state:
 
 ### Resources and Workspaces
 
-Terraform/OpenTofu workspaces provide isolation:
+OpenTofu/Terraform workspaces provide isolation:
 
 - Optional feature
 - Useful for multi-tenancy

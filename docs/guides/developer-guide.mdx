@@ -1,9 +1,9 @@
 ---
 title: Developer Guide
-description: Turn infrastructure templates into real cloud resources with InfraKitchen — no deep cloud or Terraform/OpenTofu knowledge required.
+description: Turn infrastructure templates into real cloud resources with InfraKitchen — no deep cloud or OpenTofu/Terraform knowledge required.
 ---
 
-This guide shows how to turn infrastructure templates into real cloud resources with **InfraKitchen**. You do not need deep cloud or Terraform/OpenTofu knowledge to follow the steps.
+This guide shows how to turn infrastructure templates into real cloud resources with **InfraKitchen**. You do not need deep cloud or OpenTofu/Terraform knowledge to follow the steps.
 
 ## Core Ideas (Know These First)
 
@@ -12,7 +12,7 @@ This guide shows how to turn infrastructure templates into real cloud resources 
 - **Resource**: A real instance created from a template + version + variables.
 - **Variables**: Inputs the code needs (some required, some frozen, some sensitive).
 - **Integrations**: Credentials (AWS, Azure, GCP, etc.).
-- **Storage**: Backend for Terraform/OpenTofu state (S3, Blob, GCS).
+- **Storage**: Backend for OpenTofu/Terraform state (S3, Blob, GCS).
 - **Dependency Tags**: Key/value tags that can flow down to children.
 - **Dependency Configs**: Key/value config values that prefill matching variable names for children.
 - **Outputs**: Values produced after provisioning (can feed child resources).

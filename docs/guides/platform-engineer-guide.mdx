@@ -81,7 +81,7 @@ Rules:
 ## Creating Templates
 
 ### Option A: Import From Repository
-Use existing Terraform/OpenTofu module:
+Use existing OpenTofu/Terraform module:
 
 - Provide integration, repo, path, tag/branch.
 - Auto analysis extracts variables & outputs.
@@ -194,7 +194,7 @@ Roles (simplified):
 | Cannot destroy | Active children or output dependencies | Destroy children first. Clear references.              |
 | Variables missing | Template version analysis failed | Re-analyze. Confirm path & `variables.tf` presence.    |
 | PR not created | Existing branch/PR | Approve or close current PR. Retrigger update.         |
-| Status `error` after apply | Terraform failure | Review logs. Fix variables/integration. Retry.         |
+| Status `error` after apply | OpenTofu/Terraform failure | Review logs. Fix variables/integration. Retry.         |
 
 ## Summary
 

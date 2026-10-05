@@ -9,9 +9,9 @@ Find answers to common questions about InfraKitchen.
 
 ## General Questions
 
-### How is InfraKitchen different from Terraform/OpenTofu?
+### How is InfraKitchen different from OpenTofu/Terraform?
 
-| InfraKitchen                | Terraform/OpenTofu           |
+| InfraKitchen                | OpenTofu/Terraform           |
 | :-------------------------- | :--------------------------- |
 | GUI-based workflow          | CLI-based                    |
 | Dynamic forms for variables | Manual variable files        |
@@ -21,31 +21,31 @@ Find answers to common questions about InfraKitchen.
 | Pull request automation     | Manual Git workflows         |
 | RBAC and approvals          | No built-in access control   |
 
-Think of InfraKitchen as a layer on top of Terraform/OpenTofu that makes it more accessible and manageable.
+Think of InfraKitchen as a layer on top of OpenTofu/Terraform that makes it more accessible and manageable.
 
-### Can I use InfraKitchen with existing Terraform modules?
+### Can I use InfraKitchen with existing OpenTofu/Terraform modules?
 
-Absolutely! InfraKitchen works with standard Terraform/OpenTofu modules. Simply register your Git repository containing modules, and InfraKitchen will automatically analyze variables and outputs.
+Absolutely! InfraKitchen works with standard OpenTofu/Terraform modules. Simply register your Git repository containing modules, and InfraKitchen will automatically analyze variables and outputs.
 
 ## Technical Questions
 
-### How does InfraKitchen store Terraform state?
+### How does InfraKitchen store OpenTofu/Terraform state?
 
-InfraKitchen supports standard Terraform backend configurations:
+InfraKitchen supports standard OpenTofu/Terraform backend configurations:
 
 - **AWS S3** with DynamoDB locking
 - **Azure Storage** with blob storage
 - **GCP Storage** with GCS buckets
 - **PostgreSQL** with the `pg` backend (one schema per storage)
 
-State files are stored in your configured backend, not in InfraKitchen itself. This ensures compatibility with existing Terraform workflows.
+State files are stored in your configured backend, not in InfraKitchen itself. This ensures compatibility with existing OpenTofu/Terraform workflows.
 
 ### Can I import existing infrastructure into InfraKitchen?
 
 Yes, but with some manual steps:
 
 1. Create a resource in InfraKitchen with matching configuration
-2. Use Terraform import to import existing infrastructure into the state
+2. Use the import command (`terraform import` / `tofu import`) to bring existing infrastructure into the state
 3. Run a dry run to verify configuration matches
 
 :::tip[Best Practice]
@@ -270,7 +270,7 @@ Manual edits to resource code can cause drift between InfraKitchen and actual in
 **Solutions:**
 
 1. Verify `variables.tf` exists in module
-2. Check Terraform syntax is valid
+2. Check OpenTofu/Terraform syntax is valid
 3. Re-analyze template version
 4. Check module folder path is correct
 5. Review template version logs
@@ -312,13 +312,13 @@ Manual edits to resource code can cause drift between InfraKitchen and actual in
 
 ### "State lock" error
 
-**Cause:** Another operation is using the Terraform state.
+**Cause:** Another operation is using the OpenTofu/Terraform state.
 
 **Solutions:**
 
 1. Wait for other operation to complete
 2. Check if another resource is provisioning
-3. Verify no manual Terraform operations running
+3. Verify no manual OpenTofu/Terraform operations running
 4. Force-unlock state (last resort, dangerous)
 5. Contact platform team
 
@@ -375,7 +375,7 @@ InfraKitchen itself is open source and free. You pay for:
 
 - Cloud infrastructure InfraKitchen provisions
 - Compute resources to run InfraKitchen
-- Storage for Terraform state
+- Storage for OpenTofu/Terraform state
 - Git repository hosting (if using private repos)
 
 ### Can InfraKitchen help reduce costs?
@@ -415,9 +415,9 @@ Absolutely!
 - **Custom Providers**: OpenTofu/Terraform only
 - **Real-time Collaboration**: Single user edits at a time
 
-### Supported OpenTofu versions?
+### Supported OpenTofu/Terraform versions?
 
-- OpenTofu `1.10+`
+- OpenTofu/Terraform `1.10+`
 
 ## Still Have Questions?
 

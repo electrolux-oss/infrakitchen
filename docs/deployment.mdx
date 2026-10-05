@@ -14,13 +14,13 @@ To successfully deploy InfraKitchen, ensure that your system meets the following
 - **PostgreSQL**: Version 17
 - **RabbitMQ**: Version 4.0.9
 - **Nginx**: Version 1.28
-- **OpenTofu (Terraform)**: Version 1.10
+- **OpenTofu/Terraform**: Version 1.10
 - **Yarn**: Version 1.22
 - **Git Client**: Latest stable version
 
 ## Docker Image
 
-InfraKitchen provides a multi-stage Dockerfile that builds the backend (Python + OpenTofu + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
+InfraKitchen provides a multi-stage Dockerfile that builds the backend (Python + OpenTofu/Terraform + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
 
 The example file also references the Nginx configs and entrypoint script shipped in the same directory:
 
@@ -37,38 +37,93 @@ docker build -f docs/examples/docker/Dockerfile -t your-image-name:tag .
 
 ## Kubernetes
 
-For running InfraKitchen on Kubernetes, use the example manifest:
+InfraKitchen provides an example manifest: [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml).
 
-- [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml) — Service, backend/scheduler/worker Deployments, and an Nginx Ingress.
+It contains an Nginx Ingress, a Service, and backend, scheduler, and worker
+Deployments, wired to PostgreSQL and RabbitMQ:
 
-Before applying it:
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
+flowchart LR
+    U["Users"] --> Ing["Nginx Ingress (TLS)"]
+    Ing --> Svc["Service"]
+    Svc --> B["backend<br/>(2 replicas)"]
+    S["scheduler<br/>(1 replica)"] --> PG[(PostgreSQL)]
+    S --> RQ[(RabbitMQ)]
+    B --> PG
+    B --> RQ
+    W["worker<br/>(2 replicas)"] --> PG
+    W --> RQ
+```
 
-- Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
-- RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
-- Create the Kubernetes Secret for InfraKitchen as described below.
+Use it directly, or as a base for your own manifest.
 
-### Create Namespace if Needed and Switch Context to the Namespace
+:::note
+RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
+:::
+
+<Steps>
+
+<Step title="Prepare the manifest">
+
+Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
+
+</Step>
+
+<Step title="Create the namespace and switch context">
+
+Skip the first command if the namespace already exists.
 
 ```bash
 kubectl create namespace infrakitchen
 kubectl config set-context --current --namespace=infrakitchen
 ```
 
-### Generate Secrets for JWT and Encryption Keys
+</Step>
 
-You can use the following commands to generate base64 encoded secrets:
+<Step title="Generate secrets for JWT and encryption keys">
+
+The following command generates the two secret values the platform needs — an
+`ENCRYPTION_KEY` for encrypting stored secrets and a `JWT_KEY` for signing
+authentication tokens:
 
 ```bash
 python server/generate_encryption_key.py
 ```
 
-### Create the Secret and Apply the Manifest
+Rerunning the script produces fresh values you can use to rotate the keys.
+Note that rotating the `ENCRYPTION_KEY` invalidates everything encrypted with
+the previous one (e.g. stored integration credentials), so plan the rotation
+accordingly.
+
+</Step>
+
+<Step title="Create the secret">
+
+Create the secret with the two values generated in the previous step and your
+PostgreSQL password:
 
 ```bash
 kubectl create secret generic infrakitchen-secrets \
-                --from-literal="enc-secret=<REPLACE_VALUE>" \
-                --from-literal="jwt-secret=<REPLACE_VALUE>" \
-                --from-literal="postgres-password=<REPLACE_VALUE>"
+                --from-literal="enc-secret=<ENCRYPTION_KEY generated in the previous step>" \
+                --from-literal="jwt-secret=<JWT_KEY generated in the previous step>" \
+                --from-literal="postgres-password=<password of the PostgreSQL infrakitchen user>"
+```
 
+</Step>
+
+<Step title="Apply the manifest">
+
+The manifest references the secret created in the previous step:
+
+```bash
 kubectl apply -f docs/examples/docker/k8s-manifest.yaml
 ```
+
+</Step>
+
+</Steps>
