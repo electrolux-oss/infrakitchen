@@ -31,6 +31,8 @@ from core.notifications.controller import NotificationEvent, publish_notificatio
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
+    CloudExecutionError,
+    CloudWrongCredentials,
     EntityWrongState,
     ExitWithoutSave,
     ParentIsNotReady,
@@ -364,6 +366,10 @@ class TaskWorker(BaseMessagesWorker):
             await self.handle_is_not_right_state_exception(e, message, task_controller, action=action)
         elif isinstance(e, CannotProceed):
             await self.handle_generic_exception(e, task_controller, "CannotProceed", action=action)
+        elif isinstance(e, CloudWrongCredentials):
+            await self.handle_generic_exception(e, task_controller, "CloudWrongCredentials", action=action)
+        elif isinstance(e, CloudExecutionError):
+            await self.handle_generic_exception(e, task_controller, "CloudExecutionError", action=action)
         elif isinstance(e, ExitWithoutSave):
             await self.handle_exit_without_state_exception(e, task_controller, action=action)
         elif isinstance(e, AssertionError):

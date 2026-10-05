@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import tempfile
-import traceback
 
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +28,14 @@ from core.config import InfrakitchenConfig
 from core.constants import ModelState, ModelStatus
 from core.constants.model import ModelActions
 from core.custom_entity_log_controller import EntityLogger
-from core.errors import CannotProceed, ChildrenIsNotReady, ExitWithoutSave, ParentIsNotReady
+from core.errors import (
+    CannotProceed,
+    ChildrenIsNotReady,
+    CloudExecutionError,
+    CloudWrongCredentials,
+    ExitWithoutSave,
+    ParentIsNotReady,
+)
 from application.resource_temp_state.model import ResourceTempStateDTO
 from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
@@ -576,7 +582,9 @@ class ResourceTask:
                 await self.tf_client.dry_run(destroy=self.resource_instance.state == ModelState.DESTROY)
                 await self.clean_workspace()
         except Exception as e:
-            self.logger.error(traceback.format_exc())
+            # keep tracebacks out of the user-facing entity log; the worker logs the message
+            if not isinstance(e, (CloudWrongCredentials, CloudExecutionError)):
+                logger.exception(f"Dry run failed for resource {self.resource_instance.id}")
             await self.clean_workspace()
             raise ExitWithoutSave(e) from e
 
