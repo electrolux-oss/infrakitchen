@@ -2,13 +2,8 @@ import { useMemo, useState } from "react";
 
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  Typography,
-  useColorScheme,
-} from "@mui/material";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { Box, IconButton, Tooltip, useColorScheme } from "@mui/material";
 import {
   Background,
   Controls,
@@ -21,7 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
-import { DiagramNode, NODE_ACCENT, useCanvasPalette } from "./helpers";
+import { DiagramNode, useCanvasPalette } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { useWiringCanvasGraph } from "./useWiringCanvasGraph";
 import {
@@ -63,7 +58,7 @@ function WiringCanvasInner({
 }: WiringCanvasProps) {
   const { mode } = useColorScheme();
   const palette = useCanvasPalette();
-  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
+  const accent = palette.info.main;
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // One Zustand store per WiringCanvas instance
@@ -99,6 +94,26 @@ function WiringCanvasInner({
       onConstantDefaultValueUpdate,
     },
     useStore,
+  );
+
+  // Thicken the stroke when selected, keeping its original color.
+  const styledEdges = useMemo(
+    () =>
+      edges.map((edge) =>
+        edge.selected
+          ? {
+              ...edge,
+              style: {
+                ...edge.style,
+                strokeWidth:
+                  (typeof edge.style?.strokeWidth === "number"
+                    ? edge.style.strokeWidth
+                    : 2) + 1.5,
+              },
+            }
+          : edge,
+      ),
+    [edges],
   );
 
   return (
@@ -137,7 +152,7 @@ function WiringCanvasInner({
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <ReactFlow<DiagramNode>
           nodes={nodes}
-          edges={edges}
+          edges={styledEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -160,27 +175,30 @@ function WiringCanvasInner({
           <Background gap={20} />
           <Controls />
           <Panel
-            position="top-left"
+            position="top-right"
             style={{
-              background: palette.background.paper,
-              padding: "6px 12px",
-              borderRadius: "var(--template-surface-radius)",
-              border: `1px solid ${palette.divider}`,
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: 4,
+              padding: "6px",
             }}
           >
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.secondary",
-              }}
+            <Tooltip
+              title={
+                <>
+                  Drag templates from the sidebar or drag from a green{" "}
+                  <strong>output</strong> dot to a blue <strong>input</strong>{" "}
+                  dot to wire. Press <strong>Backspace</strong> to delete an
+                  edge.
+                </>
+              }
+              arrow
             >
-              Drag templates from the sidebar or drag from a green{" "}
-              <strong>output</strong> dot to a blue <strong>input</strong> dot
-              to wire. Press <strong>Backspace</strong> to delete an edge.
-            </Typography>
+              <InfoOutlinedIcon
+                fontSize="small"
+                sx={{ color: "text.secondary", cursor: "help" }}
+              />
+            </Tooltip>
             <Tooltip
               title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
               arrow
