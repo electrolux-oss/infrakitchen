@@ -45,6 +45,7 @@ export default defineConfig({
     ],
   },
   lastModified: "git",
+  redirects: [{ from: "/infrakitchen", to: "/", status: 301 }],
   navigation: {
     sidebar: {
       display: "flat", // "flat" | "group" | "page"
