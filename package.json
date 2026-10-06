@@ -8,6 +8,6 @@
     "check": "blume check"
   },
   "dependencies": {
-    "blume": "^2.1.1"
+    "blume": "^2.1.3"
   }
 }
