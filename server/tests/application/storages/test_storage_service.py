@@ -422,10 +422,10 @@ class TestPatch:
                 ModelState.PROVISIONED,
                 ModelStatus.READY,
                 ModelState.PROVISIONED,
-                ModelStatus.QUEUED,
+                ModelStatus.READY,
                 ModelActions.EXECUTE,
             ),
-            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.QUEUED, ModelActions.EXECUTE),
+            (ModelState.DESTROY, ModelStatus.READY, ModelState.DESTROY, ModelStatus.READY, ModelActions.EXECUTE),
         ],
     )
     async def test_patch_success(

@@ -89,7 +89,7 @@ async def execute_entity(entity_instance: BaseEntity):
         raise EntityWrongState(
             f"Entity cannot be executed, has wrong state {entity_instance.state} or status {entity_instance.status}"
         )
-    entity_instance.status = ModelStatus.QUEUED
+    # Applying only queues a task: the entity keeps its state and status until a worker starts it
 
 
 async def recreate_entity(entity_instance: BaseEntity, is_resource: bool = True):

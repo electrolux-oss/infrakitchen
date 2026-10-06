@@ -19,7 +19,7 @@ def _get_graphql_session_lock(connection: HTTPConnection) -> asyncio.Lock | None
 
 async def get_db_session(connection: HTTPConnection) -> AsyncGenerator[AsyncSession]:
     """Yield a DB session that auto-commits, then flushes pending events.
-    This guarantees RabbitMQ consumers always see committed data.
+    This guarantees event consumers always see committed data.
     """
     async with SessionLocal() as session:
         try:

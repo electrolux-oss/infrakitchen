@@ -34,7 +34,6 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "dev_user"
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "infrakitchen"
-    BROKER_URL: str = "amqp://guest:guest@localhost/"
     LOG_LEVEL: str = "INFO"
     DATABASE_DRIVER: str = "asyncpg"
     CACHE_DISABLED: str = "false"
@@ -43,6 +42,14 @@ class Settings(BaseSettings):
     MCP_ENABLED: bool = False
     # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
     TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
+    # Task queue / worker settings
+    WORKER_POLL_INTERVAL: float = 5.0  # seconds between polls when no task notification arrives
+    WORKER_LEASE_SECONDS: int = 90  # how long a claimed task stays owned without a heartbeat
+    WORKER_HEARTBEAT_SECONDS: int = 30  # how often a worker extends its lease and reports itself alive
+    TASK_QUEUE_RETENTION_DAYS: int = 14  # finished queue rows older than this are purged
+    TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
+    NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
+    NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
 
     class ConfigDict:
         env_file = ".env"

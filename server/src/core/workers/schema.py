@@ -10,7 +10,7 @@ class WorkerResponse(BaseModel):
     name: str = Field(..., title="Worker name")
     host: str = Field(..., title="Worker host")
     host_metadata: dict[str, str] = Field(default={}, title="Worker metadata")
-    status: Literal["free", "busy"] = Field(default="free", title="Worker status")
+    status: Literal["free", "busy", "offline"] = Field(default="free", title="Worker status")
     current_task: dict[str, str] | None = Field(default=None, title="Currently running task")
     tasks_completed: int | None = Field(default=0, title="Total tasks completed")
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)

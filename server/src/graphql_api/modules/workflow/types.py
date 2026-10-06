@@ -1,8 +1,12 @@
+import uuid
+
+from strawberry.types import Info
 import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.workflows.model import Workflow, WorkflowStep
 
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.resource.types import ResourceType
 from graphql_api.modules.secret.types import SecretType
@@ -43,6 +47,7 @@ class WorkflowStepType:
 class WorkflowType:
     __exclude__ = ["steps", "created_by"]
 
+    id: uuid.UUID = strawberry.UNSET
     creator: UserType | None = None
 
     steps: list[WorkflowStepType] | None = None
@@ -50,6 +55,10 @@ class WorkflowType:
     @strawberry.field
     def entity_name(self) -> str:
         return "workflow"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "workflow", self.id)
 
 
 workflow_mapper.finalize()

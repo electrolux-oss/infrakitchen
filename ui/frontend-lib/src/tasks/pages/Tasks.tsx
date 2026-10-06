@@ -1,5 +1,6 @@
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
+import { TaskQueueButton } from "../components/TaskQueueDialog";
 import {
   taskColumns,
   taskDefaultColumnVisibilityModel,
@@ -13,6 +14,7 @@ export const TasksPage = () => {
     <PageContainer
       title="Tasks"
       description="Background operations running against your entities, such as plans, applies, and syncs."
+      actions={<TaskQueueButton />}
     >
       <EntityFetchTable
         title="Tasks"
