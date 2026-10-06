@@ -23,7 +23,7 @@ This part takes about <Badge color="blue" icon="clock" shape="pill">10 min</Badg
 - **git**, to clone the repository
 
 :::tip[No other installs needed]
-No OpenTofu/Terraform CLI, Python, or Node.js — your chosen environment sets everything up, including [PostgreSQL](https://www.postgresql.org/) for storing the data and [RabbitMQ](https://www.rabbitmq.com/) for driving the events. No cloud account either — Part 1 runs entirely on your machine.
+No separate OpenTofu/Terraform CLI, Python, or Node.js installation is needed — the Nix or Podman/Docker setup provides everything, including [PostgreSQL](https://www.postgresql.org/) for storing data and [RabbitMQ](https://www.rabbitmq.com/) for processing events. No cloud account is needed either — Part 1 runs entirely on your machine.
 :::
 
 ### 1. Run InfraKitchen Locally
@@ -237,7 +237,7 @@ In InfraKitchen, go to **Configurations > Integrations**, click **Connect Cloud*
 
 | Field | Value |
 | :--- | :--- |
-| **Integration Name** | Any name, e.g. `AWSDemo` |
+| **Integration Name** | e.g. `AWSDemo` |
 | **AWS Account ID** | Your AWS account ID |
 | **Access Key ID** | The generated Access Key ID |
 | **Secret Access Key** | The generated Secret Access Key |
@@ -282,21 +282,41 @@ Repeat with **Directory Path** `demo/02-aws-vpc`, name it **AWS VPC**, and pick 
 
 </Steps>
 
+The resulting template hierarchy is:
+
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
+flowchart TD
+    ACCOUNT["AWS Account (parent template)"] --> VPC["AWS VPC (child template)"]
+```
+
 ### 3. Provision the Account Resource
 
-The VPC template has the account template as parent, so provision the account resource first. The IAM role it creates is not used in this example — the account resource demonstrates the parent → child workflow:
+Provision the account resource before creating the VPC resource.
+
+:::tip
+The IAM role it creates is not used in this example — the account resource demonstrates the parent → child workflow.
+:::
 
 <Steps>
 
-<Step title="Create the resource">
+<Step title="Create the AWS Account resource">
 
-Go to **Templates**, find the **AWS Account** template, and click <kbd>Create Resource</kbd>. Give it a name (e.g. `demo-account`), select your **AWS integration** and the S3 **storage** created in [step 1](#1-connect-aws), select the **Template Version** (`main`), and fill in the variables:
+Go to **Templates**, find the **AWS Account** template, and click <kbd>Create Resource</kbd>. Fill in the fields and variables:
 
-| Variable | Value |
+| Field | Value |
 | :--- | :--- |
-| `account` | Your AWS account ID |
-| `master_account_id` | Your AWS account ID |
-| `region` | e.g. `eu-north-1` |
+| **Name** | e.g. `demo-account` |
+| **AWS integration** | Select `AWSDemo` |
+| **Storage** | Select `infrakitchen_AWSDemo` |
+| **Template Version** | Select `main` |
+| Variable: `account` | Your AWS account ID |
+| Variable: `master_account_id` | Your AWS account ID |
+| Variable: `region` | e.g. `eu-central-1` |
 
 </Step>
 
@@ -314,13 +334,18 @@ Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd>
 
 <Step title="Create the VPC resource">
 
-Create another resource, this time from the **AWS VPC** template. Give it a name (e.g. `demo-vpc`), select the account resource from step 3 as **parent**, your **AWS integration** and **storage**, select the **Template Version** (`main`), and fill in the variables:
+Create another resource from the **AWS VPC** template and fill in the fields and variables:
 
-| Variable | Value |
+| Field | Value |
 | :--- | :--- |
-| `account` | Your AWS account ID |
-| `name` | e.g. `demo-vpc` |
-| `cidr_block` | `10.20.0.0/16` |
+| **Name** | e.g. `demo-vpc` |
+| **Parent** | Select `demo-account` |
+| **AWS integration** | Select `AWSDemo` |
+| **Storage** | Select `infrakitchen_AWSDemo` |
+| **Template Version** | Select `main` |
+| Variable: `account` | Your AWS account ID |
+| Variable: `name` | e.g. `demo-vpc` |
+| Variable: `cidr_block` | `10.20.0.0/16` |
 
 </Step>
 
@@ -334,7 +359,9 @@ Save, click <kbd>Plan</kbd> to preview the changes, then click <kbd>Review</kbd>
 
 ### 5. Clean Up
 
-Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first). Stop InfraKitchen with `docker compose down`, or exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>.
+Go to the **demo-account** resource's **Settings** tab, and in the **Danger Zone**, click <kbd>Cascade Destroy</kbd>, type the resource's name to confirm, and click <kbd>Cascade Destroy</kbd> again — InfraKitchen creates a destroy workflow covering the account resource and the VPC beneath it, and opens it. Click <kbd>Apply</kbd> to run the workflow: both resources are destroyed in the right order (children first).
+
+Exit the Nix shell with <kbd>Ctrl</kbd>+<kbd>D</kbd>, or stop InfraKitchen with `docker compose down`.
 
 :::tip[Just want a quick look?]
 Run `make fixtures` to populate the instance with realistic mock data. It runs on the host, so use the Nix dev shell (or an environment with `uv` and PostgreSQL reachable on `localhost`). Everything above also works on an empty instance.
