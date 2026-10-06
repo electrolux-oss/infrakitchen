@@ -1,4 +1,5 @@
 import { defineConfig } from "blume";
+import { filesystem, githubReleases } from "blume/sources";
 
 export default defineConfig({
   title: "InfraKitchen",
@@ -16,7 +17,7 @@ export default defineConfig({
   footer: {
     links: [
       {
-        href: "https://github.com/electrolux-oss/infrakitchen/releases",
+        href: "/changelog",
         label: "Changelog",
       },
       {
@@ -34,7 +35,17 @@ export default defineConfig({
   },
   content: {
     pages: "docs/pages",
+    sources: [
+      filesystem({ root: "docs" }),
+      githubReleases({
+        prefix: "changelog",
+        owner: "electrolux-oss",
+        repo: "infrakitchen",
+      }),
+    ],
   },
+  lastModified: "git",
+  redirects: [{ from: "/infrakitchen", to: "/", status: 301 }],
   navigation: {
     sidebar: {
       display: "flat", // "flat" | "group" | "page"

@@ -13,7 +13,7 @@ A workflow combines:
 - **Variable Overrides** (runtime customizations per template)
 - **Integrations** (cloud credentials shared across all steps)
 - **Secrets** (sensitive data shared across all steps)
-- **Storage** (backend for Terraform/OpenTofu state)
+- **Storage** (backend for OpenTofu/Terraform state)
 
 Once executed, workflows provision resources in topological order — ensuring that upstream resources are created before downstream resources that depend on their outputs.
 
@@ -26,6 +26,11 @@ Workflows move through these stages: **Create → Execute → Complete/Error**.
 Each workflow step also maintains its own status, allowing granular tracking of multi-resource provisioning.
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph TD
     A[Blueprint] -->|Create Execution| B[Workflow Created]
     B -->|Execute| C[In Progress]
@@ -75,7 +80,7 @@ Each step within a workflow tracks the provisioning of a single resource:
 | **Cloud Integrations**  | Cloud provider credentials for this step           | Shared from workflow request              |
 | **Secrets**             | Sensitive data for this step                       | Shared from workflow request              |
 | **Template Version** | Specific code version for this step                | Can be overridden per template            |
-| **Storage**             | Backend for Terraform/OpenTofu state               | Shared from workflow request              |
+| **Storage**             | Backend for OpenTofu/Terraform state               | Shared from workflow request              |
 | **Started At**          | Timestamp when step execution began                | Set when step starts                      |
 | **Completed At**        | Timestamp when step execution finished             | Set on success or failure                 |
 

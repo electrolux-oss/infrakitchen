@@ -3,7 +3,7 @@ title: Overview
 description: Key InfraKitchen concepts and how they relate to each other.
 ---
 
-InfraKitchen introduces several key concepts that work together to enable self-service infrastructure provisioning. This page explains each concept and how they relate to each other.
+InfraKitchen introduces several key concepts that work together to enable self-service infrastructure and platform engineering workflows. This page explains each concept and how they relate to each other.
 
 ## Integration
 
@@ -41,7 +41,7 @@ Projects are useful when you want to organize infrastructure by team, product, o
 
 ## Code Repository
 
-InfraKitchen embraces Infrastructure-as-Code (IaC). A **Code Repository** is a Git repository containing Terraform/OpenTofu modules, registered in InfraKitchen so its code can be used by templates and executors.
+InfraKitchen embraces Infrastructure-as-Code (IaC). A **Code Repository** is a Git repository containing OpenTofu/Terraform modules, registered in InfraKitchen so its code can be used by templates and executors.
 
 ### Code Repository Components
 
@@ -60,7 +60,7 @@ Repository: github.com/myorg/terraform-modules
 
 ## Storage
 
-A **Storage** is a remote backend where Terraform/OpenTofu state files are kept, so that state
+A **Storage** is a remote backend where OpenTofu/Terraform state files are kept, so that state
 lives in your cloud account — not in InfraKitchen.
 
 Supported providers:
@@ -152,4 +152,4 @@ A [**Resource**](./resource) is an actual instance of infrastructure, created fr
 
 ## Workspace
 
-A [**Workspace**](./workspace) is a Git repository where InfraKitchen commits the Terraform/OpenTofu code it generates for each [Resource](./resource): provision, update, and destroy operations are pushed to a per-resource branch and opened as a pull request against the default branch.
+A [**Workspace**](./workspace) is a Git repository where InfraKitchen commits the OpenTofu/Terraform code it generates for each [Resource](./resource): provision, update, and destroy operations are pushed to a per-resource branch and opened as a pull request against the default branch.

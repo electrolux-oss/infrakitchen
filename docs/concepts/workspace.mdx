@@ -2,7 +2,7 @@
 title: Workspace
 ---
 
-**Workspaces** connect your managed infrastructure to Git: for every [Resource](./resource), InfraKitchen commits the Terraform/OpenTofu code it generates into the workspace's repository and opens a pull request, so every change is version-controlled and reviewed before it reaches your default branch. Where *Templates* define structure and *Resources* are concrete instances, the Workspace is where their code becomes visible and reviewable.
+**Workspaces** connect your managed infrastructure to Git: for every [Resource](./resource), InfraKitchen commits the OpenTofu/Terraform code it generates into the workspace's repository and opens a pull request, so every change is version-controlled and reviewed before it reaches your default branch. Where *Templates* define structure and *Resources* are concrete instances, the Workspace is where their code becomes visible and reviewable.
 
 A workspace is a single repository on a supported Git provider ([GitHub](../../integrations/git#github), [Bitbucket](../../integrations/git#bitbucket), [Azure DevOps](../../integrations/git#azure-devops)). You create the repository in your provider first, then register it in InfraKitchen — InfraKitchen never creates repositories.
 
@@ -13,7 +13,7 @@ When a [Resource](./resource) is provisioned, updated, or destroyed, InfraKitche
 InfraKitchen handles all of the Git work:
 
 - Cloning the repository and creating a branch from the default branch
-- Copying the generated Terraform/OpenTofu code into the resource's directory — or removing that directory when the resource is destroyed (see [Repository Layout](#repository-layout))
+- Copying the generated OpenTofu/Terraform code into the resource's directory — or removing that directory when the resource is destroyed (see [Repository Layout](#repository-layout))
 - Opening a pull request for the change
 - Merging the pull request when the change is approved, closing it when rejected
 
@@ -194,7 +194,7 @@ Access is enforced through the platform's RBAC and entity-level permissions.
 
 ## Integration with Other Features
 
-- **[Storage](./resource#resources-and-storage)** — Terraform/OpenTofu state stays in Storage; the workspace repository contains generated code only.
+- **[Storage](./resource#resources-and-storage)** — OpenTofu/Terraform state stays in Storage; the workspace repository contains generated code only.
 - **[Pull requests](#pull-request-flow)** — the human approval gate before code lands in the default branch, enabling policy checks or external CI.
 
 ## Troubleshooting

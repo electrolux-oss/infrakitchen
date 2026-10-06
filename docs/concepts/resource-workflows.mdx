@@ -11,6 +11,11 @@ The resource workflow consists of primary steps that guide a resource from creat
 When approval flow is enabled, all provisioning, update, and destroy operations require explicit approval from resource owners before execution:
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph TD
     A[1. Create Resource] --> B[2. Request Approval]
     B --> C{Owner Decision}
@@ -48,6 +53,11 @@ graph TD
 When approval flow is disabled, operations execute automatically after being requested, providing faster deployment cycles:
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph TD
     A[1. Create Resource] --> B[2. Provision]
     B --> C[Resource Provisioned]
@@ -165,7 +175,7 @@ The Provision step executes the actual infrastructure as code to create resource
 
 1. Sets status to `in_progress`
 2. Fetches cloud integration credentials
-3. Initializes Terraform/OpenTofu backend
+3. Initializes OpenTofu/Terraform backend
 4. Downloads the module code from Git
 5. Prepares variable files
 6. Executes `terraform apply` or `tofu apply`
@@ -179,7 +189,7 @@ The Provision step executes the actual infrastructure as code to create resource
 - Parent resources must be in `provisioned` state
 - Cloud integrations must be valid
 - Storage backend must be accessible
-- Code must be valid Terraform/OpenTofu
+- Code must be valid OpenTofu/Terraform
 
 ### Dry Run (Plan)
 
@@ -209,7 +219,7 @@ The plan shows:
 
 The provision operation runs in an isolated environment with:
 
-- Terraform/OpenTofu CLI
+- OpenTofu/Terraform CLI
 - Cloud provider CLI tools (aws-cli, az, gcloud)
 - Git for code checkout
 - Environment variables from integrations
@@ -220,7 +230,7 @@ The provision operation runs in an isolated environment with:
 After successful provisioning, InfraKitchen extracts outputs:
 
 ```hcl
-# In Terraform code
+# In OpenTofu/Terraform code
 output "vpc_id" {
   description = "The ID of the VPC"
   value       = aws_vpc.main.id
@@ -277,7 +287,7 @@ The Update step modifies an existing provisioned resource. InfraKitchen uses a t
 3. Optionally perform dry run on temporary state
 4. If approval flow: requests approval
 5. Merges temporary state to main resource
-6. Executes Terraform/OpenTofu apply
+6. Executes OpenTofu/Terraform apply
 7. Updates outputs
 8. Increments revision number
 
@@ -288,6 +298,11 @@ Updates create a temporary state for review. You can preview changes before appl
 :::
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph LR
     A[Create Temp State] --> B[Review Changes]
     B --> C{Dry Run?}

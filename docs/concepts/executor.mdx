@@ -45,7 +45,7 @@ Each executor in InfraKitchen contains the following core properties:
 | **Status**               | Current operation status                       | `queued`, `in_progress`, `done`, `error` |
 | **Cloud Integrations**   | Cloud provider credentials                     | Optional, as needed for task             |
 | **Secrets**              | Sensitive data for execution                   | Database passwords, API keys, etc.       |
-| **Storage**              | Backend for Terraform/OpenTofu state           | S3, Azure Blob, GCS, etc.                |
+| **Storage**              | Backend for OpenTofu/Terraform state           | S3, Azure Blob, GCS, etc.                |
 | **Storage Path**         | Path to state file in storage                  | Auto-generated or custom                 |
 | **IaC Tool**           | OpenTofu/Terraform version used to run it      | Global default when empty, see [IaC Tools](../operations/iac_tools) |
 | **Labels**               | Tags for organizing and filtering              | E.g., `migration`, `cleanup`, `one-time` |
@@ -130,7 +130,7 @@ Executors support various lifecycle actions based on their current state.
 | **Delete**    | State: `destroyed`         | Permanently remove executor                 |
 
 :::warning[State Management]
-Even for one-time tasks, executors maintain Terraform/OpenTofu state. This ensures proper cleanup and tracking of any infrastructure modifications made during execution.
+Even for one-time tasks, executors maintain OpenTofu/Terraform state. This ensures proper cleanup and tracking of any infrastructure modifications made during execution.
 :::
 
 ## Executor Integrations
@@ -181,7 +181,7 @@ Learn more about [Secrets Management](../../secrets/overview).
 
 ## Executor Storage
 
-Executors require storage backends to persist Terraform/OpenTofu state.
+Executors require storage backends to persist OpenTofu/Terraform state.
 
 ### Supported Storage Backends
 
@@ -253,7 +253,7 @@ State management is critical for executors:
 Unlike resources, executors typically don't use workspace Git sync:
 
 - Executor code comes directly from the registered code repository
-- No automatic Git commits of generated Terraform
+- No automatic Git commits of generated OpenTofu/Terraform code
 - State is stored in configured backend only
 
 ## Best Practices

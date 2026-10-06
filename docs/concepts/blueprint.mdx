@@ -25,6 +25,11 @@ Blueprints move through these stages: **Create → Enable/Disable → Delete**.
 Unlike Resources or Executors, blueprints are configuration entities — they define *what* to build, not running infrastructure. They can be executed multiple times, each execution creating a new Workflow.
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph LR
     A[Create Blueprint] --> B[Enabled]
     B -->|Disable| C[Disabled]
@@ -155,6 +160,11 @@ Wiring Rules:
 The wiring rules automatically create a directed acyclic graph (DAG) that determines execution order:
 
 ```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+---
 graph TD
     A[VPC Template] -->|vpc_id| B[EKS Cluster Template]
     A -->|private_subnet_ids| B
@@ -201,7 +211,7 @@ At execution time, you can customize the workflow with:
 | **Variable Overrides**        | Override default variables per template               |
 | **Integration IDs**           | Cloud credentials shared across all resources         |
 | **Secret IDs**                | Sensitive data shared across all resources             |
-| **Storage ID**                | Backend for Terraform/OpenTofu state                   |
+| **Storage ID**                | Backend for OpenTofu/Terraform state                   |
 | **Template Version Overrides** | Use specific code versions per template           |
 | **Parent Overrides**          | Specify parent resources for templates with external parents |
 
