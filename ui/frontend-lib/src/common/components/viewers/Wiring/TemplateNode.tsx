@@ -6,26 +6,21 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  useColorScheme,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Handle, NodeProps, Position } from "@xyflow/react";
 
 import { CODE_FONT_FAMILY } from "../../../theme";
 import { STATUS_CHIP_COLOR } from "../../../utils";
+import { InlineCode } from "../../code/InlineCode";
 import { GetReferenceUrlValue } from "../../fields/CommonField";
 
-import {
-  DiagramNode,
-  makeHandleStyle,
-  NODE_ACCENT,
-  useCanvasPalette,
-} from "./helpers";
+import { DiagramNode, makeHandleStyle, useCanvasPalette } from "./helpers";
 
 export function TemplateNode({ data }: NodeProps<DiagramNode>) {
   const theme = useTheme();
   const palette = useCanvasPalette();
-  const { mode } = useColorScheme();
   const bg = palette.background.paper;
   const isExternal = data.kind === "external";
   const displayOrder =
@@ -33,9 +28,9 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
     (data.stepPosition != null ? data.stepPosition + 1 : undefined);
   const canRemove = typeof data.onRemove === "function";
 
-  // External nodes always use warning palette; template nodes use the blue
-  // accent (see NODE_ACCENT) unless a workflow status overrides it.
-  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
+  // External nodes always use warning palette; template nodes use the
+  // theme's `info` blue unless a workflow status overrides it.
+  const accent = palette.info.main;
   let headerBg = isExternal ? palette.warning.main : accent;
   let headerText = isExternal ? palette.warning.contrastText : "#ffffff";
   let borderStyle = isExternal ? "dashed" : "solid";
@@ -48,19 +43,18 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
         : data.status === "error"
           ? palette.error
           : data.status === "in_progress"
-            ? null
+            ? palette.info
             : palette.warning;
-    // `info` is monochrome here, so in-progress keeps the accent.
-    headerBg = p ? p.main : accent;
-    headerText = p ? p.contrastText : "#ffffff";
-    borderColor = p ? p.main : accent;
+    headerBg = p.main;
+    headerText = p.contrastText;
+    borderColor = p.main;
   }
 
   return (
     <Box
       sx={{
         background: bg,
-        border: `2px ${borderStyle} ${borderColor}`,
+        border: `1px ${borderStyle} ${borderColor}`,
         borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
         maxWidth: 300,
@@ -71,9 +65,9 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
       <Box
         sx={{
           px: 1.5,
-          py: 1,
+          py: 0.5,
           borderBottom: `1px solid ${palette.divider}`,
-          background: headerBg,
+          background: `color-mix(in srgb, ${headerBg} 85%, transparent)`,
           borderTopLeftRadius: 6,
           borderTopRightRadius: 6,
           display: "flex",
@@ -135,9 +129,17 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
             <IconButton
               size="small"
               onClick={() => data.onRemove?.(data.templateId)}
-              sx={{ color: headerText, ml: 0.5 }}
+              sx={{
+                color: headerText,
+                ml: 0.5,
+                p: 0.25,
+                "&:hover": {
+                  backgroundColor: (theme) =>
+                    alpha(theme.palette.error.main, 0.35),
+                },
+              }}
             >
-              <DeleteIcon fontSize="small" />
+              <DeleteIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
         )}
@@ -226,32 +228,74 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
             {data.inputs.map((input) => (
               <Box
                 key={`in-${input}`}
-                sx={{ display: "flex", alignItems: "center", my: 0.4 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  my: 0.4,
+                  minWidth: 0,
+                }}
               >
-                <Handle
-                  type="target"
-                  position={Position.Left}
-                  id={`input-${input}`}
-                  style={{
-                    ...makeHandleStyle(palette.info.main, bg),
-                    marginRight: 4,
-                  }}
-                />
-                <Chip
-                  label={input}
-                  variant="outlined"
-                  color="info"
-                  sx={{ fontSize: 11 }}
-                />
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`input-source-${input}`}
-                  style={{
-                    ...makeHandleStyle(palette.info.light, bg, 7),
-                    marginLeft: 4,
-                  }}
-                />
+                <Tooltip
+                  title={
+                    <>
+                      Drag from an output to connect it to{" "}
+                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                        {input}
+                      </InlineCode>
+                    </>
+                  }
+                  arrow
+                  placement="left"
+                >
+                  <Handle
+                    type="target"
+                    position={Position.Left}
+                    id={`input-${input}`}
+                    style={{
+                      ...makeHandleStyle(palette.info.main, bg),
+                      marginRight: 4,
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip title={input} arrow>
+                  <Chip
+                    label={input}
+                    variant="outlined"
+                    color="info"
+                    sx={{
+                      fontSize: 11,
+                      minWidth: 0,
+                      flex: "0 1 auto",
+                      "& .MuiChip-label": {
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      },
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <>
+                      Drag to use{" "}
+                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                        {input}
+                      </InlineCode>{" "}
+                      as a source for another input
+                    </>
+                  }
+                  arrow
+                  placement="right"
+                >
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`input-source-${input}`}
+                    style={{
+                      ...makeHandleStyle(palette.info.light, bg, 7),
+                      marginLeft: 4,
+                    }}
+                  />
+                </Tooltip>
               </Box>
             ))}
           </Box>
@@ -279,23 +323,48 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
                   alignItems: "center",
                   justifyContent: "flex-end",
                   my: 0.4,
+                  minWidth: 0,
                 }}
               >
-                <Chip
-                  label={output}
-                  variant="outlined"
-                  color="success"
-                  sx={{ fontSize: 11 }}
-                />
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`output-${output}`}
-                  style={{
-                    ...makeHandleStyle(palette.success.main, bg),
-                    marginLeft: 4,
-                  }}
-                />
+                <Tooltip title={output} arrow>
+                  <Chip
+                    label={output}
+                    variant="outlined"
+                    color="success"
+                    sx={{
+                      fontSize: 11,
+                      minWidth: 0,
+                      flex: "0 1 auto",
+                      "& .MuiChip-label": {
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      },
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip
+                  title={
+                    <>
+                      Drag to connect{" "}
+                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                        {output}
+                      </InlineCode>{" "}
+                      to an input
+                    </>
+                  }
+                  arrow
+                  placement="right"
+                >
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`output-${output}`}
+                    style={{
+                      ...makeHandleStyle(palette.success.main, bg),
+                      marginLeft: 4,
+                    }}
+                  />
+                </Tooltip>
               </Box>
             ))}
           </Box>

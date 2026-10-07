@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { Typography, Chip, useTheme } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
 
 import { VariableCard } from "../../../common/components/fields/VariableCard";
 import { solidChipColorSx } from "../../../common/utils/softChip";
@@ -47,12 +48,15 @@ export const ResourceVariableRow = ({
       description={variable.description}
       sx={
         hasDefault
-          ? {
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "rgba(255, 167, 38, 0.08)"
-                  : "rgba(237, 108, 2, 0.04)",
-            }
+          ? (theme: Theme) => ({
+              backgroundColor: "rgba(237, 108, 2, 0.04)",
+              // `theme.palette.mode` is frozen to the default scheme when
+              // CSS variables are enabled, so dark-mode styling must go
+              // through `applyStyles` instead.
+              ...theme.applyStyles("dark", {
+                backgroundColor: "rgba(255, 167, 38, 0.08)",
+              }),
+            })
           : undefined
       }
       chips={

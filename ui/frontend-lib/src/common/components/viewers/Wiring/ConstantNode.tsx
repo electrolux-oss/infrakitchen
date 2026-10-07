@@ -1,7 +1,6 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import NumbersIcon from "@mui/icons-material/Numbers";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
-import TuneIcon from "@mui/icons-material/Tune";
 import {
   Box,
   Chip,
@@ -11,7 +10,10 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Handle, NodeProps, Position } from "@xyflow/react";
+
+import { InlineCode } from "../../code/InlineCode";
 
 import { DiagramNode, makeHandleStyle, useCanvasPalette } from "./helpers";
 
@@ -28,9 +30,10 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
     <Box
       sx={{
         background: bg,
-        border: `2px solid ${palette.secondary.main}`,
+        border: `1px solid ${palette.secondary.main}`,
         borderRadius: "var(--template-surface-radius)",
         minWidth: 220,
+        maxWidth: 300,
         boxShadow: theme.shadows[2],
       }}
     >
@@ -40,9 +43,9 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
           alignItems: "center",
           justifyContent: "space-between",
           px: 1.5,
-          py: 1,
+          py: 0.5,
           borderBottom: `1px solid ${palette.divider}`,
-          background: palette.secondary.main,
+          background: `color-mix(in srgb, ${palette.secondary.main} 85%, transparent)`,
           borderTopLeftRadius: 6,
           borderTopRightRadius: 6,
           gap: 1,
@@ -51,20 +54,38 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
         <Box
           sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}
         >
-          <TuneIcon
-            fontSize="small"
-            sx={{ color: palette.secondary.contrastText }}
-          />
+          {data.constantType === "number" ? (
+            <NumbersIcon
+              fontSize="small"
+              sx={{ color: palette.secondary.contrastText }}
+            />
+          ) : (
+            <TextFieldsIcon
+              fontSize="small"
+              sx={{ color: palette.secondary.contrastText }}
+            />
+          )}
           <Typography
             variant="subtitle2"
             noWrap
             sx={{
               fontWeight: 700,
               color: palette.secondary.contrastText,
+              minWidth: 0,
             }}
           >
             {canEdit ? "Constant" : data.label}
           </Typography>
+          <InlineCode
+            disableCopy
+            sx={{
+              backgroundColor: "rgba(255, 255, 255, 0.18)",
+              color: palette.secondary.contrastText,
+              flexShrink: 0,
+            }}
+          >
+            {data.constantType === "number" ? "number" : "string"}
+          </InlineCode>
         </Box>
         {canRemove && (
           <Tooltip title="Remove" arrow>
@@ -73,30 +94,26 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
               onClick={() =>
                 data.onRemove?.(data.constantId ?? data.templateId)
               }
-              sx={{ color: palette.secondary.contrastText, ml: 0.5 }}
+              sx={{
+                color: palette.secondary.contrastText,
+                ml: 0.5,
+                p: 0.25,
+                "&:hover": {
+                  backgroundColor: (theme) =>
+                    alpha(theme.palette.error.main, 0.35),
+                },
+              }}
             >
-              <DeleteIcon fontSize="small" />
+              <DeleteIcon sx={{ fontSize: 16 }} />
             </IconButton>
           </Tooltip>
         )}
       </Box>
 
-      <Box sx={{ p: 1.5 }} className={canEdit ? "nodrag nowheel" : undefined}>
-        <Chip
-          icon={
-            data.constantType === "number" ? (
-              <NumbersIcon />
-            ) : (
-              <TextFieldsIcon />
-            )
-          }
-          label={data.constantType === "number" ? "Number" : "String"}
-          size="small"
-          variant="outlined"
-          color="secondary"
-          sx={{ mb: 0.5 }}
-        />
-
+      <Box
+        sx={{ p: 1.5, pt: 3 }}
+        className={canEdit ? "nodrag nowheel" : undefined}
+      >
         {canEdit && (
           <TextField
             label="Name"
@@ -104,7 +121,7 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
             onChange={(e) => data.onUpdate?.(data.constantId!, e.target.value)}
             onKeyDown={(e) => e.stopPropagation()}
             fullWidth
-            sx={{ mb: 1 }}
+            sx={{ mb: 2 }}
           />
         )}
 
@@ -135,15 +152,29 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
                 }}
               >
                 <Chip label={output} variant="outlined" color="secondary" />
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`output-${output}`}
-                  style={{
-                    ...makeHandleStyle(palette.secondary.main, bg),
-                    marginLeft: 4,
-                  }}
-                />
+                <Tooltip
+                  title={
+                    <>
+                      Drag to connect{" "}
+                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                        {output}
+                      </InlineCode>{" "}
+                      to an input
+                    </>
+                  }
+                  arrow
+                  placement="right"
+                >
+                  <Handle
+                    type="source"
+                    position={Position.Right}
+                    id={`output-${output}`}
+                    style={{
+                      ...makeHandleStyle(palette.secondary.main, bg),
+                      marginLeft: 4,
+                    }}
+                  />
+                </Tooltip>
               </Box>
             ))}
           </Box>
@@ -159,15 +190,29 @@ export function ConstantNode({ data }: NodeProps<DiagramNode>) {
             }}
           >
             <Chip label={valueLabel} variant="outlined" color="secondary" />
-            <Handle
-              type="source"
-              position={Position.Right}
-              id="output-value"
-              style={{
-                ...makeHandleStyle(palette.secondary.main, bg),
-                marginLeft: 4,
-              }}
-            />
+            <Tooltip
+              title={
+                <>
+                  Drag to connect{" "}
+                  <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                    {valueLabel}
+                  </InlineCode>{" "}
+                  to an input
+                </>
+              }
+              arrow
+              placement="right"
+            >
+              <Handle
+                type="source"
+                position={Position.Right}
+                id="output-value"
+                style={{
+                  ...makeHandleStyle(palette.secondary.main, bg),
+                  marginLeft: 4,
+                }}
+              />
+            </Tooltip>
           </Box>
         )}
       </Box>

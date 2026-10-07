@@ -5,7 +5,7 @@ import { Theme, alpha, Components } from "@mui/material/styles";
 import { svgIconClasses } from "@mui/material/SvgIcon";
 import { typographyClasses } from "@mui/material/Typography";
 
-import { grey, red, green, orange } from "../themePrimitives";
+import { grey, red, green, orange, accent, purple } from "../themePrimitives";
 
 /**
  * Shared dropdown popover/leaf styles used by both Menu/Select and
@@ -336,22 +336,47 @@ export const dataDisplayCustomizations: Components<Theme> = {
               color: "info",
             },
             style: {
-              borderColor: "hsl(211, 92%, 85%)",
-              backgroundColor: "hsl(211, 92%, 96%)",
+              borderColor: accent[200],
+              backgroundColor: accent[50],
               [`& .${chipClasses.label}`]: {
-                color: "hsl(211, 92%, 45%)",
+                color: accent[500],
               },
               [`& .${chipClasses.icon}`]: {
-                color: "hsl(211, 92%, 45%)",
+                color: accent[500],
               },
               ...theme.applyStyles("dark", {
-                borderColor: "hsl(211, 92%, 32%)",
-                backgroundColor: "hsl(211, 92%, 12%)",
+                borderColor: accent[800],
+                backgroundColor: accent[900],
                 [`& .${chipClasses.label}`]: {
-                  color: "hsl(211, 92%, 70%)",
+                  color: accent[300],
                 },
                 [`& .${chipClasses.icon}`]: {
-                  color: "hsl(211, 92%, 70%)",
+                  color: accent[300],
+                },
+              }),
+            },
+          },
+          {
+            props: {
+              color: "secondary",
+            },
+            style: {
+              borderColor: purple[200],
+              backgroundColor: purple[50],
+              [`& .${chipClasses.label}`]: {
+                color: purple[500],
+              },
+              [`& .${chipClasses.icon}`]: {
+                color: purple[500],
+              },
+              ...theme.applyStyles("dark", {
+                borderColor: purple[800],
+                backgroundColor: purple[900],
+                [`& .${chipClasses.label}`]: {
+                  color: purple[300],
+                },
+                [`& .${chipClasses.icon}`]: {
+                  color: purple[300],
                 },
               }),
             },

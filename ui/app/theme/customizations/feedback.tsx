@@ -1,6 +1,6 @@
 import { Theme, alpha, Components } from "@mui/material/styles";
 
-import { brand, green, grey, orange, red } from "../themePrimitives";
+import { accent, green, grey, orange, red } from "../themePrimitives";
 
 export const feedbackCustomizations: Components<Theme> = {
   MuiSnackbarContent: {
@@ -78,14 +78,14 @@ export const feedbackCustomizations: Components<Theme> = {
           }),
         },
 
-        // info (brand blue)
+        // info (real blue)
         "&.MuiAlert-colorInfo": {
-          backgroundColor: brand[100],
-          border: `1px solid ${alpha(brand[300], 0.5)}`,
-          "& .MuiAlert-icon": { color: brand[400] },
+          backgroundColor: accent[100],
+          border: `1px solid ${alpha(accent[300], 0.5)}`,
+          "& .MuiAlert-icon": { color: accent[500] },
           ...theme.applyStyles("dark", {
-            backgroundColor: alpha(brand[900], 0.5),
-            border: `1px solid ${alpha(brand[800], 0.5)}`,
+            backgroundColor: alpha(accent[900], 0.5),
+            border: `1px solid ${alpha(accent[800], 0.5)}`,
           }),
         },
       }),

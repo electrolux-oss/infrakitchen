@@ -3,10 +3,6 @@ import { alpha } from "@mui/material/styles";
 import type { Theme } from "@mui/material/styles";
 import type { SystemStyleObject } from "@mui/system";
 
-// Informational blue. The global `info` palette is deliberately monochrome
-// (near-black), so informational indicators use a distinct hue.
-export const SOFT_BLUE = "hsl(211, 92%, 50%)";
-
 // Sizing shared by the pill chip styles. `compact` is for chips rendered inside
 // dense contexts like datagrid rows.
 const chipSize = (compact: boolean) =>
@@ -41,8 +37,13 @@ export const softChipSx = (
 });
 
 // Resolves a MUI chip `color` name to the tint color used by the pill styles.
-// `default` (or an unknown color) falls back to the neutral grey; `info` uses
-// the soft blue instead of the monochrome info palette.
+// `default` (or an unknown color) falls back to the neutral grey. Note:
+// `theme.palette` is frozen to the default (light) scheme when CSS variables
+// are enabled, so the colored case stays fixed to its light-mode value even
+// in dark mode. That can't be fixed via `theme.vars.palette` here because the
+// resulting `var(...)` string isn't accepted by `alpha()` in `softChipSx`/
+// `solidChipColorSx` below. `grey` is unaffected since it's defined
+// identically in both color schemes.
 export const resolveChipColor = (
   color: ChipProps["color"] | undefined,
   theme: Theme,
@@ -51,10 +52,6 @@ export const resolveChipColor = (
     // Neutral grey for label/tag chips: light solid fill in light mode, and
     // as colored text/border on the dark-mode outlined pills.
     return theme.palette.grey[400];
-  }
-  if (color === "info") {
-    // Soft blue instead of the monochrome info palette.
-    return SOFT_BLUE;
   }
   return theme.palette[color]?.main ?? theme.palette.grey[600];
 };

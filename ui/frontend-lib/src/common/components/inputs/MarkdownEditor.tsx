@@ -6,8 +6,10 @@ import {
   FormControl,
   FormHelperText,
   Typography,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useColorScheme } from "@mui/material/styles";
 import MDEditor from "@uiw/react-md-editor";
 
 const MAX_BYTES = 65_535;
@@ -45,7 +47,13 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
   disabled = false,
 }) => {
   const theme = useTheme();
-  const colorMode = theme.palette.mode === "dark" ? "dark" : "light";
+  // `theme.palette.mode` is frozen to the default scheme when CSS variables
+  // are enabled, so resolve the live mode via `useColorScheme` instead (same
+  // pattern as `ThemeSwitcher`/`GraphViewNode`).
+  const { mode } = useColorScheme();
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const preferredMode = prefersDarkMode ? "dark" : "light";
+  const colorMode = !mode || mode === "system" ? preferredMode : mode;
   const bytes = new Blob([value || ""]).size;
   const overLimit = bytes > MAX_BYTES;
   const [focused, setFocused] = useState(false);

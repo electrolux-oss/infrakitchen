@@ -105,6 +105,22 @@ export const red = {
   900: "hsl(0, 93%, 6%)",
 };
 
+// Matches MUI's default `secondary` palette hue (purple), for chips/surfaces
+// that need a secondary-tinted pastel fill (e.g. constant nodes in wiring
+// diagrams), following the same lightness/saturation steps as red/green/orange.
+export const purple = {
+  50: "hsl(291, 100%, 97%)",
+  100: "hsl(291, 92%, 90%)",
+  200: "hsl(291, 94%, 80%)",
+  300: "hsl(291, 90%, 60%)",
+  400: "hsl(291, 90%, 40%)",
+  500: "hsl(291, 90%, 30%)",
+  600: "hsl(291, 91%, 25%)",
+  700: "hsl(291, 94%, 18%)",
+  800: "hsl(291, 95%, 12%)",
+  900: "hsl(291, 93%, 6%)",
+};
+
 // Accent brand hue used to highlight the active/selected navigation item.
 // A vivid blue that stays readable on both light and dark surfaces.
 export const accent = {
@@ -132,10 +148,10 @@ export const colorSchemes = {
         contrastText: "#ffffff",
       },
       info: {
-        light: brand[100],
-        main: grey[900],
-        dark: brand[900],
-        contrastText: grey[50],
+        light: accent[300],
+        main: accent[500],
+        dark: accent[700],
+        contrastText: "#ffffff",
       },
       warning: {
         light: orange[300],
@@ -199,10 +215,10 @@ export const colorSchemes = {
         dark: brand[500],
       },
       info: {
-        contrastText: grey[900],
-        light: grey[200],
-        main: grey[50],
-        dark: brand[500],
+        contrastText: "#ffffff",
+        light: accent[300],
+        main: accent[400],
+        dark: accent[600],
       },
       warning: {
         light: orange[400],

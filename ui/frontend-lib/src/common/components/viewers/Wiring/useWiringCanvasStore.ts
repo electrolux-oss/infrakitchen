@@ -11,7 +11,7 @@ import { create } from "zustand";
 
 import { ENTITY_STATUS } from "../../../../utils";
 
-import { DiagramNode, NODE_ACCENT } from "./helpers";
+import { DiagramNode } from "./helpers";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import { TemplatePorts } from "./WiringCanvas.types";
 
@@ -174,7 +174,6 @@ export function buildEdges(params: {
   externalTemplates: Array<{ id: string; name: string }>;
   constants: Array<{ id: string; name: string }>;
   theme: Theme;
-  mode?: "light" | "dark";
   stepByTemplate?: Map<string, GenericStep>;
 }): Edge[] {
   const {
@@ -183,13 +182,12 @@ export function buildEdges(params: {
     externalTemplates,
     constants,
     theme,
-    mode,
     stepByTemplate,
   } = params;
 
   // See `useCanvasPalette` — `theme.palette` is light-only under cssVariables.
   const palette = (theme.vars ?? theme).palette;
-  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
+  const accent = palette.info.main;
 
   return wiring
     .map((w, i) => {
@@ -215,7 +213,8 @@ export function buildEdges(params: {
 
       // Step-based coloring (workflow mode) or wire-type coloring
       const sourceStep = stepByTemplate?.get(w.source_template_id);
-      // `primary`/`info` are monochrome here, so those wires use the accent.
+      // Non-step/default wires use the theme's `info` blue (the same accent
+      // as the node headers in `TemplateNode`).
       const strokeColor = sourceStep
         ? sourceStep.status === "done"
           ? palette.success.main

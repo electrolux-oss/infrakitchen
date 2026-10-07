@@ -75,7 +75,7 @@ export const getStateColor = (
   if (status === ENTITY_STATUS.IN_PROGRESS)
     return {
       backgroundColor: "info.dark",
-      color: "primary.contrastText",
+      color: "info.contrastText",
       borderColor: "info.dark",
     };
 

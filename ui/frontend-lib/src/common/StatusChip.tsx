@@ -31,16 +31,17 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 
 const getThemeColor = (theme: any, colorPath: string) => {
   const [category, shade] = colorPath.split(".");
+  const palette = (theme.vars || theme).palette;
 
   if (category === "text" || category === "background") {
-    return (theme.palette as any)[category]?.[shade] || colorPath;
+    return palette[category]?.[shade] || colorPath;
   }
 
   if (category === "grey") {
-    return (theme.palette as any).grey?.[shade] || colorPath;
+    return palette.grey?.[shade] || colorPath;
   }
 
-  return (theme.palette as any)[category]?.[shade] || colorPath;
+  return palette[category]?.[shade] || colorPath;
 };
 
 const renderIconWithText = (

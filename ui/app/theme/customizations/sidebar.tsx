@@ -41,9 +41,17 @@ export const sidebarCustomizations: Components<Theme> = {
             height: "55%",
             borderRadius: "0 3px 3px 0",
             backgroundColor: theme.palette.primary.main,
+            ...theme.applyStyles("dark", {
+              // `theme.palette.primary.main` is frozen to the light scheme
+              // here, so mirror dark mode's actual primary.main (grey[50]).
+              backgroundColor: grey[50],
+            }),
           },
           [`& .${svgIconClasses.root}`]: {
             color: theme.palette.primary.main,
+            ...theme.applyStyles("dark", {
+              color: grey[50],
+            }),
           },
           "&:hover": {
             backgroundColor: alpha(theme.palette.primary.main, 0.12),

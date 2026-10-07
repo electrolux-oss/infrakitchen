@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
+import DataObjectIcon from "@mui/icons-material/DataObject";
 import NumbersIcon from "@mui/icons-material/Numbers";
 import SearchIcon from "@mui/icons-material/Search";
 import StorageIcon from "@mui/icons-material/Storage";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
-import TuneIcon from "@mui/icons-material/Tune";
 import {
   Box,
   Button,
@@ -301,7 +301,7 @@ export function WiringCanvasSidebar({
             gap: 0.5,
           }}
         >
-          <TuneIcon sx={{ fontSize: 14 }} />
+          <DataObjectIcon sx={{ fontSize: 14 }} />
           Constants
         </Typography>
         <Typography

@@ -220,18 +220,9 @@ export const WiringDiagram = ({
         externalTemplates,
         constants,
         theme,
-        mode: mode === "dark" ? "dark" : "light",
         stepByTemplate,
       }),
-    [
-      wiring,
-      templates,
-      externalTemplates,
-      constants,
-      theme,
-      mode,
-      stepByTemplate,
-    ],
+    [wiring, templates, externalTemplates, constants, theme, stepByTemplate],
   );
 
   const useStore = useMemo(() => createWiringCanvasStore(), []);
