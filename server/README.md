@@ -41,6 +41,10 @@ Configure metrics with these environment variables:
 
 By default, InfraKitchen no longer exposes a Prometheus scrape endpoint. Metrics are exported directly to an OTLP collector.
 
+To inspect metrics locally, run a collector with `make otel-collector` (from the repository root). It uses
+`observability/otel-local.yaml`, listens for OTLP on `4317`/`4318`, and re-exposes everything as a Prometheus
+scrape endpoint at <http://localhost:9464/metrics>.
+
 **How It Works**
 
 1. The Scheduler service, running as a dedicated instance, loads jobs from the database and refreshes the job list every 10 minutes.
