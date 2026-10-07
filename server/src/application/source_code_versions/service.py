@@ -26,6 +26,8 @@ from core.utils.model_tools import has_field_changes, model_db_dump, valid_uuid
 from .crud import SourceCodeVersionCRUD
 from .schema import (
     BatchTemplatePortsResponse,
+    ConfigSyncSummary,
+    OutputVariableModel,
     SourceCodeVersionCreate,
     SourceCodeVersionResponse,
     SourceCodeVersionUpdate,
@@ -39,6 +41,7 @@ from .schema import (
     SourceOutputConfigResponse,
     SourceOutputConfigTemplateResponse,
     TemplatePortsItem,
+    VariableModel,
 )
 from core.users.model import UserDTO
 
@@ -371,6 +374,108 @@ class SourceCodeVersionService:
             config = await self.crud.create_config(c.model_dump(exclude_unset=True))
             result.append(config)
         return [SourceConfigResponse.model_validate(config) for config in result]
+
+    async def sync_configs_with_code(
+        self,
+        source_code_version_id: UUID,
+        template_id: UUID,
+        variables: list[VariableModel],
+        outputs: list[OutputVariableModel],
+        previous_variables: list[VariableModel],
+    ) -> ConfigSyncSummary:
+        """
+        Reconcile variable and output configs with freshly parsed source code, matched by name.
+        Code-derived fields are always refreshed. `default`/`required` are refreshed only when they
+        still match what was derived from the previously parsed variable (i.e. not customized by a user).
+        User-managed fields (`frozen`, `unique`, `restricted`, `options`) are never touched.
+        :param source_code_version_id: ID of the source code version
+        :param template_id: ID of the template the source code version belongs to
+        :param variables: Variables parsed from the current code
+        :param outputs: Outputs parsed from the current code
+        :param previous_variables: Variables parsed during the previous sync
+        :return: ConfigSyncSummary with names of added, updated and removed configs
+        """
+        summary = ConfigSyncSummary()
+        previous_by_name = {v.name: v for v in previous_variables}
+        existing_configs = {c.name: c for c in await self.crud.get_configs_by_scv_id(source_code_version_id)}
+
+        for idx, variable in enumerate(variables):
+            config = existing_configs.pop(variable.name, None)
+            if config is None:
+                new_config = SourceConfigCreate(
+                    index=idx,
+                    source_code_version_id=source_code_version_id,
+                    name=variable.name,
+                    description=variable.description,
+                    type=variable.type,
+                    required=variable.default is None,
+                    default=variable.default,
+                    sensitive=variable.sensitive,
+                )
+                await self.crud.create_config(new_config.model_dump())
+                summary.added_configs.append(variable.name)
+                continue
+
+            body: dict[str, Any] = {
+                "index": idx,
+                "description": variable.description,
+                "type": variable.type,
+                "sensitive": variable.sensitive,
+            }
+            previous = previous_by_name.get(variable.name)
+            if (
+                previous is not None
+                and config.default == previous.default
+                and config.required == (previous.default is None)
+            ):
+                body["default"] = variable.default
+                body["required"] = variable.default is None
+
+            changes = {key: value for key, value in body.items() if getattr(config, key) != value}
+            if changes:
+                await self.crud.update_config(config, changes)
+                summary.updated_configs.append(variable.name)
+
+        for name, config in existing_configs.items():
+            await self.crud.delete_config(config)
+            summary.removed_configs.append(name)
+
+        if summary.removed_configs:
+            # References are stored per template, so keep them if another version still has the variable
+            template_configs = (await self.crud.get_configs_by_template_ids([template_id])).get(template_id, [])
+            still_used = {c.name for c in template_configs if c.source_code_version_id != source_code_version_id}
+            for reference in await self.crud.get_reference_output_configs_by_template_id(template_id):
+                if reference.input_config_name in summary.removed_configs and (
+                    reference.input_config_name not in still_used
+                ):
+                    await self.crud.delete_template_references(reference)
+                    summary.removed_references.append(reference.input_config_name)
+
+        existing_outputs = {o.name: o for o in await self.crud.get_output_configs_by_scv_id(source_code_version_id)}
+        for idx, output in enumerate(outputs):
+            output_config = existing_outputs.pop(output.name, None)
+            if output_config is None:
+                new_output = SourceOutputConfigCreate(
+                    index=idx,
+                    source_code_version_id=source_code_version_id,
+                    name=output.name,
+                    description=output.description,
+                )
+                await self.crud.create_output_config(new_output.model_dump())
+                summary.added_outputs.append(output.name)
+                continue
+
+            output_body: dict[str, Any] = {"index": idx, "description": output.description}
+            output_changes = {key: value for key, value in output_body.items() if getattr(output_config, key) != value}
+            if output_changes:
+                await self.crud.update_output_config(output_config, output_changes)
+                summary.updated_outputs.append(output.name)
+
+        for name, output_config in existing_outputs.items():
+            await self.crud.delete_output_config(output_config)
+            summary.removed_outputs.append(name)
+
+        return summary
 
     async def update_template_references(self, template_references: list[SourceConfigTemplateReferenceCreate]) -> None:
         """

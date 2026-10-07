@@ -10,11 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.integrations.model import IntegrationDTO
 from application.source_code_versions.model import SourceCodeVersion
 from application.source_code_versions.crud import SourceCodeVersionCRUD
-from application.source_code_versions.schema import (
-    SourceCodeVersionResponse,
-    SourceConfigCreate,
-    SourceOutputConfigCreate,
-)
+from application.source_code_versions.schema import ConfigSyncSummary, SourceCodeVersionResponse
 from application.source_code_versions.service import SourceCodeVersionService
 from application.source_codes.model import SourceCodeDTO
 from core.adapters.provider_adapters import IntegrationProvider
@@ -106,38 +102,44 @@ class SourceCodeVersionTask:
             case _:
                 raise CannotProceed(f"Unknown action: {self.action}")
 
-    async def generate_configs_and_outputs(self, variables: list[VariableModel], outputs: list[OutputVariableModel]):
-        """Generate configs and outputs for the source code version"""
-        self.logger.info(f"Generating configs for {self.source_code_version_instance.id}")
+    async def sync_configs_and_outputs(
+        self,
+        variables: list[VariableModel],
+        outputs: list[OutputVariableModel],
+        previous_variables: list[VariableModel],
+    ) -> None:
+        """Reconcile variable and output configs of the source code version with the parsed code"""
+        self.logger.info(f"Syncing configs for {self.source_code_version_instance.id}")
+        summary = await self.source_code_version_service.sync_configs_with_code(
+            source_code_version_id=self.source_code_version_instance.id,
+            template_id=self.source_code_version_instance.template_id,
+            variables=variables,
+            outputs=outputs,
+            previous_variables=previous_variables,
+        )
+        self._log_config_sync_summary(summary)
 
-        configs: list[SourceConfigCreate] = []
-        for idx, v in enumerate(variables):
-            config = SourceConfigCreate(
-                index=idx,
-                source_code_version_id=self.source_code_version_instance.id,
-                name=v.name,
-                description=v.description,
-                type=v.type,
-                required=True if v.default is None else False,
-                default=v.default,
-                sensitive=v.sensitive,
-                frozen=False,
-                unique=False,
-                options=[],
-            )
-            configs.append(config)
-        _ = await self.source_code_version_service.create_configs(configs)
-
-        foroutputs: list[SourceOutputConfigCreate] = []
-        for idx, o in enumerate(outputs):
-            output = SourceOutputConfigCreate(
-                index=idx,
-                source_code_version_id=self.source_code_version_instance.id,
-                name=o.name,
-                description=o.description,
-            )
-            foroutputs.append(output)
-        _ = await self.source_code_version_service.create_output_configs(foroutputs)
+    def _log_config_sync_summary(self, summary: ConfigSyncSummary) -> None:
+        for name in summary.added_configs:
+            self.logger.info(f"Variable config added: {name}")
+        for name in summary.updated_configs:
+            self.logger.info(f"Variable config updated: {name}")
+        for name in summary.removed_configs:
+            self.logger.warning(f"Variable config removed: {name}")
+        for name in summary.removed_references:
+            self.logger.warning(f"Template reference removed for variable: {name}")
+        for name in summary.added_outputs:
+            self.logger.info(f"Output config added: {name}")
+        for name in summary.updated_outputs:
+            self.logger.info(f"Output config updated: {name}")
+        for name in summary.removed_outputs:
+            self.logger.warning(f"Output config removed: {name}")
+        self.logger.info(
+            f"Configs: +{len(summary.added_configs)} added, {len(summary.updated_configs)} updated, "
+            f"{len(summary.removed_configs)} removed. "
+            f"Outputs: +{len(summary.added_outputs)} added, {len(summary.updated_outputs)} updated, "
+            f"{len(summary.removed_outputs)} removed"
+        )
 
     async def init_workspace(self):
         self.logger.info(f"Init workspace at {self.workspace_root}")
@@ -201,6 +203,9 @@ class SourceCodeVersionTask:
             main_otf = OtfProvider(destination_dir)
             tf_data = await main_otf.parse_tf_directory_to_json()
 
+            previous_variables = [
+                VariableModel.model_validate(v) for v in self.source_code_version_instance.variables or []
+            ]
             variables = main_otf.remap_variable_types(main_otf.list_to_dict(tf_data.get("variable", [])))
             vars = [VariableModel.get_from_named_dict(variables, v) for v in variables]
             self.source_code_version_instance.variables = [v.model_dump() for v in vars]
@@ -229,9 +234,7 @@ class SourceCodeVersionTask:
             self.logger.info(f"Variables found: {len(self.source_code_version_instance.variables)}")
             self.logger.info(f"Outputs found: {len(self.source_code_version_instance.outputs)}")
 
-            if not await self.source_code_version_service.get_configs_by_scv_id(self.source_code_version_instance.id):
-                self.logger.info("Variable configs are not found, generating default ones based on the variables")
-                await self.generate_configs_and_outputs(vars, outpts)
+            await self.sync_configs_and_outputs(vars, outpts, previous_variables)
             await self.session.commit()
         await self.git_client.delete_workspace()
 

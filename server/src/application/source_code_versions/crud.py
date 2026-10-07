@@ -122,6 +122,28 @@ class SourceCodeVersionCRUD:
             setattr(existing_source_code_config, key, value)
         return existing_source_code_config
 
+    async def delete_config(self, source_code_config: SourceConfig) -> None:
+        await self.session.delete(source_code_config)
+
+    async def get_output_configs_by_scv_id(self, source_code_version_id: str | UUID) -> list[SourceOutputConfig]:
+        statement = (
+            select(SourceOutputConfig)
+            .where(SourceOutputConfig.source_code_version_id == source_code_version_id)
+            .order_by(SourceOutputConfig.index.asc())
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
+    async def update_output_config(
+        self, existing_output_config: SourceOutputConfig, body: dict[str, Any]
+    ) -> SourceOutputConfig:
+        for key, value in body.items():
+            setattr(existing_output_config, key, value)
+        return existing_output_config
+
+    async def delete_output_config(self, output_config: SourceOutputConfig) -> None:
+        await self.session.delete(output_config)
+
     # Get config references
     async def get_output_by_template_id(self, template_id: str | UUID) -> list[SourceOutputConfig]:
         if not is_valid_uuid(template_id):
