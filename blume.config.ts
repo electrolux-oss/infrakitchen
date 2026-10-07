@@ -32,6 +32,7 @@ export default defineConfig({
     socials: {
       linkedin: "https://www.linkedin.com/company/infrakitchen",
     },
+    copyright: "© 2026 Electrolux Group",
   },
   content: {
     pages: "docs/pages",

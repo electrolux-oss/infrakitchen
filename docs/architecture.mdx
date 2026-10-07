@@ -5,6 +5,83 @@ sidebar:
   order: 2
 ---
 
+## Overview
+
+InfraKitchen's architecture can be divided into three planes.
+
+```mermaid
+---
+config:
+  themeVariables:
+    fontFamily: "ui-sans-serif, system-ui, sans-serif"
+  flowchart:
+    nodeSpacing: 30
+    rankSpacing: 30
+    padding: 10
+---
+flowchart TD
+    USER(["User"])
+    AGENT(["AI Agent"])
+    UI["Web UI"]
+    MCP["MCP Server"]
+
+    subgraph ControlPlane["Control Plane"]
+        direction LR
+        API["API Server"] ~~~ IAM["Identity &<br/>Access"] ~~~ PROJ["Projects &<br/>Environments"]
+        SP1[" "] ~~~ SP2[" "]
+        RESOURCES["Templates &<br/>Resources"] ~~~ CONTROLLERS["Controllers &<br/>Reconciliation"]
+    end
+
+    subgraph ExecutionPlane["Execution Plane"]
+        direction LR
+        MANAGED["Managed<br/>OpenTofu/Terraform"] --> MRUNNER["Worker"]
+        BYO["BYO<br/>OpenTofu/Terraform"] --> BRUNNER["Worker"]
+        CRD["Kubernetes CRD"] --> CTRL["Controller"] --> PODS["Worker Pods"]
+    end
+
+    subgraph ResourcePlane["Resource Plane"]
+        direction LR
+        AWS["AWS"] ~~~ GCP["GCP"] ~~~ AZURE["Azure"] ~~~ OTHER["Other Clouds"]
+    end
+
+    USER --> UI
+    AGENT --> MCP
+    UI --> ControlPlane
+    MCP --> ControlPlane
+    ControlPlane --> ExecutionPlane
+    ExecutionPlane --> ResourcePlane
+
+    style ControlPlane fill:#e8f1fc,stroke:#4a7fc9
+    style ExecutionPlane fill:#eef7ed,stroke:#5b9e5b
+    style SP1 fill:transparent,stroke:transparent
+    style SP2 fill:transparent,stroke:transparent
+    style MANAGED fill:#ECECFF,stroke:#9370DB
+    style BYO fill:#ECECFF,stroke:#9370DB
+    style CRD fill:#ECECFF,stroke:#9370DB,stroke-dasharray: 3 3
+    style MRUNNER fill:#ECECFF,stroke:#9370DB
+    style BRUNNER fill:#ECECFF,stroke:#9370DB
+    style CTRL fill:#ECECFF,stroke:#9370DB,stroke-dasharray: 3 3
+    style PODS fill:#ECECFF,stroke:#9370DB,stroke-dasharray: 3 3
+    style ResourcePlane fill:#fffaf2,stroke:#fb8c00,stroke-dasharray: 4 4
+```
+
+- **Control Plane** - Decides *what* should happen, independent of how infrastructure is actually provisioned. Implemented today by the API Server, Scheduler, Worker, and PostgreSQL:
+  - **API Server** - The entry point
+  - **Identity & Access** - Users, teams, roles, authorization
+  - **Projects & Environments** - Organizational/resource boundaries
+  - **Templates & Resources** - What InfraKitchen manages
+  - **Controllers & Reconciliation** - Continuously makes reality match desired state
+- **Execution Plane** - A pluggable execution engine driven by a controller to carry out a task. Once a run finishes, it reports its status back, closing the reconcile loop:
+  - **Managed OpenTofu/Terraform** - Managed install, runs inside a Worker
+  - **BYO OpenTofu/Terraform** - Bring-your-own binary (selectable per resource/executor), runs inside a Worker
+  - **Kubernetes CRD** - A Controller managing Worker Pods
+
+:::note
+The Kubernetes CRD/Controller engine is on the roadmap. Today, only the Managed/BYO OpenTofu/Terraform engines exist.
+:::
+
+- **Resource Plane** - The actual infrastructure that ends up running (AWS, GCP, Azure, and others such as Kubernetes). It lives entirely outside InfraKitchen's own processes; InfraKitchen only manages it remotely.
+
 ## High-Level Architecture
 
 InfraKitchen follows a GraphQL-first architecture with a React frontend and a backend made up of three independent processes - an **API Server** (FastAPI), an asynchronous **Worker**, and a **Scheduler** - all connected through PostgreSQL (task queue, notification outbox, and `LISTEN`/`NOTIFY` pub/sub). Besides the GraphQL API consumed by the frontend, the API Server also exposes an **MCP Server** for AI agents, and integrates with external **Identity Providers** (login), **Cloud Providers** (provisioning), and **Notification Providers** (e.g. Slack).
