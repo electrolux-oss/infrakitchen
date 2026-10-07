@@ -23,7 +23,7 @@ This part takes about <Badge color="blue" icon="clock" shape="pill">10 min</Badg
 - **git**, to clone the repository
 
 :::tip[No other installs needed]
-No separate OpenTofu/Terraform CLI, Python, or Node.js installation is needed — the Nix or Podman/Docker setup provides everything, including [PostgreSQL](https://www.postgresql.org/) for storing data and [RabbitMQ](https://www.rabbitmq.com/) for processing events. No cloud account is needed either — Part 1 runs entirely on your machine.
+No separate OpenTofu/Terraform CLI, Python, or Node.js installation is needed — the Nix or Podman/Docker setup provides everything, including [PostgreSQL](https://www.postgresql.org/) for storing data, the task queue, and processing events. No cloud account is needed either — Part 1 runs entirely on your machine.
 :::
 
 ### 1. Run InfraKitchen Locally
@@ -372,4 +372,4 @@ Run `make fixtures` to populate the instance with realistic mock data. It runs o
 For local development, InfraKitchen automatically configures the following on first run — no manual setup needed:
 
 - **Encryption & signing keys** — `ENCRYPTION_KEY` encrypts sensitive data at rest (e.g. stored integration credentials), and `JWT_KEY` signs auth tokens. Generated into `server/.env_local`.
-- **Data storage** (Nix only) — PostgreSQL data, RabbitMQ data/logs, and other local state are stored in the `ik_data/` directory. Delete this directory to start the project from scratch. (Docker/Podman store data in their own named volumes instead.)
+- **Data storage** (Nix only) — PostgreSQL data and other local state are stored in the `ik_data/` directory. Delete this directory to start the project from scratch. (Docker/Podman store data in their own named volumes instead.)

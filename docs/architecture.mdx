@@ -7,7 +7,7 @@ sidebar:
 
 ## High-Level Architecture
 
-InfraKitchen follows a GraphQL-first architecture with a React frontend, a FastAPI backend, an asynchronous task worker, and a scheduler, connected through PostgreSQL and RabbitMQ.
+InfraKitchen follows a GraphQL-first architecture with a React frontend, a FastAPI backend, an asynchronous task worker, and a scheduler, all connected through PostgreSQL (task queue, notification outbox, and `LISTEN`/`NOTIFY` pub/sub).
 
 ```mermaid
 ---
@@ -22,7 +22,7 @@ flowchart TD
 
     subgraph Backend["Backend (FastAPI)"]
         GQL["GraphQL API (Strawberry)<br/>queries · mutations · subscriptions"]
-        CONSUMERS["RabbitMQ consumers<br/>events · notifications · logs"]
+        CONSUMERS["Postgres LISTEN/NOTIFY subscribers<br/>events · notifications · logs"]
     end
 
     subgraph Worker["Worker"]
@@ -31,21 +31,20 @@ flowchart TD
     end
 
     SCH["Scheduler (APScheduler)"]
-    DB[("PostgreSQL")]
-    RMQ[("RabbitMQ")]
+    DB[("PostgreSQL<br/>task queue · notification outbox · LISTEN/NOTIFY")]
     CLOUD["Cloud providers"]
 
     UI -->|"GraphQL over HTTP"| GQL
     UI <-.->|"GraphQL subscriptions<br/>(WebSocket)"| CONSUMERS
     GQL --> DB
-    GQL -->|"task messages"| RMQ
-    SCH -->|"scheduled jobs"| RMQ
-    RMQ -->|"ik_tasks queue"| TW
+    GQL -->|"enqueue task row"| DB
+    SCH -->|"enqueue scheduled jobs"| DB
+    DB -->|"NOTIFY wakes up<br/>(claims task row)"| TW
     TW --> DB
     TW --> TOFU
     TOFU --> CLOUD
-    TW -.->|"log / event /<br/>notification messages"| RMQ
-    RMQ --> CONSUMERS
+    TW -.->|"log / event /<br/>notification rows"| DB
+    DB -.->|"NOTIFY"| CONSUMERS
 ```
 
 ### Components
@@ -53,10 +52,9 @@ flowchart TD
 - **Frontend (React/TypeScript)** - User interface for managing infrastructure, talking to the backend exclusively through GraphQL (queries, mutations, and subscriptions)
 - **Backend (Python/FastAPI)** - GraphQL API (Strawberry) mounted at `/api/graphql`, SSO/OIDC authentication routes, MCP server, and business logic
 - **Scheduler** - APScheduler process that enqueues scheduled jobs and recurring entity actions into the task queue
-- **Worker** - Consumes task messages from RabbitMQ and executes the entity pipelines (provision, destroy, dry run, ...)
+- **Worker** - Claims task rows from the PostgreSQL task queue (woken up via `LISTEN`/`NOTIFY`, with a polling fallback) and executes the entity pipelines (provision, destroy, dry run, ...)
 - **OpenTofu/Terraform** - Infrastructure-as-Code execution engine, invoked by the worker through the `OtfClient` shell wrapper
-- **PostgreSQL** - Relational database for storing infrastructure state
-- **RabbitMQ** - Message broker: the `ik_tasks` exchange for tasks (direct), plus `ik_raw_messages`, `ik_event_messages`, and `ik_notification_messages` for logs, events, and notifications
+- **PostgreSQL** - Relational database for storing infrastructure state, the task queue, the notification outbox, and `LISTEN`/`NOTIFY` pub/sub for logs, events, and notifications
 
 ## Request Flow
 
@@ -93,23 +91,24 @@ sequenceDiagram
     participant User
     participant Frontend
     participant Backend
-    participant RabbitMQ
+    participant Database as PostgreSQL
     participant Worker
     participant IaC as OpenTofu/Terraform
     participant Cloud
 
     User->>Frontend: Click "Provision"
     Frontend->>Backend: mutation resourceAction (action: execute)
-    Backend->>RabbitMQ: Publish task to ik_tasks (after commit)
+    Backend->>Database: Enqueue task (after commit)
     Backend->>Frontend: Return resource (status: queued)
 
-    Worker->>RabbitMQ: Pick up task
+    Database-->>Worker: NOTIFY wakes up worker
+    Worker->>Database: Claim task row
     Worker->>IaC: init / apply (OtfClient)
     IaC->>Cloud: Create infrastructure
     Cloud->>IaC: Return outputs
     IaC->>Worker: Apply complete
     Worker->>Backend: Update resource (state: provisioned)
-    Worker->>RabbitMQ: Publish log / event / notification messages
+    Worker->>Database: Write log / event / notification rows
     Backend->>Frontend: GraphQL subscription update
     Frontend->>User: Show provisioned
 ```
@@ -171,7 +170,7 @@ server/src/
 │   ├── base_models.py    # Base / BaseEntity / BaseModel / MessageModel
 │   ├── errors.py         # Custom exceptions
 │   └── ...
-├── worker.py             # Task worker entrypoint (consumes ik_tasks)
+├── worker.py             # Task worker entrypoint (claims rows from the Postgres task queue)
 ├── scheduler.py          # Scheduler entrypoint (APScheduler)
 ├── app.py                # FastAPI app entrypoint
 └── fixtures/             # Demo data

@@ -12,7 +12,6 @@ To successfully deploy InfraKitchen, ensure that your system meets the following
 - **Python**: Version 3.14
 - **Node.js**: Version 24
 - **PostgreSQL**: Version 17
-- **RabbitMQ**: Version 4.0.9
 - **Nginx**: Version 1.28
 - **OpenTofu/Terraform**: Version 1.10
 - **Yarn**: Version 1.22
@@ -40,7 +39,7 @@ docker build -f docs/examples/docker/Dockerfile -t your-image-name:tag .
 InfraKitchen provides an example manifest: [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml).
 
 It contains an Nginx Ingress, a Service, and backend, scheduler, and worker
-Deployments, wired to PostgreSQL and RabbitMQ:
+Deployments, wired to PostgreSQL:
 
 ```mermaid
 ---
@@ -53,24 +52,21 @@ flowchart LR
     Ing --> Svc["Service"]
     Svc --> B["backend<br/>(2 replicas)"]
     S["scheduler<br/>(1 replica)"] --> PG[(PostgreSQL)]
-    S --> RQ[(RabbitMQ)]
     B --> PG
-    B --> RQ
     W["worker<br/>(2 replicas)"] --> PG
-    W --> RQ
 ```
 
 Use it directly, or as a base for your own manifest.
 
 :::note
-RabbitMQ and PostgreSQL services are assumed to be running and accessible from the Kubernetes cluster.
+PostgreSQL is assumed to be running and accessible from the Kubernetes cluster.
 :::
 
 <Steps>
 
 <Step title="Prepare the manifest">
 
-Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>`, `<RabbitMQ_URL>` and `<HOST_NAME>` with your actual values.
+Replace the placeholders `<SERVICE_ACCOUNT_NAME>`, `<IMG_NAME>`, `<POSTGRES_HOST>` and `<HOST_NAME>` with your actual values.
 
 </Step>
 
