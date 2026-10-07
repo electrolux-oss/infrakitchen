@@ -342,6 +342,20 @@ class SourceConfigUpdateWithId(BaseModel):
     output_config_name: str | None = Field(default=None)
 
 
+class ConfigSyncSummary(BaseModel):
+    """
+    Result of reconciling variable/output configs with freshly parsed source code.
+    """
+
+    added_configs: list[str] = Field(default_factory=list)
+    updated_configs: list[str] = Field(default_factory=list)
+    removed_configs: list[str] = Field(default_factory=list)
+    added_outputs: list[str] = Field(default_factory=list)
+    updated_outputs: list[str] = Field(default_factory=list)
+    removed_outputs: list[str] = Field(default_factory=list)
+    removed_references: list[str] = Field(default_factory=list)
+
+
 class SourceOutputConfigResponse(BaseModel):
     id: uuid.UUID = Field(...)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
