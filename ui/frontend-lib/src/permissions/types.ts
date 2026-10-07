@@ -17,6 +17,8 @@ export interface PermissionResponse {
     name?: string;
     id?: string;
     entityName?: string;
+    sourceCodeUrl?: string;
+    sourceCodeProvider?: string;
   };
   userData?: GqlUserShort;
 }

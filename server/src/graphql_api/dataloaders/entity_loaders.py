@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +10,9 @@ from application.executors.model import Executor
 from application.favorites.model import Favorite
 from application.integrations.model import Integration
 from application.projects.model import Project
+from application.resource_temp_state.model import ResourceTempState
 from application.resources.model import Resource
+from application.services.model import Service
 from application.secrets.model import Secret
 from application.source_codes.model import SourceCode
 from application.source_code_versions.model import SourceCodeVersion
@@ -18,7 +21,13 @@ from application.templates.model import Template
 from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
+from core.tools.model import Tool
+from core.task_queue.crud import TaskQueueCRUD
+from core.task_queue.model import EntityQueueStatus
+from core.task_queue.service import TaskQueueService, worker_alive_seconds
+from core.tasks.model import TaskEntity
 from core.users.model import User
+from core.workers.model import Worker
 
 
 async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
@@ -39,14 +48,28 @@ async def _load_projects(keys: list[str], session: AsyncSession) -> list[dict[st
     return [mapping.get(key) for key in keys]
 
 
+async def _load_services(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Service.id, Service.name).where(Service.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "service"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
 async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(
-        Resource.id,
-        Resource.name,
-        Resource.status,
-        Resource.state,
-        Resource.updated_at,
-    ).where(Resource.id.in_(keys))
+    stmt = (
+        select(
+            Resource.id,
+            Resource.name,
+            Resource.status,
+            Resource.state,
+            Resource.updated_at,
+            Template.name.label("template_name"),
+        )
+        .outerjoin(Template, Resource.template_id == Template.id)
+        .where(Resource.id.in_(keys))
+    )
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {
@@ -56,10 +79,61 @@ async def _load_resources(keys: list[str], session: AsyncSession) -> list[dict[s
             "state": row.state,
             "updatedAt": row.updated_at.isoformat() if row.updated_at else None,
             "entityName": "resource",
+            "template": {"name": row.template_name} if row.template_name else None,
         }
         for row in result
     }
     return [mapping.get(key) for key in keys]
+
+
+async def _load_resource_temp_states_by_resource(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(ResourceTempState).where(ResourceTempState.resource_id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.resource_id): {
+            "id": row.id,
+            "resource_id": row.resource_id,
+            "value": row.value,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+        for row in result.scalars()
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_scheduled_actions_by_entity(
+    keys: list[str], session: AsyncSession, entity_type: str
+) -> list[TaskEntity | None]:
+    stmt = (
+        select(TaskEntity)
+        .where(
+            TaskEntity.entity == entity_type,
+            TaskEntity.entity_id.in_(keys),
+            TaskEntity.run_at.is_not(None),
+        )
+        .order_by(TaskEntity.run_at.asc())
+    )
+    result = await session.execute(stmt)
+    mapping: dict[str, TaskEntity] = {str(row.entity_id): row for row in result.scalars()}
+    return [mapping.get(key) for key in keys]
+
+
+# Entity pages also show tasks queued under other controllers for the same id
+# (workspace syncs are queued with the resource id).
+TASK_QUEUE_ENTITIES: dict[str, tuple[str, ...]] = {"resource": ("resource", "workspace")}
+
+
+async def _load_task_queue_status(
+    keys: list[str], session: AsyncSession, entity_type: str
+) -> list[EntityQueueStatus | None]:
+    service = TaskQueueService(crud=TaskQueueCRUD(session=session))
+    statuses = await service.get_entity_queue_status(
+        list(TASK_QUEUE_ENTITIES.get(entity_type, (entity_type,))),
+        [UUID(key) for key in keys],
+        worker_alive_seconds(),
+    )
+    return [statuses.get(UUID(key)) for key in keys]
 
 
 async def _load_storages(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
@@ -67,6 +141,21 @@ async def _load_storages(keys: list[str], session: AsyncSession) -> list[dict[st
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
         str(row.id): {"id": str(row.id), "name": row.name, "entityName": "storage"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_tools(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    stmt = select(Tool.id, Tool.name, Tool.version, Tool.os, Tool.arch).where(Tool.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {
+            "id": str(row.id),
+            "name": f"{row.name} {row.version} ({row.os}/{row.arch})",
+            "tool": row.name,
+            "entityName": "tool",
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -104,10 +193,19 @@ async def _load_workspaces(keys: list[str], session: AsyncSession) -> list[dict[
 
 
 async def _load_source_codes(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(SourceCode.id, SourceCode.source_code_url).where(SourceCode.id.in_(keys))
+    stmt = select(SourceCode.id, SourceCode.source_code_url, SourceCode.source_code_provider).where(
+        SourceCode.id.in_(keys)
+    )
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.source_code_url, "entityName": "source_code"} for row in result
+        str(row.id): {
+            "id": str(row.id),
+            "name": row.source_code_url,
+            "sourceCodeUrl": row.source_code_url,
+            "sourceCodeProvider": row.source_code_provider,
+            "entityName": "source_code",
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -125,6 +223,8 @@ async def _load_source_code_versions(keys: list[str], session: AsyncSession) -> 
             "id": str(row.id),
             "name": f"{row.source_code_folder}:{row.source_code_version or row.source_code_branch}",
             "entityName": "source_code_version",
+            "sourceCodeVersion": row.source_code_version,
+            "sourceCodeBranch": row.source_code_branch,
         }
         for row in result
     }
@@ -202,15 +302,62 @@ def get_favorite_status_loader(info: Info, user_id: str, component_type: str) ->
     return loaders[loader_key]
 
 
+def get_resource_temp_state_loader(info: Info) -> DataLoader[str, dict[str, Any] | None]:
+    return info.context["loaders"]["resource_temp_state_by_resource"]
+
+
+def get_scheduled_action_loader(info: Info, entity_type: str) -> DataLoader[str, TaskEntity | None]:
+    return info.context["loaders"][f"scheduled_actions_by_{entity_type}"]
+
+
+async def _load_worker_hosts(keys: list[str], session: AsyncSession) -> list[str | None]:
+    stmt = select(Worker.id, Worker.host).where(Worker.id.in_(keys))
+    mapping = {str(row.id): row.host for row in await session.execute(stmt)}
+    return [mapping.get(key) for key in keys]
+
+
+def get_worker_host_loader(info: Info) -> DataLoader[str, str | None]:
+    loaders = info.context["loaders"]
+    if "worker_host" not in loaders:
+        session = info.context["session"]
+        loaders["worker_host"] = DataLoader[str, str | None](
+            load_fn=lambda keys: _load_worker_hosts(list(keys), session)
+        )
+    return loaders["worker_host"]
+
+
+def get_task_queue_status_loader(info: Info, entity_type: str) -> DataLoader[str, EntityQueueStatus | None]:
+    """Get or create a DataLoader for the queued/running tasks of an entity type."""
+    loaders = info.context["loaders"]
+    loader_key = f"task_queue_status:{entity_type}"
+    if loader_key not in loaders:
+        session = info.context["session"]
+        loaders[loader_key] = DataLoader[str, EntityQueueStatus | None](
+            load_fn=lambda keys: _load_task_queue_status(list(keys), session, entity_type)
+        )
+    return loaders[loader_key]
+
+
 def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str, Any] | None]]:
     return {
         "integration": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_integrations(list(keys), session)
         ),
         "project": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_projects(list(keys), session)),
+        "service": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_services(list(keys), session)),
         "resource": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_resources(list(keys), session)),
+        "resource_temp_state_by_resource": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_resource_temp_states_by_resource(list(keys), session)
+        ),
+        "scheduled_actions_by_resource": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "resource")
+        ),
         "storage": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_storages(list(keys), session)),
         "executor": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_executors(list(keys), session)),
+        "tool": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_tools(list(keys), session)),
+        "scheduled_actions_by_executor": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_scheduled_actions_by_entity(list(keys), session, "executor")
+        ),
         "workspace": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_workspaces(list(keys), session)),
         "source_code": DataLoader[str, dict[str, Any] | None](
             load_fn=lambda keys: _load_source_codes(list(keys), session)

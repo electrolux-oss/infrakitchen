@@ -177,6 +177,37 @@ export const renderFieldsForProvider = (
           />
         </>
       );
+    case "postgresql":
+      return (
+        <Controller
+          name="configuration.pg_schema_name"
+          control={control}
+          defaultValue=""
+          rules={{
+            required: "Schema name is required",
+            pattern: {
+              value: /^[a-z_][a-z0-9_]{0,62}$/,
+              message:
+                "Lowercase letters, digits and underscores, max 63 characters",
+            },
+          }}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="PostgreSQL Schema Name"
+              fullWidth
+              margin="normal"
+              error={!!(errors.configuration as FieldErrors)?.pg_schema_name}
+              helperText={
+                ((errors.configuration as FieldErrors)?.pg_schema_name
+                  ?.message as string) ||
+                "Schema is created in the integration database when the storage is executed. Each resource is stored as a workspace."
+              }
+            />
+          )}
+        />
+      );
+
     default:
       return null;
   }

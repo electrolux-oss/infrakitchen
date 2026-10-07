@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.integrations.model import IntegrationDTO
 from application.source_codes.crud import SourceCodeCRUD
 from application.source_codes.schema import SourceCodeResponse
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.adapters.provider_adapters import IntegrationProvider
 from core.constants.model import ModelActions, ModelStatus
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, ExitWithoutSave
-from core.tasks.handler import TaskHandler
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
@@ -29,7 +29,7 @@ class SourceCodeTask:
         session: AsyncSession,
         crud_source_code: SourceCodeCRUD,
         source_code_instance: SourceCode,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         user: UserDTO,
         event_sender: EventSender,
@@ -43,7 +43,7 @@ class SourceCodeTask:
         self.source_code_instance: SourceCode = source_code_instance
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
         self.git_client: GitClient | None = None
         self.environment_variables: dict[str, str] = {}
@@ -138,7 +138,12 @@ class SourceCodeTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.source_code_instance.status)
+        await self.task_service.update_task(
+            entity_id=self.source_code_instance.id,
+            entity_name="source_code",
+            requester=self.user,
+            status=self.source_code_instance.status,
+        )
         await self.session.commit()
         await self.crud_source_code.refresh(self.source_code_instance)
         response_model = SourceCodeResponse.model_validate(self.source_code_instance)

@@ -17,14 +17,13 @@ import {
   Typography,
 } from "@mui/material";
 
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { Duration } from "../../common/components/Duration";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { Entity } from "../../common/components/entities/Entity";
+import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
+import { Duration } from "../../common/components/fields/Duration";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { AbstractChip } from "../../common/components/labels/AbstractChip";
 import StatusChip from "../../common/StatusChip";
-import { GqlTemplateShort } from "../../templates/graphql";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowStepProps {
@@ -52,7 +51,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
               : step.status === "done"
                 ? "success.main"
                 : "divider",
-          borderRadius: 2,
+          borderRadius: "var(--template-surface-radius)",
           overflow: "hidden",
         }}
       >
@@ -72,26 +71,20 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={step.position + 1}
-              size="small"
               color="primary"
               sx={{ fontWeight: 700, minWidth: 28 }}
             />
             {templateName ? (
-              <GetEntityLink {...(step.template as GqlTemplateShort)} />
+              <Entity entity={step.template} />
             ) : (
-              <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
+              >
                 {step.template?.id.slice(0, 8)}…
               </Typography>
             )}
-            {step.template?.abstract && (
-              <Chip
-                label="Abstract"
-                size="small"
-                color="warning"
-                variant="outlined"
-                sx={{ fontWeight: 600 }}
-              />
-            )}
+            {step.template?.abstract && <AbstractChip />}
             <StatusChip status={step.status} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -165,13 +158,14 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                   Source Code Version
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
-                  <GetReferenceUrlValue
-                    id={step.sourceCodeVersion.id}
-                    entityName="source_code_version"
-                    identifier={
-                      step.sourceCodeVersion?.identifier ??
-                      step.sourceCodeVersion.id.slice(0, 8) + "…"
-                    }
+                  <Entity
+                    entity={{
+                      ...step.sourceCodeVersion,
+                      entityType: "source_code_version",
+                      identifier:
+                        step.sourceCodeVersion.identifier ??
+                        step.sourceCodeVersion.id.slice(0, 8) + "…",
+                    }}
                   />
                 </Box>
               </Box>
@@ -264,7 +258,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                         py: 0.75,
                         border: 1,
                         borderColor: "divider",
-                        borderRadius: 1,
+                        borderRadius: "var(--template-surface-radius)",
                         bgcolor: "background.paper",
                       }}
                     >
@@ -285,19 +279,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                             resource.template?.id ??
                             "External"}
                         </Typography>
-                        {resource.template?.abstract && (
-                          <Chip
-                            label="Abstract"
-                            size="small"
-                            color="warning"
-                            variant="outlined"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: "0.65rem",
-                              height: 18,
-                            }}
-                          />
-                        )}
+                        {resource.template?.abstract && <AbstractChip />}
                       </Box>
                       <GetReferenceUrlValue
                         id={resource.id}
@@ -335,13 +317,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                   {step.integrationIds.map((integration) => (
                     <Chip
                       key={integration.id}
-                      label={
-                        <GetReferenceUrlValue
-                          id={integration.id}
-                          entityName="integration"
-                          name={integration.name}
-                        />
-                      }
+                      label={<Entity entity={integration} />}
                       size="small"
                       variant="outlined"
                     />
@@ -359,9 +335,9 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 p: 1.5,
                 bgcolor: "error.main",
                 color: "error.contrastText",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 fontSize: 13,
-                fontFamily: "monospace",
+                fontFamily: CODE_FONT_FAMILY,
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
@@ -381,7 +357,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                 mt: 1.5,
                 border: 1,
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 "&:before": { display: "none" },
               }}
             >
@@ -408,7 +384,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                 }}
                               >
@@ -419,7 +395,7 @@ export const WorkflowStep = ({ step, workflowAction }: WorkflowStepProps) => {
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
+                                  fontFamily: CODE_FONT_FAMILY,
                                   fontSize: 12,
                                   maxWidth: 400,
                                   wordBreak: "break-all",

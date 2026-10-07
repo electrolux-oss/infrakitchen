@@ -6,7 +6,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { Button } from "@mui/material";
 
 import { PermissionWrapper, useConfig } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SecretContent } from "../components/SecretContent";
@@ -55,7 +55,7 @@ export const SecretPage = () => {
       entityFields={SECRET_DETAIL_FIELDS}
     >
       <EntityContainer
-        title={"Secret Overview"}
+        title={"Secret Details"}
         actions={
           <PermissionWrapper
             requiredPermission="api:secret"

@@ -7,9 +7,9 @@ import {
 } from "react";
 
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
-import PendingIcon from "@mui/icons-material/Pending";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
+import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
 import {
   Accordion,
   AccordionDetails,
@@ -29,8 +29,9 @@ import Ansi from "ansi-to-react";
 import { GqlLog, buildLogsQuery } from "../../logs/graphql";
 import { LogEntity } from "../../types";
 import { ENTITY_ACTION } from "../../utils/constants";
-import { RelativeTime } from "../components/RelativeTime";
+import { RelativeTime } from "../components/fields/RelativeTime";
 import { useConfig } from "../context";
+import { CODE_FONT_FAMILY } from "../theme";
 
 import { LogLine } from "./LogLine";
 
@@ -121,9 +122,12 @@ const executionStatusIcons: Record<
   ExecutionStatus,
   { color: "error" | "info" | "success"; icon: ComponentType<SvgIconProps> }
 > = {
-  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorIcon },
-  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingIcon },
-  [ExecutionStatus.COMPLETE]: { color: "success", icon: CheckCircleIcon },
+  [ExecutionStatus.ERROR]: { color: "error", icon: ErrorOutlinedIcon },
+  [ExecutionStatus.IN_PROGRESS]: { color: "info", icon: PendingOutlinedIcon },
+  [ExecutionStatus.COMPLETE]: {
+    color: "success",
+    icon: CheckCircleOutlinedIcon,
+  },
 };
 
 const stripBoxPrefix = (s: string): string => s.replace(/^[│╷╵]\s*/, "");
@@ -608,7 +612,6 @@ export const SummaryView = (props: {
                     <Chip
                       key={action}
                       label={`${count} ${action.charAt(0) + action.slice(1).toLowerCase()}`}
-                      size="small"
                       color={getActionColor(action)}
                       variant="outlined"
                     />
@@ -632,7 +635,7 @@ export const SummaryView = (props: {
               <AlertTitle>Fatal error</AlertTitle>
               <Box
                 sx={{
-                  fontFamily: "monospace",
+                  fontFamily: CODE_FONT_FAMILY,
                   fontSize: "0.8rem",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
@@ -703,14 +706,13 @@ export const SummaryView = (props: {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Chip
                         label={change.action}
-                        size="small"
                         color={getActionColor(change.action)}
                         variant="outlined"
                         sx={{ minWidth: 100, fontWeight: 600 }}
                       />
                       <Typography
                         sx={{
-                          fontFamily: "monospace",
+                          fontFamily: CODE_FONT_FAMILY,
                           fontSize: "0.85rem",
                           fontWeight: 500,
                         }}
@@ -729,7 +731,7 @@ export const SummaryView = (props: {
                 <AccordionDetails
                   sx={{
                     p: 1.5,
-                    fontFamily: "monospace",
+                    fontFamily: CODE_FONT_FAMILY,
                     fontSize: "0.8rem",
                     bgcolor: "action.hover",
                     overflowX: "auto",
@@ -742,7 +744,7 @@ export const SummaryView = (props: {
                     <Box
                       sx={{
                         p: 1.5,
-                        fontFamily: "monospace",
+                        fontFamily: CODE_FONT_FAMILY,
                         fontSize: "0.8rem",
                         borderTop: "2px solid",
                         borderColor: "error.main",

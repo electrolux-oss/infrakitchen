@@ -30,6 +30,10 @@ class ProjectType:
         return await info.context["loaders"]["project_resource_count"].load(str(self.id))
 
     @strawberry.field
+    async def services_count(self, info: Info) -> int:
+        return await info.context["loaders"]["project_service_count"].load(str(self.id))
+
+    @strawberry.field
     async def golden_state(self, info: Info) -> GoldenStateProjectReportType | None:
         await check_api_permission(info, "resource", ["read"])
         return await info.context["loaders"]["project_golden_state"].load(str(self.id))

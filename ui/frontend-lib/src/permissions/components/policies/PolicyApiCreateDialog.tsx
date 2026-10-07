@@ -160,7 +160,7 @@ export const PolicyApiCreate = (props: PolicyApiCreateProps) => {
                           p: 1.5,
                           border: "1px solid",
                           borderColor: "divider",
-                          borderRadius: 2,
+                          borderRadius: "var(--template-surface-radius)",
                           bgcolor: "background.paper",
                         }}
                       >
@@ -249,12 +249,7 @@ export const PolicyApiCreateDialog = (props: PolicyApiCreateDialogProps) => {
         />
       }
       actions={
-        <Button
-          type="submit"
-          form="policy-api-create-form"
-          variant="contained"
-          color="primary"
-        >
+        <Button type="submit" form="policy-api-create-form" variant="contained">
           Submit
         </Button>
       }

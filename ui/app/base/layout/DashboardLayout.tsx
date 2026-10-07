@@ -5,6 +5,7 @@ import { Outlet } from "react-router";
 import {
   GradientCircularProgress,
   InfrakitchenLogo,
+  useLocalStorage,
   usePermissionProvider,
 } from "@electrolux-oss/infrakitchen";
 import Box from "@mui/material/Box";
@@ -18,9 +19,12 @@ import DashboardSidebar from "./DashboardSidebar";
 export default function DashboardLayout() {
   const theme = useTheme();
   const loading = usePermissionProvider().loading;
+  const { get, setKey } = useLocalStorage<Record<string, boolean>>();
+
+  const desktopNavigationStorageKey = "dashboard_desktop_navigation_expanded";
 
   const [isDesktopNavigationExpanded, setIsDesktopNavigationExpanded] =
-    React.useState(true);
+    React.useState(() => get(desktopNavigationStorageKey) ?? true);
   const [isMobileNavigationExpanded, setIsMobileNavigationExpanded] =
     React.useState(false);
 
@@ -52,6 +56,10 @@ export default function DashboardLayout() {
     [setIsNavigationExpanded],
   );
 
+  React.useEffect(() => {
+    setKey(desktopNavigationStorageKey, isDesktopNavigationExpanded);
+  }, [isDesktopNavigationExpanded, setKey]);
+
   const layoutRef = React.useRef<HTMLDivElement>(null);
 
   if (loading) {
@@ -76,7 +84,10 @@ export default function DashboardLayout() {
         position: "relative",
         display: "flex",
         overflow: "hidden",
+        // 100vh on mobile browsers includes the area behind the address bar;
+        // dvh tracks the actually visible viewport.
         height: "100vh",
+        "@supports (height: 100dvh)": { height: "100dvh" },
         width: "100%",
       }}
     >

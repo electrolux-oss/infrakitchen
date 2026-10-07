@@ -4,7 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useRef,
 } from "react";
 
 import { useConfig } from "../..";
@@ -26,16 +26,8 @@ interface FilterContextValue {
   filterValues: FilterState;
   setFilterValue: (filterId: string, value: any) => void;
   setFilterValues: (values: FilterState) => void;
-  resetFilters: () => void;
-  resetFilter: (filterId: string) => void;
-  hasActiveFilters: boolean;
-  hasUnsavedFilters: boolean;
-  saveFilters?: () => void;
   syncToUrl: boolean;
   hasFilters: boolean;
-  isFilterPanelOpen: boolean;
-  setFilterPanelOpen: (isOpen: boolean) => void;
-  toggleFilterPanel: () => void;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -51,11 +43,21 @@ export function FilterProvider(props: FilterProviderProps) {
 
   const { ikApi, globalConfig } = useConfig();
 
+  // Reference loaders are created once at derive time; keep the latest filter
+  // values in a ref so those loaders can read the current clauses (e.g. to
+  // scope one field's options by another field's selection) without forcing
+  // the whole filter config to be re-derived on every change.
+  const filterValuesRef = useRef<FilterState>({});
+
   const filters = useMemo<FilterConfig[]>(() => {
     const fields = deriveFilterableFields(columns, {
       ikApi,
       options: {
         entities: globalConfig.entities,
+      },
+      getFilterClauses: () => {
+        const value = filterValuesRef.current["filter"];
+        return Array.isArray(value) ? value : [];
       },
     });
 
@@ -68,6 +70,7 @@ export function FilterProvider(props: FilterProviderProps) {
         id: "filter",
         label: "Filters",
         fields,
+        defaultField: fields.find((field) => field.defaultSelected)?.field,
       },
     ];
   }, [columns, ikApi, globalConfig.entities]);
@@ -77,19 +80,11 @@ export function FilterProvider(props: FilterProviderProps) {
     filterConfigs: filters,
     syncToUrl,
   });
-  const [isFilterPanelOpen, setFilterPanelOpen] = useState(false);
   const hasFilters = filters.length > 0;
 
-  useEffect(() => {
-    if (!hasFilters) {
-      setFilterPanelOpen(false);
-      return;
-    }
-
-    if (filterState.hasActiveFilters) {
-      setFilterPanelOpen(true);
-    }
-  }, [hasFilters, filterState.hasActiveFilters]);
+  // Sync during render (not in an effect) so reference loaders invoked from
+  // child mount effects in the same commit already see the latest clauses.
+  filterValuesRef.current = filterState.filterValues;
 
   useEffect(() => {
     onFilterChange?.(filterState.filterValues);
@@ -101,32 +96,16 @@ export function FilterProvider(props: FilterProviderProps) {
       filterValues: filterState.filterValues,
       setFilterValue: filterState.setFilterValue,
       setFilterValues: filterState.setFilterValues,
-      resetFilters: filterState.resetFilters,
-      resetFilter: filterState.resetFilter,
-      hasActiveFilters: filterState.hasActiveFilters,
-      hasUnsavedFilters: filterState.hasUnsavedFilters,
-      saveFilters: filterState.saveFilters,
       syncToUrl,
       hasFilters,
-      isFilterPanelOpen,
-      setFilterPanelOpen,
-      toggleFilterPanel: () => {
-        setFilterPanelOpen((current) => !current);
-      },
     }),
     [
       filters,
       filterState.filterValues,
       filterState.setFilterValue,
       filterState.setFilterValues,
-      filterState.resetFilters,
-      filterState.resetFilter,
-      filterState.hasActiveFilters,
-      filterState.hasUnsavedFilters,
-      filterState.saveFilters,
       syncToUrl,
       hasFilters,
-      isFilterPanelOpen,
     ],
   );
 

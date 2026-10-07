@@ -1,60 +1,72 @@
 import { ReactNode, useCallback, useMemo, useState } from "react";
 
 import SyncIcon from "@mui/icons-material/Sync";
-import {
-  Box,
-  Divider,
-  IconButton,
-  TextField,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Divider, IconButton, TextField, Tooltip } from "@mui/material";
 
-import { PermissionWrapper, UserAvatar } from "../../common";
+import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
+import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
+} from "../../common/components/fields/CommonField";
+import {
+  PlaceholderDescription,
+  PlaceholderText,
+} from "../../common/components/fields/PlaceholderDescription";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { Labels } from "../../common/components/Labels";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { PendingChangeBadge } from "../../common/components/PendingChangeBadge";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { Labels } from "../../common/components/labels/Labels";
+import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import StatusChip from "../../common/StatusChip";
 import { sameStringSet } from "../../common/utils";
 import { IkEntity } from "../../types";
-import { GqlUserShort } from "../../users/graphql";
 import {
   GqlResource,
   ResourceUpdateFieldInput,
   SYNC_WORKSPACE_MUTATION,
   UPDATE_RESOURCE_MUTATION,
 } from "../graphql";
-import type { ResourcePendingChanges } from "../hooks";
+import { useResourceNotificationDialog } from "../hooks/useResourceNotificationDialog";
+
+import { SubscribeNotificationButton } from "./notifications/SubscribeNotificationButton";
 
 export interface ResourceAboutProps {
   resource: GqlResource;
-  pendingChanges?: ResourcePendingChanges;
+  onSubscriptionChange?: () => void;
 }
 
 export const ResourceOverview = ({
   resource,
-  pendingChanges = null,
+  onSubscriptionChange,
 }: ResourceAboutProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity, userEntityPermissions, actions } = useEntityProvider();
+  const { refreshEntity, userEntityPermissions, actions, hasPendingChange } =
+    useEntityProvider();
   const { permissions } = usePermissionProvider();
   const canEdit =
     userEntityPermissions.includes("write") || actions.includes("edit");
+  const { pendingScheduledAction } = usePendingScheduledAction();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+
+  const { loading, isSubscribed, handleSubscribe, handleUnsubscribe } =
+    useResourceNotificationDialog({
+      resourceId: String(resource.id),
+      onSubscriptionChange,
+    });
 
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
     {},
@@ -136,13 +148,6 @@ export const ResourceOverview = ({
     [ikApi, resource.id, refreshEntity],
   );
 
-  const hasPendingChange = useCallback(
-    (key: string) =>
-      pendingChanges !== null &&
-      Object.prototype.hasOwnProperty.call(pendingChanges, key),
-    [pendingChanges],
-  );
-
   const withPendingChange = useCallback(
     (display: ReactNode, key: string) => {
       if (!hasPendingChange(key)) {
@@ -161,32 +166,43 @@ export const ResourceOverview = ({
             gap: 1,
           }}
         >
-          {isEmptyDisplay ? (
-            <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              None
-            </Typography>
-          ) : (
-            display
-          )}
+          {" "}
+          {isEmptyDisplay ? <PlaceholderText /> : display}
           <PendingChangeBadge />
         </Box>
       );
     },
     [hasPendingChange],
   );
-  const projectOwners = resource.project?.owners || null;
+  const projectOwners = resource.project?.owners
+    ? [...resource.project.owners].sort((a, b) =>
+        a.identifier.localeCompare(b.identifier),
+      )
+    : null;
 
   return (
     <OverviewCard
       name={resource.name}
-      description={resource.description || "No description"}
       actions={
-        <FavoriteButton
-          componentId={String(resource.id)}
-          componentType="resource"
-          ariaLabel="Add resource to favorites"
-          isFavorite={resource.isFavorite}
-        />
+        <>
+          <SubscribeNotificationButton
+            isSubscribed={isSubscribed}
+            isLoading={loading}
+            onSubscribeClick={(inheritChildren) =>
+              void handleSubscribe(inheritChildren)
+            }
+            onUnsubscribeClick={(inheritChildren) =>
+              void handleUnsubscribe(inheritChildren)
+            }
+          />
+          <DownloadSourceCodeButton entityId={String(resource.id)} />
+          <FavoriteButton
+            componentId={String(resource.id)}
+            componentType="resource"
+            ariaLabel="Add resource to favorites"
+            isFavorite={resource.isFavorite}
+          />
+        </>
       }
     >
       <CommonEditableField<string>
@@ -200,48 +216,44 @@ export const ResourceOverview = ({
           <TextField
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Name"
+            slotProps={{ input: { "aria-label": "Name" } }}
             fullWidth
             margin="normal"
             autoFocus
           />
         )}
         size={4}
-      />
+      />{" "}
       <CommonField
         name="State"
         value={<StatusChip status={resource.status} state={resource.state} />}
         size={4}
       />
-      <CommonEditableField<string>
-        name="Description"
+      {pendingScheduledAction && (
+        <CommonField
+          name="Next Scheduled Apply"
+          value={
+            <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
+          }
+          size={4}
+        />
+      )}
+      <EditableDescriptionField
+        value={resource.description}
         canEdit={canEdit}
-        value={resource.description ?? ""}
-        ariaLabel="Edit description"
+        onSave={(value) => saveField({ description: value })}
         display={withPendingChange(
-          <span>{resource.description || "No description"}</span>,
+          resource.description ? (
+            <span>{resource.description}</span>
+          ) : (
+            <PlaceholderDescription />
+          ),
           "description",
         )}
-        onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
       <CommonField
         name="Created"
-        value={
-          <RelativeTime date={resource.createdAt} user={resource.creator!} />
-        }
+        value={<RelativeTime date={resource.createdAt} />}
         size={4}
       />
       <CommonField
@@ -249,27 +261,15 @@ export const ResourceOverview = ({
         value={<RelativeTime date={resource.updatedAt} />}
         size={4}
       />
-      <CommonField name="Revision" value={resource.revisionNumber} size={4} />
-      <CommonEditableField<string[]>
-        name="Labels"
-        canEdit={canEdit}
+      <CommonField name="Revision" value={resource.revisionNumber} size={4} />{" "}
+      <EditableTagsField
         value={resource.labels ?? []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
+        canEdit={canEdit}
+        onSave={(value) => saveField({ labels: value })}
         display={withPendingChange(
           <Labels labels={resource.labels || []} />,
           "labels",
         )}
-        onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
       />
       <Box sx={{ width: "100%", my: 1 }}>
         <Divider />
@@ -296,7 +296,8 @@ export const ResourceOverview = ({
             optionFilter={projectOptionFilter}
             value={value}
             onChange={onChange}
-            label="Project"
+            ariaLabel="Project"
+            placeholder="Select project…"
             helpertext="Only projects you have write access to are shown"
           />
         )}
@@ -320,9 +321,11 @@ export const ResourceOverview = ({
                   }}
                 >
                   {resource.integrationIds.map((integration) => (
-                    <span key={integration.id}>
-                      <GetReferenceUrlValue {...integration} />
-                    </span>
+                    <Entity
+                      key={integration.id}
+                      entity={integration}
+                      providerIconSize={24}
+                    />
                   ))}
                 </Box>
               ) : null,
@@ -335,12 +338,16 @@ export const ResourceOverview = ({
                 buffer={buffer}
                 setBuffer={setBuffer}
                 entity_name="integrations"
-                filter={{ integration_type: "cloud" }}
+                filter={{
+                  integration_type: "cloud",
+                  integration_provider__not_eq: "postgresql",
+                }}
                 showFields={["integrationProvider", "name"]}
                 optionFilter={integrationOptionFilter}
                 value={value}
                 onChange={onChange}
-                label="Cloud Integrations"
+                ariaLabel="Cloud Integrations"
+                placeholder="Select cloud integrations…"
                 helpertext="Existing integrations are kept; new options are limited to those you have write access to."
                 multiple
               />
@@ -381,7 +388,9 @@ export const ResourceOverview = ({
                 entity_name="secrets"
                 value={value}
                 onChange={onChange}
-                label="Secrets"
+                ariaLabel="Secrets"
+                placeholder="Select secrets…"
+                singleLine
                 multiple
               />
             )}
@@ -392,20 +401,10 @@ export const ResourceOverview = ({
             <CommonField
               name="Owners"
               value={
-                !projectOwners || projectOwners.length === 0 ? (
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    None
-                  </Typography>
+                projectOwners?.length ? (
+                  <UserAvatarList users={projectOwners} />
                 ) : (
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {projectOwners.map((owner: GqlUserShort) => (
-                      <UserAvatar
-                        key={owner.id}
-                        id={owner.id}
-                        identifier={owner.identifier}
-                      />
-                    ))}
-                  </Box>
+                  <PlaceholderText />
                 )
               }
               size={6}
@@ -453,7 +452,8 @@ export const ResourceOverview = ({
                 optionFilter={workspaceOptionFilter}
                 value={value}
                 onChange={onChange}
-                label="Workspace"
+                ariaLabel="Workspace"
+                placeholder="Select workspace…"
                 helpertext="Only workspaces you have write access to are shown"
               />
             )}
@@ -476,16 +476,14 @@ export const ResourceOverview = ({
                 mt: 1,
                 p: 1,
                 border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.parents.map((parent) => (
-                <GetReferenceUrlValue
-                  key={parent.id}
-                  {...parent}
-                  display_name={`${parent.template.name} (${parent.name})`}
-                />
-              ))}
+              {[...resource.parents]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((parent) => (
+                  <Entity key={parent.id} entity={parent} showLabel />
+                ))}
             </Box>
           ) : null
         }
@@ -505,19 +503,27 @@ export const ResourceOverview = ({
                 mt: 1,
                 p: 1,
                 border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
               })}
             >
-              {resource.children.map((child) => (
-                <GetReferenceUrlValue
-                  key={child.id}
-                  {...child}
-                  display_name={`${child.template.name} (${child.name})`}
-                />
-              ))}
+              {[...resource.children]
+                .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+                .map((child) => (
+                  <Entity key={child.id} entity={child} showLabel />
+                ))}
             </Box>
           ) : null
         }
+      />
+      <ScheduleEntityActionDialog
+        open={isScheduleDialogOpen}
+        entityId={String(resource.id)}
+        entityType="resource"
+        scheduledAction={pendingScheduledAction}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        onChanged={() => {
+          refreshEntity?.();
+        }}
       />
     </OverviewCard>
   );

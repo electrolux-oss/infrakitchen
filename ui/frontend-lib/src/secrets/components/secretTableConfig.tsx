@@ -4,14 +4,15 @@ import {
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import {
+  createdUpdatedColumns,
+  labelsColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { Labels } from "../../common/components/Labels";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -27,9 +28,10 @@ export const secretColumns: EntityTableColumn[] = [
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -60,7 +62,7 @@ export const secretColumns: EntityTableColumn[] = [
           height: "100%",
         }}
       >
-        {getProviderValue(params.value)}
+        {getProviderValue(params.value, 18)}
       </Box>
     ),
   },
@@ -88,50 +90,8 @@ export const secretColumns: EntityTableColumn[] = [
       />
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} />;
-    },
-  },
+  ...createdUpdatedColumns(),
+  userColumn(),
   {
     field: "integration",
     headerName: "Integration",
@@ -150,25 +110,10 @@ export const secretColumns: EntityTableColumn[] = [
     valueGetter: (_value: any, row: any) => row.integration?.name || "",
     renderCell: (params: GridRenderCellParams) =>
       params.row.integration ? (
-        <GetEntityLink {...params.row.integration} />
+        <Entity entity={params.row.integration} />
       ) : null,
   },
-  {
-    field: "labels",
-    headerName: "Labels",
-    flex: 1,
-    filter: {
-      field: "labels",
-      operators: ["contains_all"],
-      valueType: "autocomplete-multiple",
-      defaultOperator: "contains_all",
-      labelsEntity: "secret",
-    },
-    valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Labels labels={params.row.labels || []} />
-    ),
-  },
+  labelsColumn("secret"),
 ];
 
 export const secretDefaultColumnVisibilityModel: GridColumnVisibilityModel = {

@@ -2,6 +2,12 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
+import {
+  CODE_FONT_FAMILY,
+  Label,
+  ServerInfoDialog,
+  useConfig,
+} from "@electrolux-oss/infrakitchen";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import MuiAppBar from "@mui/material/AppBar";
@@ -13,7 +19,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import SettingsMenu from "./SettingsMenu";
 import ThemeSwitcher from "./ThemeSwitcher";
 import UserSidebar from "./UserSidebar";
 
@@ -22,6 +27,8 @@ const AppBar = styled(MuiAppBar)(({ theme }) => ({
   borderBottomWidth: 1,
   borderStyle: "solid",
   borderColor: (theme.vars ?? theme).palette.divider,
+  // Header shares the grey canvas color with the sidebar and content.
+  backgroundColor: (theme.vars ?? theme).palette.background.default,
   boxShadow: "none",
   zIndex: theme.zIndex.drawer + 1,
 }));
@@ -46,9 +53,20 @@ export default function DashboardHeader({
   menuOpen,
   onToggleMenu,
 }: DashboardHeaderProps) {
+  const [serverInfoOpen, setServerInfoOpen] = React.useState(false);
+  const { serverInfo } = useConfig();
+
   const handleMenuOpen = React.useCallback(() => {
     onToggleMenu(!menuOpen);
   }, [menuOpen, onToggleMenu]);
+
+  const handleServerInfoOpen = React.useCallback(() => {
+    setServerInfoOpen(true);
+  }, []);
+
+  const handleServerInfoClose = React.useCallback(() => {
+    setServerInfoOpen(false);
+  }, []);
 
   const getMenuIcon = React.useCallback(
     (isExpanded: boolean) => {
@@ -65,6 +83,16 @@ export default function DashboardHeader({
               size="small"
               aria-label={`${isExpanded ? collapseMenuActionText : expandMenuActionText} navigation menu`}
               onClick={handleMenuOpen}
+              sx={(theme) => ({
+                border: "none",
+                backgroundColor: "transparent",
+                "&:hover": { backgroundColor: "transparent" },
+                ...theme.applyStyles("dark", {
+                  border: "none",
+                  backgroundColor: "transparent",
+                  "&:hover": { backgroundColor: "transparent" },
+                }),
+              })}
             >
               {isExpanded ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
@@ -83,24 +111,27 @@ export default function DashboardHeader({
           sx={{
             justifyContent: "space-between",
             alignItems: "center",
-            flexWrap: "wrap",
             width: "100%",
+            minWidth: 0,
           }}
         >
           <Stack
             direction="row"
             sx={{
               alignItems: "center",
+              minWidth: 0,
             }}
           >
-            <Box sx={{ mr: 1 }}>{getMenuIcon(menuOpen)}</Box>
+            <Box sx={{ mr: 1, display: { xs: "block", md: "none" } }}>
+              {getMenuIcon(menuOpen)}
+            </Box>
             <Link to="/" style={{ textDecoration: "none" }}>
               {logo ? <LogoContainer>{logo}</LogoContainer> : null}
             </Link>
             <Stack
               direction="row"
               sx={{
-                alignItems: "baseline",
+                alignItems: "center",
               }}
             >
               {title ? (
@@ -109,8 +140,10 @@ export default function DashboardHeader({
                     variant="h5"
                     sx={{
                       color: "text.primary",
-                      fontWeight: "700",
-                      ml: 1,
+                      fontWeight: 600,
+                      fontSize: { xs: "1.375rem", sm: "1.875rem" }, // 22px / 30px
+                      letterSpacing: "-0.02em",
+                      ml: 0,
                       whiteSpace: "nowrap",
                       lineHeight: 1,
                     }}
@@ -119,17 +152,35 @@ export default function DashboardHeader({
                   </Typography>
                 </Link>
               ) : null}
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.disabled",
-                  fontSize: "0.6rem",
-                  ml: 2,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                v{__APP_VERSION__}+{__GIT_COMMIT_HASH__}
-              </Typography>
+              {serverInfo ? (
+                <Label
+                  component="button"
+                  onClick={handleServerInfoOpen}
+                  label={
+                    <Box
+                      component="span"
+                      sx={{ fontFamily: CODE_FONT_FAMILY }}
+                    >{`v${String(serverInfo.version).replace(
+                      /^v/,
+                      "",
+                    )}-${serverInfo.sourceCommitShort}`}</Box>
+                  }
+                  sx={{
+                    display: { xs: "none", sm: "inline-flex" },
+                    alignSelf: "flex-end",
+                    ml: 2,
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "action.selected",
+                    },
+                    "&:focus-visible": {
+                      outline: "2px solid",
+                      outlineColor: "primary.main",
+                      outlineOffset: "1px",
+                    },
+                  }}
+                />
+              ) : null}
             </Stack>
           </Stack>
           <Stack
@@ -138,7 +189,7 @@ export default function DashboardHeader({
             sx={{
               alignItems: "center",
               marginLeft: "auto",
-              minWidth: 0,
+              flexShrink: 0,
             }}
           >
             <Stack
@@ -148,12 +199,15 @@ export default function DashboardHeader({
                 alignItems: "center",
               }}
             >
-              <SettingsMenu />
               <ThemeSwitcher />
             </Stack>
             <UserSidebar />
           </Stack>
         </Stack>
+        <ServerInfoDialog
+          open={serverInfoOpen}
+          onClose={handleServerInfoClose}
+        />
       </Toolbar>
     </AppBar>
   );

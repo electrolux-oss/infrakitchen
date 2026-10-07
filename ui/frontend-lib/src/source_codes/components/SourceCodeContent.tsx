@@ -1,15 +1,17 @@
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
 import { RefType } from "../../source_code_versions/types";
+import { EntityTaskQueueStatus } from "../../workers/components";
 import { RefFolders } from "../types";
 
 import { SourceCodeOverview } from "./SourceCodeOverview";
@@ -25,8 +27,10 @@ export const SourceCodeContent = () => {
     ...(entity.gitTags?.length
       ? [
           {
-            label: `Tags`,
-            tabLabel: `Tags (${entity.gitTags.length})`,
+            label: "Tags",
+            tabLabel: (
+              <TabCountLabel label="Tags" count={entity.gitTags.length} />
+            ),
             content: (
               <SourceCodeRefSection
                 refs={entity.gitTags}
@@ -41,8 +45,13 @@ export const SourceCodeContent = () => {
     ...(entity.gitBranches?.length
       ? [
           {
-            label: `Branches`,
-            tabLabel: `Branches (${entity.gitBranches.length})`,
+            label: "Branches",
+            tabLabel: (
+              <TabCountLabel
+                label="Branches"
+                count={entity.gitBranches.length}
+              />
+            ),
             content: (
               <SourceCodeRefSection
                 refs={entity.gitBranches}
@@ -82,6 +91,7 @@ export const SourceCodeContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <SourceCodeOverview sourceCode={entity} />
       <TabbedContent tabs={tabs} />
     </Box>

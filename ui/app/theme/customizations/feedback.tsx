@@ -6,7 +6,7 @@ export const feedbackCustomizations: Components<Theme> = {
   MuiSnackbarContent: {
     styleOverrides: {
       root: ({ theme }) => ({
-        borderRadius: 10,
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         padding: "6px 14px",
         boxShadow: theme.shadows[4],
         fontSize: theme.typography.body2.fontSize,
@@ -42,7 +42,7 @@ export const feedbackCustomizations: Components<Theme> = {
   MuiAlert: {
     styleOverrides: {
       root: ({ theme }) => ({
-        borderRadius: 10,
+        borderRadius: (theme.vars || theme).shape.borderRadius,
         color: (theme.vars || theme).palette.text.primary,
 
         // warning (default / orange)
@@ -94,10 +94,22 @@ export const feedbackCustomizations: Components<Theme> = {
   MuiDialog: {
     styleOverrides: {
       root: ({ theme }) => ({
+        // Soft, frosted overlay instead of the default heavy black scrim.
+        "& .MuiBackdrop-root": {
+          backgroundColor: alpha(grey[900], 0.35),
+          backdropFilter: "blur(4px)",
+          ...theme.applyStyles("dark", {
+            backgroundColor: alpha(grey[900], 0.55),
+          }),
+        },
         "& .MuiDialog-paper": {
-          borderRadius: "10px",
+          borderRadius: 12,
           border: "1px solid",
           borderColor: (theme.vars || theme).palette.divider,
+          boxShadow: "0 24px 64px rgba(0, 0, 0, 0.14)",
+          ...theme.applyStyles("dark", {
+            boxShadow: "0 24px 64px rgba(0, 0, 0, 0.55)",
+          }),
         },
       }),
     },

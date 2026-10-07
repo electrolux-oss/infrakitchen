@@ -1,5 +1,3 @@
-import { RESOURCE_TEMP_STATE_FIELDS } from "./fragments";
-
 export const RESOURCE_TREE_QUERY = `
   query ResourceTree($id: UUID!, $direction: String!) {
     resourceTree(id: $id, direction: $direction) {
@@ -79,14 +77,6 @@ export const RESOURCE_VARIABLE_SCHEMA_QUERY = `
       unique
       value
       index
-    }
-  }
-`;
-
-export const RESOURCE_TEMP_STATE_BY_RESOURCE_QUERY = `
-  query ResourceTempState($id: UUID!) {
-    resourceTempStateByResource(resourceId: $id) {
-      ${RESOURCE_TEMP_STATE_FIELDS}
     }
   }
 `;

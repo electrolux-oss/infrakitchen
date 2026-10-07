@@ -20,7 +20,7 @@ import {
   Checkbox,
 } from "@mui/material";
 
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -91,18 +91,10 @@ const AuthProviderCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Auth Provider"
-      onBack={handleBack}
-      backAriaLabel="Back to auth_providers"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>

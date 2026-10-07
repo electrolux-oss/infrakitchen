@@ -5,7 +5,10 @@ import { WORKFLOW_FIELD_MAP } from "../graphql";
 
 export const WorkflowsPage = () => {
   return (
-    <PageContainer title="Workflows">
+    <PageContainer
+      title="Workflows"
+      description="Orchestrated runs that execute multiple resources in dependency order."
+    >
       <EntityFetchTable
         title="Workflows"
         entityName="workflow"

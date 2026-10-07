@@ -29,5 +29,12 @@ otel-collector:
 		-v $(PWD)/observability/otel-local.yaml:/etc/otelcol-contrib/config.yaml:ro \
 		otel/opentelemetry-collector-contrib:latest
 
-mkdocs: server-install
-	./server/.venv/bin/python -m mkdocs serve
+# --- Docs (Blume) ---
+docs-dev:
+	npm run dev
+
+docs-build:
+	npm run build
+
+docs-validate:
+	npx blume validate --isolated

@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import joinedload, raiseload
 
 from core.audit_logs.model import AuditLog
 from core.database import FieldSpec, build_load_only
@@ -14,12 +14,16 @@ def build_audit_log_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(AuditLog.creator),
         ]
 
-    opts: list[Any] = build_load_only(AuditLog, set(fields.keys()))
+    requested: set[str] = set(fields.keys())
+    if "metadata" in requested:
+        requested.add("action_metadata")
+
+    opts: list[Any] = build_load_only(AuditLog, requested)
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(AuditLog.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(AuditLog.creator))
+        opts.append(raiseload(AuditLog.creator))
 
     return opts

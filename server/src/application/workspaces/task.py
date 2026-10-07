@@ -10,7 +10,7 @@ from application.workspaces.model import Workspace, WorkspaceDTO
 from application.workspaces.schema import WorkspaceResponse
 from core.adapters.provider_adapters import IntegrationProvider
 from core.constants.model import ModelActions, ModelState, ModelStatus
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.utils.event_sender import EventSender
 
@@ -32,7 +32,7 @@ class WorkspaceTask:
         crud_workspace: WorkspaceCRUD,
         resource_task_controller: ResourceTask,
         workspace_instance: Workspace,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         user: UserDTO,
         event_sender: EventSender,
@@ -47,7 +47,7 @@ class WorkspaceTask:
         self.workspace_instance: Workspace = workspace_instance
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
 
         self.git_client: GitClient | None = None
@@ -118,9 +118,9 @@ class WorkspaceTask:
         # Determine the Git URL based on the integration type
         integration_type = workspace.integration.integration_provider
         if "ssh" in integration_type.lower():
-            git_url = workspace.configuration.ssh_url
+            git_url = workspace.configuration.ssh_clone_url
         else:
-            git_url = workspace.configuration.https_url
+            git_url = workspace.configuration.https_clone_url
 
         try:
             self.git_client = await self.integration_provider.get_git_client(
@@ -154,12 +154,13 @@ class WorkspaceTask:
         self.workspace_root = self.resource_task_controller.workspace_root
 
     # change entity state depends on task state
-    def make_failed(self) -> None:
-        self.workspace_instance.status = ModelStatus.ERROR
+    # change_state commits, so the status survives the worker rolling back the failed task's session
+    async def make_failed(self) -> None:
+        await self.change_state(ModelStatus.ERROR)
 
-    def make_retry(self, retry: int, max_retries: int):
+    async def make_retry(self, retry: int, max_retries: int):
         if self.workspace_instance.status == ModelStatus.IN_PROGRESS:
-            self.workspace_instance.status = ModelStatus.ERROR
+            await self.change_state(ModelStatus.ERROR)
 
     # sync source code with workspace and create PR
     async def change_state(self, new_state: ModelStatus, event_type: str = ModelActions.SYNC) -> None:
@@ -167,7 +168,12 @@ class WorkspaceTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.workspace_instance.status)
+        await self.task_service.update_task(
+            entity_id=self.workspace_instance.id,
+            entity_name="workspace",
+            requester=self.user,
+            status=self.workspace_instance.status,
+        )
         await self.session.commit()
         await self.crud_workspace.refresh(self.workspace_instance)
         response_model = WorkspaceResponse.model_validate(self.workspace_instance)
@@ -280,7 +286,7 @@ class WorkspaceTask:
 
         assert self.git_client, "Git client is not initialized"
         # get resource source code
-        await self.resource_task_controller.init_workspace()
+        await self.resource_task_controller.init_workspace(git_auth_only=True)
 
         await self.git_client.clone()
         await self.resource_task_controller.init_provision_tool()

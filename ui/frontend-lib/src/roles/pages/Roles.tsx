@@ -16,14 +16,13 @@ export const RolesPage = () => {
   return (
     <PageContainer
       title="Roles"
+      description="Access roles that control what users and service accounts can do."
       actions={
         <PermissionWrapper
           requiredPermission="api:permission"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}roles/create`)}
             startIcon={<AddIcon />}
           >

@@ -5,14 +5,18 @@ import {
   DeleteOutlined as DeleteOutlineIcon,
 } from "@mui/icons-material";
 import {
-  TextField,
-  IconButton,
-  Typography,
-  Grid,
   Box,
+  Button,
+  Chip,
+  IconButton,
+  TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
 
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
+import { dashedAddButtonSx } from "../../common/utils/dashedAddButtonSx";
+import { solidChipColorSx } from "../../common/utils/softChip";
 import { CustomSecret } from "../types";
 
 interface CustomSecretInputProps {
@@ -20,12 +24,15 @@ interface CustomSecretInputProps {
   errors: any;
   value: CustomSecret[];
   onChange: (value: CustomSecret[]) => void;
+  /** Hide the section header (label + count chip + add action) so a caller can
+   * keep its own header; only the editable rows render. */
+  hideHeader?: boolean;
   [key: string]: any;
 }
 
 const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
   (props, _ref) => {
-    const { errors, label, value, onChange } = props;
+    const { errors, label, value, onChange, hideHeader = false } = props;
     const currentValue: CustomSecret[] = Array.isArray(value) ? value : [];
 
     const handleAdd = () => {
@@ -50,87 +57,113 @@ const CustomSecretInput = forwardRef<any, CustomSecretInputProps>(
 
     return (
       <Box sx={{ mt: 2, px: 2 }}>
-        <Grid
-          container
-          spacing={2}
-          sx={{
-            alignItems: "center",
-            mb: 1,
-          }}
-        >
-          <Grid size={{ xs: 12, sm: 11 }}>
-            <Typography variant="h5" component="h3" sx={{ mb: 0 }}>
+        {!hideHeader && (
+          /* Section header: label, entry count */
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {label}
             </Typography>
-          </Grid>
-          <Grid
-            size={{ xs: 12, sm: 1 }}
-            sx={{ display: "flex", justifyContent: "center" }}
-          >
-            <Tooltip title="Add secret">
-              <IconButton onClick={handleAdd} aria-label="Add secret">
-                <AddIcon />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
-        {currentValue.map((item, index) => (
-          <Grid
-            container
-            spacing={2}
-            key={index}
+            <Chip
+              label={String(currentValue.length)}
+              sx={solidChipColorSx("info", undefined, undefined, true)}
+            />
+          </Box>
+        )}
+
+        {currentValue.length > 0 && (
+          <Box
             sx={{
-              alignItems: "flex-end",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 1,
+              pb: 0,
+              color: "text.secondary",
             }}
           >
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <TextField
-                label="Name"
-                variant="outlined"
-                margin="normal"
-                value={item.name}
-                onChange={(e) =>
-                  handleFieldChange(index, "name", e.target.value)
-                }
-                error={!!errors?.[item.name]?.[index]?.name}
-                helperText={errors?.[item.name]?.[index]?.name?.message || ""}
-                fullWidth
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <TextField
-                label="Value"
-                variant="outlined"
-                type="password"
-                margin="normal"
-                value={item.value}
-                onChange={(e) =>
-                  handleFieldChange(index, "value", e.target.value)
-                }
-                error={!!errors?.[item.name]?.[index]?.value}
-                helperText={errors?.[item.name]?.[index]?.value?.message || ""}
-                fullWidth
-              />
-            </Grid>
-            <Grid
-              size={{ xs: 0, sm: 1 }}
-              sx={{ display: { xs: "none", sm: "block" } }}
-            />
-            <Grid
-              size={{ xs: 12, sm: 1 }}
-              sx={{ display: "flex", justifyContent: "center", mb: 1 }}
+            {/* Column captions shown once, instead of "Name"/"Value" labels on
+                every row. The trailing spacer reserves the remove-button width
+                so the captions align with the fields below. */}
+            <Typography
+              variant="caption"
+              sx={{ flex: "1 1 180px", minWidth: 160 }}
             >
-              <Tooltip title="Remove secret">
-                <IconButton
-                  onClick={() => handleRemove(index)}
-                  aria-label="Remove secret"
-                >
-                  <DeleteOutlineIcon />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
+              Name
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ flex: "1 1 180px", minWidth: 160 }}
+            >
+              Value
+            </Typography>
+            <Box sx={{ flex: "0 0 auto", width: 30 }} />
+          </Box>
+        )}
+
+        {currentValue.map((item, index) => (
+          <Box
+            key={index}
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+              gap: 1,
+              pt: 0.25,
+            }}
+          >
+            <TextField
+              variant="outlined"
+              margin="dense"
+              value={item.name}
+              onChange={(e) => handleFieldChange(index, "name", e.target.value)}
+              error={!!errors?.[item.name]?.[index]?.name}
+              helperText={errors?.[item.name]?.[index]?.name?.message}
+              required
+              slotProps={{
+                htmlInput: { "aria-label": `Secret name ${index + 1}` },
+              }}
+              sx={{ flex: "1 1 180px", minWidth: 160 }}
+            />
+            <TextField
+              variant="outlined"
+              type="password"
+              margin="dense"
+              value={item.value}
+              onChange={(e) =>
+                handleFieldChange(index, "value", e.target.value)
+              }
+              error={!!errors?.[item.name]?.[index]?.value}
+              helperText={errors?.[item.name]?.[index]?.value?.message}
+              required
+              slotProps={{
+                htmlInput: { "aria-label": `Secret value ${index + 1}` },
+              }}
+              sx={{ flex: "1 1 180px", minWidth: 160 }}
+            />
+            <Tooltip title="Remove">
+              <IconButton
+                size="small"
+                sx={{ ...deleteIconButtonStyle, alignSelf: "center", my: 0.5 }}
+                onClick={() => handleRemove(index)}
+                aria-label="Remove"
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         ))}
+        {!hideHeader && (
+          /* Add action sits under the rows, matching the other list editors. */
+          <Box sx={{ mt: 1 }}>
+            <Button
+              startIcon={<AddIcon />}
+              onClick={handleAdd}
+              sx={dashedAddButtonSx}
+            >
+              Add
+            </Button>
+          </Box>
+        )}
       </Box>
     );
   },

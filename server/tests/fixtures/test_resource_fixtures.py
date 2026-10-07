@@ -58,6 +58,7 @@ def mock_resource_service(
     mock_favorite_service,
     mock_subscription_service,
     mock_project_service,
+    mock_tool_service,
 ):
     return ResourceService(
         crud=mock_resource_crud,
@@ -77,6 +78,7 @@ def mock_resource_service(
         favorite_service=mock_favorite_service,
         subscription_service=mock_subscription_service,
         project_service=mock_project_service,
+        tool_service=mock_tool_service,
     )
 
 

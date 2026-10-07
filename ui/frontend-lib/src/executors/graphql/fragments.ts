@@ -4,9 +4,11 @@ import {
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
 import { INTEGRATION_SHORT_FIELDS } from "../../integrations/graphql";
+import { RESOURCE_SCHEDULED_ACTION_FIELDS } from "../../resources/graphql";
 import { SECRET_SHORT_FIELDS } from "../../secrets/graphql";
 import { SOURCE_CODE_SHORT_FIELDS } from "../../source_codes/graphql";
 import { STORAGE_SHORT_FIELDS } from "../../storages/graphql";
+import { TOOL_SHORT_FIELDS } from "../../tools/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const EXECUTOR_GRAPHQL_FIELDS = {
@@ -34,7 +36,9 @@ export const EXECUTOR_GRAPHQL_FIELDS = {
     integrationIds: "integrationIds",
     secretIds: "secretIds",
     storage: "storage",
+    tool: "tool",
     creator: "creator",
+    scheduledActions: "scheduledActions",
   } as const,
 };
 
@@ -51,7 +55,9 @@ export const EXECUTOR_LIST_FIELDS = `
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.integrationIds, INTEGRATION_SHORT_FIELDS)}
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
+  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.tool, TOOL_SHORT_FIELDS)}
   ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
+  ${buildNestedSelection(EXECUTOR_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
 `;
 
 export const EXECUTOR_FIELD_MAP: GraphqlFieldMap = {
@@ -71,9 +77,17 @@ export const EXECUTOR_FIELD_MAP: GraphqlFieldMap = {
     EXECUTOR_GRAPHQL_FIELDS.relations.storage,
     STORAGE_SHORT_FIELDS,
   ),
+  tool: buildNestedSelection(
+    EXECUTOR_GRAPHQL_FIELDS.relations.tool,
+    TOOL_SHORT_FIELDS,
+  ),
   creator: buildNestedSelection(
     EXECUTOR_GRAPHQL_FIELDS.relations.creator,
     USER_SHORT_FIELDS,
+  ),
+  scheduledActions: buildNestedSelection(
+    EXECUTOR_GRAPHQL_FIELDS.relations.scheduledActions,
+    RESOURCE_SCHEDULED_ACTION_FIELDS,
   ),
 };
 

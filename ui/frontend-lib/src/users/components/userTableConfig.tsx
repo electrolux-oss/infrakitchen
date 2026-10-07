@@ -1,13 +1,42 @@
-import { Box } from "@mui/material";
+import { Box, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  GetEntityLink,
-  getProviderValue,
-} from "../../common/components/CommonField";
+import { useConfig } from "../../common";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { createdUpdatedColumns } from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
 import { PROVIDER_DISPLAY_NAMES } from "../../common/utils";
+import { solidChipColorSx } from "../../common/utils/softChip";
+
+const UserIdentifierCell = (params: GridRenderCellParams) => {
+  const { currentUser } = useConfig();
+  const isCurrentUser = currentUser?.id === params.row.id;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        height: "100%",
+      }}
+    >
+      <Entity entity={{ ...params.row, entityType: "user" }} />
+      {isCurrentUser ? (
+        <Chip
+          label="You"
+          variant="filled"
+          sx={(theme) => ({
+            ...solidChipColorSx("info")(theme),
+            height: 18,
+            fontSize: "0.625rem",
+          })}
+        />
+      ) : null}
+    </Box>
+  );
+};
 
 const USER_AUTH_PROVIDERS = [
   "microsoft",
@@ -31,9 +60,9 @@ export const userColumns: EntityTableColumn[] = [
       valueType: "text",
       defaultOperator: "like",
     },
-    renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
-    },
+    renderCell: (params: GridRenderCellParams) => (
+      <UserIdentifierCell {...params} />
+    ),
   },
   {
     field: "displayName",
@@ -80,32 +109,11 @@ export const userColumns: EntityTableColumn[] = [
           height: "100%",
         }}
       >
-        {getProviderValue(params.value)}
+        {getProviderValue(params.value, 18)}
       </Box>
     ),
   },
-  {
-    field: "createdAt",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  ...createdUpdatedColumns(),
   {
     field: "description",
     headerName: "Description",
@@ -149,7 +157,7 @@ export const userColumns: EntityTableColumn[] = [
         }}
       >
         {(params.row.secondaryAccounts || []).map((u: any) => (
-          <GetEntityLink key={u.id} {...u} />
+          <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
       </Box>
     ),
@@ -172,7 +180,7 @@ export const userColumns: EntityTableColumn[] = [
         }}
       >
         {(params.row.primaryAccount || []).map((u: any) => (
-          <GetEntityLink key={u.id} {...u} />
+          <Entity key={u.id} entity={{ ...u, entityType: "user" }} />
         ))}
       </Box>
     ),

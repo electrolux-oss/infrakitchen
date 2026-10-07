@@ -46,6 +46,9 @@ export const EntityFetchTable = forwardRef<
     entityFieldMap,
     transformFn,
     syncFiltersToUrl,
+    defaultSort,
+    rowClickable,
+    onDataChange,
   } = props;
 
   const { get, setKey } = useLocalStorage<Record<string, unknown>>();
@@ -67,13 +70,40 @@ export const EntityFetchTable = forwardRef<
   const storageKey = `entityTable_${title.toLowerCase().replace(/\s+/g, "_")}`;
   const savedState = get(storageKey) as DataGridState | undefined;
 
-  const [sortModel, setSortModel] = useState<GridSortModel>(
-    savedState?.sortModel || [],
-  );
+  const defaultSortModel = useMemo<GridSortModel>(() => {
+    const effectiveDefault = defaultSort ?? {
+      field: "updated_at",
+      sort: "desc" as const,
+    };
+    const normalizedDefaultField = effectiveDefault.field.replaceAll("_", "");
+    const column = columns.find(
+      ({ field, sortField, sortable }) =>
+        sortable !== false &&
+        (field === effectiveDefault.field ||
+          sortField === effectiveDefault.field ||
+          field.replaceAll("_", "").toLowerCase() ===
+            normalizedDefaultField.toLowerCase()),
+    );
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
-    savedState?.paginationModel || { page: 0, pageSize: 10 },
-  );
+    return column ? [{ field: column.field, sort: effectiveDefault.sort }] : [];
+  }, [columns, defaultSort]);
+
+  const [sortModel, setSortModel] = useState<GridSortModel>(() => {
+    const sortableFields = new Set(
+      columns
+        .filter((column) => column.sortable !== false)
+        .map((column) => column.field),
+    );
+    const savedSortModel = (savedState?.sortModel || []).filter(({ field }) =>
+      sortableFields.has(field),
+    );
+    return savedSortModel.length > 0 ? savedSortModel : defaultSortModel;
+  });
+
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
 
   const [columnVisibilityModel, setColumnVisibilityModel] =
     useState<GridColumnVisibilityModel>(() => ({
@@ -83,7 +113,7 @@ export const EntityFetchTable = forwardRef<
 
   const handleSortModelChange = (newSortModel: GridSortModel) => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
-    setSortModel(newSortModel);
+    setSortModel(newSortModel.length > 0 ? newSortModel : defaultSortModel);
   };
 
   const handlePaginationModelChange = (
@@ -112,7 +142,6 @@ export const EntityFetchTable = forwardRef<
         column.fetchFields.forEach((field) => {
           if (field) requested.add(field);
         });
-        // Still skip adding column.field itself when column is hidden/non-filterable
         if (isHidden || isNonFilterable) return;
       } else {
         if (isHidden || isNonFilterable) return;
@@ -126,10 +155,9 @@ export const EntityFetchTable = forwardRef<
   useEffect(() => {
     setKey(storageKey, {
       sortModel,
-      paginationModel,
       columnVisibilityModel,
     });
-  }, [sortModel, paginationModel, columnVisibilityModel, storageKey, setKey]);
+  }, [sortModel, columnVisibilityModel, storageKey, setKey]);
 
   return (
     <FilterProvider
@@ -151,6 +179,9 @@ export const EntityFetchTable = forwardRef<
         buildApiFiltersRef={buildApiFiltersRef}
         defaultFilterRef={defaultFilterRef}
         columnsRef={columnsRef}
+        defaultSort={defaultSort}
+        rowClickable={rowClickable}
+        onDataChange={onDataChange}
         loading={loading}
         setLoading={setLoading}
         data={data}

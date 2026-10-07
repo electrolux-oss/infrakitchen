@@ -18,7 +18,15 @@ export const StringTagEditor = ({
     freeSolo
     options={[]}
     value={value}
-    onChange={(_event, newValue) => onChange(newValue as string[])}
+    onChange={(_event, newValue) =>
+      // Trim whitespace, drop empties, and prevent duplicates.
+      onChange(
+        (newValue as string[])
+          .map((v) => v.trim())
+          .filter((v, index, arr) => v.length > 0 && arr.indexOf(v) === index),
+      )
+    }
+    size="small"
     renderValue={(items: readonly string[], getTagProps) =>
       items.map((option: string, index: number) => {
         const { key, ...rest } = getTagProps({ index });
@@ -28,10 +36,10 @@ export const StringTagEditor = ({
     renderInput={(params) => (
       <TextField
         {...params}
-        label={label}
+        aria-label={label}
+        placeholder="Add a label..."
         helperText={helperText}
         fullWidth
-        margin="normal"
       />
     )}
   />

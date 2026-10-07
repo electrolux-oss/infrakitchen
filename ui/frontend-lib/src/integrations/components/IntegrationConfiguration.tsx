@@ -1,12 +1,13 @@
 import { Box } from "@mui/material";
 
 import { formatLabel } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import {
   CommonField,
   getProviderValue,
-} from "../../common/components/CommonField";
-import { OverviewCard } from "../../common/components/OverviewCard";
+} from "../../common/components/fields/CommonField";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlIntegration } from "../graphql";
 
 import { IntegrationConfigurationEditor } from "./IntegrationConfigurationEditor";
@@ -36,7 +37,7 @@ export const IntegrationConfiguration = ({
       "workload_identity_federation_oidc";
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <CommonField
         name={"Integration Provider"}
         value={
@@ -60,7 +61,7 @@ export const IntegrationConfiguration = ({
             <Box
               sx={{
                 color: "text.secondary",
-                fontFamily: "monospace",
+                fontFamily: CODE_FONT_FAMILY,
                 overflowWrap: "anywhere",
                 wordBreak: "break-word",
               }}
@@ -82,6 +83,6 @@ export const IntegrationConfiguration = ({
         integration={integration}
         canEdit={canEdit}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

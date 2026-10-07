@@ -1,22 +1,21 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
-import { TextField } from "@mui/material";
-
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { ScheduleEntityActionDialog } from "../../common/components/dialogs/ScheduleEntityActionDialog";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
-import { Labels } from "../../common/components/Labels";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+} from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { ScheduledApplyValue } from "../../common/components/fields/ScheduledApplyValue";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { usePendingScheduledAction } from "../../common/hooks/usePendingScheduledAction";
 import StatusChip from "../../common/StatusChip";
-import { sameStringSet } from "../../common/utils";
 import {
   ExecutorUpdateFieldInput,
   EXECUTOR_UPDATE_MUTATION,
@@ -32,7 +31,9 @@ export interface ExecutorAboutProps {
 export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity, userEntityPermissions } = useEntityProvider();
+  const { pendingScheduledAction } = usePendingScheduledAction();
   const canEdit = userEntityPermissions.includes("admin");
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
@@ -50,11 +51,9 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
     },
     [ikApi, executor.id, refreshEntity],
   );
-
   return (
     <OverviewCard
       name={executor.name}
-      description={executor.description || "No description"}
       actions={
         <FavoriteButton
           componentId={String(executor.id)}
@@ -68,25 +67,18 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
         name={"State"}
         value={<StatusChip status={executor.status} state={executor.state} />}
       />
-      <CommonEditableField<string>
-        name={"Description"}
+      {pendingScheduledAction && (
+        <CommonField
+          name={"Next Scheduled Apply"}
+          value={
+            <ScheduledApplyValue scheduledAction={pendingScheduledAction} />
+          }
+        />
+      )}
+      <EditableDescriptionField
+        value={executor.description}
         canEdit={canEdit}
-        value={executor.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{executor.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
       />
       <CommonField
         name={"Code Repository"}
@@ -97,34 +89,28 @@ export const ExecutorOverview = ({ executor }: ExecutorAboutProps) => {
         }
       />
       <SourceCodeConfigEditor executor={executor} canEdit={canEdit} />
-
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={executor.createdAt} user={executor.creator} />
-        }
+        value={<RelativeTime date={executor.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}
         value={<RelativeTime date={executor.updatedAt} />}
-      />
-      <CommonEditableField<string[]>
-        name={"Labels"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
         value={executor.labels || []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
-        display={<Labels labels={executor.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
+      />
+      <ScheduleEntityActionDialog
+        open={isScheduleDialogOpen}
+        entityId={String(executor.id)}
+        entityType="executor"
+        scheduledAction={pendingScheduledAction}
+        onClose={() => setIsScheduleDialogOpen(false)}
+        onChanged={() => {
+          refreshEntity?.();
+        }}
       />
     </OverviewCard>
   );

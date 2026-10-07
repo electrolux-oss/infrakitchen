@@ -15,6 +15,7 @@ from core.constants.model import ModelStatus
 @pytest.fixture
 def mock_workspace_crud():
     crud = Mock(spec=WorkspaceCRUD)
+    crud.session = Mock()
     crud.get_by_id = AsyncMock()
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()
@@ -22,6 +23,7 @@ def mock_workspace_crud():
     crud.update = AsyncMock()
     crud.patch = AsyncMock()
     crud.delete = AsyncMock()
+    crud.refresh = AsyncMock()
     crud.get_dependencies = AsyncMock()
     return crud
 
@@ -50,10 +52,10 @@ def workspace_response(mocked_user_response, mocked_integration_response):
     config = WorkspaceMeta(
         default_branch="main",
         name="Test-Workspace",
-        url=HttpUrl("http://example.com"),
+        web_url=HttpUrl("http://example.com"),
         description="Test description",
-        ssh_url="git://example.com",
-        https_url=HttpUrl("http://example.com/test-workspace"),
+        ssh_clone_url="git://example.com",
+        https_clone_url=HttpUrl("http://example.com/test-workspace"),
         organization="test-org",
     )
     return WorkspaceResponse(
@@ -76,9 +78,9 @@ def workspace(mocked_user, mocked_integration):
         configuration={
             "default_branch": "main",
             "name": "Test-Workspace",
-            "url": "http://example.com",
-            "ssh_url": "git://example.com",
-            "https_url": "http://example.com/test-workspace",
+            "web_url": "http://example.com",
+            "ssh_clone_url": "git://example.com",
+            "https_clone_url": "http://example.com/test-workspace",
             "organization": "test-org",
         },
         description="Test description",

@@ -2,10 +2,11 @@ import React, { useCallback } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Card, CardContent, Stack, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { Entity } from "../../common/components/entities/Entity";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import StatusChip from "../../common/StatusChip";
 import { FavoriteResource } from "../types";
 
@@ -27,70 +28,79 @@ export const FavoriteResourceItem = ({
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.metaKey || e.ctrlKey || e.button === 1) return;
+      // The entity name renders as its own link (via the shared Entity
+      // component) — let it handle navigation instead of double-navigating.
+      if ((e.target as Element).closest("a")) return;
       e.preventDefault();
       navigate(href);
     },
     [navigate, href],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        navigate(href);
+      }
+    },
+    [navigate, href],
+  );
+
   return (
-    <Card
-      component="a"
-      href={href}
+    <Box
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        px: 2,
+        py: 1.25,
         cursor: "pointer",
-        textDecoration: "none",
-        display: "block",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        transition: "background-color 120ms ease-in-out",
+        outline: "none",
         "&:hover": {
-          borderColor: "text.disabled",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          backgroundColor: "action.hover",
         },
-        transition: "all 0.1s ease-in-out",
+        "&:focus-visible": {
+          boxShadow: "0 0 0 2px",
+        },
+        "&:last-child": {
+          borderBottom: "none",
+        },
       }}
     >
-      <CardContent sx={{ py: 1.5, "&:last-child": { pb: 1.5 } }}>
-        <Stack
-          direction="row"
-          spacing={1.5}
-          sx={{
-            alignItems: "center",
+      <Box
+        title={resource.name}
+        sx={{ flex: 1, minWidth: 0, overflow: "hidden", whiteSpace: "nowrap" }}
+      >
+        <Entity
+          entity={{
+            id: resource.id,
+            name: resource.name,
+            entityType: resource.entityName ?? resource._component_type,
+            template: resource.template,
           }}
-        >
-          <Typography
-            variant="body2"
-            title={resource.name}
-            sx={{
-              fontWeight: 600,
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            {resource.name}
-          </Typography>
-          {resource.updatedAt && (
-            <Typography
-              variant="caption"
-              sx={{
-                color: "text.disabled",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <RelativeTime
-                date={resource.updatedAt}
-                sx={{ fontSize: "0.75rem", display: "flex" }}
-              />
-            </Typography>
-          )}
-          {(resource.status || resource.state) && (
-            <StatusChip
-              status={resource.status ?? ""}
-              state={resource.state}
-              compact
-            />
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
+          showLabel
+        />
+      </Box>
+      {resource.updatedAt && (
+        <Typography color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
+          <RelativeTime date={resource.updatedAt} sx={{ display: "flex" }} />
+        </Typography>
+      )}
+      {(resource.status || resource.state) && (
+        <StatusChip
+          status={resource.status ?? ""}
+          state={resource.state}
+          compact
+        />
+      )}
+    </Box>
   );
 };

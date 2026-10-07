@@ -3,21 +3,18 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityResources } from "../../resources/components/EntityResources";
 
 import { WorkspaceConfiguration } from "./WorkspaceConfiguration";
 import { WorkspaceOverview } from "./WorkspaceOverview";
 import { WorkspacePermissions } from "./WorkspacePermissions";
-import { WorkspacePullRequests } from "./WorkspacePullRequests";
-import { WorkspaceRepository } from "./WorkspaceRepository";
-
-const METADATA_PROVIDERS = ["github", "bitbucket", "azure_devops"];
 
 export const WorkspaceContent = () => {
   const { entity } = useEntityProvider();
@@ -27,8 +24,6 @@ export const WorkspaceContent = () => {
   );
   if (!entity) return null;
 
-  const hasMetadata = METADATA_PROVIDERS.includes(entity.workspaceProvider);
-
   const tabs: TabDefinition[] = [
     {
       label: "Configuration",
@@ -36,7 +31,9 @@ export const WorkspaceContent = () => {
     },
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -44,18 +41,6 @@ export const WorkspaceContent = () => {
         />
       ),
     },
-    ...(hasMetadata
-      ? [
-          {
-            label: "Repository",
-            content: <WorkspaceRepository workspace={entity} />,
-          },
-          {
-            label: "Pull Requests",
-            content: <WorkspacePullRequests workspace={entity} />,
-          },
-        ]
-      : []),
     {
       label: "Audit",
       content: <Audit entityId={entity.id} />,

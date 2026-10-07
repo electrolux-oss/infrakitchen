@@ -1,11 +1,17 @@
 import os
+import tempfile
 from typing import Any
+
 from dotenv import load_dotenv
 from pydantic import computed_field
 from pydantic_settings import BaseSettings
 from sqlalchemy import URL
 
+from build_info import load_build_info
 from core.singleton_meta import SingletonMeta
+
+
+BUILD_INFO = load_build_info()
 
 
 def setup_service_environment():
@@ -28,7 +34,6 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "dev_user"
     POSTGRES_PASSWORD: str = "password"
     POSTGRES_DB: str = "infrakitchen"
-    BROKER_URL: str = "amqp://guest:guest@localhost/"
     LOG_LEVEL: str = "INFO"
     DATABASE_DRIVER: str = "asyncpg"
     CACHE_DISABLED: str = "false"
@@ -40,6 +45,16 @@ class Settings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318/v1/metrics"
     OTEL_EXPORTER_OTLP_PROTOCOL: str = "http/protobuf"
     OTEL_RESOURCE_ATTRIBUTES: str = ""
+    # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
+    TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
+    # Task queue / worker settings
+    WORKER_POLL_INTERVAL: float = 5.0  # seconds between polls when no task notification arrives
+    WORKER_LEASE_SECONDS: int = 90  # how long a claimed task stays owned without a heartbeat
+    WORKER_HEARTBEAT_SECONDS: int = 30  # how often a worker extends its lease and reports itself alive
+    TASK_QUEUE_RETENTION_DAYS: int = 14  # finished queue rows older than this are purged
+    TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
+    NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
+    NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
 
     class ConfigDict:
         env_file = ".env"
@@ -58,6 +73,12 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     approval_flow: bool = True
     demo_mode: bool = False
     websocket: bool = True
+    services: bool = False
+    server_version: str = BUILD_INFO["version"]
+    git_commit: str = BUILD_INFO["git_commit"]
+    git_commit_short: str = BUILD_INFO["git_commit_short"]
+    repository: str = BUILD_INFO["repository"]
+    repository_url: str = BUILD_INFO["repository_url"]
 
     def __setattr__(self, name: str, value: Any, /) -> None:
         if not hasattr(self, name):
@@ -70,7 +91,11 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             f"  approval_flow={self.approval_flow}, "
             f"  demo_mode={self.demo_mode}, "
             f"  websocket={self.websocket}, "
-            ")"
+            f"  services={self.services}, "
+            f"  server_version={self.server_version}, "
+            f"  git_commit={self.git_commit}, "
+            f"  repository_url={self.repository_url}, "
+            f")"
         )
 
     def __str__(self) -> str:
@@ -81,4 +106,9 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
             "approval_flow": self.approval_flow,
             "demo_mode": self.demo_mode,
             "websocket": self.websocket,
+            "server_version": self.server_version,
+            "git_commit": self.git_commit,
+            "git_commit_short": self.git_commit_short,
+            "repository": self.repository,
+            "repository_url": self.repository_url,
         }

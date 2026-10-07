@@ -7,11 +7,23 @@ from .fixtures.test_auth_provider_fixtures import (
     auth_provider,
 )
 from .fixtures.test_casbin_fixtures import mock_casbin
+from .fixtures.test_tool_fixtures import (
+    mock_tool_crud,
+    mock_tool_service,
+    tool_service,
+    mocked_tool,
+)
 from .fixtures.test_project_fixtures import (
     mock_project_crud,
     mock_project_service,
     project_response,
     mocked_project,
+)
+from .fixtures.test_service_fixtures import (
+    mock_service_crud,
+    mock_service_service,
+    service_response,
+    mocked_service,
 )
 from .fixtures.test_template_fixtures import (
     mock_template_crud,
@@ -25,7 +37,6 @@ from .fixtures.test_handlers_fixtures import (
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
-    mock_task_handler,
 )
 from .fixtures.test_entity_tasks_fixtures import mock_task_entity_crud, mock_task_entity_service
 from .fixtures.test_executor_fixtures import (
@@ -152,7 +163,6 @@ from .fixtures.test_tools_fixtures import mock_stream_subprocess
 __all__ = [
     "mock_template_crud",
     "mock_revision_handler",
-    "mock_task_handler",
     "mock_event_sender",
     "mock_audit_log_handler",
     "mock_template_service",
@@ -214,6 +224,10 @@ __all__ = [
     "mock_project_service",
     "project_response",
     "mocked_project",
+    "mock_service_crud",
+    "mock_service_service",
+    "service_response",
+    "mocked_service",
     "mock_permission_crud",
     "mock_permission_service",
     "mocked_permission_response",
@@ -264,4 +278,8 @@ __all__ = [
     "mock_blueprint_service",
     "mocked_blueprint",
     "blueprint_response",
+    "mock_tool_crud",
+    "mock_tool_service",
+    "tool_service",
+    "mocked_tool",
 ]

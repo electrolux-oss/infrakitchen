@@ -1,9 +1,3 @@
-import React from "react";
-
-import BlockIcon from "@mui/icons-material/Block";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import PendingIcon from "@mui/icons-material/Pending";
-import UpdateIcon from "@mui/icons-material/Update";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Chip, Tooltip } from "@mui/material";
 import { SxProps, Theme } from "@mui/system";
@@ -11,6 +5,16 @@ import { SxProps, Theme } from "@mui/system";
 import { VERSION_LIFECYCLE_STATE } from "../utils/constants";
 
 import { MuiChipColor } from "./utils";
+import { resolveChipColor, solidChipColorSx } from "./utils/softChip";
+
+const VERSION_LIFECYCLE_STATE_COLORS: Partial<
+  Record<VERSION_LIFECYCLE_STATE, MuiChipColor>
+> = {
+  [VERSION_LIFECYCLE_STATE.ACTIVE]: "success",
+  [VERSION_LIFECYCLE_STATE.PREVIEW]: "info",
+  [VERSION_LIFECYCLE_STATE.DEPRECATED]: "warning",
+  [VERSION_LIFECYCLE_STATE.ARCHIVED]: "error",
+};
 
 export const getVersionLifecycleStateColor = (
   lifecycleStateValue: string | undefined,
@@ -18,50 +22,82 @@ export const getVersionLifecycleStateColor = (
   const lifecycleState = lifecycleStateValue?.toLocaleLowerCase() as
     VERSION_LIFECYCLE_STATE | undefined;
 
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.ACTIVE) return "success";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.PREVIEW) return "info";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.DEPRECATED) return "warning";
-
-  if (lifecycleState === VERSION_LIFECYCLE_STATE.ARCHIVED) return "error";
-
-  return "default";
+  return lifecycleState
+    ? (VERSION_LIFECYCLE_STATE_COLORS[lifecycleState] ?? "default")
+    : "default";
 };
 
 interface VersionLifecycleStateChipProps {
   lifecycleState: VERSION_LIFECYCLE_STATE | string;
   sx?: SxProps<Theme>;
   breakingChanges?: string;
+  /**
+   * `chip` is the full labelled pill; `dot` is a small colored dot with the
+   * state in a tooltip, for dense contexts like grid rows.
+   */
+  variant?: "chip" | "dot";
+  /**
+   * Suppress the built-in breaking-changes warning icon so the caller can
+   * position it separately (e.g. trailing the entity name in dot layouts).
+   */
+  hideBreakingChangesWarning?: boolean;
 }
-
-const iconMap: Record<string, React.ComponentType<any>> = {
-  [VERSION_LIFECYCLE_STATE.ACTIVE]: CheckCircleIcon,
-  [VERSION_LIFECYCLE_STATE.PREVIEW]: UpdateIcon,
-  [VERSION_LIFECYCLE_STATE.DEPRECATED]: BlockIcon,
-  [VERSION_LIFECYCLE_STATE.UNKNOWN]: PendingIcon,
-};
 
 const VersionLifecycleStateChip = ({
   lifecycleState,
   sx,
   breakingChanges,
+  variant = "chip",
+  hideBreakingChangesWarning = false,
 }: VersionLifecycleStateChipProps) => {
   const normalizedState =
     lifecycleState?.toLowerCase() || VERSION_LIFECYCLE_STATE.UNKNOWN;
-  const IconComponent = iconMap[normalizedState] || PendingIcon;
   const color = getVersionLifecycleStateColor(normalizedState);
-  const hasBreakingChanges = Boolean(breakingChanges?.trim());
+  const hasBreakingChanges =
+    !hideBreakingChangesWarning && Boolean(breakingChanges?.trim());
+
+  if (variant === "dot") {
+    return (
+      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+        <Tooltip
+          title={
+            hasBreakingChanges
+              ? `${normalizedState} — ${breakingChanges}`
+              : normalizedState
+          }
+        >
+          <Box
+            component="span"
+            aria-label={normalizedState}
+            sx={(theme) => ({
+              width: 10,
+              height: 10,
+              flexShrink: 0,
+              borderRadius: "50%",
+              bgcolor: resolveChipColor(color, theme),
+              ...(sx as object),
+            })}
+          />
+        </Tooltip>
+        {hasBreakingChanges ? (
+          <Tooltip title={breakingChanges}>
+            <WarningAmberIcon color="warning" fontSize="small" />
+          </Tooltip>
+        ) : null}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
       <Chip
-        icon={<IconComponent fontSize="small" />}
         label={normalizedState}
-        size="small"
-        color={color}
-        variant="outlined"
-        sx={{ textTransform: "uppercase", fontWeight: 500, ...(sx as object) }}
+        sx={(theme) => ({
+          ...solidChipColorSx(color)(theme),
+          textTransform: "uppercase",
+          fontWeight: 500,
+          ...(sx as object),
+        })}
       />
       {hasBreakingChanges ? (
         <Tooltip title={breakingChanges}>

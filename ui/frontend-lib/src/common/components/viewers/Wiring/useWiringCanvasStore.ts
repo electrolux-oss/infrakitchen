@@ -11,7 +11,7 @@ import { create } from "zustand";
 
 import { ENTITY_STATUS } from "../../../../utils";
 
-import { DiagramNode } from "./helpers";
+import { DiagramNode, NODE_ACCENT } from "./helpers";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import { TemplatePorts } from "./WiringCanvas.types";
 
@@ -174,6 +174,7 @@ export function buildEdges(params: {
   externalTemplates: Array<{ id: string; name: string }>;
   constants: Array<{ id: string; name: string }>;
   theme: Theme;
+  mode?: "light" | "dark";
   stepByTemplate?: Map<string, GenericStep>;
 }): Edge[] {
   const {
@@ -182,8 +183,13 @@ export function buildEdges(params: {
     externalTemplates,
     constants,
     theme,
+    mode,
     stepByTemplate,
   } = params;
+
+  // See `useCanvasPalette` — `theme.palette` is light-only under cssVariables.
+  const palette = (theme.vars ?? theme).palette;
+  const accent = mode === "dark" ? NODE_ACCENT.dark : NODE_ACCENT.light;
 
   return wiring
     .map((w, i) => {
@@ -209,17 +215,18 @@ export function buildEdges(params: {
 
       // Step-based coloring (workflow mode) or wire-type coloring
       const sourceStep = stepByTemplate?.get(w.source_template_id);
+      // `primary`/`info` are monochrome here, so those wires use the accent.
       const strokeColor = sourceStep
         ? sourceStep.status === "done"
-          ? theme.palette.success.main
+          ? palette.success.main
           : sourceStep.status === "error"
-            ? theme.palette.error.main
+            ? palette.error.main
             : sourceStep.status === "in_progress"
-              ? theme.palette.info.main
-              : theme.palette.grey[500]
+              ? accent
+              : palette.grey[500]
         : isConstantWire
-          ? theme.palette.secondary.main
-          : theme.palette.primary.main;
+          ? palette.secondary.main
+          : accent;
 
       const animated = stepByTemplate
         ? sourceStep?.status === "in_progress" || sourceStep?.status === "done"
@@ -250,7 +257,7 @@ export function buildEdges(params: {
         },
         markerEnd: { type: MarkerType.ArrowClosed, color: strokeColor },
         label: `${displaySourceName} -> ${w.target_variable}`,
-        labelStyle: { fontSize: 11, fill: theme.palette.text.secondary },
+        labelStyle: { fontSize: 11, fill: palette.text.secondary },
         interactionWidth: 20,
       } as Edge;
     })

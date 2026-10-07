@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +14,12 @@ class AuditLogHandler:
         self.audit_log_id: UUID | None = None
 
     async def create_log(
-        self, entity_id: str | UUID, requester_id: str | UUID, action: str, revision_number: int | None = None
+        self,
+        entity_id: str | UUID,
+        requester_id: str | UUID,
+        action: str,
+        revision_number: int | None = None,
+        action_metadata: dict[str, Any] | None = None,
     ) -> None:
         audit_log = AuditLog(
             model=self.entity_name,
@@ -21,6 +27,7 @@ class AuditLogHandler:
             action=action,
             entity_id=entity_id,
             revision_number=revision_number,
+            action_metadata=action_metadata,
         )
         self.session.add(audit_log)
         await self.session.flush()

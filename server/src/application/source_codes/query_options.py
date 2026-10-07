@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import joinedload, raiseload
 
 from application.integrations.query_options import build_integration_query_options
 from application.source_codes.model import SourceCode
@@ -27,12 +27,12 @@ def build_source_code_query_options(fields: FieldSpec | None = None) -> list[Any
         nested = fields["integration"]
         opts.append(joinedload(SourceCode.integration).options(*build_integration_query_options(nested)))
     else:
-        opts.append(noload(SourceCode.integration))
+        opts.append(raiseload(SourceCode.integration))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(SourceCode.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(SourceCode.creator))
+        opts.append(raiseload(SourceCode.creator))
 
     return opts

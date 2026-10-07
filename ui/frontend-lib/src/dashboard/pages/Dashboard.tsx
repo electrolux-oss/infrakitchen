@@ -1,7 +1,6 @@
-import { useState } from "react";
-
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import { Box, Typography, IconButton, Tooltip } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import PageContainer from "../../common/PageContainer";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
@@ -14,57 +13,23 @@ export const DashboardPage = () => {
   const {
     favorites,
     activities,
+    activitiesTotal,
+    loadingMore,
     goldenStateReport,
     hasResources,
     loading,
+    refreshing,
     refetch,
+    loadMoreActivities,
   } = useDashboardData();
-
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    if (!refreshing) {
-      setRefreshing(true);
-      try {
-        await refetch();
-      } finally {
-        setRefreshing(false);
-      }
-    }
-  };
 
   if (!loading && !hasResources) {
     return (
-      <PageContainer>
-        <Box
-          sx={{
-            mb: 4,
-            width: "100%",
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h4"
-              component="h1"
-              color="primary"
-              gutterBottom
-            >
-              Welcome to InfraKitchen
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: "text.secondary",
-                mb: 6,
-              }}
-            >
-              Streamline your infrastructure management with our powerful
-              platform for composing, deploying, and managing infrastructure as
-              code.
-            </Typography>
-          </Box>
-          <GettingStartedContent />
-        </Box>
+      <PageContainer
+        title="Welcome"
+        description="Let's get your platform set up. Complete the steps below to start managing your infrastructure and services."
+      >
+        <GettingStartedContent />
       </PageContainer>
     );
   }
@@ -74,32 +39,35 @@ export const DashboardPage = () => {
       title={
         <>
           <Typography
-            variant="h4"
-            component="span"
+            variant="h5"
+            component="h1"
             color="primary"
-            sx={{
-              fontWeight: 600,
-            }}
+            sx={{ fontWeight: 600 }}
           >
-            Welcome to InfraKitchen
+            Dashboard
           </Typography>
         </>
       }
-      description="Here's what's happening with your infrastructure"
+      description="A quick overview of your infrastructure and recent activities"
       actions={
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={
-            refreshing ? <CircularProgress size={16} /> : <RefreshIcon />
-          }
-          onClick={handleRefresh}
-          disabled={refreshing || loading}
-        >
-          Refresh
-        </Button>
+        <Tooltip title="Refresh">
+          <IconButton
+            size="small"
+            sx={{ p: 0.75 }}
+            aria-label="Refresh"
+            onClick={() => void refetch()}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <CircularProgress size={16} />
+            ) : (
+              <RefreshIcon fontSize="small" />
+            )}
+          </IconButton>
+        </Tooltip>
       }
     >
+      {" "}
       <Box sx={{ width: "100%", mb: 3 }}>
         <GoldenStateWidget
           goldenStateReport={goldenStateReport}
@@ -110,7 +78,11 @@ export const DashboardPage = () => {
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: "minmax(300px, 30%) 1fr",
+          // Stack the widgets on small screens; side by side from md up.
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            md: "minmax(300px, 30%) minmax(0, 1fr)",
+          },
           gap: 3,
           alignItems: "start",
           width: "100%",
@@ -120,7 +92,10 @@ export const DashboardPage = () => {
         <RecentActivityWidget
           activities={activities}
           loading={loading}
+          loadingMore={loadingMore}
           hasFavorites={favorites.length > 0}
+          total={activitiesTotal}
+          onLoadMore={loadMoreActivities}
         />
       </Box>
     </PageContainer>

@@ -9,6 +9,7 @@ import { SECRET_SHORT_FIELDS } from "../../secrets/graphql";
 import { SCV_SHORT_FIELDS } from "../../source_code_versions/graphql";
 import { STORAGE_SHORT_FIELDS } from "../../storages/graphql";
 import { TEMPLATE_SHORT_FIELDS } from "../../templates/graphql";
+import { TOOL_SHORT_FIELDS } from "../../tools/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 import { WORKSPACE_SHORT_FIELDS } from "../../workspaces/graphql";
 
@@ -39,7 +40,10 @@ export const RESOURCE_GRAPHQL_FIELDS = {
     integrationIds: "integrationIds",
     secretIds: "secretIds",
     storage: "storage",
+    tool: "tool",
     creator: "creator",
+    tempState: "tempState",
+    scheduledActions: "scheduledActions",
     parents: "parents",
     children: "children",
     workspace: "workspace",
@@ -61,6 +65,29 @@ export const RESOURCE_SHORT_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.template, TEMPLATE_SHORT_FIELDS)}
 `;
 
+export const RESOURCE_TEMP_STATE_FIELDS = `
+  id
+  resourceId
+  value
+  createdAt
+  updatedAt
+`;
+
+export const RESOURCE_SCHEDULED_ACTION_FIELDS = `
+  id
+  entityId
+  entity
+  action
+  runAt
+  cron
+  timezone
+  status
+  error
+  createdAt
+  updatedAt
+  entityData
+`;
+
 export const RESOURCE_DETAIL_FIELDS = `
   ${buildSelection(RESOURCE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
@@ -69,18 +96,13 @@ export const RESOURCE_DETAIL_FIELDS = `
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.integrationIds, INTEGRATION_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.secretIds, SECRET_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.storage, STORAGE_SHORT_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tool, TOOL_SHORT_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.tempState, RESOURCE_TEMP_STATE_FIELDS)}
+  ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.scheduledActions, RESOURCE_SCHEDULED_ACTION_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.parents, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.children, RESOURCE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.workspace, WORKSPACE_SHORT_FIELDS)}
   ${buildNestedSelection(RESOURCE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
-`;
-
-export const RESOURCE_TEMP_STATE_FIELDS = `
-  id
-  resourceId
-  value
-  createdAt
-  updatedAt
 `;
 
 /** Maps snake_case table column fields to their GraphQL selection strings. */
@@ -108,6 +130,10 @@ export const RESOURCE_FIELD_MAP: GraphqlFieldMap = {
   storage: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.storage,
     STORAGE_SHORT_FIELDS,
+  ),
+  tool: buildNestedSelection(
+    RESOURCE_GRAPHQL_FIELDS.relations.tool,
+    TOOL_SHORT_FIELDS,
   ),
   workspace: buildNestedSelection(
     RESOURCE_GRAPHQL_FIELDS.relations.workspace,

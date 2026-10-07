@@ -12,8 +12,8 @@ import { useNavigate } from "react-router";
 import { Box, TextField, Button, MenuItem } from "@mui/material";
 
 import { LabelInput } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -80,18 +80,10 @@ const StorageCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Storage"
-      onBack={handleBack}
-      backAriaLabel="Back to storages"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>

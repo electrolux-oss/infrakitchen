@@ -1,18 +1,21 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
+import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { GoldenStateWidget } from "../../golden_state/GoldenStateWidget";
 import { DependencyConfiguration } from "../../resources/components/DependencyConfiguration";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { ProjectServices } from "../../services/components/ProjectServices";
 import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
 
 import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
@@ -20,14 +23,10 @@ import { ProjectOverview } from "./ProjectOverview";
 import { ProjectPermissions } from "./ProjectPermissions";
 import { ProjectSettings } from "./ProjectSettings";
 
-interface ProjectContentProps {
-  subscribersRefreshKey?: number;
-}
-
-export const ProjectContent = ({
-  subscribersRefreshKey = 0,
-}: ProjectContentProps) => {
+export const ProjectContent = () => {
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
+  const { globalConfig } = useConfig();
 
   const fixedFilters = useMemo(
     () => ({ project_id: [entity?.id] }),
@@ -48,9 +47,25 @@ export const ProjectContent = ({
         />
       ),
     },
+    ...(globalConfig?.services
+      ? [
+          {
+            label: "Services",
+            tabLabel: (
+              <TabCountLabel
+                label="Services"
+                count={entity.servicesCount ?? 0}
+              />
+            ),
+            content: <ProjectServices projectId={entity.id} />,
+          },
+        ]
+      : []),
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -112,7 +127,12 @@ export const ProjectContent = ({
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
-      <ProjectOverview project={entity} />
+      <ProjectOverview
+        project={entity}
+        onSubscriptionChange={() =>
+          setSubscribersRefreshKey((currentKey) => currentKey + 1)
+        }
+      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}

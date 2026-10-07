@@ -17,26 +17,53 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
-import { serverSearchReference } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
+import {
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { buildAdvancedApiFilters } from "../../common/components/filter_panel/buildAdvancedApiFilters";
 import { FilterProvider } from "../../common/components/filter_panel/FilterContext";
 import { FilterPanel } from "../../common/components/filter_panel/FilterPanel";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useLocalStorage } from "../../common/context/UIStateContext";
 import { buildGraphqlFields } from "../../common/graphql/buildGraphqlFields";
 import { notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
 import { executorColumns as filterableExecutorColumns } from "../../executors/components/executorTableConfig";
 import { EXECUTOR_FIELD_MAP } from "../../executors/graphql";
 import { resourceColumns as filterableResourceColumns } from "../../resources/components/resourceTableConfig";
 import { RESOURCE_FIELD_MAP } from "../../resources/graphql";
 import { IkEntity } from "../../types";
-import { VERSION_LIFECYCLE_STATE } from "../../utils";
 import { BatchOperationCreate } from "../types";
+
+// State + Created columns are identical across the resource and executor
+// selection grids; defined once so they can't drift apart.
+const selectionStateColumn: EntityTableColumn = {
+  field: "state",
+  headerName: "State",
+  flex: 1,
+  valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
+  renderCell: (params: GridRenderCellParams) => (
+    <StatusChip
+      status={String(params.row.status).toLowerCase()}
+      state={String(params.row.state).toLowerCase()}
+    />
+  ),
+};
+
+const selectionCreatedAtColumn: EntityTableColumn = {
+  field: "createdAt",
+  headerName: "Created",
+  width: RELATIVE_TIME_COLUMN_WIDTH,
+  renderCell: (params: GridRenderCellParams) => (
+    <RelativeTime date={params.value} sx={{ display: "flex" }} />
+  ),
+};
 
 export interface BatchOperationEntitySelectorProps {
   control: Control<BatchOperationCreate>;
@@ -79,7 +106,7 @@ export const BatchOperationEntitySelector = (
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -89,7 +116,7 @@ export const BatchOperationEntitySelector = (
         valueGetter: (value: any) => value?.name || "",
         renderCell: (params: GridRenderCellParams) => {
           const template = params.row.template;
-          return <GetEntityLink {...template} />;
+          return <Entity entity={template} />;
         },
       },
       {
@@ -106,36 +133,6 @@ export const BatchOperationEntitySelector = (
           "sourceCodeVersion.id",
         ],
         sortField: "source_code_version.source_code_version",
-        filter: [
-          {
-            field: "source_code_version_id",
-            label: "Version",
-            operators: ["eq", "in"],
-            valueType: "reference",
-            defaultOperator: "eq",
-            makeReferenceLoader: serverSearchReference({
-              entityPlural: "sourceCodeVersions",
-              labelField: "identifier",
-            }),
-          },
-          {
-            field: "source_code_version__lifecycle_state",
-            label: "Version Lifecycle State",
-            operators: ["eq", "in"],
-            valueType: "select",
-            defaultOperator: "eq",
-            selectOptions: [
-              { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
-              { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
-              { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
-              {
-                label: "Deprecated",
-                value: VERSION_LIFECYCLE_STATE.DEPRECATED,
-              },
-              { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
-            ],
-          },
-        ],
         valueGetter: (_value: any, row: any) => {
           const scv = row.sourceCodeVersion;
           if (!scv) return "";
@@ -144,56 +141,12 @@ export const BatchOperationEntitySelector = (
         renderCell: (params: GridRenderCellParams) => {
           const scv = params.row.sourceCodeVersion;
           if (!scv) return null;
-          const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-          const color = getVersionLifecycleStateColor(scv.lifecycleState);
-          const textColor =
-            color === "success"
-              ? "success.main"
-              : color === "info"
-                ? "info.main"
-                : color === "warning"
-                  ? "warning.main"
-                  : color === "error"
-                    ? "error.main"
-                    : "text.primary";
-
-          return (
-            <GetEntityLink
-              {...scv}
-              name={ref}
-              sx={{
-                color: textColor,
-                fontWeight: color === "warning" ? 600 : 500,
-                textDecorationColor: textColor,
-              }}
-            />
-          );
+          return <Entity entity={scv} lifecycleVariant="dot" />;
         },
       },
 
-      {
-        field: "state",
-        headerName: "State",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={String(params.row.status).toLowerCase()}
-            state={String(params.row.state).toLowerCase()}
-          />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
+      selectionStateColumn,
+      selectionCreatedAtColumn,
     ],
     [],
   );
@@ -207,42 +160,22 @@ export const BatchOperationEntitySelector = (
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
         field: "sourceCode",
         headerName: "Source Code",
         flex: 1,
-        valueGetter: (value: any, row: any) => row.sourceCode?.identifier || "",
+        valueGetter: (_value: any, row: any) =>
+          row.sourceCode?.identifier || "",
         renderCell: (params: GridRenderCellParams) => {
           const sourceCodeVersion = params.row.sourceCode;
-          return <GetEntityLink {...sourceCodeVersion} />;
+          return <Entity entity={sourceCodeVersion} />;
         },
       },
-      {
-        field: "state",
-        headerName: "State",
-        flex: 1,
-        valueGetter: (_value: any, row: any) => `${row.state}-${row.status}`,
-        renderCell: (params: GridRenderCellParams) => (
-          <StatusChip
-            status={String(params.row.status).toLowerCase()}
-            state={String(params.row.state).toLowerCase()}
-          />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "Created",
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
-        ),
-      },
+      selectionStateColumn,
+      selectionCreatedAtColumn,
     ],
     [],
   );
@@ -409,7 +342,7 @@ export const BatchOperationEntitySelector = (
                 sortingMode="server"
                 checkboxSelection
                 disableRowSelectionOnClick
-                disableColumnFilter
+                {...dataGridDefaultProps}
                 rowSelectionModel={buildRowSelectionModel(
                   Array.isArray(selectedEntityIds) ? selectedEntityIds : [],
                 )}
@@ -448,27 +381,10 @@ export const BatchOperationEntitySelector = (
                 onSortModelChange={setSortModel}
                 pageSizeOptions={[10, 25, 50, 100]}
                 keepNonExistentRowsSelected
-                sx={{
-                  "& .MuiDataGrid-columnHeader": {
-                    "& .MuiDataGrid-columnHeaderTitleContainer": {
-                      justifyContent: "space-between",
-                      flexDirection: "row",
-                    },
-                  },
-                }}
-                slotProps={{
-                  pagination: {
-                    SelectProps: {
-                      inputProps: {
-                        "aria-label": "Rows per page",
-                        "aria-labelledby": "entity-pagination-label",
-                      },
-                      "aria-label": "Rows per page",
-                    },
-                    labelRowsPerPage: "Rows per page:",
-                    labelId: "entity-pagination-label",
-                  },
-                }}
+                sx={{ ...dataGridSx }}
+                slotProps={dataGridPaginationSlotProps(
+                  "entity-pagination-label",
+                )}
               />
             </Box>
           </Box>

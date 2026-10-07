@@ -11,6 +11,7 @@ export const projectColumns: EntityTableColumn[] = [
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
   },
   {

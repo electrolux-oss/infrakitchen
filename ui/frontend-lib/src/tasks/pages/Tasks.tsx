@@ -1,10 +1,6 @@
-import { useMemo } from "react";
-
-import { useNavigate } from "react-router";
-
-import { useConfig } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
+import { TaskQueueButton } from "../components/TaskQueueDialog";
 import {
   taskColumns,
   taskDefaultColumnVisibilityModel,
@@ -12,22 +8,14 @@ import {
 import { TASK_FIELD_MAP } from "../graphql";
 
 export const TasksPage = () => {
-  const { linkPrefix, globalConfig } = useConfig();
-
-  const navigate = useNavigate();
-
-  const columns = useMemo(
-    () =>
-      taskColumns({
-        navigate,
-        linkPrefix,
-        entityOptions: globalConfig.entities,
-      }),
-    [navigate, linkPrefix, globalConfig.entities],
-  );
+  const columns = taskColumns();
 
   return (
-    <PageContainer title="Tasks">
+    <PageContainer
+      title="Tasks"
+      description="Background operations running against your entities, such as plans, applies, and syncs."
+      actions={<TaskQueueButton />}
+    >
       <EntityFetchTable
         title="Tasks"
         entityName="task"
@@ -35,6 +23,8 @@ export const TasksPage = () => {
         entityFieldMap={TASK_FIELD_MAP}
         defaultColumnVisibilityModel={taskDefaultColumnVisibilityModel}
         syncFiltersToUrl
+        // Tasks have no detail page — rows shouldn't navigate (or look clickable).
+        rowClickable={false}
       />
     </PageContainer>
   );

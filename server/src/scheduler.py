@@ -1,33 +1,49 @@
 import asyncio
-import json
 import logging
 from typing import Any
 from uuid import UUID
 
-import aio_pika
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 from application.logger import change_logger
 
+from core.constants.model import ModelState, ModelStatus
 from core.dependencies import get_async_session
-from core.rabbitmq import RabbitMQConnection
+from core.errors import EntityNotFound
+from core.notifications.outbox import NotificationOutboxCRUD
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
+from core.config import Settings
+from core.task_queue.functions import task_queue_service
+from core.tasks.crud import TaskEntityCRUD
+from core.tasks.functions import build_cron_trigger, next_cron_run
+from core.tasks.model import TaskEntity
+from core.users.crud import UserCRUD
+from core.users.service import UserService
 from core.utils.event_sender import EventSender
+from core.utils.event_stream_manager import consume_events
 
-change_logger()
 
 logger = logging.getLogger("scheduler")
 
 # Id of the internal polling job. Excluded when reconciling DB jobs so it is
 # never treated as a stale job and removed.
 POLL_JOB_ID = "poll_new_jobs"
+TASK_QUEUE_CLEANUP_JOB_ID = "task_queue_cleanup"
+INTERNAL_JOB_IDS = {POLL_JOB_ID, TASK_QUEUE_CLEANUP_JOB_ID}
+ENTITY_ACTION_JOB_PREFIX = "entity_action:"
 
 # Serializes reconciliation so the event-driven reload and the periodic poll
 # never mutate the APScheduler job store concurrently.
 _reconcile_lock = asyncio.Lock()
+
+# A recurring occurrence is skipped while the previous run is still in flight or
+# the entity is being destroyed.
+RECURRING_BUSY_STATUSES = {ModelStatus.QUEUED, ModelStatus.IN_PROGRESS, ModelStatus.APPROVAL_PENDING}
+RECURRING_SKIP_STATES = {ModelState.DESTROY, ModelState.DESTROYED}
 
 
 async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender: EventSender):
@@ -35,6 +51,73 @@ async def run_job(job_id: UUID, job_type: JobType, job_script: str, event_sender
     await event_sender.send_scheduler_job(job_id=job_id, job_type=job_type, job_script=job_script)
     await event_sender.flush()
     logger.info(f"Scheduler job {job_id} sent successfully to worker")
+
+
+async def run_entity_action(action_id: UUID, event_sender: EventSender):
+    async with get_async_session() as session:
+        scheduled_action_crud = TaskEntityCRUD(session=session)
+        scheduled_action = await scheduled_action_crud.get_by_id(action_id)
+        if scheduled_action is None:
+            raise EntityNotFound("Scheduled action not found")
+
+        entity_id = scheduled_action.entity_id
+        entity = scheduled_action.entity
+        action = scheduled_action.action.value if scheduled_action.action else "execute"
+        created_by = scheduled_action.created_by
+        skip_reason: str | None = None
+
+        if scheduled_action.cron is None:
+            if scheduled_action.run_at is None or scheduled_action.status != ModelStatus.PENDING:
+                logger.info(f"Skipping scheduled action {action_id}: no longer pending")
+                return
+        else:
+            if scheduled_action.status in RECURRING_BUSY_STATUSES:
+                skip_reason = f"previous run is {scheduled_action.status}"
+            elif scheduled_action.state in RECURRING_SKIP_STATES:
+                skip_reason = f"{entity} state is {scheduled_action.state}"
+
+            # Advance the next run time shown in the UI regardless of whether this occurrence runs.
+            await scheduled_action_crud.update(
+                scheduled_action,
+                {"run_at": next_cron_run(scheduled_action.cron, scheduled_action.timezone)},
+            )
+            await session.commit()
+
+        if skip_reason is not None:
+            logger.info(f"Skipping recurring action {action_id} for {entity} {entity_id}: {skip_reason}")
+            return
+
+        user_service = UserService(crud=UserCRUD(session=session))
+        user = await user_service.get_dto_by_id(created_by)
+        if user is None:
+            raise EntityNotFound(f"User {created_by} not found")
+
+    logger.info(f"Sending scheduled action {action_id} for {entity} {entity_id} to worker")
+    await event_sender.send_task(
+        entity_id=entity_id,
+        requester=user,
+        action=action,
+        extra_metadata={"entity_controller": entity},
+        # Scheduled runs start on time; they can be cancelled from the schedule instead
+        delay_seconds=0,
+    )
+    await event_sender.flush()
+    logger.info(f"Scheduled action {action_id} sent successfully to worker")
+
+
+def _entity_action_trigger(scheduled_action: TaskEntity) -> CronTrigger | DateTrigger:
+    if scheduled_action.cron is not None:
+        return build_cron_trigger(scheduled_action.cron, scheduled_action.timezone)
+    return DateTrigger(run_date=scheduled_action.run_at)
+
+
+def _entity_action_signature(scheduled_action: TaskEntity) -> str:
+    """Job name encoding everything that defines the trigger, so a reconcile can detect changes."""
+    base = f"{scheduled_action.action}:{scheduled_action.entity}:{scheduled_action.entity_id}"
+    if scheduled_action.cron is not None:
+        return f"{base}|cron={scheduled_action.cron}|tz={scheduled_action.timezone}"
+    run_at = scheduled_action.run_at.isoformat() if scheduled_action.run_at else None
+    return f"{base}|at={run_at}"
 
 
 def _add_or_replace_job(scheduler: AsyncIOScheduler, job, event_sender: EventSender) -> None:
@@ -78,7 +161,9 @@ async def schedule_jobs(scheduler: AsyncIOScheduler, event_sender: EventSender):
     async with _reconcile_lock:
         async with get_async_session() as session:
             crud = SchedulerJobCRUD(session=session)
+            scheduled_action_crud = TaskEntityCRUD(session=session)
             jobs = await crud.get_all()
+            scheduled_actions = await scheduled_action_crud.get_pending_scheduled()
 
         db_job_ids = {str(job.id) for job in jobs}
 
@@ -94,14 +179,50 @@ async def schedule_jobs(scheduler: AsyncIOScheduler, event_sender: EventSender):
 
         # Remove jobs that were deleted from the DB (ignore internal jobs).
         for existing in scheduler.get_jobs():
-            if existing.id == POLL_JOB_ID:
+            if existing.id in INTERNAL_JOB_IDS:
+                continue
+            if existing.id.startswith(ENTITY_ACTION_JOB_PREFIX):
                 continue
             if existing.id not in db_job_ids:
                 scheduler.remove_job(existing.id)
                 logger.info(f"Removed stale job {existing.id}")
 
+        db_action_job_ids = set()
+        for scheduled_action in scheduled_actions:
+            job_id = f"{ENTITY_ACTION_JOB_PREFIX}{scheduled_action.id}"
+            db_action_job_ids.add(job_id)
+            existing = scheduler.get_job(job_id)
+            signature = _entity_action_signature(scheduled_action)
+            if existing is not None and existing.name == signature:
+                continue
+
+            scheduler.add_job(
+                run_entity_action,
+                trigger=_entity_action_trigger(scheduled_action),
+                kwargs={"action_id": scheduled_action.id, "event_sender": event_sender},
+                id=job_id,
+                name=signature,
+                replace_existing=True,
+            )
+            when = (
+                f"cron '{scheduled_action.cron}' ({scheduled_action.timezone})"
+                if scheduled_action.cron
+                else scheduled_action.run_at
+            )
+            verb = "Scheduled" if existing is None else "Rescheduled"
+            logger.info(f"{verb} action {scheduled_action.id} at {when}")
+
+        for existing in scheduler.get_jobs():
+            if not existing.id.startswith(ENTITY_ACTION_JOB_PREFIX):
+                continue
+            if existing.id not in db_action_job_ids:
+                scheduler.remove_job(existing.id)
+                logger.info(f"Removed stale scheduled action {existing.id}")
+
     if not jobs:
         logger.info("No jobs found in DB")
+    if not scheduled_actions:
+        logger.info("No scheduled actions found in DB")
 
 
 async def schedule_polling_job(scheduler: AsyncIOScheduler, event_sender: EventSender):
@@ -122,62 +243,37 @@ async def schedule_polling_job(scheduler: AsyncIOScheduler, event_sender: EventS
     )
 
 
-async def reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
-    """Subscribe to the FANOUT event exchange and re-sync jobs on demand.
+async def purge_task_queue():
+    retention_days = Settings().TASK_QUEUE_RETENTION_DAYS
+    async with task_queue_service() as service:
+        deleted = await service.purge_finished(older_than_days=retention_days)
+    logger.info(f"Purged {deleted} finished task queue items older than {retention_days} days")
 
-    Mirrors core.utils.event_stream_manager.rabbitmq_consumer but binds its own
-    dedicated queue so the scheduler receives its own copy of every broadcast
-    event (FANOUT delivers to each bound queue).
-    """
+    async with get_async_session() as session:
+        deleted = await NotificationOutboxCRUD(session).purge_finished(older_than_days=retention_days)
+        await session.commit()
+    logger.info(f"Purged {deleted} finished notification outbox items older than {retention_days} days")
 
-    async def callback(message: aio_pika.abc.AbstractIncomingMessage) -> None:
-        async with message.process(ignore_processed=True):
-            try:
-                decoded: dict[str, Any] = json.loads(message.body.decode())
-            except (ValueError, UnicodeDecodeError):
-                logger.warning("Received malformed event message, ignoring")
-                return
 
-            if decoded.get("_metadata", {}).get("event") == "reload_scheduler_jobs":
-                logger.info("Got reload_scheduler_jobs event, re-syncing jobs")
-                await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
-
-    async with RabbitMQConnection() as connection:
-        channel = await connection.get_channel()
-        if channel is None:
-            raise RuntimeError("Failed to create a channel. Connection might not be established.")
-
-        events_exchange = await channel.declare_exchange(
-            "ik_event_messages",
-            aio_pika.ExchangeType.FANOUT,
-            auto_delete=False,
-            durable=True,
-        )
-
-        queue = await channel.declare_queue(name="scheduler_reload_consumer", auto_delete=False)
-        _ = await queue.bind(events_exchange)
-
-        consumer_tag = await queue.consume(callback)
-        logger.info("Subscribed RabbitMQ ik_event_messages for scheduler reloads")
-
-        try:
-            await asyncio.Future()
-        except asyncio.CancelledError:
-            if consumer_tag:
-                await queue.cancel(consumer_tag)
-            raise
+def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
+    """Schedules a daily job that removes old finished items from the task queue and notification outbox."""
+    scheduler.add_job(
+        purge_task_queue,
+        trigger=IntervalTrigger(days=1),
+        id=TASK_QUEUE_CLEANUP_JOB_ID,
+        replace_existing=True,
+    )
 
 
 async def start_reload_consumer(scheduler: AsyncIOScheduler, event_sender: EventSender):
-    """Run the reload consumer, restarting it if it stops unexpectedly."""
-    try:
-        await reload_consumer(scheduler=scheduler, event_sender=event_sender)
-    except asyncio.CancelledError:
-        raise
-    except Exception as e:
-        logger.error(f"Scheduler reload consumer stopped unexpectedly: {e}, restarting in 5 seconds")
-        await asyncio.sleep(5)
-        await start_reload_consumer(scheduler=scheduler, event_sender=event_sender)
+    """Re-sync jobs whenever a ``reload_scheduler_jobs`` event is broadcast."""
+
+    async def on_event(event: str) -> None:
+        if event == "reload_scheduler_jobs":
+            logger.info("Got reload_scheduler_jobs event, re-syncing jobs")
+            await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
+
+    await consume_events(on_event, name="Scheduler reload consumer")
 
 
 async def start_scheduler():
@@ -186,6 +282,7 @@ async def start_scheduler():
 
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
+    schedule_task_queue_cleanup_job(scheduler=scheduler)
 
     scheduler.start()
     logger.info("Scheduler started")
@@ -203,4 +300,5 @@ async def start_scheduler():
 
 
 if __name__ == "__main__":
+    change_logger()
     asyncio.run(start_scheduler())

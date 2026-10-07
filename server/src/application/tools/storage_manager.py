@@ -7,7 +7,7 @@ from core.custom_entity_log_controller import EntityLogger
 
 from core.errors import CannotProceed
 
-from ..storages.schema import AWSStorageConfig, AzureRMStorageConfig, GCPStorageConfig
+from ..storages.schema import StorageConfigType
 from ..providers import (
     StorageProviderAdapter,
 )
@@ -52,7 +52,7 @@ class StorageManager:
     async def get_storage_provider(
         self,
         tf_backend_provider: str,
-        configuration: AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig,
+        configuration: StorageConfigType,
         environment_variables: dict[str, str],
     ) -> StorageProviderAdapter:
         provider_adapter: type[StorageProviderAdapter] | None = StorageProviderAdapter.adapters.get(tf_backend_provider)

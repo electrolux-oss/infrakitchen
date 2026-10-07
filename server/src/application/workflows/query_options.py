@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload, selectinload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.integrations.query_options import build_integration_query_options
 from application.secrets.query_options import build_secret_query_options
@@ -33,19 +33,19 @@ def build_workflow_step_query_options(fields: FieldSpec | None = None) -> list[A
         nested = fields.get("integrationIds") or fields.get("integration_ids")
         opts.append(selectinload(WorkflowStep.integration_ids).options(*build_integration_query_options(nested)))
     else:
-        opts.append(noload(WorkflowStep.integration_ids))
+        opts.append(raiseload(WorkflowStep.integration_ids))
 
     if "secretIds" in fields or "secret_ids" in fields:
         nested = fields.get("secretIds") or fields.get("secret_ids")
         opts.append(selectinload(WorkflowStep.secret_ids).options(*build_secret_query_options(nested)))
     else:
-        opts.append(noload(WorkflowStep.secret_ids))
+        opts.append(raiseload(WorkflowStep.secret_ids))
 
     if "template" in fields:
         nested = fields["template"]
         opts.append(selectinload(WorkflowStep.template).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(WorkflowStep.template))
+        opts.append(raiseload(WorkflowStep.template))
 
     if "sourceCodeVersion" in fields or "source_code_version" in fields:
         nested = fields.get("sourceCodeVersion") or fields.get("source_code_version")
@@ -53,19 +53,19 @@ def build_workflow_step_query_options(fields: FieldSpec | None = None) -> list[A
             selectinload(WorkflowStep.source_code_version).options(*build_source_code_version_query_options(nested))
         )
     else:
-        opts.append(noload(WorkflowStep.source_code_version))
+        opts.append(raiseload(WorkflowStep.source_code_version))
 
     if "parentResourceIds" in fields or "parent_resource_ids" in fields:
         nested = fields.get("parentResourceIds") or fields.get("parent_resource_ids")
         opts.append(selectinload(WorkflowStep.parent_resource_ids).options(*build_resource_query_options(nested)))
     else:
-        opts.append(noload(WorkflowStep.parent_resource_ids))
+        opts.append(raiseload(WorkflowStep.parent_resource_ids))
 
     if "resource" in fields:
         nested = fields["resource"]
         opts.append(selectinload(WorkflowStep.resource).options(*build_resource_query_options(nested)))
     else:
-        opts.append(noload(WorkflowStep.resource))
+        opts.append(raiseload(WorkflowStep.resource))
 
     return opts
 
@@ -84,12 +84,12 @@ def build_workflow_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["creator"]
         opts.append(joinedload(Workflow.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Workflow.creator))
+        opts.append(raiseload(Workflow.creator))
 
     if "steps" in fields:
         nested = fields["steps"]
         opts.append(selectinload(Workflow.steps).options(*build_workflow_step_query_options(nested)))
     else:
-        opts.append(noload(Workflow.steps))
+        opts.append(raiseload(Workflow.steps))
 
     return opts

@@ -18,6 +18,7 @@ import {
   useConfig,
   useEntityListProvider,
   CommonDialog,
+  InlineCode,
   PermissionWrapper,
 } from "../../common";
 import { DeleteButton } from "../../common/components/buttons/DeleteEntityButton";
@@ -172,7 +173,6 @@ export const MetadataTab = ({
           {!hasVersion && (
             <Button
               variant="contained"
-              size="small"
               onClick={handleSave}
               disabled={!draftTemplate || !draftFolder || loading}
             >
@@ -185,8 +185,8 @@ export const MetadataTab = ({
             title="Save root path?"
             content={
               <Typography variant="body2">
-                The selected path is <code>/</code>. This will save the version
-                at the repository root. Do you want to continue?
+                The selected path is <InlineCode>/</InlineCode>. This will save
+                the version at the repository root. Do you want to continue?
               </Typography>
             }
             actions={
@@ -206,7 +206,6 @@ export const MetadataTab = ({
         {entity?.status === "error" && (
           <Button
             variant="contained"
-            size="small"
             onClick={(e) => {
               e.stopPropagation();
               triggerSync();
@@ -244,9 +243,7 @@ export const MetadataTab = ({
               <Tooltip title={"Configure template references"}>
                 <span>
                   <Button
-                    variant="outlined"
                     color="error"
-                    size="small"
                     onClick={(e) => {
                       if (e.metaKey || e.ctrlKey) {
                         window.open(
@@ -276,9 +273,7 @@ export const MetadataTab = ({
               >
                 <span>
                   <Button
-                    variant="outlined"
                     color="error"
-                    size="small"
                     onClick={() => setDeleteDialogOpen(true)}
                     disabled={
                       entity.status !== ENTITY_STATUS.DISABLED ||

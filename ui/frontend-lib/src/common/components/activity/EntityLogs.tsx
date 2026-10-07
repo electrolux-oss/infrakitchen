@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Box, Card, CardContent } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import {
   DataGrid,
   GridColDef,
@@ -14,7 +13,12 @@ import { buildLogsQuery, GqlLog } from "../../../logs/graphql";
 import { LogEntity } from "../../../types";
 import { LogActionButtons } from "../../LogsComponent/LogActionButtons";
 import { LogsDialog } from "../../LogsComponent/LogsDialog";
-import { RelativeTime } from "../RelativeTime";
+import {
+  dataGridDefaultProps,
+  dataGridSx,
+} from "../entity_table/dataGridStyles";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../entity_table/tableColumns";
+import { RelativeTime } from "../fields/RelativeTime";
 
 export interface EntityLogsProps {
   entityId?: string;
@@ -115,10 +119,8 @@ export const EntityLogs = ({
       {
         field: "createdAt",
         headerName: "Started",
-        flex: 0.2,
-        renderCell: (params) => (
-          <RelativeTime date={params.value} sx={{ fontSize: "0.75rem" }} />
-        ),
+        width: RELATIVE_TIME_COLUMN_WIDTH,
+        renderCell: (params) => <RelativeTime date={params.value} />,
       },
 
       {
@@ -169,36 +171,14 @@ export const EntityLogs = ({
               loading={loading}
               getRowId={(row) => row.id}
               pagination
-              disableColumnFilter
-              disableColumnMenu
               disableRowSelectionOnClick
+              {...dataGridDefaultProps}
               sortModel={sortModel}
               onSortModelChange={setSortModel}
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
               pageSizeOptions={[10, 25, 50, 100]}
-              sx={{
-                "& .MuiDataGrid-columnHeader": {
-                  "& .MuiDataGrid-columnHeaderTitleContainer": {
-                    justifyContent: "space-between",
-                    flexDirection: "row",
-                  },
-                  "& .MuiButtonBase-root": {
-                    border: "none",
-                  },
-                },
-                "& .MuiTablePagination-root": {
-                  "& .MuiButtonBase-root": {
-                    border: "none",
-                  },
-                },
-                "& .MuiDataGrid-row": {
-                  "&:hover": {
-                    backgroundColor: (theme) =>
-                      alpha(theme.palette.primary.main, 0.08),
-                  },
-                },
-              }}
+              sx={{ ...dataGridSx }}
             />
           </Box>
         </CardContent>

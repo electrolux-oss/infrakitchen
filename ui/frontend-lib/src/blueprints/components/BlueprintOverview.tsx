@@ -6,21 +6,18 @@ import StorageIcon from "@mui/icons-material/Storage";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Chip, TextField } from "@mui/material";
 
-import { Labels } from "../../common";
-import {
-  CommonField,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { Entity } from "../../common/components/entities/Entity";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { sameStringSet } from "../../common/utils";
 import { GqlBlueprint, UPDATE_BLUEPRINT_MUTATION } from "../graphql";
 import { BlueprintUpdateFieldInput } from "../graphql/mutations";
 
@@ -63,7 +60,7 @@ export const BlueprintOverview = () => {
     }>) || [];
 
   return (
-    <OverviewCard name={blueprint.name} description={blueprint.description}>
+    <OverviewCard name={blueprint.name}>
       <CommonEditableField<string>
         name="Name"
         canEdit={canEdit}
@@ -75,7 +72,7 @@ export const BlueprintOverview = () => {
           <TextField
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            label="Name"
+            slotProps={{ input: { "aria-label": "Name" } }}
             fullWidth
             margin="normal"
             autoFocus
@@ -87,67 +84,33 @@ export const BlueprintOverview = () => {
         name="Status"
         value={<StatusChip status={blueprint.status} />}
         size={6}
-      />
-
-      <CommonEditableField<string>
-        name="Description"
+      />{" "}
+      <EditableDescriptionField
+        value={blueprint.description}
         canEdit={canEdit}
-        value={blueprint.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{blueprint.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            multiline
-            minRows={2}
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
       />
-
       <CommonField
         name="Templates"
         value={
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
             {blueprint.templates.map((t) => (
-              <GetEntityLink key={t.id} {...t} />
+              <Entity key={t.id} entity={t} />
             ))}
           </Box>
         }
         size={6}
       />
-
       <CommonField
         name="Last Updated"
         value={<RelativeTime date={blueprint.updatedAt} />}
         size={6}
-      />
-
-      <CommonEditableField<string[]>
-        name="Labels"
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
         value={blueprint.labels || []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
-        display={<Labels labels={blueprint.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
       />
-
       {externalTemplates.length > 0 && (
         <CommonField
           name="Input Templates"
@@ -158,7 +121,6 @@ export const BlueprintOverview = () => {
                 <Chip
                   key={t.id}
                   label={t.name}
-                  size="small"
                   variant="outlined"
                   color="warning"
                   icon={<StorageIcon />}
@@ -169,7 +131,6 @@ export const BlueprintOverview = () => {
           }
         />
       )}
-
       {constants.length > 0 && (
         <CommonField
           name="Constants"
@@ -180,7 +141,6 @@ export const BlueprintOverview = () => {
                 <Chip
                   key={c.id}
                   label={c.name}
-                  size="small"
                   variant="outlined"
                   color="secondary"
                   icon={<TuneIcon />}

@@ -10,11 +10,13 @@ from .gitlab.gitlab_provider import GitLabProvider
 from .azurerm.azure_devops_repo_provider import AzureRepoSourceCode
 from .datadog.datadog_provider import DatadogProvider
 from .mongo_atlas import MongodbAtlasProvider
+from .postgresql import PostgresqlProvider
 from .public.public_provider import PublicProvider
 from .slack.slack_provider import SlackProvider
 from .tf_storage_providers.aws_storage_provider import AwsTfStorage
 from .tf_storage_providers.azure_storage_provider import AzurermTfStorage
 from .tf_storage_providers.gcp_storage_provider import GcpStorage
+from .tf_storage_providers.postgresql_storage_provider import PostgresqlTfStorage
 
 __all__ = [
     "StorageProviderAdapter",
@@ -31,6 +33,8 @@ __all__ = [
     "AzurermTfStorage",
     "AwsTfStorage",
     "MongodbAtlasProvider",
+    "PostgresqlProvider",
+    "PostgresqlTfStorage",
     "AzurermProvider",
     "DatadogProvider",
     "SlackProvider",

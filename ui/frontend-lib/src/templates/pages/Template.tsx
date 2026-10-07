@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Tooltip } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import {
   EntityProvider,
   useEntityProvider,
@@ -32,6 +32,11 @@ const TemplatePageContent = () => {
   const navigate = useNavigate();
   const { entity } = useEntityProvider();
 
+  // The API serializes status with its display casing (e.g. "DISABLED"); the
+  // constants are lowercase, so normalize before comparing.
+  const isDisabled =
+    String(entity?.status ?? "").toLocaleLowerCase() === ENTITY_STATUS.DISABLED;
+
   const handleUseTemplate = () => {
     if (entity?.id) {
       navigate(`${linkPrefix}resources/create`, {
@@ -42,15 +47,11 @@ const TemplatePageContent = () => {
 
   return (
     <EntityContainer
-      title={"Template Overview"}
+      title={"Template Details"}
       actions={
-        entity?.status !== ENTITY_STATUS.DISABLED ? (
+        !isDisabled ? (
           <Tooltip title="Create a new resource from this template">
-            <Button
-              variant="outlined"
-              onClick={handleUseTemplate}
-              startIcon={<AddIcon />}
-            >
+            <Button onClick={handleUseTemplate} startIcon={<AddIcon />}>
               Create Resource
             </Button>
           </Tooltip>

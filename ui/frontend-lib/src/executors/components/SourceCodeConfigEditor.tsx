@@ -17,7 +17,8 @@ import {
   Typography,
 } from "@mui/material";
 
-import { CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -200,7 +201,12 @@ export const SourceCodeConfigEditor = ({
               </Typography>
             )}
             <Typography variant="body2">
-              Directory Path: {executor.sourceCodeFolder || "Not set"}
+              Directory Path:{" "}
+              {executor.sourceCodeFolder ? (
+                executor.sourceCodeFolder
+              ) : (
+                <PlaceholderText />
+              )}
             </Typography>
           </Box>
           {canEdit ? (

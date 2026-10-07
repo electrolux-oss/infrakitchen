@@ -1,0 +1,185 @@
+---
+title: Git Providers
+---
+
+InfraKitchen integrates seamlessly with your existing Git workflows, supporting providers such as GitHub, GitLab, Bitbucket, and Azure DevOps.
+
+InfraKitchen enables two powerful workflows for infrastructure management:
+
+- First, you can maintain your infrastructure modules as version-controlled templates in your Git repositories. InfraKitchen imports these templates, ensuring that your organization’s best practices and standards are consistently applied across all projects.
+
+- Second, when developers design new infrastructure blueprints using these templates, InfraKitchen automatically generates the required code and opens pull requests in your designated Git workspace or repository. This process allows your team to review, discuss, and approve infrastructure changes using familiar Git-based collaboration and CI/CD pipelines.
+
+By leveraging your Git provider, InfraKitchen brings transparency, traceability, and automation to your infrastructure lifecycle, making it easy to manage changes and maintain compliance across environments.
+
+## GitHub
+
+Integrate **GitHub** with **InfraKitchen** to enable repository access.
+This integration allows InfraKitchen to read repositories, fetch configurations, and optionally create pull requests as part of your automation pipelines.
+
+### Create a Personal Access Token
+
+Follow GitHub's official guide to [create a fine-grained personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token).
+
+Give it a clear, descriptive name (e.g. `InfraKitchen Integration`) and set the expiration according to your organization's security policies — this makes the token easy to identify when rotating or revoking it later. Fine-grained tokens are recommended over classic tokens; the same guide covers both types.
+
+While creating the token, under **Repository permissions**, grant at least the following:
+
+| Permission   | Level | Description                                                     |
+| ------------ | ----- | --------------------------------------------------------------- |
+| **Contents** | Read  | Allows InfraKitchen to read repository files and configurations |
+| **Metadata** | Read  | Required for InfraKitchen to identify and index repositories    |
+
+The **Pull requests** permission is optional — grant it only if you want InfraKitchen to open pull requests, for example when [syncing generated infrastructure code to a Workspace](../../concepts/workspace). If you will only import templates and read repositories, you can skip it:
+
+| Permission        | Level | Description                                             |
+| ----------------- | ----- | ------------------------------------------------------- |
+| **Pull requests** | Write | Allows InfraKitchen to open pull requests automatically |
+
+### Add the Credentials to InfraKitchen
+
+In InfraKitchen, open the setup page at `/integrations/github/setup` and fill in the following fields:
+
+| Field                      | Description                                                                 |
+| -------------------------- | --------------------------------------------------------------------------- |
+| **Integration Name**       |  A unique name for this integration (e.g., `github-prod`)                    |
+| **Description**            | A short description (e.g., “InfraKitchen GitHub integration for IaC repos”) |
+| **Labels**                 | Tags such as `github`, `repository`, or `infra`                             |
+| **GitHub Token**           |  Paste the Personal Access Token you generated                               |
+
+Click <kbd>Test Connection</kbd> to validate the token and granted permissions before saving.
+
+### GitHub SSH (Alternative Connection Method)
+
+InfraKitchen can also use **SSH** to connect to your GitHub repositories. This typically involves generating an SSH key pair and adding the public key to your GitHub account settings, which is an alternative to using an API Token for repository access.
+
+## GitLab
+
+Integrate **GitLab** with **InfraKitchen** to enable repository access.
+This integration allows InfraKitchen to read repositories and fetch configurations.
+
+### Create an Access Token
+
+GitLab offers two token types — pick whichever fits how you manage access:
+
+**Personal access token** — the simplest way to import modules from all projects your user can access. Follow GitLab's official guide to [create a personal access token](https://docs.gitlab.com/user/profile/personal_access_tokens/#create-a-personal-access-token). Works for both GitLab Cloud and your own private instance.
+
+**Group (or project) access token** — restricts access to the projects of a specific group (or a single project), regardless of your user's own access. Follow GitLab's official guide to [create a group access token](https://docs.gitlab.com/user/group/settings/group_access_tokens/#create-a-group-access-token).
+
+In both cases, give the token a clear, descriptive name (e.g. `InfraKitchen Integration`) and set the expiration according to your organization's security policies — this makes the token easy to identify when rotating or revoking it later.
+
+While creating the token, under **Select scopes**, grant at least the following:
+
+| Scope               | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| **read_repository** | Allows InfraKitchen to read repository files and configurations |
+| **read_api**        | Required for InfraKitchen to identify and index repositories    |
+
+Specific to Group or Project access tokens:
+
+* Select a role fitting the use case (most of the time `Developer`).
+
+### Add the Credentials to InfraKitchen
+
+In InfraKitchen, open the setup page at `/integrations/gitlab/setup` and fill in the following fields:
+
+| Field                      | Description                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------- |
+| **Integration Name**       | A unique name for this integration (e.g., `gitlab-cloud-prod`)                    |
+| **Description**            | A short description (e.g., “InfraKitchen GitLab Cloud integration for IaC repos”) |
+| **Labels**                 | Tags such as `gitlab`, `repository`, or `infra`                                   |
+| **GitLab Server URL**      | The URL to our own instance, or let it to its default for GitLab Cloud            |
+| **GitLab Token**           | Paste the Access Token you generated                                              |
+
+Click <kbd>Test Connection</kbd> to validate the token and granted scopes before saving.
+
+### GitLab SSH (Alternative Connection Method)
+
+SSH-based access is not recommended and not yet implemented.
+
+## Bitbucket
+
+Integrate **Bitbucket** with **InfraKitchen** to enable repository access.
+This integration allows InfraKitchen to read repositories, fetch configurations, and optionally create pull requests as part of your automation pipelines.
+
+### Create an API Token
+
+Follow Bitbucket's official guide to [create an API token](https://support.atlassian.com/bitbucket-cloud/docs/create-an-api-token/).
+
+Give your token a clear, descriptive **Label** (e.g. `InfraKitchen Integration`) — this makes the token easy to identify when rotating or revoking it later.
+
+While creating the token, under **Permissions**, grant the necessary scopes for InfraKitchen to function.
+
+#### Scopes for Repository Read Access
+
+To allow InfraKitchen to **read repositories**, **fetch configurations**, and **index repositories**, grant at least the following **Read** scopes:
+
+| Scope | Description |
+| :--- | :--- |
+| **read:project:bitbucket** | Allows InfraKitchen to read project details. |
+| **read:repository:bitbucket** | Allows InfraKitchen to read repository files and configurations. |
+| **read:user:bitbucket** | Required for identifying the user associated with the token. |
+| **read:workspace:bitbucket** | Required for InfraKitchen to identify and index repositories. |
+
+#### Scopes for Pull Request Management
+
+If InfraKitchen will **create pull requests** or **manage branches**, also enable the following **Write** scopes:
+
+| Scope | Description |
+| :--- | :--- |
+| **read:pullrequest:bitbucket** | Allows InfraKitchen to read pull request details. |
+| **write:pullrequest:bitbucket** | Allows InfraKitchen to **open pull requests** automatically. |
+| **write:repository:bitbucket** | Allows InfraKitchen to create/manage branches and update repositories. |
+
+### Add the Credentials to InfraKitchen
+
+In InfraKitchen, open the setup page at `/integrations/bitbucket/setup` and fill in the following fields:
+
+| Field | Description |
+| :--- | :--- |
+| **Integration Name** | A unique name for this integration (e.g., `bitbucket-prod`) |
+| **Description** | A short description (e.g., “InfraKitchen Bitbucket integration for IaC repos”) |
+| **Labels** | Tags such as `bitbucket`, `repository`, or `infra` |
+| **User Email** | User email associated with the Bitbucket account |
+| **Bitbucket API Token** | **Paste the API Token you generated** from Atlassian |
+
+Click <kbd>Test Connection</kbd> to validate the token and granted scopes before saving.
+
+### Bitbucket SSH (Alternative Connection Method)
+
+InfraKitchen can also use **SSH** to connect to your Bitbucket repositories. This typically involves generating an SSH key pair and adding the public key to your Bitbucket account settings, which is an alternative to using an API Token for repository access.
+
+## Azure DevOps
+
+Follow these steps to integrate **Azure DevOps** with **InfraKitchen**.
+This integration enables InfraKitchen to connect with your Azure DevOps organization for repositories.
+
+### Create a Personal Access Token
+
+Follow Azure DevOps' official guide to [use personal access tokens](https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops).
+
+Give the token a clear, descriptive name (e.g. `InfraKitchen Integration Token`) and set an **Expiration** according to your organization's security policies — e.g., 90 or 180 days.
+
+While creating the token, under **Scopes**, grant at least the following:
+
+| Scope | Description |
+| ----- | ----------- |
+| **Code (Read, write & manage)** | Required for repository access |
+
+### Add the Credentials to InfraKitchen
+
+In InfraKitchen, open the setup page at `/integrations/azure_devops/setup` and fill in the following fields:
+
+| Field                 |Description                                                    |
+| --------------------- |-------------------------------------------------------------- |
+| **Integration Name**  | A unique name for this integration (e.g., `azure-devops-prod`) |
+| **Description**       |A short description for your integration                       |
+| **Labels**            |Add tags such as `ci-cd`, `devops`, or `infra`                 |
+| **Azure Organization** | Your Azure DevOps organization name — visible in the browser URL as `https://dev.azure.com/<organization-name>/` |
+| **Azure Access Token** | The PAT you generated                                         |
+
+Click <kbd>Test Connection</kbd> to validate the organization name and PAT before saving.
+
+### Azure DevOps SSH
+
+InfraKitchen can also use SSH to connect to your DevOps repositories.

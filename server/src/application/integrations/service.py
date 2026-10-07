@@ -7,7 +7,8 @@ from uuid import UUID
 from core.models.encrypted_secret import EncryptedSecretStr
 from core.adapters.functions import get_integration_adapter
 from application.providers.gcp import gcp_oidc
-from application.integrations.schema import GCPIntegrationConfig
+from application.integrations.schema import GCPIntegrationConfig, PostgreSQLIntegrationConfig
+from application.providers.postgresql import PostgresqlProvider
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
 from core.constants import ModelStatus
@@ -18,7 +19,6 @@ from core.errors import CloudWrongCredentials, DependencyError, EntityNotFound, 
 from core.permissions.schema import EntityPolicyCreate
 from core.permissions.service import PermissionService
 from core.revisions.handler import RevisionHandler
-from core.tasks.service import TaskEntityService
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
@@ -48,14 +48,12 @@ class IntegrationService:
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
-        task_service: TaskEntityService,
         permission_service: PermissionService,
     ):
         self.crud: IntegrationCRUD = crud
         self.revision_handler: RevisionHandler = revision_handler
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
-        self.task_service: TaskEntityService = task_service
         self.permission_service: PermissionService = permission_service
 
     async def get_dto_by_id(self, integration_id: str | UUID) -> IntegrationDTO | None:
@@ -102,7 +100,7 @@ class IntegrationService:
         :param requester: User who creates the integration
         :return: Created integration ORM model
         """
-        cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog"]
+        cloud_providers = ["aws", "azurerm", "gcp", "mongodb_atlas", "datadog", "postgresql"]
         source_code_providers = [
             "github",
             "gitlab",
@@ -125,6 +123,7 @@ class IntegrationService:
                 raise ValueError(f"Invalid integration provider, must be one of {', '.join(notification_providers)}")
 
         self._ensure_gcp_oidc_signing_material(getattr(integration, "configuration", None))
+        await self._ensure_postgresql_database(getattr(integration, "configuration", None))
         body = model_db_dump(integration)
         body["created_by"] = requester.id
         new_integration = await self.crud.create(body)
@@ -171,6 +170,7 @@ class IntegrationService:
         self.revision_handler.original_entity_instance_dump = to_dict(existing_integration)
 
         self.validate_configuration(integration_update=integration, existing_integration=existing_integration)
+        self._validate_postgresql_database_unchanged(integration.configuration, existing_integration)
         self._carry_over_gcp_oidc_signing_material(integration, existing_integration)
         self._ensure_gcp_oidc_signing_material(integration.configuration)
         body = model_db_dump(integration, exclude_defaults=True, exclude_none=True)
@@ -258,7 +258,6 @@ class IntegrationService:
 
         await self.audit_log_handler.create_log(integration_id, requester.id, ModelActions.DELETE)
         await self.revision_handler.delete_revisions(integration_id)
-        await self.task_service.delete_by_entity_id(integration_id)
         await self.permission_service.delete_entity_permissions("integration", integration_id)
         await self.crud.delete(existing_integration)
 
@@ -316,6 +315,31 @@ class IntegrationService:
             integration_is_valid = False
             message = f"Unexpected error: {str(e)}"
         return IntegrationValidationResponse(is_valid=integration_is_valid, message=message)
+
+    # PostgreSQL: one integration owns one database, created on integration creation
+    @staticmethod
+    def _postgresql_database_key(config: dict[str, Any]) -> tuple[str, int, str]:
+        return (str(config.get("pg_host", "")).lower(), int(config.get("pg_port", 5432)), config.get("pg_database", ""))
+
+    async def _ensure_postgresql_database(self, config: Any) -> None:
+        if not isinstance(config, PostgreSQLIntegrationConfig):
+            return
+        database_key = self._postgresql_database_key(config.model_dump())
+        for other in await self.crud.get_all(filter={"integration_provider": "postgresql"}):
+            if self._postgresql_database_key(other.configuration) == database_key:
+                raise ValueError(
+                    f"Database {config.pg_database} on {config.pg_host}:{config.pg_port} "
+                    f"is already used by integration {other.name}"
+                )
+        _ = await PostgresqlProvider(configuration=config).ensure_database()
+
+    def _validate_postgresql_database_unchanged(self, config: Any, existing_integration: Integration) -> None:
+        if not isinstance(config, PostgreSQLIntegrationConfig):
+            return
+        if self._postgresql_database_key(config.model_dump()) != self._postgresql_database_key(
+            existing_integration.configuration
+        ):
+            raise ValueError("PostgreSQL host, port and database cannot be changed, create a new integration instead")
 
     # GCP OIDC signing keypair handling: generate on creation, preserve on update
     @staticmethod

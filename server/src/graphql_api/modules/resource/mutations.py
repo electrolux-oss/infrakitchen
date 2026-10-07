@@ -3,6 +3,7 @@ from typing import Any, cast
 
 import strawberry
 from strawberry import Maybe
+from strawberry.experimental import pydantic as strawberry_pydantic
 from strawberry.scalars import JSON
 from strawberry.types import Info
 
@@ -19,7 +20,6 @@ from graphql_api.modules.permission.mutations import EntityPolicyCreateInput
 from graphql_api.modules.permission.types import PermissionType
 from graphql_api.modules.resource.types import ResourceType
 from graphql_api.modules.workflow.types import WorkflowType
-from strawberry.experimental import pydantic as strawberry_pydantic
 
 
 @strawberry_pydantic.input(model=ResourceCreate, all_fields=True)
@@ -32,6 +32,7 @@ class ResourceCreateInput:
     secret_ids: list[uuid.UUID] = strawberry.field(default_factory=list)
     storage_id: uuid.UUID | None = None
     storage_path: str | None = None
+    tool_id: uuid.UUID | None = None
     variables: JSON | None = None
     dependency_tags: JSON | None = None
     dependency_config: JSON | None = None
@@ -51,6 +52,7 @@ class ResourceUpdateInput:
     secret_ids: Maybe[list[uuid.UUID] | None] = None
     storage_id: Maybe[uuid.UUID | None] = None
     storage_path: Maybe[str | None] = None
+    tool_id: Maybe[uuid.UUID | None] = None
     variables: Maybe[JSON | None] = None
     dependency_tags: Maybe[JSON | None] = None
     dependency_config: Maybe[JSON | None] = None

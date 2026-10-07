@@ -1,20 +1,20 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  GetReferenceUrlValue,
-} from "../../../common/components/CommonField";
+import { Entity, PermissionWrapper } from "../../../common";
+import { BaseCard } from "../../../common/components/cards/BaseCard";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../../common/components/OverviewCard";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -49,10 +49,10 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
-            <GetEntityLink
-              id={params.row.entityData?.id}
-              entityName={params.row.entityData?.entityName}
-              name={params.row.entityData?.name || "Unknown Entity"}
+            <Entity
+              entity={params.row.entityData}
+              showLifecycleState={false}
+              showLabel
             />
           );
         },
@@ -73,24 +73,12 @@ export const UserPoliciesCard = (props: { userId: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        sortable: false,
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          return creator ? <GetReferenceUrlValue {...creator} /> : "No User";
-        },
-      },
+      userColumn({ disableFilter: true, sortable: false, sortField: null }),
       {
         field: "id",
         headerName: "Delete",
@@ -113,25 +101,34 @@ export const UserPoliciesCard = (props: { userId: string }) => {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          variant="outlined"
-          onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Resource Policy
-        </Button>
-        <EntityPolicyUserCreateDialog
-          userId={userId}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<Icon icon="icon-park-outline:add" />}
+          >
+            Add Resource Policy
+          </Button>
+        </Box>
       </PermissionWrapper>
+      <EntityPolicyUserCreateDialog
+        userId={userId}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshPoliciesTable}
+      />
       <EntityFetchTable
         ref={tableRef}
         title="User Policies"
@@ -140,6 +137,6 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

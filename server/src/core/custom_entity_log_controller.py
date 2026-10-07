@@ -4,15 +4,47 @@ import logging
 from typing import Any, Literal, Protocol
 from uuid import UUID
 
-from aio_pika import ExchangeType
-
 from core.dependencies import get_async_session
 from core.logs.model import Log
 
-from .base_models import MessageModel
-from .rabbitmq import RabbitMQConnection
+import core.pubsub as pubsub
 
 logger = logging.getLogger("entity_logger")
+
+# Room left in a NOTIFY payload for the envelope and the per-batch fields
+_LINES_BUDGET = pubsub.MAX_PAYLOAD_BYTES - 1024
+# JSON escaping grows a character to at most 6 bytes (\u001b), so this many always fit
+_MAX_CHUNK_CHARS = _LINES_BUDGET // 6
+
+
+def chunk_lines(lines: list[dict[str, Any]], budget: int = _LINES_BUDGET) -> list[list[dict[str, Any]]]:
+    """Pack log lines into groups that each fit one NOTIFY payload, keeping their order.
+
+    A line too long for a payload of its own is split into consecutive pieces.
+    """
+    pieces: list[dict[str, Any]] = []
+    for line in lines:
+        data: str = line["data"]
+        if pubsub.encoded_size(line) <= budget:
+            pieces.append(line)
+            continue
+        for start in range(0, len(data), _MAX_CHUNK_CHARS):
+            pieces.append({**line, "data": data[start : start + _MAX_CHUNK_CHARS]})
+
+    chunks: list[list[dict[str, Any]]] = []
+    current: list[dict[str, Any]] = []
+    size = 0
+    for piece in pieces:
+        # +1 for the separating comma
+        piece_size = pubsub.encoded_size(piece) + 1
+        if current and size + piece_size > budget:
+            chunks.append(current)
+            current, size = [], 0
+        current.append(piece)
+        size += piece_size
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 class LoggerProtocol(Protocol):
@@ -33,7 +65,8 @@ class EntityLogger:
         trace_id: str | None = None,
     ):
         self.bulk_logs_operations: list[Log] = []
-        self.messages: list[MessageModel] = []
+        # Lines saved but not yet streamed to live subscribers
+        self.pending_lines: list[dict[str, Any]] = []
         self.entity_name: str | None = entity_name
         self.entity_id: str | UUID = entity_id
         self.revision_number: int = revision_number
@@ -65,41 +98,24 @@ class EntityLogger:
 
         self.bulk_logs_operations.append(log)
 
-    def create_message(self, body: dict[str, Any]) -> MessageModel:
-        message = MessageModel(
-            body=body,
-            message_type="log",
-            exchange="ik_raw_messages",
-            routing_key=f"logs.{self.entity_name}.{self.entity_id}",
-            exchange_type=ExchangeType.TOPIC,
-        )
-        return message
-
     def append_log(self, data: str, level: Literal["info", "warn", "error", "debug"] = "info"):
         if data == "":
             return
+        created_at = datetime.datetime.now(datetime.UTC)
         log = Log(
             entity=self.entity_name,
             entity_id=self.entity_id,
             revision=self.revision_number,
             data=data,
             level=level,
-            created_at=datetime.datetime.now(datetime.UTC),
+            created_at=created_at,
             execution_start=self.execution_start,
             audit_log_id=self.audit_log_id,
             expire_at=self.expire_at,
             trace_id=self.trace_id,
         )
         self.bulk_logs_operations.append(log)
-        message = self.create_message(
-            {
-                "entity": self.entity_name,
-                "entity_id": str(self.entity_id),
-                "data": data,
-                "level": level,
-            }
-        )
-        self.messages.append(message)
+        self.pending_lines.append({"data": data, "level": level, "created_at": created_at.isoformat()})
 
     async def save_if_more_than(self, count: int):
         # Return early if already saving to avoid creating unnecessary lock contention
@@ -119,9 +135,24 @@ class EntityLogger:
             await self.send_messages()
 
     async def send_messages(self):
-        for message in self.messages:
-            await RabbitMQConnection.send_message(message)
-        self.messages = []
+        """Stream the pending lines to live subscribers, a few lines per NOTIFY."""
+        lines, self.pending_lines = self.pending_lines, []
+        if not lines:
+            return
+        batch = {
+            "entity": self.entity_name,
+            "entity_id": str(self.entity_id),
+            "revision": self.revision_number,
+            "execution_start": self.execution_start,
+            "audit_log_id": str(self.audit_log_id) if self.audit_log_id else None,
+            "trace_id": self.trace_id,
+        }
+        topic = pubsub.logs_topic(self.entity_name or "", self.entity_id)
+        try:
+            await pubsub.publish_many((topic, {**batch, "lines": chunk}) for chunk in chunk_lines(lines))
+        except Exception as e:
+            # The lines are already saved; only the live tail misses them
+            logger.warning(f"Failed to stream {len(lines)} log line(s) for {topic}: {e}")
 
     def add_divider(self):
         self.append_log("\n" + "=" * 100 + "\n")

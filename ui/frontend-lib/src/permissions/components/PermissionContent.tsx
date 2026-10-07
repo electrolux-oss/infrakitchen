@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { PermissionResponse } from "../types";
 
@@ -17,8 +17,8 @@ export const PermissionContent = () => {
       sx={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
         gap: 2,
+        width: "100%",
       }}
     >
       <PermissionOverview permission={entity} />

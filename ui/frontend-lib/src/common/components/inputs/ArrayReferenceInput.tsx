@@ -14,6 +14,7 @@ import { IkEntity } from "../../../types";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
+import { getReferenceQueryFields, ReferenceContent } from "./referenceContent";
 import { getOptionLabel } from "./utils";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
@@ -32,11 +33,16 @@ interface ArrayReferenceInputProps {
   buffer: Record<string, IkEntity[]>;
   bufferKey?: string;
   showFields?: Array<string>;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
+  /** Keep selected chips on a single line (horizontal scroll) so the control stays compact. */
+  singleLine?: boolean;
   value: any;
   error?: boolean;
   setBuffer: (selectedEntity: any) => void;
   optionFilter?: (option: IkEntity) => boolean;
+  renderOptionContent?: (option: IkEntity) => React.ReactNode;
   tooltip?: string;
   options?: IkEntity[];
   [key: string]: any; // Allow additional props
@@ -55,8 +61,12 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       fields,
       filter = {},
       label,
+      ariaLabel,
+      placeholder,
+      singleLine,
       value,
       optionFilter,
+      renderOptionContent,
       tooltip,
       options: externalOptions,
       ...otherProps
@@ -64,6 +74,10 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
 
     const graphqlEntityName = pluralEntityToGraphql(entity_name);
     const graphqlCountName = `${graphqlEntityName}Count`;
+    const queryFields = getReferenceQueryFields(
+      entity_name,
+      fields || showFields,
+    );
 
     const handleEntityChange = (
       _event: React.SyntheticEvent,
@@ -99,11 +113,11 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       ikApi
         .graphqlRequest(
           `query ArrayReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
-            ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-              ${buildGraphqlFields(["id", "status", ...(fields || showFields)])}
-            }
-            ${graphqlCountName}(filter: $filter)
-          }`,
+                  ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+                    ${buildGraphqlFields(["id", "status", ...queryFields])}
+                  }
+                  ${graphqlCountName}(filter: $filter)
+                }`,
           {
             filter,
             sort: ["name", "ASC"],
@@ -129,25 +143,32 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
       setBuffer,
       externalOptions,
     ]);
-
     const control = (
-      <FormControl fullWidth margin="normal">
+      <FormControl fullWidth margin="dense">
         <Autocomplete
+          size="small"
           sx={{
             "& .MuiOutlinedInput-root": {
-              height: "auto",
-              paddingTop: "6px",
-              paddingBottom: "6px",
               alignItems: "center",
+              minHeight: 32,
+              marginTop: "0 !important",
+              ...(singleLine && {
+                height: "32px !important",
+                minHeight: "32px !important",
+                paddingTop: "0 !important",
+                paddingBottom: "0 !important",
+              }),
             },
             "& .MuiAutocomplete-tagContainer": {
-              flexWrap: "wrap",
-              overflow: "visible",
+              flexWrap: singleLine ? "nowrap" : "wrap",
+              overflowX: singleLine ? "auto" : undefined,
+              overflow: singleLine ? "hidden" : "visible",
               margin: "2px 0",
               padding: "0 2px",
             },
             "& .MuiAutocomplete-tag": {
               margin: "2px",
+              flexShrink: singleLine ? 0 : undefined,
             },
           }}
           clearIcon={false}
@@ -177,7 +198,15 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
             const { key, ...rest } = props;
             return (
               <li key={key} {...rest}>
-                {`${getOptionLabel(option, showFields)}`}
+                {renderOptionContent ? (
+                  renderOptionContent(option)
+                ) : (
+                  <ReferenceContent
+                    entityName={entity_name}
+                    entity={option}
+                    fallback={getOptionLabel(option, showFields)}
+                  />
+                )}
               </li>
             );
           }}
@@ -187,10 +216,15 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
             return [
               ...visible.map((option: IkEntity, index: number) => (
                 <Chip
-                  label={`${option.name || option.identifier}`}
+                  label={
+                    <ReferenceContent
+                      entityName={entity_name}
+                      entity={option}
+                      fallback={option.name || option.identifier}
+                    />
+                  }
                   {...getTagProps({ index })}
                   key={option.id}
-                  size="small"
                   variant="outlined"
                 />
               )),
@@ -199,13 +233,27 @@ const ArrayReferenceInput = forwardRef<any, ArrayReferenceInputProps>(
                   label={`+${value.length - maxToShow}`}
                   {...getTagProps({ index: maxToShow })}
                   key="more"
-                  size="small"
                   variant="outlined"
                 />
               ) : null,
             ];
           }}
-          renderInput={(params) => <TextField label={label} {...params} />}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={label ? label : undefined}
+              placeholder={placeholder}
+              required={otherProps.required}
+              error={props.error}
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  ...(label ? {} : { "aria-label": ariaLabel || label || "" }),
+                },
+              }}
+            />
+          )}
         />
 
         <FormHelperText error={props.error}>

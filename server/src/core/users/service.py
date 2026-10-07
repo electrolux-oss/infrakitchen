@@ -66,7 +66,7 @@ class UserService:
         return await self.crud.get_all(filter=filter, range=range, sort=sort, fields=fields)
 
     async def get_user_by_identifier(self, identifier: str) -> UserDTO | None:
-        result = await self.crud.get_one(filter={"identifier": identifier})
+        result = await self.crud.get_by_identifier(identifier)
         if result:
             return UserDTO.model_validate(result)
         return None

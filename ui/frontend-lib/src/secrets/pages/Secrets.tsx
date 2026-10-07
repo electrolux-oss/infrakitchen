@@ -20,14 +20,13 @@ export const SecretsPage = () => {
   return (
     <PageContainer
       title="Secrets"
+      description="Securely manage credentials, API keys, and other sensitive values for your infrastructure."
       actions={
         <PermissionWrapper
           requiredPermission="api:secret"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}secrets/create`)}
             startIcon={<AddIcon />}
           >

@@ -29,14 +29,14 @@ export const ResourcesPage = () => {
   return (
     <PageContainer
       title="Resources"
+      description="Infrastructure provisioned from your templates and managed end to end."
       actions={
         <PermissionWrapper
           requiredPermission="api:resource"
           permissionAction="read"
         >
+          {" "}
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}resources/create`)}
             startIcon={<AddIcon />}
           >

@@ -2,20 +2,23 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useNavigate } from "react-router";
 
-import { Icon } from "@iconify/react";
-import { Button, Chip } from "@mui/material";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Box, Button, Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import {
-  GetEntityLink,
-  capitalizeFirstLetter,
-} from "../../../common/components/CommonField";
+import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../../common/components/entity_table/tableColumns";
+import { capitalizeFirstLetter } from "../../../common/components/fields/CommonField";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { useConfig } from "../../../common/context";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
@@ -62,17 +65,22 @@ export const EntityPoliciesBase = ({
         renderCell: (params: GridRenderCellParams) => {
           if (params.row.v0.startsWith("user:")) {
             return (
-              <GetEntityLink
-                id={params.row.v0.split(":")[1]}
-                {...params.row.userData}
+              <Entity
+                entity={{
+                  ...params.row.userData,
+                  id: params.row.v0.split(":")[1],
+                  entityType: "user",
+                }}
               />
             );
           } else {
             return (
-              <GetEntityLink
-                id={params.row.v0}
-                entityName={"role"}
-                name={params.row.v0}
+              <Entity
+                entity={{
+                  id: params.row.v0,
+                  entityType: "role",
+                  name: params.row.v0,
+                }}
               />
             );
           }
@@ -106,7 +114,6 @@ export const EntityPoliciesBase = ({
 
                 return isInherited ? (
                   <Chip
-                    size="small"
                     label="Inherited from Project"
                     color="info"
                     variant="outlined"
@@ -123,7 +130,7 @@ export const EntityPoliciesBase = ({
                     }}
                   />
                 ) : (
-                  <Chip size="small" label="Direct" variant="outlined" />
+                  <Chip label="Direct" variant="outlined" />
                 );
               },
             },
@@ -132,24 +139,12 @@ export const EntityPoliciesBase = ({
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        sortable: false,
-        flex: 1,
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          return creator ? <GetEntityLink {...creator} /> : "No User";
-        },
-      },
+      userColumn({ disableFilter: true, sortable: false, sortField: null }),
       {
         field: "id",
         headerName: "Delete",
@@ -186,35 +181,30 @@ export const EntityPoliciesBase = ({
         requiredPermission={"api:permission"}
         permissionAction="write"
       >
-        <Button
-          variant="outlined"
-          onClick={() => setIsDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
-          sx={{ mr: 1 }}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            gap: 1,
+            mb: 0.5,
+          }}
         >
-          Add Role
-        </Button>
-        <EntityPolicyRoleCreateDialog
-          entityId={entityId}
-          entityName={entityName}
-          open={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-          onSuccess={refreshPoliciesTable}
-        />
-        <Button
-          variant="outlined"
-          onClick={() => setIsUserDialogOpen(true)}
-          startIcon={<Icon icon="icon-park-outline:add" />}
-        >
-          Add User
-        </Button>
-        <UserPolicyEntityCreateDialog
-          entityId={entityId}
-          entityName={entityName}
-          open={isUserDialogOpen}
-          onClose={() => setIsUserDialogOpen(false)}
-          onSuccess={refreshPoliciesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => setIsDialogOpen(true)}
+            startIcon={<AdminPanelSettingsIcon />}
+          >
+            Add Role
+          </Button>
+          <Button
+            size="small"
+            onClick={() => setIsUserDialogOpen(true)}
+            startIcon={<PersonAddIcon />}
+          >
+            Add User
+          </Button>
+        </Box>
       </PermissionWrapper>
       <EntityFetchTable
         ref={tableRef}
@@ -227,6 +217,20 @@ export const EntityPoliciesBase = ({
         }
         columns={columns}
         entityFieldMap={PERMISSION_FIELD_MAP}
+      />
+      <EntityPolicyRoleCreateDialog
+        entityId={entityId}
+        entityName={entityName}
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={refreshPoliciesTable}
+      />
+      <UserPolicyEntityCreateDialog
+        entityId={entityId}
+        entityName={entityName}
+        open={isUserDialogOpen}
+        onClose={() => setIsUserDialogOpen(false)}
+        onSuccess={refreshPoliciesTable}
       />
     </>
   );

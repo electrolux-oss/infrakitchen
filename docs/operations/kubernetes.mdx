@@ -1,0 +1,80 @@
+---
+title: Kubernetes Integration
+---
+
+InfraKitchen integrates with Kubernetes clusters provisioned as resources, so you can inspect
+and operate the workloads running on them directly from the resource page — no kubectl or
+direct cluster access required.
+
+:::info[Running InfraKitchen itself on Kubernetes?]
+This page is about managing the workloads running on clusters provisioned *through*
+InfraKitchen. For deploying the InfraKitchen platform itself on a Kubernetes cluster, see
+[Kubernetes Deployment](../deployment#kubernetes).
+:::
+
+## Key Features
+
+- Browse **namespaces** on a provisioned cluster.
+- List **deployments**, **services**, and **pods** per namespace.
+- Drill into a deployment to see its pods (resolved via the deployment's label selector).
+- Inspect **pod details**: status phase, version label, and creation timestamp.
+- **Restart a deployment** (rolling restart of its pods).
+- **Kill a pod** to have it rescheduled.
+
+## Where to Find It
+
+The integration appears on the **resource detail page** of a provisioned cluster resource:
+
+<Steps>
+
+<Step title="Open the provisioned resource">
+
+Navigate to a provisioned resource whose template declares a Kubernetes cloud resource type.
+
+</Step>
+
+<Step title="Browse the cluster relations">
+
+The relations section on the resource page shows the cluster's namespaces and workloads.
+
+</Step>
+
+<Step title="Select a namespace">
+
+Browse its deployments, services, and pods.
+
+</Step>
+
+</Steps>
+
+Currently the AWS EKS resource type (`aws_eks`) is supported. The connection is established
+through the **AWS integration** attached to the resource — no separate Kubernetes
+configuration is needed.
+
+## Workload Actions
+
+| Action | Scope | Effect |
+| ------ | ----- | ------ |
+| **Kill pod** | Individual pod | Deletes the pod; it is rescheduled by the cluster |
+| **Restart deployment** | Deployment | Rolling restart of all pods in the deployment |
+
+:::warning[Actions take effect immediately]
+Killing a pod or restarting a deployment changes the live workload right away. Make sure
+the target is correct before confirming — the dialogs show the namespace and name of the
+affected object.
+:::
+
+## Permissions
+
+Using the integration requires **write access** to the cluster resource (or write access to
+the project the resource belongs to). Read-only users can still view the resource itself but
+cannot browse its Kubernetes workloads or run actions.
+
+## Troubleshooting
+
+| Symptom | Possible Cause | Resolution |
+| ------- | -------------- | ---------- |
+| No namespaces listed | Resource not provisioned yet | Provision the cluster resource first |
+| Connection error | AWS integration lacks EKS permissions | Verify the integration can describe the cluster and its API endpoint |
+| Empty deployments/pods | Namespace has no workloads | Pick a different namespace |
+| Action fails with access denied | Missing write access | Ask a platform engineer for write permission on the resource |

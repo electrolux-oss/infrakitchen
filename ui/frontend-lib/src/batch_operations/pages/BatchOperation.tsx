@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { BatchOperationContent } from "../components/BatchOperationContent";
 import { BATCH_OPERATION_FIELDS } from "../graphql";
@@ -14,7 +14,7 @@ export const BatchOperationPage = () => {
       entity_id={batch_operation_id || ""}
       entityFields={BATCH_OPERATION_FIELDS}
     >
-      <EntityContainer title={"Batch Operation Overview"}>
+      <EntityContainer title={"Batch Operation Details"}>
         <BatchOperationContent />
       </EntityContainer>
     </EntityProvider>

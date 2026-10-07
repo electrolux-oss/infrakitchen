@@ -48,6 +48,7 @@ export const getStateColor = (
     };
 
   if (
+    status === ENTITY_STATUS.PENDING ||
     status === ENTITY_STATUS.APPROVAL_PENDING ||
     status === ENTITY_STATUS.READY
   )
@@ -80,9 +81,9 @@ export const getStateColor = (
 
   if (status === WORKER_STATUS.BUSY)
     return {
-      backgroundColor: "info.dark",
-      color: "primary.contrastText",
-      borderColor: "info.dark",
+      backgroundColor: "warning.main",
+      color: "warning.text",
+      borderColor: "warning.main",
     };
 
   if (status === WORKER_STATUS.FREE)
@@ -106,7 +107,7 @@ export const STATUS_CHIP_COLOR: Record<
   done: "success",
   error: "error",
   in_progress: "info",
-  pending: "default",
+  pending: "warning",
   approval_pending: "warning",
   ready: "warning",
   disabled: "default",
@@ -124,35 +125,85 @@ export const formatTimeAgo = (dateInput: string | Date) => {
   }
 
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const diffInMs = date.getTime() - now.getTime();
+  const isFuture = diffInMs > 0;
+  const absDiffInMs = Math.abs(diffInMs);
+  const diffInMinutes = Math.floor(absDiffInMs / (1000 * 60));
+  const diffInHours = Math.floor(absDiffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(absDiffInMs / (1000 * 60 * 60 * 24));
 
   if (diffInMinutes < 1) return "Just now";
 
-  if (diffInMinutes < 60)
-    return `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+  if (diffInMinutes < 60) {
+    return isFuture
+      ? `in ${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"}`
+      : `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+  }
 
-  if (diffInHours < 24)
-    return `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  if (diffInHours < 24) {
+    return isFuture
+      ? `in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`
+      : `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+  }
 
-  if (diffInDays === 1) return "1 day ago";
+  if (diffInDays === 1) return isFuture ? "in 1 day" : "1 day ago";
 
-  if (diffInDays < 7) return `${diffInDays} days ago`;
+  if (diffInDays < 7)
+    return isFuture ? `in ${diffInDays} days` : `${diffInDays} days ago`;
 
   if (diffInDays < 30) {
     const weeks = Math.floor(diffInDays / 7);
+    if (isFuture) {
+      return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
+    }
     return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
   }
 
   if (diffInDays < 365) {
     const months = Math.floor(diffInDays / 30);
+    if (isFuture) {
+      return months === 1 ? "in 1 month" : `in ${months} months`;
+    }
     return months === 1 ? "1 month ago" : `${months} months ago`;
   }
-
   const years = Math.floor(diffInDays / 365);
+  if (isFuture) {
+    return years === 1 ? "in 1 year" : `in ${years} years`;
+  }
   return years === 1 ? "1 year ago" : `${years} years ago`;
+};
+
+/**
+ * Seconds-accurate countdown until a future time, e.g. "in 45s",
+ * "in 12m 30s", "in 03h 25m 10s", "in 02d 03h 25m 10s". Every displayed
+ * unit is zero-padded to two digits. Returns "now" once the target time is
+ * reached or passed.
+ */
+export const formatTimeUntil = (dateInput: string | Date, now = Date.now()) => {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
+  const diffInMs = date.getTime() - now;
+  if (diffInMs <= 0) return "now";
+
+  const totalSeconds = Math.floor(diffInMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${pad(days)}d`);
+  if (days > 0 || hours > 0) parts.push(`${pad(hours)}h`);
+  if (days > 0 || hours > 0 || minutes > 0) parts.push(`${pad(minutes)}m`);
+  parts.push(`${pad(seconds)}s`);
+
+  return `in ${parts.join(" ")}`;
 };
 
 export const getProviderFromLabels = (labels: string[]) => {
@@ -182,6 +233,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   azure_devops: "Azure Repos",
   azure_devops_ssh: "Azure Repos",
   datadog: "Datadog",
+  postgresql: "PostgreSQL",
 };
 
 export const getProviderDisplayName = (
@@ -228,6 +280,8 @@ export const formatLabel = (key: string): string => {
       const lowerWord = word.toLowerCase();
       if (lowerWord === "id") return "ID";
       if (lowerWord === "ssh") return "SSH";
+      if (lowerWord === "url") return "URL";
+      if (lowerWord === "https") return "HTTPS";
 
       if (PROVIDER_DISPLAY_NAMES[lowerWord]) {
         return PROVIDER_DISPLAY_NAMES[lowerWord];

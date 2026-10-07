@@ -25,6 +25,17 @@ blueprint_templates = Table(
     Column("is_external", Boolean, nullable=False, server_default="false"),
 )
 
+
+def _template_secondaryjoin(external: bool) -> Any:
+    # The is_external predicate must live in secondaryjoin: SQLAlchemy 2.1 selectinload
+    # drops extra primaryjoin predicates on many-to-many relationships.
+    templates = Base.metadata.tables["templates"]
+    return and_(
+        templates.c.id == blueprint_templates.c.template_id,
+        blueprint_templates.c.is_external.is_(external),
+    )
+
+
 blueprint_workflows = Table(
     "blueprint_workflows",
     Base.metadata,
@@ -49,10 +60,8 @@ class Blueprint(BaseRevision):
     templates: Mapped[list["Template"]] = relationship(
         "Template",
         secondary=blueprint_templates,
-        primaryjoin=lambda: and_(
-            Blueprint.id == blueprint_templates.c.blueprint_id,
-            blueprint_templates.c.is_external.is_(False),
-        ),
+        primaryjoin=lambda: Blueprint.id == blueprint_templates.c.blueprint_id,
+        secondaryjoin=lambda: _template_secondaryjoin(external=False),
         order_by=blueprint_templates.c.position,
         lazy="selectin",
         viewonly=True,
@@ -63,10 +72,8 @@ class Blueprint(BaseRevision):
     external_templates: Mapped[list["Template"]] = relationship(
         "Template",
         secondary=blueprint_templates,
-        primaryjoin=lambda: and_(
-            Blueprint.id == blueprint_templates.c.blueprint_id,
-            blueprint_templates.c.is_external.is_(True),
-        ),
+        primaryjoin=lambda: Blueprint.id == blueprint_templates.c.blueprint_id,
+        secondaryjoin=lambda: _template_secondaryjoin(external=True),
         lazy="selectin",
         viewonly=True,
         overlaps="templates",
@@ -76,7 +83,7 @@ class Blueprint(BaseRevision):
     workflows: Mapped[list["Workflow"]] = relationship(
         "Workflow",
         secondary=blueprint_workflows,
-        lazy="noload",
+        lazy="raise",
     )
 
     # Wiring config: maps template outputs → template inputs

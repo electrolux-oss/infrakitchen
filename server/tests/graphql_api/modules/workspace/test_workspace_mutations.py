@@ -33,6 +33,16 @@ DELETE_WORKSPACE_MUTATION = """
     }
 """
 
+SYNC_WORKSPACE_MUTATION = """
+    mutation SyncWorkspaceMetadata($id: UUID!) {
+        syncWorkspaceMetadata(id: $id) {
+            id
+            name
+            entityName
+        }
+    }
+"""
+
 
 def make_context(user):
     request = Mock()
@@ -67,6 +77,7 @@ class TestWorkspaceMutations:
                         "html_url": "https://github.com/acme/repo-name",
                         "git_url": "git://github.com/acme/repo-name.git",
                         "ssh_url": "git@github.com:acme/repo-name.git",
+                        "clone_url": "https://github.com/acme/repo-name.git",
                         "url": "https://api.github.com/repos/acme/repo-name",
                         "created_at": "2024-01-01T00:00:00Z",
                         "updated_at": "2024-01-02T00:00:00Z",
@@ -230,3 +241,62 @@ class TestWorkspaceMutations:
         assert result.data == {"deleteWorkspace": True}
         mock_service.get_actions.assert_awaited_once_with(workspace_id=workspace_id, requester=mocked_user)
         mock_service.delete.assert_awaited_once_with(workspace_id=str(workspace_id))
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.workspace.mutations.get_workspace_service")
+    async def test_sync_workspace_denies_without_edit_action(
+        self,
+        mock_get_service,
+        mocked_user,
+    ):
+        workspace_id = uuid4()
+        mock_service = Mock()
+        mock_service.get_actions = AsyncMock(return_value=[])
+        mock_service.sync_workspace = AsyncMock()
+        mock_get_service.return_value = mock_service
+
+        result = await schema.execute(
+            SYNC_WORKSPACE_MUTATION,
+            variable_values={"id": str(workspace_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.data is None or result.data["syncWorkspaceMetadata"] is None
+        assert result.errors is not None
+        assert any("Access denied for action edit" in error.message for error in result.errors)
+        mock_service.get_actions.assert_awaited_once_with(workspace_id=workspace_id, requester=mocked_user)
+        mock_service.sync_workspace.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.workspace.mutations.get_workspace_service")
+    async def test_sync_workspace_returns_synced_workspace(
+        self,
+        mock_get_service,
+        workspace,
+        mocked_user,
+    ):
+        workspace_id = uuid4()
+        mock_service = Mock()
+        mock_service.get_actions = AsyncMock(return_value=[ModelActions.EDIT])
+        mock_service.sync_workspace = AsyncMock(return_value=workspace)
+        mock_get_service.return_value = mock_service
+
+        result = await schema.execute(
+            SYNC_WORKSPACE_MUTATION,
+            variable_values={"id": str(workspace_id)},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {
+            "syncWorkspaceMetadata": {
+                "id": str(workspace.id),
+                "name": workspace.name,
+                "entityName": "workspace",
+            }
+        }
+        mock_service.get_actions.assert_awaited_once_with(workspace_id=workspace_id, requester=mocked_user)
+        mock_service.sync_workspace.assert_awaited_once_with(
+            workspace_id=str(workspace_id),
+            requester=mocked_user,
+        )

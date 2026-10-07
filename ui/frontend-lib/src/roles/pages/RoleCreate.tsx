@@ -10,8 +10,8 @@ import { useNavigate } from "react-router";
 
 import { Box, TextField, Button } from "@mui/material";
 
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceSearchInput from "../../common/components/inputs/ReferenceSearchInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -60,18 +60,10 @@ const RoleCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Role"
-      onBack={handleBack}
-      backAriaLabel="Back to roles"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             Save
           </Button>
         </>

@@ -16,20 +16,14 @@ import {
 } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import {
   Box,
-  Typography,
   TextField,
-  AccordionDetails,
-  Accordion,
-  AccordionSummary,
-  Table,
-  TableBody,
   Button,
   Alert,
+  Grid,
   IconButton,
   InputAdornment,
   Card,
@@ -38,17 +32,18 @@ import {
 } from "@mui/material";
 
 import { GradientCircularProgress, LabelInput } from "../../common";
-import { DependencyConfigurationFields } from "../../common/components/DependencyConfigurationFields";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { MarkdownViewer } from "../../common/components/MarkdownViewer";
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { MarkdownViewer } from "../../common/components/viewers/MarkdownViewer";
 import { useConfig } from "../../common/context/ConfigContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
-import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlTemplateShort } from "../../templates/graphql";
+import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { ValidationRule } from "../../types";
 import { ENTITY_STATUS } from "../../utils";
@@ -84,7 +79,6 @@ const ResourceCreatePageInner = () => {
     name: "variables",
   });
 
-  const [variablesOpen, setVariablesOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
@@ -136,7 +130,6 @@ const ResourceCreatePageInner = () => {
       };
 
       if (rootField === "variables") {
-        setVariablesOpen(true);
         scrollTo(inputVariablesSectionRef);
         return;
       }
@@ -149,7 +142,7 @@ const ResourceCreatePageInner = () => {
 
       scrollTo(templateConfigSectionRef);
     },
-    [setVariablesOpen],
+    [],
   );
 
   useEffect(() => {
@@ -167,6 +160,7 @@ const ResourceCreatePageInner = () => {
       const payload: ResourceCreate = {
         ...data,
         storageId: data.storageId || null,
+        toolId: data.toolId || null,
         workspaceId: data.workspaceId || null,
         projectId: data.projectId || null,
         sourceCodeVersionId: data.sourceCodeVersionId || null,
@@ -245,12 +239,24 @@ const ResourceCreatePageInner = () => {
     [buffer, watchedProjectId],
   );
 
+  // postgresql storages can always be used, cloud storages only with the resource integrations;
+  // the backend is accessed with the storage integration
   const filter_storage = useMemo(
-    () => ({
-      integration_id: watchedIntegrationIds ? watchedIntegrationIds : [],
-    }),
+    () =>
+      watchedIntegrationIds?.length > 0
+        ? {
+            or: [
+              { integration_id: watchedIntegrationIds },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
     [watchedIntegrationIds],
   );
+
+  const integrationRequired =
+    (watchedTemplate?.configuration.allowedProviderIntegrationTypes?.length ??
+      0) > 0;
 
   const filter_template = useMemo(
     () => ({
@@ -262,12 +268,14 @@ const ResourceCreatePageInner = () => {
   const watchedName = watch("name");
 
   const integrationWriteFilter = useMemo(
-    () => (option: IkEntity) => {
-      if (permissions["*"] === "admin") return true;
-      const p = permissions[`integration:${option.id}`];
-      return p === "write" || p === "admin";
+    () => (_option: IkEntity) => {
+      // TOODO: add integration validation
+      // if (permissions["*"] === "admin") return true;
+      // const p = permissions[`integration:${option.id}`];
+      // return p === "write" || p === "admin";
+      return true;
     },
-    [permissions],
+    [],
   );
 
   const workspaceWriteFilter = useMemo(
@@ -550,16 +558,11 @@ const ResourceCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Resource"
-      onBack={handleBack}
-      backAriaLabel="Back to resources"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
+          <Button onClick={handleBack}>Cancel</Button>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleSubmit(handleSave, handleInvalidSave)}
           >
             {saving ? "Saving..." : "Save"}
@@ -627,7 +630,6 @@ const ResourceCreatePageInner = () => {
                   >
                     <Chip
                       label="Template Documentation"
-                      size="small"
                       color="info"
                       variant="filled"
                       sx={{
@@ -964,7 +966,8 @@ const ResourceCreatePageInner = () => {
                     rules={{
                       validate: {
                         required: (value: string[]) => {
-                          if (value.length === 0) return "*Required";
+                          if (integrationRequired && value.length === 0)
+                            return "*Required";
                         },
                       },
                     }}
@@ -973,7 +976,10 @@ const ResourceCreatePageInner = () => {
                         {...field}
                         ikApi={ikApi}
                         entity_name="integrations"
-                        filter={{ integration_type: "cloud" }}
+                        filter={{
+                          integration_type: "cloud",
+                          integration_provider__not_eq: "postgresql",
+                        }}
                         showFields={["integrationProvider", "name"]}
                         buffer={buffer}
                         setBuffer={setBuffer}
@@ -1001,7 +1007,7 @@ const ResourceCreatePageInner = () => {
                             ? `Only ${watchedTemplate.configuration.allowedProviderIntegrationTypes.join(", ")} integrations are allowed for this template.`
                             : ""
                         }`}
-                        required
+                        required={integrationRequired}
                         multiple
                         fullWidth
                       />
@@ -1033,35 +1039,33 @@ const ResourceCreatePageInner = () => {
                     )}
                   />
 
-                  {watchedIntegrationIds.length > 0 && (
-                    <Controller
-                      name="storageId"
-                      control={control}
-                      rules={{ required: "*Required" }}
-                      render={({ field }) => (
-                        <ReferenceInput
-                          {...field}
-                          ikApi={ikApi}
-                          entity_name="storages"
-                          buffer={buffer}
-                          showFields={["name", "storageProvider"]}
-                          fields={["name", "storageProvider", "state"]}
-                          getOptionDisabled={(option: any) =>
-                            option.state !== "PROVISIONED"
-                          }
-                          setBuffer={setBuffer}
-                          error={!!errors.storageId}
-                          helpertext={
-                            errors.storageId ? errors.storageId.message : ""
-                          }
-                          filter={filter_storage}
-                          value={field.value}
-                          label="Select Storage for storing TF state"
-                          required
-                        />
-                      )}
-                    />
-                  )}
+                  <Controller
+                    name="storageId"
+                    control={control}
+                    rules={{ required: "*Required" }}
+                    render={({ field }) => (
+                      <ReferenceInput
+                        {...field}
+                        ikApi={ikApi}
+                        entity_name="storages"
+                        buffer={buffer}
+                        showFields={["name", "storageProvider"]}
+                        fields={["name", "storageProvider", "state"]}
+                        getOptionDisabled={(option: any) =>
+                          option.state !== "PROVISIONED"
+                        }
+                        setBuffer={setBuffer}
+                        error={!!errors.storageId}
+                        helpertext={
+                          errors.storageId ? errors.storageId.message : ""
+                        }
+                        filter={filter_storage}
+                        value={field.value}
+                        label="Select Storage for storing TF state"
+                        required
+                      />
+                    )}
+                  />
 
                   {watchedStorage && (
                     <Controller
@@ -1086,6 +1090,19 @@ const ResourceCreatePageInner = () => {
                               ? errors.storagePath.message
                               : "By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path. You can specify another path if needed (e.g., for migration), but note that this is a frozen field that you can not update later on. If you edit this field, make sure the path is unique within the selected storage."
                           }
+                        />
+                      )}
+                    />
+                  )}
+
+                  {watchedStorage && (
+                    <Controller
+                      name="toolId"
+                      control={control}
+                      render={({ field }) => (
+                        <ToolSelect
+                          value={field.value}
+                          onChange={field.onChange}
                         />
                       )}
                     />
@@ -1179,25 +1196,6 @@ const ResourceCreatePageInner = () => {
                         sort={["index", "ASC"]}
                         value={field.value}
                         label="Template Version"
-                        renderOptionContent={(option: any) => (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              gap: 1,
-                              width: "100%",
-                            }}
-                          >
-                            <Typography variant="body2">
-                              {option.identifier}
-                            </Typography>
-                            <VersionLifecycleStateChip
-                              lifecycleState={option.lifecycleState}
-                              breakingChanges={option.breakingChanges}
-                            />
-                          </Box>
-                        )}
                         required
                         disabled={!watchedTemplateId}
                       />
@@ -1213,50 +1211,34 @@ const ResourceCreatePageInner = () => {
                 </Box>
 
                 {Array.isArray(schema) && schema.length > 0 && (
-                  <Accordion
-                    ref={inputVariablesSectionRef}
-                    expanded={variablesOpen}
-                    onChange={() => setVariablesOpen(!variablesOpen)}
-                    elevation={0}
-                    sx={{
-                      borderRadius: 1,
-                      mt: 2,
-                      "&:before": {
-                        display: "none",
-                      },
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h5" component="h4">
-                        Input Variables ({schema?.length || 0})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Table>
-                        <TableBody>
-                          {fields.map((field, index) =>
-                            schema && schema[index] ? (
-                              <ResourceVariableForm
-                                key={field.id}
-                                index={index}
-                                variable={schema[index]}
-                                validationSummary={
-                                  validationRuleSummaryByVariable[
-                                    schema[index].name
-                                  ] || null
-                                }
-                                validationRule={
-                                  validationRuleByVariable[
-                                    schema[index].name
-                                  ] || null
-                                }
-                              />
-                            ) : null,
-                          )}
-                        </TableBody>
-                      </Table>
-                    </AccordionDetails>
-                  </Accordion>
+                  <Box ref={inputVariablesSectionRef} sx={{ mt: 2 }}>
+                    <BaseCard
+                      name="Input Variables"
+                      chip={String(schema?.length || 0)}
+                      chipVariant="solid"
+                    >
+                      <Grid size={12}>
+                        {fields.map((field, index) =>
+                          schema && schema[index] ? (
+                            <ResourceVariableForm
+                              key={field.id}
+                              index={index}
+                              variable={schema[index]}
+                              validationSummary={
+                                validationRuleSummaryByVariable[
+                                  schema[index].name
+                                ] || null
+                              }
+                              validationRule={
+                                validationRuleByVariable[schema[index].name] ||
+                                null
+                              }
+                            />
+                          ) : null,
+                        )}
+                      </Grid>
+                    </BaseCard>
+                  </Box>
                 )}
                 {isLoading && <GradientCircularProgress />}
               </PropertyCard>
@@ -1287,6 +1269,7 @@ const ResourceCreatePage = () => {
       dependencyConfig: [],
       storageId: "",
       storagePath: "",
+      toolId: "",
     },
     mode: "onChange",
   });

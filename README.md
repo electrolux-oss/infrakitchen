@@ -1,5 +1,5 @@
 <h1>
-  <img style="height: 1em;" src="./docs/assets/images/ik-logo.png" alt="logo" title="InfraKitchen">
+  <img style="height: 1em;" src="./public/icon.png" alt="logo" title="InfraKitchen">
   InfraKitchen
 </h1>
 
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-    <a href="https://opensource.electrolux.one/infrakitchen/getting-started/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/core-concepts/overview/">Core Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
+    <a href="https://opensource.electrolux.one/infrakitchen/quick-start/">Getting Started</a> | <a href="https://opensource.electrolux.one/infrakitchen/concepts/overview/">Concepts</a> | <a href="https://opensource.electrolux.one/infrakitchen/guides/platform-engineer-guide/">User Guides</a>
 </p>
 
 ## What is InfraKitchen?

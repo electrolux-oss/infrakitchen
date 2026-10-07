@@ -1,32 +1,18 @@
-import json
 import re
 from typing import Any, TypeVar
 
-from sqlalchemy import BinaryExpression, ColumnElement, and_, cast
+from sqlalchemy import BinaryExpression, ColumnElement, and_, cast, or_
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import RelationshipProperty, aliased, load_only
 from sqlalchemy.orm.query import inspect
 from sqlalchemy.sql.selectable import Select
 
 from core.base_models import Base
-from core.utils.json_encoder import JsonEncoder
 from core.utils.model_tools import is_valid_uuid, valid_uuid
 from core.utils.event_sender import flush_all_pending_senders
 
-from core.config import setup_service_environment
-
-setup_service_environment()
-
-from core.config import Settings  # noqa: E402
-
-
-engine = create_async_engine(
-    str(Settings().db_url),
-    pool_size=20,
-    max_overflow=40,
-    json_serializer=lambda obj: json.dumps(obj, cls=JsonEncoder),
-)
+from core.db_engine import engine
 
 
 class EventFlushingSession(AsyncSession):
@@ -64,11 +50,11 @@ def is_column_relationship(model: type, attr_name: str) -> bool:
     return is_relationship
 
 
-def evaluate_sqlalchemy_sorting(
+def evaluate_sqlalchemy_sorting[*Ts](
     model: type,
-    statement: Select[Any],
+    statement: Select[*Ts],
     sort: tuple[str, str] | None = None,
-) -> Select[Any]:
+) -> Select[*Ts]:
     """
     Converts a generic API sorting tuple into SQLAlchemy sorting.
     Supports dot-notation for relationship fields (e.g. "template.name").
@@ -130,7 +116,7 @@ def evaluate_sqlalchemy_sorting(
     return statement
 
 
-def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int] | None = None) -> Select[Any]:
+def evaluate_sqlalchemy_pagination[*Ts](statement: Select[*Ts], range: tuple[int, int] | None = None) -> Select[*Ts]:
     """
     Applies pagination to a SQLAlchemy statement.
     """
@@ -144,18 +130,34 @@ def evaluate_sqlalchemy_pagination(statement: Select[Any], range: tuple[int, int
     return statement
 
 
-def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[str, Any] | None) -> Select[Any]:
+def evaluate_sqlalchemy_filters[*Ts](model: type, statement: Select[*Ts], body: dict[str, Any] | None) -> Select[*Ts]:
     """
     Converts a generic API filter dict with operators into SQLAlchemy filters.
     Supports nested relationship filtering using double underscore notation.
     Example: template__name__in will filter by the template's name field using has() for relationships.
+    The "or" key takes a list of filter dicts and matches rows satisfying any of them.
+    Example: {"or": [{"integration_id": [...]}, {"storage_provider": "postgresql"}]}
     """
-    filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
-
     if body is None:
         return statement
 
+    filters = _build_sqlalchemy_filters(model, body)
+    if filters:
+        statement = statement.where(*filters)
+    return statement
+
+
+def _build_sqlalchemy_filters(model: type, body: dict[str, Any]) -> list[BinaryExpression[Any] | ColumnElement[Any]]:
+    filters: list[BinaryExpression[Any] | ColumnElement[Any]] = []
+
     for key, value in body.items():
+        if key == "or":
+            if not isinstance(value, list) or not all(isinstance(v, dict) and v for v in value):
+                raise ValueError("Filter 'or' must be a list of non-empty filter objects")
+            if value:
+                filters.append(or_(*[and_(*_build_sqlalchemy_filters(model, sub_body)) for sub_body in value]))
+            continue
+
         operator = "eq"
         column = None
 
@@ -300,9 +302,7 @@ def evaluate_sqlalchemy_filters(model: type, statement: Select[Any], body: dict[
             case _:
                 raise ValueError(f"Unsupported operator: {operator} in filter")
 
-    if filters:
-        statement = statement.where(*filters)
-    return statement
+    return filters
 
 
 _CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")

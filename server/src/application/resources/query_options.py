@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload, selectinload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.integrations.query_options import build_integration_query_options
 from application.projects.query_options import build_project_query_options
@@ -12,6 +12,7 @@ from application.source_code_versions.query_options import build_source_code_ver
 from application.storages.query_options import build_storage_query_options
 from application.templates.query_options import build_template_query_options
 from application.workspaces.query_options import build_workspace_query_options
+from core.tools.query_options import build_tool_query_options
 from core.database import FieldSpec, build_load_only
 from core.users.query_options import build_user_query_options
 
@@ -28,6 +29,7 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
             joinedload(Resource.workspace),
             joinedload(Resource.source_code_version),
             joinedload(Resource.storage),
+            joinedload(Resource.tool),
             joinedload(Resource.creator),
             joinedload(Resource.project),
         ]
@@ -38,60 +40,66 @@ def build_resource_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields.get("integrationIds") or fields.get("integration_ids")
         opts.append(selectinload(Resource.integration_ids).options(*build_integration_query_options(nested)))
     else:
-        opts.append(noload(Resource.integration_ids))
+        opts.append(raiseload(Resource.integration_ids))
 
     if "secretIds" in fields or "secret_ids" in fields:
         nested = fields.get("secretIds") or fields.get("secret_ids")
         opts.append(selectinload(Resource.secret_ids).options(*build_secret_query_options(nested)))
     else:
-        opts.append(noload(Resource.secret_ids))
+        opts.append(raiseload(Resource.secret_ids))
 
     if "parents" in fields:
         nested = fields["parents"]
         opts.append(selectinload(Resource.parents).options(*build_resource_query_options(nested)))
     else:
-        opts.append(noload(Resource.parents))
+        opts.append(raiseload(Resource.parents))
 
     if "children" in fields:
         nested = fields["children"]
         opts.append(selectinload(Resource.children).options(*build_resource_query_options(nested)))
     else:
-        opts.append(noload(Resource.children))
+        opts.append(raiseload(Resource.children))
 
     if "template" in fields:
         nested = fields["template"]
         opts.append(joinedload(Resource.template).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(Resource.template))
+        opts.append(raiseload(Resource.template))
 
     if "workspace" in fields:
         nested = fields["workspace"]
         opts.append(joinedload(Resource.workspace).options(*build_workspace_query_options(nested)))
     else:
-        opts.append(noload(Resource.workspace))
+        opts.append(raiseload(Resource.workspace))
 
     if "sourceCodeVersion" in fields or "source_code_version" in fields:
         nested = fields.get("sourceCodeVersion") or fields.get("source_code_version")
         opts.append(joinedload(Resource.source_code_version).options(*build_source_code_version_query_options(nested)))
     else:
-        opts.append(noload(Resource.source_code_version))
+        opts.append(raiseload(Resource.source_code_version))
 
     if "storage" in fields:
         nested = fields["storage"]
         opts.append(joinedload(Resource.storage).options(*build_storage_query_options(nested)))
     else:
-        opts.append(noload(Resource.storage))
+        opts.append(raiseload(Resource.storage))
+
+    if "tool" in fields:
+        nested = fields["tool"]
+        opts.append(joinedload(Resource.tool).options(*build_tool_query_options(nested)))
+    else:
+        opts.append(raiseload(Resource.tool))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(Resource.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Resource.creator))
+        opts.append(raiseload(Resource.creator))
 
     if "project" in fields:
         nested = fields["project"]
         opts.append(joinedload(Resource.project).options(*build_project_query_options(nested)))
     else:
-        opts.append(noload(Resource.project))
+        opts.append(raiseload(Resource.project))
 
     return opts

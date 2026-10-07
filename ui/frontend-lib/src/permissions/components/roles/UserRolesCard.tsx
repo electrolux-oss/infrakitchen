@@ -1,17 +1,21 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { Icon } from "@iconify/react";
-import { Button } from "@mui/material";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import { Box, Button } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper } from "../../../common";
-import { GetEntityLink } from "../../../common/components/CommonField";
+import { BaseCard } from "../../../common/components/cards/BaseCard";
+import { Entity } from "../../../common/components/entities/Entity";
 import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../../common/components/OverviewCard";
-import { RelativeTime } from "../../../common/components/RelativeTime";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../../common/components/fields/RelativeTime";
 import { PERMISSION_FIELD_MAP } from "../../graphql";
 import { DeletePermissionButton } from "../PermissionActionButton";
 
@@ -43,10 +47,12 @@ export const UserRolesCard = (props: { userId: string }) => {
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
           return (
-            <GetEntityLink
-              name={params.row.v1}
-              id={params.row.v1}
-              entityName={"role"}
+            <Entity
+              entity={{
+                id: params.row.v1,
+                entityType: "role",
+                name: params.row.v1,
+              }}
             />
           );
         },
@@ -54,26 +60,12 @@ export const UserRolesCard = (props: { userId: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        sortField: "creator.identifier",
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} name={creator.identifier} />;
-        },
-      },
+      userColumn({ disableFilter: true }),
       {
         field: "id",
         headerName: "Delete",
@@ -95,26 +87,35 @@ export const UserRolesCard = (props: { userId: string }) => {
   );
 
   return (
-    <OverviewCard>
+    <BaseCard>
       <PermissionWrapper
         requiredPermission="api:permission"
         permissionAction="write"
       >
-        <Button
-          variant="outlined"
-          onClick={() => handleOpenDialog()}
-          startIcon={<Icon icon="icon-park-outline:add" />}
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            justifyContent: "flex-end",
+            mb: 0.5,
+          }}
         >
-          Add Role
-        </Button>
-
-        <UserRoleCreateDialog
-          userId={userId}
-          open={isDialogOpen}
-          onClose={handleCloseDialog}
-          onSuccess={refreshUserRolesTable}
-        />
+          <Button
+            size="small"
+            onClick={() => handleOpenDialog()}
+            startIcon={<AdminPanelSettingsIcon />}
+          >
+            Assign Role
+          </Button>
+        </Box>
       </PermissionWrapper>
+
+      <UserRoleCreateDialog
+        userId={userId}
+        open={isDialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={refreshUserRolesTable}
+      />
 
       <EntityFetchTable
         ref={tableRef}
@@ -124,6 +125,6 @@ export const UserRolesCard = (props: { userId: string }) => {
         defaultFilter={{ ptype: "g", v0: `user:${userId}` }}
         entityFieldMap={PERMISSION_FIELD_MAP}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

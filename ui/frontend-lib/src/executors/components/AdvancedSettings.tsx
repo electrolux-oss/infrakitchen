@@ -1,23 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Box, IconButton, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 
+import { Entity } from "../../common";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import {
   CommonField,
   GetReferenceUrlValue,
-} from "../../common/components/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+} from "../../common/components/fields/CommonField";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { OverviewCard } from "../../common/components/OverviewCard";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { sameStringSet } from "../../common/utils";
-import { PermissionWrapper } from "../../common/wrappers";
+import { ProviderIcon } from "../../icons/Icons";
+import { ToolSelect, toolLabel } from "../../tools";
 import { IkEntity } from "../../types";
 import {
   ExecutorUpdateFieldInput,
@@ -37,10 +37,10 @@ const INTEGRATION_STORAGE_WARNING =
 
 export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   const { ikApi } = useConfig();
-  const { refreshEntity } = useEntityProvider();
+  const { refreshEntity, userEntityPermissions } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
   const canEdit = checkActionPermission("api:executor", "write");
-  const canEditStorage = checkActionPermission("api:storage", "admin");
+  const canEditStorage = userEntityPermissions.includes("admin");
 
   const saveField = useCallback(
     async (input: ExecutorUpdateFieldInput) => {
@@ -58,9 +58,9 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
     },
     [ikApi, executor.id, refreshEntity],
   );
-
   const [buffer, setBuffer] = useState<Record<string, IkEntity[]>>({});
   const [isStorageUnlocked, setIsStorageUnlocked] = useState(false);
+  const [isStoragePathUnlocked, setIsStoragePathUnlocked] = useState(false);
 
   // Track the live integration selection so the storage list is filtered by the
   // integrations currently chosen in the editor, not just the saved value. A
@@ -77,62 +77,27 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
   const storageFilter = { integration_id: selectedIntegrationIds };
 
   return (
-    <OverviewCard>
+    <BaseCard>
+      {" "}
       <CommonField name={"Revision"} value={executor.revisionNumber} />
-      <PermissionWrapper
-        requiredPermission="api:storage"
-        permissionAction="admin"
-      >
-        <CommonField
-          name={"Storage editing"}
-          value={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Tooltip
-                title={
-                  isStorageUnlocked
-                    ? "Lock storage fields"
-                    : "Unlock storage fields"
-                }
-              >
-                <IconButton
-                  size="small"
-                  color="warning"
-                  onClick={() => setIsStorageUnlocked((unlocked) => !unlocked)}
-                  aria-label={
-                    isStorageUnlocked
-                      ? "Lock storage fields"
-                      : "Unlock storage fields"
-                  }
-                >
-                  {isStorageUnlocked ? (
-                    <LockOpenOutlinedIcon fontSize="small" />
-                  ) : (
-                    <LockOutlinedIcon fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "warning.main",
-                }}
-              >
-                {isStorageUnlocked
-                  ? "Storage editing is enabled. Changing storage can cause OpenTofu/Terraform state issues."
-                  : "Storage is locked. Click the lock icon to edit. Changing storage can cause OpenTofu/Terraform state issues."}
-              </Typography>
-            </Box>
-          }
-        />
-      </PermissionWrapper>
       <CommonEditableField<string | null>
         name={"Storage"}
         canEdit={canEditStorage && isStorageUnlocked}
-        disabledTooltip={
+        lock={
           canEditStorage
-            ? "Unlock storage editing to change this field"
-            : "Only admins can change storage"
+            ? {
+                locked: !isStorageUnlocked,
+                onToggle: () => setIsStorageUnlocked((unlocked) => !unlocked),
+                lockedTitle: "Storage is locked",
+                lockedDescription:
+                  "Changing storage can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
+                unlockedTitle: "Storage editing is enabled",
+                unlockedDescription:
+                  "Click the lock to lock it again when you are done.",
+              }
+            : undefined
         }
+        disabledTooltip="Only admins can change storage"
         value={executor.storage?.id ?? null}
         ariaLabel="Edit storage"
         display={
@@ -156,7 +121,8 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
                 option.state !== "PROVISIONED"
               }
               onChange={onChange}
-              label="Select Storage for storing TF state"
+              ariaLabel="Storage"
+              placeholder="Select storage for TF state…"
               helpertext={STORAGE_DANGER_HELPER}
             />
           </Box>
@@ -172,12 +138,7 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
           executor.integrationIds && executor.integrationIds.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {executor.integrationIds.map((parent) => (
-                <span key={parent.id}>
-                  <GetReferenceUrlValue
-                    {...parent}
-                    urlProvider={parent.integrationProvider}
-                  />
-                </span>
+                <Entity key={parent.id} entity={parent} providerIconSize={24} />
               ))}
             </Box>
           ) : null
@@ -196,7 +157,8 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
               onChange(selected);
               setSelectedIntegrationIds(selected);
             }}
-            label="Credentials"
+            ariaLabel="Integrations"
+            placeholder="Select credentials…"
             helpertext={INTEGRATION_STORAGE_WARNING}
             multiple
           />
@@ -229,21 +191,34 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
             setBuffer={setBuffer}
             value={value}
             onChange={onChange}
-            label="Secrets"
+            ariaLabel="Secrets"
+            placeholder="Select secrets…"
+            singleLine
             helpertext="Select secrets for the executor"
             multiple
           />
         )}
         size={6}
-      />
+      />{" "}
       <CommonEditableField<string | null>
         name={"Storage Path"}
-        canEdit={canEditStorage && isStorageUnlocked}
-        disabledTooltip={
+        canEdit={canEditStorage && isStoragePathUnlocked}
+        lock={
           canEditStorage
-            ? "Unlock storage editing to change this field"
-            : "Only admins can change storage path"
+            ? {
+                locked: !isStoragePathUnlocked,
+                onToggle: () =>
+                  setIsStoragePathUnlocked((unlocked) => !unlocked),
+                lockedTitle: "Storage path is locked",
+                lockedDescription:
+                  "Changing the storage path can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
+                unlockedTitle: "Storage path editing is enabled",
+                unlockedDescription:
+                  "Click the lock to lock it again when you are done.",
+              }
+            : undefined
         }
+        disabledTooltip="Only admins can change storage path"
         value={executor.storagePath}
         ariaLabel="Edit storage path"
         display={<span>{executor.storagePath}</span>}
@@ -258,6 +233,31 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
             autoFocus
             helperText="Frozen field used as the OpenTofu/Terraform state path. Make sure the path is unique within the selected storage."
           />
+        )}
+        size={12}
+      />
+      <CommonEditableField<string | null>
+        name={"IaC Tool"}
+        canEdit={canEdit}
+        value={executor.tool?.id ?? null}
+        ariaLabel="Edit IaC tool"
+        display={
+          executor.tool ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <ProviderIcon provider={executor.tool.name} />
+              <GetReferenceUrlValue
+                id={executor.tool.id}
+                entityName="tool"
+                display_name={toolLabel(executor.tool)}
+              />
+            </Box>
+          ) : (
+            <span>Global default</span>
+          )
+        }
+        onSave={(value) => saveField({ toolId: value })}
+        renderEditor={({ value, onChange }) => (
+          <ToolSelect value={value} onChange={onChange} />
         )}
         size={12}
       />
@@ -281,6 +281,6 @@ export const AdvancedSettings = ({ executor }: AdvancedSettingsProps) => {
         )}
         size={12}
       />
-    </OverviewCard>
+    </BaseCard>
   );
 };

@@ -3,17 +3,18 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Box, Button } from "@mui/material";
+import { Button, Switch, Tooltip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { PermissionWrapper, useConfig } from "../../common";
-import {
-  GetEntityLink,
-  getProviderValue,
-  getBooleanLabel,
-} from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import {
+  RELATIVE_TIME_COLUMN_WIDTH,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { getProviderValue } from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import { AUTH_PROVIDER_FIELD_MAP } from "../graphql";
 
@@ -31,7 +32,7 @@ export const AuthProvidersPage = () => {
         flex: 1,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => {
-          return <GetEntityLink {...params.row} />;
+          return <Entity entity={params.row} />;
         },
       },
       {
@@ -44,49 +45,32 @@ export const AuthProvidersPage = () => {
         headerName: "Provider",
         flex: 1,
         sortField: "auth_provider",
-        renderCell: (params: GridRenderCellParams) => (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-            }}
-          >
-            {getProviderValue(params.value)}
-          </Box>
-        ),
+        renderCell: (params: GridRenderCellParams) =>
+          getProviderValue(params.value, 18),
       },
       {
         field: "enabled",
         headerName: "Enabled",
         flex: 1,
-        renderCell: (params: GridRenderCellParams) =>
-          getBooleanLabel(params.row.enabled),
+        renderCell: (params: GridRenderCellParams) => (
+          <Tooltip title={params.row.enabled ? "Enabled" : "Disabled"}>
+            <Switch
+              checked={Boolean(params.row.enabled)}
+              sx={{ pointerEvents: "none", cursor: "default" }}
+            />
+          </Tooltip>
+        ),
       },
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} />
         ),
       },
-      {
-        field: "creator",
-        headerName: "Creator",
-        flex: 1,
-        sortField: "creator.identifier",
-        valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-        renderCell: (params: GridRenderCellParams) => {
-          const creator = params.row.creator;
-          if (!creator) return null;
-          return <GetEntityLink {...creator} />;
-        },
-      },
+      userColumn({ disableFilter: true }),
     ],
     [],
   );
@@ -94,14 +78,13 @@ export const AuthProvidersPage = () => {
   return (
     <PageContainer
       title="Auth Providers"
+      description="Sign-in methods you can enable for your users."
       actions={
         <PermissionWrapper
           requiredPermission="api:auth_provider"
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
             onClick={() => navigate(`${linkPrefix}auth_providers/create`)}
             startIcon={<AddIcon />}
           >

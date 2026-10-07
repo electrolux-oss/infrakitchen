@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { PermissionContent } from "../components/PermissionContent";
 import { PERMISSION_FIELDS } from "../graphql";
@@ -14,7 +14,7 @@ export const PermissionPage = () => {
       entity_id={permission_id || ""}
       entityFields={PERMISSION_FIELDS}
     >
-      <EntityContainer title={"Permission Overview"}>
+      <EntityContainer title={"Permission Details"}>
         <PermissionContent />
       </EntityContainer>
     </EntityProvider>

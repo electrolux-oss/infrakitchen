@@ -18,9 +18,9 @@ import {
 } from "@mui/material";
 import CodeMirror from "@uiw/react-codemirror";
 
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -70,7 +70,13 @@ const JsonField = ({ label, value, onChange, helperText }: JsonFieldProps) => {
   return (
     <FormControl fullWidth margin="normal" error={!!error}>
       <FormLabel>{label}</FormLabel>
-      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1 }}>
+      <Box
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: "var(--template-surface-radius)",
+        }}
+      >
         <CodeMirror
           basicSetup={{ lineNumbers: true, foldGutter: false }}
           extensions={[jsonLang(), lintGutter()]}
@@ -193,16 +199,11 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
     <FormProvider {...methods}>
       <PageContainer
         title={`Edit Workflow ${workflow.id.slice(0, 8)}…`}
-        onBack={handleBack}
-        backAriaLabel="Back to workflow"
         bottomActions={
           <>
-            <Button variant="outlined" onClick={handleBack}>
-              Cancel
-            </Button>
+            <Button onClick={handleBack}>Cancel</Button>
             <Button
               variant="contained"
-              color="primary"
               onClick={handleSubmit(onSubmit)}
               disabled={isSubmitting || !canEdit}
             >
@@ -239,7 +240,6 @@ const WorkflowEditPageInner = (props: { workflow: GqlWorkflow }) => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Chip
                     label={idx + 1}
-                    size="small"
                     color="primary"
                     sx={{ fontWeight: 700, minWidth: 28 }}
                   />

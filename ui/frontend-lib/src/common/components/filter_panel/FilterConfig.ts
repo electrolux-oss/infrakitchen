@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface BaseFilterConfig {
   id: string;
   label: string;
@@ -23,6 +25,14 @@ export type ValueInputType =
 export interface ReferenceOption {
   label: string;
   value: string;
+  /** Optional icon rendered before the label in autocomplete dropdowns. */
+  icon?: ReactNode;
+  /** Optional template name shown as a Label chip before the label text. */
+  templateName?: string;
+  /** Optional lifecycle state (e.g. Template Version options) rendered as a trailing chip. */
+  lifecycleState?: string | null;
+  /** Optional breaking-changes note shown alongside the lifecycle chip. */
+  breakingChanges?: string | null;
 }
 
 export type ReferenceLoader = ((
@@ -42,16 +52,27 @@ export interface FilterableField {
   valueType: ValueInputType;
   /** Default operator when this field is first selected */
   defaultOperator?: FilterOperator;
+  /** Whether this field should seed the first empty filter row */
+  defaultSelected?: boolean;
   /** Options for autocomplete-multiple / select value inputs */
   options?: string[] | (() => Promise<string[]>);
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
+  /** Custom rendering for a select option's value (e.g. a colored chip), used in the dropdown list and the selected value. */
+  renderSelectOption?: (value: string, label: string) => ReactNode;
   /**
    * Async loader for reference fields (valueType "reference").
    * @param search - user-typed search string (empty = load defaults)
    * @returns list of {label, value} options matching the search
    */
   loadReferenceOptions?: ReferenceLoader;
+  /**
+   * Other filter fields whose current values scope this field's options
+   * (e.g. Template Version scoped by Template). When one of these values
+   * changes, this field's value is cleared and the reference input is
+   * remounted so options reload with the new scope.
+   */
+  dependencies?: string[];
 }
 
 /**
@@ -71,8 +92,12 @@ export interface ColumnFilterSpec {
   valueType: ValueInputType;
   /** Default operator when this field is first selected */
   defaultOperator?: FilterOperator;
+  /** Whether this field should seed the first empty filter row */
+  defaultSelected?: boolean;
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
+  /** Custom rendering for a select option's value (e.g. a colored chip), used in the dropdown list and the selected value. */
+  renderSelectOption?: (value: string, label: string) => ReactNode;
   /** Static string options for autocomplete-multiple inputs. */
   options?: string[];
   /** Entity name for the common labels autocomplete loader. */
@@ -87,6 +112,13 @@ export interface ColumnFilterSpec {
    * Called once at derive time.
    */
   makeReferenceLoader?: (ctx: FilterDeriveContext) => ReferenceLoader;
+  /**
+   * Other filter fields whose current values scope this field's options
+   * (e.g. Template Version scoped by Template). When one of these values
+   * changes, this field's value is cleared and the reference input is
+   * remounted so options reload with the new scope.
+   */
+  dependencies?: string[];
 }
 
 /**
@@ -98,6 +130,13 @@ export interface FilterDeriveContext {
   ikApi: any;
   /** Dynamic option sets keyed by name (e.g. { labels: string[] }) */
   options?: Record<string, string[]>;
+  /**
+   * Live access to the panel's current advanced filter clauses. Lets a
+   * reference loader scope its options by the value selected in another
+   * field (e.g. Template Version options limited to the selected Template).
+   * Returns the clauses for the panel's filter config.
+   */
+  getFilterClauses?: () => FilterClause[];
 }
 
 export interface FilterClause {
@@ -110,6 +149,8 @@ export interface FilterClause {
 export interface FilterConfig extends BaseFilterConfig {
   /** Filterable fields available in the query builder */
   fields: FilterableField[];
+  /** Default field preselected in the empty clause row */
+  defaultField?: string;
 }
 
 export interface FilterState {

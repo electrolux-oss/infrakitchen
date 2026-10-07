@@ -12,6 +12,18 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 import { GqlUserShort, USER_SHORT_FIELDS } from "../../users/graphql";
 import { notifyError } from "../hooks/useNotification";
 
+export interface ServerInfo {
+  version: string;
+  versionUrl: string;
+  repository: string;
+  repositoryUrl: string;
+  sourceCommit: string;
+  sourceCommitShort: string;
+  sourceUrl: string;
+  python: string;
+  hostMetadata: Record<string, string>;
+}
+
 interface ConfigContextType {
   linkPrefix: string;
   ikApi: InfraKitchenApi;
@@ -20,6 +32,9 @@ interface ConfigContextType {
   bootstrapPermissions?: Record<string, string>;
   bootstrapLoading?: boolean;
   bootstrapError?: string | null;
+  serverInfo?: ServerInfo | null;
+  serverInfoLoading?: boolean;
+  serverInfoError?: string | null;
 }
 
 interface GlobalConfigType {
@@ -49,6 +64,9 @@ export const ConfigProvider = ({
     bootstrapPermissions: {},
     bootstrapLoading: true,
     bootstrapError: null,
+    serverInfo: null,
+    serverInfoLoading: true,
+    serverInfoError: null,
   });
 
   const getBootstrapConfig = useCallback(async (): Promise<void> => {
@@ -58,12 +76,14 @@ export const ConfigProvider = ({
         entities: string[];
         userApiPolicies: Record<string, string>;
         currentUser: GqlUserShort | null;
+        serverInfo: ServerInfo;
       }>(
         `{
           globalConfig {
             approvalFlow
             demoMode
             websocket
+            services
             cloudProviderRegistry
             gitProviderRegistry
             notificationProviderRegistry
@@ -75,6 +95,17 @@ export const ConfigProvider = ({
           currentUser {
             ${USER_SHORT_FIELDS}
           }
+          serverInfo {
+            version
+            versionUrl
+            repository
+            repositoryUrl
+            sourceCommit
+            sourceCommitShort
+            sourceUrl
+            python
+            hostMetadata
+          }
         }`,
       );
 
@@ -83,6 +114,7 @@ export const ConfigProvider = ({
         approval_flow: gql.approvalFlow,
         demo_mode: gql.demoMode,
         websocket: gql.websocket,
+        services: gql.services,
         cloud_provider_registry: gql.cloudProviderRegistry,
         git_provider_registry: gql.gitProviderRegistry,
         storage_provider_registry: gql.storageProviderRegistry,
@@ -98,6 +130,9 @@ export const ConfigProvider = ({
         bootstrapLoading: false,
         bootstrapError: null,
         currentUser: response.currentUser,
+        serverInfo: response.serverInfo,
+        serverInfoLoading: false,
+        serverInfoError: null,
       }));
     } catch (error: any) {
       notifyError(error);
@@ -105,6 +140,8 @@ export const ConfigProvider = ({
         ...prevConfig,
         bootstrapLoading: false,
         bootstrapError: error?.message || "Failed to load bootstrap config",
+        serverInfoLoading: false,
+        serverInfoError: error?.message || "Failed to load server info",
       }));
     }
   }, [initialIkApi]);

@@ -11,14 +11,15 @@ import { useNavigate } from "react-router";
 import { Box, TextField, Button, MenuItem, Autocomplete } from "@mui/material";
 
 import { LabelInput } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { getAutocompleteTextFieldProps } from "../../common/utils/autocompleteInput";
 import { RefFolders } from "../../source_codes/types";
+import { ToolSelect } from "../../tools";
 import { IkEntity } from "../../types";
 import { EXECUTOR_CREATE_MUTATION } from "../graphql";
 import { ExecutorCreate } from "../types";
@@ -146,7 +147,7 @@ const ExecutorCreatePageInner = () => {
       ikApi
         .graphqlRequest<{ createExecutor: { id: string; name: string } }>(
           EXECUTOR_CREATE_MUTATION,
-          { input: data },
+          { input: { ...data, toolId: data.toolId || null } },
         )
         .then((response) => {
           const created = response.createExecutor;
@@ -190,18 +191,10 @@ const ExecutorCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Executor"
-      onBack={handleBack}
-      backAriaLabel="Back to executors list"
       bottomActions={
         <>
-          <Button variant="outlined" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>
@@ -533,6 +526,16 @@ const ExecutorCreatePageInner = () => {
                 )}
               />
             )}
+
+            {watchedStorage && (
+              <Controller
+                name="toolId"
+                control={control}
+                render={({ field }) => (
+                  <ToolSelect value={field.value} onChange={field.onChange} />
+                )}
+              />
+            )}
           </Box>
         </PropertyCard>
       </Box>
@@ -552,6 +555,7 @@ const ExecutorCreatePage = () => {
       sourceCodeId: "",
       storageId: "",
       storagePath: "",
+      toolId: "",
     },
     mode: "onChange",
   });

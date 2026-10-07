@@ -48,5 +48,5 @@ scrape endpoint at <http://localhost:9464/metrics>.
 **How It Works**
 
 1. The Scheduler service, running as a dedicated instance, loads jobs from the database and refreshes the job list every 10 minutes.
-2. When a job is triggered based on its cron schedule, the scheduler sends an event through RabbitMQ.
-3. A **task worker** receives the event and executes the job based on its type and script.
+2. When a job is triggered based on its cron schedule, the scheduler adds it to the task queue in PostgreSQL.
+3. A **task worker** claims the job and executes the job based on its type and script.

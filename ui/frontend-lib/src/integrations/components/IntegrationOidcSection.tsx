@@ -11,9 +11,10 @@ import {
   Typography,
 } from "@mui/material";
 
-import { CommonField } from "../../common/components/CommonField";
+import { CommonField } from "../../common/components/fields/CommonField";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { INTEGRATION_OIDC_QUERY } from "../graphql/queries";
 
 interface IntegrationOidcDetails {
@@ -88,7 +89,7 @@ export const IntegrationOidcSection = ({
     >
       <Box
         component="span"
-        sx={{ wordBreak: "break-all", fontFamily: "monospace" }}
+        sx={{ wordBreak: "break-all", fontFamily: CODE_FONT_FAMILY }}
       >
         {value}
       </Box>
@@ -114,12 +115,7 @@ export const IntegrationOidcSection = ({
         name={"OIDC JWKS (offline upload)"}
         value={
           <Box>
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<DownloadIcon />}
-              onClick={handleDownloadJwks}
-            >
+            <Button startIcon={<DownloadIcon />} onClick={handleDownloadJwks}>
               Download JWKS
             </Button>
             <Typography

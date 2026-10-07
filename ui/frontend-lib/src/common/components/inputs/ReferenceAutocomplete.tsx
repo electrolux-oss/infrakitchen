@@ -9,13 +9,16 @@ import React, {
 import {
   Autocomplete,
   AutocompleteRenderValue,
+  Box,
   Chip,
   SxProps,
   TextField,
   Theme,
 } from "@mui/material";
 
+import VersionLifecycleStateChip from "../../VersionLifecycleStateChip";
 import { ReferenceLoader, ReferenceOption } from "../filter_panel/FilterConfig";
+import { Label } from "../labels/Label";
 
 interface ReferenceAutocompleteProps {
   loadOptions: ReferenceLoader;
@@ -25,6 +28,45 @@ interface ReferenceAutocompleteProps {
   placeholder?: string;
   sx?: SxProps<Theme>;
 }
+
+const ReferenceOptionContent = ({
+  option,
+  labelSx,
+}: {
+  option: ReferenceOption;
+  labelSx?: SxProps<Theme>;
+}) => (
+  <>
+    {option.templateName && (
+      <Label
+        label={option.templateName}
+        sx={{ mr: 1, height: 20, fontSize: "0.75rem" }}
+      />
+    )}
+    {option.icon && (
+      <Box
+        component="span"
+        sx={{ mr: 0.5, display: "inline-flex", alignItems: "center" }}
+      >
+        {option.icon}
+      </Box>
+    )}
+    <Box component="span" sx={labelSx}>
+      {option.label}
+    </Box>
+    {option.lifecycleState && (
+      <Box
+        component="span"
+        sx={{ ml: 1, display: "inline-flex", alignItems: "center" }}
+      >
+        <VersionLifecycleStateChip
+          lifecycleState={option.lifecycleState}
+          breakingChanges={option.breakingChanges ?? undefined}
+        />
+      </Box>
+    )}
+  </>
+);
 
 export const ReferenceAutocomplete = ({
   loadOptions,
@@ -125,7 +167,7 @@ export const ReferenceAutocomplete = ({
     };
   }, []);
 
-  const effectiveOptions = useMemo(() => {
+  const effectiveOptions: ReferenceOption[] = useMemo(() => {
     const optionValues = new Set(options.map((o) => o.value));
     const missing = selectedValues
       .filter((v) => !optionValues.has(v))
@@ -146,7 +188,9 @@ export const ReferenceAutocomplete = ({
       return;
     }
 
-    setInputValue(selectedOption?.label || "");
+    // The selected value is rendered as rich content via renderValue, so the
+    // input text stays empty to avoid duplicating the label.
+    setInputValue("");
   }, [multiple, selectedOption]);
 
   if (multiple) {
@@ -184,9 +228,7 @@ export const ReferenceAutocomplete = ({
         ) =>
           val.map((option, index) => {
             const { key, ...rest } = getItemProps({ index });
-            return (
-              <Chip key={key} label={option.label} size="small" {...rest} />
-            );
+            return <Chip key={key} label={option.label} {...rest} />;
           })
         }
         renderInput={(params) => (
@@ -216,8 +258,43 @@ export const ReferenceAutocomplete = ({
       onInputChange={handleInputChange}
       loading={loading}
       filterOptions={(x) => x}
+      renderOption={(props, option) => {
+        const opt = option as ReferenceOption;
+        return (
+          <li {...props} key={opt.value}>
+            <ReferenceOptionContent option={opt} />
+          </li>
+        );
+      }}
+      renderValue={(option, getItemProps) => {
+        // Drop the chip delete handler; it doesn't belong on the plain span.
+        const { onDelete: _onDelete, ...itemProps } = getItemProps();
+        return (
+          <Box
+            component="span"
+            {...itemProps}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              minWidth: 0,
+            }}
+          >
+            <ReferenceOptionContent
+              option={option}
+              labelSx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            />
+          </Box>
+        );
+      }}
       renderInput={(params) => (
-        <TextField {...params} placeholder={placeholder} />
+        <TextField
+          {...params}
+          placeholder={selectedOption ? "" : placeholder}
+        />
       )}
       sx={sx}
     />

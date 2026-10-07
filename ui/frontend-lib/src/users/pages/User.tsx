@@ -1,6 +1,6 @@
 import { useParams } from "react-router";
 
-import { EntityContainer } from "../../common/components/EntityContainer";
+import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { UserContent } from "../components/UserContent";
 import { USER_FIELDS } from "../graphql";
@@ -14,7 +14,7 @@ export const UserPage = () => {
       entity_id={user_id || ""}
       entityFields={USER_FIELDS}
     >
-      <EntityContainer title={"User Overview"}>
+      <EntityContainer title={"User Details"}>
         <UserContent />
       </EntityContainer>
     </EntityProvider>

@@ -1,18 +1,24 @@
+import CallSplitOutlinedIcon from "@mui/icons-material/CallSplitOutlined";
+import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import {
   GridColumnVisibilityModel,
   GridRenderCellParams,
 } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { FavoriteButton } from "../../common/components/FavoriteButton";
+import {
+  createdUpdatedColumns,
+  labelsColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { Labels } from "../../common/components/Labels";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import StatusChip from "../../common/StatusChip";
-import { getVersionLifecycleStateColor } from "../../common/VersionLifecycleStateChip";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { GqlIntegrationShort } from "../../integrations/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
+import { toolColumn } from "../../tools/components/toolColumn";
 import {
   ENTITY_STATE,
   ENTITY_STATUS,
@@ -23,8 +29,11 @@ import { GqlResourceShort } from "../graphql";
 // --- Column visibility defaults ---
 
 export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
+  template: true,
+  created_at: false,
   creator: false,
   storage: false,
+  tool: true,
   workspace: false,
   integration_ids: false,
   secret_ids: false,
@@ -35,6 +44,7 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   labels: false,
   dependency_tags: false,
   dependency_config: false,
+  sourceCodeVersion: true,
 };
 
 export const resourceColumns: EntityTableColumn[] = [
@@ -70,7 +80,7 @@ export const resourceColumns: EntityTableColumn[] = [
       defaultOperator: "like",
     },
     renderCell: (params: GridRenderCellParams) => {
-      return <GetEntityLink {...params.row} />;
+      return <Entity entity={params.row} />;
     },
   },
   {
@@ -93,7 +103,157 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const template = params.row.template;
-      return <GetEntityLink {...template} />;
+      return <Entity entity={template} />;
+    },
+  },
+  {
+    field: "sourceCodeVersion",
+    headerName: "Template Version",
+    flex: 1,
+    fetchFields: [
+      "sourceCodeVersion.sourceCodeVersion",
+      "sourceCodeVersion.sourceCodeBranch",
+      "sourceCodeVersion.lifecycleState",
+      "sourceCodeVersion.breakingChanges",
+      "sourceCodeVersion.identifier",
+      "sourceCodeVersion.entityName",
+      "sourceCodeVersion.id",
+    ],
+    sortField: "source_code_version.tag",
+    filter: [
+      {
+        field: "source_code_version_id",
+        label: "Template Version",
+        operators: ["eq", "in"],
+        valueType: "reference",
+        defaultOperator: "eq",
+        dependencies: ["template_id"],
+        makeReferenceLoader: (ctx) => {
+          // When a single Template filter is set, scope version options to
+          // that template only. The template tag is then omitted from the
+          // options since the template is implied by the scope.
+          const getTemplateId = (): string | null => {
+            const clauses = ctx.getFilterClauses?.() ?? [];
+            const value = clauses.find((c) => c.field === "template_id")?.value;
+            if (typeof value === "string" && value) return value;
+            if (Array.isArray(value) && value.length === 1) {
+              return String(value[0]);
+            }
+            return null;
+          };
+
+          const toOptions = (
+            entities: Array<Record<string, any>>,
+            templateId: string | null,
+          ) =>
+            entities
+              .filter((e) => e.id && e.identifier)
+              .map((e) => {
+                const ref = e.sourceCodeVersion ?? e.sourceCodeBranch;
+                const RefIcon = e.sourceCodeVersion
+                  ? LocalOfferOutlinedIcon
+                  : CallSplitOutlinedIcon;
+                return {
+                  label: ref || e.identifier,
+                  value: e.id,
+                  icon: <RefIcon sx={{ fontSize: 15 }} color="action" />,
+                  lifecycleState: e.lifecycleState,
+                  breakingChanges: e.breakingChanges,
+                  ...(templateId ? {} : { templateName: e.template?.name }),
+                };
+              });
+
+          const withIcons = async (search: string) => {
+            const templateId = getTemplateId();
+            const filter: Record<string, any> = {};
+            if (templateId) {
+              filter["template_id"] = [templateId];
+            }
+            if (search.trim()) {
+              filter["identifier__like"] = search.trim();
+            }
+            const response = await ctx.ikApi.graphqlRequest(
+              `query ReferenceSearch($filter: JSON, $sort: [String!], $range: [Int!]) {
+                sourceCodeVersions(filter: $filter, sort: $sort, range: $range) {
+                  id
+                  identifier
+                  sourceCodeVersion
+                  sourceCodeBranch
+                  lifecycleState
+                  breakingChanges
+                  template { name }
+                }
+              }`,
+              {
+                filter,
+                sort: ["identifier", "ASC"],
+                range: [0, 50],
+              },
+            );
+            const entities: Array<Record<string, any>> =
+              response.sourceCodeVersions || [];
+            return toOptions(entities, templateId);
+          };
+
+          withIcons.resolveByIds = async (ids: string[]) => {
+            if (ids.length === 0) return [];
+            const templateId = getTemplateId();
+            const response = await ctx.ikApi.graphqlRequest(
+              `query ReferenceResolveByIds($filter: JSON) {
+                sourceCodeVersions(filter: $filter) {
+                  id
+                  identifier
+                  sourceCodeVersion
+                  sourceCodeBranch
+                  lifecycleState
+                  breakingChanges
+                  template { name }
+                }
+              }`,
+              {
+                filter: {
+                  ...(templateId ? { template_id: [templateId] } : {}),
+                  id__in: ids,
+                },
+              },
+            );
+            const entities: Array<Record<string, any>> =
+              response.sourceCodeVersions || [];
+            return toOptions(entities, templateId);
+          };
+          return withIcons;
+        },
+      },
+      {
+        field: "source_code_version__lifecycle_state",
+        label: "Template Version Lifecycle State",
+        operators: ["eq", "in"],
+        valueType: "select",
+        defaultOperator: "eq",
+        selectOptions: [
+          { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
+          { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
+          { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
+          {
+            label: "Deprecated",
+            value: VERSION_LIFECYCLE_STATE.DEPRECATED,
+          },
+          { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
+        ],
+        renderSelectOption: (value) => (
+          <VersionLifecycleStateChip lifecycleState={value} />
+        ),
+      },
+    ],
+    valueGetter: (_value: any, row: any) => {
+      const scv = row.sourceCodeVersion;
+      if (!scv) return "";
+      return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
+    },
+    renderCell: (params: GridRenderCellParams) => {
+      const scv = params.row.sourceCodeVersion;
+      if (!scv) return null;
+      return <Entity entity={scv} lifecycleVariant="dot" />;
     },
   },
   {
@@ -115,97 +275,21 @@ export const resourceColumns: EntityTableColumn[] = [
     valueGetter: (value: any) => value?.name || "",
     renderCell: (params: GridRenderCellParams) => {
       const project = params.row.project;
-      return <GetEntityLink {...project} />;
+      return <Entity entity={project} />;
     },
   },
-  {
-    field: "sourceCodeVersion",
-    headerName: "Template Version",
-    flex: 1,
-    fetchFields: [
-      "sourceCodeVersion.sourceCodeVersion",
-      "sourceCodeVersion.sourceCodeBranch",
-      "sourceCodeVersion.lifecycleState",
-      "sourceCodeVersion.breakingChanges",
-      "sourceCodeVersion.identifier",
-      "sourceCodeVersion.entityName",
-      "sourceCodeVersion.id",
-    ],
-    sortField: "source_code_version.source_code_version",
-    filter: [
-      {
-        field: "source_code_version_id",
-        label: "Version",
-        operators: ["eq", "in"],
-        valueType: "reference",
-        defaultOperator: "eq",
-        makeReferenceLoader: serverSearchReference({
-          entityPlural: "sourceCodeVersions",
-          labelField: "identifier",
-        }),
-      },
-      {
-        field: "source_code_version__lifecycle_state",
-        label: "Version Lifecycle State",
-        operators: ["eq", "in"],
-        valueType: "select",
-        defaultOperator: "eq",
-        selectOptions: [
-          { label: "Unknown", value: VERSION_LIFECYCLE_STATE.UNKNOWN },
-          { label: "Preview", value: VERSION_LIFECYCLE_STATE.PREVIEW },
-          { label: "Active", value: VERSION_LIFECYCLE_STATE.ACTIVE },
-          {
-            label: "Deprecated",
-            value: VERSION_LIFECYCLE_STATE.DEPRECATED,
-          },
-          { label: "Archived", value: VERSION_LIFECYCLE_STATE.ARCHIVED },
-        ],
-      },
-    ],
-    valueGetter: (_value: any, row: any) => {
-      const scv = row.sourceCodeVersion;
-      if (!scv) return "";
-      return scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-    },
-    renderCell: (params: GridRenderCellParams) => {
-      const scv = params.row.sourceCodeVersion;
-      if (!scv) return null;
-      const ref = scv.sourceCodeVersion ?? scv.sourceCodeBranch;
-      const color = getVersionLifecycleStateColor(scv.lifecycleState);
-      const textColor =
-        color === "success"
-          ? "success.main"
-          : color === "info"
-            ? "info.main"
-            : color === "warning"
-              ? "warning.main"
-              : color === "error"
-                ? "error.main"
-                : "text.primary";
 
-      return (
-        <GetEntityLink
-          {...scv}
-          name={ref}
-          sx={{
-            color: textColor,
-            fontWeight: color === "warning" ? 600 : 500,
-            textDecorationColor: textColor,
-          }}
-        />
-      );
-    },
-  },
   {
     field: "state",
     fetchFields: ["state", "status"],
     headerName: "State",
     flex: 1,
+    mobile: "badge",
     filter: [
       {
         field: "state",
         label: "State",
-        operators: ["eq", "in", "not_eq"],
+        operators: ["eq", "in"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [
@@ -219,7 +303,7 @@ export const resourceColumns: EntityTableColumn[] = [
       {
         field: "status",
         label: "Status",
-        operators: ["eq", "in", "not_eq"],
+        operators: ["eq", "in"],
         valueType: "select",
         defaultOperator: "eq",
         selectOptions: [
@@ -243,50 +327,13 @@ export const resourceColumns: EntityTableColumn[] = [
       />
     ),
   },
-  {
-    field: "created_at",
-    headerName: "Created",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.row.createdAt}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "updated_at",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.row.updatedAt}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} />;
-    },
-  },
+  ...createdUpdatedColumns({
+    createdField: "created_at",
+    updatedField: "updated_at",
+    createdValue: (params: GridRenderCellParams) => params.row.createdAt,
+    updatedValue: (params: GridRenderCellParams) => params.row.updatedAt,
+  }),
+  userColumn(),
   {
     field: "storage",
     headerName: "Storage",
@@ -305,9 +352,10 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const storage = params.row.storage;
       if (!storage) return null;
-      return <GetEntityLink {...storage} />;
+      return <Entity entity={storage} />;
     },
   },
+  toolColumn(),
   {
     field: "workspace",
     headerName: "Workspace",
@@ -326,7 +374,7 @@ export const resourceColumns: EntityTableColumn[] = [
     renderCell: (params: GridRenderCellParams) => {
       const workspace = params.row.workspace;
       if (!workspace) return null;
-      return <GetEntityLink {...workspace} />;
+      return <Entity entity={workspace} />;
     },
   },
   {
@@ -355,7 +403,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {integrations.map((integration, index) => (
             <span key={integration.id}>
-              <GetEntityLink {...integration} />
+              <Entity entity={integration} />
               {index < integrations.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -387,7 +435,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {secrets.map((secret, index) => (
             <span key={secret.id}>
-              <GetEntityLink {...secret} />
+              <Entity entity={secret} />
               {index < secrets.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -409,7 +457,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {parents.map((parent, index) => (
             <span key={parent.id}>
-              <GetEntityLink {...parent} />
+              <Entity entity={parent} />
               {index < parents.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -431,7 +479,7 @@ export const resourceColumns: EntityTableColumn[] = [
         <span>
           {children.map((child, index) => (
             <span key={child.id}>
-              <GetEntityLink {...child} />
+              <Entity entity={child} />
               {index < children.length - 1 ? ", " : ""}
             </span>
           ))}
@@ -461,22 +509,7 @@ export const resourceColumns: EntityTableColumn[] = [
         .map((o: { name: string }) => o.name)
         .join(", ") || null,
   },
-  {
-    field: "labels",
-    headerName: "Labels",
-    flex: 1,
-    filter: {
-      field: "labels",
-      operators: ["contains_all"],
-      valueType: "autocomplete-multiple",
-      defaultOperator: "contains_all",
-      labelsEntity: "resource",
-    },
-    valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Labels labels={params.row.labels || []} />
-    ),
-  },
+  labelsColumn("resource"),
   {
     field: "dependencyTags",
     headerName: "Dependency Tags",

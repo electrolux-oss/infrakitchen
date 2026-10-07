@@ -6,11 +6,17 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.executors.model import Executor
 
-from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
+from graphql_api.dataloaders.entity_loaders import (
+    get_favorite_status_loader,
+    get_scheduled_action_loader,
+)
+from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code.types import SourceCodeType
 from graphql_api.modules.storage.types import StorageType
+from graphql_api.modules.task.types import TaskType
 from graphql_api.modules.user.types import UserType
 
 
@@ -19,18 +25,23 @@ executor_mapper = StrawberrySQLAlchemyMapper()
 
 @executor_mapper.type(Executor)
 class ExecutorType:
-    __exclude__ = ["integration_ids", "secret_ids", "created_by"]
+    __exclude__ = ["integration_ids", "secret_ids", "created_by", "tool_id"]
 
     id: uuid.UUID = strawberry.UNSET
     integration_ids: list[IntegrationType] | None = None
     secret_ids: list[SecretType] | None = None
     source_code: SourceCodeType | None = None
     storage: StorageType | None = None
+    tool: ToolType | None = None
     creator: UserType | None = None
 
     @strawberry.field
     def entity_name(self) -> str:
         return "executor"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "executor", self.id)
 
     @strawberry.field
     async def is_favorite(self, info: Info) -> bool:
@@ -40,6 +51,12 @@ class ExecutorType:
 
         loader = get_favorite_status_loader(info, str(user.id), "executor")
         return await loader.load(str(self.id))
+
+    @strawberry.field
+    async def scheduled_actions(self, info: Info) -> list[TaskType]:
+        loader = get_scheduled_action_loader(info, "executor")
+        scheduled_actions = await loader.load(str(self.id))
+        return [scheduled_actions] if scheduled_actions else []
 
 
 executor_mapper.finalize()

@@ -1,25 +1,24 @@
 import { useCallback, useState } from "react";
 
-import { Box, TextField } from "@mui/material";
+import { Box } from "@mui/material";
 
-import { IconField } from "../../common";
+import { Entity, IconField } from "../../common";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
+import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
+import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
 import {
   CommonField,
-  GetReferenceUrlValue,
   getRemoteUrlValue,
-} from "../../common/components/CommonField";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { StringTagEditor } from "../../common/components/editors/StringTagEditor";
+} from "../../common/components/fields/CommonField";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { Labels } from "../../common/components/Labels";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import StatusChip from "../../common/StatusChip";
-import { getRepoNameFromUrl, sameStringSet } from "../../common/utils";
+import { getRepoNameFromUrl } from "../../common/utils";
 import { IkEntity } from "../../types";
 import { GqlSourceCode } from "../graphql";
 import {
@@ -59,10 +58,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
   );
 
   return (
-    <OverviewCard
-      name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}
-      description={sourceCode.description}
-    >
+    <OverviewCard name={getRepoNameFromUrl(sourceCode.sourceCodeUrl)}>
       <CommonField
         name={"URL"}
         value={
@@ -92,13 +88,7 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         ariaLabel="Edit integration"
         display={
           sourceCode.integration ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {IconField(sourceCode.sourceCodeProvider)}
-              <GetReferenceUrlValue
-                {...sourceCode.integration}
-                urlProvider={sourceCode.integration.integrationProvider}
-              />
-            </Box>
+            <Entity entity={sourceCode.integration} providerIconSize={24} />
           ) : null
         }
         onSave={(value) => saveField({ integrationId: value })}
@@ -111,57 +101,29 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
             filter={{ integration_type: "git" }}
             value={value}
             onChange={onChange}
-            label="Select Integration"
+            ariaLabel="Integration"
+            placeholder="Select integration…"
             helpertext="Select credentials for the source code"
           />
         )}
       />
       <CommonField
         name={"Created"}
-        value={
-          <RelativeTime date={sourceCode.createdAt} user={sourceCode.creator} />
-        }
+        value={<RelativeTime date={sourceCode.createdAt} />}
       />
       <CommonField
         name={"Last Updated"}
         value={<RelativeTime date={sourceCode.updatedAt} />}
-      />
-      <CommonEditableField<string>
-        name={"Description"}
+      />{" "}
+      <EditableDescriptionField
+        value={sourceCode.description}
         canEdit={canEdit}
-        value={sourceCode.description ?? ""}
-        ariaLabel="Edit description"
-        display={<span>{sourceCode.description || "No description"}</span>}
         onSave={(value) => saveField({ description: value })}
-        renderEditor={({ value, onChange }) => (
-          <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            label="Description"
-            fullWidth
-            margin="normal"
-            autoFocus
-          />
-        )}
-        size={12}
-      />
-      <CommonEditableField<string[]>
-        name={"Labels"}
-        canEdit={canEdit}
+      />{" "}
+      <EditableTagsField
         value={sourceCode.labels || []}
-        ariaLabel="Edit labels"
-        isEqual={sameStringSet}
-        display={<Labels labels={sourceCode.labels || []} />}
+        canEdit={canEdit}
         onSave={(value) => saveField({ labels: value })}
-        renderEditor={({ value, onChange }) => (
-          <StringTagEditor
-            value={value}
-            onChange={onChange}
-            label="Labels"
-            helperText="Press Enter to add a label"
-          />
-        )}
-        size={12}
       />
     </OverviewCard>
   );

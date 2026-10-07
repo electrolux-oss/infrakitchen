@@ -5,9 +5,10 @@ import { useNavigate } from "react-router";
 import { Chip } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
 import { NOTIFICATION_SUBSCRIPTION_FIELD_MAP } from "../../notifications";
 
@@ -33,18 +34,15 @@ export const ResourceNotificationSubscribersTable = ({
         renderCell: (params: GridRenderCellParams) => {
           const user = params.row.user;
           if (!user) return "Unknown";
-          return <GetEntityLink {...user} name={user.identifier} />;
+          return <Entity entity={{ ...user, entityType: "user" }} />;
         },
       },
       {
         field: "createdAt",
         headerName: "Subscribed",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       ...(projectId
@@ -61,7 +59,6 @@ export const ResourceNotificationSubscribersTable = ({
 
                 return isInherited ? (
                   <Chip
-                    size="small"
                     label="Inherited from Project"
                     color="info"
                     variant="outlined"
@@ -78,7 +75,7 @@ export const ResourceNotificationSubscribersTable = ({
                     }}
                   />
                 ) : (
-                  <Chip size="small" label="Direct" variant="outlined" />
+                  <Chip label="Direct" variant="outlined" />
                 );
               },
             },

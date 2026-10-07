@@ -1,0 +1,113 @@
+---
+title: Overview
+---
+
+Integrations are the foundation of InfraKitchen's connectivity to external systems. They securely store credentials and configuration needed to interact with cloud providers, Git repositories, and authentication systems.
+
+## What are Integrations?
+
+An **Integration** in InfraKitchen is a secure record that contains:
+
+- **Connection details** (URLs, endpoints, account IDs)
+- **Authentication credentials** (API keys, tokens, OAuth credentials)
+- **Configuration settings** (regions, scopes, permissions)
+
+All credentials are **encrypted at rest** and decrypted only when needed for operations.
+
+## Integration Properties
+
+All integrations share common properties:
+
+| Property          | Description                           | Required |
+| ----------------- | ------------------------------------- | -------- |
+| **Name**          | Human-readable identifier             | ✅       |
+| **Type**          | Cloud/Git/Auth provider               | ✅       |
+| **Provider**      | Specific provider (AWS, GitHub, etc.) | ✅       |
+| **Configuration** | Provider-specific settings            | ✅       |
+| **Description**   | Purpose and usage notes               | ❌       |
+
+## Managing Integrations
+
+### Create
+
+Only platform engineers can create integrations:
+
+<Steps>
+
+<Step title="Navigate to Integrations">
+
+Open the Integrations page.
+
+</Step>
+
+<Step title="Create Integration">
+
+Click <kbd>Create Integration</kbd>, select the provider type, and fill in the required fields.
+
+</Step>
+
+<Step title="Save">
+
+Optionally test the connection, then save.
+
+</Step>
+
+</Steps>
+
+### Update
+
+Credentials can be rotated without affecting resources:
+
+<Steps>
+
+<Step title="Edit existing integration">
+
+Update the credentials or configuration and save.
+
+</Step>
+
+</Steps>
+
+Existing resources continue working.
+
+### Delete
+
+:::warning
+Deleting an integration will prevent resources using it from being provisioned or destroyed.
+:::
+
+Before deletion:
+
+- Ensure no resources reference it
+- Update or destroy dependent resources
+- Document the change
+
+## Provider-Specific Guides
+
+### Cloud Providers
+
+- [AWS Setup Guide](./cloud#aws) - IAM roles, permissions, and best practices
+- [Azure Setup Guide](./cloud#azure) - Service principals and RBAC
+- [GCP Setup Guide](./cloud#google-cloud) - Service accounts and IAM
+- [MongoDB Atlas Guide](./cloud#mongodb-atlas) - API keys and project setup
+- [Datadog Guide](./cloud#datadog) - API and application keys
+
+### Git Providers
+
+- [GitHub Setup Guide](./git#github) - PATs, permissions, and SSH
+- [GitLab Setup Guide](./git#gitlab) - Personal and group access tokens
+- [Bitbucket Setup Guide](./git#bitbucket) - API tokens and scopes
+- [Azure DevOps Guide](./git#azure-devops) - PATs and organization setup
+
+### Auth Providers
+
+- [GitHub OAuth Setup](./auth#github) - App registration and scopes
+- [Google OAuth Setup](./auth#google) - OAuth client registration and redirect URI
+- [Microsoft OAuth Setup](./auth#microsoft) - App registration and Azure AD
+- [Backstage Integration](./auth#backstage) - Plugin configuration
+- [Service Accounts](./auth#service-account) - API token management
+- [Guest Access](./auth#guest) - Development mode
+
+### Notification Providers
+
+- [Slack Setup Guide](./notification#slack) - Bot token, scopes, and channel setup

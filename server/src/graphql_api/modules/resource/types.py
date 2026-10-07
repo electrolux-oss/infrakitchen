@@ -7,12 +7,20 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 from application.resources.model import Resource
 from application.validation_rules.schema import ValidationRuleResponse
 
-from graphql_api.dataloaders.entity_loaders import get_favorite_status_loader
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
+from graphql_api.dataloaders.entity_loaders import (
+    get_favorite_status_loader,
+    get_scheduled_action_loader,
+    get_resource_temp_state_loader,
+)
+from graphql_api.modules.tool.types import ToolType
 from graphql_api.modules.integration.types import IntegrationType
+from graphql_api.modules.resource_temp_state.types import ResourceTempStateType
 from graphql_api.modules.secret.types import SecretType
 from graphql_api.modules.source_code_version.types import SourceCodeVersionType
 from graphql_api.modules.storage.types import StorageType
 from graphql_api.modules.template.types import TemplateType
+from graphql_api.modules.task.types import TaskType
 from graphql_api.modules.user.types import UserType
 from graphql_api.modules.workspace.types import WorkspaceType
 from graphql_api.modules.project.types import ProjectType
@@ -28,6 +36,8 @@ class ResourceType:
         "template",
         "storage",
         "storage_id",
+        "tool",
+        "tool_id",
         "integration_ids",
         "secret_ids",
         "parents",
@@ -42,6 +52,7 @@ class ResourceType:
     id: uuid.UUID = strawberry.UNSET
     template: TemplateType | None = None
     storage: StorageType | None = None
+    tool: ToolType | None = None
     workspace: WorkspaceType | None = None
     project: ProjectType | None = None
     source_code_version: SourceCodeVersionType | None = None
@@ -56,6 +67,10 @@ class ResourceType:
         return "resource"
 
     @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "resource", self.id)
+
+    @strawberry.field
     async def is_favorite(self, info: Info) -> bool:
         user = info.context.get("user")
         if user is None:
@@ -63,6 +78,21 @@ class ResourceType:
 
         loader = get_favorite_status_loader(info, str(user.id), "resource")
         return await loader.load(str(self.id))
+
+    @strawberry.field
+    async def temp_state(self, info: Info) -> ResourceTempStateType | None:
+        loader = get_resource_temp_state_loader(info)
+        temp_state = await loader.load(str(self.id))
+        if temp_state is None:
+            return None
+
+        return ResourceTempStateType(**temp_state)
+
+    @strawberry.field
+    async def scheduled_actions(self, info: Info) -> list[TaskType]:
+        loader = get_scheduled_action_loader(info, "resource")
+        scheduled_actions = await loader.load(str(self.id))
+        return [scheduled_actions] if scheduled_actions else []
 
 
 resource_mapper.finalize()

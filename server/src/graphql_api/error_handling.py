@@ -55,65 +55,93 @@ def _sanitize_message(message: str) -> str:
     return sanitized
 
 
+def _classify_known_exception(original: Exception) -> tuple[str, str, dict[str, Any] | None] | None:
+    if isinstance(original, EntityNotFound):
+        return "NOT_FOUND", _sanitize_message(str(original)), None
+
+    if isinstance(original, AccessDenied):
+        return "ACCESS_DENIED", _sanitize_message(str(original)), None
+
+    if isinstance(original, AccessUnauthorized):
+        return "UNAUTHORIZED", _sanitize_message(str(original)), None
+
+    if isinstance(original, EntityWrongState):
+        return "WRONG_STATE", _sanitize_message(str(original)), None
+
+    if isinstance(original, DependencyError):
+        extras: dict[str, Any] = {"error_code": original.error_code}
+        if original.metadata:
+            extras["metadata"] = original.metadata
+        return "DEPENDENCY", _sanitize_message(original.message), extras
+
+    if isinstance(original, EntityExistsError):
+        return "CONFLICT", _sanitize_message(str(original)), None
+
+    if isinstance(original, IntegrityError):
+        safe_msg = (
+            str(original.orig.__cause__)
+            if original.orig and original.orig.__cause__
+            else "A conflicting record already exists."
+        )
+        return "CONFLICT", _sanitize_message(safe_msg), None
+
+    if isinstance(original, ChildrenIsNotReady):
+        return "CHILDREN_NOT_READY", _sanitize_message(str(original)), None
+
+    if isinstance(original, CannotProceed):
+        return "CANNOT_PROCEED", _sanitize_message(str(original)), None
+
+    if isinstance(original, (ValueError, TypeError, RequestValidationError, EntityValueError)):
+        return "VALIDATION", _sanitize_message(str(original)), None
+
+    if isinstance(original, ConfigError):
+        return "INTERNAL", "Internal server error", None
+
+    if isinstance(original, CloudWrongCredentials):
+        extras = {"error_code": original.error_code}
+        if original.metadata:
+            extras["metadata"] = original.metadata
+        return "CREDENTIALS_ERROR", _sanitize_message(original.message), extras
+
+    if isinstance(original, AssertionError):
+        return "VALIDATION", _sanitize_message(str(original)) or "Assertion failed.", None
+
+    if isinstance(original, NotImplementedError):
+        return "NOT_IMPLEMENTED", _sanitize_message(str(original)), None
+
+    if isinstance(original, PermissionError):
+        return "ACCESS_DENIED", _sanitize_message(str(original)), None
+
+    return None
+
+
+def _attach_metadata(
+    original: Exception, code: str, message: str, extras: dict[str, Any] | None
+) -> tuple[str, str, dict[str, Any] | None]:
+    """
+    Generic fallback: if an exception carries a non-empty ``metadata`` attribute
+    (e.g. a raw API error payload) that wasn't already surfaced above, attach it
+    so the frontend can render the structured details instead of just a message.
+    """
+    if extras is not None and "metadata" in extras:
+        return code, message, extras
+
+    metadata = getattr(original, "metadata", None)
+    if not metadata:
+        return code, message, extras
+
+    extras = dict(extras or {})
+    extras["metadata"] = metadata
+    return code, message, extras
+
+
 def classify_graphql_error(error: GraphQLError) -> tuple[str, str, dict[str, Any] | None]:
     original = _unwrap_original_error(error)
 
     if original is not None:
-        if isinstance(original, EntityNotFound):
-            return "NOT_FOUND", _sanitize_message(str(original)), None
-
-        if isinstance(original, AccessDenied):
-            return "ACCESS_DENIED", _sanitize_message(str(original)), None
-
-        if isinstance(original, AccessUnauthorized):
-            return "UNAUTHORIZED", _sanitize_message(str(original)), None
-
-        if isinstance(original, EntityWrongState):
-            return "WRONG_STATE", _sanitize_message(str(original)), None
-
-        if isinstance(original, DependencyError):
-            extras: dict[str, Any] = {"error_code": original.error_code}
-            if original.metadata:
-                extras["metadata"] = original.metadata
-            return "DEPENDENCY", _sanitize_message(original.message), extras
-
-        if isinstance(original, EntityExistsError):
-            return "CONFLICT", _sanitize_message(str(original)), None
-
-        if isinstance(original, IntegrityError):
-            safe_msg = (
-                str(original.orig.__cause__)
-                if original.orig and original.orig.__cause__
-                else "A conflicting record already exists."
-            )
-            return "CONFLICT", _sanitize_message(safe_msg), None
-
-        if isinstance(original, ChildrenIsNotReady):
-            return "CHILDREN_NOT_READY", _sanitize_message(str(original)), None
-
-        if isinstance(original, CannotProceed):
-            return "CANNOT_PROCEED", _sanitize_message(str(original)), None
-
-        if isinstance(original, (ValueError, TypeError, RequestValidationError, EntityValueError)):
-            return "VALIDATION", _sanitize_message(str(original)), None
-
-        if isinstance(original, ConfigError):
-            return "INTERNAL", "Internal server error", None
-
-        if isinstance(original, CloudWrongCredentials):
-            extras = {"error_code": original.error_code}
-            if original.metadata:
-                extras["metadata"] = original.metadata
-            return "CREDENTIALS_ERROR", _sanitize_message(original.message), extras
-
-        if isinstance(original, AssertionError):
-            return "VALIDATION", _sanitize_message(str(original)) or "Assertion failed.", None
-
-        if isinstance(original, NotImplementedError):
-            return "NOT_IMPLEMENTED", _sanitize_message(str(original)), None
-
-        if isinstance(original, PermissionError):
-            return "ACCESS_DENIED", _sanitize_message(str(original)), None
+        classified = _classify_known_exception(original)
+        if classified is not None:
+            return _attach_metadata(original, *classified)
 
     # Strawberry permission errors are plain GraphQLError without original_error.
     if error.message.startswith("Not authenticated"):

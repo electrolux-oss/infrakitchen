@@ -1,7 +1,8 @@
+import aiofiles
 import platform
 
 
-def get_host_metadata():
+async def get_host_metadata():
     stats = {
         "machine": platform.machine(),
         "node": platform.node(),
@@ -13,8 +14,8 @@ def get_host_metadata():
     }
 
     if stats.get("system") == "Linux":
-        with open("/proc/meminfo") as f:
-            lines = f.readlines()
+        async with aiofiles.open("/proc/meminfo") as f:
+            lines = await f.readlines()
 
         for line in range(5):
             key, value = lines[line].split(":")

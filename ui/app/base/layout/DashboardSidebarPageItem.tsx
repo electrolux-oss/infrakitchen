@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Link } from "react-router";
 
-import { usePermissionProvider } from "@electrolux-oss/infrakitchen";
+import { Label, usePermissionProvider } from "@electrolux-oss/infrakitchen";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -23,8 +23,11 @@ export interface DashboardSidebarPageItemProps {
   id: string;
   title: string;
   icon?: React.ReactNode;
-  href: string;
+  /** Page URL; omit for pure group parents that only expand/collapse. */
+  href?: string;
   action?: React.ReactNode;
+  /** Small pill shown next to the title, e.g. "alpha" or "beta". */
+  label?: string;
   defaultExpanded?: boolean;
   expanded?: boolean;
   selected?: boolean;
@@ -39,6 +42,7 @@ export default function DashboardSidebarPageItem({
   icon,
   href,
   action,
+  label,
   defaultExpanded = false,
   expanded = defaultExpanded,
   selected = false,
@@ -129,7 +133,7 @@ export default function DashboardSidebarPageItem({
         sx={{
           display: "block",
           py: 0,
-          px: 1,
+          px: 0,
           overflowX: "hidden",
         }}
       >
@@ -139,10 +143,24 @@ export default function DashboardSidebarPageItem({
             disabled={disabled}
             sx={{
               height: mini ? 34 : "auto",
+              mx: 0,
             }}
             {...(nestedNavigation && !mini
               ? {
                   onClick: handleClick,
+                  // A parent can also be a page: navigate AND toggle children.
+                  ...(href
+                    ? {
+                        LinkComponent,
+                        ...(hasExternalHref
+                          ? {
+                              target: "_blank",
+                              rel: "noopener noreferrer",
+                            }
+                          : {}),
+                        to: href,
+                      }
+                    : {}),
                 }
               : {})}
             {...(!nestedNavigation
@@ -191,6 +209,9 @@ export default function DashboardSidebarPageItem({
                   zIndex: 1,
                 }}
               />
+            ) : null}
+            {label && !mini ? (
+              <Label label={label} sx={{ ml: 1, flexShrink: 0 }} />
             ) : null}
             {action && !mini && fullyExpanded ? action : null}
             {nestedNavigation ? (

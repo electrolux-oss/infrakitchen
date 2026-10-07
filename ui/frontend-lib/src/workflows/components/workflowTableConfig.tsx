@@ -1,11 +1,12 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import {
-  getDateValue,
-  GetEntityLink,
-} from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import {
+  NUMERIC_COLUMN_ALIGN,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { getDateValue } from "../../common/components/fields/CommonField";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
 
@@ -16,10 +17,12 @@ export const workflowColumns: EntityTableColumn[] = [
     flex: 1,
     hideable: false,
     renderCell: (params: GridRenderCellParams) => (
-      <GetEntityLink
-        id={params.row.id}
-        entityName="workflow"
-        name={params.row.id.slice(0, 8) + "..."}
+      <Entity
+        entity={{
+          id: params.row.id,
+          entityType: "workflow",
+          name: params.row.id.slice(0, 8) + "...",
+        }}
       />
     ),
   },
@@ -57,30 +60,10 @@ export const workflowColumns: EntityTableColumn[] = [
     headerName: "Steps",
     flex: 0.5,
     sortable: false,
+    ...NUMERIC_COLUMN_ALIGN,
     valueGetter: (_value: any, row: any) => row.steps?.length ?? 0,
   },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
-  },
+  userColumn(),
   {
     field: "createdAt",
     headerName: "Created At",

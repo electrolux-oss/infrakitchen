@@ -1,13 +1,17 @@
 import { useMemo } from "react";
 
-import { Box, Tooltip, Typography } from "@mui/material";
+import { Tooltip, Typography } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import PageContainer from "../../common/PageContainer";
 import StatusChip from "../../common/StatusChip";
+import { CODE_FONT_FAMILY } from "../../common/theme";
+import { PermissionWrapper } from "../../common/wrappers/PermissionWrapper";
+import { TaskQueueButton } from "../../tasks/components/TaskQueueDialog";
 import { WORKER_FIELD_MAP } from "../graphql";
 
 // Helper function to flatten nested objects,
@@ -53,24 +57,21 @@ const HostInfoField = {
     return (
       <Tooltip
         title={
-          <Typography component="pre" variant="caption">
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: CODE_FONT_FAMILY,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              maxWidth: 420,
+            }}
+          >
             {formattedString}
           </Typography>
         }
         placement="top-start"
       >
-        <Box
-          sx={{
-            width: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Typography variant="body2" color="textSecondary">
-            {condensedDisplay}
-          </Typography>
-        </Box>
+        <Typography>{condensedDisplay}</Typography>
       </Tooltip>
     );
   },
@@ -100,11 +101,7 @@ export default function WorkerList() {
         sortable: false,
         renderCell: (params: GridRenderCellParams) => {
           if (!params.value) {
-            return (
-              <Typography variant="body2" color="textSecondary">
-                N/A
-              </Typography>
-            );
+            return <Typography color="textSecondary">N/A</Typography>;
           }
           // current_task is a free-form JSON blob stored with snake_case keys.
           const { entity, entity_id, action, user, started_at } = params.value;
@@ -112,19 +109,23 @@ export default function WorkerList() {
           return (
             <Tooltip
               title={
-                <Typography component="pre" variant="caption">
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: CODE_FONT_FAMILY,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    maxWidth: 420,
+                  }}
+                >
                   {`Entity: ${entity}\nID: ${entity_id}\nAction: ${action}\nUser: ${user}\nStarted: ${started_at}`}
                 </Typography>
               }
               placement="top-start"
             >
-              <Typography variant="body1">
-                <GetEntityLink
-                  entityName={entity}
-                  id={entity_id}
-                  identifier={label}
-                />
-              </Typography>
+              <Entity
+                entity={{ id: entity_id, entityType: entity, name: label }}
+              />
             </Tooltip>
           );
         },
@@ -135,37 +136,25 @@ export default function WorkerList() {
         flex: 0.5,
         sortField: "tasks_completed",
         renderCell: (params: GridRenderCellParams) => (
-          <Typography variant="body2">{params.value ?? 0}</Typography>
+          <Typography>{params.value ?? 0}</Typography>
         ),
       },
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{
-              fontSize: "0.75rem",
-              display: "flex",
-            }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
         field: "updatedAt",
         headerName: "Last Updated",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "updated_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{
-              fontSize: "0.75rem",
-              display: "flex",
-            }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       HostInfoField,
@@ -174,7 +163,19 @@ export default function WorkerList() {
   );
 
   return (
-    <PageContainer title="Workers">
+    <PageContainer
+      title="Workers"
+      description="The processes that pick up and execute infrastructure tasks."
+      actions={
+        // The queue is task data, so it needs task read access on top of worker access
+        <PermissionWrapper
+          requiredPermission="api:task"
+          permissionAction="read"
+        >
+          <TaskQueueButton />
+        </PermissionWrapper>
+      }
+    >
       <EntityFetchTable
         title="Workers"
         entityName="worker"

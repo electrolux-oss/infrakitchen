@@ -34,11 +34,16 @@ export const deriveFilterableFields = (
         operators: spec.operators,
         valueType: spec.valueType,
         defaultOperator: spec.defaultOperator,
+        defaultSelected: spec.defaultSelected,
       };
 
       // Resolve static select options
       if (spec.selectOptions) {
         field.selectOptions = spec.selectOptions;
+      }
+
+      if (spec.renderSelectOption) {
+        field.renderSelectOption = spec.renderSelectOption;
       }
 
       if (spec.options) {
@@ -58,6 +63,11 @@ export const deriveFilterableFields = (
       // Resolve reference loader via factory
       if (spec.makeReferenceLoader) {
         field.loadReferenceOptions = spec.makeReferenceLoader(ctx);
+      }
+
+      // Fields whose values scope this field's options
+      if (spec.dependencies) {
+        field.dependencies = spec.dependencies;
       }
 
       fields.push(field);

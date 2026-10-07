@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload
+from sqlalchemy.orm import joinedload, raiseload
 
 from application.batch_operations.model import BatchOperation
 from core.database import FieldSpec, build_load_only
@@ -20,6 +20,6 @@ def build_batch_operation_query_options(fields: FieldSpec | None = None) -> list
         nested = fields["creator"]
         opts.append(joinedload(BatchOperation.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(BatchOperation.creator))
+        opts.append(raiseload(BatchOperation.creator))
 
     return opts

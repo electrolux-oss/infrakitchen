@@ -1,17 +1,19 @@
+import { useState } from "react";
+
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
+import { EntityGraphViewTab } from "../../common/components/graph/GraphViewTab";
 import { EntityTreeViewTab } from "../../common/components/tree/TreeViewTab";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
-import { ENTITY_STATUS } from "../../utils/constants";
-import { useResourceTempState } from "../hooks";
+import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { DependencyConfiguration } from "./DependencyConfiguration";
 import { ResourceNotificationSubscribersTable } from "./ResourceNotificationSubscribersTable";
@@ -19,32 +21,16 @@ import { ResourceOverview } from "./ResourceOverview";
 import { ResourcePermissions } from "./ResourcePermissions";
 import { TemplateConfiguration } from "./TemplateConfiguration";
 
-interface ResourceContentProps {
-  subscribersRefreshKey?: number;
-}
-
-export const ResourceContent = ({
-  subscribersRefreshKey = 0,
-}: ResourceContentProps) => {
+export const ResourceContent = () => {
+  const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
   const { entity, userEntityPermissions } = useEntityProvider();
-
-  const { pendingChanges } = useResourceTempState({
-    resourceId: entity?.id,
-    enabled: entity != null && entity.status !== ENTITY_STATUS.APPROVAL_PENDING,
-    refreshKey: entity?.updatedAt,
-  });
 
   if (!entity) return null;
 
   const tabs: TabDefinition[] = [
     {
       label: "Template",
-      content: (
-        <TemplateConfiguration
-          resource={entity}
-          pendingChanges={pendingChanges}
-        />
-      ),
+      content: <TemplateConfiguration resource={entity} />,
     },
     {
       label: "Dependencies",
@@ -54,6 +40,15 @@ export const ResourceContent = ({
       label: "Tree View",
       content: (
         <EntityTreeViewTab
+          entity_id={entity.id}
+          entity_name={entity.entityName}
+        />
+      ),
+    },
+    {
+      label: "Graph View",
+      content: (
+        <EntityGraphViewTab
           entity_id={entity.id}
           entity_name={entity.entityName}
         />
@@ -116,7 +111,13 @@ export const ResourceContent = ({
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
-      <ResourceOverview resource={entity} pendingChanges={pendingChanges} />
+      <EntityTaskQueueStatus />
+      <ResourceOverview
+        resource={entity}
+        onSubscriptionChange={() =>
+          setSubscribersRefreshKey((currentKey) => currentKey + 1)
+        }
+      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}

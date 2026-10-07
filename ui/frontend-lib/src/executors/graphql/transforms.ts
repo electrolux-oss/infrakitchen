@@ -1,7 +1,9 @@
 import { GqlIntegrationShort } from "../../integrations/graphql";
+import { GqlScheduledResourceAction } from "../../resources/graphql";
 import { GqlSecretShort } from "../../secrets/graphql";
 import { GqlSourceCodeShort } from "../../source_codes/graphql";
 import { GqlStorageShort } from "../../storages/graphql";
+import type { ToolShort } from "../../tools/types";
 import { GqlUserShort } from "../../users/graphql";
 
 export interface GqlExecutor {
@@ -19,11 +21,13 @@ export interface GqlExecutor {
   secretIds: GqlSecretShort[] | null;
   storage: GqlStorageShort | null;
   storagePath: string | null;
+  tool: ToolShort | null;
   labels: string[] | null;
   state: string;
   status: string;
   revisionNumber: number;
   creator: GqlUserShort | null;
+  scheduledActions: GqlScheduledResourceAction[] | null;
   createdAt: string;
   updatedAt: string;
   isFavorite: boolean;

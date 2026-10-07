@@ -46,20 +46,20 @@ class GithubAuthentication:
         self.github_pat: EncryptedSecretStr | None = None
 
         if isinstance(config, GithubSshIntegrationConfig):
-            self.logger.info("Using SSH key for Github authentication...")
+            self.logger.info("Using SSH key for GitHub authentication...")
             self.github_ssh_key = config.github_ssh_private_key
 
         elif isinstance(config, GithubIntegrationConfig):
             token_field = getattr(config, "github_token", None)
             if token_field:  # explicit PAT field
-                self.logger.info("Using personal access token for Github authentication...")
+                self.logger.info("Using personal access token for GitHub authentication...")
                 self.github_pat = token_field
             elif getattr(config, "github_client_id", None) and getattr(config, "github_client_secret", None):
-                self.logger.info("Using username and token for Github authentication...")
+                self.logger.info("Using username and token for GitHub authentication...")
                 self.github_user = config.github_client_id
                 self.github_key = config.github_client_secret
             elif getattr(config, "github_client_secret", None):
-                self.logger.info("Using personal access token (client secret only) for Github authentication...")
+                self.logger.info("Using personal access token (client secret only) for GitHub authentication...")
                 self.github_pat = config.github_client_secret
             else:
                 self.logger.warning("No recognizable credentials found in GithubIntegrationConfig")
@@ -168,7 +168,7 @@ class GithubProvider(IntegrationProvider, GithubAuthentication):
 
     @override
     async def get_git_client(self, git_url: str, workspace_root: str, repo_name: str) -> GitClient:
-        """Get the git client for the Github integration."""
+        """Get the git client for the GitHub integration."""
 
         git_client = GitClient(
             git_url=self._get_git_url(git_url),

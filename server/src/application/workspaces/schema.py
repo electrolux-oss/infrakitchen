@@ -31,6 +31,7 @@ class GithubWorkspaceMeta(BaseModel):
     html_url: HttpUrl = Field(...)
     git_url: str = Field(default="")
     ssh_url: str = Field(default="")
+    clone_url: HttpUrl = Field(...)
     url: HttpUrl = Field(...)
     created_at: str = Field(...)
     updated_at: str = Field(...)
@@ -84,10 +85,10 @@ class WorkspaceMeta(BaseModel):
     """
 
     name: str
-    url: HttpUrl
+    web_url: HttpUrl
     description: str | None = None
-    ssh_url: str
-    https_url: HttpUrl
+    ssh_clone_url: str
+    https_clone_url: HttpUrl
     default_branch: str = Field(default="main")
     organization: str | None = None
 
@@ -98,10 +99,10 @@ class WorkspaceMeta(BaseModel):
         """
         return cls(
             name=github_meta.name,
-            url=github_meta.url,
+            web_url=github_meta.html_url,  # Browsable repo page, not the API self-link
             description=github_meta.description,
-            ssh_url=github_meta.ssh_url,
-            https_url=github_meta.html_url,  # Mapping html_url from GitHub to https_url
+            ssh_clone_url=github_meta.ssh_url,
+            https_clone_url=github_meta.clone_url,  # Actual HTTPS clone URL
             default_branch=github_meta.default_branch,
             organization=github_meta.owner.login,  # Mapping owner.login to organization
         )
@@ -120,10 +121,10 @@ class WorkspaceMeta(BaseModel):
 
         return cls(
             name=bitbucket_meta.name,
-            url=bitbucket_meta.links.html.href,
+            web_url=bitbucket_meta.links.html.href,
             description=bitbucket_meta.description,
-            ssh_url=ssh_url,
-            https_url=HttpUrl(https_url),
+            ssh_clone_url=ssh_url,
+            https_clone_url=HttpUrl(https_url),
             default_branch=bitbucket_meta.mainbranch.name,
             organization=bitbucket_meta.workspace.slug,  # Mapping workspace.slug to organization
         )
@@ -145,9 +146,9 @@ class WorkspaceMeta(BaseModel):
 
         return cls(
             name=azure_meta.name,
-            url=azure_meta.url,
-            ssh_url=azure_meta.ssh_url,
-            https_url=HttpUrl(https_url),
+            web_url=azure_meta.url,
+            ssh_clone_url=azure_meta.ssh_url,
+            https_clone_url=HttpUrl(https_url),
             default_branch=default_branch,
             organization=azure_meta.project.id,
         )

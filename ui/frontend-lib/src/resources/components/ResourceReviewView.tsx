@@ -1,10 +1,9 @@
 import React from "react";
 
-import { Alert, Button, Typography } from "@mui/material";
+import { Alert, Button } from "@mui/material";
 
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { ENTITY_ACTION, ENTITY_STATUS } from "../../utils";
-import { useResourceTempState } from "../hooks";
+import { ENTITY_ACTION } from "../../utils";
 
 import ResourceStateReviewDialog from "./ResourceStateReviewDialog";
 
@@ -14,19 +13,20 @@ export const ResourceReviewView = () => {
   const hasCheckStateDifferencePermission =
     actions.includes(ENTITY_ACTION.APPROVE) ||
     actions.includes(ENTITY_ACTION.HAS_TEMPORARY_STATE);
-  const { resourceTempState, loading, error } = useResourceTempState({
-    resourceId: entity.id,
-    enabled:
-      openStateReview && entity.status !== ENTITY_STATUS.APPROVAL_PENDING,
-    refreshKey: openStateReview ? entity.updatedAt : null,
-  });
 
   return (
     <>
       {hasCheckStateDifferencePermission && (
         <Alert
           severity="warning"
-          sx={{ mb: 2 }}
+          sx={{
+            mb: 2,
+            // MUI anchors the action slot to the top; center it on the message.
+            "& .MuiAlert-action": {
+              alignItems: "center",
+              paddingTop: 0,
+            },
+          }}
           action={
             <Button
               color="inherit"
@@ -37,13 +37,9 @@ export const ResourceReviewView = () => {
             </Button>
           }
         >
-          {actions.includes(ENTITY_ACTION.APPROVE) ? (
-            <Typography>Review required before proceeding.</Typography>
-          ) : (
-            <Typography>
-              Temporary changes detected. Awaiting owner confirmation.
-            </Typography>
-          )}
+          {actions.includes(ENTITY_ACTION.APPROVE)
+            ? "Review required before proceeding."
+            : "Temporary changes detected. Awaiting owner confirmation."}
         </Alert>
       )}
       <ResourceStateReviewDialog
@@ -53,9 +49,7 @@ export const ResourceReviewView = () => {
         actions={actions}
         title="Review Changes"
         entity_name={entity.entityName}
-        resourceTempState={resourceTempState}
-        loading={loading}
-        error={error}
+        resourceTempState={entity.tempState}
         onClose={() => {
           setOpenStateReview(false);
         }}

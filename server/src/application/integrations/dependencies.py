@@ -4,7 +4,6 @@ from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
 from core.permissions.dependencies import get_permission_service
 from core.revisions.handler import RevisionHandler
-from core.tasks.dependencies import get_task_service
 from core.utils.event_sender import EventSender
 
 from .crud import IntegrationCRUD
@@ -24,6 +23,5 @@ def get_integration_service(
         revision_handler=revision_handler,
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,
-        task_service=get_task_service(session=session),
         permission_service=get_permission_service(session=session),
     )

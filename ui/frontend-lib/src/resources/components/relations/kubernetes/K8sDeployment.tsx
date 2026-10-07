@@ -38,7 +38,7 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
   const [selectedDeployment, setSelectedDeployment] = useState<string>("");
 
   const handleToggleExpand = (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     isExpanded: boolean,
   ) => {
     setExpanded(isExpanded);
@@ -120,7 +120,7 @@ export const DeploymentsDetails = (props: DeploymentsDetailsProps) => {
                           width: "100%",
                           textAlign: "left",
                           p: 0.5,
-                          borderRadius: "4px",
+                          borderRadius: "var(--template-surface-radius)",
                           "&:hover": { backgroundColor: "action.hover" },
                         }}
                       >

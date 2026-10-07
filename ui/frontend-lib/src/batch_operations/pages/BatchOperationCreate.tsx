@@ -14,7 +14,7 @@ import {
   FormHelperText,
 } from "@mui/material";
 
-import { PropertyCard } from "../../common/components/PropertyCard";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -67,22 +67,12 @@ export const BatchOperationCreatePage = () => {
   return (
     <PageContainer
       title="Create Batch Operation"
-      onBack={() => navigate(`${linkPrefix}batch_operations`)}
-      backAriaLabel="Back to batch operations"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(`${linkPrefix}batch_operations`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}batch_operations`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

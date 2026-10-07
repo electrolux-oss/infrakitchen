@@ -5,3 +5,9 @@ erl_crash.dump
 /docker-compose.yml
 .claude/
 .opencode/
+server/build-info.json
+node_modules/
+.blume/
+dist/
+.blume-verify/
+.astro/

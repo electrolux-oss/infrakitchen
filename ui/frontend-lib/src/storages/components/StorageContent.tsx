@@ -3,15 +3,17 @@ import { useMemo } from "react";
 import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
-import { DangerZoneCard } from "../../common/components/DangerZoneCard";
+import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
 import {
   TabbedContent,
+  TabCountLabel,
   TabDefinition,
-} from "../../common/components/TabbedContent";
+} from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityExecutors } from "../../executors/components/EntityExecutors";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
+import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { StorageConfiguration } from "./StorageConfiguration";
 import { StorageOverview } from "./StorageOverview";
@@ -31,7 +33,9 @@ export const StorageContent = () => {
     },
     {
       label: "Resources",
-      tabLabel: `Resources (${entity.resourcesCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Resources" count={entity.resourcesCount ?? 0} />
+      ),
       content: (
         <EntityResources
           fixedFilters={fixedFilters}
@@ -41,7 +45,9 @@ export const StorageContent = () => {
     },
     {
       label: "Executors",
-      tabLabel: `Executors (${entity.executorsCount ?? 0})`,
+      tabLabel: (
+        <TabCountLabel label="Executors" count={entity.executorsCount ?? 0} />
+      ),
       content: (
         <EntityExecutors
           fixedFilters={fixedFilters}
@@ -71,6 +77,7 @@ export const StorageContent = () => {
     <Box
       sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
     >
+      <EntityTaskQueueStatus />
       <StorageOverview storage={entity} />
       <TabbedContent tabs={tabs} />
     </Box>

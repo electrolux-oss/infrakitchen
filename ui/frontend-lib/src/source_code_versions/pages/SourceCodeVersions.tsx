@@ -1,11 +1,15 @@
 import { useNavigate } from "react-router";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 
 import { useConfig, PermissionWrapper } from "../../common";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import PageContainer from "../../common/PageContainer";
-import { sourceCodeVersionColumns } from "../components/sourceCodeVersionTableConfig";
+import {
+  sourceCodeVersionColumns,
+  sourceCodeVersionDefaultColumnVisibilityModel,
+} from "../components/sourceCodeVersionTableConfig";
 import { SCV_FIELD_MAP } from "../graphql/fragments";
 
 export const SourceCodeVersionsPage = () => {
@@ -22,8 +26,7 @@ export const SourceCodeVersionsPage = () => {
           permissionAction="write"
         >
           <Button
-            variant="outlined"
-            color="primary"
+            startIcon={<AddIcon />}
             onClick={() => navigate(`${linkPrefix}source_code_versions/create`)}
           >
             Create
@@ -35,6 +38,9 @@ export const SourceCodeVersionsPage = () => {
         title="Code Versions"
         entityName="sourceCodeVersion"
         columns={sourceCodeVersionColumns}
+        defaultColumnVisibilityModel={
+          sourceCodeVersionDefaultColumnVisibilityModel
+        }
         entityFieldMap={SCV_FIELD_MAP}
         syncFiltersToUrl
       />

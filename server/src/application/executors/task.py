@@ -11,17 +11,22 @@ from application.executors.service import ExecutorService
 from application.secrets.model import SecretDTO
 from application.source_codes.model import SourceCodeDTO
 from application.source_codes.service import SourceCodeService
-from application.storages.functions import get_tf_storage_config
+from application.storages.functions import (
+    get_tf_storage_config,
+    get_tf_storage_environment,
+    get_tf_workspace,
+)
 from application.storages.model import Storage
 from application.tools.cloud_api_manager import CloudApiManager
 from application.tools.secret_manager import SecretManager
 from core.adapters.provider_adapters import IntegrationProvider
+from core.tools.functions import resolve_tool_to_run
 from core.config import InfrakitchenConfig
 from core.constants import ModelState, ModelStatus
 from core.constants.model import ModelActions
 from core.custom_entity_log_controller import EntityLogger
 from core.errors import CannotProceed, ExitWithoutSave
-from core.tasks.handler import TaskHandler
+from core.tasks.service import TaskEntityService
 from core.tools.git_client import GitClient
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import make_done, make_in_progress
@@ -41,7 +46,7 @@ class ExecutorTask:
         executor_service: ExecutorService,
         executor_instance: Executor,
         source_code_service: SourceCodeService,
-        task_handler: TaskHandler,
+        task_service: TaskEntityService,
         logger: EntityLogger,
         secret_manager: SecretManager,
         user: UserDTO,
@@ -59,7 +64,7 @@ class ExecutorTask:
         self.source_code_instance: SourceCodeDTO | None = None
         self.user: UserDTO = user
         self.workspace_root: str = workspace_root or tempfile.mkdtemp()
-        self.task_handler: TaskHandler = task_handler
+        self.task_service: TaskEntityService = task_service
         self.action: ModelActions = action
         self.tf_client: OtfClient | None = None
         self.git_client: GitClient | None = None
@@ -196,7 +201,8 @@ class ExecutorTask:
         code_language = self.source_code_instance.source_code_language
 
         if self.tf_client is None and code_language == "opentofu":
-            self.logger.info("Initiating Tofu...")
+            tool = await resolve_tool_to_run(self.session, self.executor_instance.tool_id)
+            self.logger.info(f"Initiating {tool.label}...")
             assert self.executor_instance.storage_path is not None, "Storage path is not defined"
             assert self.executor_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.executor_instance.storage_id)
@@ -207,6 +213,7 @@ class ExecutorTask:
 
             tf_data = await otf_provider.parse_tf_directory_to_json()
             await otf_provider.setup_tf_backend(tf_data, self.executor_instance.storage.storage_provider)
+            self.environment_variables.update(get_tf_storage_environment(storage))
 
             self.tf_client = OtfClient(
                 self.workspace_path,
@@ -214,6 +221,8 @@ class ExecutorTask:
                 variables={},
                 backend_storage_config=get_tf_storage_config(storage, self.executor_instance.storage_path),
                 logger=self.logger,
+                tool_path=tool.path,
+                workspace=get_tf_workspace(storage, self.executor_instance.storage_path),
             )
 
             assert self.tf_client is not None, "Tofu client is not defined"
@@ -284,7 +293,13 @@ class ExecutorTask:
         if hasattr(self.logger, "save_log"):
             await self.logger.save_log()
 
-        await self.task_handler.update_task(status=self.executor_instance.status, state=self.executor_instance.state)
+        await self.task_service.update_task(
+            entity_id=self.executor_instance.id,
+            entity_name="executor",
+            requester=self.user,
+            status=self.executor_instance.status,
+            state=self.executor_instance.state,
+        )
         await self.session.commit()
         await self.crud_executor.refresh(self.executor_instance)
 

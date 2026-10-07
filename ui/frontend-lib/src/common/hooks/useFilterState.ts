@@ -19,11 +19,6 @@ export interface UseFilterStateReturn {
   filterValues: FilterState;
   setFilterValue: (filterId: string, value: any) => void;
   setFilterValues: (values: FilterState) => void;
-  resetFilters: () => void;
-  resetFilter: (filterId: string) => void;
-  hasActiveFilters: boolean;
-  hasUnsavedFilters: boolean;
-  saveFilters?: () => void;
 }
 
 function isClauseValueEmpty(value: any): boolean {
@@ -73,28 +68,6 @@ function isEmptyFilterValue(value: any): boolean {
   }
 
   return !hasFilledAdvancedClause(value);
-}
-
-export function computeHasActiveFilters(filterValues: FilterState): boolean {
-  return Object.values(filterValues).some((value) => {
-    if (Array.isArray(value)) {
-      if (value.length === 0) {
-        return false;
-      }
-
-      if (isAdvancedClauseArray(value)) {
-        return hasFilledAdvancedClause(value);
-      }
-
-      return true;
-    }
-
-    if (typeof value === "string") {
-      return value.trim().length > 0;
-    }
-
-    return value !== null && value !== undefined;
-  });
 }
 
 function serializeFilterValue(
@@ -222,13 +195,6 @@ export function useFilterState(
   );
   const lastStoredValueRef = useRef<FilterState>(storedFilterValues);
 
-  const [savedUrlFilterValues, setSavedUrlFilterValues] = useState<FilterState>(
-    () => {
-      const saved = get(storageKey) as FilterState | undefined;
-      return saved && Object.keys(saved).length > 0 ? saved : {};
-    },
-  );
-  const hasInteractedRef = useRef(false);
   const [optimisticUrlFilterValues, setOptimisticUrlFilterValues] =
     useState<FilterState | null>(null);
 
@@ -255,50 +221,14 @@ export function useFilterState(
     setKey(storageKey, storedFilterValues);
   }, [storedFilterValues, storageKey, setKey, syncToUrl]);
 
-  const clearSavedUrlFilters = useCallback(() => {
-    setSavedUrlFilterValues({});
-    setKey(storageKey, {});
-  }, [setKey, storageKey]);
-
   const derivedUrlFilterValues = useMemo(() => {
     const urlHasFilters = hasAnyFilterParam(searchParams, filterConfigs);
     if (urlHasFilters) {
       return searchParamsToFilters(searchParams, filterConfigs);
     }
 
-    if (hasInteractedRef.current) {
-      return {};
-    }
-
-    return savedUrlFilterValues;
-  }, [searchParams, filterConfigs, savedUrlFilterValues]);
-
-  useEffect(() => {
-    if (!syncToUrl || hasInteractedRef.current) {
-      return;
-    }
-
-    if (hasAnyFilterParam(searchParams, filterConfigs)) {
-      return;
-    }
-
-    if (Object.keys(savedUrlFilterValues).length === 0) {
-      return;
-    }
-
-    setSearchParams(
-      filtersToSearchParams(savedUrlFilterValues, filterConfigs),
-      {
-        replace: true,
-      },
-    );
-  }, [
-    searchParams,
-    filterConfigs,
-    savedUrlFilterValues,
-    setSearchParams,
-    syncToUrl,
-  ]);
+    return {};
+  }, [searchParams, filterConfigs]);
 
   useEffect(() => {
     if (!syncToUrl || optimisticUrlFilterValues === null) {
@@ -319,11 +249,9 @@ export function useFilterState(
   const setFilterValue = useCallback(
     (filterId: string, value: any) => {
       if (syncToUrl) {
-        hasInteractedRef.current = true;
-
         const currentFromUrl = hasAnyFilterParam(searchParams, filterConfigs)
           ? searchParamsToFilters(searchParams, filterConfigs)
-          : savedUrlFilterValues;
+          : {};
         const newValues = { ...currentFromUrl };
 
         if (isEmptyFilterValue(value)) {
@@ -351,19 +279,12 @@ export function useFilterState(
         return updated;
       });
     },
-    [
-      syncToUrl,
-      searchParams,
-      filterConfigs,
-      savedUrlFilterValues,
-      setSearchParams,
-    ],
+    [syncToUrl, searchParams, filterConfigs, setSearchParams],
   );
 
   const setFilterValues = useCallback(
     (values: FilterState) => {
       if (syncToUrl) {
-        hasInteractedRef.current = true;
         setOptimisticUrlFilterValues(values);
         setSearchParams(filtersToSearchParams(values, filterConfigs), {
           replace: true,
@@ -376,72 +297,9 @@ export function useFilterState(
     [filterConfigs, setSearchParams, syncToUrl],
   );
 
-  const resetFilters = useCallback(() => {
-    if (syncToUrl) {
-      hasInteractedRef.current = true;
-      setOptimisticUrlFilterValues({});
-      clearSavedUrlFilters();
-      setSearchParams(new URLSearchParams(), { replace: true });
-      return;
-    }
-
-    setStoredFilterValues(initialValues);
-  }, [clearSavedUrlFilters, initialValues, setSearchParams, syncToUrl]);
-
-  const resetFilter = useCallback(
-    (filterId: string) => {
-      if (syncToUrl) {
-        hasInteractedRef.current = true;
-
-        const currentFromUrl = hasAnyFilterParam(searchParams, filterConfigs)
-          ? searchParamsToFilters(searchParams, filterConfigs)
-          : savedUrlFilterValues;
-        const newValues = { ...currentFromUrl };
-
-        delete newValues[filterId];
-
-        setOptimisticUrlFilterValues(newValues);
-        setSearchParams(filtersToSearchParams(newValues, filterConfigs), {
-          replace: true,
-        });
-        return;
-      }
-
-      setStoredFilterValues((prev) => {
-        const updated = { ...prev };
-        delete updated[filterId];
-        return updated;
-      });
-    },
-    [
-      syncToUrl,
-      searchParams,
-      filterConfigs,
-      savedUrlFilterValues,
-      setSearchParams,
-    ],
-  );
-
-  const saveFilters = useCallback(() => {
-    if (!syncToUrl) {
-      return;
-    }
-
-    hasInteractedRef.current = true;
-    setSavedUrlFilterValues(filterValues);
-    setKey(storageKey, filterValues);
-  }, [filterValues, setKey, storageKey, syncToUrl]);
-
   return {
     filterValues,
     setFilterValue,
     setFilterValues,
-    resetFilters,
-    resetFilter,
-    hasActiveFilters: computeHasActiveFilters(filterValues),
-    hasUnsavedFilters: syncToUrl
-      ? !areFilterStatesEqual(filterValues, savedUrlFilterValues)
-      : false,
-    saveFilters: syncToUrl ? saveFilters : undefined,
   };
 }

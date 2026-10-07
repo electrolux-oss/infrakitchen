@@ -46,7 +46,7 @@ const JsonInput: React.FC<JsonInputProps> = ({ field }) => {
         extensions={[json(), lintGutter()]}
         value={jsonStr}
         onChange={handleChange}
-        style={{ border: "1px solid silver" }}
+        style={{ border: "1px solid var(--template-palette-divider)" }}
       />
       {error && <FormLabel color="error">{error}</FormLabel>}
     </div>

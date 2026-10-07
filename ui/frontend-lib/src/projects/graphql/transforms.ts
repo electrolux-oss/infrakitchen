@@ -32,6 +32,7 @@ type GqlProjectDetailFieldTypes = {
   status: string;
   revisionNumber: number;
   resourcesCount: number;
+  servicesCount: number;
   createdAt: string;
   updatedAt: string;
   entityName: string;
@@ -41,7 +42,7 @@ type GqlProjectDetailFieldTypes = {
 type GqlProjectRelationFieldTypes = {
   creator: GqlUserShort | null;
   owners: GqlUserShort[] | null;
-  workspace: { id: string; name: string } | null;
+  workspace: { id: string; name: string; workspaceProvider: string } | null;
 };
 
 type GqlProjectFieldTypes = GqlProjectDetailFieldTypes &

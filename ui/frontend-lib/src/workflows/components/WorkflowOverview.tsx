@@ -2,10 +2,10 @@ import { useNavigate } from "react-router";
 
 import { Box, Chip } from "@mui/material";
 
-import { CommonField } from "../../common/components/CommonField";
-import { Duration } from "../../common/components/Duration";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { CommonField } from "../../common/components/fields/CommonField";
+import { Duration } from "../../common/components/fields/Duration";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context/ConfigContext";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import StatusChip from "../../common/StatusChip";
@@ -43,9 +43,7 @@ export const WorkflowOverview = () => {
 
       <CommonField
         name="Created"
-        value={
-          <RelativeTime date={workflow.createdAt} user={workflow.creator} />
-        }
+        value={<RelativeTime date={workflow.createdAt} />}
         size={4}
       />
 
@@ -99,7 +97,6 @@ export const WorkflowOverview = () => {
                 <Chip
                   key={t.id}
                   label={t.name}
-                  size="small"
                   variant="outlined"
                   onClick={() => navigate(`${linkPrefix}templates/${t.id}`)}
                 />

@@ -1,9 +1,13 @@
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import {
+  relativeTimeColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
+import { GqlAuditLog } from "../graphql";
+import { getAuditLogEntity } from "../utils/auditLogEntity";
 
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
@@ -29,53 +33,31 @@ const AUDIT_LOG_ACTION_OPTIONS = [
 export const auditLogColumns: EntityTableColumn[] = [
   {
     field: "entityId",
-    fetchFields: ["model", "entityId", "entityData"],
+    fetchFields: ["model", "entityId", "entityData", "action", "metadata"],
     headerName: "Entity",
-    flex: 1,
+    flex: 2.5,
     sortable: true,
     sortField: "entity_id",
     hideable: false,
     valueGetter: (value: string) => value,
-    renderCell: (params: GridRenderCellParams) => {
+    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
+      const { entity, isDeleted } = getAuditLogEntity(params.row);
       return (
-        <GetEntityLink
-          id={params.row.entityId}
-          entityName={params.row.model}
-          name={params.row.entityData?.name ?? params.row.model}
+        <Entity
+          entity={{
+            ...entity,
+            id: params.row.entityId,
+            entityType: params.row.model,
+            name: entity?.name ?? params.row.model,
+          }}
+          showLifecycleState={false}
+          showLabel
+          disableLink={isDeleted}
         />
       );
     },
   },
-  {
-    field: "creator",
-    headerName: "User",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "user_id",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (creator?.id) {
-        return (
-          <GetEntityLink
-            id={creator.id}
-            entityName="user"
-            name={creator.identifier}
-          />
-        );
-      }
-      return null;
-    },
-  },
+  userColumn({ headerName: "User", filterField: "user_id" }),
   {
     field: "action",
     headerName: "Event",
@@ -89,22 +71,5 @@ export const auditLogColumns: EntityTableColumn[] = [
     },
     renderCell: (params: GridRenderCellParams) => params.value,
   },
-  {
-    field: "model",
-    headerName: "Model",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => params.value,
-  },
-  {
-    field: "createdAt",
-    headerName: "Time",
-    flex: 1,
-    sortField: "created_at",
-    renderCell: (params: GridRenderCellParams) => (
-      <RelativeTime
-        date={params.value}
-        sx={{ fontSize: "0.75rem", display: "flex" }}
-      />
-    ),
-  },
+  relativeTimeColumn("createdAt", "Time", { sortField: "created_at" }),
 ];

@@ -13,6 +13,7 @@ def mock_task_entity_crud():
     crud.get_all = AsyncMock()
     crud.count = AsyncMock()
     crud.create = AsyncMock()
+    crud.update_task = AsyncMock()
     crud.delete_by_entity_id = AsyncMock()
     return crud
 

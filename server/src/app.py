@@ -6,7 +6,7 @@ import time
 import json
 from contextlib import asynccontextmanager, nullcontext
 from fastapi.exceptions import RequestValidationError
-from application.tools.notification_manager import start_notification_event_router
+from application.tools.notification_manager import start_notification_dispatcher
 from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import JSONResponse, StreamingResponse
@@ -17,7 +17,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "."))
 
 from application.logger import change_logger
 
-from core.utils.event_stream_manager import start_rabbitmq_consumer
+import core.pubsub as pubsub
+from core.utils.event_stream_manager import start_event_consumer
 
 from application.init_app import init_app
 from fastapi import FastAPI, Request
@@ -52,10 +53,6 @@ logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
 
 logger = logging.getLogger(__name__)
 
-logging.getLogger("aiormq").setLevel(logging.WARNING)
-logging.getLogger("aio_pika").setLevel(logging.WARNING)
-logging.getLogger("aio_pika.queue").setLevel(logging.ERROR)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -65,8 +62,10 @@ async def lifespan(app: FastAPI):
         mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
 
     loop = asyncio.get_running_loop()
-    rabbitmq_task = loop.create_task(start_rabbitmq_consumer())
-    notification_event_router_task = loop.create_task(start_notification_event_router())
+    background = [
+        loop.create_task(start_event_consumer()),
+        loop.create_task(start_notification_dispatcher()),
+    ]
 
     await init_app()
     await CasbinEnforcer().init_enforcer()
@@ -74,16 +73,14 @@ async def lifespan(app: FastAPI):
     async with mcp_context:
         yield
 
-    rabbitmq_task.cancel()
-    notification_event_router_task.cancel()
-    try:
-        await rabbitmq_task
-    except (asyncio.CancelledError, Exception):
-        pass
-    try:
-        await notification_event_router_task
-    except (asyncio.CancelledError, Exception):
-        pass
+    for task in background:
+        _ = task.cancel()
+    for task in background:
+        try:
+            await task
+        except (asyncio.CancelledError, Exception):
+            pass
+    await pubsub.hub.close()
 
 
 app = FastAPI(

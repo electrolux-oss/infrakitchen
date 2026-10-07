@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -13,22 +13,12 @@ from application.resources.schema import (
     ResourceUpdate,
 )
 from application.resources.service import ResourceService
-from core.base_models import MessageModel
 from core.config import InfrakitchenConfig
 from core.constants.model import ModelActions, ModelState, ModelStatus
 from core.errors import AccessDenied, DependencyError, EntityNotFound, EntityWrongState
-from core.rabbitmq import RabbitMQConnection
 from core.users.model import UserDTO
 
 RESOURCE_ID = "abc123"
-
-
-async def send_message(message: MessageModel, confirm: bool = False):
-    pass
-
-
-# Monkey patching the send_task method
-RabbitMQConnection.send_message = send_message  # type: ignore[method-assign]
 
 
 class TestGetById:
@@ -483,6 +473,49 @@ class TestCreate:
 
         await mock_resource_service.create(resource_create, requester)
         mock_integration_crud.get_all.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_create_resource_with_postgresql_integration_fails(
+        self,
+        mock_resource_service,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mock_integration_crud,
+        mocked_integration,
+        mocked_resource,
+        source_code_version,
+        mock_source_code_version_crud,
+        mock_user_permissions,
+        monkeypatch,
+        mock_storage_crud,
+        mocked_storage,
+    ):
+        source_code_version.template_id = mocked_template.id
+        mocked_template.abstract = False
+        mocked_integration.integration_provider = "aws"
+        pg_integration = Mock(id=uuid4(), integration_provider="postgresql", status=ModelStatus.ENABLED)
+        resource_create = ResourceCreate(
+            name=mocked_resource.name,
+            template_id=mocked_template.id,
+            source_code_version_id=source_code_version.id,
+            integration_ids=[mocked_integration.id, pg_integration.id],
+            storage_id=mocked_storage.id,
+            storage_path="path/to/storage",
+        )
+
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mock_storage_crud.get_by_id.return_value = mocked_storage
+        mock_integration_crud.get_all.return_value = [mocked_integration, pg_integration]
+        mock_source_code_version_crud.get_by_id.return_value = source_code_version
+        mock_user_permissions(["read", "write"], monkeypatch, "application.resources.service.user_entity_permissions")
+
+        with patch(
+            "application.integrations.service.IntegrationDTO.model_validate",
+            side_effect=lambda integration: integration,
+        ):
+            with pytest.raises(ValueError, match="can be used only for TF state storage"):
+                await mock_resource_service.create(resource_create, mocked_user)
 
     @pytest.mark.asyncio
     async def test_create_resource_with_allowed_provider_integration_types_failure(
@@ -1001,6 +1034,44 @@ class TestPatch:
             )
 
     @pytest.mark.asyncio
+    async def test_patch_postgresql_integration_fails(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_resource,
+        monkeypatch,
+    ):
+        existing_integration_id = mocked_resource.integration_ids[0].id
+        pg_integration_id = uuid4()
+        mocked_resource.state = ModelState.PROVISION
+        mocked_resource.status = ModelStatus.READY
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+
+        existing_pydantic = Mock(
+            abstract=False,
+            integration_ids=[Mock(id=existing_integration_id), Mock(id=pg_integration_id)],
+            template=Mock(id=mocked_resource.template_id),
+            parents=[],
+        )
+        monkeypatch.setattr(ResourceResponse, "model_validate", Mock(return_value=existing_pydantic))
+
+        mock_resource_service.template_service.get_by_id = AsyncMock(
+            return_value=Mock(configuration=Mock(allowed_provider_integration_types=None))
+        )
+        mock_resource_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[
+                Mock(id=existing_integration_id, status=ModelStatus.ENABLED, integration_provider="aws"),
+                Mock(id=pg_integration_id, status=ModelStatus.ENABLED, integration_provider="postgresql"),
+            ]
+        )
+
+        resource_patch = ResourceUpdate(integration_ids=[existing_integration_id, pg_integration_id])
+
+        with pytest.raises(ValueError, match="can be used only for TF state storage"):
+            await mock_resource_service.update_resource(mocked_resource.id, resource_patch, mocked_user)
+
+    @pytest.mark.asyncio
     async def test_patch_denies_changing_workspace_without_write_access(
         self,
         mock_resource_service,
@@ -1119,9 +1190,15 @@ class TestDelete:
         mock_resource_crud.delete.assert_awaited_once_with(existing_resource)
         mock_log_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
         mock_revision_handler.delete_revisions.assert_awaited_once_with(existing_resource.id)
-        mock_audit_log_handler.create_log.assert_awaited_once_with(
-            existing_resource.id, mock_user_dto.id, ModelActions.DELETE
-        )
+        mock_audit_log_handler.create_log.assert_awaited_once()
+        audit_args, audit_kwargs = mock_audit_log_handler.create_log.await_args
+        assert audit_args == (existing_resource.id, mock_user_dto.id, ModelActions.DELETE)
+        entity_snapshot = audit_kwargs["action_metadata"]
+        assert entity_snapshot["id"] == str(existing_resource.id)
+        assert entity_snapshot["name"] == existing_resource.name
+        assert entity_snapshot["entityName"] == "resource"
+        assert entity_snapshot["state"] == state
+        assert entity_snapshot["status"] == status
         mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(existing_resource.id)
         mock_permission_crud.delete_entity_permissions.assert_awaited_once_with("resource", existing_resource.id)
         mock_subscription_crud.delete_many_by_entity_id.assert_awaited_once_with("resource", existing_resource.id)

@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 
 import { notify } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflowStep } from "../graphql";
 
 interface WorkflowResolvedVariablesProps {
@@ -82,7 +83,7 @@ export const WorkflowResolvedVariables = ({
           sx={{
             border: 1,
             borderColor: "divider",
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             "&:before": { display: "none" },
             overflow: "hidden",
           }}
@@ -107,7 +108,6 @@ export const WorkflowResolvedVariables = ({
                 label={`${group.steps.length} step${
                   group.steps.length === 1 ? "" : "s"
                 }`}
-                size="small"
                 variant="outlined"
               />
             </Box>
@@ -169,7 +169,6 @@ const StepVariablesBlock = ({
         {showPosition && (
           <Chip
             label={`#${step.position + 1}`}
-            size="small"
             color="primary"
             sx={{ fontWeight: 700, minWidth: 36 }}
           />
@@ -208,8 +207,9 @@ const StepVariablesBlock = ({
             px: 2,
             py: 1.5,
             bgcolor: "background.default",
+            borderRadius: "var(--template-code-radius)",
             fontSize: 13,
-            fontFamily: "monospace",
+            fontFamily: CODE_FONT_FAMILY,
             overflow: "auto",
             maxHeight: 400,
             whiteSpace: "pre",

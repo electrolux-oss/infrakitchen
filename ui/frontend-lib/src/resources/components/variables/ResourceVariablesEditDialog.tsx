@@ -11,15 +11,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Table,
-  TableBody,
   Typography,
 } from "@mui/material";
 
 import ReferenceInput from "../../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../../common/context";
+import { useEntityProvider } from "../../../common/context/EntityContext";
 import { notifyError } from "../../../common/hooks/useNotification";
-import VersionLifecycleStateChip from "../../../common/VersionLifecycleStateChip";
 import { IkEntity, ValidationRule } from "../../../types";
 import {
   ENTITY_STATE,
@@ -31,7 +29,6 @@ import {
   VALIDATION_RULES_BY_VARIABLE_FIELDS,
 } from "../../../validation_rules/graphql";
 import { GqlResource, RESOURCE_VARIABLE_SCHEMA_QUERY } from "../../graphql";
-import type { ResourcePendingChanges } from "../../hooks";
 import { ResourceVariableSchema, VariableInput } from "../../types";
 import { buildValidationRuleMaps } from "../../utils/validationRules";
 
@@ -47,7 +44,6 @@ export interface ResourceVariablesEditDialogProps {
   open: boolean;
   onClose: () => void;
   resource: GqlResource;
-  pendingChanges?: ResourcePendingChanges;
   onSave: (
     variables: VariableInput[],
     sourceCodeVersionId?: string | null,
@@ -58,10 +54,10 @@ export const ResourceVariablesEditDialog = ({
   open,
   onClose,
   resource,
-  pendingChanges = null,
   onSave,
 }: ResourceVariablesEditDialogProps) => {
   const { ikApi } = useConfig();
+  const { pendingChanges } = useEntityProvider();
   const [schema, setSchema] = useState<ResourceVariableSchema[]>([]);
   const [saving, setSaving] = useState(false);
   const [loadingSchema, setLoadingSchema] = useState(false);
@@ -352,23 +348,6 @@ export const ResourceVariablesEditDialog = ({
             value={selectedVersionId}
             onChange={(value: string | null) => setSelectedVersionId(value)}
             label="Template Version"
-            renderOptionContent={(option: any) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                  width: "100%",
-                }}
-              >
-                <Typography variant="body2">{option.identifier}</Typography>
-                <VersionLifecycleStateChip
-                  lifecycleState={option.lifecycleState}
-                  breakingChanges={option.breakingChanges}
-                />
-              </Box>
-            )}
           />
           {isDeprecatedVersion ? (
             <Alert severity="warning" sx={{ mt: 1 }}>
@@ -396,49 +375,47 @@ export const ResourceVariablesEditDialog = ({
         {!loadingSchema && (
           <FormProvider {...methods}>
             {(schema.length > 0 || fields.length > 0) && (
-              <Table>
-                <TableBody>
-                  {fields.map((field, index) =>
-                    (() => {
-                      const variableStatus = variableStatusByName[field.name];
-                      const schemaVariable = schemaObject[field.name] || {
-                        name: field.name,
-                        type: field.type || "string",
-                        description: field.description || "",
-                        options: [],
-                        required: false,
-                        restricted: false,
-                        sensitive: field.sensitive || false,
-                        frozen: false,
-                        unique: false,
-                        value: field.value ?? null,
-                        index,
-                      };
+              <Box>
+                {fields.map((field, index) =>
+                  (() => {
+                    const variableStatus = variableStatusByName[field.name];
+                    const schemaVariable = schemaObject[field.name] || {
+                      name: field.name,
+                      type: field.type || "string",
+                      description: field.description || "",
+                      options: [],
+                      required: false,
+                      restricted: false,
+                      sensitive: field.sensitive || false,
+                      frozen: false,
+                      unique: false,
+                      value: field.value ?? null,
+                      index,
+                    };
 
-                      return (
-                        <ResourceVariableForm
-                          key={field.id}
-                          index={index}
-                          edit_mode={!allowFrozenVariableChanges}
-                          variable={schemaVariable}
-                          status={variableStatus}
-                          validationSummary={
-                            variableStatus === "deleted"
-                              ? null
-                              : validationRuleSummaryByVariable[field.name] ||
-                                null
-                          }
-                          validationRule={
-                            variableStatus === "deleted"
-                              ? null
-                              : validationRuleByVariable[field.name] || null
-                          }
-                        />
-                      );
-                    })(),
-                  )}
-                </TableBody>
-              </Table>
+                    return (
+                      <ResourceVariableForm
+                        key={field.id}
+                        index={index}
+                        edit_mode={!allowFrozenVariableChanges}
+                        variable={schemaVariable}
+                        status={variableStatus}
+                        validationSummary={
+                          variableStatus === "deleted"
+                            ? null
+                            : validationRuleSummaryByVariable[field.name] ||
+                              null
+                        }
+                        validationRule={
+                          variableStatus === "deleted"
+                            ? null
+                            : validationRuleByVariable[field.name] || null
+                        }
+                      />
+                    );
+                  })(),
+                )}
+              </Box>
             )}
             {!loadingSchema &&
               schema.length === 0 &&

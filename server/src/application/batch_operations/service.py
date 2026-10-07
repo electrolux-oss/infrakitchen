@@ -8,7 +8,6 @@ from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.errors import EntityNotFound
 from core.database import FieldSpec
-from core.tasks.service import TaskEntityService
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
@@ -34,14 +33,12 @@ class BatchOperationService:
         crud: BatchOperationCRUD,
         executor_service: ExecutorService,
         resource_service: ResourceService,
-        task_service: TaskEntityService,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
     ):
         self.crud: BatchOperationCRUD = crud
         self.executor_service: ExecutorService = executor_service
         self.resource_service: ResourceService = resource_service
-        self.task_service: TaskEntityService = task_service
         self.event_sender: EventSender = event_sender
         self.audit_log_handler: AuditLogHandler = audit_log_handler
 

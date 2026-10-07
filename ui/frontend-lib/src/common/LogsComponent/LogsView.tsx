@@ -6,7 +6,7 @@ import { useEffectOnce } from "react-use";
 import { Box, Typography } from "@mui/material";
 
 import { GqlLog, LOG_DETAIL_FIELDS } from "../../logs/graphql";
-import { getTimeOnlyValue } from "../components/CommonField";
+import { getTimeOnlyValue } from "../components/fields/CommonField";
 import { useConfig } from "../context";
 import GradientCircularProgress from "../GradientCircularProgress";
 

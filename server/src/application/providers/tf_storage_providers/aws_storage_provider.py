@@ -3,7 +3,7 @@ from typing import override
 from core import StorageProviderAdapter
 from core.custom_entity_log_controller import EntityLogger
 
-from ...storages.model import AWSStorageConfig
+from ...storages.schema import AWSStorageConfig
 from ..aws.aws_s3 import AwsS3
 
 

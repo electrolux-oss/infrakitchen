@@ -13,9 +13,9 @@ import {
 } from "@mui/material";
 
 import { LabelInput } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -86,22 +86,12 @@ export const TemplateCreatePage = () => {
   return (
     <PageContainer
       title="Create Template"
-      onBack={() => navigate(`${linkPrefix}templates`)}
-      backAriaLabel="Back to templates"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(`${linkPrefix}templates`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}templates`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

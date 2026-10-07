@@ -14,8 +14,9 @@ import {
 } from "@mui/material";
 
 import { useConfig } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { Entity } from "../../common/components/entities/Entity";
 import StatusChip from "../../common/StatusChip";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlWorkflow } from "../../workflows/graphql";
 
 interface WorkflowTimelineProps {
@@ -49,7 +50,7 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
             mb: 3,
             border: 1,
             borderColor: "divider",
-            borderRadius: 2,
+            borderRadius: "var(--template-surface-radius)",
             overflow: "hidden",
           }}
         >
@@ -66,11 +67,14 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography variant="subtitle2" sx={{ fontFamily: "monospace" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontFamily: CODE_FONT_FAMILY }}
+              >
                 <Link
                   component="button"
                   variant="subtitle2"
-                  sx={{ fontFamily: "monospace", cursor: "pointer" }}
+                  sx={{ fontFamily: CODE_FONT_FAMILY, cursor: "pointer" }}
                   onClick={() => navigate(`${linkPrefix}workflows/${exec.id}`)}
                 >
                   {exec.id.slice(0, 8)}…
@@ -106,10 +110,12 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                   <TableRow key={step.id}>
                     <TableCell>{step.position + 1}</TableCell>
                     <TableCell>
-                      <GetEntityLink
-                        entityName="template"
-                        id={step.template?.id || ""}
-                        name={step.template?.name || "Template"}
+                      <Entity
+                        entity={{
+                          id: step.template?.id,
+                          entityType: "template",
+                          name: step.template?.name || "Template",
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -117,10 +123,12 @@ export const WorkflowTimeline = ({ workflows }: WorkflowTimelineProps) => {
                     </TableCell>
                     <TableCell>
                       {step.resource ? (
-                        <GetEntityLink
-                          entityName="resource"
-                          id={step.resource?.id || ""}
-                          name={step.resource?.name || "Resource"}
+                        <Entity
+                          entity={{
+                            id: step.resource?.id,
+                            entityType: "resource",
+                            name: step.resource?.name || "Resource",
+                          }}
                         />
                       ) : (
                         "-"

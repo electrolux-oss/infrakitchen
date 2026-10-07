@@ -6,6 +6,7 @@ from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.source_code_versions.model import SourceCodeVersion
 from application.source_codes.model import SourceCode
+from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.modules.integration.types import IntegrationType
 from graphql_api.modules.user.types import UserType
 
@@ -25,6 +26,10 @@ class SourceCodeType:
     @strawberry.field
     def entity_name(self) -> str:
         return "source_code"
+
+    @strawberry.field
+    async def task_queue_status(self, info: Info) -> EntityQueueStatusType | None:
+        return await resolve_task_queue_status(info, "source_code", self.id)
 
     @strawberry.field
     def identifier(self) -> str:

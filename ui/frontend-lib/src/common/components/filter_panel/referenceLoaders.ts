@@ -13,17 +13,23 @@ export interface ReferenceLoaderOpts {
   labelField: string;
   /** Optional base filter always applied */
   baseFilter?: Record<string, any>;
+  /** Additional fields needed to build a custom option. */
+  fields?: string[];
+  /** Optional mapper for customized labels, icons, or metadata. */
+  mapOption?: (entity: Record<string, any>) => ReferenceOption;
 }
 
 export type StringOptionsLoader = () => Promise<string[]>;
 
 function mapReferenceOptions(
   entities: Array<Record<string, any>>,
-  labelField: string,
+  opts: ReferenceLoaderOpts,
 ): ReferenceOption[] {
   return entities
-    .filter((e) => e.id && e[labelField])
-    .map((e) => ({ label: e[labelField], value: e.id }));
+    .filter((e) => e.id && e[opts.labelField])
+    .map(
+      opts.mapOption ?? ((e) => ({ label: e[opts.labelField], value: e.id })),
+    );
 }
 
 /**
@@ -49,6 +55,7 @@ export const makeServerSearchReferenceLoader = (
         ${opts.entityPlural}(filter: $filter) {
           id
           ${opts.labelField}
+          ${(opts.fields || []).join("\n")}
         }
       }`,
       {
@@ -59,7 +66,7 @@ export const makeServerSearchReferenceLoader = (
     const entities: Array<Record<string, any>> =
       response[opts.entityPlural] || [];
 
-    return mapReferenceOptions(entities, opts.labelField);
+    return mapReferenceOptions(entities, opts);
   };
 
   const loader = async (search: string): Promise<ReferenceOption[]> => {
@@ -73,6 +80,7 @@ export const makeServerSearchReferenceLoader = (
         ${opts.entityPlural}(filter: $filter, sort: $sort, range: $range) {
           id
           ${opts.labelField}
+          ${(opts.fields || []).join("\n")}
         }
       }`,
       {
@@ -85,7 +93,7 @@ export const makeServerSearchReferenceLoader = (
     const entities: Array<Record<string, any>> =
       response[opts.entityPlural] || [];
 
-    return mapReferenceOptions(entities, opts.labelField);
+    return mapReferenceOptions(entities, opts);
   };
 
   loader.resolveByIds = resolveByIds;

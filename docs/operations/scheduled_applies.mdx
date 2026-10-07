@@ -1,0 +1,75 @@
+---
+title: Scheduled Applies
+---
+
+## Overview
+
+You can schedule an apply for a resource or an executor to run later, instead of starting it by hand.
+Use the **Schedule Apply** button in the header of the resource or executor page.
+You need the `execute` permission on the entity. The scheduled apply runs as the user who created the schedule.
+
+There are two kinds of schedule:
+
+- **One-time**: the apply runs once, at a date and time you pick.
+- **Recurring**: the apply runs over and over, following a cron expression.
+
+An entity can have only one schedule at a time. If you save a new schedule, it replaces the current one.
+This includes switching between one-time and recurring.
+
+## One-time Schedules
+
+Pick a date and time in the future. The time is shown in your local time zone.
+After the apply runs, the schedule is finished and the page no longer shows it.
+
+## Recurring Schedules
+
+A recurring schedule keeps running applies until you cancel it.
+Use it for drift correction, periodic re-syncs, or executors that must run on a fixed cadence.
+
+### Choosing a schedule
+
+In the dialog, select **Recurring**. Then pick a preset or enter your own cron expression:
+
+| Preset                      | Cron expression |
+| --------------------------- | --------------- |
+| Every hour                  | `0 * * * *`     |
+| Every day at 02:00          | `0 2 * * *`     |
+| Every Monday at 02:00       | `0 2 * * 1`     |
+| 1st of every month at 02:00 | `0 2 1 * *`     |
+
+A custom expression uses the standard five cron fields:
+
+```text
+┌───────────── minute (0-59)
+│ ┌─────────── hour (0-23)
+│ │ ┌───────── day of month (1-31)
+│ │ │ ┌─────── month (1-12)
+│ │ │ │ ┌───── day of week (0-6, Sunday = 0)
+│ │ │ │ │
+0 2 * * 1-5   → every weekday at 02:00
+*/30 * * * *  → every 30 minutes
+```
+
+The server checks the expression when you save. If it is not valid, the schedule is rejected with an error.
+
+### Time zone
+
+A recurring schedule stores the time zone of the browser used to save it.
+The cron expression is evaluated in that zone, and daylight saving time is taken into account.
+So `0 2 * * *` always means 02:00 local time for the person who created the schedule.
+If you save the schedule again from a browser in another time zone, the schedule uses that new zone.
+
+### Skipped runs
+
+A run is **skipped**, not queued, when it comes due while:
+
+- the previous run of the entity is still `queued`, `in_progress`, or `approval_pending`
+- the entity is being destroyed or has been destroyed (state `destroy` or `destroyed`).
+
+A skipped run is recorded in the scheduler logs. The schedule itself stays active, and the next run happens at the next cron time.
+This way, recurring applies never pile up behind a long-running apply or a pending approval.
+
+:::tip
+Pick an interval that is longer than a normal apply takes for the entity.
+Otherwise many runs will be skipped because the previous run is still in progress.
+:::

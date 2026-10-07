@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import joinedload, noload, selectinload
+from sqlalchemy.orm import joinedload, raiseload, selectinload
 
 from application.source_code_versions.model import (
     SourceCodeVersion,
@@ -17,9 +17,9 @@ from core.users.query_options import build_user_query_options
 def build_source_config_query_options(fields: FieldSpec | None = None) -> list[Any]:
     """Build SQLAlchemy loading options for SourceConfig based on requested fields."""
     if fields is None:
-        return [noload(SourceConfig.source_code_version)]
+        return [raiseload(SourceConfig.source_code_version)]
     opts: list[Any] = build_load_only(SourceConfig, set(fields.keys()))
-    opts.append(noload(SourceConfig.source_code_version))
+    opts.append(raiseload(SourceConfig.source_code_version))
     return opts
 
 
@@ -60,29 +60,29 @@ def build_source_code_version_query_options(fields: FieldSpec | None = None) -> 
     if "variableConfigs" in fields or "variable_configs" in fields:
         opts.append(selectinload(SourceCodeVersion.variable_configs))
     else:
-        opts.append(noload(SourceCodeVersion.variable_configs))
+        opts.append(raiseload(SourceCodeVersion.variable_configs))
 
     if "outputConfigs" in fields or "output_configs" in fields:
         opts.append(selectinload(SourceCodeVersion.output_configs))
     else:
-        opts.append(noload(SourceCodeVersion.output_configs))
+        opts.append(raiseload(SourceCodeVersion.output_configs))
 
     if "template" in fields:
         nested = fields["template"]
         opts.append(joinedload(SourceCodeVersion.template).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(SourceCodeVersion.template))
+        opts.append(raiseload(SourceCodeVersion.template))
 
     if "sourceCode" in fields or "source_code" in fields:
         nested = fields.get("sourceCode") or fields.get("source_code")
         opts.append(joinedload(SourceCodeVersion.source_code).options(*build_source_code_query_options(nested)))
     else:
-        opts.append(noload(SourceCodeVersion.source_code))
+        opts.append(raiseload(SourceCodeVersion.source_code))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(joinedload(SourceCodeVersion.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(SourceCodeVersion.creator))
+        opts.append(raiseload(SourceCodeVersion.creator))
 
     return opts

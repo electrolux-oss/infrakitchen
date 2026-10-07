@@ -1,6 +1,4 @@
-import { formHelperTextClasses } from "@mui/material/FormHelperText";
 import { iconButtonClasses } from "@mui/material/IconButton";
-import { inputBaseClasses } from "@mui/material/InputBase";
 import { inputLabelClasses } from "@mui/material/InputLabel";
 import { outlinedInputClasses } from "@mui/material/OutlinedInput";
 import { alpha, Theme, Components } from "@mui/material/styles";
@@ -11,17 +9,17 @@ export const formInputCustomizations: Components<Theme> = {
   MuiFormControl: {
     styleOverrides: {
       root: ({ theme }) => ({
-        [`& .${inputBaseClasses.root}`]: {
-          marginTop: 6,
-        },
         [`& .${inputLabelClasses.root}`]: {
-          transform: "translate(4px, -11px) scale(0.75)",
+          // Labels always float above the field (this app's form design).
+          // MUI's default -9px parks the shrunk label's line box on the
+          // border; on the compact 32px fields the glyphs would cross the
+          // top border line. -16px lifts the label fully above the border
+          // with a small gap (~2px under the baseline), and -18px on focus
+          // clears the 2px focus outline ring as well.
+          transform: "translate(4px, -16px) scale(0.75)",
           [`&.${outlinedInputClasses.focused}`]: {
-            transform: "translate(4px, -12px) scale(0.75)",
+            transform: "translate(4px, -18px) scale(0.75)",
           },
-        },
-        [`& .${formHelperTextClasses.root}`]: {
-          marginLeft: 2,
         },
         "& .MuiPickersInputBase-root": {
           marginTop: 6,

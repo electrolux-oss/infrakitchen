@@ -4,6 +4,7 @@ import { GqlSecret } from "../../secrets/graphql";
 import { GqlSourceCodeVersionShort } from "../../source_code_versions/graphql";
 import { GqlStorage } from "../../storages/graphql";
 import { GqlTemplateShort } from "../../templates/graphql";
+import type { ToolShort } from "../../tools/types";
 import { GqlUserShort } from "../../users/graphql";
 import { GqlWorkspaceShort } from "../../workspaces/graphql";
 
@@ -55,7 +56,10 @@ type GqlResourceRelationFieldTypes = {
   integrationIds: GqlIntegrationShort[] | null;
   secretIds: GqlSecret[] | null;
   storage: GqlStorage | null;
+  tool: ToolShort | null;
   creator: GqlUserShort | null;
+  tempState: GqlResourceTempState | null;
+  scheduledActions: GqlScheduledResourceAction[] | null;
   parents: GqlResourceShort[] | null;
   children: GqlResourceShort[] | null;
   workspace: GqlWorkspaceShort | null;
@@ -89,4 +93,20 @@ export interface GqlResourceTreeNode {
   templateName: string;
   nodeId: string;
   children: GqlResourceTreeNode[];
+}
+
+export interface GqlScheduledResourceAction {
+  id: string;
+  entityId: string;
+  entity: string;
+  action: string;
+  runAt: string;
+  cron: string | null;
+  timezone: string | null;
+  status: string;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  creator?: GqlUserShort | null;
+  entityData?: { id?: string; name?: string; entityName?: string } | null;
 }

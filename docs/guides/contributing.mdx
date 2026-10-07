@@ -1,0 +1,57 @@
+---
+title: Contributing
+description: Conventions and workflows for developers contributing code to InfraKitchen.
+---
+
+Follow these conventions when a change touches the areas below — they keep the codebase consistent and make reviews faster.
+
+## Database Migrations
+
+InfraKitchen's backend uses [SQLAlchemy](https://www.sqlalchemy.org/) as its ORM to define database models, and [Alembic](https://alembic.sqlalchemy.org/) to manage schema migrations.
+
+When adding or changing a SQLAlchemy model, generate a migration with Alembic **autogenerate**. Do not write migration files by hand, and do not copy/rename an existing migration as a shortcut — autogenerate keeps the migration history consistent with the models.
+
+**Steps:**
+
+<Steps>
+
+<Step title="Make the model changes">
+
+Make the model changes in `server/src/`.
+
+</Step>
+
+<Step title="Generate the migration">
+
+From the `server/` directory, run:
+
+```bash
+cd server
+alembic -c src/alembic.ini revision --autogenerate -m "<describe the change>"
+```
+
+If the virtual environment isn't activated, prefix with `uv run`:
+
+```bash
+uv run alembic -c src/alembic.ini revision --autogenerate -m "<describe the change>"
+```
+
+:::tip
+Use a short, descriptive message — it becomes part of the migration file name, so make it easy to recognize later.
+:::
+
+</Step>
+
+<Step title="Review the generated migration">
+
+Open the generated file in `server/src/alembic/versions/` and review it carefully. Autogenerate is reliable for most changes, but it can **miss or misdetect** things like column/table renames, enum value changes, or server-side defaults — fix the generated script by hand if needed before moving on.
+
+</Step>
+
+<Step title="Commit">
+
+Commit the migration file in the **same pull request** as the model change it corresponds to — do not split them across PRs.
+
+</Step>
+
+</Steps>

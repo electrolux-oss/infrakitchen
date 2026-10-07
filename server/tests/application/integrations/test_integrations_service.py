@@ -607,7 +607,6 @@ class TestDelete:
         mock_user_dto,
         mock_revision_handler,
         mock_audit_log_handler,
-        mock_task_entity_crud,
     ):
         mocked_integration.status = ModelStatus.DISABLED
         mock_integration_crud.get_by_id.return_value = mocked_integration
@@ -622,7 +621,6 @@ class TestDelete:
         mock_audit_log_handler.create_log.assert_awaited_once_with(
             mocked_integration.id, mock_user_dto.id, ModelActions.DELETE
         )
-        mock_task_entity_crud.delete_by_entity_id.assert_awaited_once_with(mocked_integration.id)
         mock_integration_service.permission_service.delete_entity_permissions.assert_awaited_once_with(
             "integration", mocked_integration.id
         )

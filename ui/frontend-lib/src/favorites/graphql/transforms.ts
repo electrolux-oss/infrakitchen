@@ -5,6 +5,7 @@ export interface GqlComponentData {
   state?: string;
   updatedAt?: string;
   entityName: string;
+  template?: { name?: string } | null;
 }
 
 export interface GqlFavorite {

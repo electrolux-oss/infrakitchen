@@ -1,52 +1,49 @@
-import { GridRenderCellParams } from "@mui/x-data-grid";
+import {
+  GridColumnVisibilityModel,
+  GridRenderCellParams,
+} from "@mui/x-data-grid";
 
-import { Labels } from "../../common";
-import { GetEntityLink } from "../../common/components/CommonField";
+import { getRepoNameFromUrl } from "../../common";
+import { CodeRepository } from "../../common/components/entities/CodeRepository";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
+import {
+  labelsColumn,
+  relativeTimeColumn,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
+
+export const sourceCodeDefaultColumnVisibilityModel: GridColumnVisibilityModel =
+  {
+    description: false,
+    creator: false,
+  };
 
 export const sourceCodeColumns: EntityTableColumn[] = [
   {
     field: "sourceCodeUrl",
-    headerName: "Repository URL",
+    headerName: "Name",
     flex: 1,
-    fetchFields: ["sourceCodeUrl", "entityName"],
+    fetchFields: ["sourceCodeUrl", "entityName", "sourceCodeProvider"],
     filter: {
       field: "source_code_url",
       operators: ["like", "not_like", "eq"],
       valueType: "text",
       defaultOperator: "like",
+      defaultSelected: true,
     },
-    valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const sourceCode = params.row;
-      return (
-        <GetEntityLink {...sourceCode} identifier={sourceCode.sourceCodeUrl} />
-      );
-    },
+    valueGetter: (_value: any, row: any) =>
+      getRepoNameFromUrl(row.sourceCodeUrl || ""),
+    renderCell: (params: GridRenderCellParams) => (
+      <CodeRepository {...params.row} />
+    ),
   },
   {
     field: "description",
     headerName: "Description",
   },
-  {
-    field: "labels",
-    headerName: "Labels",
-    flex: 1,
-    filter: {
-      field: "labels",
-      operators: ["contains_all"],
-      valueType: "autocomplete-multiple",
-      defaultOperator: "contains_all",
-      labelsEntity: "source_code",
-    },
-    valueGetter: (_value: any, row: any) => (row.labels || []).join(", "),
-    renderCell: (params: GridRenderCellParams) => (
-      <Labels labels={params.row.labels || []} />
-    ),
-  },
+  labelsColumn("source_code"),
   {
     field: "status",
     headerName: "Status",
@@ -70,26 +67,8 @@ export const sourceCodeColumns: EntityTableColumn[] = [
       <StatusChip status={params.row.status} />
     ),
   },
-  {
-    field: "creator",
-    headerName: "Creator",
-    flex: 1,
-    sortField: "creator.identifier",
-    filter: {
-      field: "created_by",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "users",
-        labelField: "identifier",
-      }),
-    },
-    valueGetter: (_value: any, row: any) => row.creator?.identifier || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const creator = params.row.creator;
-      if (!creator) return null;
-      return <GetEntityLink {...creator} name={creator.identifier} />;
-    },
-  },
+  relativeTimeColumn("updatedAt", "Last Updated", {
+    sortField: "updated_at",
+  }),
+  userColumn(),
 ];

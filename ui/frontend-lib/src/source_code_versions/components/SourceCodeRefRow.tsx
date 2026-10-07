@@ -29,7 +29,7 @@ import {
   usePermissionProvider,
 } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
-import { HclItemList } from "../../common/components/HclItemList";
+import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { notify } from "../../common/hooks/useNotification";
 import { Revision } from "../../revision/Revision";
 import { ENTITY_STATUS } from "../../utils";
@@ -196,7 +196,6 @@ export const SourceCodeRefRow = ({
             !!entity.resourcesCount && ( // Render only when the SCV has resources
               <Chip
                 label={`${entity.resourcesCount}`}
-                size="small"
                 variant="outlined"
                 onClick={handleResourcesClick}
                 sx={{

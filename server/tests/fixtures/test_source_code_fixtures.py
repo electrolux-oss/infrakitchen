@@ -119,14 +119,14 @@ def mocked_source_code_task(
     mock_source_code_crud,
     mock_user_dto,
     mocked_source_code,
-    mock_task_handler,
+    mock_task_entity_service,
     mock_event_sender,
     mock_entity_logger,
 ):
     return SourceCodeTask(
         session=AsyncMock(),
         source_code_instance=mocked_source_code,
-        task_handler=mock_task_handler,
+        task_service=mock_task_entity_service,
         crud_source_code=mock_source_code_crud,
         event_sender=mock_event_sender,
         logger=mock_entity_logger,

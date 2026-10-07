@@ -7,6 +7,7 @@ export type ResourceCreateFieldInput = {
   integrationIds: string[];
   secretIds: string[];
   storagePath: string | null;
+  toolId: string | null;
   variables: object[];
   outputs: object[];
   dependencyTags: object[];
@@ -42,6 +43,7 @@ export type ResourceUpdateFieldInput = Partial<{
   secretIds: string[];
   storageId: string | null;
   storagePath: string | null;
+  toolId: string | null;
   variables: object[];
   dependencyTags: object[];
   dependencyConfig: object[];
@@ -86,6 +88,17 @@ export const SYNC_WORKSPACE_MUTATION = `
       id
       name
       entityName
+    }
+  }
+`;
+
+export const CANCEL_SCHEDULED_ENTITY_ACTION_MUTATION = `
+  mutation CancelScheduledEntityAction($id: UUID!) {
+    cancelScheduledEntityAction(id: $id) {
+      id
+      status
+      error
+      updatedAt
     }
   }
 `;

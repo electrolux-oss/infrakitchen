@@ -12,6 +12,7 @@ import { IkEntity } from "../../../types";
 import { buildGraphqlFields } from "../../graphql/buildGraphqlFields";
 import { notifyError } from "../../hooks/useNotification";
 
+import { getReferenceQueryFields, ReferenceContent } from "./referenceContent";
 import { getOptionLabel } from "./utils";
 
 const SNAKE_TO_CAMEL_RE = /_([a-z])/g;
@@ -27,7 +28,9 @@ interface ReferenceInputProps {
   fields?: Array<string>;
   sort?: Array<string>;
   value: any;
-  label: string;
+  label?: string;
+  ariaLabel?: string;
+  placeholder?: string;
   error?: boolean;
   showFields?: Array<string>;
   helpertext?: string;
@@ -69,12 +72,16 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ? allOptions.filter(optionFilter)
     : allOptions;
   const [warning, setWarning] = useState<string | null>(null);
+  const queryFields = getReferenceQueryFields(
+    entity_name,
+    fields || showFields,
+  );
 
   const selectedOption =
     allOptions.find((option) => option.id === value) || null;
 
   const handleAutocompleteChange = (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     newValue: IkEntity | null,
   ) => {
     onChange(newValue ? newValue.id : null);
@@ -105,11 +112,11 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
     ikApi
       .graphqlRequest(
         `query ReferenceInput($filter: JSON, $sort: [String!], $range: [Int!]) {
-          ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
-            ${buildGraphqlFields(["id", ...(fields || showFields)])}
-          }
-          ${graphqlCountName}(filter: $filter)
-        }`,
+                ${graphqlEntityName}(filter: $filter, sort: $sort, range: $range) {
+                  ${buildGraphqlFields(["id", ...queryFields])}
+                }
+                ${graphqlCountName}(filter: $filter)
+              }`,
         {
           filter,
           sort: sort,
@@ -120,7 +127,7 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         const data = (response[graphqlEntityName] as IkEntity[]) || [];
         if (data.length === 0 && otherProps.required === true) {
           setWarning(
-            `No available options for the required field "${props.label}". You need to create them first.`,
+            `No available options for the required field "${props.label || props.ariaLabel || "this field"}". You need to create them first.`,
           );
         }
 
@@ -144,18 +151,25 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
   ]);
 
   return (
-    <FormControl fullWidth margin="normal">
+    <FormControl fullWidth margin="dense">
       <Autocomplete
         readOnly={otherProps.readOnly}
         disabled={otherProps.disabled || otherProps.readOnly}
+        size="small"
         value={selectedOption}
         options={options}
         getOptionLabel={(option) => getOptionLabel(option, showFields)}
         renderOption={(renderProps, option) => (
           <li {...renderProps} key={option.id}>
-            {renderOptionContent
-              ? renderOptionContent(option)
-              : getOptionLabel(option, showFields)}
+            {renderOptionContent ? (
+              renderOptionContent(option)
+            ) : (
+              <ReferenceContent
+                entityName={entity_name}
+                entity={option}
+                fallback={getOptionLabel(option, showFields)}
+              />
+            )}
           </li>
         )}
         isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -163,16 +177,35 @@ const ReferenceInput = forwardRef<any, ReferenceInputProps>((props, _ref) => {
         getOptionDisabled={isOptionDisabled}
         onChange={handleAutocompleteChange}
         renderValue={(option) => {
-          return `${option.name || option.identifier}`;
+          return (
+            <ReferenceContent
+              entityName={entity_name}
+              entity={option}
+              fallback={option.name || option.identifier}
+            />
+          );
         }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            {...otherProps}
-            label={props.label}
-            error={props.error}
-          />
-        )}
+        renderInput={(params) => {
+          const hasLabel = Boolean(props.label);
+          return (
+            <TextField
+              {...params}
+              {...otherProps}
+              label={hasLabel ? props.label : undefined}
+              placeholder={props.placeholder}
+              error={props.error}
+              slotProps={{
+                ...params.slotProps,
+                htmlInput: {
+                  ...params.slotProps.htmlInput,
+                  ...(!hasLabel
+                    ? { "aria-label": props.ariaLabel || props.label || "" }
+                    : {}),
+                },
+              }}
+            />
+          );
+        }}
       />
       <FormHelperText error={props.error}>
         {props.helpertext || ""}

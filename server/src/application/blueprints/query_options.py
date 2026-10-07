@@ -1,6 +1,6 @@
 from typing import Any
 
-from sqlalchemy.orm import noload, selectinload
+from sqlalchemy.orm import raiseload, selectinload
 
 from application.blueprints.model import Blueprint
 from application.templates.query_options import build_template_query_options
@@ -25,24 +25,24 @@ def build_blueprint_query_options(fields: FieldSpec | None = None) -> list[Any]:
         nested = fields["templates"]
         opts.append(selectinload(Blueprint.templates).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(Blueprint.templates))
+        opts.append(raiseload(Blueprint.templates))
 
     if "externalTemplates" in fields or "external_templates" in fields:
         nested = fields.get("externalTemplates") or fields.get("external_templates")
         opts.append(selectinload(Blueprint.external_templates).options(*build_template_query_options(nested)))
     else:
-        opts.append(noload(Blueprint.external_templates))
+        opts.append(raiseload(Blueprint.external_templates))
 
     if "creator" in fields:
         nested = fields["creator"]
         opts.append(selectinload(Blueprint.creator).options(*build_user_query_options(nested)))
     else:
-        opts.append(noload(Blueprint.creator))
+        opts.append(raiseload(Blueprint.creator))
 
     if "workflows" in fields:
         nested = fields["workflows"]
         opts.append(selectinload(Blueprint.workflows).options(*build_workflow_query_options(nested)))
     else:
-        opts.append(noload(Blueprint.workflows))
+        opts.append(raiseload(Blueprint.workflows))
 
     return opts

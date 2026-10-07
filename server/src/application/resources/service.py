@@ -7,18 +7,20 @@ from uuid import UUID, uuid4
 
 from application.integrations.service import IntegrationService
 from application.projects.service import ProjectService
-from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.controller import NotificationEvent
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
 from application.resources.functions import (
     add_resource_parent_policy,
     add_resource_parent_subscriptions,
+    build_resource_audit_snapshot,
     convert_field_by_naming_convention_pattern,
     delete_resource_policies,
     get_resource_actions,
     get_resource_variable_schema,
     validate_resource_variables_on_create,
     update_resource_variables_on_patch,
+    validate_not_state_backend_integrations,
 )
 from application.resources.model import Resource, ResourceDTO
 from application.source_code_versions.service import SourceCodeVersionService
@@ -30,6 +32,7 @@ from core.adapters.cloud_resource_adapter import CloudResourceAdapter
 from core.adapters.provider_adapters import IntegrationProvider
 from core.audit_logs.handler import AuditLogHandler
 from core.base_models import PatchBodyModel
+from core.tools.service import ToolService
 from core.caches.functions import cache_decorator
 from core.config import InfrakitchenConfig
 from core.constants import ModelStatus, ModelState
@@ -95,6 +98,7 @@ class ResourceService:
         favorite_service: FavoriteService,
         subscription_service: SubscriptionService,
         project_service: ProjectService,
+        tool_service: ToolService,
     ):
         self.crud: ResourceCRUD = crud
         self.template_service: TemplateService = template_service
@@ -113,6 +117,7 @@ class ResourceService:
         self.favorite_service: FavoriteService = favorite_service
         self.subscription_service: SubscriptionService = subscription_service
         self.project_service: ProjectService = project_service
+        self.tool_service: ToolService = tool_service
 
     async def get_dto_by_id(self, resource_id: str | UUID) -> ResourceDTO | None:
         if not is_valid_uuid(resource_id):
@@ -232,6 +237,12 @@ class ResourceService:
                     if "write" not in integration_permissions and "admin" not in integration_permissions:
                         raise AccessDenied(f"You don't have write access to integration {integration_id}")
 
+                integrations = await self.integration_service.get_all_dto(
+                    filter={"id": [i for i in resource.integration_ids]}
+                )
+
+                validate_not_state_backend_integrations(integrations)
+
                 # if template allows only specific integration types,
                 # check that number of integrations is equal to number of allowed types.
                 if template.configuration.allowed_provider_integration_types:
@@ -243,9 +254,6 @@ class ResourceService:
                             f"got {len(resource.integration_ids)}"
                         )
 
-                integrations = await self.integration_service.get_all_dto(
-                    filter={"id": [i for i in resource.integration_ids]}
-                )
                 for integration in integrations:
                     if integration.status != ModelStatus.ENABLED:
                         raise EntityWrongState(
@@ -373,6 +381,9 @@ class ResourceService:
                 await convert_field_by_naming_convention_pattern(
                     resource, fields=["name", "storage_path"], parents=parents
                 )
+
+        if resource.tool_id is not None:
+            _ = await self.tool_service.validate_ready(resource.tool_id)
 
         body = resource.model_dump(exclude_unset=True)
         if template.abstract is True:
@@ -553,6 +564,7 @@ class ResourceService:
                     integrations = await self.integration_service.get_all_dto(
                         filter={"id": [i for i in resource.integration_ids]}
                     )
+                    validate_not_state_backend_integrations(integrations)
                     for integration in integrations:
                         if integration.status != ModelStatus.ENABLED:
                             raise EntityWrongState(
@@ -580,6 +592,14 @@ class ResourceService:
                 workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
                 if "write" not in workspace_permissions and "admin" not in workspace_permissions:
                     raise AccessDenied(f"You don't have write access to workspace {resource.workspace_id}")
+
+        # a disabled tool stays valid for entities already using it
+        if (
+            resource.tool_id is not None
+            and "tool_id" in resource.model_fields_set
+            and resource.tool_id != existing_resource.tool_id
+        ):
+            _ = await self.tool_service.validate_ready(resource.tool_id)
 
         if not has_field_changes(body, existing_resource):
             raise ValueError("No changes detected; the resource is already up to date.")
@@ -609,8 +629,12 @@ class ResourceService:
                 raise EntityNotFound("Resource not found after update")
 
         elif body is not None:
+            full_body = model_db_dump(
+                resource,
+                exclude_unset=True,
+            )
             await self.resource_temp_state_handler.set_resource_temp_state(
-                resource_id=existing_resource.id, value=body, created_by=requester.id
+                resource_id=existing_resource.id, value=full_body, created_by=requester.id
             )
 
         response_pydantic = ResourceResponse.model_validate(existing_resource)
@@ -660,6 +684,15 @@ class ResourceService:
             # compare variables in temp state and existing resource, if they differ, we need to change resource status
             if resource_temp_state is None:
                 return False
+
+            if resource_temp_state.value.get("source_code_version_id"):
+                return True
+
+            # running the code with another tofu/terraform tool requires a new execution
+            if "tool_id" in resource_temp_state.value and str(resource_temp_state.value["tool_id"] or "") != str(
+                pydantic_resource.tool_id or ""
+            ):
+                return True
 
             input_variables = resource_temp_state.value.get("variables", [])
             if not input_variables:
@@ -822,6 +855,9 @@ class ResourceService:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
                 await self.publish_notification_event(existing_resource, "destroy")
             case ModelActions.EXECUTE:
+                if existing_resource.abstract is True:
+                    raise ValueError("Apply action is not allowed for abstract resources")
+
                 await execute_entity(existing_resource)
                 await self.event_sender.send_task(
                     pydantic_resource.id,
@@ -839,6 +875,10 @@ class ResourceService:
                     raise EntityWrongState(
                         "Dry run is only allowed for resources in READY, ERROR, APPROVAL_PENDING, or DONE",
                     )
+
+                if existing_resource.abstract is True:
+                    raise ValueError("Dry run action is not allowed for abstract resources")
+
                 await self.event_sender.send_task(
                     existing_resource.id,
                     requester=requester,
@@ -852,6 +892,9 @@ class ResourceService:
                 )
                 if resource_temp_state is None:
                     raise ValueError("Resource has no temporary state for dry run with temp state")
+
+                if existing_resource.abstract is True:
+                    raise ValueError("Dry run action is not allowed for abstract resources")
 
                 if existing_resource.status not in [
                     ModelStatus.READY,
@@ -903,7 +946,12 @@ class ResourceService:
         await self.favorite_service.delete_all_by_component(component_type="resource", component_id=resource_id)
 
         await delete_entity(existing_resource)
-        await self.audit_log_handler.create_log(resource_id, requester.id, ModelActions.DELETE)
+        await self.audit_log_handler.create_log(
+            resource_id,
+            requester.id,
+            ModelActions.DELETE,
+            action_metadata=build_resource_audit_snapshot(existing_resource),
+        )
         await self.revision_handler.delete_revisions(resource_id)
         await self.log_service.delete_by_entity_id(resource_id)
         await self.task_service.delete_by_entity_id(resource_id)
@@ -1374,4 +1422,5 @@ class ResourceService:
             message=f"Resource {resource.name} status has been changed ({title.upper()})\n"
             f"New status: {resource.status}, new state: {resource.state}",
         )
-        await publish_notification_event(event)
+        # Buffered until the request commits, so a rolled-back change notifies nobody
+        await self.event_sender.send_notification(event)

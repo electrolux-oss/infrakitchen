@@ -10,6 +10,7 @@ export const TASK_GRAPHQL_FIELDS = {
     "id",
     "entity",
     "entityId",
+    "runAt",
     "state",
     "status",
     "createdAt",

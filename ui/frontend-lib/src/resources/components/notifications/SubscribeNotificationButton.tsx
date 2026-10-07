@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 
-import NotificationsActiveOutlinedIcon from "@mui/icons-material/NotificationsActiveOutlined";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
 import {
+  Box,
   Button,
-  Checkbox,
-  FormControlLabel,
+  Divider,
+  IconButton,
   Popover,
   Stack,
+  Switch,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -68,40 +71,78 @@ export const SubscribeNotificationButton = ({
             : `Subscribe to ${entityName} notifications`
         }
       >
-        <Button
-          variant="outlined"
-          startIcon={<NotificationsActiveOutlinedIcon fontSize="small" />}
+        <IconButton
           color={isSubscribed ? "error" : "primary"}
           onClick={handleButtonClick}
           disabled={isLoading}
+          aria-label={isSubscribed ? "Unsubscribe" : "Subscribe"}
         >
-          {isSubscribed ? "Unsubscribe" : "Subscribe"}
-        </Button>
+          {isSubscribed ? (
+            <NotificationsActiveIcon fontSize="small" />
+          ) : (
+            <NotificationsOffIcon fontSize="small" />
+          )}
+        </IconButton>
       </Tooltip>
       <Popover
         open={open}
         anchorEl={anchorEl}
         onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{ paper: { sx: { borderRadius: 2, mt: 1 } } }}
       >
-        <Stack sx={{ p: 2, gap: 1.5, minWidth: 240 }}>
-          <Typography variant="subtitle2">
-            {action === "subscribe"
-              ? "Subscribe to notifications"
-              : "Unsubscribe from notifications"}
-          </Typography>
+        <Stack sx={{ width: 320, p: 2, gap: 1.5 }}>
+          <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                bgcolor: "action.hover",
+                color: action === "subscribe" ? "primary.main" : "error.main",
+              }}
+            >
+              {action === "subscribe" ? (
+                <NotificationsOffIcon fontSize="small" />
+              ) : (
+                <NotificationsActiveIcon fontSize="small" />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {action === "subscribe"
+                  ? "Subscribe to notifications"
+                  : "Unsubscribe from notifications"}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block" }}
+              >
+                {action === "subscribe"
+                  ? `Get notified when this ${entityName} changes`
+                  : `Stop receiving notifications for this ${entityName}`}
+              </Typography>
+            </Box>
+          </Stack>
+          <Divider />
           {showIncludeChildren ? (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={inheritChildren}
-                  onChange={(e) => setInheritChildren(e.target.checked)}
-                  size="small"
-                />
-              }
-              label="Include child resources"
-            />
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <Switch
+                checked={inheritChildren}
+                onChange={(e) => setInheritChildren(e.target.checked)}
+              />
+              <Typography variant="body2">Include child resources</Typography>
+            </Box>
           ) : null}
           <Stack
             direction="row"
@@ -110,10 +151,14 @@ export const SubscribeNotificationButton = ({
               gap: 1,
             }}
           >
-            <Button size="small" onClick={handleClose}>
+            <Button onClick={handleClose} color="inherit">
               Cancel
             </Button>
-            <Button size="small" variant="contained" onClick={handleConfirm}>
+            <Button
+              variant="contained"
+              onClick={handleConfirm}
+              color={action === "subscribe" ? "primary" : "error"}
+            >
               {action === "subscribe" ? "Subscribe" : "Unsubscribe"}
             </Button>
           </Stack>

@@ -1,18 +1,13 @@
-import { useNavigate } from "react-router";
-
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Alert, IconButton, Typography } from "@mui/material";
 
 import { useEntityProvider } from "../../../common";
-import { useConfig } from "../../../common/context/ConfigContext";
 import PageContainer from "../../../common/PageContainer";
 
 import { KubernetesRelations } from "./kubernetes/KubernetesRelations";
 import { MetadataComponent } from "./MetadataComponent";
 
 export const RelationsComponent = () => {
-  const navigate = useNavigate();
-  const { linkPrefix } = useConfig();
   const { entity, loading, error, refreshEntity } = useEntityProvider();
 
   const handleRefresh = () => {
@@ -24,10 +19,13 @@ export const RelationsComponent = () => {
   return (
     <PageContainer
       title={`Resource Metadata for ${entity?.name || entity?.identifier}`}
-      onBack={() => navigate(`${linkPrefix}resources/${entity?.id}`)}
       actions={
         <>
-          <IconButton onClick={() => handleRefresh()} aria-label="refresh">
+          <IconButton
+            size="small"
+            onClick={() => handleRefresh()}
+            aria-label="refresh"
+          >
             <RefreshIcon />
           </IconButton>
         </>

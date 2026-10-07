@@ -12,10 +12,10 @@ import {
   Chip,
 } from "@mui/material";
 
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import { MarkdownEditor } from "../../common/components/inputs/MarkdownEditor";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -96,16 +96,11 @@ export const TemplateImportPage = () => {
   return (
     <PageContainer
       title="Import Template from Repository"
-      onBack={handleBack}
-      backAriaLabel="Back to templates"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
+          <Button onClick={handleBack}>Cancel</Button>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
           >

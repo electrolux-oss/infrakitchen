@@ -94,7 +94,7 @@ const MarkdownEditorInner: FC<MarkdownEditorProps> = ({
           }
         }}
         sx={{
-          borderRadius: 1,
+          borderRadius: "var(--template-surface-radius)",
           border: 1,
           borderColor,
           overflow: "hidden",

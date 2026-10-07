@@ -1,57 +1,24 @@
 import asyncio
-import json
 import logging
 from typing import Any, cast
 from uuid import UUID
 
-import aio_pika
-from aio_pika import ExchangeType
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.resources.dependencies import get_resource_service
-from core.base_models import MessageModel
+import core.pubsub as pubsub
+from core.config import Settings
 from core.database import FieldSpec
 from core.dependencies import get_async_session
-from core.rabbitmq import RabbitMQConnection
 
 from application.providers import NotificationProviderAdapter
 from application.integrations.dependencies import get_integration_service
-from core.notifications.controller import NotificationEvent
 from core.notifications.dependencies import get_notification_preference_service, get_subscription_service
-from core.notifications.model import NotificationChannel
+from core.notifications.model import NotificationChannel, NotificationEvent, NotificationOutboxItem, OutboxStatus
+from core.notifications.outbox import NotificationOutboxCRUD
 
 logger = logging.getLogger(__name__)
-
-
-def create_in_app_message(body: dict[str, Any]) -> MessageModel:
-    notification_provider = body.get("provider")
-    user_id = body.get("user_id")
-    if not notification_provider or not user_id:
-        raise ValueError("Message body must contain 'provider' and 'user_id' fields")
-
-    if notification_provider == "in_app":
-        routing_key = f"notifications.in_app.{user_id}"
-    else:
-        routing_key = f"notification_provider_consumer.{notification_provider}.{user_id}"
-
-    logger.debug(
-        f"Creating notification message with routing_key: {routing_key} "
-        f"(entity_name={notification_provider}, user_id={user_id})"
-    )
-
-    return MessageModel(
-        body=body,
-        message_type="notification",
-        exchange="ik_notification_messages",
-        routing_key=routing_key,
-        exchange_type=ExchangeType.TOPIC,
-    )
-
-
-async def send_message(message: MessageModel) -> None:
-    logger.debug(f"Sending notification message: {message}")
-    await RabbitMQConnection.send_message(message)
 
 
 async def _get_provider_integration(provider: str) -> Integration | None:
@@ -81,7 +48,7 @@ async def _dispatch_notification(msg: dict[str, Any]) -> None:
         return
 
     if provider == "in_app":
-        await send_message(create_in_app_message(msg))
+        await pubsub.publish(pubsub.in_app_notifications_topic(user_id), msg)
         return
 
     adapter_cls: type[NotificationProviderAdapter] | None = NotificationProviderAdapter.notification_adapters.get(
@@ -104,7 +71,7 @@ async def _dispatch_notification(msg: dict[str, Any]) -> None:
 async def _route_notification_event(event: NotificationEvent, session: AsyncSession) -> None:
     """Resolve subscriptions and preferences for an event and dispatch per-user-per-channel messages.
 
-    - IN_APP: publishes to ``ik_notification_messages`` for the GraphQL WebSocket consumer.
+    - IN_APP: publishes to the user's ``notifications.in_app.<user_id>`` pubsub topic.
     - External providers (e.g. Slack): dispatches directly via the registered adapter.
     """
     subscription_service = get_subscription_service(session)
@@ -192,74 +159,105 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
                 logger.error(f"Failed to notify user {user_id} via {channel.value}: {e}", exc_info=True)
 
 
-async def notification_event_router() -> None:
-    """RabbitMQ consumer that routes raw notification events to per-user-per-channel messages.
+class NotificationDispatcher:
+    """Routes notification outbox items to subscribers, a few at a time.
 
-    Listens on ``ik_raw_messages`` exchange. For each event it opens a fresh DB
-    session, resolves subscriptions and user preferences via ``_route_notification_event``,
-    and dispatches the resulting per-user messages to provider adapters or ``ik_notification_messages``.
+    Runs in every API process. Items are claimed with ``FOR UPDATE SKIP LOCKED``,
+    so each event is routed once across replicas; a failed routing is retried with
+    backoff, and an item whose claimer died is picked up again once its lease expires.
     """
-    async with RabbitMQConnection() as connection:
-        channel = await connection.get_channel()
-        if channel is None:
-            raise RuntimeError("Failed to create a channel. Connection might not be established.")
 
-        await channel.set_qos(prefetch_count=1)
+    def __init__(
+        self,
+        concurrency: int | None = None,
+        lease_seconds: int | None = None,
+        poll_interval: float = 10.0,
+    ):
+        settings = Settings()
+        self.concurrency: int = concurrency or settings.NOTIFICATION_DISPATCHERS
+        self.lease_seconds: int = lease_seconds or settings.NOTIFICATION_LEASE_SECONDS
+        self.poll_interval: float = poll_interval
+        self._wakeup: asyncio.Event = asyncio.Event()
 
-        events_exchange = await channel.declare_exchange(
-            "ik_raw_messages",
-            aio_pika.ExchangeType.TOPIC,
-            auto_delete=False,
-            durable=True,
-        )
+    @staticmethod
+    def retry_delay(attempts: int) -> float:
+        """Back off 5s, 10s, 20s, ... between attempts."""
+        return 5.0 * (2 ** max(attempts - 1, 0))
 
-        queue = await channel.declare_queue(
-            "notification_event_router",
-            durable=True,
-            auto_delete=False,
-        )
-        await queue.bind(events_exchange, routing_key="notification_event_router.#")
+    async def run(self) -> None:
+        loops = [asyncio.create_task(self._dispatch_loop()) for _ in range(self.concurrency)]
+        try:
+            async with pubsub.hub.subscribe(pubsub.NOTIFICATION_OUTBOX_TOPIC) as wakeups:
+                logger.info(f"Notification dispatcher started with {self.concurrency} concurrent routers")
+                async for _ in wakeups:
+                    self._wakeup.set()
+        finally:
+            for loop in loops:
+                _ = loop.cancel()
+            _ = await asyncio.gather(*loops, return_exceptions=True)
 
-        logger.info("Notification event router started, bound to notification_event_router.#")
-
-        async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
-            async with message.process(ignore_processed=True):
+    async def _dispatch_loop(self) -> None:
+        while True:
+            # Cleared before claiming, so a wakeup that arrives meanwhile isn't lost
+            self._wakeup.clear()
+            try:
+                did_work = await self.dispatch_once()
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.error(f"Notification dispatcher error: {e}", exc_info=True)
+                did_work = False
+            if not did_work:
                 try:
-                    body: dict[str, Any] = json.loads(message.body.decode())
-                    body.pop("_metadata", None)
+                    _ = await asyncio.wait_for(self._wakeup.wait(), timeout=self.poll_interval)
+                except TimeoutError:
+                    pass
 
-                    event = NotificationEvent(
-                        event_type=body["event_type"],
-                        entity_type=body["entity_type"],
-                        entity_id=body.get("entity_id"),
-                        title=body["title"],
-                        message=body["message"],
-                        status=body["status"],
-                        metadata=body.get("metadata"),
-                    )
+    async def dispatch_once(self) -> bool:
+        """Claim and route one outbox item. Returns True if there was one."""
+        async with get_async_session() as session:
+            item = await NotificationOutboxCRUD(session).claim(self.lease_seconds)
+            await session.commit()
+        if item is None:
+            return False
 
-                    async with get_async_session() as session:
-                        await _route_notification_event(event, session)
-                except Exception as e:
-                    logger.error(f"Failed to route notification event: {e}", exc_info=True)
-
-        consumer_tag = await queue.consume(on_message)
+        if item.attempts > item.max_attempts:
+            # Its claimers kept dying before they could record a result
+            await self._finish(item, OutboxStatus.FAILED, "Gave up after the dispatcher was lost too many times")
+            return True
 
         try:
-            await asyncio.Future()
+            event = NotificationEvent(**item.payload)
+            async with get_async_session() as session:
+                await _route_notification_event(event, session)
+        except Exception as e:
+            error = f"{type(e).__name__}: {e}"
+            if item.attempts >= item.max_attempts:
+                logger.error(f"Giving up on notification {item.id} after {item.attempts} attempts: {error}")
+                await self._finish(item, OutboxStatus.FAILED, error)
+            else:
+                logger.warning(f"Failed to route notification {item.id} (attempt {item.attempts}): {error}")
+                async with get_async_session() as session:
+                    _ = await NotificationOutboxCRUD(session).retry(item, self.retry_delay(item.attempts), error)
+                    await session.commit()
+            return True
+
+        await self._finish(item, OutboxStatus.DONE)
+        return True
+
+    async def _finish(self, item: NotificationOutboxItem, status: OutboxStatus, error: str | None = None) -> None:
+        async with get_async_session() as session:
+            _ = await NotificationOutboxCRUD(session).finish(item, status, error)
+            await session.commit()
+
+
+async def start_notification_dispatcher() -> None:
+    """Run the notification dispatcher, restarting it if it stops unexpectedly."""
+    while True:
+        try:
+            await NotificationDispatcher().run()
         except asyncio.CancelledError:
-            if consumer_tag:
-                await queue.cancel(consumer_tag)
             raise
-
-
-async def start_notification_event_router() -> None:
-    """Start the notification event router with auto-restart on failure."""
-    try:
-        await notification_event_router()
-    except asyncio.CancelledError:
-        raise
-    except Exception as e:
-        logger.error(f"Notification event router stopped unexpectedly: {e}, restarting in 5 seconds")
-        await asyncio.sleep(5)
-        await start_notification_event_router()
+        except Exception as e:
+            logger.error(f"Notification dispatcher stopped unexpectedly: {e}, restarting in 5 seconds")
+            await asyncio.sleep(5)

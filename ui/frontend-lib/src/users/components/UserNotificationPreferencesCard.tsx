@@ -21,10 +21,11 @@ import {
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
-import { CommonDialog } from "../../common/components/CommonDialog";
+import { BaseCard } from "../../common/components/cards/BaseCard";
+import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
-import { OverviewCard } from "../../common/components/OverviewCard";
-import { RelativeTime } from "../../common/components/RelativeTime";
+import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
+import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import {
   CREATE_NOTIFICATION_PREFERENCE_MUTATION,
@@ -168,7 +169,7 @@ const NotificationPreferenceDialog = ({
       }
       actions={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+          <Button onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button variant="contained" onClick={handleSave} disabled={isLoading}>
@@ -210,9 +211,7 @@ const DeleteNotificationPreferenceButton = ({
   if (!isConfirming) {
     return (
       <Button
-        variant="outlined"
         color="error"
-        size="small"
         startIcon={<DeleteOutlineIcon />}
         onClick={() => setIsConfirming(true)}
       >
@@ -224,9 +223,6 @@ const DeleteNotificationPreferenceButton = ({
   return (
     <Stack direction="row" spacing={1}>
       <Button
-        variant="outlined"
-        color="success"
-        size="small"
         startIcon={<CheckIcon />}
         onClick={handleDelete}
         disabled={isLoading}
@@ -234,9 +230,7 @@ const DeleteNotificationPreferenceButton = ({
         Confirm
       </Button>
       <Button
-        variant="outlined"
         color="inherit"
-        size="small"
         startIcon={<CloseIcon />}
         onClick={() => setIsConfirming(false)}
         disabled={isLoading}
@@ -255,12 +249,7 @@ const EditNotificationPreferenceButton = ({
   onEdit: (preference: GqlNotificationPreference) => void;
 }) => {
   return (
-    <Button
-      variant="outlined"
-      size="small"
-      startIcon={<EditOutlinedIcon />}
-      onClick={() => onEdit(preference)}
-    >
+    <Button startIcon={<EditOutlinedIcon />} onClick={() => onEdit(preference)}>
       Edit
     </Button>
   );
@@ -308,12 +297,9 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
       {
         field: "createdAt",
         headerName: "Created",
-        flex: 1,
+        width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime
-            date={params.value}
-            sx={{ fontSize: "0.75rem", display: "flex" }}
-          />
+          <RelativeTime date={params.value} sx={{ display: "flex" }} />
         ),
       },
       {
@@ -347,7 +333,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
 
   return (
     <>
-      <OverviewCard
+      <BaseCard
         name="Notification Preferences"
         description="Manage your event preferences and delivery channels."
         actions={
@@ -369,7 +355,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
           defaultFilter={{ user_id }}
           entityFieldMap={NOTIFICATION_PREFERENCE_FIELD_MAP}
         />
-      </OverviewCard>
+      </BaseCard>
       <NotificationPreferenceDialog
         userId={user_id}
         open={dialogOpen}

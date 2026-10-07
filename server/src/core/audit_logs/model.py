@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import Any
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from core.users.model import User
 from ..base_models import Base
-from sqlalchemy import UUID, ForeignKey, DateTime, func
+from sqlalchemy import JSON, UUID, ForeignKey, DateTime, func
 
 
 class AuditLog(Base):
@@ -15,5 +16,6 @@ class AuditLog(Base):
     action: Mapped[str] = mapped_column()
     entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
     revision_number: Mapped[int | None] = mapped_column(default=1, nullable=True)
+    action_metadata: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     creator: Mapped[User] = relationship("User", lazy="joined")

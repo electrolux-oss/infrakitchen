@@ -14,9 +14,9 @@ import {
 } from "@mui/material";
 
 import { LabelInput, MultiSelectEditor } from "../../common";
-import { DependencyConfigurationFields } from "../../common/components/DependencyConfigurationFields";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { DependencyConfigurationFields } from "../../common/components/hcl/DependencyConfigurationFields";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -104,22 +104,12 @@ export const ProjectCreatePage = () => {
   return (
     <PageContainer
       title="Create Project"
-      onBack={() => navigate(`${linkPrefix}projects`)}
-      backAriaLabel="Back to projects"
       bottomActions={
         <>
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => navigate(`${linkPrefix}projects`)}
-          >
+          <Button onClick={() => navigate(`${linkPrefix}projects`)}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(onSubmit)}
-          >
+          <Button variant="contained" onClick={handleSubmit(onSubmit)}>
             Save
           </Button>
         </>

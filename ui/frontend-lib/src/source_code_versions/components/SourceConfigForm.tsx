@@ -140,7 +140,7 @@ export const SourceConfigForm = (props: {
         width: "100%",
         mb: 2,
         p: 2,
-        borderRadius: 1,
+        borderRadius: "var(--template-surface-radius)",
         border: "1px solid",
         borderColor: "divider",
         borderLeft: "4px solid",
@@ -169,45 +169,24 @@ export const SourceConfigForm = (props: {
           >
             {configName}
           </Typography>
-          <Chip label={configType} size="small" variant="outlined" />
+          <Chip label={configType} variant="outlined" />
           {required ? (
-            <Chip
-              label="required"
-              size="small"
-              color="warning"
-              variant="outlined"
-            />
+            <Chip label="required" color="warning" variant="outlined" />
           ) : (
-            <Chip
-              label="optional"
-              size="small"
-              color="info"
-              variant="outlined"
-            />
+            <Chip label="optional" color="info" variant="outlined" />
           )}
           {validationSummary && (
             <Chip
               label={validationSummary}
-              size="small"
               color="success"
               variant="outlined"
             />
           )}
           {restricted && (
-            <Chip
-              label="restricted"
-              size="small"
-              color="error"
-              variant="outlined"
-            />
+            <Chip label="restricted" color="error" variant="outlined" />
           )}
           {sensitive && (
-            <Chip
-              label="sensitive"
-              size="small"
-              color="secondary"
-              variant="outlined"
-            />
+            <Chip label="sensitive" color="secondary" variant="outlined" />
           )}
         </Box>
       </Box>
@@ -316,7 +295,6 @@ export const SourceConfigForm = (props: {
                           {...params}
                           label="Options"
                           variant="outlined"
-                          size="small"
                           error={!!errors?.options}
                           helperText={
                             errors?.options
@@ -433,7 +411,7 @@ export const SourceConfigForm = (props: {
               sx={{
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 mt: 1,
                 "&:before": { display: "none" },
               }}
@@ -478,7 +456,6 @@ export const SourceConfigForm = (props: {
                         }
                         control={
                           <Switch
-                            size="small"
                             name={field.name}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}
@@ -530,7 +507,7 @@ export const SourceConfigForm = (props: {
               sx={{
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 1,
+                borderRadius: "var(--template-surface-radius)",
                 mt: 1,
                 "&:before": { display: "none" },
               }}
@@ -575,7 +552,6 @@ export const SourceConfigForm = (props: {
                         }
                         control={
                           <Switch
-                            size="small"
                             name={field.name}
                             checked={Boolean(field.value)}
                             onClick={(event) => event.stopPropagation()}

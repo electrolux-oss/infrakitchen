@@ -11,6 +11,7 @@ import {
 
 import { useConfig } from "../../common";
 import { notifyError } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GqlSourceConfig,
   GqlSourceOutputConfigTemplate,
@@ -197,13 +198,12 @@ export const NamingConventionInput = ({
                 >
                   <Chip
                     label={config.name}
-                    size="small"
                     variant="outlined"
                     color="primary"
                     onClick={() => handleInsertVariable(config.name)}
                     sx={{
                       cursor: "pointer",
-                      fontFamily: "monospace",
+                      fontFamily: CODE_FONT_FAMILY,
                       fontSize: "0.75rem",
                     }}
                   />
@@ -239,13 +239,12 @@ export const NamingConventionInput = ({
                     >
                       <Chip
                         label={output.name}
-                        size="small"
                         variant="outlined"
                         color="secondary"
                         onClick={() => handleInsertVariable(output.name)}
                         sx={{
                           cursor: "pointer",
-                          fontFamily: "monospace",
+                          fontFamily: CODE_FONT_FAMILY,
                           fontSize: "0.75rem",
                         }}
                       />

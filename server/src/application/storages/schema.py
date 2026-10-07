@@ -37,6 +37,17 @@ class GCPStorageConfig(BaseModel):
     storage_provider: Literal["gcp"] = Field(default="gcp", frozen=True)
 
 
+class PostgreSQLStorageConfig(BaseModel):
+    pg_schema_name: str = Field(..., frozen=True, pattern=r"^[a-z_][a-z0-9_]{0,62}$")
+    storage_provider: Literal["postgresql"] = Field(default="postgresql", frozen=True)
+
+
+type StorageConfigType = Annotated[
+    AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig | PostgreSQLStorageConfig,
+    Field(discriminator="storage_provider"),
+]
+
+
 class StorageResponse(BaseModel):
     id: uuid.UUID = Field(...)
 
@@ -67,9 +78,7 @@ class StorageResponse(BaseModel):
     storage_provider: StorageProviderType = Field(..., frozen=True)
     integration: IntegrationShort = Field(...)
 
-    configuration: Annotated[
-        AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig, Field(discriminator="storage_provider")
-    ] = Field(...)
+    configuration: StorageConfigType = Field(...)
     labels: list[str] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
@@ -85,9 +94,7 @@ class StorageCreate(BaseModel):
     storage_type: IacToolType = Field(..., frozen=True)
     storage_provider: StorageProviderType = Field(..., frozen=True)
     integration_id: uuid.UUID = Field(..., frozen=True)
-    configuration: Annotated[
-        AWSStorageConfig | GCPStorageConfig | AzureRMStorageConfig, Field(discriminator="storage_provider")
-    ] = Field(...)
+    configuration: StorageConfigType = Field(...)
     labels: list[str] = Field(default_factory=list)
 
 

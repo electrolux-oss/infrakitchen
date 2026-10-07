@@ -13,10 +13,14 @@ from graphql_api.modules.log.subscriptions import LogSubscription
 from graphql_api.modules.notification.subscriptions import NotificationSubscription
 from graphql_api.modules.batch_operation.queries import BatchOperationQuery
 from graphql_api.modules.batch_operation.mutations import BatchOperationMutation
+from graphql_api.modules.tool.queries import ToolQuery
+from graphql_api.modules.tool.mutations import ToolMutation
 from graphql_api.modules.blueprint.queries import BlueprintQuery
 from graphql_api.modules.blueprint.mutations import BlueprintMutation
 from graphql_api.modules.project.queries import ProjectQuery
 from graphql_api.modules.project.mutations import ProjectMutation
+from graphql_api.modules.service.queries import ServiceQuery
+from graphql_api.modules.service.mutations import ServiceMutation
 from graphql_api.modules.resource.queries import ResourceQuery
 from graphql_api.modules.template.queries import TemplateQuery
 from graphql_api.modules.template.mutations import TemplateMutation
@@ -42,12 +46,15 @@ from graphql_api.modules.permission.queries import PermissionQuery
 from graphql_api.modules.permission.mutations import PermissionMutation
 from graphql_api.modules.resource_temp_state.queries import ResourceTempStateQuery
 from graphql_api.modules.revision.queries import RevisionQuery
+from graphql_api.modules.task.mutations import TaskMutation
 from graphql_api.modules.task.queries import TaskQuery
 from graphql_api.modules.workflow.queries import WorkflowQuery
 from graphql_api.modules.workflow.mutations import WorkflowMutation
 from graphql_api.modules.workspace.queries import WorkspaceQuery
 from graphql_api.modules.workspace.mutations import WorkspaceMutation
 from graphql_api.modules.worker.queries import WorkerQuery
+from graphql_api.modules.task_queue.mutations import TaskQueueMutation
+from graphql_api.modules.task_queue.queries import TaskQueueQuery
 from graphql_api.modules.providers.slack.queries import SlackQuery
 from graphql_api.modules.providers.github.queries import GithubQuery
 from graphql_api.modules.providers.bitbucket.queries import BitbucketQuery
@@ -76,9 +83,11 @@ class Query(
     AuthProviderQuery,
     AuditLogQuery,
     BatchOperationQuery,
+    ToolQuery,
     BlueprintQuery,
     ProjectQuery,
     ResourceQuery,
+    ServiceQuery,
     TemplateQuery,
     IntegrationQuery,
     LabelQuery,
@@ -96,6 +105,7 @@ class Query(
     WorkflowQuery,
     WorkspaceQuery,
     WorkerQuery,
+    TaskQueueQuery,
     GithubQuery,
     BitbucketQuery,
     AzureDevopsQuery,
@@ -122,7 +132,9 @@ class Mutation(
     NotificationMutation,
     ProjectMutation,
     ResourceMutation,
+    ServiceMutation,
     TemplateMutation,
+    ToolMutation,
     BlueprintMutation,
     IntegrationMutation,
     SourceCodeMutation,
@@ -134,6 +146,8 @@ class Mutation(
     FavoriteMutation,
     BatchOperationMutation,
     PermissionMutation,
+    TaskMutation,
+    TaskQueueMutation,
     WorkflowMutation,
     WorkspaceMutation,
     ValidationRuleMutation,

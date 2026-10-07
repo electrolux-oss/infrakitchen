@@ -12,6 +12,7 @@ from application.validation_rules.dependencies import get_validation_rule_servic
 from application.workflows.crud import WorkflowCRUD
 from application.workflows.service import WorkflowService
 from core.audit_logs.handler import AuditLogHandler
+from core.tools.dependencies import get_tool_service
 from core.dependencies import get_db_session
 from core.logs.dependencies import get_log_service
 from core.notifications.dependencies import get_subscription_service
@@ -51,6 +52,7 @@ def get_resource_service(
         favorite_service=get_favorite_service(session=session),
         subscription_service=get_subscription_service(session=session),
         project_service=get_project_service(session=session),
+        tool_service=get_tool_service(session=session),
     )
 
 

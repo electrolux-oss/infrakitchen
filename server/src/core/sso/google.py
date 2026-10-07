@@ -93,7 +93,7 @@ async def google_refresh_token(
 
     expiration = datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=int(Settings().SESSION_EXPIRATION))
 
-    user = await service.user_service.get_user_by_identifier(email.lower())
+    user = await service.user_service.get_user_by_identifier(email)
 
     if not user:
         raise AccessUnauthorized("Authentication failed")

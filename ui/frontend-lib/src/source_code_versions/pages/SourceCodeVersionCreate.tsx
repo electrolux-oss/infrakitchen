@@ -11,11 +11,12 @@ import { useNavigate } from "react-router";
 import { Box, TextField, Button, MenuItem } from "@mui/material";
 
 import { LabelInput } from "../../common";
+import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { PropertyCard } from "../../common/components/PropertyCard";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
+import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
 import { RefFolders } from "../../source_codes/types";
 import { IkEntity } from "../../types";
 import { VERSION_LIFECYCLE_STATE } from "../../utils";
@@ -161,18 +162,10 @@ const SourceCodeVersionCreatePageInner = () => {
   return (
     <PageContainer
       title="Create Template Version"
-      onBack={handleBack}
-      backAriaLabel="Back to template versions"
       bottomActions={
         <>
-          <Button variant="outlined" color="primary" onClick={handleBack}>
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit(handleSave)}
-          >
+          <Button onClick={handleBack}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit(handleSave)}>
             {saving ? "Saving..." : "Save"}
           </Button>
         </>
@@ -408,11 +401,10 @@ const SourceCodeVersionCreatePageInner = () => {
                   label="Lifecycle State"
                   fullWidth
                   margin="normal"
-                  autoFocus
                 >
                   {Object.values(VERSION_LIFECYCLE_STATE).map((option) => (
                     <MenuItem key={option} value={option}>
-                      {option}
+                      <VersionLifecycleStateChip lifecycleState={option} />
                     </MenuItem>
                   ))}
                 </TextField>

@@ -4,7 +4,7 @@ const chipBoxSx = {
   display: "inline-block",
   backgroundColor: "primary.dark",
   color: "primary.contrastText",
-  borderRadius: 1,
+  borderRadius: "var(--template-surface-radius)",
   px: 1,
   py: 0.5,
   mr: 0.5,

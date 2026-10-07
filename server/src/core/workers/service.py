@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from typing import Any, Literal
 from uuid import UUID
@@ -52,7 +52,7 @@ class WorkerService:
         if result:
             # add id to worker model
             worker.id = result[0].id
-            worker.updated_at = datetime.now()
+            worker.updated_at = datetime.now(UTC)
             response = await self.crud.update(
                 result[0],
                 model_db_dump(worker, exclude_fields={"_entity_name", "created_at", "current_task", "tasks_completed"}),
@@ -64,7 +64,7 @@ class WorkerService:
 
         return WorkerDTO.model_validate(response)
 
-    async def change_worker_status(self, worker_id: str | UUID, status: Literal["free", "busy"]) -> None:
+    async def change_worker_status(self, worker_id: str | UUID, status: Literal["free", "busy", "offline"]) -> None:
         worker = await self.crud.get_by_id(str(worker_id))
         if not worker:
             logger.warning(f"Worker with id {worker_id} not found")
