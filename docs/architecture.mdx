@@ -7,7 +7,7 @@ sidebar:
 
 ## High-Level Architecture
 
-InfraKitchen follows a GraphQL-first architecture with a React frontend, a FastAPI backend, an asynchronous task worker, and a scheduler, all connected through PostgreSQL (task queue, notification outbox, and `LISTEN`/`NOTIFY` pub/sub).
+InfraKitchen follows a GraphQL-first architecture with a React frontend and a backend made up of three independent processes - an **API Server** (FastAPI), an asynchronous **Worker**, and a **Scheduler** - all connected through PostgreSQL (task queue, notification outbox, and `LISTEN`/`NOTIFY` pub/sub). Besides the GraphQL API consumed by the frontend, the API Server also exposes an **MCP Server** for AI agents, and integrates with external **Identity Providers** (login), **Cloud Providers** (provisioning), and **Notification Providers** (e.g. Slack).
 
 ```mermaid
 ---
@@ -16,49 +16,93 @@ config:
     fontFamily: "ui-sans-serif, system-ui, sans-serif"
 ---
 flowchart TD
-    subgraph Frontend
-        UI["React app (TypeScript)"]
+    USER(["User"])
+
+    subgraph Clients
+        AIAGENT["AI Agent"]
+        UI["Web UI"]
     end
 
-    subgraph Backend["Backend (FastAPI)"]
-        GQL["GraphQL API (Strawberry)<br/>queries · mutations · subscriptions"]
-        CONSUMERS["Postgres LISTEN/NOTIFY subscribers<br/>events · notifications · logs"]
+    subgraph APIServer["API Server"]
+        GQL["GraphQL API"]
+        CONSUMERS["Subscription Publisher"]
+        AUTH["Authentication"]
+        MCP["MCP Server"]
+        NOTIF["Notification Dispatcher"]
     end
 
     subgraph Worker["Worker"]
-        TW["TaskWorker"]
+        TW["Task runner"]
         TOFU["OpenTofu/Terraform"]
     end
 
-    SCH["Scheduler (APScheduler)"]
-    DB[("PostgreSQL<br/>task queue · notification outbox · LISTEN/NOTIFY")]
-    CLOUD["Cloud providers"]
+    SCH["Scheduler"]
+    DB[("PostgreSQL")]
 
-    UI -->|"GraphQL over HTTP"| GQL
-    UI <-.->|"GraphQL subscriptions<br/>(WebSocket)"| CONSUMERS
-    GQL --> DB
-    GQL -->|"enqueue task row"| DB
+    subgraph External["External Services"]
+        CLOUD["Cloud Providers"]
+        OAUTH["Identity Providers"]
+        NOTIFPROV["Notification Providers"]
+        GIT["Git Providers"]
+        STATE["State Storage"]
+    end
+
+    UI -->|"GraphQL (HTTP)"| GQL
+    UI <-.->|"GraphQL (WebSocket)"| CONSUMERS
+    UI -->|"login"| AUTH
+    AUTH -->|"verify"| OAUTH
+    USER -->|"uses"| UI
+    USER -->|"uses"| AIAGENT
+    AIAGENT -->|"MCP"| MCP
+    MCP -->|"call"| GQL
+    GQL -->|"read/write data"| DB
+    GQL -->|"enqueue task"| DB
     SCH -->|"enqueue scheduled jobs"| DB
-    DB -->|"NOTIFY wakes up<br/>(claims task row)"| TW
-    TW --> DB
-    TW --> TOFU
-    TOFU --> CLOUD
-    TW -.->|"log / event /<br/>notification rows"| DB
-    DB -.->|"NOTIFY"| CONSUMERS
+    DB -->|"wakes up<br/>(claims task)"| TW
+    TW -->|"update status"| DB
+    TW -->|"clone"| GIT
+    TW -->|"plan / apply"| TOFU
+    TOFU -->|"read/write state"| STATE
+    TOFU -->|"provision / destroy"| CLOUD
+    TW -.->|"write logs / events /<br/>notifications"| DB
+    DB -.->|"notify"| CONSUMERS
+    DB -->|"claims outbox item"| NOTIF
+    NOTIF -->|"in-app"| CONSUMERS
+    NOTIF -->|"external channels"| NOTIFPROV
+
+    classDef external fill:#fff3e0,stroke:#fb8c00,color:#8a4b00
+    class OAUTH,CLOUD,AIAGENT,USER,NOTIFPROV,GIT,STATE external
+    style External fill:#fffaf2,stroke:#fb8c00,stroke-dasharray: 4 4
 ```
 
 ### Components
 
-- **Frontend (React/TypeScript)** - User interface for managing infrastructure, talking to the backend exclusively through GraphQL (queries, mutations, and subscriptions)
-- **Backend (Python/FastAPI)** - GraphQL API (Strawberry) mounted at `/api/graphql`, SSO/OIDC authentication routes, MCP server, and business logic
+- **User** - The person using InfraKitchen, either directly through the Web UI or indirectly through an AI agent
+- **Web UI (React/TypeScript)** - User interface for managing infrastructure, talking to the backend exclusively through GraphQL (queries, mutations, and subscriptions)
+- **AI Agent** - A third-party AI assistant that interacts with InfraKitchen on the user's behalf through the MCP Server
+- **API Server (Python/FastAPI)** - The backend process, exposing:
+  - **GraphQL API** (Strawberry) mounted at `/api/graphql` - queries, mutations, and subscriptions for the Web UI
+  - **Subscription Publisher** - listens for Postgres `LISTEN`/`NOTIFY` events and pushes live updates to GraphQL subscriptions
+  - **Authentication** - SSO/OIDC login routes that verify users against external Identity Providers and issue InfraKitchen JWTs
+  - **MCP Server** - exposes InfraKitchen's GraphQL API and docs as MCP tools for AI agents
+  - **Notification Dispatcher** - claims items from the notification outbox and routes them to in-app subscriptions or external Notification Providers
 - **Scheduler** - APScheduler process that enqueues scheduled jobs and recurring entity actions into the task queue
-- **Worker** - Claims task rows from the PostgreSQL task queue (woken up via `LISTEN`/`NOTIFY`, with a polling fallback) and executes the entity pipelines (provision, destroy, dry run, ...)
+- **Worker** - Claims tasks from the PostgreSQL task queue (woken up via `LISTEN`/`NOTIFY`, with a polling fallback) and executes the entity pipelines (provision, destroy, dry run, ...) by invoking OpenTofu/Terraform
 - **OpenTofu/Terraform** - Infrastructure-as-Code execution engine, invoked by the worker through the `OtfClient` shell wrapper
-- **PostgreSQL** - Relational database for storing infrastructure state, the task queue, the notification outbox, and `LISTEN`/`NOTIFY` pub/sub for logs, events, and notifications
+- **PostgreSQL** - Relational database for storing InfraKitchen's own application data, the task queue, the notification outbox, and `LISTEN`/`NOTIFY` pub/sub for logs, events, and notifications
+- **Identity Providers** - External SSO providers (Google, GitHub, Microsoft, ...) used to authenticate users
+- **Cloud Providers** - External cloud platforms (AWS, GCP, Azure, ...) where infrastructure is provisioned and destroyed
+- **Notification Providers** - External channels (e.g. Slack) used to deliver notifications outside the Web UI
+- **Git Providers** - External Git providers (GitHub, GitLab, Bitbucket, Azure DevOps, ...) hosting the IaC templates/modules the worker clones before running OpenTofu/Terraform
+- **State Storage** - External object storage (e.g. S3, GCS) used as the OpenTofu/Terraform backend for storing `.tfstate`, separate from the Cloud Providers being provisioned
 
-## Request Flow
+## Scenarios
+
+Two concrete scenarios show how the components above interact end-to-end.
 
 ### User Creates a Resource
+
+Creating a resource just saves its definition — no cloud infrastructure is provisioned yet; that happens in the next scenario.
 
 ```mermaid
 ---
@@ -68,19 +112,21 @@ config:
 ---
 sequenceDiagram
     participant User
-    participant Frontend
-    participant Backend
-    participant Database
+    participant Frontend as Web UI
+    participant APIServer as API Server
+    participant Database as PostgreSQL
 
-    User->>Frontend: Fill resource form
-    Frontend->>Backend: mutation createResource
-    Backend->>Database: Create resource record
-    Backend->>Frontend: Return resource (state: provision)
+    User->>Frontend: Create resource
+    Frontend->>APIServer: Send create resource request
+    APIServer->>Database: Save resource definition
+    APIServer->>Frontend: Return resource (state: provision)
     Frontend->>User: Show resource created
 ```
 
 ### User Provisions the Resource
 
+Provisioning is asynchronous: the API Server enqueues a task and returns immediately, while the Worker picks it up and drives the actual OpenTofu/Terraform execution in the background.
+
 ```mermaid
 ---
 config:
@@ -89,33 +135,44 @@ config:
 ---
 sequenceDiagram
     participant User
-    participant Frontend
-    participant Backend
+    participant Frontend as Web UI
+    participant APIServer as API Server
     participant Database as PostgreSQL
     participant Worker
     participant IaC as OpenTofu/Terraform
     participant Cloud
 
-    User->>Frontend: Click "Provision"
-    Frontend->>Backend: mutation resourceAction (action: execute)
-    Backend->>Database: Enqueue task (after commit)
-    Backend->>Frontend: Return resource (status: queued)
+    User->>Frontend: Provision resource
+    Frontend->>APIServer: Send provision request
+    APIServer->>Database: Enqueue task
+    APIServer->>Frontend: Return resource (status: queued)
 
-    Database-->>Worker: NOTIFY wakes up worker
-    Worker->>Database: Claim task row
-    Worker->>IaC: init / apply (OtfClient)
-    IaC->>Cloud: Create infrastructure
+    Database-->>Worker: notify
+    Worker->>Database: Claim task
+    Worker->>IaC: plan / apply
+
+    loop While provisioning is in progress
+        IaC->>Cloud: Provision
+        Cloud-->>IaC: log output
+        IaC-->>Worker: log output
+        Worker->>Database: publish log line
+        Database-->>APIServer: notify
+        APIServer->>Frontend: Push live logs
+        Frontend->>User: Show live logs
+    end
+
     Cloud->>IaC: Return outputs
     IaC->>Worker: Apply complete
-    Worker->>Backend: Update resource (state: provisioned)
-    Worker->>Database: Write log / event / notification rows
-    Backend->>Frontend: GraphQL subscription update
+    Worker->>Database: Update resource (state: provisioned)
+    Worker->>Database: Write logs / events / notifications
+    Database-->>APIServer: notify
+    APIServer->>Frontend: Push status update
     Frontend->>User: Show provisioned
 ```
 
-## Backend Module Relations
+## Domain Model
 
-InfraKitchen's backend is organized into domain modules with clear responsibilities. The main entities relate like this:
+The scenarios above show how components communicate at runtime. Zooming into the data they operate on, InfraKitchen's backend is organized around a small set of core entities. They relate like this:
 
 ```mermaid
 ---
@@ -127,116 +184,25 @@ flowchart TD
     SC["SourceCode"] -->|1:N| SCV["SourceCodeVersion"]
     T["Template"] -->|1:N versions| SCV
     T -->|M:N| T2["Template<br/>(parent / child)"]
-    R["Resource"] -->|N:1| T
-    R -->|N:1| SCV
+    T -->|1:N| R["Resource"]
+    SCV -->|1:N optional| R
     R -->|M:N| R2["Resource<br/>(parent / child)"]
     R -->|M:N| I["Integration"]
     E["Executor"] -->|M:N| I
-    E -->|N:1| SC
-    R -->|N:1 optional| ST["Storage"]
-    E -->|N:1 optional| ST
+    SC -->|1:N| E
+    ST["Storage"] -->|1:N optional| R
+    ST -->|1:N optional| E
+    I -->|1:N optional| SC
+    I -->|1:N| ST
+    R -->|M:N| SEC["Secret"]
+    E -->|M:N| SEC
 ```
 
-- **Source Code / Source Code Version** - Git repositories and their pinned branches, tags, or commits; a version snapshots the template variables and outputs configuration
+- **Source Code** - A Git repository reference (URL, provider, language, discovered branches/tags)
+- **Source Code Version** - A pinned branch or tag of a Git repository, snapshotting the template variables and outputs configuration at that point
 - **Template** - Reusable infrastructure definitions with parent/child composition, versioned through source code versions
-- **Resource** - A deployed instance of a template, with parent/child dependency links, integrations, secrets, storage backend, and state/status
-- **Executor** - A runnable unit that pins a source code repository, integrations, secrets, and a storage backend
+- **Resource** - A deployed instance of a template, pinned to a specific source code version, with parent/child dependency links, integrations, secrets, storage backend, and state/status
+- **Executor** - A runnable unit that pins a Git repository, integrations, secrets, and a storage backend
 - **Integration** - Credentials and configuration for external providers (cloud, git, notification providers, ...)
-
-### Module Structure
-
-```
-server/src/
-├── application/          # Application layer, one folder per domain
-│   ├── resources/        #   crud.py · service.py · model.py · schema.py · task.py
-│   ├── executors/        #   same structure
-│   ├── templates/        #   ...
-│   ├── integrations/
-│   ├── workspaces/
-│   ├── workflows/
-│   ├── views/            # Router mounting (auth + GraphQL)
-│   ├── use_cases/        # Multi-service orchestration
-│   └── ...
-├── graphql_api/          # GraphQL API (Strawberry)
-│   ├── context.py        # Auth context & DB session
-│   ├── endpoint.py       # GraphQLRouter mount
-│   ├── helpers.py        # Permissions, field optimization
-│   ├── schema.py         # Merged query schema
-│   └── modules/          # Per-entity types, converters, queries, mutations, subscriptions
-├── core/                 # Core utilities and shared domains
-│   ├── adapters/         # External service adapters
-│   ├── config.py         # Configuration
-│   ├── database.py       # Database connection
-│   ├── base_models.py    # Base / BaseEntity / BaseModel / MessageModel
-│   ├── errors.py         # Custom exceptions
-│   └── ...
-├── worker.py             # Task worker entrypoint (claims rows from the Postgres task queue)
-├── scheduler.py          # Scheduler entrypoint (APScheduler)
-├── app.py                # FastAPI app entrypoint
-└── fixtures/             # Demo data
-```
-
-### Key Layers
-
-1. **GraphQL Layer** (`graphql_api/`)
-      - [Strawberry GraphQL](https://strawberry.rocks/) schema and types
-      - Queries, mutations, and subscriptions per entity
-      - Bearer token authentication via permission classes
-      - See [GraphQL API](./references/graphql) for usage details
-
-2. **Service Layer** (`*_service.py`)
-      - Business logic
-      - Orchestration between modules
-      - Transaction management, publishing task/event messages
-
-3. **CRUD Layer** (`*_crud.py`)
-      - Database operations
-      - Query building
-      - Data access patterns
-
-4. **Task Layer** (`*_task.py`)
-      - Asynchronous operations executed by the worker
-      - Long-running processes (provisioning, destroying, dry runs)
-      - Pipeline orchestration per entity
-
-5. **Model Layer** (`*_model.py`)
-      - SQLAlchemy ORM models (extending `BaseEntity` / `BaseRevision`)
-      - Pydantic DTOs and schemas
-      - Data structures
-
-## Security Architecture
-
-### Authentication Flow
-
-```mermaid
----
-config:
-  themeVariables:
-    fontFamily: "ui-sans-serif, system-ui, sans-serif"
----
-flowchart LR
-    User[User] -->|Login| OAuth[OAuth Provider]
-    OAuth -->|Token| Backend[Backend API]
-    Backend -->|JWT| User
-    User -->|JWT in Header| Backend
-```
-
-**Supported Methods:**
-
-- OAuth 2.0 (GitHub, Microsoft, Google)
-- Backstage integration
-- Service accounts (API tokens)
-- Guest access (development)
-
-### Secrets Management
-
-- **Encryption at Rest** - Integration credentials encrypted using Fernet
-- **Environment Variables** - Runtime credentials via env vars
-- **No Secrets in Logs** - Sensitive data masked
-- **Audit Trail** - All changes logged
-
-## State Machine
-
-Resources follow a strict state machine to ensure consistency. States (`provision`, `provisioned`, `destroy`, `destroyed`) track the resource lifecycle, while statuses (`ready`, `queued`, `in_progress`, `done`, `error`, `approval_pending`, `pending`, `rejected`, `cancelled`, `unknown`) track the current operation.
-
-The full state constraints and status reference are documented in [Resource Workflows](concepts/resource-workflows#state-constraints).
+- **Secret** - Sensitive values (e.g. API keys, passwords) attached to resources and executors
+- **Storage** - Where OpenTofu/Terraform state is kept (e.g. an S3 or GCS backend), configured via an integration
