@@ -1,13 +1,21 @@
 """Tests for WorkflowTask._resolve_wired_variables."""
 
 from datetime import datetime
+from typing import cast
 from unittest.mock import AsyncMock, Mock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
+from application.workflows.model import Workflow
 from application.workflows.schema import WiringRule, WorkflowResponse, WorkflowStepResponse
 from core.constants.model import ModelStatus, WorkflowAction
+
+
+def _as_workflow(workflow: WorkflowResponse) -> Workflow:
+    """Stand in for the ORM workflow: the resolver validates it into a WorkflowResponse,
+    which accepts a WorkflowResponse directly."""
+    return cast(Workflow, cast(object, workflow))
 
 
 def _make_workflow(source_step: WorkflowStepResponse, target_step: WorkflowStepResponse, wiring: list[WiringRule]):
@@ -55,16 +63,18 @@ async def test_resolves_outputs_of_step_completed_in_same_task():
         target_step,
         wiring,
     )
-    task.workflow_instance = _make_workflow(  # type: ignore[assignment]
-        WorkflowStepResponse(
-            id=source_step_id,
-            template_id=source_template_id,
-            resource_id=resource_id,
-            position=0,
-            status=ModelStatus.DONE,
-        ),
-        target_step,
-        wiring,
+    task.workflow_instance = _as_workflow(
+        _make_workflow(
+            WorkflowStepResponse(
+                id=source_step_id,
+                template_id=source_template_id,
+                resource_id=resource_id,
+                position=0,
+                status=ModelStatus.DONE,
+            ),
+            target_step,
+            wiring,
+        )
     )
     output = Mock()
     output.name = "vpc_id"
@@ -87,12 +97,12 @@ def _entry(name, value):
     return entry
 
 
-def _task(workflow: WorkflowResponse, resources: dict):
+def _task(workflow: WorkflowResponse, resources: dict[UUID, Mock]):
     from application.workflows.task import WorkflowTask
 
     task = WorkflowTask.__new__(WorkflowTask)
     task.workflow_pydantic = workflow
-    task.workflow_instance = workflow  # type: ignore[assignment]
+    task.workflow_instance = _as_workflow(workflow)
     task.resource_service = Mock()
     task.resource_service.get_by_id = AsyncMock(side_effect=lambda rid: resources.get(rid))
     task.logger = Mock()

@@ -1,5 +1,6 @@
 """Tests for WorkflowTask.manage_resource creating the resource of a step."""
 
+from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
@@ -21,6 +22,13 @@ def _make_task(steps):
     task._resolve_wired_variables = AsyncMock(return_value=({}, {}))  # type: ignore[method-assign]
     task.change_step_status = AsyncMock()  # type: ignore[method-assign]
     return task
+
+
+def _created_resource(task: Any):
+    """The ResourceCreate the step passed to the resource service."""
+    create_call = cast(AsyncMock, task.resource_service.create).await_args
+    assert create_call is not None
+    return create_call.kwargs["resource"]
 
 
 def _make_step(template_id, resource_id=None, parent_resources=None):
@@ -59,7 +67,7 @@ async def test_combines_selected_parents_with_parents_created_by_earlier_steps()
 
     await task.manage_resource(step)
 
-    resource = task.resource_service.create.await_args.kwargs["resource"]
+    resource = _created_resource(task)
     assert resource.parents == [external_parent.id, upstream_step.resource_id]
 
 
@@ -83,7 +91,7 @@ async def test_selected_parent_takes_precedence_over_step_of_same_template():
 
     await task.manage_resource(step)
 
-    resource = task.resource_service.create.await_args.kwargs["resource"]
+    resource = _created_resource(task)
     assert resource.parents == [selected_parent.id]
 
 
@@ -109,7 +117,7 @@ async def test_abstract_step_is_created_with_dependency_config_and_without_state
 
     await task.manage_resource(step)
 
-    resource = task.resource_service.create.await_args.kwargs["resource"]
+    resource = _created_resource(task)
     assert {c.name: c.value for c in resource.dependency_config} == {"service_name": "checkout", "owner_team": "42"}
     assert all(c.inherited_by_children for c in resource.dependency_config)
     assert resource.storage_id is None

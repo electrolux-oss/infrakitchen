@@ -458,7 +458,9 @@ class TestCreateWorkflow:
         _ = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
 
         mock_blueprint_service.integration_service.get_all_dto.assert_not_awaited()
-        workflow_create = mock_workflow_service.create.await_args.args[0]
+        create_call = mock_workflow_service.create.await_args
+        assert create_call is not None
+        workflow_create = create_call.args[0]
         assert all(step["integration_ids"] == [] for step in workflow_create["steps"])
         assert all(step["storage_id"] == str(storage_id) for step in workflow_create["steps"])
 
@@ -631,7 +633,9 @@ class TestCreateWorkflow:
         request = WorkflowRequest(dependency_config_overrides={str(mocked_template.id): {"service_name": "checkout"}})
         _ = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
 
-        (step,) = mock_workflow_service.create.await_args.args[0]["steps"]
+        create_call = mock_workflow_service.create.await_args
+        assert create_call is not None
+        (step,) = create_call.args[0]["steps"]
         assert step["resolved_dependency_config"] == {"service_name": "checkout"}
         assert step["resolved_variables"] == {}
 
