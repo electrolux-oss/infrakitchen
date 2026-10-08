@@ -143,6 +143,7 @@ export const TEMPLATE_PORTS_FIELDS = `
     inputConfigName
     outputConfigName
   }
+  requiredConfigs
 `;
 
 export const SCV_DETAIL_FIELDS = `

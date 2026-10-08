@@ -240,6 +240,7 @@ class SourceCodeVersionQuery:
                     )
                     for reference in item.references
                 ],
+                required_configs=item.required_configs,
             )
             for item in response.templates
         ]

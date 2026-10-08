@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LinkIcon from "@mui/icons-material/Link";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -24,9 +25,13 @@ import {
 } from "@mui/material";
 
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
+import { VariableCard } from "../../common/components/fields/VariableCard";
 import ArrayReferenceInput from "../../common/components/inputs/ArrayReferenceInput";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
-import { WiringRule } from "../../common/components/viewers/Wiring/types";
+import {
+  WiringRule,
+  WiringTargetType,
+} from "../../common/components/viewers/Wiring/types";
 import { useConfig } from "../../common/context/ConfigContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
@@ -52,6 +57,8 @@ interface BlueprintUseFormValues {
   secretIds: string[];
   selectedScv: Record<string, string>;
   variableValues: Record<string, Record<string, any>>;
+  /** Required dependency config values: templateId -> name -> value */
+  configValues: Record<string, Record<string, string>>;
   parentSelections: Record<string, Record<string, string[]>>;
   constantValues: Record<string, string>;
 }
@@ -69,11 +76,13 @@ function computeWiredVariables(
   wiring: WiringRule[],
   templates: Array<{ id: string; name: string }>,
   constants: Array<{ id: string; name: string }> = [],
+  targetType: WiringTargetType = "variable",
 ): Record<string, Record<string, WiredInfo>> {
   const nameMap = new Map(templates.map((t) => [t.id, t.name]));
   const constantMap = new Map(constants.map((c) => [c.id, c]));
   const result: Record<string, Record<string, WiredInfo>> = {};
   for (const w of wiring) {
+    if ((w.target_type ?? "variable") !== targetType) continue;
     if (!result[w.target_template_id]) result[w.target_template_id] = {};
     const constant = constantMap.get(w.source_template_id);
     const isConstantWire = !!constant;
@@ -87,6 +96,21 @@ function computeWiredVariables(
     };
   }
   return result;
+}
+
+function isEmptyValue(value: unknown): boolean {
+  return (
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" && value.trim() === "")
+  );
+}
+
+function requiredConfigsOf(template: {
+  configuration?: Record<string, any> | null;
+}): string[] {
+  // template configuration is a raw JSON field, so its keys are snake_case
+  return template.configuration?.required_configuration_variables ?? [];
 }
 
 function computeMissingParents(
@@ -135,6 +159,7 @@ export const BlueprintUsePage = () => {
         secretIds: [],
         selectedScv: {},
         variableValues: {},
+        configValues: {},
         parentSelections: {},
         constantValues: {},
       },
@@ -149,6 +174,7 @@ export const BlueprintUsePage = () => {
   const parentSelections = useWatch({ control, name: "parentSelections" });
   const constantValues = useWatch({ control, name: "constantValues" });
   const variableValues = useWatch({ control, name: "variableValues" });
+  const configValues = useWatch({ control, name: "configValues" });
 
   useEffect(() => {
     if (!blueprint_id) return;
@@ -272,6 +298,19 @@ export const BlueprintUsePage = () => {
     [blueprint, constantWires, externalTemplates, constantBlocks],
   );
 
+  const wiredConfigs = useMemo(
+    () =>
+      blueprint
+        ? computeWiredVariables(
+            [...blueprint.wiring, ...constantWires],
+            [...(blueprint.templates || []), ...externalTemplates],
+            constantBlocks,
+            "dependency_config",
+          )
+        : {},
+    [blueprint, constantWires, externalTemplates, constantBlocks],
+  );
+
   const missingParents = useMemo(
     () =>
       blueprint
@@ -302,25 +341,66 @@ export const BlueprintUsePage = () => {
 
   // Every required, user-editable, non-wired variable must have a value
   // (either a schema default or a user-provided override).
-  const allRequiredVariablesFilled = useMemo(() => {
-    if (!blueprint) return false;
-    const isEmpty = (v: unknown) =>
-      v === undefined ||
-      v === null ||
-      (typeof v === "string" && v.trim() === "");
-
-    return blueprint.templates?.every((t) => {
-      const schemas = variableSchemas[t.id] || [];
+  // Required, user-editable variables left empty, per template; the value is
+  // the one the field shows (user input, else the schema default)
+  const missingVariables = useMemo(() => {
+    const result: Record<string, Set<string>> = {};
+    for (const t of blueprint?.templates || []) {
       const wired = wiredVariables[t.id] || {};
       const values = variableValues[t.id] || {};
-      return schemas.every((v) => {
-        if (!v.required || v.restricted || v.sensitive) return true;
-        if (wired[v.name]) return true; // value supplied by wiring/constant
-        if (!isEmpty(values[v.name])) return true;
-        return !isEmpty(v.value); // schema default
-      });
-    });
+      result[t.id] = new Set(
+        (variableSchemas[t.id] || [])
+          .filter(
+            (v) =>
+              v.required &&
+              !v.restricted &&
+              !v.sensitive &&
+              !wired[v.name] && // value supplied by wiring/constant
+              isEmptyValue(values[v.name] ?? v.value),
+          )
+          .map((v) => v.name),
+      );
+    }
+    return result;
   }, [blueprint, variableSchemas, wiredVariables, variableValues]);
+
+  const allRequiredVariablesFilled = useMemo(
+    () =>
+      !!blueprint &&
+      Object.values(missingVariables).every((names) => names.size === 0),
+    [blueprint, missingVariables],
+  );
+
+  // Every required dependency config must be wired, set by a constant or entered
+  const missingConfigs = useMemo(() => {
+    const result: Record<string, Set<string>> = {};
+    for (const t of blueprint?.templates || []) {
+      result[t.id] = new Set(
+        requiredConfigsOf(t).filter(
+          (name) =>
+            !wiredConfigs[t.id]?.[name] &&
+            isEmptyValue(configValues[t.id]?.[name]),
+        ),
+      );
+    }
+    return result;
+  }, [blueprint, wiredConfigs, configValues]);
+
+  const allRequiredConfigsFilled = useMemo(
+    () => Object.values(missingConfigs).every((names) => names.size === 0),
+    [missingConfigs],
+  );
+
+  const handleConfigChange = useCallback(
+    (templateId: string, name: string, value: string) => {
+      const prev = getValues("configValues");
+      setValue("configValues", {
+        ...prev,
+        [templateId]: { ...(prev[templateId] || {}), [name]: value },
+      });
+    },
+    [getValues, setValue],
+  );
 
   // Load SCVs only after all required parents are selected
   useEffect(() => {
@@ -385,6 +465,52 @@ export const BlueprintUsePage = () => {
     }
     return Array.from(map.values());
   }, [externalTemplates, missingParents]);
+
+  // The backend requires integrations on a child when a parent resource has them
+  const parentsHaveIntegrations = useMemo(() => {
+    const selectedIds = new Set(
+      Object.values(parentSelections).flatMap((sel) =>
+        Object.values(sel).flat(),
+      ),
+    );
+    return uniqueParentTemplates.some((parent) => {
+      const options = buffer[`parent_global_${parent.id}`];
+      return (
+        Array.isArray(options) &&
+        options.some(
+          (r) => selectedIds.has(r.id) && (r.integrationIds?.length ?? 0) > 0,
+        )
+      );
+    });
+  }, [parentSelections, uniqueParentTemplates, buffer]);
+
+  // Integrations are optional unless a template allows only specific providers
+  // or a selected parent resource has integrations
+  const integrationRequired = useMemo(
+    () =>
+      parentsHaveIntegrations ||
+      (blueprint?.templates || []).some(
+        (t) =>
+          (t.configuration?.allowed_provider_integration_types?.length ?? 0) >
+          0,
+      ),
+    [blueprint, parentsHaveIntegrations],
+  );
+
+  // postgresql storages can always be used, cloud storages only with the resource integrations;
+  // the backend is accessed with the storage integration
+  const filterStorage = useMemo(
+    () =>
+      integrationIds.length > 0
+        ? {
+            or: [
+              { integration_id: integrationIds },
+              { storage_provider: "postgresql" },
+            ],
+          }
+        : { storage_provider: "postgresql" },
+    [integrationIds],
+  );
 
   const handleVariableChange = useCallback(
     (templateId: string, varName: string, eventOrValue: any) => {
@@ -473,6 +599,35 @@ export const BlueprintUsePage = () => {
           }
         }
 
+        // Build dependency_config_overrides: templateId -> { name: value }
+        const dependency_config_overrides: Record<
+          string,
+          Record<string, string>
+        > = {};
+        for (const [templateId, configs] of Object.entries(data.configValues)) {
+          for (const [name, value] of Object.entries(configs)) {
+            if (value?.trim()) {
+              dependency_config_overrides[templateId] = {
+                ...(dependency_config_overrides[templateId] || {}),
+                [name]: value,
+              };
+            }
+          }
+        }
+        for (const [templateId, wiredCfg] of Object.entries(wiredConfigs)) {
+          for (const [name, info] of Object.entries(wiredCfg)) {
+            const val = info.constantId
+              ? data.constantValues[info.constantId]
+              : undefined;
+            if (info.isConstantWire && val !== undefined && val !== "") {
+              dependency_config_overrides[templateId] = {
+                ...(dependency_config_overrides[templateId] || {}),
+                [name]: String(val),
+              };
+            }
+          }
+        }
+
         // Build parent_overrides: templateId -> [resourceIds]
         const parent_overrides: Record<string, string[]> = {};
         for (const [templateId, parents] of Object.entries(
@@ -488,6 +643,7 @@ export const BlueprintUsePage = () => {
           id: blueprint_id,
           input: {
             variableOverrides: variable_overrides,
+            dependencyConfigOverrides: dependency_config_overrides,
             integrationIds: data.integrationIds,
             storageId: data.storageId,
             workspaceId: data.workspaceId,
@@ -507,7 +663,15 @@ export const BlueprintUsePage = () => {
         setSubmitting(false);
       }
     },
-    [blueprint, blueprint_id, wiredVariables, ikApi, navigate, linkPrefix],
+    [
+      blueprint,
+      blueprint_id,
+      wiredVariables,
+      wiredConfigs,
+      ikApi,
+      navigate,
+      linkPrefix,
+    ],
   );
 
   if (loading) {
@@ -537,12 +701,18 @@ export const BlueprintUsePage = () => {
     );
   }
 
-  const hasAllScvs = blueprint.templates?.every((t) => selectedScv[t.id]);
+  // Abstract templates have no source code version
+  const hasAllScvs = blueprint.templates?.every(
+    (t) => t.abstract || selectedScv[t.id],
+  );
   const canSubmit =
     !submitting &&
     allParentsResolved &&
     hasAllScvs &&
+    !!storageId &&
+    (!integrationRequired || integrationIds.length > 0) &&
     allConstantsFilled &&
+    allRequiredConfigsFilled &&
     allRequiredVariablesFilled;
 
   return (
@@ -583,15 +753,22 @@ export const BlueprintUsePage = () => {
           <ArrayReferenceInput
             ikApi={ikApi}
             entity_name="integrations"
-            filter={{ integration_type: "cloud" }}
+            filter={{
+              integration_type: "cloud",
+              integration_provider__not_eq: "postgresql",
+            }}
             showFields={["integrationProvider", "name"]}
             buffer={buffer}
             setBuffer={setBuffer}
-            error={false}
-            helpertext="Select cloud integrations for the resources"
+            error={integrationRequired && integrationIds.length === 0}
+            helpertext={
+              integrationRequired
+                ? "Integrations are required by the blueprint templates or selected parent resources"
+                : "Select cloud integrations for the resources (optional)"
+            }
             value={integrationIds}
             label="Cloud Integrations"
-            required
+            required={integrationRequired}
             multiple
             fullWidth
             onChange={(ids: string[]) => setValue("integrationIds", ids)}
@@ -612,75 +789,75 @@ export const BlueprintUsePage = () => {
             onChange={(ids: string[]) => setValue("secretIds", ids)}
           />
 
-          {integrationIds.length > 0 && (
-            <>
-              <ReferenceInput
+          <ReferenceInput
+            ikApi={ikApi}
+            entity_name="storages"
+            buffer={buffer}
+            showFields={["name", "storageProvider"]}
+            fields={["name", "storageProvider", "state"]}
+            getOptionDisabled={(option: IkEntity) =>
+              option.state !== "PROVISIONED"
+            }
+            setBuffer={setBuffer}
+            error={false}
+            helpertext="Select storage for TF state"
+            filter={filterStorage}
+            value={storageId}
+            label="Storage for TF State"
+            required
+            onChange={(val: string | null) => setValue("storageId", val)}
+          />
+
+          {/* Parent resource selectors */}
+          {uniqueParentTemplates.map((parent) => {
+            // Get current selection from any template that has this parent
+            const currentValue =
+              Object.values(parentSelections).find(
+                (sel) => sel[parent.id]?.length > 0,
+              )?.[parent.id] || [];
+
+            return (
+              <ArrayReferenceInput
+                key={parent.id}
                 ikApi={ikApi}
-                entity_name="storages"
+                entity_name="resources"
+                bufferKey={`parent_global_${parent.id}`}
                 buffer={buffer}
-                showFields={["name", "storage_provider"]}
                 setBuffer={setBuffer}
+                showFields={["template.name", "name"]}
+                fields={[
+                  "name",
+                  "template.id",
+                  "template.name",
+                  "integration_ids.id",
+                  "integration_ids.name",
+                  "storage.id",
+                  "storage.name",
+                  "workspace.id",
+                  "workspace.name",
+                  "secret_ids.id",
+                  "secret_ids.name",
+                  "id",
+                ]}
                 error={false}
-                helpertext="Select storage for TF state"
-                filter={{ integration_id: integrationIds }}
-                value={storageId}
-                label="Storage for TF State"
+                helpertext={`Select existing "${parent.name}" resources as parent`}
+                filter={{
+                  template_id: [parent.id],
+                  ...(!parent.abstract && integrationIds.length > 0
+                    ? { integration_ids__any: integrationIds }
+                    : {}),
+                }}
+                value={currentValue}
+                label={`Parent: ${parent.name}`}
                 required
-                onChange={(val: string | null) => setValue("storageId", val)}
+                multiple
+                fullWidth
+                onChange={(ids: string[]) =>
+                  handleParentSelection(parent.id, ids)
+                }
               />
-
-              {/* Parent resource selectors */}
-              {uniqueParentTemplates.map((parent) => {
-                // Get current selection from any template that has this parent
-                const currentValue =
-                  Object.values(parentSelections).find(
-                    (sel) => sel[parent.id]?.length > 0,
-                  )?.[parent.id] || [];
-
-                return (
-                  <ArrayReferenceInput
-                    key={parent.id}
-                    ikApi={ikApi}
-                    entity_name="resources"
-                    bufferKey={`parent_global_${parent.id}`}
-                    buffer={buffer}
-                    setBuffer={setBuffer}
-                    showFields={["template.name", "name"]}
-                    fields={[
-                      "name",
-                      "template.id",
-                      "template.name",
-                      "integration_ids.id",
-                      "integration_ids.name",
-                      "storage.id",
-                      "storage.name",
-                      "workspace.id",
-                      "workspace.name",
-                      "secret_ids.id",
-                      "secret_ids.name",
-                      "id",
-                    ]}
-                    error={false}
-                    helpertext={`Select existing "${parent.name}" resources as parent`}
-                    filter={{
-                      template_id: [parent.id],
-                      ...(!parent.abstract
-                        ? { integration_ids__any: integrationIds }
-                        : {}),
-                    }}
-                    value={currentValue}
-                    label={`Parent: ${parent.name}`}
-                    required
-                    multiple
-                    fullWidth
-                    onChange={(ids: string[]) =>
-                      handleParentSelection(parent.id, ids)
-                    }
-                  />
-                );
-              })}
-            </>
-          )}
+            );
+          })}
           <ReferenceInput
             ikApi={ikApi}
             entity_name="workspaces"
@@ -757,12 +934,15 @@ export const BlueprintUsePage = () => {
           const wired = wiredVariables[t.id] || {};
           const missing = missingParents[t.id] || [];
           const vals = variableValues[t.id] || {};
+          const missingVars = missingVariables[t.id] ?? new Set<string>();
           const visibleVars = vars.filter(
             (v) =>
               !v.restricted &&
               !v.sensitive &&
+              // missing required values stay visible even with defaults hidden
               !(
                 hideDefaults &&
+                !missingVars.has(v.name) &&
                 !wired[v.name] &&
                 v.value !== null &&
                 v.value !== undefined &&
@@ -775,6 +955,8 @@ export const BlueprintUsePage = () => {
           const hiddenCount = totalNonRestricted - visibleVars.length;
           const isOptionDisabled = (option: IkEntity) =>
             option.status === "disabled";
+          const missingCount =
+            missingVars.size + (missingConfigs[t.id]?.size ?? 0);
 
           return (
             <PropertyCard
@@ -795,38 +977,117 @@ export const BlueprintUsePage = () => {
                       icon={<LinkIcon />}
                     />
                   )}
+                  {missingCount > 0 && (
+                    <Chip
+                      label={`${missingCount} required missing`}
+                      color="error"
+                      icon={<ErrorOutlineIcon />}
+                    />
+                  )}
                 </Box>
               }
             >
-              {/* Source code version selector */}
-              <Autocomplete
-                options={scvs}
-                getOptionLabel={(opt: IkEntity) =>
-                  opt.sourceCodeVersion || opt.name || opt.id
-                }
-                value={scvs.find((s) => s.id === currentScv) || null}
-                onChange={(_e, newVal) =>
-                  handleScvChange(t.id, newVal?.id || null)
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Template Version"
-                    margin="normal"
-                    required
-                    helperText={
-                      scvs.length === 0
-                        ? "No source code versions found for this template"
-                        : "Select the template version to use"
-                    }
-                  />
-                )}
-                disableClearable={false}
-                getOptionDisabled={isOptionDisabled}
-                isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                fullWidth
-                sx={{ mb: 1 }}
-              />
+              {/* Source code version selector, abstract templates have none */}
+              {!t.abstract && (
+                <Autocomplete
+                  options={scvs}
+                  getOptionLabel={(opt: IkEntity) =>
+                    opt.identifier ||
+                    opt.sourceCodeVersion ||
+                    opt.sourceCodeBranch ||
+                    opt.id
+                  }
+                  value={scvs.find((s) => s.id === currentScv) || null}
+                  onChange={(_e, newVal) =>
+                    handleScvChange(t.id, newVal?.id || null)
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Template Version"
+                      margin="normal"
+                      required
+                      helperText={
+                        scvs.length === 0
+                          ? "No source code versions found for this template"
+                          : "Select the template version to use"
+                      }
+                    />
+                  )}
+                  disableClearable={false}
+                  getOptionDisabled={isOptionDisabled}
+                  isOptionEqualToValue={(opt, val) => opt.id === val.id}
+                  fullWidth
+                  sx={{ mb: 1 }}
+                />
+              )}
+              {/* Required dependency config */}
+              {requiredConfigsOf(t).length > 0 && (
+                <Box sx={{ mt: 1, mb: 1 }}>
+                  <Typography variant="h5" component="h4" sx={{ mb: 1 }}>
+                    Dependency Config
+                  </Typography>
+                  {requiredConfigsOf(t).map((name) => {
+                    // Rendered like the input variables: wired values show their source
+                    const wiredCfg = wiredConfigs[t.id]?.[name];
+                    const value = configValues[t.id]?.[name] ?? "";
+                    const isMissing = missingConfigs[t.id]?.has(name) ?? false;
+                    return (
+                      <VariableCard
+                        key={name}
+                        name={name}
+                        required
+                        type="string"
+                        description="Required configuration, inherited by child resources"
+                      >
+                        {wiredCfg ? (
+                          <Tooltip
+                            title={
+                              wiredCfg.isConstantWire
+                                ? `Value set by constant "${wiredCfg.sourceTemplateName}" in Constants`
+                                : `This configuration will receive its value from "${wiredCfg.sourceTemplateName}"`
+                            }
+                            arrow
+                          >
+                            <Chip
+                              icon={
+                                wiredCfg.isConstantWire ? (
+                                  <TuneIcon />
+                                ) : (
+                                  <LinkIcon />
+                                )
+                              }
+                              label={
+                                wiredCfg.isConstantWire
+                                  ? `Constant: ${wiredCfg.sourceTemplateName}`
+                                  : `Wired: ${wiredCfg.sourceTemplateName} -> ${wiredCfg.sourceOutput}`
+                              }
+                              size="small"
+                              color={
+                                wiredCfg.isConstantWire ? "secondary" : "info"
+                              }
+                              variant="outlined"
+                              sx={{ mt: 1 }}
+                            />
+                          </Tooltip>
+                        ) : (
+                          <TextField
+                            value={value}
+                            onChange={(e) =>
+                              handleConfigChange(t.id, name, e.target.value)
+                            }
+                            required
+                            error={isMissing}
+                            helperText={isMissing ? "Required" : undefined}
+                            size="small"
+                            fullWidth
+                          />
+                        )}
+                      </VariableCard>
+                    );
+                  })}
+                </Box>
+              )}
               {/* Missing parent selectors */}
               {missing.length > 0 && (
                 <Alert severity="info" sx={{ mb: 1 }}>
@@ -941,6 +1202,11 @@ export const BlueprintUsePage = () => {
                                     ),
                             }}
                             isDisabled={isConstantWired}
+                            fieldState={
+                              missingVars.has(variable.name)
+                                ? { error: { message: "Required" } }
+                                : {}
+                            }
                           >
                             {isWired ? (
                               <Tooltip

@@ -117,3 +117,4 @@ class TemplatePortsItemType:
     configs: list[TemplatePortsConfigType]
     outputs: list[TemplatePortsOutputType]
     references: list[TemplatePortsReferenceType]
+    required_configs: list[str]

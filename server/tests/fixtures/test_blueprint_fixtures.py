@@ -27,6 +27,7 @@ def mock_blueprint_crud():
 def mock_blueprint_service(
     mock_blueprint_crud,
     mock_workflow_service,
+    mock_integration_service,
     mock_revision_handler,
     mock_event_sender,
     mock_audit_log_handler,
@@ -34,6 +35,7 @@ def mock_blueprint_service(
     return BlueprintService(
         crud=mock_blueprint_crud,
         workflow_service=mock_workflow_service,
+        integration_service=mock_integration_service,
         revision_handler=mock_revision_handler,
         event_sender=mock_event_sender,
         audit_log_handler=mock_audit_log_handler,

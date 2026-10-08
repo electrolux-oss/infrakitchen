@@ -35,12 +35,37 @@ class TestSupersedeKey:
         )
         assert supersede_key(task("workflow", entity_id)) != supersede_key(task("workflow", entity_id, step_id="a"))
 
+    def test_workflow_resource_callbacks_are_distinct(self):
+        """Parallel resources finishing must each resume the workflow."""
+        entity_id = uuid4()
+        assert supersede_key(task("workflow", entity_id, resource_id="r1")) != supersede_key(
+            task("workflow", entity_id, resource_id="r2")
+        )
+        assert supersede_key(task("workflow", entity_id)) != supersede_key(
+            task("workflow", entity_id, resource_id="r1")
+        )
+        assert supersede_key(task("workflow", entity_id, resource_id="r1")) == supersede_key(
+            task("workflow", entity_id, resource_id="r1")
+        )
+
+    def test_step_and_resource_targets_do_not_collide(self):
+        entity_id = uuid4()
+        assert supersede_key(task("workflow", entity_id, step_id="x")) != supersede_key(
+            task("workflow", entity_id, resource_id="x")
+        )
+
     def test_scheduler_jobs_are_never_superseded(self):
         job = {"kind": TaskQueueKind.SCHEDULER_JOB, "entity": "scheduler_job", "payload": {"job_id": "1"}}
         assert supersede_key(job) is None
 
 
 class TestCollapseBatch:
+    def test_keeps_parallel_workflow_callbacks(self):
+        entity_id = uuid4()
+        items = [task("workflow", entity_id, resource_id="r1"), task("workflow", entity_id, resource_id="r2")]
+
+        assert collapse_batch(items) == items
+
     def test_keeps_last_task_per_key_in_order(self):
         e1, e2 = uuid4(), uuid4()
         job = {"kind": TaskQueueKind.SCHEDULER_JOB, "entity": "scheduler_job", "payload": {}}

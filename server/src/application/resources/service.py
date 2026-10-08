@@ -212,6 +212,19 @@ class ResourceService:
             if parent.state not in allowed_parent_states:
                 raise EntityWrongState(f"Parent resource {parent.template} ID: {parent.id} has {parent.state} state.")
 
+        # Validate required_configuration_variables, abstract templates usually provide the configuration
+        if template.configuration.required_configuration_variables:
+            provided_config_names = await get_inherited_project_dependency_config_names(resource.project_id)
+
+            provided_config_names.update({dc.name for dc in resource.dependency_config})
+            missing = [
+                name
+                for name in template.configuration.required_configuration_variables
+                if name not in provided_config_names
+            ]
+            if missing:
+                raise ValueError(f"Missing required dependency config variable(s): {', '.join(missing)}")
+
         if template.abstract is False:
             # validate that integrations are allowed for the template and are enabled.
             # If parent has integration, child resource should have it too
@@ -292,19 +305,6 @@ class ResourceService:
                                 ],
                             )
 
-            # Validate required_configuration_variables
-            if template.configuration.required_configuration_variables:
-                provided_config_names = await get_inherited_project_dependency_config_names(resource.project_id)
-
-                provided_config_names.update({dc.name for dc in resource.dependency_config})
-                missing = [
-                    name
-                    for name in template.configuration.required_configuration_variables
-                    if name not in provided_config_names
-                ]
-                if missing:
-                    raise ValueError(f"Missing required dependency config variable(s): {', '.join(missing)}")
-
             # Validate if user has write permission to linked workspace
             if resource.workspace_id is not None:
                 workspace_permissions = await user_entity_permissions(requester, resource.workspace_id, "workspace")
@@ -372,15 +372,14 @@ class ResourceService:
                 if resource.storage_path is None or resource.storage_path == "":
                     raise ValueError("Storage path is required for non-abstract resources with storage")
 
-            if template.configuration.naming_convention:
-                parents_lists: list[list[ResourceWithConfigs]] = await asyncio.gather(
-                    *[self.get_parents_with_configs(rid) for rid in resource.parents]
-                )
-                parents: list[ResourceWithConfigs] = [p for sublist in parents_lists for p in sublist]
+        # Abstract resources can use the naming convention too, e.g. with their own dependency config
+        if template.configuration.naming_convention:
+            parents_lists: list[list[ResourceWithConfigs]] = await asyncio.gather(
+                *[self.get_parents_with_configs(rid) for rid in resource.parents]
+            )
+            parents: list[ResourceWithConfigs] = [p for sublist in parents_lists for p in sublist]
 
-                await convert_field_by_naming_convention_pattern(
-                    resource, fields=["name", "storage_path"], parents=parents
-                )
+            await convert_field_by_naming_convention_pattern(resource, fields=["name", "storage_path"], parents=parents)
 
         if resource.tool_id is not None:
             _ = await self.tool_service.validate_ready(resource.tool_id)
@@ -395,6 +394,9 @@ class ResourceService:
 
         if InfrakitchenConfig().approval_flow is True:
             new_resource.status = ModelStatus.APPROVAL_PENDING
+        elif template.abstract is True:
+            # Nothing to execute for abstract resources, without approval they are provisioned right away
+            await approve_entity(new_resource, abstract=True)
         else:
             new_resource.status = ModelStatus.READY
 

@@ -3,6 +3,8 @@ import { GenericTemplate, WiringRule } from "./types";
 export interface TemplatePorts {
   inputs: string[];
   outputs: string[];
+  /** Required configuration variables, both a source and a target of wires */
+  configs?: string[];
 }
 
 export interface WiringCanvasExternalTemplate {

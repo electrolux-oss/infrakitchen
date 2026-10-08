@@ -1,5 +1,6 @@
 from fastapi import Depends
 
+from application.integrations.dependencies import get_integration_service
 from application.workflows.dependencies import get_workflow_service
 from core.audit_logs.handler import AuditLogHandler
 from core.dependencies import get_db_session
@@ -21,6 +22,7 @@ def get_blueprint_service(
     return BlueprintService(
         crud=BlueprintCRUD(session=session),
         workflow_service=get_workflow_service(session=session),
+        integration_service=get_integration_service(session=session),
         revision_handler=revision_handler,
         event_sender=event_sender,
         audit_log_handler=audit_log_handler,

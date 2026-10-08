@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 from application.blueprints.model import Blueprint
@@ -438,6 +438,53 @@ class TestCreateWorkflow:
         mock_workflow_service.create.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_create_workflow_without_integrations(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_workflow,
+        mock_workflow_crud,
+        mock_user_dto,
+    ):
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+        mock_blueprint_service.integration_service.get_all_dto = AsyncMock()
+
+        storage_id = uuid4()
+        request = WorkflowRequest(integration_ids=[], storage_id=storage_id)
+        _ = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+        mock_blueprint_service.integration_service.get_all_dto.assert_not_awaited()
+        workflow_create = mock_workflow_service.create.await_args.args[0]
+        assert all(step["integration_ids"] == [] for step in workflow_create["steps"])
+        assert all(step["storage_id"] == str(storage_id) for step in workflow_create["steps"])
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_with_postgresql_integration_fails(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mock_user_dto,
+    ):
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock()
+        pg_integration_id = uuid4()
+        mock_blueprint_service.integration_service.get_all_dto = AsyncMock(
+            return_value=[Mock(id=pg_integration_id, integration_provider="postgresql")]
+        )
+
+        request = WorkflowRequest(integration_ids=[pg_integration_id])
+        with pytest.raises(ValueError, match="can be used only for TF state storage"):
+            await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+        mock_workflow_service.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_create_workflow_blueprint_not_found(
         self, mock_blueprint_service, mock_blueprint_crud, mock_user_dto
     ):
@@ -543,6 +590,50 @@ class TestCreateWorkflow:
             await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
 
         mock_workflow_service.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_create_workflow_constant_wired_to_dependency_config(
+        self,
+        mock_blueprint_service,
+        mock_blueprint_crud,
+        mock_workflow_service,
+        mocked_blueprint,
+        mocked_workflow,
+        mocked_template,
+        mock_workflow_crud,
+        mock_user_dto,
+    ):
+        constant_id = str(uuid4())
+        mocked_blueprint.configuration = {
+            "constants": [{"id": constant_id, "name": "service_name"}],
+            "constant_wires": [
+                {
+                    "source_template_id": constant_id,
+                    "source_output": "service_name",
+                    "target_template_id": str(mocked_template.id),
+                    "target_variable": "service_name",
+                    "target_type": "dependency_config",
+                }
+            ],
+        }
+        mock_blueprint_crud.get_by_id.return_value = mocked_blueprint
+        mock_workflow_service.create = AsyncMock(return_value=mocked_workflow)
+        mock_workflow_crud.get_by_id.return_value = mocked_workflow
+
+        # the value in the variable overrides does not satisfy a dependency config target
+        with pytest.raises(ValueError, match="Missing required constant values: service_name"):
+            await mock_blueprint_service.create_workflow(
+                mocked_blueprint.id,
+                WorkflowRequest(variable_overrides={str(mocked_template.id): {"service_name": "checkout"}}),
+                mock_user_dto,
+            )
+
+        request = WorkflowRequest(dependency_config_overrides={str(mocked_template.id): {"service_name": "checkout"}})
+        _ = await mock_blueprint_service.create_workflow(mocked_blueprint.id, request, mock_user_dto)
+
+        (step,) = mock_workflow_service.create.await_args.args[0]["steps"]
+        assert step["resolved_dependency_config"] == {"service_name": "checkout"}
+        assert step["resolved_variables"] == {}
 
     @pytest.mark.asyncio
     async def test_create_workflow_empty_constant_value_raises(
