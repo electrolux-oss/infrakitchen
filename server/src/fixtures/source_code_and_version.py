@@ -40,6 +40,65 @@ class SCVFixture(TypedDict):
 
 
 scv_fixtures: dict[str, SCVFixture] = {
+    "dummy": {
+        "variables": [
+            {
+                "name": "name",
+                "type": "string",
+                "original_type": "string",
+                "required": False,
+                "default": "dummy-app",
+                "description": "Name of the dummy application",
+                "sensitive": False,
+            },
+            {
+                "name": "environment",
+                "type": "string",
+                "original_type": "string",
+                "required": False,
+                "default": "dev",
+                "description": "Environment label",
+                "sensitive": False,
+                "frozen": True,
+                "options": ["dev", "staging", "prod"],
+            },
+            {
+                "name": "instance_count",
+                "type": "number",
+                "original_type": "number",
+                "required": False,
+                "default": 2,
+                "description": "Number of dummy instances to create",
+                "sensitive": False,
+            },
+            {
+                "name": "tags",
+                "type": "object",
+                "original_type": "map(string)",
+                "required": False,
+                "default": {"owner": "platform"},
+                "description": "Tags attached to the dummy deployment",
+                "sensitive": False,
+            },
+        ],
+        "outputs": [
+            {
+                "name": "deployment_id",
+                "value": "${random_id.deployment.hex}",
+                "description": "Random deployment identifier",
+            },
+            {
+                "name": "instance_names",
+                "value": "${random_pet.instance[*].id}",
+                "description": "Generated dummy instance names",
+            },
+            {
+                "name": "tags",
+                "value": "${terraform_data.deployment.output.tags}",
+                "description": "Tags attached to the dummy deployment",
+            },
+        ],
+    },
     "aws-account": {
         "variables": [
             {
@@ -165,6 +224,7 @@ scv_fixtures: dict[str, SCVFixture] = {
                 "sensitive": False,
                 "frozen": True,
                 "unique": False,
+                "options": [f"10.{i}.0.0/16" for i in range(256)],
             },
             {
                 "name": "secondary_cidr_blocks",

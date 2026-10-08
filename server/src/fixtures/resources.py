@@ -1,12 +1,12 @@
-from typing import cast
+from typing import Any, cast
 from lorem import get_sentence, get_word, random
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.projects.model import Project
 from application.resources.dependencies import get_resource_service
 from application.resources.model import Resource
-from application.resources.schema import ResourceCreate, ResourceResponse
+from application.resources.schema import Outputs, ResourceCreate, ResourceResponse
 from application.source_code_versions.dependencies import get_source_code_version_service
 from application.storages.dependencies import get_storage_service
 from application.templates.dependencies import get_template_service
@@ -25,6 +25,74 @@ from fixtures.roles import create_role
 from fixtures.projects import insert_projects
 from fixtures.utils import change_state
 from fixtures.workspaces import insert_workspaces
+
+
+def _hex(length: int = 8) -> str:
+    return "".join(random.choice("0123456789abcdef") for _ in range(length))
+
+
+def generate_output_value(name: str, ctx: dict[str, Any]) -> Any:
+    """Generate a realistic fake output value based on the resource inputs."""
+    account = ctx.get("account", "123456789012")
+    region = ctx.get("region", "eu-north-1")
+    resource_name = ctx.get("name", "fixture")
+
+    match name:
+        case "env":
+            return ctx.get("environment_name")
+        case "cicd_admin_role_name":
+            return "cicd-admin"
+        case "cicd_admin_role_arn":
+            return f"arn:aws:iam::{account}:role/cicd-admin"
+        case "vpc_id":
+            return ctx.get("vpc_id") or f"vpc-{_hex(17)}"
+        case "private_subnets" | "public_subnets" | "database_subnets" | "elasticache_subnets":
+            return [f"subnet-{_hex(17)}" for _ in range(3)]
+        case "cidr":
+            return ctx.get("cidr_block")
+        case "vpc_owner_id":
+            return account
+        case "redis_primary_endpoint":
+            return f"master.{resource_name}.{_hex(6)}.{region}.cache.amazonaws.com"
+        case "reader_endpoint_address":
+            return f"replica.{resource_name}.{_hex(6)}.{region}.cache.amazonaws.com"
+        case "cluster_arn":
+            return f"arn:aws:elasticache:{region}:{account}:replicationgroup:{resource_name}"
+        case "replication_group_id":
+            return resource_name
+        case "iam_user_arn":
+            return f"arn:aws:elasticache:{region}:{account}:user:{ctx.get('user_prefix', resource_name)}-iam"
+        case "iam_user_read_only_arn":
+            return f"arn:aws:elasticache:{region}:{account}:user:{ctx.get('user_prefix', resource_name)}-iam-ro"
+        case "policy_name_effective":
+            return ctx.get("policy_name")
+        case "target_role":
+            return ctx.get("aws_iam_role_name")
+        case "policy_arn":
+            return f"arn:aws:iam::{account}:policy/{ctx.get('policy_name', resource_name)}"
+        case "deployment_id":
+            return _hex(8)
+        case "instance_names":
+            prefix = f"{resource_name}-{ctx.get('environment', 'dev')}"
+            return [f"{prefix}-{get_word(count=2).replace(' ', '-')}" for _ in range(int(ctx.get("instance_count", 2)))]
+        case _:
+            return ctx.get(name, f"{name}-{_hex()}")
+
+
+async def set_resource_outputs(
+    session: AsyncSession,
+    resource_id: Any,
+    output_names: list[str],
+    variables: list[Variables],
+    extra_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Store generated outputs on the resource, as if it had been applied."""
+    ctx = {**(extra_context or {}), **{v.name: v.value for v in variables}}
+    outputs = [Outputs(name=name, value=generate_output_value(name, ctx)) for name in output_names]
+    _ = await session.execute(
+        update(Resource).where(Resource.id == resource_id).values(outputs=[o.model_dump() for o in outputs])
+    )
+    return {o.name: o.value for o in outputs}
 
 
 async def insert_regional_resources(
@@ -89,6 +157,7 @@ async def insert_regional_resources(
     storage = await storage_service.get_all(filter={"integration_id": integration.id})
 
     created_resources: dict[str, ResourceResponse] = {}
+    outputs_by_template: dict[str, dict[str, Any]] = {}
     if parent:
         created_resources[str(parent.template.id)] = parent
 
@@ -97,6 +166,7 @@ async def insert_regional_resources(
         template = templates[0] if templates else None
         assert template is not None, f"Template {template_config['template']} not found"
         naming_convention = template.configuration.naming_convention or "{name}"
+        source_code_version = None
         if template.abstract:
             resource = ResourceCreate(
                 template_id=template.id,
@@ -112,9 +182,15 @@ async def insert_regional_resources(
             source_code_version = await source_code_version_service.get_by_id_with_configs(str(scv.id))
             assert source_code_version is not None, "Source code version is none"
 
+            referenced_values = {
+                ref.input_config_name: outputs_by_template.get(str(ref.reference_template_id), {}).get(
+                    ref.output_config_name
+                )
+                for ref in source_code_version.template_refs
+            }
             variables = []
             for v in source_code_version.variable_configs:
-                value = default_values.get(v.name, None) or v.default
+                value = referenced_values.get(v.name) or default_values.get(v.name, None) or v.default
                 if v.type == "string":
                     variables.append(
                         Variables(
@@ -180,12 +256,19 @@ async def insert_regional_resources(
             created_resource = await resource_service.create(
                 resource, user, allowed_parent_states=allowed_parent_states
             )
-            created_resources[str(resource.template_id)] = created_resource
-            await session.commit()
         else:
             created_resource = await resource_service.create(resource, user)
-            created_resources[str(resource.template_id)] = created_resource
-            await session.commit()
+        created_resources[str(resource.template_id)] = created_resource
+
+        if source_code_version is not None:
+            outputs_by_template[str(template.id)] = await set_resource_outputs(
+                session,
+                created_resource.id,
+                [o.name for o in source_code_version.output_configs],
+                resource.variables,
+                extra_context=default_values,
+            )
+        await session.commit()
 
 
 async def insert_organization_resource(session: AsyncSession, user: UserDTO) -> ResourceResponse:
@@ -304,8 +387,57 @@ async def insert_env_resources(
     )
 
 
+async def insert_dummy_resources(
+    session: AsyncSession, envs: list[str], parent: ResourceResponse, user: UserDTO
+) -> list[ResourceResponse]:
+    template_service = get_template_service(session=session)
+    storage_service = get_storage_service(session=session)
+    source_code_version_service = get_source_code_version_service(session=session)
+    resource_service = get_resource_service(session=session)
+
+    templates = await template_service.get_all(filter={"template": "dummy"})
+    template = templates[0] if templates else None
+    assert template is not None, "Dummy template not found"
+
+    scv = next((sv for sv in await source_code_version_service.get_all() if sv.template.id == template.id), None)
+    assert scv is not None, "Dummy source code version not found"
+    scv_with_configs = await source_code_version_service.get_by_id_with_configs(str(scv.id))
+    assert scv_with_configs is not None, "Dummy source code version not found"
+    output_names = [o.name for o in scv_with_configs.output_configs]
+
+    created_resources: list[ResourceResponse] = []
+    for env in envs:
+        storages = await storage_service.get_all(filter={"name": f"{env}_postgresql_storage"})
+        assert storages, f"PostgreSQL storage not found for {env}"
+
+        resource = ResourceCreate(
+            template_id=template.id,
+            source_code_version_id=scv.id,
+            name=template.configuration.naming_convention or "{name}",
+            description=get_sentence(),
+            storage_id=storages[0].id,
+            storage_path=f"ik-catalog/{template.template}/{env}/terraform.tfstate",
+            variables=[
+                Variables(name="name", value="dummy-app", type="string"),
+                Variables(name="environment", value=env, type="string"),
+                Variables(name="instance_count", value=2, type="number"),
+                Variables(name="tags", value={"owner": "platform", "environment": env}, type="object"),
+            ],
+            parents=[parent.id],
+        )
+        created_resource = await resource_service.create(
+            resource, user, allowed_parent_states=[state.value for state in ModelState]
+        )
+        _ = await set_resource_outputs(session, created_resource.id, output_names, resource.variables)
+        await session.commit()
+        created_resources.append(created_resource)
+
+    return created_resources
+
+
 async def insert_resources(session: AsyncSession, envs: list[str], user: UserDTO):
     organization_resource = await insert_organization_resource(session=session, user=user)
+    await insert_dummy_resources(session=session, envs=envs, parent=organization_resource, user=user)
     for proj_postfix in "abcd":
         workspace = await insert_workspaces(session=session, env=f"workspace_{proj_postfix}", user=user)
         project = f"project_{proj_postfix}"

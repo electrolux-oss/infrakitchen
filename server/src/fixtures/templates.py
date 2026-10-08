@@ -36,6 +36,16 @@ template_fixtures: list[TemplateFixture] = [
         "parent": ["organization"],
     },
     {
+        "name": "Dummy",
+        "description": get_sentence(),
+        "template": "dummy",
+        "labels": ["dummy", "demo"],
+        "configuration": TemplateConfig(
+            naming_convention="dummy-{environment}-{name}",
+        ),
+        "parent": ["organization"],
+    },
+    {
         "name": "AWS Account",
         "description": get_sentence(),
         "template": "aws_account",
@@ -53,6 +63,7 @@ template_fixtures: list[TemplateFixture] = [
         "labels": ["aws", "environment", "cloud"],
         "configuration": TemplateConfig(
             naming_convention="aws-environment-{env}-{region}",
+            required_configuration_variables=["region", "environment_name"],
         ),
         "abstract": True,
         "parent": ["aws_account"],
