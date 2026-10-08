@@ -4,6 +4,7 @@ import { GqlValidationRule } from "../../validation_rules/graphql";
 import { GqlWorkflow } from "../../workflows/graphql";
 
 interface GqlTemplateWithParents extends GqlTemplateShort {
+  configuration: Record<string, any> | null;
   parents: GqlTemplateShort[];
 }
 

@@ -210,6 +210,20 @@ async def test_validate_resource_variables_nullable_if_not_required():
 
 
 @pytest.mark.asyncio
+async def test_validate_resource_variables_missing_optional_gets_default():
+    schema = [
+        ResourceVariableSchema(name="admin_role_arn", type="string", required=False, value=""),
+        ResourceVariableSchema(name="tags", type="object", required=False),
+    ]
+    resource = ResourceCreate(name="test", template_id=uuid4(), variables=[])
+
+    await validate_resource_variables_on_create(schema, resource, [])
+
+    assert {v.name: v.value for v in resource.variables} == {"admin_role_arn": "", "tags": None}
+    assert {v.name: v.type for v in resource.variables} == {"admin_role_arn": "string", "tags": "object"}
+
+
+@pytest.mark.asyncio
 async def test_validate_resource_variables_missing_required():
     schema = [ResourceVariableSchema(name="env", type="string", required=True)]
     resource = ResourceCreate(name="test", template_id=uuid4(), variables=[])  # Missing 'env'
@@ -506,3 +520,22 @@ def test_build_resource_audit_snapshot_uses_branch_when_version_is_missing():
     assert snapshot["project"] is None
     assert snapshot["workspace"] is None
     assert snapshot["variableNames"] == []
+
+
+@pytest.mark.asyncio
+async def test_naming_convention_uses_own_dependency_config():
+    from uuid import uuid4
+
+    from application.common.schema import DependencyConfig
+    from application.resources.functions import convert_field_by_naming_convention_pattern
+    from application.resources.schema import ResourceCreate
+
+    resource = ResourceCreate(
+        name="service-{service_name}",
+        template_id=uuid4(),
+        dependency_config=[DependencyConfig(name="service_name", value="checkout")],
+    )
+
+    await convert_field_by_naming_convention_pattern(resource, fields=["name"], parents=[])
+
+    assert resource.name == "service-checkout"

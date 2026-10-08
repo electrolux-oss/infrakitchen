@@ -30,6 +30,7 @@ interface BatchTemplatePortsItem {
   configs: SourceConfigItem[];
   outputs: Array<{ name: string }>;
   references: SourceConfigTemplateReferenceItem[];
+  requiredConfigs: string[];
 }
 
 interface BatchTemplatePortsResponse {
@@ -106,6 +107,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
           newPorts[item.template.id] = {
             inputs: item.configs.map((c) => c.name),
             outputs: item.outputs.map((o) => o.name),
+            configs: item.requiredConfigs ?? [],
           };
         }
         setTemplatePorts((prev) => ({ ...prev, ...newPorts }));
@@ -175,7 +177,7 @@ export function useBlueprintForm({ setValue, watch }: UseBlueprintFormOptions) {
         // Fallback: set empty ports for all requested IDs
         const emptyPorts: Record<string, TemplatePorts> = {};
         for (const tid of allIds) {
-          emptyPorts[tid] = { inputs: [], outputs: [] };
+          emptyPorts[tid] = { inputs: [], outputs: [], configs: [] };
         }
         setTemplatePorts((prev) => ({ ...prev, ...emptyPorts }));
       }

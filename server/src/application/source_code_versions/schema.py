@@ -454,6 +454,8 @@ class TemplatePortsItem(BaseModel):
     configs: list[SourceConfigResponse] = Field(default_factory=list)
     outputs: list[SourceOutputConfigTemplateResponse] = Field(default_factory=list)
     references: list[SourceConfigTemplateReferenceResponse] = Field(default_factory=list)
+    # Template required configuration variables, wired as dependency config
+    required_configs: list[str] = Field(default_factory=list)
 
 
 class BatchTemplatePortsResponse(BaseModel):

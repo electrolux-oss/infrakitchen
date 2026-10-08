@@ -11,7 +11,7 @@ async def insert_batch_operations(session: AsyncSession, envs: list[str], user: 
     template_service = get_template_service(session=session)
     batch_operation_service = get_batch_operation_service(session=session)
 
-    templates = await template_service.get_all(filter={"template": "aws_redis_iam"})
+    templates = await template_service.get_all(filter={"template": "dummy_redis_iam"})
     if not templates:
         raise Exception("Required template not found")
     template = templates[0]

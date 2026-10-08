@@ -22,6 +22,7 @@ from graphql_api.modules.workflow.types import WorkflowType
 class WorkflowStepUpdateInput:
     id: uuid.UUID
     resolved_variables: JSON | None = strawberry.UNSET
+    resolved_dependency_config: JSON | None = strawberry.UNSET
     parent_resource_ids: list[uuid.UUID] | None = strawberry.UNSET
     source_code_version_id: uuid.UUID | None = strawberry.UNSET
     integration_ids: list[uuid.UUID] | None = strawberry.UNSET
@@ -32,6 +33,8 @@ class WorkflowStepUpdateInput:
         data: dict[str, Any] = {"id": self.id}
         if self.resolved_variables is not strawberry.UNSET:
             data["resolved_variables"] = self.resolved_variables
+        if self.resolved_dependency_config is not strawberry.UNSET:
+            data["resolved_dependency_config"] = self.resolved_dependency_config
         if self.parent_resource_ids is not strawberry.UNSET:
             data["parent_resource_ids"] = self.parent_resource_ids
         if self.source_code_version_id is not strawberry.UNSET:

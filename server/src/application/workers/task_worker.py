@@ -31,6 +31,7 @@ from core.config import Settings
 from core.constants.model import EventType, ModelActions
 from core.db_engine import engine
 from core.dependencies import get_async_session
+from core.utils.event_sender import flush_all_pending_senders
 from core.notifications.controller import NotificationEvent, publish_notification_event
 from core.errors import (
     CannotProceed,
@@ -302,6 +303,8 @@ class TaskWorker:
         async with self.session_factory() as session:
             try:
                 await self.execute_task(session, item)
+                # Write tasks and events buffered after the controller's last commit
+                await flush_all_pending_senders()
             except BaseException:
                 # Includes cancellation after a lost lease
                 await session.rollback()

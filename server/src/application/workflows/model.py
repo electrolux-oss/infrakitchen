@@ -98,6 +98,8 @@ class WorkflowStep(Base):
 
     # Resolved variables after wiring substitution
     resolved_variables: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+    # Resolved dependency config of the step resource, e.g. required config of abstract templates
+    resolved_dependency_config: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, server_default="{}")
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

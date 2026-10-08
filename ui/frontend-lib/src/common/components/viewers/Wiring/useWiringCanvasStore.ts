@@ -11,7 +11,7 @@ import { create } from "zustand";
 
 import { ENTITY_STATUS } from "../../../../utils";
 
-import { DiagramNode } from "./helpers";
+import { DiagramNode, sourceHandleId, targetHandleId } from "./helpers";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import { TemplatePorts } from "./WiringCanvas.types";
 
@@ -102,6 +102,7 @@ export function buildNodes(params: {
         order: i + 1,
         inputs: ports.inputs,
         outputs: ports.outputs,
+        configs: ports.configs ?? [],
         kind: "template",
         onRemove: onTemplateRemove,
         status: step?.status as ENTITY_STATUS | undefined,
@@ -125,6 +126,7 @@ export function buildNodes(params: {
         templateId: t.id,
         inputs: [],
         outputs: ports.outputs,
+        configs: ports.configs ?? [],
         kind: "external",
         onRemove: onExternalTemplateRemove
           ? (templateId: string) => onExternalTemplateRemove(templateId)
@@ -208,8 +210,8 @@ export function buildEdges(params: {
         : w.source_output;
 
       const sourceHandle = isConstantWire
-        ? `output-${constant?.name || "value"}`
-        : `output-${w.source_output}`;
+        ? sourceHandleId("output", constant?.name || "value")
+        : sourceHandleId(w.source_type, w.source_output);
 
       // Step-based coloring (workflow mode) or wire-type coloring
       const sourceStep = stepByTemplate?.get(w.source_template_id);
@@ -248,7 +250,7 @@ export function buildEdges(params: {
         source: sourceNodeId,
         sourceHandle,
         target: w.target_template_id,
-        targetHandle: `input-${w.target_variable}`,
+        targetHandle: targetHandleId(w.target_type, w.target_variable),
         animated,
         style: {
           stroke: strokeColor,

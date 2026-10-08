@@ -49,6 +49,7 @@ class BlueprintActionInput:
 @strawberry.input
 class BlueprintWorkflowCreateInput:
     variable_overrides: JSON | None = strawberry.field(default_factory=dict)
+    dependency_config_overrides: JSON | None = strawberry.field(default_factory=dict)
     workspace_id: uuid.UUID | None = None
     integration_ids: list[uuid.UUID] = strawberry.field(default_factory=list)
     storage_id: uuid.UUID | None = None
@@ -65,6 +66,7 @@ class BlueprintWorkflowCreateInput:
 
         return WorkflowRequest(
             variable_overrides=variable_overrides,
+            dependency_config_overrides=cast(dict[str, dict[str, Any]], self.dependency_config_overrides or {}),
             workspace_id=self.workspace_id,
             integration_ids=self.integration_ids,
             storage_id=self.storage_id,

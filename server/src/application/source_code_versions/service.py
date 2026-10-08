@@ -652,10 +652,11 @@ class SourceCodeVersionService:
 
             result.append(
                 TemplatePortsItem(
-                    template=TemplateResponse.model_validate(next(t for t in templates if t.id == template_id)),
+                    template=TemplateResponse.model_validate(template),
                     configs=unique_configs,
                     outputs=filtered_outputs,
                     references=validated_refs,
+                    required_configs=template.configuration.required_configuration_variables,
                 )
             )
 

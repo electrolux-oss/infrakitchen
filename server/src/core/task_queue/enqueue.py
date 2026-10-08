@@ -3,7 +3,7 @@ import uuid
 from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import func, select, text, update
+from sqlalchemy import ColumnElement, func, literal, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db_engine import engine
@@ -17,17 +17,36 @@ logger = logging.getLogger(__name__)
 NOTIFY_STATEMENT = text(f"SELECT pg_notify('{TASK_QUEUE_CHANNEL}', '')")
 
 
+def task_target(payload: dict[str, Any]) -> str:
+    """The part of an entity the task works on.
+
+    Workflow tasks for a specific step, or reporting that a specific resource finished,
+    are distinct work: steps run in parallel and each completion must be processed.
+    """
+    if step_id := payload.get("step_id"):
+        return f"step:{step_id}"
+    if resource_id := payload.get("resource_id"):
+        return f"resource:{resource_id}"
+    return ""
+
+
+def task_target_sql() -> ColumnElement[str]:
+    """``task_target`` computed on the queued rows."""
+    step_id = func.nullif(TaskQueueItem.payload["step_id"].as_string(), "")
+    resource_id = func.nullif(TaskQueueItem.payload["resource_id"].as_string(), "")
+    # concatenating NULL gives NULL, so coalesce picks the first key present
+    return func.coalesce(literal("step:") + step_id, literal("resource:") + resource_id, literal(""))
+
+
 def supersede_key(item: dict[str, Any]) -> tuple[str, uuid.UUID, str] | None:
     """Tasks with the same key replace each other while still queued.
 
-    Workflow tasks targeting a specific step are distinct work, so the step is part of the key.
     Tasks without an entity (scheduler jobs) are never superseded.
     """
     entity_id = item.get("entity_id")
     if entity_id is None:
         return None
-    step_id = (item.get("payload") or {}).get("step_id") or ""
-    return item["entity"], entity_id, str(step_id)
+    return item["entity"], entity_id, task_target(item.get("payload") or {})
 
 
 def collapse_batch(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -41,14 +60,14 @@ async def cancel_queued(session: AsyncSession, item: dict[str, Any]) -> list[Sup
     key = supersede_key(item)
     if key is None:
         return []
-    entity, entity_id, step_id = key
+    entity, entity_id, target = key
     statement = (
         update(TaskQueueItem)
         .where(
             TaskQueueItem.status == TaskQueueStatus.QUEUED,
             TaskQueueItem.entity == entity,
             TaskQueueItem.entity_id == entity_id,
-            func.coalesce(TaskQueueItem.payload["step_id"].as_string(), "") == step_id,
+            task_target_sql() == target,
         )
         .values(
             status=TaskQueueStatus.CANCELLED,
