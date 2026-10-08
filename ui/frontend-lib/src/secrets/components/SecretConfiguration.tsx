@@ -1,19 +1,12 @@
 import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import {
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Chip, Typography } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 import { Entity, formatLabel } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import {
   dataGridDefaultProps,
   dataGridSx,
@@ -202,50 +195,15 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
     }
   };
 
-  const editAffordance = (() => {
-    const ariaLabel = "Edit secret list";
-    const iconSx = {
-      opacity: 0,
-      transition: "opacity 0.15s ease-in-out",
-      width: 24,
-      height: 24,
-      padding: 2,
-      "&:focus-visible": { opacity: 1 },
-    };
-    return canEdit ? (
-      <Tooltip title={ariaLabel}>
-        <IconButton
-          className="inline-edit-action"
-          size="small"
-          onClick={startEditList}
-          aria-label={ariaLabel}
-          sx={iconSx}
-        >
-          <EditOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    ) : (
-      <Tooltip title="You do not have permission to edit this section">
-        <span>
-          <IconButton
-            className="inline-edit-action"
-            size="small"
-            disabled
-            aria-label={ariaLabel}
-            sx={iconSx}
-          >
-            <EditOutlinedIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-    );
-  })();
-
-  const hoverRevealSx = {
-    "&:hover .inline-edit-action, &:focus-within .inline-edit-action": {
-      opacity: 1,
-    },
-  };
+  const editAffordance = (
+    <EditAffordance
+      onClick={startEditList}
+      ariaLabel="Edit secret list"
+      title="Edit secret list"
+      disabled={!canEdit}
+      disabledTooltip="You do not have permission to edit this section"
+    />
+  );
 
   return (
     <BaseCard name="Secret Configuration">
@@ -326,7 +284,6 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
                   display: "flex",
                   alignItems: "flex-start",
                   gap: 0.5,
-                  ...hoverRevealSx,
                 }}
               >
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -341,7 +298,6 @@ export const SecretConfiguration = ({ secret }: SecretConfigurationProps) => {
                   alignItems: "center",
                   gap: 0.5,
                   maxWidth: "100%",
-                  ...hoverRevealSx,
                 }}
               >
                 <PlaceholderText />

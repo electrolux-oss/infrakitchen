@@ -1,40 +1,26 @@
-import { ReactNode, useCallback, useMemo, useState } from "react";
+import { useCallback } from "react";
 
-import { Box, Button, Chip, Grid, TextField, Typography } from "@mui/material";
+import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 
-import { useConfig } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CodeBlock } from "../../common/components/code/CodeBlock";
 import { InlineCode } from "../../common/components/code/InlineCode";
-import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
-import { EditAffordance } from "../../common/components/editors/EditAffordance";
-import { Entity } from "../../common/components/entities/Entity";
-import {
-  CommonField,
-  GetReferenceUrlValue,
-} from "../../common/components/fields/CommonField";
 import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
-import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { PendingChangeBadge } from "../../common/components/labels/PendingChangeBadge";
 import { useEntityProvider } from "../../common/context/EntityContext";
-import { usePermissionProvider } from "../../common/context/PermissionContext";
-import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { solidChipColorSx } from "../../common/utils/softChip";
-import { ProviderIcon } from "../../icons/Icons";
-import { ToolSelect, toolLabel } from "../../tools";
-import { IkEntity } from "../../types";
 import { GqlResource } from "../graphql";
-import {
-  ResourceUpdateFieldInput,
-  UPDATE_RESOURCE_MUTATION,
-} from "../graphql/mutations";
+import { ResourceUpdateFieldInput } from "../graphql/mutations";
+import { useResourceFieldEditor } from "../hooks/useResourceFieldEditor";
 import { VariableInput, VariableOutput } from "../types";
 
 import { ResourceVariablesEditDialog } from "./variables/ResourceVariablesEditDialog";
 
 export interface TemplateConfigurationProps {
   resource: GqlResource;
+  /** Opens the variables / template version edit dialog. */
+  onEditVariables: () => void;
 }
 
 const formatVariableValue = (value: any) => {
@@ -70,8 +56,10 @@ const getSourceCodeVariables = (
               mb: 1.5,
             }}
           >
+            {/* From xl up the cards share one row and get narrow, so the name
+                and value stack instead of sitting side by side. */}
             <Grid container spacing={2} sx={{ alignItems: "center" }}>
-              <Grid size={{ xs: 12, md: 7 }}>
+              <Grid size={{ xs: 12, md: 7, xl: 12 }}>
                 <Box
                   sx={{
                     display: "flex",
@@ -116,7 +104,7 @@ const getSourceCodeVariables = (
                   )}
                 </Box>
               </Grid>
-              <Grid size={{ xs: 12, md: 5 }}>
+              <Grid size={{ xs: 12, md: 5, xl: 12 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
                   Value
                 </Typography>
@@ -140,54 +128,21 @@ const getSourceCodeVariables = (
   );
 };
 
-export const TemplateConfiguration = ({
+/**
+ * Variables/template-version edit dialog wired to the resource update
+ * mutation. Mounted once at page level so both the Input Variables card and
+ * the sidebar's Template Version field can open it from any tab.
+ */
+export const ResourceVariablesEditor = ({
   resource,
-}: TemplateConfigurationProps) => {
-  const { ikApi } = useConfig();
-  const { refreshEntity, hasPendingChange, userEntityPermissions } =
-    useEntityProvider();
-  const { checkActionPermission } = usePermissionProvider();
-  const canEdit = checkActionPermission("api:resource", "write");
-  const canEditStorage = userEntityPermissions.includes("admin");
-  const [isStorageUnlocked, setIsStorageUnlocked] = useState(false);
-  const [isStoragePathUnlocked, setIsStoragePathUnlocked] = useState(false);
-  const [variablesDialogOpen, setVariablesDialogOpen] = useState(false);
-
-  const [buffer, setBuffer] = useState<Record<string, IkEntity | IkEntity[]>>(
-    {},
-  );
-
-  // postgresql storages can always be used, cloud storages only with the resource integrations;
-  // the backend is accessed with the storage integration
-  const storageFilter = useMemo(
-    () =>
-      resource.integrationIds && resource.integrationIds.length > 0
-        ? {
-            or: [
-              { integration_id: resource.integrationIds.map((i) => i.id) },
-              { storage_provider: "postgresql" },
-            ],
-          }
-        : { storage_provider: "postgresql" },
-    [resource.integrationIds],
-  );
-
-  const saveField = useCallback(
-    async (input: ResourceUpdateFieldInput) => {
-      try {
-        await ikApi.graphqlRequest(UPDATE_RESOURCE_MUTATION, {
-          id: resource.id,
-          input,
-        });
-        notify("Resource updated successfully", "success");
-        refreshEntity?.();
-      } catch (error) {
-        notifyError(error);
-        throw error;
-      }
-    },
-    [ikApi, resource.id, refreshEntity],
-  );
+  open,
+  onClose,
+}: {
+  resource: GqlResource;
+  open: boolean;
+  onClose: () => void;
+}) => {
+  const { saveField } = useResourceFieldEditor(resource);
 
   const handleVariablesSave = useCallback(
     async (variables: VariableInput[], sourceCodeVersionId?: string | null) => {
@@ -200,266 +155,78 @@ export const TemplateConfiguration = ({
     [saveField],
   );
 
-  const withPendingChange = useCallback(
-    (display: ReactNode, key: string) => {
-      if (!hasPendingChange(key)) {
-        return display;
-      }
-
-      const isEmptyDisplay =
-        display === null || display === undefined || display === "";
-
-      return (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 1,
-          }}
-        >
-          {" "}
-          {isEmptyDisplay ? <PlaceholderText /> : display}
-          <PendingChangeBadge />
-        </Box>
-      );
-    },
-    [hasPendingChange],
-  );
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <BaseCard name="Template Configuration">
-        {resource.template && (
-          <CommonField
-            name="Template"
-            value={<GetReferenceUrlValue {...resource.template} />}
-          />
-        )}
-        <CommonField
-          name="Template Version"
-          value={withPendingChange(
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1,
-                maxWidth: "100%",
-                // Reveal the edit affordance on hover/focus, like other editable fields.
-                "&:hover .inline-edit-action, &:focus-within .inline-edit-action":
-                  {
-                    opacity: 1,
-                  },
-              }}
-            >
-              {resource.sourceCodeVersion ? (
-                <Entity entity={resource.sourceCodeVersion} />
-              ) : (
-                <PlaceholderText />
-              )}
-              {canEdit && (
-                <EditAffordance
-                  className="inline-edit-action"
-                  onClick={() => setVariablesDialogOpen(true)}
-                  ariaLabel="Change template version"
-                />
-              )}
-            </Box>,
-            "source_code_version_id",
-          )}
-        />
-        {canEditStorage && resource.abstract === false && (
-          <>
-            <CommonEditableField<string | null>
-              name="Storage"
-              canEdit={canEditStorage && isStorageUnlocked}
-              lock={{
-                locked: !isStorageUnlocked,
-                onToggle: () => setIsStorageUnlocked((unlocked) => !unlocked),
-                lockedTitle: "Storage is locked",
-                lockedDescription:
-                  "Changing storage can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                unlockedTitle: "Storage editing is enabled",
-                unlockedDescription:
-                  "Click the lock to lock it again when you are done.",
-              }}
-              value={resource.storage?.id ?? null}
-              ariaLabel="Edit storage"
-              display={withPendingChange(
-                resource.storage ? (
-                  <GetReferenceUrlValue {...resource.storage} />
-                ) : null,
-                "storage_id",
-              )}
-              onSave={(value) => saveField({ storageId: value })}
-              renderEditor={({ value, onChange }) => (
-                <ReferenceInput
-                  ikApi={ikApi}
-                  entity_name="storages"
-                  buffer={buffer}
-                  bufferKey="storages"
-                  showFields={["name", "storage_provider"]}
-                  fields={["name", "storage_provider", "state"]}
-                  setBuffer={setBuffer}
-                  filter={storageFilter}
-                  value={value}
-                  onChange={onChange}
-                  getOptionDisabled={(option: any) =>
-                    option.state !== "PROVISIONED"
-                  }
-                  ariaLabel="Storage"
-                  placeholder="Select storage for TF state…"
-                  required
-                  helpertext="Keep this value unchanged unless you are intentionally migrating OpenTofu/Terraform state."
-                />
-              )}
-            />
+    <ResourceVariablesEditDialog
+      open={open}
+      onClose={onClose}
+      resource={resource}
+      onSave={handleVariablesSave}
+    />
+  );
+};
 
-            {resource.storage && (
-              <CommonEditableField<string | null>
-                name="Storage Path"
-                canEdit={canEditStorage && isStoragePathUnlocked}
-                lock={{
-                  locked: !isStoragePathUnlocked,
-                  onToggle: () =>
-                    setIsStoragePathUnlocked((unlocked) => !unlocked),
-                  lockedTitle: "Storage path is locked",
-                  lockedDescription:
-                    "Changing the storage path can cause OpenTofu/Terraform state issues. Click to unlock and edit.",
-                  unlockedTitle: "Storage path editing is enabled",
-                  unlockedDescription:
-                    "Click the lock to lock it again when you are done.",
-                }}
-                value={resource.storagePath ?? null}
-                ariaLabel="Edit storage path"
-                display={withPendingChange(
-                  resource.storagePath ? (
-                    <span>{resource.storagePath}</span>
-                  ) : null,
-                  "storage_path",
-                )}
-                onSave={(value) => saveField({ storagePath: value })}
-                renderEditor={({ value, onChange }) => (
-                  <TextField
-                    value={value ?? ""}
-                    onChange={(e) => onChange(e.target.value || null)}
-                    slotProps={{ input: { "aria-label": "Storage Path" } }}
-                    fullWidth
-                    margin="normal"
-                    autoFocus
-                    helperText="By default InfraKitchen uses `service-catalog/{template}/{resource_name}/terraform.tfstate` as the path."
-                  />
-                )}
-              />
-            )}
-          </>
-        )}
-        {!canEditStorage && (
-          <>
-            <CommonField
-              name="Storage"
-              value={withPendingChange(
-                resource.storage ? (
-                  <GetReferenceUrlValue {...resource.storage} />
-                ) : null,
-                "storage_id",
-              )}
+export const TemplateConfiguration = ({
+  resource,
+  onEditVariables,
+}: TemplateConfigurationProps) => {
+  const { hasPendingChange } = useEntityProvider();
+  const { canEdit } = useResourceFieldEditor(resource);
+
+  // Rendered as sibling cards (no wrapper) so the parent grid can lay them
+  // out next to the dependency configuration on wide screens.
+  if (resource.abstract !== false) return null;
+
+  return (
+    <>
+      <BaseCard
+        name={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Inherit the card-title styling so this header matches the
+                    plain-string titles used by the other overview cards. */}
+            <Typography component="span" variant="inherit">
+              Input Variables
+            </Typography>
+            <Chip
+              label={String(resource.variables?.length ?? 0)}
+              sx={solidChipColorSx("info")}
             />
-            <CommonField
-              name="Storage Path"
-              value={withPendingChange(resource.storagePath, "storage_path")}
-            />
-          </>
-        )}
-        {resource.storage && (
-          <CommonEditableField<string | null>
-            name="IaC Tool"
-            canEdit={canEdit}
-            value={resource.tool?.id ?? null}
-            ariaLabel="Edit IaC tool"
-            display={withPendingChange(
-              resource.tool ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <ProviderIcon provider={resource.tool.name} />
-                  <GetReferenceUrlValue
-                    id={resource.tool.id}
-                    entityName="tool"
-                    display_name={toolLabel(resource.tool)}
-                  />
-                </Box>
-              ) : (
-                <span>Global default</span>
-              ),
-              "tool_id",
-            )}
-            onSave={(value) => saveField({ toolId: value })}
-            renderEditor={({ value, onChange }) => (
-              <ToolSelect value={value} onChange={onChange} />
-            )}
-          />
-        )}{" "}
+            {hasPendingChange("variables") && <PendingChangeBadge />}
+          </Box>
+        }
+        actions={
+          <Button onClick={onEditVariables} disabled={!canEdit}>
+            Edit Configuration
+          </Button>
+        }
+      >
+        <Grid size={12}>
+          {getSourceCodeVariables(resource.variables as VariableInput[], {
+            showType: true,
+            emptyMessage: "No input variables.",
+          })}
+        </Grid>
       </BaseCard>
-      {resource.abstract === false && (
-        <>
-          <BaseCard
-            name={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {/* Inherit the card-title styling so this header matches the
+      <BaseCard
+        name={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Inherit the card-title styling so this header matches the
                     plain-string titles used by the other overview cards. */}
-                <Typography component="span" variant="inherit">
-                  Input Variables
-                </Typography>
-                <Chip
-                  label={String(resource.variables?.length ?? 0)}
-                  sx={solidChipColorSx("info")}
-                />
-                {hasPendingChange("variables") && <PendingChangeBadge />}
-              </Box>
-            }
-            actions={
-              <Button
-                onClick={() => setVariablesDialogOpen(true)}
-                disabled={!canEdit}
-              >
-                Edit Configuration
-              </Button>
-            }
-          >
-            <Grid size={12}>
-              {getSourceCodeVariables(resource.variables as VariableInput[], {
-                showType: true,
-                emptyMessage: "No input variables.",
-              })}
-            </Grid>
-          </BaseCard>
-          <ResourceVariablesEditDialog
-            open={variablesDialogOpen}
-            onClose={() => setVariablesDialogOpen(false)}
-            resource={resource}
-            onSave={handleVariablesSave}
-          />
-          <BaseCard
-            name={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {/* Inherit the card-title styling so this header matches the
-                    plain-string titles used by the other overview cards. */}
-                <Typography component="span" variant="inherit">
-                  Output Values
-                </Typography>
-                <Chip
-                  label={String(resource.outputs?.length ?? 0)}
-                  sx={solidChipColorSx("info")}
-                />
-              </Box>
-            }
-          >
-            <Grid size={12}>
-              {getSourceCodeVariables(resource.outputs as VariableOutput[], {
-                emptyMessage: "No output values.",
-              })}
-            </Grid>
-          </BaseCard>
-        </>
-      )}
-    </Box>
+            <Typography component="span" variant="inherit">
+              Output Values
+            </Typography>
+            <Chip
+              label={String(resource.outputs?.length ?? 0)}
+              sx={solidChipColorSx("info")}
+            />
+          </Box>
+        }
+      >
+        <Grid size={12}>
+          {getSourceCodeVariables(resource.outputs as VariableOutput[], {
+            emptyMessage: "No output values.",
+          })}
+        </Grid>
+      </BaseCard>
+    </>
   );
 };

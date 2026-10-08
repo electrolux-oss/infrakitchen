@@ -1,13 +1,11 @@
 import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   Box,
   Button,
   Chip,
   Grid,
-  IconButton,
   Switch,
   Tooltip,
   Typography,
@@ -15,6 +13,7 @@ import {
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 import { BaseCard } from "../../common/components/cards/BaseCard";
+import { EditAffordance } from "../../common/components/editors/EditAffordance";
 import {
   dataGridDefaultProps,
   dataGridSx,
@@ -216,47 +215,21 @@ export const DependencyConfiguration = ({
   );
 
   // Pencil edit affordance that sits beside the displayed value (e.g. on the
-  // "Not set" line), revealed on hover/focus like other inline-editable fields.
+  // "Not set" line), same always-visible pencil as the editable fields.
   const renderEditAffordance = (
     onEdit: () => void,
     canEdit: boolean,
     label: string,
   ) => {
     const ariaLabel = `Edit ${label.toLowerCase()}`;
-    const iconSx = {
-      opacity: 0,
-      transition: "opacity 0.15s ease-in-out",
-      width: 24,
-      height: 24,
-      padding: 2,
-      "&:focus-visible": { opacity: 1 },
-    };
-    return canEdit ? (
-      <Tooltip title={ariaLabel}>
-        <IconButton
-          className="inline-edit-action"
-          size="small"
-          onClick={onEdit}
-          aria-label={ariaLabel}
-          sx={iconSx}
-        >
-          <EditOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    ) : (
-      <Tooltip title="You do not have permission to edit this section">
-        <span>
-          <IconButton
-            className="inline-edit-action"
-            size="small"
-            disabled
-            aria-label={ariaLabel}
-            sx={iconSx}
-          >
-            <EditOutlinedIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
+    return (
+      <EditAffordance
+        onClick={onEdit}
+        ariaLabel={ariaLabel}
+        title={ariaLabel}
+        disabled={!canEdit}
+        disabledTooltip="You do not have permission to edit this section"
+      />
     );
   };
 
@@ -370,10 +343,6 @@ export const DependencyConfiguration = ({
                 display: "flex",
                 alignItems: "flex-start",
                 gap: 0.5,
-                // Reveal the edit affordance on hover/focus, like other
-                // inline editors where it sits beside the displayed value.
-                "&:hover .inline-edit-action, &:focus-within .inline-edit-action":
-                  { opacity: 1 },
               }}
             >
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -388,10 +357,6 @@ export const DependencyConfiguration = ({
                 alignItems: "center",
                 gap: 0.5,
                 maxWidth: "100%",
-                // Reveal the edit affordance on hover/focus, like other
-                // inline editors where it sits beside the displayed value.
-                "&:hover .inline-edit-action, &:focus-within .inline-edit-action":
-                  { opacity: 1 },
               }}
             >
               {getDependencyVariables(entries)}

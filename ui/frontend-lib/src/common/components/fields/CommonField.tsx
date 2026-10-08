@@ -170,7 +170,8 @@ export const CommonField = ({ name, value, size }: ParameterFieldProps) => {
       {isEmptyValue ? (
         <PlaceholderText />
       ) : isStringOrNumber ? (
-        <Typography>{value}</Typography>
+        // Long unbroken values (paths, ids) wrap instead of overflowing.
+        <Typography sx={{ overflowWrap: "anywhere" }}>{value}</Typography>
       ) : (
         value
       )}
