@@ -37,10 +37,15 @@ Go to **Configurations → IaC Tools** and click <kbd>Add tool</kbd>.
 
 </Step>
 
-<Step title="Select the tool and architecture">
+<Step title="Select the tool and platform">
 
 - Choose **OpenTofu** or **Terraform**
+- Choose **Linux**, **macOS** or **Windows**, or keep **Server default** to use the operating system of the InfraKitchen server
 - Choose `amd64` or `arm64`, or keep **Server default** to use the architecture of the InfraKitchen server
+
+A worker only runs tools built for its own operating system and architecture. Download a tool for every platform your
+workers run on. Not every release is published for every platform, for example some releases have no
+`windows/arm64` build; the download then fails with a missing checksum error.
 
 </Step>
 

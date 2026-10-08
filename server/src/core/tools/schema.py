@@ -9,7 +9,7 @@ from core.constants.model import ModelStatus
 from core.users.schema import UserShort
 
 type ToolName = Literal["opentofu", "terraform"]
-type ToolOS = Literal["linux", "darwin"]
+type ToolOS = Literal["linux", "darwin", "windows"]
 type ToolArch = Literal["amd64", "arm64"]
 
 VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$")
@@ -62,8 +62,8 @@ class ToolResponse(BaseModel):
 class ToolDownloadRequest(BaseModel):
     name: ToolName = Field(..., description="Tool to download")
     version: str = Field(..., description="Release version, e.g. 1.8.2")
-    os: ToolOS = Field(default="linux")
-    # defaults to the architecture of the host serving the request
+    # os and arch default to the platform of the host serving the request
+    os: ToolOS | None = Field(default=None)
     arch: ToolArch | None = Field(default=None)
 
     @field_validator("version")

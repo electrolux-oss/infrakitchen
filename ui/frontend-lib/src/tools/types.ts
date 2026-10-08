@@ -33,6 +33,17 @@ export const TOOL_NAMES: { value: ToolName; label: string }[] = [
   { value: "terraform", label: "Terraform" },
 ];
 
+export const TOOL_OS_OPTIONS: { value: string; label: string }[] = [
+  { value: "linux", label: "Linux" },
+  { value: "darwin", label: "macOS" },
+  { value: "windows", label: "Windows" },
+];
+
+export const TOOL_ARCH_OPTIONS: { value: string; label: string }[] = [
+  { value: "amd64", label: "amd64" },
+  { value: "arm64", label: "arm64" },
+];
+
 export const toolStatus = (tool: Pick<Tool, "status">): string =>
   String(tool.status || "").toLowerCase();
 

@@ -15,7 +15,7 @@ from graphql_api.modules.tool.types import ToolType
 class ToolDownloadInput:
     name: str = strawberry.UNSET
     version: str = strawberry.UNSET
-    os: str = "linux"
+    os: str | None = None
     arch: str | None = None
 
 
