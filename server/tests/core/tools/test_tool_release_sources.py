@@ -66,6 +66,19 @@ class TestReleaseSource:
             source.shasums_url("1.5.7") == "https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_SHA256SUMS"
         )
 
+    @pytest.mark.parametrize(
+        ("os", "executable"), [("linux", "tofu"), ("darwin", "tofu"), ("windows", "tofu.exe")]
+    )
+    def test_executable_name(self, os, executable):
+        assert get_release_source("opentofu").executable_name(os) == executable
+
+    def test_windows_url(self):
+        source = get_release_source("opentofu")
+        assert (
+            source.download_url("1.8.0", "windows", "amd64")
+            == "https://github.com/opentofu/opentofu/releases/download/v1.8.0/tofu_1.8.0_windows_amd64.zip"
+        )
+
     def test_unsupported(self):
         with pytest.raises(ValueError, match="Unsupported tool"):
             _ = get_release_source("pulumi")

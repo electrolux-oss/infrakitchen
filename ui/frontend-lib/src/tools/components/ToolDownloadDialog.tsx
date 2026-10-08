@@ -17,16 +17,21 @@ import { CommonDialog } from "../../common/components/dialogs";
 import { notifyError } from "../../common/hooks/useNotification";
 import { ProviderIcon } from "../../icons/Icons";
 import { AVAILABLE_TOOL_VERSIONS_QUERY } from "../graphql";
-import { TOOL_NAMES, ToolName } from "../types";
+import {
+  TOOL_ARCH_OPTIONS,
+  TOOL_NAMES,
+  TOOL_OS_OPTIONS,
+  ToolName,
+} from "../types";
 
 import { SELECTED_ICON_SX } from "./selectSx";
 
-const SERVER_DEFAULT_ARCH = "server_default";
+const SERVER_DEFAULT = "server_default";
 
 export interface ToolDownloadInput {
   name: string;
   version: string;
-  os?: string;
+  os?: string | null;
   arch?: string | null;
 }
 
@@ -52,7 +57,8 @@ export const ToolDownloadDialog = ({
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [version, setVersion] = useState("");
   // MUI selects render an empty value as blank, so the server default needs its own value
-  const [arch, setArch] = useState(SERVER_DEFAULT_ARCH);
+  const [os, setOs] = useState(SERVER_DEFAULT);
+  const [arch, setArch] = useState(SERVER_DEFAULT);
 
   useEffect(() => {
     if (!open) {
@@ -81,7 +87,8 @@ export const ToolDownloadDialog = ({
       await onDownload({
         name,
         version,
-        arch: arch === SERVER_DEFAULT_ARCH ? null : arch,
+        os: os === SERVER_DEFAULT ? null : os,
+        arch: arch === SERVER_DEFAULT ? null : arch,
       })
     ) {
       setVersion("");
@@ -121,6 +128,22 @@ export const ToolDownloadDialog = ({
                 </MenuItem>
               ))}
             </TextField>
+          </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <TextField
+              select
+              fullWidth
+              label="Operating system"
+              value={os}
+              onChange={(event) => setOs(event.target.value)}
+            >
+              <MenuItem value={SERVER_DEFAULT}>Server default</MenuItem>
+              {TOOL_OS_OPTIONS.map((item) => (
+                <MenuItem key={item.value} value={item.value}>
+                  {item.label}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
               select
               fullWidth
@@ -128,9 +151,12 @@ export const ToolDownloadDialog = ({
               value={arch}
               onChange={(event) => setArch(event.target.value)}
             >
-              <MenuItem value={SERVER_DEFAULT_ARCH}>Server default</MenuItem>
-              <MenuItem value="amd64">amd64</MenuItem>
-              <MenuItem value="arm64">arm64</MenuItem>
+              <MenuItem value={SERVER_DEFAULT}>Server default</MenuItem>
+              {TOOL_ARCH_OPTIONS.map((item) => (
+                <MenuItem key={item.value} value={item.value}>
+                  {item.label}
+                </MenuItem>
+              ))}
             </TextField>
           </Stack>
           <Box>

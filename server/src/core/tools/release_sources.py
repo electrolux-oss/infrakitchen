@@ -23,6 +23,10 @@ class ReleaseSource:
     download_url_template: str
     shasums_url_template: str
 
+    def executable_name(self, os: str) -> str:
+        """Name of the executable inside the release archive."""
+        return f"{self.executable}.exe" if os == "windows" else self.executable
+
     def archive_name(self, version: str, os: str, arch: str) -> str:
         return f"{self.executable}_{version}_{os}_{arch}.zip"
 

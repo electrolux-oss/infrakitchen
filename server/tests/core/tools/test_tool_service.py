@@ -33,7 +33,7 @@ class TestRequestDownload:
         mock_tool_crud.get_by_id.return_value = mocked_tool
 
         result = await tool_service.request_download(
-            ToolDownloadRequest(name="terraform", version="1.5.7", arch="amd64"), requester=mock_user_dto
+            ToolDownloadRequest(name="terraform", version="1.5.7", os="linux", arch="amd64"), requester=mock_user_dto
         )
 
         assert result is mocked_tool
@@ -66,6 +66,38 @@ class TestRequestDownload:
         )
 
         assert mock_tool_crud.create.call_args.args[0]["arch"] == "arm64"
+
+    async def test_defaults_to_host_os(
+        self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, available_versions, monkeypatch
+    ):
+        monkeypatch.setattr(tool_service_module, "host_os", lambda: "darwin")
+        mock_tool_crud.create.return_value = mocked_tool
+        mock_tool_crud.get_by_id.return_value = mocked_tool
+
+        _ = await tool_service.request_download(
+            ToolDownloadRequest(name="terraform", version="1.5.7", arch="arm64"), requester=mock_user_dto
+        )
+
+        body = mock_tool_crud.create.call_args.args[0]
+        assert body["os"] == "darwin"
+        assert body["executable"] == "terraform"
+        assert body["source_url"].endswith("terraform_1.5.7_darwin_arm64.zip")
+
+    async def test_windows_executable(
+        self, tool_service, mock_tool_crud, mocked_tool, mock_user_dto, available_versions
+    ):
+        mock_tool_crud.create.return_value = mocked_tool
+        mock_tool_crud.get_by_id.return_value = mocked_tool
+
+        _ = await tool_service.request_download(
+            ToolDownloadRequest(name="terraform", version="1.5.7", os="windows", arch="amd64"),
+            requester=mock_user_dto,
+        )
+
+        body = mock_tool_crud.create.call_args.args[0]
+        assert body["os"] == "windows"
+        assert body["executable"] == "terraform.exe"
+        assert body["source_url"].endswith("terraform_1.5.7_windows_amd64.zip")
 
     async def test_unknown_version(self, tool_service, mock_tool_crud, mock_user_dto, available_versions):
         with pytest.raises(ValueError, match="not available"):

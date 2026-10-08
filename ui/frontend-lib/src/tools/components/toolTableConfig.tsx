@@ -9,7 +9,13 @@ import {
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
-import { Tool, TOOL_NAMES, toolStatus, formatToolSize } from "../types";
+import {
+  Tool,
+  TOOL_ARCH_OPTIONS,
+  TOOL_NAMES,
+  toolStatus,
+  formatToolSize,
+} from "../types";
 
 export const TOOL_PENDING_STATUSES = ["queued", "in_progress"];
 
@@ -69,10 +75,7 @@ export const toolColumns = (actions: ToolRowActions): EntityTableColumn[] => [
       operators: ["eq"],
       valueType: "select",
       defaultOperator: "eq",
-      selectOptions: [
-        { label: "amd64", value: "amd64" },
-        { label: "arm64", value: "arm64" },
-      ],
+      selectOptions: TOOL_ARCH_OPTIONS,
     },
     valueGetter: (_value: any, row: any) => `${row.os}/${row.arch}`,
   },
