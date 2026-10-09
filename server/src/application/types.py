@@ -3,6 +3,9 @@ from typing import Literal
 
 type GitProviderType = Literal["github", "gitlab", "bitbucket", "azure_devops", "git_public"]
 type CodeLanguageType = Literal["opentofu"]
+# module_library: reusable modules used through source code versions, templates and executors;
+# iac: modules run per environment by InfraKitchen; application: the code of a service.
+type RepositoryType = Literal["module_library", "iac", "application"]
 type StorageProviderType = Literal["aws", "azurerm", "gcp", "postgresql"]
 type IacToolType = Literal["tofu"]
 type IntegrationType = Literal["git", "cloud", "notification"]

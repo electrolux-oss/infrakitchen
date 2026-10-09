@@ -2,6 +2,7 @@ import {
   buildSelection,
   buildNestedSelection,
 } from "../../common/graphql/buildGraphqlFields";
+import { SOURCE_CODE_SHORT_FIELDS } from "../../source_codes/graphql";
 import { USER_SHORT_FIELDS } from "../../users/graphql";
 
 export const SERVICE_GRAPHQL_FIELDS = {
@@ -23,6 +24,7 @@ export const SERVICE_GRAPHQL_FIELDS = {
     "description",
     "projectId",
     "repositoryUrl",
+    "sourceCodeId",
     "labels",
     "revisionNumber",
     "createdAt",
@@ -33,6 +35,7 @@ export const SERVICE_GRAPHQL_FIELDS = {
     creator: "creator",
     owners: "owners",
     project: "project",
+    sourceCode: "sourceCode",
   } as const,
 };
 
@@ -65,4 +68,5 @@ export const SERVICE_DETAIL_FIELDS = `
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.owners, USER_SHORT_FIELDS)}
   ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.project, PROJECT_SHORT_FIELDS)}
+  ${buildNestedSelection(SERVICE_GRAPHQL_FIELDS.relations.sourceCode, SOURCE_CODE_SHORT_FIELDS)}
 `;

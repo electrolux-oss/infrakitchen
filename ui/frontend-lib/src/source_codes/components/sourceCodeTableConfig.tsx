@@ -13,6 +13,7 @@ import {
 } from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
 import { ENTITY_STATUS } from "../../utils/constants";
+import { REPOSITORY_TYPE_LABELS, RepositoryType } from "../types";
 
 export const sourceCodeDefaultColumnVisibilityModel: GridColumnVisibilityModel =
   {
@@ -42,6 +43,21 @@ export const sourceCodeColumns: EntityTableColumn[] = [
   {
     field: "description",
     headerName: "Description",
+  },
+  {
+    field: "repositoryType",
+    headerName: "Type",
+    flex: 1,
+    filter: {
+      field: "repository_type",
+      operators: ["eq"],
+      valueType: "select",
+      defaultOperator: "eq",
+      selectOptions: Object.entries(REPOSITORY_TYPE_LABELS).map(
+        ([value, label]) => ({ label, value }),
+      ),
+    },
+    valueGetter: (value: RepositoryType) => REPOSITORY_TYPE_LABELS[value],
   },
   labelsColumn("source_code"),
   {

@@ -18,7 +18,7 @@ import { notify, notifyError } from "../../common/hooks/useNotification";
 import PageContainer from "../../common/PageContainer";
 import { IkEntity } from "../../types";
 import { CREATE_SOURCE_CODE_MUTATION } from "../graphql";
-import { SourceCodeCreate } from "../types";
+import { REPOSITORY_TYPE_LABELS, SourceCodeCreate } from "../types";
 
 const SOURCE_CODE_LANGUAGES = ["opentofu"];
 
@@ -206,6 +206,35 @@ const SourceCodeCreatePageInner = () => {
                 </TextField>
               )}
             />
+            <Controller
+              name="repositoryType"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Repository Type"
+                  fullWidth
+                  margin="normal"
+                  helperText="Infrastructure as Code repositories are scanned for modules and environments on sync"
+                  slotProps={{
+                    select: {
+                      inputProps: {
+                        "aria-label": "Repository type",
+                      },
+                    },
+                  }}
+                >
+                  {Object.entries(REPOSITORY_TYPE_LABELS).map(
+                    ([value, label]) => (
+                      <MenuItem key={value} value={value}>
+                        {label}
+                      </MenuItem>
+                    ),
+                  )}
+                </TextField>
+              )}
+            />
             {watchedSourceCodeProvider && (
               <Controller
                 name="integrationId"
@@ -256,6 +285,7 @@ export const SourceCodeCreatePage = () => {
       sourceCodeUrl: "",
       sourceCodeProvider: "",
       sourceCodeLanguage: "opentofu",
+      repositoryType: "module_library",
       integrationId: null,
       labels: [],
     },

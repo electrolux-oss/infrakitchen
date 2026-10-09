@@ -36,6 +36,9 @@ from .schema import (
     ExecutorUpdate,
 )
 
+# IaC repositories are allowed too, as their environment runs are meant to replace executors over time.
+EXECUTOR_REPOSITORY_TYPES = ("module_library", "iac")
+
 logger = logging.getLogger(__name__)
 
 
@@ -142,6 +145,9 @@ class ExecutorService:
 
         if source_code.status == ModelStatus.DISABLED:
             raise EntityWrongState("SourceCode is not enabled")
+
+        if source_code.repository_type not in EXECUTOR_REPOSITORY_TYPES:
+            raise ValueError("Executors can only run code from a module library or IaC repository")
 
         if executor.runtime in ["tofu"] and not executor.storage_id:
             raise ValueError("Storage is required for opentofu executors")

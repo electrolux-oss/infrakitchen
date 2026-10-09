@@ -38,6 +38,7 @@ export const ServiceCreatePage = () => {
       description: "",
       projectId: presetProjectId ?? "",
       repositoryUrl: "",
+      sourceCodeId: null,
       labels: [],
       owners: [],
     },
@@ -237,6 +238,26 @@ export const ServiceCreatePage = () => {
                       "aria-label": "Service repository URL",
                     },
                   }}
+                />
+              )}
+            />
+            <Controller
+              name="sourceCodeId"
+              control={control}
+              render={({ field }) => (
+                <ReferenceInput
+                  ikApi={ikApi}
+                  buffer={buffer}
+                  setBuffer={setBuffer}
+                  {...field}
+                  entity_name="source_codes"
+                  filter={{ repository_type: "application" }}
+                  fields={["identifier"]}
+                  showFields={["identifier"]}
+                  sort={["source_code_url", "ASC"]}
+                  helpertext="The application repository this service is built from"
+                  value={field.value}
+                  label="Select Code Repository"
                 />
               )}
             />

@@ -165,6 +165,9 @@ class SourceCodeVersionService:
         if source_code.status == ModelStatus.DISABLED:
             raise EntityWrongState("SourceCode is not enabled")
 
+        if source_code.repository_type != "module_library":
+            raise ValueError("Source code versions can only be created from a module library repository")
+
         # Validate that branch or tag exists in source code
         if source_code_version.source_code_branch:
             if (

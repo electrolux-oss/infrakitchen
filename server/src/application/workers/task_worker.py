@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from application.executors.task import ExecutorTask
+from application.iac.task import IacRunTask
 from application.resources.task import ResourceTask
 from application.source_code_versions.task import SourceCodeVersionTask
 from application.source_codes.task import SourceCodeTask
@@ -18,6 +19,7 @@ from application.storages.task import StorageTask
 from application.workers.utils import (
     get_workflow_task,
     get_executor_task,
+    get_iac_run_task,
     get_source_code_task,
     get_source_code_version_task,
     get_storage_task,
@@ -61,6 +63,7 @@ prometheus_counter = Counter("tasks_total", "Total executed tasks", ["job_type",
 
 TaskController = (
     SourceCodeTask
+    | IacRunTask
     | SourceCodeVersionTask
     | StorageTask
     | ResourceTask
@@ -414,6 +417,15 @@ class TaskWorker:
         match entity_controller:
             case "source_code":
                 return await get_source_code_task(
+                    session=session,
+                    obj_id=obj_id,
+                    user=user,
+                    action=action,
+                    trace_id=trace_id,
+                    audit_log_id=audit_log_id,
+                )
+            case "iac_run":
+                return await get_iac_run_task(
                     session=session,
                     obj_id=obj_id,
                     user=user,

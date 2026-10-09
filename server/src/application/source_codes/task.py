@@ -17,6 +17,7 @@ from core.errors import CannotProceed, ExitWithoutSave
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
 
+from ..source_codes.iac import discover_iac_modules
 from ..source_codes.model import RefFolders, SourceCode
 
 
@@ -108,6 +109,7 @@ class SourceCodeTask:
             raise CannotProceed("Git client is not initialized. Cannot fetch source code data.")
 
         await self.git_client.clone()
+        self.discover_modules()
         git_tags = await self.git_client.get_repo_tags()
         git_tag_messages = await self.git_client.get_repo_tag_messages()
         git_branches = await self.git_client.get_repo_branches()
@@ -134,6 +136,20 @@ class SourceCodeTask:
             ref_folders = RefFolders(ref=ref, folders=folders).model_dump()
             self.source_code_instance.git_folders_map.append(ref_folders)
         await self.git_client.delete_workspace()
+
+    def discover_modules(self) -> None:
+        """Find the runnable modules of an IaC repository in the fresh clone (the default branch)."""
+        if self.source_code_instance.repository_type != "iac":
+            self.source_code_instance.iac_modules = None
+            return
+        assert self.git_client is not None
+        repository_name = self.source_code_instance.source_code_url.rstrip("/").rsplit("/", 1)[-1]
+        modules = discover_iac_modules(
+            self.git_client.destination_dir, repository_name=repository_name.removesuffix(".git")
+        )
+        environments = {env.name for module in modules for env in module.environments}
+        self.logger.info(f"Found {len(modules)} modules with {len(environments)} environments")
+        self.source_code_instance.iac_modules = [module.model_dump() for module in modules]
 
     # change entity state depends on task state
     async def change_entity_status(self, new_state: ModelStatus) -> None:

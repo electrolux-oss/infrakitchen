@@ -22,6 +22,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "description",
     "sourceCodeUrl",
     "sourceCodeProvider",
+    "repositoryType",
     "status",
     "labels",
     "updatedAt",
@@ -34,6 +35,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "sourceCodeUrl",
     "sourceCodeProvider",
     "sourceCodeLanguage",
+    "repositoryType",
     "integrationId",
     "gitTags",
     "gitTagMessages",
@@ -43,6 +45,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
     "defaultBranch",
     "gitTagShas",
     "commitCount",
+    "iacEnvironmentNames",
     "labels",
     "status",
     "revisionNumber",
@@ -53,6 +56,7 @@ export const SOURCE_CODE_GRAPHQL_FIELDS = {
   relations: {
     integration: "integration",
     creator: "creator",
+    iacModules: "iacModules",
   } as const,
 };
 
@@ -84,8 +88,31 @@ export const SOURCE_CODE_FIELD_MAP: GraphqlFieldMap = {
   ),
 };
 
+const IAC_MODULE_FIELDS = `
+  name
+  path
+  environments {
+    name
+    workingDir
+    varFiles
+    regions {
+      name
+      workingDir
+      varFiles
+    }
+  }
+  variables {
+    name
+    type
+    description
+    required
+    sensitive
+  }
+`;
+
 export const SOURCE_CODE_DETAIL_FIELDS = `
   ${buildSelection(SOURCE_CODE_GRAPHQL_FIELDS.detail)}
   ${buildNestedSelection(SOURCE_CODE_GRAPHQL_FIELDS.relations.integration, INTEGRATION_SHORT_FIELDS)}
   ${buildNestedSelection(SOURCE_CODE_GRAPHQL_FIELDS.relations.creator, USER_SHORT_FIELDS)}
+  ${buildNestedSelection(SOURCE_CODE_GRAPHQL_FIELDS.relations.iacModules, IAC_MODULE_FIELDS)}
 `;

@@ -11,10 +11,12 @@ import { MultiSelectEditor } from "../../common/components/editors/MultiSelectEd
 import { CommonField } from "../../common/components/fields/CommonField";
 import { GetReferenceUrlValue } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
 import { useEntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { SubscribeNotificationButton } from "../../resources/components/notifications/SubscribeNotificationButton";
+import { IkEntity } from "../../types";
 import { GqlUserShort, USERS_SHORT_QUERY } from "../../users/graphql";
 import { GqlService } from "../graphql";
 import {
@@ -76,6 +78,9 @@ export const ServiceOverview = ({
     });
 
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [sourceCodeBuffer, setSourceCodeBuffer] = useState<
+    Record<string, IkEntity | IkEntity[]>
+  >({});
   const ownersLoadedRef = useRef(false);
 
   const loadUsers = useCallback(async () => {
@@ -232,6 +237,39 @@ export const ServiceOverview = ({
             fullWidth
             margin="normal"
             autoFocus
+          />
+        )}
+        size={6}
+      />
+      <CommonEditableField<string | null>
+        name={"Code Repository"}
+        canEdit={canEdit}
+        value={service.sourceCodeId}
+        ariaLabel="Edit code repository"
+        display={
+          service.sourceCode ? (
+            <GetReferenceUrlValue
+              {...service.sourceCode}
+              entityName="source_code"
+            />
+          ) : null
+        }
+        onSave={(value) =>
+          saveField(value ? { sourceCodeId: value } : { clearSourceCode: true })
+        }
+        renderEditor={({ value, onChange }) => (
+          <ReferenceInput
+            ikApi={ikApi}
+            buffer={sourceCodeBuffer}
+            setBuffer={setSourceCodeBuffer}
+            entity_name="source_codes"
+            filter={{ repository_type: "application" }}
+            fields={["identifier"]}
+            showFields={["identifier"]}
+            sort={["source_code_url", "ASC"]}
+            value={value}
+            onChange={onChange}
+            ariaLabel="Code Repository"
           />
         )}
         size={6}

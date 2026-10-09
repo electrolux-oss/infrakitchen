@@ -1,3 +1,5 @@
+import type { RepositoryType } from "../types";
+
 /**
  * Partial payload for updating a single source code field at a time, used by
  * the inline editing controls on the source code overview page.
@@ -6,6 +8,7 @@
  */
 export type SourceCodeUpdateFieldInput = Partial<{
   description: string | null;
+  repositoryType: RepositoryType;
   integrationId: string | null;
   labels: string[];
 }>;

@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from application.executors.model import Executor
 from application.integrations.model import Integration
+from application.services.model import Service
 from application.source_code_versions.model import SourceCodeVersion
 from core.tools.git_client import GitCommit
 from core.users.model import User
@@ -115,7 +116,12 @@ class SourceCodeCRUD:
             literal("executor").label("type"),
             Executor.name.label("name"),
         ).where(Executor.source_code_id == existing_source_code.id)
-        combined_statement = union_all(scv_statement, executor_statement)
+        service_statement = select(
+            Service.id.label("id"),
+            literal("service").label("type"),
+            Service.name.label("name"),
+        ).where(Service.source_code_id == existing_source_code.id)
+        combined_statement = union_all(scv_statement, executor_statement, service_statement)
         result = await self.session.execute(combined_statement)
         return list(result.fetchall())
 

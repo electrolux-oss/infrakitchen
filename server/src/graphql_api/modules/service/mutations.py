@@ -24,6 +24,7 @@ class ServiceCreateInput:
     description: str = ""
     project_id: uuid.UUID = strawberry.UNSET
     repository_url: str | None = None
+    source_code_id: uuid.UUID | None = None
     labels: list[str] = strawberry.field(default_factory=list)
     owners: list[uuid.UUID] = strawberry.field(default_factory=list)
 
@@ -35,6 +36,8 @@ class ServiceUpdateInput:
     description: str | None = None
     project_id: uuid.UUID | None = None
     repository_url: str | None = None
+    source_code_id: uuid.UUID | None = None
+    clear_source_code: bool = False
     labels: list[str] | None = None
     owners: list[uuid.UUID] | None = None
 

@@ -8,22 +8,44 @@ import {
   TabDefinition,
 } from "../../common/components/cards/TabbedContent";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { usePermissionProvider } from "../../common/context/PermissionContext";
 import { Revision } from "../../revision/Revision";
 import { SourceCodeRefSection } from "../../source_code_versions/components/SourceCodeRefSection";
 import { RefType } from "../../source_code_versions/types";
 import { EntityTaskQueueStatus } from "../../workers/components";
-import { GqlSourceCodeTag } from "../graphql";
+import {
+  DEFAULT_ENVIRONMENT_NAME,
+  GqlIacModule,
+  GqlSourceCodeTag,
+} from "../graphql";
 import { RefFolders } from "../types";
 
+import { IacEnvironments } from "./iac/IacEnvironments";
 import { SourceCodeCommits } from "./SourceCodeCommits";
+import { SourceCodeModules } from "./SourceCodeModules";
 import { SourceCodeOverview } from "./SourceCodeOverview";
 
 export const SourceCodeContent = () => {
   const { entity } = useEntityProvider();
+  const { checkActionPermission } = usePermissionProvider();
   if (!entity) return null;
 
   const getFolders = (ref: string): string[] =>
     entity.gitFoldersMap.find((r: RefFolders) => r.ref === ref)?.folders ?? [];
+
+  // Modules without environments are run under "default", so it needs settings too.
+  const iacEnvironmentNames: string[] = [
+    ...(entity.iacEnvironmentNames ?? []),
+    ...((entity.iacModules ?? []).some(
+      (module: GqlIacModule) => module.environments.length === 0,
+    )
+      ? [DEFAULT_ENVIRONMENT_NAME]
+      : []),
+  ];
+  const canConfigureEnvironments = checkActionPermission(
+    "api:source_code",
+    "admin",
+  );
 
   const commitTags: GqlSourceCodeTag[] = (entity.gitTags ?? []).flatMap(
     (name: string) => {
@@ -33,6 +55,25 @@ export const SourceCodeContent = () => {
   );
 
   const tabs: TabDefinition[] = [
+    ...(entity.repositoryType === "iac" && entity.iacModules
+      ? [
+          {
+            label: "Modules",
+            content: <SourceCodeModules sourceCode={entity} />,
+          },
+          {
+            label: "Environments",
+            content: (
+              <IacEnvironments
+                sourceCodeId={entity.id}
+                modules={entity.iacModules ?? []}
+                environmentNames={iacEnvironmentNames}
+                canEdit={canConfigureEnvironments}
+              />
+            ),
+          },
+        ]
+      : []),
     ...(entity.commitCount
       ? [
           {

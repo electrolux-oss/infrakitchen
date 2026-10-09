@@ -376,6 +376,32 @@ class TestCreate:
             await mock_executor_service.create_executor(executor_create, requester)
 
     @pytest.mark.asyncio
+    async def test_create_source_code_of_application_type(
+        self,
+        mock_executor_service,
+        mock_source_code_crud,
+        mocked_user_response,
+        mocked_source_code,
+        storage_response,
+    ):
+        mocked_source_code.status = ModelStatus.DONE
+        mocked_source_code.repository_type = "application"
+        executor_create = ExecutorCreate(
+            name="TestExecutor",
+            source_code_id=mocked_source_code.id,
+            source_code_version="v1.0.0",
+            source_code_folder="executors/",
+            storage_id=storage_response.id,
+            storage_path="path/to/storage",
+            runtime="tofu",
+            command_args="apply",
+        )
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        with pytest.raises(ValueError, match="module library or IaC repository"):
+            await mock_executor_service.create_executor(executor_create, mocked_user_response)
+
+    @pytest.mark.asyncio
     async def test_create_missing_storage_for_opentofu(
         self,
         mock_executor_service,

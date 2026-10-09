@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from core.errors import ShellExecutionError
 from core.tools.shell_client import ShellScriptClient
 
 logger = logging.getLogger(__name__)
@@ -229,6 +230,28 @@ class GitClient:
             _validate_git_ref(since)
         revision = f"{since}..FETCH_HEAD" if since else "FETCH_HEAD"
         return parse_git_log(await self._log_fetched(revision, _COMMIT_FORMAT, limit, first_parent=first_parent))
+
+    async def checkout_commit(self, sha: str, ref: str | None = None) -> str:
+        """Check out a single commit into the destination directory and return its full SHA.
+
+        The commit is fetched on its own, which most hosts allow for any commit. When that
+        fails (e.g. the host does not, or ``sha`` is abbreviated), ``ref`` is fetched without
+        file contents and the commit is checked out from its history.
+        """
+        _validate_git_ref(sha)
+        if ref is not None:
+            _validate_git_ref(ref)
+        _ = await self._run_git_command(["init", "-q", self.destination_dir], self.workspace_path)
+        _ = await self._run_git_command(["remote", "add", "origin", self.git_url], self.destination_dir)
+        try:
+            _ = await self._run_git_command(["fetch", "-q", "--depth=1", "origin", sha], self.destination_dir)
+        except ShellExecutionError:
+            if ref is None:
+                raise
+            self.logger.info(f"Commit {sha} cannot be fetched on its own, fetching {ref}")
+            _ = await self._run_git_command(["fetch", "-q", "--filter=blob:none", "origin", ref], self.destination_dir)
+        _ = await self._run_git_command(["checkout", "-q", "--detach", sha], self.destination_dir)
+        return (await self._run_git_command(["rev-parse", "HEAD"], self.destination_dir)).strip()
 
     async def delete_workspace(self):
         shutil.rmtree(self.destination_dir, ignore_errors=True)

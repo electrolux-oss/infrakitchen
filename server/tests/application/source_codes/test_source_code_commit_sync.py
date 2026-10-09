@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Any, cast
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
@@ -30,6 +31,7 @@ def _source_code(**kwargs) -> SourceCode:
         "source_code_url": "https://github.com/org/repo",
         "source_code_provider": "github",
         "source_code_language": "opentofu",
+        "repository_type": "application",
         "integration_id": None,
         "integration": None,
         "status": ModelStatus.READY,
@@ -348,6 +350,37 @@ class TestSourceCodeCommitSync:
 
         assert store.writes == ["replace 3", "delete unborn"]
         assert store.rows == {}
+
+    async def test_iac_repository_modules_are_discovered(self, tmp_path: Path):
+        for env in ["dev", "prod"]:
+            folder = tmp_path / "terraform" / "redis" / env
+            folder.mkdir(parents=True)
+            _ = (folder / "main.tf").write_text("")
+        source_code = _source_code(repository_type="iac")
+        task = _task(source_code, FakeGitClient(FakeRemote()), FakeCommitStore())
+        task.git_client = cast(Any, Mock(destination_dir=str(tmp_path)))
+
+        task.discover_modules()
+
+        assert source_code.iac_modules == [
+            {
+                "name": "redis",
+                "path": "terraform/redis",
+                "environments": [
+                    {"name": "dev", "working_dir": "terraform/redis/dev", "var_files": [], "regions": []},
+                    {"name": "prod", "working_dir": "terraform/redis/prod", "var_files": [], "regions": []},
+                ],
+                "variables": [],
+            }
+        ]
+
+    async def test_application_repository_has_no_modules(self):
+        source_code = _source_code(repository_type="application", iac_modules=[])
+        task = _task(source_code, FakeGitClient(FakeRemote()), FakeCommitStore())
+
+        task.discover_modules()
+
+        assert source_code.iac_modules is None
 
     async def test_failure_marks_error(self, remote: FakeRemote):
         source_code = _source_code()

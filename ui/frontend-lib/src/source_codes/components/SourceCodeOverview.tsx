@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { Box } from "@mui/material";
+import { Box, MenuItem, TextField } from "@mui/material";
 
 import { Entity, IconField } from "../../common";
 import { OverviewCard } from "../../common/components/cards/OverviewCard";
@@ -25,6 +25,7 @@ import {
   SourceCodeUpdateFieldInput,
   UPDATE_SOURCE_CODE_MUTATION,
 } from "../graphql/mutations";
+import { REPOSITORY_TYPE_LABELS, RepositoryType } from "../types";
 
 export interface SourceCodeOverviewProps {
   sourceCode: GqlSourceCode;
@@ -76,6 +77,35 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
             {sourceCode.sourceCodeLanguage}
           </Box>
         }
+      />
+      <CommonEditableField<RepositoryType>
+        name={"Repository Type"}
+        canEdit={canEdit}
+        value={sourceCode.repositoryType}
+        ariaLabel="Edit repository type"
+        display={
+          <span>{REPOSITORY_TYPE_LABELS[sourceCode.repositoryType]}</span>
+        }
+        onSave={(value) => saveField({ repositoryType: value })}
+        renderEditor={({ value, onChange }) => (
+          <TextField
+            select
+            value={value}
+            onChange={(e) => onChange(e.target.value as RepositoryType)}
+            helperText="Infrastructure as Code repositories are scanned for modules on sync"
+            slotProps={{
+              select: { inputProps: { "aria-label": "Repository type" } },
+            }}
+            fullWidth
+            margin="normal"
+          >
+            {Object.entries(REPOSITORY_TYPE_LABELS).map(([type, label]) => (
+              <MenuItem key={type} value={type}>
+                {label}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
       />
       <CommonField
         name={"Status"}

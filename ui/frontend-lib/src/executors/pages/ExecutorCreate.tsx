@@ -264,6 +264,7 @@ const ExecutorCreatePageInner = () => {
                   {...field}
                   ikApi={ikApi}
                   entity_name="source_codes"
+                  filter={{ repository_type: ["module_library", "iac"] }}
                   fields={[
                     "identifier",
                     "gitTags",

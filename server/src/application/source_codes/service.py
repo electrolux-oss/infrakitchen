@@ -155,6 +155,10 @@ class SourceCodeService:
         if check_critical_fields_changed(existing_source_code, source_code):
             existing_source_code.status = ModelStatus.READY
 
+        # Modules are only discovered for IaC repositories, on the next sync.
+        if body.get("repository_type", existing_source_code.repository_type) != existing_source_code.repository_type:
+            body["iac_modules"] = None
+
         await self.crud.update(existing_source_code, body)
 
         await self.revision_handler.handle_revision(existing_source_code)

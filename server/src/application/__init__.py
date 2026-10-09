@@ -22,8 +22,11 @@ from .blueprints import BlueprintShort
 from .workflows import Workflow
 from .favorites import Favorite
 from .services import ServiceDTO
+from .iac import IacEnvironmentConfig, IacRun
 
 __all__ = [
+    "IacEnvironmentConfig",
+    "IacRun",
     "ExecutorDTO",
     "BatchOperationDTO",
     "TemplateDTO",

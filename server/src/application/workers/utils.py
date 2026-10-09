@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from application.executors.crud import ExecutorCRUD
 from application.executors.dependencies import get_executor_service
 from application.executors.task import ExecutorTask
+from application.iac.crud import IacCRUD
+from application.iac.task import IacRunTask
 from application.integrations.dependencies import get_integration_service
 from application.resources.crud import ResourceCRUD
 from application.resources.dependencies import get_resource_service
@@ -31,6 +33,43 @@ from application.resource_temp_state.model import ResourceTempStateDTO
 from core.tasks.dependencies import get_task_service
 from core.users.model import UserDTO
 from core.utils.event_sender import EventSender
+
+
+async def get_iac_run_task(
+    session: AsyncSession,
+    obj_id: UUID,
+    user: UserDTO,
+    action: ModelActions,
+    trace_id: str | None = None,
+    audit_log_id: UUID | None = None,
+):
+    crud = IacCRUD(session=session)
+    run = await crud.get_run(obj_id)
+    if not run:
+        raise CannotProceed(f"Run {obj_id} not found")
+    source_code = await SourceCodeCRUD(session=session).get_by_id(run.source_code_id)
+    if not source_code:
+        raise CannotProceed(f"Source code {run.source_code_id} not found")
+
+    return IacRunTask(
+        session=session,
+        crud=crud,
+        run=run,
+        source_code=source_code,
+        # A missing configuration fails the run inside the task, so the run is marked as failed.
+        environment_config=await crud.get_environment_config_by_name(source_code.id, run.environment_name),
+        task_service=get_task_service(session=session),
+        logger=EntityLogger(
+            entity_name="iac_run",
+            entity_id=run.id,
+            revision_number=1,
+            trace_id=trace_id,
+            audit_log_id=audit_log_id,
+        ),
+        user=user,
+        event_sender=EventSender(entity_name="iac_run"),
+        action=action,
+    )
 
 
 async def get_source_code_task(

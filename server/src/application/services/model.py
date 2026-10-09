@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from application.projects.model import Project
+from application.source_codes.model import SourceCode
 from core.base_models import Base, BaseRevision
 from sqlalchemy import UUID, Column, DateTime, ForeignKey, Index, JSON, Table, func
 
@@ -35,6 +36,12 @@ class Service(BaseRevision):
     project: Mapped["Project"] = relationship("Project", lazy="joined")
 
     repository_url: Mapped[str | None] = mapped_column(nullable=True)
+    source_code_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("source_codes.id", name="fk_service_source_code_id"),
+        nullable=True,
+    )
+    source_code: Mapped[SourceCode | None] = relationship("SourceCode", lazy="joined")
 
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
 
@@ -62,6 +69,7 @@ class ServiceDTO(BaseModel):
     description: str = Field(default="")
     project_id: uuid.UUID = Field(...)
     repository_url: str | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
     owners: list[UserDTO] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

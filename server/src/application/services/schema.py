@@ -4,6 +4,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from application.projects.schema import ProjectShort
+from application.source_codes.schema import SourceCodeShort
 from core.users.schema import UserShort
 
 
@@ -36,6 +37,7 @@ class ServiceCreate(BaseModel):
     description: str = Field(default="")
     project_id: uuid.UUID = Field(...)
     repository_url: str | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
     labels: list[str] = Field(default_factory=list)
     owners: list[uuid.UUID] = Field(default_factory=list)
 
@@ -50,6 +52,9 @@ class ServiceUpdate(BaseModel):
     description: str | None = Field(default=None)
     project_id: uuid.UUID | None = Field(default=None)
     repository_url: str | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
+    # Set to true to unlink the source code repository.
+    clear_source_code: bool = Field(default=False)
     labels: list[str] | None = Field(default=None)
     owners: list[uuid.UUID] | None = Field(default=None)
 
@@ -71,6 +76,8 @@ class ServiceResponse(BaseModel):
     project_id: uuid.UUID = Field(...)
     project: ProjectShort | None = Field(default=None)
     repository_url: str | None = Field(default=None)
+    source_code_id: uuid.UUID | None = Field(default=None)
+    source_code: SourceCodeShort | None = Field(default=None)
     owners: list[UserShort] = Field(default_factory=list)
     labels: list[str] = Field(default_factory=list)
 

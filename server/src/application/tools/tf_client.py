@@ -125,6 +125,10 @@ class OtfClient:
         else:
             await self._run_command(f"plan {command_args}")
 
+    async def plan(self, command_args: list[str]) -> str:
+        """Run a plan and return its output, e.g. to read the summary."""
+        return await self._run_command(["plan", *command_args])
+
     async def get_output(self) -> dict[str, Any]:
         """
         Get Tofu output.

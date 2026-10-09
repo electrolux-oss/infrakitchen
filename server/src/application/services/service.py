@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from application.projects.model import Project
+from application.source_codes.model import SourceCode
 from core.audit_logs.handler import AuditLogHandler
 from core.constants.model import ModelActions
 from core.database import FieldSpec, to_dict
@@ -75,6 +76,15 @@ class ServiceService:
         if project is None:
             raise EntityNotFound(f"Project {project_id} not found")
 
+    async def _assert_application_source_code(self, source_code_id: str | UUID) -> None:
+        repository_type = (
+            await self.crud.session.execute(select(SourceCode.repository_type).where(SourceCode.id == source_code_id))
+        ).scalar_one_or_none()
+        if repository_type is None:
+            raise EntityNotFound(f"Source code {source_code_id} not found")
+        if repository_type != "application":
+            raise ValueError("A service can only be linked to an application repository")
+
     async def create_service(self, service: ServiceCreate, requester: UserDTO) -> Service:
         await self._assert_project_exists(service.project_id)
 
@@ -82,6 +92,8 @@ class ServiceService:
         body["created_by"] = requester.id
         if body.get("repository_url") == "":
             body["repository_url"] = None
+        if source_code_id := body.get("source_code_id"):
+            await self._assert_application_source_code(source_code_id)
 
         new_service = await self.crud.create(body)
         result = await self.crud.get_by_id(new_service.id)
@@ -106,12 +118,16 @@ class ServiceService:
         body = model_db_dump(service, exclude_defaults=True, exclude_none=True)
         if body.get("repository_url") == "":
             body["repository_url"] = None
+        if body.pop("clear_source_code", False):
+            body["source_code_id"] = None
 
         if not has_field_changes(body, existing_service):
             raise ValueError("No changes detected; the service is already up to date.")
 
         if body.get("project_id"):
             await self._assert_project_exists(body["project_id"])
+        if source_code_id := body.get("source_code_id"):
+            await self._assert_application_source_code(source_code_id)
 
         self.revision_handler.original_entity_instance_dump = to_dict(existing_service)
 

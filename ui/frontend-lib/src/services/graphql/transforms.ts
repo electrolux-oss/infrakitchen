@@ -1,3 +1,4 @@
+import { GqlSourceCodeShort } from "../../source_codes/graphql";
 import { GqlUserShort } from "../../users/graphql";
 
 import type {
@@ -26,6 +27,7 @@ type GqlServiceDetailFieldTypes = {
   description: string | null;
   projectId: string;
   repositoryUrl: string | null;
+  sourceCodeId: string | null;
   labels: string[] | null;
   revisionNumber: number;
   createdAt: string;
@@ -37,6 +39,7 @@ type GqlServiceRelationFieldTypes = {
   creator: GqlUserShort | null;
   owners: GqlUserShort[] | null;
   project: { id: string; name: string } | null;
+  sourceCode: GqlSourceCodeShort | null;
 };
 
 type GqlServiceFieldTypes = GqlServiceDetailFieldTypes &

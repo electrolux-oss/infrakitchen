@@ -21,6 +21,11 @@ def build_source_code_query_options(fields: FieldSpec | None = None) -> list[Any
         fields = dict(fields)
         fields.setdefault("sourceCodeUrl", None)
 
+    # Computed from the iac_modules column.
+    if "iacEnvironmentNames" in fields:
+        fields = dict(fields)
+        fields.setdefault("iacModules", None)
+
     opts: list[Any] = build_load_only(SourceCode, set(fields.keys()))
 
     if "integration" in fields:

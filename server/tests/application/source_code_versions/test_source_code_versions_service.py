@@ -379,6 +379,35 @@ class TestCreate:
             )
 
     @pytest.mark.asyncio
+    async def test_create_from_iac_repository(
+        self,
+        mock_source_code_version_service,
+        mock_template_crud,
+        mock_source_code_crud,
+        mocked_source_code,
+        mocked_template,
+        mock_user_dto,
+    ):
+        mocked_template.status = ModelStatus.ENABLED
+        mock_template_crud.get_by_id.return_value = mocked_template
+        mocked_source_code.status = ModelStatus.DONE
+        mocked_source_code.repository_type = "iac"
+        mock_source_code_crud.get_by_id.return_value = mocked_source_code
+
+        mocked_source_code_version_create = Mock(spec=SourceCodeVersionCreate)
+        mocked_source_code_version_create.source_code_folder = "redis/"
+        mocked_source_code_version_create.source_code_branch = None
+        mocked_source_code_version_create.source_code_version = "v1.0"
+        mocked_source_code_version_create.source_code_id = str(mocked_source_code.id)
+        mocked_source_code_version_create.template_id = str(mocked_template.id)
+        mocked_source_code_version_create.labels = []
+
+        with pytest.raises(ValueError, match="module library repository"):
+            await mock_source_code_version_service.create_source_code_version(
+                source_code_version=mocked_source_code_version_create, requester=mock_user_dto
+            )
+
+    @pytest.mark.asyncio
     async def test_create_tag_not_found_in_source_code(
         self,
         mock_source_code_version_service,

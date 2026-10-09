@@ -28,6 +28,8 @@ from graphql_api.modules.integration.queries import IntegrationQuery
 from graphql_api.modules.integration.mutations import IntegrationMutation
 from graphql_api.modules.use_case.mutations import UseCaseMutation
 from graphql_api.modules.label.queries import LabelQuery
+from graphql_api.modules.iac.mutations import IacMutation
+from graphql_api.modules.iac.queries import IacQuery
 from graphql_api.modules.source_code.queries import SourceCodeQuery
 from graphql_api.modules.source_code.mutations import SourceCodeMutation
 from graphql_api.modules.source_code_version.queries import SourceCodeVersionQuery
@@ -92,6 +94,7 @@ class Query(
     IntegrationQuery,
     LabelQuery,
     SourceCodeQuery,
+    IacQuery,
     SourceCodeVersionQuery,
     SecretQuery,
     SchedulerQuery,
@@ -138,6 +141,7 @@ class Mutation(
     BlueprintMutation,
     IntegrationMutation,
     SourceCodeMutation,
+    IacMutation,
     SourceCodeVersionMutation,
     StorageMutation,
     SecretMutation,
