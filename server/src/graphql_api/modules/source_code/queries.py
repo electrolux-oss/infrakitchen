@@ -15,7 +15,8 @@ from graphql_api.helpers import (
     parse_range,
     parse_sort,
 )
-from graphql_api.modules.source_code.types import SourceCodeType
+from graphql_api.modules.source_code.types import SourceCodeCommitType, SourceCodeType
+from graphql_api.modules.user.types import UserShortType
 
 
 def _build_service(info: Info) -> SourceCodeService:
@@ -70,3 +71,49 @@ class SourceCodeQuery:
         service = _build_service(info)
         requester = info.context["request"].state.user
         return await service.get_actions(source_code_id=id, requester=requester)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def source_code_commits(
+        self,
+        info: Info,
+        id: uuid.UUID,
+        branch: str | None = None,
+        range: list[int] | None = None,
+    ) -> list[SourceCodeCommitType]:
+        await check_api_permission(info, "source_code", ["read"])
+        service = _build_service(info)
+        commits = await service.get_commits(id, branch=branch, range=parse_range(range))
+        return [
+            SourceCodeCommitType(
+                **commit.model_dump(exclude={"author"}),
+                author=UserShortType(
+                    id=commit.author.id, identifier=commit.author.identifier, provider=commit.author.provider
+                )
+                if commit.author
+                else None,
+            )
+            for commit in commits
+        ]
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def source_code_commits_count(
+        self,
+        info: Info,
+        id: uuid.UUID,
+        branch: str | None = None,
+    ) -> int:
+        await check_api_permission(info, "source_code", ["read"])
+        service = _build_service(info)
+        return await service.count_commits(id, branch=branch)
+
+    @strawberry.field(permission_classes=[IsAuthenticated])
+    async def source_code_commit_index(
+        self,
+        info: Info,
+        id: uuid.UUID,
+        sha: str,
+        branch: str | None = None,
+    ) -> int | None:
+        await check_api_permission(info, "source_code", ["read"])
+        service = _build_service(info)
+        return await service.get_commit_index(id, sha, branch=branch)

@@ -40,6 +40,9 @@ type GqlSourceCodeDetailFieldTypes = {
   gitBranches: string[] | null;
   gitBranchMessages: Record<string, string> | null;
   gitFoldersMap: GqlRefFolders[] | null;
+  defaultBranch: string | null;
+  gitTagShas: Record<string, string> | null;
+  commitCount: number;
   labels: string[] | null;
   status: string;
   revisionNumber: number;
@@ -63,3 +66,20 @@ export type GqlSourceCode = Pick<
 
 export type GqlSourceCodeOptional = Partial<GqlSourceCode> &
   Pick<GqlSourceCodeShortFieldTypes, "id" | "sourceCodeUrl" | "entityName">;
+
+export type GqlSourceCodeTag = {
+  name: string;
+  sha: string;
+};
+
+export type GqlSourceCodeCommit = {
+  sha: string;
+  shortSha: string;
+  message: string;
+  description: string;
+  authorName: string;
+  authorEmail: string;
+  authoredAt: string;
+  url: string | null;
+  author: GqlUserShort | null;
+};
