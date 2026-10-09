@@ -1,14 +1,17 @@
 import uuid
+from datetime import datetime
+
 from sqlalchemy import func, select
 import strawberry
 from strawberry.types import Info
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from application.source_code_versions.model import SourceCodeVersion
+from application.source_codes.crud import SourceCodeCRUD
 from application.source_codes.model import SourceCode
 from graphql_api.modules.task_queue.types import EntityQueueStatusType, resolve_task_queue_status
 from graphql_api.modules.integration.types import IntegrationType
-from graphql_api.modules.user.types import UserType
+from graphql_api.modules.user.types import UserShortType, UserType
 
 
 source_code_mapper = StrawberrySQLAlchemyMapper()
@@ -41,6 +44,23 @@ class SourceCodeType:
         stmt = select(func.count()).select_from(SourceCodeVersion).where(SourceCodeVersion.source_code_id == self.id)
         result = await session.execute(stmt)
         return result.scalar_one()
+
+    @strawberry.field
+    async def commit_count(self, info: Info) -> int:
+        return await SourceCodeCRUD(session=info.context["session"]).count_commits(self.id)
+
+
+@strawberry.type
+class SourceCodeCommitType:
+    sha: str
+    short_sha: str
+    message: str
+    description: str
+    author_name: str
+    author_email: str
+    authored_at: datetime
+    url: str | None = None
+    author: UserShortType | None = None
 
 
 source_code_mapper.finalize()
