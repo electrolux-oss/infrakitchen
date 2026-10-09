@@ -1,7 +1,11 @@
 import logging
+import os
 import re
 import shutil
+from datetime import datetime
 from typing import Any
+
+from pydantic import BaseModel
 
 from core.tools.shell_client import ShellScriptClient
 
@@ -23,6 +27,69 @@ def _validate_git_ref(ref: str) -> None:
 def _validate_git_path(path: str) -> None:
     if not path or path.startswith("-") or ".." in path.split("/") or not _GIT_PATH_RE.match(path):
         raise ValueError(f"invalid git path: {path!r}")
+
+
+_FIELD_SEP = "\x1f"
+_RECORD_SEP = "\x1e"
+_COMMIT_FORMAT = "%H%x1f%an%x1f%ae%x1f%aI%x1f%s%x1f%b%x1e"
+
+
+class GitCommit(BaseModel):
+    sha: str
+    author_name: str
+    author_email: str
+    authored_at: datetime
+    message: str
+    description: str = ""
+
+
+def parse_ls_remote_symref(output: str) -> str | None:
+    for line in output.splitlines():
+        if line.startswith("ref: ") and line.endswith("\tHEAD"):
+            ref = line.removeprefix("ref: ").split("\t", 1)[0]
+            return ref.removeprefix("refs/heads/")
+    return None
+
+
+class GitTag(BaseModel):
+    name: str
+    sha: str
+
+
+def parse_ls_remote_tags(output: str) -> list[GitTag]:
+    # Annotated tags are listed twice; the peeled "^{}" line holds the commit.
+    shas: dict[str, str] = {}
+    for line in output.splitlines():
+        parts = line.split("\t", 1)
+        if len(parts) != 2 or not parts[1].startswith("refs/tags/"):
+            continue
+        sha, ref = parts
+        name = ref.removeprefix("refs/tags/")
+        if name.endswith("^{}"):
+            shas[name.removesuffix("^{}")] = sha
+        else:
+            _ = shas.setdefault(name, sha)
+    return [GitTag(name=name, sha=sha) for name, sha in shas.items()]
+
+
+def parse_git_log(output: str) -> list[GitCommit]:
+    commits: list[GitCommit] = []
+    for record in output.split(_RECORD_SEP):
+        parts = record.lstrip("\n").split(_FIELD_SEP, 5)
+        if len(parts) != 6:
+            continue
+        sha, author_name, author_email, authored_at, message, description = parts
+        commits.append(
+            GitCommit(
+                sha=sha,
+                author_name=author_name,
+                author_email=author_email,
+                authored_at=datetime.fromisoformat(authored_at),
+                message=message,
+                description=description.strip(),
+            )
+        )
+    return commits
 
 
 class GitClient:
@@ -95,6 +162,73 @@ class GitClient:
         _validate_git_ref(ref)
         _validate_git_path(path)
         return await self._run_git_command(["show", f"{ref}:{path}"], self.destination_dir)
+
+    async def get_remote_default_branch(self) -> str | None:
+        out = await self._run_git_command(["ls-remote", "--symref", self.git_url, "HEAD"], self.workspace_path)
+        return parse_ls_remote_symref(out)
+
+    async def get_remote_tags(self) -> list[GitTag]:
+        out = await self._run_git_command(
+            ["ls-remote", "--tags", "--sort=-version:refname", self.git_url], self.workspace_path
+        )
+        return parse_ls_remote_tags(out)
+
+    async def get_remote_branch_head(self, branch: str) -> str | None:
+        _validate_git_ref(branch)
+        out = await self._run_git_command(["ls-remote", self.git_url, f"refs/heads/{branch}"], self.workspace_path)
+        for line in out.splitlines():
+            parts = line.split("\t", 1)
+            if len(parts) == 2 and parts[1] == f"refs/heads/{branch}":
+                return parts[0]
+        return None
+
+    async def fetch_branch(self, branch: str, depth: int | None = None) -> None:
+        _validate_git_ref(branch)
+        _ = await self._run_git_command(["init", "--bare", "-q", self.destination_dir], self.workspace_path)
+        fetch_args = ["fetch", "-q", "--no-tags", "--filter=tree:0"]
+        if depth is not None:
+            fetch_args.append(f"--depth={depth}")
+        _ = await self._run_git_command([*fetch_args, self.git_url, f"refs/heads/{branch}"], self.destination_dir)
+
+    async def deepen_fetched(self, branch: str, by: int) -> None:
+        _validate_git_ref(branch)
+        _ = await self._run_git_command(
+            ["fetch", "-q", "--no-tags", "--filter=tree:0", f"--deepen={by}", self.git_url, f"refs/heads/{branch}"],
+            self.destination_dir,
+        )
+
+    async def is_fetched_shallow(self) -> bool:
+        out = await self._run_git_command(["rev-parse", "--is-shallow-repository"], self.destination_dir)
+        return out.strip() == "true"
+
+    async def _log_fetched(
+        self, revision: str, log_format: str, limit: int | None = None, first_parent: bool = False
+    ) -> str:
+        # Written to a file because the shell client logs every stdout line.
+        log_file = os.path.join(self.workspace_path, "commits.log")
+        log_args = ["log", f"--format={log_format}", f"--output={log_file}"]
+        if limit is not None:
+            log_args.append(f"-n{limit}")
+        if first_parent:
+            log_args.append("--first-parent")
+        try:
+            _ = await self._run_git_command([*log_args, revision], self.destination_dir)
+            with open(log_file, encoding="utf-8", errors="replace") as f:
+                return f.read()
+        finally:
+            if os.path.exists(log_file):
+                os.remove(log_file)
+
+    async def get_fetched_shas(self, first_parent: bool = False) -> set[str]:
+        return set((await self._log_fetched("FETCH_HEAD", "%H", first_parent=first_parent)).split())
+
+    async def get_fetched_commits(
+        self, since: str | None = None, limit: int | None = None, first_parent: bool = False
+    ) -> list[GitCommit]:
+        if since is not None:
+            _validate_git_ref(since)
+        revision = f"{since}..FETCH_HEAD" if since else "FETCH_HEAD"
+        return parse_git_log(await self._log_fetched(revision, _COMMIT_FORMAT, limit, first_parent=first_parent))
 
     async def delete_workspace(self):
         shutil.rmtree(self.destination_dir, ignore_errors=True)

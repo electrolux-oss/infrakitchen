@@ -108,6 +108,10 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
         )}
       />
       <CommonField
+        name={"Default Branch"}
+        value={sourceCode.defaultBranch || "Not synced"}
+      />
+      <CommonField
         name={"Created"}
         value={<RelativeTime date={sourceCode.createdAt} />}
       />

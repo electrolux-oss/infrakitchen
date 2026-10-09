@@ -8,8 +8,8 @@ from sqlalchemy import Enum as SQLAlchemyEnum
 
 from application.integrations.model import Integration, IntegrationDTO
 from application.types import CodeLanguageType, GitProviderType
-from core.base_models import BaseRevision
-from sqlalchemy import UUID, DateTime, ForeignKey, JSON, func
+from core.base_models import Base, BaseRevision
+from sqlalchemy import UUID, DateTime, ForeignKey, Index, JSON, Text, func
 from core.constants.model import ModelStatus
 from core.users.model import User, UserDTO
 
@@ -28,6 +28,8 @@ class SourceCode(BaseRevision):
     git_branches: Mapped[list[str]] = mapped_column(JSON, default=list)
     git_branch_messages: Mapped[dict[str, str]] = mapped_column(JSON, default=dict, nullable=True)
     git_folders_map: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
+    default_branch: Mapped[str | None] = mapped_column(nullable=True)
+    git_tag_shas: Mapped[dict[str, str] | None] = mapped_column(JSON(none_as_null=True), nullable=True, default=None)
     labels: Mapped[list[str]] = mapped_column(JSON, default=list)
     creator: Mapped[User] = relationship("User", lazy="joined")
 
@@ -40,6 +42,29 @@ class SourceCode(BaseRevision):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
     created_by: Mapped[str | uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+
+
+class SourceCodeCommit(Base):
+    __tablename__: str = "source_code_commits"
+
+    source_code_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("source_codes.id", name="fk_source_code_commit_source_code_id", ondelete="CASCADE"),
+    )
+    branch: Mapped[str] = mapped_column()
+    sha: Mapped[str] = mapped_column()
+    # Lower is newer; new commits go below the stored ones, so it can be negative.
+    position: Mapped[int] = mapped_column()
+    message: Mapped[str] = mapped_column()
+    description: Mapped[str] = mapped_column(Text, default="")
+    author_name: Mapped[str] = mapped_column()
+    author_email: Mapped[str] = mapped_column()
+    authored_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        Index("ix_source_code_commit_source_code_id_branch_sha", "source_code_id", "branch", "sha", unique=True),
+        Index("ix_source_code_commit_source_code_id_branch_position", "source_code_id", "branch", "position"),
+    )
 
 
 class RefFolders(BaseModel):
@@ -77,5 +102,7 @@ class SourceCodeDTO(BaseModel):
     git_branches: list[str] = Field(default_factory=list)
     git_branch_messages: dict[str, str] | None = Field(default_factory=dict)
     git_folders_map: list[RefFolders] = Field(default_factory=list)
+    default_branch: str | None = Field(default=None)
+    git_tag_shas: dict[str, str] | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
