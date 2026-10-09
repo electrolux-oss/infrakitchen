@@ -7,6 +7,7 @@ from datetime import datetime, UTC
 from typing import Any, Literal
 from uuid import UUID
 
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -71,6 +72,16 @@ TaskController = (
 )
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
+
+
+def _loaded_entity_name(task_controller: Any) -> str | None:
+    """Name of the task's entity, read without lazy loading (the session may be rolled back already)."""
+    instance = getattr(task_controller, f"{task_controller.logger.entity_name}_instance", None)
+    if instance is None:
+        return None
+    state = sa_inspect(instance, raiseerr=False)
+    name = state.dict.get("name") if state is not None else getattr(instance, "name", None)
+    return name if isinstance(name, str) else None
 
 
 class RequeueTask(Exception):
@@ -584,6 +595,7 @@ class TaskWorker:
             status=status,
             entity_id=task_controller.logger.entity_id,
             entity_type=task_controller.logger.entity_name,
+            entity_name=_loaded_entity_name(task_controller),
             event_type=EventType.EXECUTE,
         )
         await publish_notification_event(event_message)

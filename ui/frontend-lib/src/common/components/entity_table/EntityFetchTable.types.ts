@@ -21,6 +21,8 @@ export interface EntityFetchTableProps {
   defaultSort?: { field: string; sort: "asc" | "desc" };
   /** Set to false for tables whose rows shouldn't offer a click affordance. */
   rowClickable?: boolean;
+  /** Replaces the default navigation to the row's detail page. */
+  onRowClick?: (row: any, event?: MouseEvent) => void;
   /** Called with the rows of every fetched page. */
   onDataChange?: (data: any[]) => void;
 }

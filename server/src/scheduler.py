@@ -13,6 +13,7 @@ from application.logger import change_logger
 from core.constants.model import ModelState, ModelStatus
 from core.dependencies import get_async_session
 from core.errors import EntityNotFound
+from core.notifications.dependencies import get_user_notification_service
 from core.notifications.outbox import NotificationOutboxCRUD
 from core.scheduler.crud import SchedulerJobCRUD
 from core.scheduler.model import JobType
@@ -254,9 +255,15 @@ async def purge_task_queue():
         await session.commit()
     logger.info(f"Purged {deleted} finished notification outbox items older than {retention_days} days")
 
+    notification_retention_days = Settings().NOTIFICATION_RETENTION_DAYS
+    async with get_async_session() as session:
+        deleted = await get_user_notification_service(session).purge_older_than(notification_retention_days)
+        await session.commit()
+    logger.info(f"Purged {deleted} user notifications older than {notification_retention_days} days")
+
 
 def schedule_task_queue_cleanup_job(scheduler: AsyncIOScheduler):
-    """Schedules a daily job that removes old finished items from the task queue and notification outbox."""
+    """Schedules a daily job that removes old task queue items, notification outbox items and user notifications."""
     scheduler.add_job(
         purge_task_queue,
         trigger=IntervalTrigger(days=1),

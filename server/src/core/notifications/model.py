@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import JSON, UUID, BigInteger, DateTime, ForeignKey, Identity, Index, String, func, text, ARRAY
+from sqlalchemy import JSON, UUID, BigInteger, DateTime, ForeignKey, Identity, Index, String, Text, func, text, ARRAY
 from sqlalchemy import Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,6 +54,29 @@ class NotificationPreference(Base):
     __table_args__ = (Index("unique_user_event_preference", "user_id", "event_type", unique=True),)
 
 
+class UserNotification(Base):
+    """An in-app notification delivered to a user, kept for the notification inbox."""
+
+    __tablename__: str = "user_notifications"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(150), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    entity_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="info")
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("ix_user_notifications_user_created", "user_id", "created_at"),
+        Index("ix_user_notifications_unread", "user_id", postgresql_where=text("read_at IS NULL")),
+        Index("ix_user_notifications_created", "created_at"),
+    )
+
+
 class SubscriptionDTO(BaseModel):
     id: uuid.UUID = Field(...)
     user_id: uuid.UUID | None = Field(...)
@@ -76,6 +99,22 @@ class NotificationPreferenceDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserNotificationDTO(BaseModel):
+    id: uuid.UUID = Field(...)
+    user_id: uuid.UUID = Field(...)
+    event_type: str = Field(...)
+    entity_type: str = Field(...)
+    entity_id: uuid.UUID | None = Field(default=None)
+    entity_name: str | None = Field(default=None)
+    title: str | None = Field(default=None)
+    message: str = Field(...)
+    status: str = Field(default="info")
+    read_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC), frozen=True)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 @dataclass
 class NotificationEvent:
     event_type: EventType
@@ -84,6 +123,7 @@ class NotificationEvent:
     status: str  # "info", "warning", "error", "success"
     message: str
     entity_id: str | None = None
+    entity_name: str | None = None
     metadata: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:

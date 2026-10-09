@@ -1,4 +1,7 @@
+from typing import Any
 from uuid import UUID
+
+from casbin.util.builtin_operators import key_match
 
 from core.casbin.enforcer import CasbinEnforcer
 from core.constants.model import ModelActions
@@ -189,6 +192,53 @@ async def user_is_super_admin(user: UserDTO | None) -> bool:
     if "super" not in requester_roles:
         return False
     return True
+
+
+async def _get_casbin_enforcer():
+    casbin_enforcer = CasbinEnforcer()
+    if casbin_enforcer.enforcer is None:
+        _ = await casbin_enforcer.get_enforcer()
+    if casbin_enforcer.enforcer is None:
+        raise RuntimeError("Casbin enforcer is not initialized")
+    return casbin_enforcer.enforcer
+
+
+def _expand_subjects_to_user_ids(enforcer: Any, subjects: set[str]) -> set[str]:
+    """Resolve policy subjects (``user:<id>`` or role names, possibly nested) to user IDs."""
+    user_ids: set[str] = set()
+    visited_roles: set[str] = set()
+    pending = list(subjects)
+    while pending:
+        subject = pending.pop()
+        if subject.startswith("user:"):
+            user_ids.add(subject.removeprefix("user:"))
+            continue
+        if subject in visited_roles:
+            continue
+        visited_roles.add(subject)
+        pending.extend(member for member, *_ in enforcer.get_filtered_named_grouping_policy("g", 1, subject))
+    return user_ids
+
+
+async def get_entity_admin_user_ids(entities: list[tuple[str, str | UUID]]) -> set[str]:
+    """IDs of users holding ``admin`` on any of the given ``(entity_name, entity_id)`` pairs.
+
+    The global ``*`` (super admin) policy is ignored, so super admins are only included
+    when they were granted admin on the entity itself.
+    """
+    enforcer = await _get_casbin_enforcer()
+    objects = [f"{entity_name}:{entity_id}" for entity_name, entity_id in entities]
+    subjects = {
+        subject
+        for subject, policy_object, *_ in enforcer.get_filtered_policy(2, "admin")
+        if policy_object != "*" and any(key_match(obj, policy_object) for obj in objects)
+    }
+    return _expand_subjects_to_user_ids(enforcer, subjects)
+
+
+async def get_super_admin_user_ids() -> set[str]:
+    enforcer = await _get_casbin_enforcer()
+    return _expand_subjects_to_user_ids(enforcer, {"super"})
 
 
 async def get_user_actions(requester: UserDTO | None) -> list[str]:

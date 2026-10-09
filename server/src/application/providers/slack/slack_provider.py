@@ -26,7 +26,8 @@ DEFAULT_SLACK_NOTIFICATION_TEMPLATE = """*{{ title or 'InfraKitchen Alert' }}* \
 > {{ (msg or '') | replace('\n', '\n> ') }}
 
 *Details*
-• *Entity:* `{{ entity_name or 'unknown' }}`
+• *Entity:* `{{ entity_name or '-' }}`
+• *Type:* `{{ entity_type or 'unknown' }}`
 • *ID:* `{% if entity_id %}{{ entity_id }}{% else %}-{% endif %}`
 {% if infrakitchen_url %}• *Link:* <{{ infrakitchen_url }}|Open in InfraKitchen>{% endif %}
 """
@@ -100,8 +101,8 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
         url: str | None = None
         if Settings().INFRAKITCHEN_URL:
             url = (
-                f"{Settings().INFRAKITCHEN_URL}/{kwargs.get('entity_name')}s/{kwargs.get('entity_id')}"
-                if kwargs.get("entity_id")
+                f"{Settings().INFRAKITCHEN_URL}/{kwargs.get('entity_type')}s/{kwargs.get('entity_id')}"
+                if kwargs.get("entity_id") and kwargs.get("entity_type")
                 else Settings().INFRAKITCHEN_URL
             )
 
@@ -110,6 +111,7 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
             "title": kwargs.get("title"),
             "status": kwargs.get("status"),
             "entity_id": kwargs.get("entity_id"),
+            "entity_type": kwargs.get("entity_type"),
             "entity_name": kwargs.get("entity_name"),
             "infrakitchen_url": url,
         }

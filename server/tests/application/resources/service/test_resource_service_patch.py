@@ -9,7 +9,7 @@ from application.resources.schema import (
 )
 from core.base_models import PatchBodyModel
 from core.config import InfrakitchenConfig
-from core.constants.model import ModelActions, ModelState, ModelStatus
+from core.constants.model import EventType, ModelActions, ModelState, ModelStatus
 from core.errors import DependencyError, EntityNotFound, EntityWrongState
 from core.users.model import UserDTO
 from core.utils.model_tools import model_db_dump
@@ -80,6 +80,36 @@ class TestPatch:
         mock_audit_log_handler.create_log.assert_not_awaited()
         mock_resource_crud.patch.assert_not_awaited()
         mock_revision_handler.handle_revision.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_patch_with_temp_state_notifies_approvers(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_event_sender,
+        mocked_resource,
+        mocked_user_response,
+    ):
+        mock_resource_service.publish_notification_event = AsyncMock()
+        mocked_resource.id = uuid4()
+        mocked_resource.state = ModelState.PROVISIONED
+        mocked_resource.status = ModelStatus.DONE
+        mocked_resource.abstract = True
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+
+        await mock_resource_service.update_resource(
+            resource_id=mocked_resource.id,
+            resource=ResourceUpdate(description="Resource description"),
+            requester=mocked_user_response,
+        )
+
+        events = [c.args[0] for c in mock_event_sender.send_notification.await_args_list]
+        approval_events = [e for e in events if e.event_type == EventType.APPROVAL_REQUIRED]
+        assert len(approval_events) == 1
+        event = approval_events[0]
+        assert event.entity_id == str(mocked_resource.id)
+        assert event.entity_name == mocked_resource.name
+        assert event.metadata == {"requester_id": str(mocked_user_response.id)}
 
     @pytest.mark.asyncio
     async def test_patch_resource_does_not_exist(self, mock_resource_service, mock_resource_crud, mock_user_dto):
@@ -400,6 +430,39 @@ class TestPatchAction:
 
         assert result.status == ModelStatus.READY
         assert result.state == ModelState.PROVISION
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("action, approved", [(ModelActions.APPROVE, True), (ModelActions.REJECT, False)])
+    async def test_patch_approval_decision_notifies_change_requester(
+        self,
+        action,
+        approved,
+        mock_resource_service,
+        mock_resource_crud,
+        mock_audit_log_handler,
+        mock_event_sender,
+        mocked_resource_temp_state_handler,
+        mocked_user,
+        mocked_resource,
+    ):
+        mock_resource_service.publish_notification_event = AsyncMock()
+        mocked_resource.id = uuid4()
+        mocked_resource.status = ModelStatus.APPROVAL_PENDING
+        mocked_resource.state = ModelState.PROVISION
+        mock_resource_crud.get_by_id.return_value = mocked_resource
+        mocked_resource_temp_state_handler.get_by_resource_id.return_value = None
+        creator_id = uuid4()
+        mock_audit_log_handler.get_last_actor_id = AsyncMock(return_value=creator_id)
+
+        await mock_resource_service.patch_action(
+            resource_id=mocked_resource.id, body=PatchBodyModel(action=action), requester=mocked_user
+        )
+
+        events = [c.args[0] for c in mock_event_sender.send_notification.await_args_list]
+        [event] = [e for e in events if e.event_type == EventType.APPROVAL_RESULT]
+        assert event.metadata == {"recipient_id": str(creator_id), "approver_id": str(mocked_user.id)}
+        assert event.title == ("Change approved" if approved else "Change rejected")
+        assert event.entity_name == mocked_resource.name
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

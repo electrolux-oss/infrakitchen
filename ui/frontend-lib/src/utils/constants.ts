@@ -54,6 +54,8 @@ export enum WORKER_STATUS {
 export enum EVENT_TYPE {
   UPDATE = "update",
   EXECUTE = "execute",
+  APPROVAL_REQUIRED = "approval_required",
+  APPROVAL_RESULT = "approval_result",
 }
 
 export enum VERSION_LIFECYCLE_STATE {

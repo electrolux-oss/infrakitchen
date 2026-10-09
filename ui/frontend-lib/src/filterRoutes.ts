@@ -546,6 +546,12 @@ const DashboardPageLazy = lz(
   "DashboardPage",
 );
 
+// Every signed-in user has a notification inbox, so the page needs no permission
+const NotificationsPageLazy = lz(
+  () => import("./notifications/pages/Notifications"),
+  "NotificationsPage",
+);
+
 export const useFilteredProtectedRoutes = (): RouteObject[] => {
   const { permissions } = usePermissionProvider();
   const { globalConfig } = useConfig();
@@ -596,6 +602,7 @@ export const useFilteredProtectedRoutes = (): RouteObject[] => {
     return [
       ...accessibleRoutes,
       { path: "/", Component: DashboardPageLazy },
+      { path: "/notifications", Component: NotificationsPageLazy },
       { path: "*", Component: NotFoundPage },
     ];
     // `loading` is included so consumers re-run once permissions resolve.

@@ -1,7 +1,8 @@
 import uuid
 from typing import Any
 
-import core.pubsub as pubsub
+from core.constants.model import EventType
+from core.notifications.in_app import deliver_in_app_notification
 
 from .model import SupersededTask
 
@@ -17,12 +18,14 @@ async def _send_in_app(user_id: uuid.UUID, title: str, message: str, task: Super
         "msg": message,
         "title": title,
         "status": "warning",
+        "event_type": str(EventType.EXECUTE),
+        "entity_type": task.entity,
         "entity_id": str(task.entity_id),
-        "entity_name": task.entity,
+        "entity_name": None,
         "provider": "in_app",
         "user_id": str(user_id),
     }
-    await pubsub.publish(pubsub.in_app_notifications_topic(user_id), body)
+    await deliver_in_app_notification(body)
 
 
 async def notify_superseded(task: SupersededTask) -> None:

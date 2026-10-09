@@ -18,8 +18,12 @@ class NotificationStreamMessage:
     msg: str
     title: str | None = None
     status: str = "info"
+    id: str | None = None
+    event_type: str | None = None
+    entity_type: str | None = None
     entity_id: str | None = None
     entity_name: str | None = None
+    created_at: str | None = None
 
 
 @strawberry.type
@@ -46,8 +50,12 @@ class NotificationSubscription:
                         msg=msg.get("msg", ""),
                         title=msg.get("title"),
                         status=msg.get("status", "info"),
+                        id=msg.get("id"),
+                        event_type=msg.get("event_type"),
+                        entity_type=msg.get("entity_type"),
                         entity_id=str(v) if (v := msg.get("entity_id")) else None,
                         entity_name=msg.get("entity_name"),
+                        created_at=msg.get("created_at"),
                     )
         finally:
             logger.debug("GraphQL subscription: cleaned up notification stream for user %s", user.id)
