@@ -6,7 +6,7 @@ Notification Preferences let you control which event types trigger notifications
 
 ## Overview
 
-A **Notification Preference** answers the question: *"When event X happens, how should I be notified?"*
+A **Notification Preference** answers the question: _"When event X happens, how should I be notified?"_
 
 You can have multiple preferences — one per event type — and each can enable different channel combinations. If no preference exists for an event type, that event will not generate a notification for you even if you are subscribed to the entity.
 
@@ -65,20 +65,19 @@ Click <kbd>Create</kbd>.
 
 ### Event Types
 
-| Event Type | Description |
-|---|---|
-| `create` | An entity was created |
-| `update` | An entity was modified |
-| `destroy` | Resource infrastructure was destroyed |
-| `execute` | An operation was executed on an entity |
-| `sync` | An entity was synchronized |
+| Event Type          | Description                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `update`            | An entity's status changed, e.g. it was edited, approved, rejected, destroyed or recreated                                        |
+| `execute`           | An operation (apply, plan, sync, ...) finished on an entity                                                                       |
+| `approval_required` | A resource you can approve is waiting for approval. In-app delivery is always on; add this preference to also receive it in Slack |
+| `approval_result`   | A change you requested was approved or rejected. In-app delivery is always on; add this preference to also receive it in Slack    |
 
 ### Delivery Channels
 
-| Channel | Description |
-|---|---|
-| **IN_APP** | Notification appears inside the InfraKitchen UI |
-| **SLACK** | Notification is sent to Slack via the configured [Slack integration](../../integrations/notification#slack) |
+| Channel    | Description                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------------- |
+| **IN_APP** | Notification appears inside the InfraKitchen UI                                                             |
+| **SLACK**  | Notification is sent to Slack via the configured [Slack integration](../../integrations/notification#slack) |
 
 :::info[At least one channel required]
 You must select at least one delivery channel when creating or editing a preference. A preference with no channels cannot be saved.
@@ -100,9 +99,9 @@ After deletion, events of that type will no longer generate notifications for yo
 
 ## Preference Properties
 
-| Property | Description |
-|---|---|
+| Property       | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
 | **Event Type** | The event that triggers the notification (e.g., `update`, `execute`) |
-| **Channels** | The delivery channels enabled for this preference |
-| **User** | The user who owns this preference |
-| **Created At** | When the preference was created |
+| **Channels**   | The delivery channels enabled for this preference                    |
+| **User**       | The user who owns this preference                                    |
+| **Created At** | When the preference was created                                      |

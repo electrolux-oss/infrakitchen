@@ -7,21 +7,29 @@ import { InfraKitchenApi } from "../../api/InfraKitchenApi";
 const NOTIFICATION_STREAM_SUBSCRIPTION = `
   subscription NotificationStream {
     notificationStream {
+      id
       msg
       title
       status
+      eventType
+      entityType
       entityId
       entityName
+      createdAt
     }
   }
 `;
 
 export interface NotificationMessage {
+  id: string | null;
   msg: string;
   title: string | null;
   status: string;
+  eventType: string | null;
+  entityType: string | null;
   entityId: string | null;
   entityName: string | null;
+  createdAt: string | null;
 }
 
 interface UseNotificationSubscriptionOptions {

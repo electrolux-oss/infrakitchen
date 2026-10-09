@@ -7,12 +7,13 @@ from core.errors import AccessDenied, EntityNotFound
 from core.users.functions import user_is_super_admin
 from core.users.model import UserDTO
 
-from .crud import SubscriptionCRUD, NotificationPreferenceCRUD
+from .crud import SubscriptionCRUD, NotificationPreferenceCRUD, UserNotificationCRUD
 from .model import (
     Subscription,
     NotificationPreference,
     SubscriptionDTO,
     NotificationPreferenceDTO,
+    UserNotification,
 )
 
 logger = logging.getLogger(__name__)
@@ -145,3 +146,46 @@ class NotificationPreferenceService:
                 raise AccessDenied("Only super admins can delete notification preferences of other users")
 
         await self.crud.delete(preference)
+
+
+def _requester_user_ids(requester: UserDTO) -> list[UUID]:
+    """Notifications may be addressed to the requester's own account or to its primary account."""
+    return [requester.id, *(account.id for account in requester.primary_account)]
+
+
+class UserNotificationService:
+    """The requester's in-app notification inbox; every operation is scoped to the requester."""
+
+    def __init__(self, crud: UserNotificationCRUD):
+        self.crud: UserNotificationCRUD = crud
+
+    async def query_all(
+        self,
+        requester: UserDTO,
+        filter: dict[str, Any] | None = None,
+        range: tuple[int, int] | None = None,
+        sort: tuple[str, str] | None = None,
+    ) -> list[UserNotification]:
+        return await self.crud.get_all(_requester_user_ids(requester), filter=filter, range=range, sort=sort)
+
+    async def count(self, requester: UserDTO, filter: dict[str, Any] | None = None) -> int:
+        return await self.crud.count(_requester_user_ids(requester), filter=filter)
+
+    async def unread_count(self, requester: UserDTO) -> int:
+        return await self.crud.count(_requester_user_ids(requester), filter={"read": False})
+
+    async def mark_read(self, requester: UserDTO, ids: list[UUID]) -> int:
+        if not ids:
+            return 0
+        return await self.crud.mark_read(_requester_user_ids(requester), ids)
+
+    async def mark_all_read(self, requester: UserDTO) -> int:
+        return await self.crud.mark_read(_requester_user_ids(requester))
+
+    async def mark_unread(self, requester: UserDTO, ids: list[UUID]) -> int:
+        if not ids:
+            return 0
+        return await self.crud.mark_unread(_requester_user_ids(requester), ids)
+
+    async def purge_older_than(self, days: int) -> int:
+        return await self.crud.purge_older_than(days)

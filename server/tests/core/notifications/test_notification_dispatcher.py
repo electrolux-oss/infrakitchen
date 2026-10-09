@@ -6,6 +6,7 @@ import pytest
 
 from application.tools import notification_manager
 from application.tools.notification_manager import NotificationDispatcher
+from core.notifications import in_app
 from core.notifications.model import OutboxStatus
 
 PAYLOAD = {
@@ -89,11 +90,16 @@ class TestDispatchOnce:
 
 
 class TestInAppDispatch:
-    async def test_in_app_goes_to_the_users_topic(self, monkeypatch):
+    async def test_in_app_is_stored_and_streamed_to_the_users_topic(self, monkeypatch):
         publish = AsyncMock()
-        monkeypatch.setattr(notification_manager.pubsub, "publish", publish)
+        store = AsyncMock(side_effect=lambda msg: {**msg, "id": "n1", "created_at": "2026-10-08T00:00:00+00:00"})
+        monkeypatch.setattr(in_app.pubsub, "publish", publish)
+        monkeypatch.setattr(in_app, "store_in_app_notification", store)
         body = {"provider": "in_app", "user_id": "u1", "msg": "hi"}
 
         await notification_manager._dispatch_notification(body)
 
-        publish.assert_awaited_once_with("notifications.in_app.u1", body)
+        store.assert_awaited_once_with(body)
+        publish.assert_awaited_once_with(
+            "notifications.in_app.u1", {**body, "id": "n1", "created_at": "2026-10-08T00:00:00+00:00"}
+        )

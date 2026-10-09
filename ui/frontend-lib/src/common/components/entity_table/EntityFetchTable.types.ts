@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { MouseEvent, ReactNode } from "react";
 
 import { GridColumnVisibilityModel } from "@mui/x-data-grid";
 
@@ -25,6 +25,8 @@ export interface EntityFetchTableProps {
   rowClickable?: boolean;
   /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
   quickFilters?: ReactNode;
+  /** Replaces the default navigation to the row's detail page. */
+  onRowClick?: (row: any, event?: MouseEvent) => void;
   /** Called with the rows of every fetched page. */
   onDataChange?: (data: any[]) => void;
 }

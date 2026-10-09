@@ -8,6 +8,7 @@ from core.errors import AccessDenied, EntityNotFound
 from core.notifications.dependencies import (
     get_subscription_service,
     get_notification_preference_service,
+    get_user_notification_service,
 )
 from core.notifications.model import NotificationChannel
 from core.users.functions import user_is_super_admin
@@ -97,3 +98,19 @@ class NotificationMutation:
 
         await service.delete(requester=requester, preference_id=id)
         return True
+
+    # User notification inbox mutations, scoped to the authenticated user
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def mark_user_notifications_read(self, info: Info, ids: list[uuid.UUID]) -> int:
+        service = get_user_notification_service(info.context["session"])
+        return await service.mark_read(requester=info.context["user"], ids=ids)
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def mark_all_user_notifications_read(self, info: Info) -> int:
+        service = get_user_notification_service(info.context["session"])
+        return await service.mark_all_read(requester=info.context["user"])
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def mark_user_notifications_unread(self, info: Info, ids: list[uuid.UUID]) -> int:
+        service = get_user_notification_service(info.context["session"])
+        return await service.mark_unread(requester=info.context["user"], ids=ids)

@@ -6,6 +6,7 @@ import type {
   NotificationPreferenceGraphqlRelationField,
   NotificationSubscriptionGraphqlBaseField,
   NotificationSubscriptionGraphqlRelationField,
+  UserNotificationGraphqlBaseField,
 } from "./fragments";
 
 type GqlNotificationSubscriptionFieldTypes = {
@@ -54,4 +55,22 @@ export type GqlNotificationPreference = Pick<
   GqlNotificationPreferenceTypes,
   | NotificationPreferenceGraphqlBaseField
   | NotificationPreferenceGraphqlRelationField
+>;
+
+type GqlUserNotificationFieldTypes = {
+  id: string;
+  eventType: string;
+  entityType: string;
+  entityId: string | null;
+  entityName: string | null;
+  title: string | null;
+  message: string;
+  status: string;
+  readAt: string | null;
+  createdAt: string;
+};
+
+export type GqlUserNotification = Pick<
+  GqlUserNotificationFieldTypes,
+  UserNotificationGraphqlBaseField
 >;

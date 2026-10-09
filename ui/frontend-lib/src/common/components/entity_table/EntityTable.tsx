@@ -74,6 +74,8 @@ export interface ResourceTableProps {
   rowClickable?: boolean;
   /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
   quickFilters?: ReactNode;
+  /** Replaces the default navigation to the row's detail page. */
+  onRowClick?: (row: any, event?: MouseEvent) => void;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -96,6 +98,7 @@ export const EntityTable = ({
   onRefresh,
   rowClickable = true,
   quickFilters,
+  onRowClick,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
   const { linkPrefix } = useConfig();
@@ -110,6 +113,11 @@ export const EntityTable = ({
       // the row to its detail page.
       if ((event?.target as Element | undefined)?.closest("a, button")) return;
 
+      if (onRowClick) {
+        onRowClick(row, event);
+        return;
+      }
+
       const { entityName, id } = row;
       if (!entityName || !id) return;
 
@@ -120,7 +128,7 @@ export const EntityTable = ({
       }
       void navigate(href);
     },
-    [linkPrefix, navigate],
+    [linkPrefix, navigate, onRowClick],
   );
 
   const handleRowClick: GridEventListener<"rowClick"> = useCallback(

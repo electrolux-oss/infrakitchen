@@ -28,7 +28,7 @@ from core.errors import EntityExistsError
 from core.notifications.service import SubscriptionService
 from core.permissions.schema import ActionLiteral, EntityPolicyCreate
 from core.permissions.service import PermissionService
-from core.users.functions import user_entity_permissions
+from core.users.functions import get_entity_admin_user_ids, user_entity_permissions
 from core.users.model import UserDTO
 from application.types import STATE_BACKEND_INTEGRATION_PROVIDERS
 from application.validation_rules.model import ValidationRuleTargetType
@@ -146,6 +146,20 @@ async def get_resource_actions(
             actions.append(ModelActions.DRYRUN)
 
     return actions
+
+
+async def get_resource_approver_ids(resource: ResourceResponse) -> set[str]:
+    """IDs of users who can approve the resource: project owners and resource/project admins.
+
+    Super admins are only included when they were granted one of these roles explicitly.
+    """
+    entities: list[tuple[str, str | UUID]] = [("resource", resource.id)]
+    approver_ids: set[str] = set()
+    if resource.project:
+        entities.append(("project", resource.project.id))
+        approver_ids.update(str(owner.id) for owner in resource.project.owners)
+    approver_ids |= await get_entity_admin_user_ids(entities)
+    return approver_ids
 
 
 def merge_tags_or_configs(tags: Sequence[DependencyType], *args: Sequence[DependencyType]) -> Sequence[DependencyType]:
