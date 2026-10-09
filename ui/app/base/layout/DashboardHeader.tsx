@@ -5,6 +5,7 @@ import { Link } from "react-router";
 import {
   CODE_FONT_FAMILY,
   Label,
+  NotificationBell,
   ServerInfoDialog,
   useConfig,
 } from "@electrolux-oss/infrakitchen";
@@ -200,6 +201,7 @@ export default function DashboardHeader({
               }}
             >
               <ThemeSwitcher />
+              <NotificationBell />
             </Stack>
             <UserSidebar />
           </Stack>

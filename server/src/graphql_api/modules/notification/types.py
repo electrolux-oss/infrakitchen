@@ -4,12 +4,13 @@ import strawberry
 from strawberry.types import Info
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
-from core.notifications.model import Subscription, NotificationPreference
+from core.notifications.model import Subscription, NotificationPreference, UserNotification
 from graphql_api.modules.user.types import UserType
 
 
 subscription_mapper = StrawberrySQLAlchemyMapper()
 notification_preference_mapper = StrawberrySQLAlchemyMapper()
+user_notification_mapper = StrawberrySQLAlchemyMapper()
 
 
 @subscription_mapper.type(Subscription)
@@ -36,5 +37,14 @@ class NotificationPreferenceType:
     user: UserType | None = None
 
 
+@user_notification_mapper.type(UserNotification)
+class UserNotificationType:
+    __exclude__ = ["user_id"]
+
+    id: uuid.UUID = strawberry.UNSET
+    entity_id: str | None = None
+
+
 subscription_mapper.finalize()
 notification_preference_mapper.finalize()
+user_notification_mapper.finalize()

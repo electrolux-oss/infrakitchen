@@ -76,11 +76,17 @@ const ANSI_ESCAPE_RE = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
 const stripAnsi = (line: string): string =>
   line.replace(ANSI_ESCAPE_RE, "").trim();
 
+// Failure lines the task worker logs when a run is aborted (see task_worker.py handlers)
+const WORKER_FAILURE_RE =
+  /^(ExitWithoutSave|CannotProceed|CloudWrongCredentials|CloudExecutionError|AssertionError|IntegrityError|FileNotFoundError):/;
+
 const isFatalErrorLine = (line: string): boolean => {
   return (
     /^fatal:/i.test(line) ||
     /^Command\s+'.+'\s+failed\s+with\s+exit\s+code\s+\d+/i.test(line) ||
-    /^Unhandled exception occurred$/i.test(line)
+    /^Unhandled exception occurred$/i.test(line) ||
+    /^Task is timed out$/i.test(line) ||
+    WORKER_FAILURE_RE.test(line)
   );
 };
 

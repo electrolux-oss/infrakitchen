@@ -1,7 +1,35 @@
 import {
   NOTIFICATION_PREFERENCE_FIELDS,
   NOTIFICATION_SUBSCRIPTION_FIELDS,
+  USER_NOTIFICATION_FIELDS,
 } from "./fragments";
+
+export const RECENT_USER_NOTIFICATIONS_QUERY = `
+  query RecentUserNotifications($range: [Int!]) {
+    userNotifications(sort: ["created_at", "DESC"], range: $range) {
+      ${USER_NOTIFICATION_FIELDS}
+    }
+    unreadUserNotificationsCount
+  }
+`;
+
+export const MARK_USER_NOTIFICATIONS_READ_MUTATION = `
+  mutation MarkUserNotificationsRead($ids: [UUID!]!) {
+    markUserNotificationsRead(ids: $ids)
+  }
+`;
+
+export const MARK_ALL_USER_NOTIFICATIONS_READ_MUTATION = `
+  mutation MarkAllUserNotificationsRead {
+    markAllUserNotificationsRead
+  }
+`;
+
+export const MARK_USER_NOTIFICATIONS_UNREAD_MUTATION = `
+  mutation MarkUserNotificationsUnread($ids: [UUID!]!) {
+    markUserNotificationsUnread(ids: $ids)
+  }
+`;
 
 export const RESOURCE_NOTIFICATION_STATE_QUERY = `
   query ResourceNotificationState($subscriptionFilter: JSON, $preferenceFilter: JSON) {

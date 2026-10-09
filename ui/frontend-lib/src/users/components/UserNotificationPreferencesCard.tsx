@@ -169,9 +169,6 @@ const NotificationPreferenceDialog = ({
       }
       actions={
         <Stack direction="row" spacing={1}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
           <Button variant="contained" onClick={handleSave} disabled={isLoading}>
             {initialPreference ? "Save" : "Create"}
           </Button>

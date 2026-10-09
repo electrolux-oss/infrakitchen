@@ -65,27 +65,28 @@ class TestNotifySuperseded:
 
     async def test_notifies_requester_once_when_same_user(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
+        monkeypatch.setattr(notifications_mod, "deliver_in_app_notification", send)
         user = uuid4()
 
         await notify_superseded(self.superseded(created_by=user, replaced_by_user=user))
 
         send.assert_awaited_once()
-        topic, body = send.await_args_list[0].args
-        assert topic == f"notifications.in_app.{user}"
+        body = send.await_args_list[0].args[0]
+        assert body["user_id"] == str(user)
+        assert body["entity_type"] == "resource"
         assert body["status"] == "warning"
         assert body["title"] == "Resource action already queued"
         assert "'execute'" in body["msg"] and "'dryrun'" in body["msg"]
 
     async def test_notifies_both_users_when_different(self, monkeypatch):
         send = AsyncMock()
-        monkeypatch.setattr(notifications_mod.pubsub, "publish", send)
+        monkeypatch.setattr(notifications_mod, "deliver_in_app_notification", send)
         old_user, new_user = uuid4(), uuid4()
 
         await notify_superseded(self.superseded(created_by=old_user, replaced_by_user=new_user))
 
-        topics = [call.args[0] for call in send.await_args_list]
-        assert topics == [f"notifications.in_app.{new_user}", f"notifications.in_app.{old_user}"]
+        user_ids = [call.args[0]["user_id"] for call in send.await_args_list]
+        assert user_ids == [str(new_user), str(old_user)]
 
 
 class TestToRow:

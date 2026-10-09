@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
+    NOTIFICATION_RETENTION_DAYS: int = 30  # in-app notifications older than this are purged
 
     class ConfigDict:
         env_file = ".env"

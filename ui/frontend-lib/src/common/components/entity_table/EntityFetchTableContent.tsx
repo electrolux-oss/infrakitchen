@@ -39,6 +39,7 @@ interface EntityFetchTableContentProps {
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
   rowClickable?: boolean;
+  onRowClick?: (row: any, event?: MouseEvent) => void;
   onDataChange?: (data: any[]) => void;
   buildApiFiltersRef: MutableRefObject<
     ((filterValues: Record<string, any>) => Record<string, any>) | undefined
@@ -79,6 +80,7 @@ export const EntityFetchTableContent = forwardRef<
     entityFieldMap,
     transformFn,
     rowClickable,
+    onRowClick,
     onDataChange,
     buildApiFiltersRef,
     defaultFilterRef,
@@ -266,6 +268,7 @@ export const EntityFetchTableContent = forwardRef<
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         onRefresh={fetchFilteredData}
         rowClickable={rowClickable}
+        onRowClick={onRowClick}
       />
     </Box>
   );
