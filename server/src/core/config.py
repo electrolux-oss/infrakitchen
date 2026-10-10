@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
     MCP_ENABLED: bool = False
+    OTEL_METRICS_ENABLED: bool = True
+    OTEL_SERVICE_NAME: str = "infrakitchen"
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4318/v1/metrics"
+    OTEL_EXPORTER_OTLP_PROTOCOL: str = "http/protobuf"
+    OTEL_RESOURCE_ATTRIBUTES: str = ""
     # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
     TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
     # Task queue / worker settings

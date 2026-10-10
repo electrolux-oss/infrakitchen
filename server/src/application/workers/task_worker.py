@@ -46,18 +46,23 @@ from core.scheduler.executor import SchedulerExecutor
 from core.task_queue.crud import TaskQueueCRUD
 from core.task_queue.model import TASK_QUEUE_CHANNEL, TaskQueueItemDTO, TaskQueueKind
 from core.task_queue.service import TaskQueueService
+from core.telemetry import get_meter
 from core.users.dependencies import get_user_service
 from core.users.model import UserDTO
 from core.workers.crud import WorkerCRUD
 from core.workers.functions import get_host_metadata
 from core.workers.model import WorkerDTO
 from core.workers.service import WorkerService
-from prometheus_client import Counter
 
 logger = logging.getLogger("TaskWorker")
 
 
-prometheus_counter = Counter("tasks_total", "Total executed tasks", ["job_type", "status"])
+meter = get_meter("infrakitchen.worker.tasks")
+task_executions_counter = meter.create_counter(
+    name="infrakitchen.tasks.executions",
+    description="Total executed tasks",
+    unit="{task}",
+)
 
 TaskController = (
     SourceCodeTask
@@ -318,9 +323,9 @@ class TaskWorker:
         try:
             await task_controller.start_pipeline()
             await self._send_success_notification(task_controller, action)
-            prometheus_counter.labels(item.entity, "success").inc()
+            task_executions_counter.add(1, {"job_type": item.entity, "status": "success"})
         except Exception as e:
-            prometheus_counter.labels(item.entity, "error").inc()
+            task_executions_counter.add(1, {"job_type": item.entity, "status": "error"})
             await self.handle_exception(e, item, task_controller, action)
 
     async def build_task_controller(self, session: AsyncSession, item: TaskQueueItemDTO) -> TaskController:

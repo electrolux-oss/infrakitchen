@@ -23,6 +23,12 @@ fixtures:
 format:
 	cd server && uv run ruff format && uv run ruff check --fix
 
+otel-collector:
+	docker run --rm --name infrakitchen-otel-collector \
+		-p 4317:4317 -p 4318:4318 -p 9464:9464 \
+		-v $(PWD)/observability/otel-local.yaml:/etc/otelcol-contrib/config.yaml:ro \
+		otel/opentelemetry-collector-contrib:latest
+
 # --- Docs (Blume) ---
 docs-dev:
 	npm run dev
