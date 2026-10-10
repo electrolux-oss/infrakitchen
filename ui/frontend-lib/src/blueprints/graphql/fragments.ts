@@ -79,6 +79,7 @@ export const BLUEPRINT_USE_FIELDS = `
     BLUEPRINT_GRAPHQL_FIELDS.relations.templates,
     `
     ${TEMPLATE_SHORT_FIELDS}
+    configuration
     parents {
       ${TEMPLATE_SHORT_FIELDS}
     }

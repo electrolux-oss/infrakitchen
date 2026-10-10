@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
+import { flushSync } from "react-dom";
+
 import { useEventStreamSubscription } from "../hooks/useEventStreamSubscription";
 
 import { useConfig } from "./ConfigContext";
@@ -22,7 +24,9 @@ export const EventProvider = ({ children }: { children: ReactNode }) => {
     ikApi,
     enabled: subscriptionEnabled,
     onMessage: (data) => {
-      setEvent(data.payload);
+      // Consumers react to `event` in effects: commit each event on its own, otherwise
+      // events arriving back to back are batched and only the last one is seen
+      flushSync(() => setEvent(data.payload));
     },
   });
 

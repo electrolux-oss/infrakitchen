@@ -462,7 +462,10 @@ async def validate_resource_variables_on_create(
             continue
 
         if resource_variable is None:
-            raise ValueError(f"Variable '{variable.name}' is missing in the resource.")
+            if variable.required:
+                raise ValueError(f"Variable '{variable.name}' is missing in the resource.")
+            # An optional variable left out gets its default, like one sent without a value
+            resource_variable = Variables(name=variable.name, value=None)
 
         resource_variable.type = variable.type
         resource_variable.description = variable.description if variable.description else resource_variable.description
@@ -626,6 +629,11 @@ async def convert_field_by_naming_convention_pattern(
         for var in resource.variables:
             if var.name in matches:
                 resource_field_value = resource_field_value.replace(f"{{{var.name}}}", str(var.value))
+
+        # Own dependency config, e.g. required configuration of abstract templates
+        for config in resource.dependency_config:
+            if config.name in matches and config.value is not None:
+                resource_field_value = resource_field_value.replace(f"{{{config.name}}}", str(config.value))
 
         if "{" in resource_field_value or "}" in resource_field_value:
             for parent in parents or []:

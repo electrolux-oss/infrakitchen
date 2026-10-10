@@ -49,6 +49,7 @@ export const CREATE_BLUEPRINT_MUTATION = `
 
 export interface BlueprintWorkflowCreateMutationInput {
   variableOverrides: Record<string, Record<string, any>>;
+  dependencyConfigOverrides: Record<string, Record<string, string>>;
   workspaceId: string | null;
   integrationIds: string[];
   storageId: string | null;

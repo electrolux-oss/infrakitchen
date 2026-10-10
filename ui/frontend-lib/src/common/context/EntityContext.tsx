@@ -72,12 +72,18 @@ export const EntityProvider = ({
   entity_id,
   entityFields,
   transformFn,
+  refetchOnEvent = false,
 }: {
   children: ReactNode;
   entity_name: string;
   entity_id: string;
   entityFields?: string;
   transformFn?: (data: any) => any;
+  /**
+   * Refetch the entity on each of its events instead of merging the event body,
+   * for entities whose nested data events can't be merged into (e.g. workflow steps).
+   */
+  refetchOnEvent?: boolean;
 }) => {
   const [actions, setActions] = useState<string[]>([]);
   const [entity, setEntity] = useState<Record<string, any>>();
@@ -104,19 +110,31 @@ export const EntityProvider = ({
 
   useEffect(() => {
     if (event && event.id === entity_id) {
+      if (refetchOnEvent) {
+        setSilentRefresh((prev) => prev + 1);
+        return;
+      }
       const statusChanged =
         event.status !== undefined && event.status !== entityStatusRef.current;
+      // Events too big for the live stream keep only small top-level fields,
+      // the rest has to be refetched
+      const truncated = !!event._metadata?.truncated;
       setEntity((prev) => ({ ...prev, ...camelizeKeys(event) }));
-      if (tracksTaskQueue && statusChanged) {
+      if (truncated || (tracksTaskQueue && statusChanged)) {
         setSilentRefresh((prev) => prev + 1);
       }
     }
-  }, [event, entity_id, tracksTaskQueue]);
+  }, [event, entity_id, tracksTaskQueue, refetchOnEvent]);
+
+  // Events can trigger refetches in quick succession; only the latest response is applied
+  const latestFetchRef = useRef(0);
 
   const fetchEntity = useCallback(
     async (silent: boolean) => {
       if (!entity_id) return;
       if (!silent) setLoading(true);
+      const fetchId = ++latestFetchRef.current;
+      const isStale = () => fetchId !== latestFetchRef.current;
       try {
         await ikApi
           .graphqlRequest(
@@ -132,6 +150,7 @@ export const EntityProvider = ({
             { id: entity_id },
           )
           .then((response: any) => {
+            if (isStale()) return undefined;
             const data = response?.[entity_name];
             if (!data) {
               throw new ApiClientError(
@@ -148,13 +167,14 @@ export const EntityProvider = ({
             return transformFn ? transformFn(data) : data;
           })
           .then((response: any) => {
+            if (isStale()) return;
             setEntity(response);
             setNotFound(false);
             setError(null);
           });
       } catch (e: any) {
         // A failed background refresh keeps the page as it is
-        if (silent) return;
+        if (silent || isStale()) return;
         const entityNotFound = isNotFoundError(e);
         if (!entityNotFound) {
           notifyError(e);

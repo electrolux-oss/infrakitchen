@@ -48,6 +48,7 @@ TEMPLATE_PORTS_QUERY = """
                 inputConfigName
                 outputConfigName
             }
+            requiredConfigs
         }
     }
 """
@@ -128,6 +129,7 @@ class TestSourceCodeVersionQueries:
                             output_config_name="output_one",
                         )
                     ],
+                    required_configs=["service_name"],
                 )
             ]
         )
@@ -167,6 +169,7 @@ class TestSourceCodeVersionQueries:
                             "outputConfigName": "output_one",
                         }
                     ],
+                    "requiredConfigs": ["service_name"],
                 }
             ]
         }

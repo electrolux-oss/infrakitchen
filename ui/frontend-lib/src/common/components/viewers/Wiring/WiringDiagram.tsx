@@ -40,9 +40,13 @@ function derivePorts(
   constants: Array<{ id: string; name: string }>,
   wiring: WiringRule[],
 ): Record<string, TemplatePorts> {
-  const m: Record<string, { inputs: Set<string>; outputs: Set<string> }> = {};
+  const m: Record<
+    string,
+    { inputs: Set<string>; outputs: Set<string>; configs: Set<string> }
+  > = {};
   const ensure = (id: string) => {
-    if (!m[id]) m[id] = { inputs: new Set(), outputs: new Set() };
+    if (!m[id])
+      m[id] = { inputs: new Set(), outputs: new Set(), configs: new Set() };
   };
 
   for (const t of templates) ensure(t.id);
@@ -57,18 +61,28 @@ function derivePorts(
     if (isConstant) {
       const c = constants.find((c) => c.id === w.source_template_id);
       m[w.source_template_id]?.outputs.add(c?.name ?? "value");
+    } else if (w.source_type === "dependency_config") {
+      m[w.source_template_id]?.configs.add(w.source_output);
     } else {
       m[w.source_template_id]?.outputs.add(w.source_output);
     }
 
     ensure(w.target_template_id);
-    m[w.target_template_id]?.inputs.add(w.target_variable);
+    if (w.target_type === "dependency_config") {
+      m[w.target_template_id]?.configs.add(w.target_variable);
+    } else {
+      m[w.target_template_id]?.inputs.add(w.target_variable);
+    }
   }
 
   return Object.fromEntries(
     Object.entries(m).map(([id, sets]) => [
       id,
-      { inputs: [...sets.inputs], outputs: [...sets.outputs] },
+      {
+        inputs: [...sets.inputs],
+        outputs: [...sets.outputs],
+        configs: [...sets.configs],
+      },
     ]),
   );
 }

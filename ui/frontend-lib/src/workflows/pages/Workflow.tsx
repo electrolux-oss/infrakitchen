@@ -17,6 +17,8 @@ export const WorkflowPage = () => {
       entity_name="workflow"
       entity_id={workflow_id || ""}
       entityFields={PAGE_FIELDS}
+      // workflow events carry every step and are cut down for the live stream
+      refetchOnEvent
     >
       <EntityContainer title="Workflow" showEditAction>
         <WorkflowContent />

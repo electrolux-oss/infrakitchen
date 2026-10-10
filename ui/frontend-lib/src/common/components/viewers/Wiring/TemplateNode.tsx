@@ -370,6 +370,99 @@ export function TemplateNode({ data }: NodeProps<DiagramNode>) {
           </Box>
         )}
       </Box>
+      {/* Required configuration variables: set from a wire and usable as a source */}
+      {(data.configs?.length ?? 0) > 0 && (
+        <Box sx={{ px: 1.5, pb: 1.5 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              fontWeight: 600,
+              display: "block",
+              mb: 0.5,
+            }}
+          >
+            Dependency config
+          </Typography>
+          {data.configs?.map((config) => (
+            <Box
+              key={`config-${config}`}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                my: 0.4,
+                minWidth: 0,
+              }}
+            >
+              {/* External resources already exist, their config is only a source */}
+              {!isExternal && (
+                <Tooltip
+                  title={
+                    <>
+                      Drag from an output or constant to set{" "}
+                      <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                        {config}
+                      </InlineCode>
+                    </>
+                  }
+                  arrow
+                  placement="left"
+                >
+                  <Handle
+                    type="target"
+                    position={Position.Left}
+                    id={`config-in-${config}`}
+                    style={{
+                      ...makeHandleStyle(palette.secondary.main, bg),
+                      marginRight: 4,
+                    }}
+                  />
+                </Tooltip>
+              )}
+              <Tooltip title={config} arrow>
+                <Chip
+                  label={config}
+                  variant="outlined"
+                  color="secondary"
+                  sx={{
+                    fontSize: 11,
+                    minWidth: 0,
+                    flex: "0 1 auto",
+                    mr: "auto",
+                    "& .MuiChip-label": {
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    },
+                  }}
+                />
+              </Tooltip>
+              <Tooltip
+                title={
+                  <>
+                    Drag to connect{" "}
+                    <InlineCode disableCopy sx={{ mx: 0.25 }}>
+                      {config}
+                    </InlineCode>{" "}
+                    to an input
+                  </>
+                }
+                arrow
+                placement="right"
+              >
+                <Handle
+                  type="source"
+                  position={Position.Right}
+                  id={`config-out-${config}`}
+                  style={{
+                    ...makeHandleStyle(palette.secondary.main, bg),
+                    marginLeft: 4,
+                  }}
+                />
+              </Tooltip>
+            </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

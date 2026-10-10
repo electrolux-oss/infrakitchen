@@ -4,6 +4,8 @@ from typing import Any
 from uuid import UUID
 
 from application.blueprints.model import blueprint_workflows
+from application.integrations.service import IntegrationService
+from application.resources.functions import validate_not_state_backend_integrations
 from application.workflows.model import Workflow
 from application.workflows.schema import WorkflowCreate, WorkflowRequest, WorkflowStepCreate
 from application.workflows.service import WorkflowService
@@ -48,12 +50,14 @@ class BlueprintService:
         self,
         crud: BlueprintCRUD,
         workflow_service: WorkflowService,
+        integration_service: IntegrationService,
         revision_handler: RevisionHandler,
         event_sender: EventSender,
         audit_log_handler: AuditLogHandler,
     ):
         self.crud = crud
         self.workflow_service = workflow_service
+        self.integration_service = integration_service
         self.revision_handler = revision_handler
         self.event_sender = event_sender
         self.audit_log_handler = audit_log_handler
@@ -174,7 +178,12 @@ class BlueprintService:
         if blueprint is None:
             raise EntityNotFound("Blueprint not found")
 
-        self._validate_constants(blueprint, request.variable_overrides)
+        self._validate_constants(blueprint, request.variable_overrides, request.dependency_config_overrides)
+
+        # Integrations are optional, but state backend ones can be used only through the storage
+        if request.integration_ids:
+            integrations = await self.integration_service.get_all_dto(filter={"id": request.integration_ids})
+            validate_not_state_backend_integrations(integrations)
 
         wiring_rules = [WiringRule(**w) for w in (blueprint.wiring or [])]
         template_ids = [t.id for t in blueprint.templates]
@@ -197,6 +206,7 @@ class BlueprintService:
                     template_id=tid,
                     position=position,
                     resolved_variables=merged_vars,
+                    resolved_dependency_config=dict(request.dependency_config_overrides.get(str(tid), {})),
                     parent_resource_ids=request.parent_overrides.get(str(tid), []),
                     source_code_version_id=request.source_code_version_overrides.get(str(tid)),
                     integration_ids=request.integration_ids,
@@ -225,11 +235,16 @@ class BlueprintService:
         return workflow_orm
 
     @staticmethod
-    def _validate_constants(blueprint: Any, variable_overrides: dict[str, dict[str, Any]]) -> None:
+    def _validate_constants(
+        blueprint: Any,
+        variable_overrides: dict[str, dict[str, Any]],
+        dependency_config_overrides: dict[str, dict[str, Any]] | None = None,
+    ) -> None:
         """
         Ensure every constant declared in ``blueprint.configuration.constants``
-        has a non-empty value supplied through ``variable_overrides`` for each
-        of its wired targets (``blueprint.configuration.constant_wires``).
+        has a non-empty value supplied for each of its wired targets
+        (``blueprint.configuration.constant_wires``): through ``variable_overrides``
+        for input variables, ``dependency_config_overrides`` for dependency config.
         """
         configuration = blueprint.configuration or {}
         constants = configuration.get("constants") or []
@@ -253,7 +268,12 @@ class BlueprintService:
             for wire in wires:
                 target_template = str(wire["target_template_id"])
                 target_variable = wire["target_variable"]
-                value = (variable_overrides.get(target_template) or {}).get(target_variable)
+                overrides = (
+                    dependency_config_overrides or {}
+                    if wire.get("target_type") == "dependency_config"
+                    else variable_overrides
+                )
+                value = (overrides.get(target_template) or {}).get(target_variable)
                 if value is None or (isinstance(value, str) and value.strip() == ""):
                     missing.append(name)
                     break
@@ -323,7 +343,7 @@ class BlueprintService:
 
         # 2) Wired outputs from upstream
         for rule in wiring_rules:
-            if str(rule.target_template_id) == tid_str:
+            if str(rule.target_template_id) == tid_str and rule.target_type == "variable":
                 source_outputs = completed_outputs.get(str(rule.source_template_id), {})
                 if rule.source_output in source_outputs:
                     variables[rule.target_variable] = source_outputs[rule.source_output]

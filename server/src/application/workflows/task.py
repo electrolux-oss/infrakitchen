@@ -6,12 +6,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.attributes import flag_modified
 
+from application.common.schema import DependencyConfig
 from application.resources.schema import ResourceCreate, Variables
 from application.resources.service import ResourceService
 from application.source_code_versions.service import SourceCodeVersionService
 from application.templates.service import TemplateService
 from application.workflows.model import Workflow, WorkflowStep
-from application.workflows.schema import WorkflowResponse, WorkflowStepResponse
+from application.workflows.schema import WiringRule, WorkflowResponse, WorkflowStepResponse
 from application.workflows.service import WorkflowService
 from core.base_models import PatchBodyModel
 from core.constants.model import ModelActions, ModelState, ModelStatus, WorkflowAction
@@ -77,21 +78,31 @@ class WorkflowTask:
             if not template.configuration.naming_convention:
                 raise CannotProceed(f"Template {template.id} does not have a naming convention defined")
 
+            # Parents outside the workflow are selected explicitly, the others are created by earlier steps
             parent_resources = [r.id for r in step.parent_resource_ids]
-            if not parent_resources and template.parents:
-                parent_resources = [
-                    stp.resource_id
-                    for stp in self.workflow_instance.steps
-                    if stp.template_id in [parent.id for parent in template.parents] and stp.resource_id is not None
-                ]
+            selected_parent_templates = {r.template_id for r in step.parent_resource_ids}
+            parent_resources += [
+                stp.resource_id
+                for stp in self.workflow_instance.steps
+                if stp.template_id in [parent.id for parent in template.parents]
+                and stp.template_id not in selected_parent_templates
+                and stp.resource_id is not None
+            ]
 
-            # Resolve wired variables from completed upstream resources
-            wired_vars = await self._resolve_wired_variables(step)
+            # Resolve wired variables and dependency config from upstream resources
+            wired_vars, wired_config = await self._resolve_wired_variables(step)
             if wired_vars:
                 step.resolved_variables = {**step.resolved_variables, **wired_vars}
                 flag_modified(step, "resolved_variables")
                 self.logger.info(f"Resolved wired variables for step {step.id}: {list(wired_vars.keys())}")
+            if wired_config:
+                step.resolved_dependency_config = {**(step.resolved_dependency_config or {}), **wired_config}
+                flag_modified(step, "resolved_dependency_config")
+                self.logger.info(f"Resolved wired dependency config for step {step.id}: {list(wired_config.keys())}")
 
+            storage_path = (
+                f"service-catalog/{template.template}/{template.configuration.naming_convention}/terraform.tfstate"
+            )
             resource = ResourceCreate(
                 name=template.configuration.naming_convention,
                 template_id=step.template_id,
@@ -100,10 +111,15 @@ class WorkflowTask:
                 integration_ids=[i.id for i in step.integration_ids],
                 secret_ids=[s.id for s in step.secret_ids],
                 variables=[Variables(name=k, value=v) for k, v in step.resolved_variables.items()],
-                dependency_config=[],
+                dependency_config=[
+                    DependencyConfig(name=k, value=str(v), inherited_by_children=True)
+                    for k, v in (step.resolved_dependency_config or {}).items()
+                    if v is not None
+                ],
                 dependency_tags=[],
-                storage_id=step.storage_id,
-                storage_path=f"service-catalog/{template.template}/{template.configuration.naming_convention}/terraform.tfstate",
+                # Abstract resources have no tf state
+                storage_id=None if template.abstract else step.storage_id,
+                storage_path=None if template.abstract else storage_path,
                 workspace_id=None,
             )
             created_resource = await self.resource_service.create(
@@ -339,71 +355,92 @@ class WorkflowTask:
                 delay_seconds=0,
             )
             self.logger.info(f"Sent task to process step {step.id}")
+        # The commit above already flushed; write what was buffered after it now
+        await self.event_sender.flush()
 
-    async def _resolve_wired_variables(self, step: WorkflowStep) -> dict[str, Any]:
+    def _external_parent_resource_id(self, template_id: UUID) -> UUID | None:
+        """The resource selected as parent from outside the workflow for ``template_id``, if any."""
+        for stp in self.workflow_instance.steps:
+            for parent in stp.parent_resource_ids:
+                if parent.template_id == template_id:
+                    return parent.id
+        return None
+
+    async def _source_value(self, resource_id: UUID, rule: WiringRule) -> tuple[bool, Any]:
+        """Value of the wired output or dependency config of a resource, and whether it was found."""
+        resource = await self.resource_service.get_by_id(resource_id)
+        if not resource:
+            self.logger.warning(f"Resource {resource_id} not found for wire {rule.source_output}")
+            return False, None
+
+        entries = resource.dependency_config if rule.source_type == "dependency_config" else resource.outputs
+        for entry in entries:
+            if entry.name == rule.source_output:
+                return True, entry.value
+        self.logger.warning(f"{rule.source_type} '{rule.source_output}' not found in resource {resource_id}")
+        return False, None
+
+    async def _resolve_wired_variables(self, step: WorkflowStep) -> tuple[dict[str, Any], dict[str, Any]]:
         """
-        Resolve wired variables from completed upstream resources and constant blocks.
+        Resolve the wires targeting this step's template into input variables and dependency config.
 
-        For each wiring rule targeting this step's template:
-        - If source is a completed step with a resource:
-          - Regular outputs → use the source resource's output value
-        - If source has no step (constant/external block):
-          - Infer the constant value from another completed step that received
-            the same constant output via wiring
+        The source of a wire is an output or a dependency config value of:
+        - a completed step of the workflow, read from its resource;
+        - a template outside the workflow, read from the parent resource selected for it;
+        - otherwise a constant block: the value is inferred from a completed step that
+          received the same constant through another wire.
         """
         wired_vars: dict[str, Any] = {}
+        wired_config: dict[str, Any] = {}
         template_id_str = step.template_id
-        step_by_template: dict[UUID, WorkflowStepResponse] = {s.template_id: s for s in self.workflow_pydantic.steps}
+        # workflow_pydantic is a snapshot from the task start, so an upstream step completed
+        # earlier in this same task would still look unfinished there; use the current state
+        workflow = WorkflowResponse.model_validate(self.workflow_instance)
+        step_by_template: dict[UUID, WorkflowStepResponse] = {s.template_id: s for s in workflow.steps}
 
-        for rule in self.workflow_pydantic.wiring_snapshot:
-            source_tid = rule.source_template_id
-            target_tid = rule.target_template_id
-
-            if target_tid != template_id_str:
+        for rule in workflow.wiring_snapshot:
+            if rule.target_template_id != template_id_str:
                 continue
 
-            source_output: str = rule.source_output
-            target_variable: str = rule.target_variable
-            source_step = step_by_template.get(source_tid)
+            target = wired_config if rule.target_type == "dependency_config" else wired_vars
+            source_step = step_by_template.get(rule.source_template_id)
 
-            if source_step and source_step.resource_id and source_step.status == ModelStatus.DONE:
-                # Fetch resource (cached)
-                rid = source_step.resource_id
-                resource = await self.resource_service.get_by_id(rid)
-                if not resource:
-                    self.logger.warning(f"Resource {rid} not found for completed step {source_step.id}")
-                    continue
+            if source_step:
+                if source_step.resource_id and source_step.status == ModelStatus.DONE:
+                    found, value = await self._source_value(source_step.resource_id, rule)
+                    if found:
+                        target[rule.target_variable] = value
+                continue
 
-                for o in resource.outputs:
-                    if o.name == source_output:
-                        wired_vars[target_variable] = o.value
-                        break
-                else:
-                    self.logger.warning(f"Output '{source_output}' not found in resource {rid}")
+            if external_resource_id := self._external_parent_resource_id(rule.source_template_id):
+                found, value = await self._source_value(external_resource_id, rule)
+                if found:
+                    target[rule.target_variable] = value
+                continue
 
-            elif not source_step:
-                # Constant/external block without a workflow step.
-                # Infer the value from a completed step that also received
-                # the same output from this constant via another wiring rule.
-                for other_rule in self.workflow_pydantic.wiring_snapshot:
-                    if (
-                        other_rule.source_template_id == source_tid
-                        and other_rule.source_output == source_output
-                        and other_rule.target_template_id != template_id_str
-                    ):
-                        other_step = step_by_template.get(other_rule.target_template_id)
-                        if other_step and other_step.status == ModelStatus.DONE:
-                            other_var = other_rule.target_variable
-                            if other_var in other_step.resolved_variables:
-                                wired_vars[target_variable] = other_step.resolved_variables[other_var]
-                                break
-                else:
-                    if target_variable not in wired_vars:
-                        self.logger.warning(
-                            f"Could not resolve constant wire {source_tid}:{source_output} → {target_variable}"
+            # Constant block: infer the value from another completed step it is wired to
+            for other_rule in workflow.wiring_snapshot:
+                if (
+                    other_rule.source_template_id == rule.source_template_id
+                    and other_rule.source_output == rule.source_output
+                    and other_rule.target_template_id != template_id_str
+                ):
+                    other_step = step_by_template.get(other_rule.target_template_id)
+                    if other_step and other_step.status == ModelStatus.DONE:
+                        other_values = (
+                            other_step.resolved_dependency_config
+                            if other_rule.target_type == "dependency_config"
+                            else other_step.resolved_variables
                         )
+                        if other_rule.target_variable in other_values:
+                            target[rule.target_variable] = other_values[other_rule.target_variable]
+                            break
+            else:
+                self.logger.warning(
+                    f"Could not resolve wire {rule.source_template_id}:{rule.source_output} → {rule.target_variable}"
+                )
 
-        return wired_vars
+        return wired_vars, wired_config
 
     async def make_failed(self) -> None:
         await self.change_entity_status(new_status=ModelStatus.ERROR)

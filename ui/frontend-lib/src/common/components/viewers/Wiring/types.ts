@@ -1,8 +1,15 @@
+export type WiringSourceType = "output" | "dependency_config";
+export type WiringTargetType = "variable" | "dependency_config";
+
 export interface WiringRule {
   source_template_id: string;
   source_output: string;
   target_template_id: string;
   target_variable: string;
+  /** Source is an output (default) or a required dependency config of the source template */
+  source_type?: WiringSourceType;
+  /** Target is an input variable (default) or a required dependency config of the target template */
+  target_type?: WiringTargetType;
 }
 
 export interface GenericTemplate {

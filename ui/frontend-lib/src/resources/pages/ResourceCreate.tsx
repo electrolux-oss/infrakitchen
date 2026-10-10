@@ -254,9 +254,10 @@ const ResourceCreatePageInner = () => {
     [watchedIntegrationIds],
   );
 
-  const integrationRequired =
-    (watchedTemplate?.configuration.allowedProviderIntegrationTypes?.length ??
-      0) > 0;
+  // template configuration is a raw JSON field, so its keys are snake_case
+  const allowedIntegrationTypes: string[] =
+    watchedTemplate?.configuration?.allowed_provider_integration_types ?? [];
+  const integrationRequired = allowedIntegrationTypes.length > 0;
 
   const filter_template = useMemo(
     () => ({
@@ -288,9 +289,11 @@ const ResourceCreatePageInner = () => {
   );
 
   useEffect(() => {
-    if (watchedTemplate?.configuration?.namingConvention) {
-      setNamingConvention(watchedTemplate.configuration.namingConvention);
-      setValue("name", watchedTemplate.configuration.namingConvention, {
+    const templateNamingConvention =
+      watchedTemplate?.configuration?.naming_convention;
+    if (templateNamingConvention) {
+      setNamingConvention(templateNamingConvention);
+      setValue("name", templateNamingConvention, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -326,7 +329,7 @@ const ResourceCreatePageInner = () => {
 
   useEffect(() => {
     const requiredVars =
-      watchedTemplate?.configuration?.requiredConfigurationVariables || [];
+      watchedTemplate?.configuration?.required_configuration_variables || [];
     if (requiredVars.length === 0) return;
     const currentConfig = (watch("dependencyConfig") || []) as Array<{
       name: string;
@@ -733,7 +736,7 @@ const ResourceCreatePageInner = () => {
                   requiredConfigVars: (value) => {
                     const required =
                       watchedTemplate?.configuration
-                        ?.requiredConfigurationVariables;
+                        ?.required_configuration_variables;
                     if (!required || required.length === 0) return true;
                     const dependencyConfigValue = Array.isArray(value)
                       ? (value as Array<{ name: string }>)
@@ -1002,9 +1005,8 @@ const ResourceCreatePageInner = () => {
                         }
                         value={field.value}
                         label={`Cloud Integrations. ${
-                          watchedTemplate?.configuration
-                            .allowedProviderIntegrationTypes
-                            ? `Only ${watchedTemplate.configuration.allowedProviderIntegrationTypes.join(", ")} integrations are allowed for this template.`
+                          integrationRequired
+                            ? `Only ${allowedIntegrationTypes.join(", ")} integrations are allowed for this template.`
                             : ""
                         }`}
                         required={integrationRequired}

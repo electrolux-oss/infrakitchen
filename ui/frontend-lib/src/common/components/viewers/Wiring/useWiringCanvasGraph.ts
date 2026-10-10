@@ -4,6 +4,7 @@ import type { DragEvent } from "react";
 import { useTheme } from "@mui/material";
 import { Connection, Edge, useStoreApi } from "@xyflow/react";
 
+import { parseSourceHandle, parseTargetHandle } from "./helpers";
 import { GenericTemplate, WiringRule } from "./types";
 import {
   buildEdges,
@@ -137,16 +138,17 @@ export function useWiringCanvasGraph(
           ? conn.source.slice(6)
           : conn.source;
 
-      const sourceOutput = conn.sourceHandle.replace("output-", "");
-
-      const targetVariable = conn.targetHandle.replace("input-", "");
+      const source = parseSourceHandle(conn.sourceHandle);
+      const target = parseTargetHandle(conn.targetHandle);
 
       const exists = wiring.some(
         (w) =>
           w.source_template_id === sourceId &&
-          w.source_output === sourceOutput &&
+          w.source_output === source.name &&
+          (w.source_type ?? "output") === source.type &&
           w.target_template_id === conn.target &&
-          w.target_variable === targetVariable,
+          w.target_variable === target.name &&
+          (w.target_type ?? "variable") === target.type,
       );
       if (exists) return;
 
@@ -154,9 +156,11 @@ export function useWiringCanvasGraph(
         ...wiring,
         {
           source_template_id: sourceId,
-          source_output: sourceOutput,
+          source_output: source.name,
           target_template_id: conn.target,
-          target_variable: targetVariable,
+          target_variable: target.name,
+          source_type: source.type,
+          target_type: target.type,
         },
       ]);
     },

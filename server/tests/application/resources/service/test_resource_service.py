@@ -164,7 +164,8 @@ class TestCreate:
         "expected_state,expected_status, disabled_approval_flow_feature",
         [
             (ModelState.PROVISION, ModelStatus.APPROVAL_PENDING, False),
-            (ModelState.PROVISION, ModelStatus.READY, True),
+            # Nothing to execute for abstract resources, without approval they are provisioned right away
+            (ModelState.PROVISIONED, ModelStatus.DONE, True),
         ],
     )
     async def test_create_abstract_success(
@@ -630,6 +631,26 @@ class TestCreate:
 
         with pytest.raises(ValueError, match="Missing required dependency config variable\\(s\\): region"):
             await mock_resource_service.create(resource_create, requester)
+
+    @pytest.mark.asyncio
+    async def test_create_abstract_missing_required_configuration_variables(
+        self,
+        mock_resource_service,
+        mock_resource_crud,
+        mocked_user,
+        mocked_template,
+        mock_template_crud,
+        mocked_resource,
+    ):
+        mocked_template.configuration["required_configuration_variables"] = ["service_name"]
+        mocked_template.abstract = True
+        resource_create = ResourceCreate(name=mocked_resource.name, template_id=mocked_template.id)
+        mock_template_crud.get_by_id.return_value = mocked_template
+
+        with pytest.raises(ValueError, match="Missing required dependency config variable\\(s\\): service_name"):
+            await mock_resource_service.create(resource_create, mocked_user)
+
+        mock_resource_crud.create.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_create_all_required_configuration_variables_present(
