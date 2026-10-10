@@ -212,14 +212,13 @@ export const SourceCodeRefRow = ({
             )}
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", pr: 1.5 }}>
           {loading || inProgress ? (
             <CircularProgress size={20} sx={{ mx: 2.5 }} />
           ) : (
             <Switch
               checked={isDone}
               onClick={handleToggle}
-              sx={{ pl: 2 }}
               disabled={!canWrite}
             />
           )}

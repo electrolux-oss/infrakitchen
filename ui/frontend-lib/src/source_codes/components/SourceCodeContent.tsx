@@ -33,60 +33,44 @@ export const SourceCodeContent = () => {
   );
 
   const tabs: TabDefinition[] = [
-    ...(entity.commitCount
-      ? [
-          {
-            label: "Commits",
-            content: (
-              <SourceCodeCommits
-                sourceCodeId={entity.id}
-                branch={entity.defaultBranch}
-                total={entity.commitCount}
-                tags={commitTags}
-              />
-            ),
-          },
-        ]
-      : []),
-    ...(entity.gitTags?.length
-      ? [
-          {
-            label: "Tags",
-            tabLabel: (
-              <TabCountLabel label="Tags" count={entity.gitTags.length} />
-            ),
-            content: (
-              <SourceCodeRefSection
-                refs={entity.gitTags}
-                type={RefType.TAG}
-                sourceCodeId={entity.id}
-                getFolders={getFolders}
-              />
-            ),
-          },
-        ]
-      : []),
-    ...(entity.gitBranches?.length
-      ? [
-          {
-            label: "Branches",
-            tabLabel: (
-              <TabCountLabel
-                label="Branches"
-                count={entity.gitBranches.length}
-              />
-            ),
-            content: (
-              <SourceCodeRefSection
-                refs={entity.gitBranches}
-                type={RefType.BRANCH}
-                sourceCodeId={entity.id}
-                getFolders={getFolders}
-              />
-            ),
-          },
-        ]
-      : []),
+    {
+      label: "Commits",
+      tabLabel: <TabCountLabel label="Commits" count={entity.commitCount} />,
+      content: (
+        <SourceCodeCommits
+          sourceCodeId={entity.id}
+          branch={entity.defaultBranch}
+          total={entity.commitCount}
+          tags={commitTags}
+        />
+      ),
+    },
+    {
+      label: "Tags",
+      tabLabel: <TabCountLabel label="Tags" count={entity.gitTags.length} />,
+      content: (
+        <SourceCodeRefSection
+          refs={entity.gitTags}
+          type={RefType.TAG}
+          sourceCodeId={entity.id}
+          getFolders={getFolders}
+        />
+      ),
+    },
+    {
+      label: "Branches",
+      tabLabel: (
+        <TabCountLabel label="Branches" count={entity.gitBranches.length} />
+      ),
+      content: (
+        <SourceCodeRefSection
+          refs={entity.gitBranches}
+          type={RefType.BRANCH}
+          sourceCodeId={entity.id}
+          getFolders={getFolders}
+        />
+      ),
+    },
     {
       label: "Audit",
       content: (

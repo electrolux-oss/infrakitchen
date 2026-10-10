@@ -3,11 +3,12 @@ import { useState, useMemo } from "react";
 import { useLocation } from "react-router";
 
 import {
-  CircularProgress,
+  Alert,
   Box,
-  TablePagination,
+  CircularProgress,
   FormControlLabel,
   Switch,
+  TablePagination,
 } from "@mui/material";
 import { GridPaginationModel } from "@mui/x-data-grid";
 
@@ -18,6 +19,7 @@ import {
   FilterClause,
   FilterState,
   FilterRenderer,
+  useEntityProvider,
   useLocalStorage,
 } from "../../common";
 import { BaseCard } from "../../common/components/cards/BaseCard";
@@ -54,6 +56,27 @@ type SourceCodeRefSectionProps = {
   type: RefType;
   sourceCodeId: string;
   getFolders: (ref: string) => string[];
+};
+
+/**
+ * Empty state for the Tags/Branches tab. "Not synced" (no default branch on
+ * the source code entity) hints at the sync action; a synced repo with none
+ * of this ref kind just reports the plain fact.
+ */
+const RefEmptyState = ({ type }: { type: RefType }) => {
+  const { entity } = useEntityProvider();
+  const synced = Boolean(
+    (entity as { defaultBranch?: string | null })?.defaultBranch,
+  );
+  const label = type === RefType.TAG ? "tags" : "branches";
+
+  return (
+    <Alert severity="info" sx={{ mt: 1 }}>
+      {synced
+        ? `This repository has no ${label}.`
+        : `This repository has not been synced yet. Trigger a sync to load ${label}.`}
+    </Alert>
+  );
 };
 
 const SourceCodeGitRefRows = ({
@@ -310,7 +333,9 @@ export const SourceCodeRefSection = ({
     setKey(storageKey, updatedModel);
   };
 
-  if (refs.length === 0) return null;
+  if (refs.length === 0) {
+    return <RefEmptyState type={type} />;
+  }
 
   return (
     <EntityListProvider

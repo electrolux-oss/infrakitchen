@@ -3,27 +3,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import { Alert, Box, Link } from "@mui/material";
 import {
-  Alert,
-  Box,
-  Chip,
-  Link,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Tooltip,
-} from "@mui/material";
+  DataGrid,
+  GridColDef,
+  GridPaginationModel,
+  GridRenderCellParams,
+} from "@mui/x-data-grid";
 
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
-import { Entity } from "../../common/components/entities/Entity";
+import { UserAvatar } from "../../common/components/entities/UserAvatar";
+import {
+  dataGridDefaultProps,
+  dataGridPaginationSlotProps,
+  dataGridSx,
+} from "../../common/components/entity_table/dataGridStyles";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
+import { useEntityProvider } from "../../common/context/EntityContext";
 import { notifyError } from "../../common/hooks/useNotification";
+import { CODE_FONT_FAMILY } from "../../common/theme";
 import {
   GqlSourceCodeCommit,
   GqlSourceCodeTag,
@@ -31,16 +30,32 @@ import {
   SOURCE_CODE_COMMITS_QUERY,
 } from "../graphql";
 
-import { CopyButton } from "./CopyButton";
 import { SourceCodeCommitMessage } from "./SourceCodeCommitMessage";
 
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100];
 const SHA_PARAM = "sha";
 
-const commitLink = (sha: string): string => {
-  const url = new URL(window.location.href);
-  url.searchParams.set(SHA_PARAM, sha);
-  return url.toString();
+/**
+ * Git tag rendered like Template Versions row labels: the outlined tag icon
+ * followed by the plain tag name.
+ */
+export const TagChip = ({ tag }: { tag: string }) => {
+  return (
+    <Box
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.75,
+        minWidth: 0,
+      }}
+    >
+      <LocalOfferOutlinedIcon
+        color="action"
+        sx={{ fontSize: 16, flexShrink: 0 }}
+      />
+      <Box component="span">{tag}</Box>
+    </Box>
+  );
 };
 
 interface SourceCodeCommitsProps {
@@ -58,15 +73,16 @@ export const SourceCodeCommits = ({
 }: SourceCodeCommitsProps) => {
   const { ikApi } = useConfig();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(ROWS_PER_PAGE_OPTIONS[0]);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: ROWS_PER_PAGE_OPTIONS[0],
+  });
   const [commits, setCommits] = useState<GqlSourceCodeCommit[]>([]);
   const [count, setCount] = useState(total);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTag, setSelectedTag] = useState<GqlSourceCodeTag | null>(null);
   const highlightedSha = searchParams.get(SHA_PARAM);
-  const highlightedRowRef = useRef<HTMLTableRowElement | null>(null);
+  const highlightedRowRef = useRef<HTMLElement | null>(null);
 
   const tagsBySha = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -97,14 +113,14 @@ export const SourceCodeCommits = ({
       setLoading(true);
       setError(null);
       try {
-        const start = page * rowsPerPage;
+        const start = paginationModel.page * paginationModel.pageSize;
         const response = await ikApi.graphqlRequest<{
           sourceCodeCommits: GqlSourceCodeCommit[];
           sourceCodeCommitsCount: number;
         }>(SOURCE_CODE_COMMITS_QUERY, {
           id: sourceCodeId,
           branch,
-          range: [start, start + rowsPerPage],
+          range: [start, start + paginationModel.pageSize],
         });
         if (!cancelled) {
           setCommits(response.sourceCodeCommits || []);
@@ -120,7 +136,7 @@ export const SourceCodeCommits = ({
     return () => {
       cancelled = true;
     };
-  }, [ikApi, sourceCodeId, branch, page, rowsPerPage, total]);
+  }, [ikApi, sourceCodeId, branch, paginationModel, total]);
 
   useEffect(() => {
     if (!loading && highlightedSha) {
@@ -147,12 +163,15 @@ export const SourceCodeCommits = ({
           return;
         }
         setHighlightedSha(sha);
-        setPage(Math.floor(index / rowsPerPage));
+        setPaginationModel((prev) => ({
+          ...prev,
+          page: Math.floor(index / prev.pageSize),
+        }));
       } catch (e) {
         notifyError(e);
       }
     },
-    [ikApi, sourceCodeId, branch, rowsPerPage, setHighlightedSha],
+    [ikApi, sourceCodeId, branch, setHighlightedSha],
   );
 
   // A shared link opens the page of its commit.
@@ -167,164 +186,128 @@ export const SourceCodeCommits = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const selectTag = (tag: GqlSourceCodeTag | null) => {
-    setSelectedTag(tag);
-    if (!tag) {
-      setHighlightedSha(null);
-      return;
-    }
-    void jumpToCommit(
-      tag.sha,
-      `Tag ${tag.name} points to a commit that is not in this list`,
+  const lastSyncedAt = useEntityProvider().entity?.updatedAt;
+
+  const columns: GridColDef<GqlSourceCodeCommit>[] = useMemo(
+    () => [
+      {
+        field: "shortSha",
+        headerName: "Commit",
+        width: 100,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => {
+          const commit = params.row;
+          const shaText = (
+            <span style={{ fontFamily: CODE_FONT_FAMILY }}>
+              {commit.shortSha}
+            </span>
+          );
+          return commit.url ? (
+            <Link href={commit.url} target="_blank" rel="noopener noreferrer">
+              {shaText}
+            </Link>
+          ) : (
+            shaText
+          );
+        },
+      },
+      {
+        field: "message",
+        headerName: "Message",
+        flex: 1,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => (
+          <SourceCodeCommitMessage commit={params.row} />
+        ),
+      },
+      {
+        field: "tags",
+        headerName: "Tags",
+        width: 160,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {(tagsBySha.get(params.row.sha) ?? []).map((tag) => (
+              <TagChip key={tag} tag={tag} />
+            ))}
+          </Box>
+        ),
+      },
+      {
+        field: "authoredAt",
+        headerName: "Date",
+        width: 150,
+        sortable: false,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params: GridRenderCellParams<GqlSourceCodeCommit>) => {
+          const commit = params.row;
+          return (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                minWidth: 0,
+              }}
+            >
+              <RelativeTime date={commit.authoredAt} />
+              <UserAvatar
+                id={commit.author?.id}
+                identifier={commit.author?.identifier ?? commit.authorName}
+              />
+            </Box>
+          );
+        },
+      },
+    ],
+    [tagsBySha],
+  );
+
+  if (!branch) {
+    return (
+      <Alert severity="info" sx={{ mt: 1 }}>
+        This repository has not been synced yet. Trigger a sync to load commits.
+      </Alert>
     );
-  };
+  }
 
   return (
     <PropertyCard
-      title="Commits"
-      subtitle={`${total} commits on ${branch}, as of the last sync`}
-      action={
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            pt: 1.5,
-            pr: 1,
-          }}
-        >
-          {tags.length > 0 && (
-            <TextField
-              select
-              size="small"
-              label="Jump to tag"
-              sx={{ width: 200 }}
-              value={selectedTag?.name ?? ""}
-              onChange={(e) =>
-                selectTag(
-                  tags.find((tag) => tag.name === e.target.value) ?? null,
-                )
-              }
-              slotProps={{
-                htmlInput: { "aria-label": "Jump to tag" },
-                select: {
-                  MenuProps: {
-                    slotProps: { paper: { sx: { maxHeight: 360 } } },
-                  },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {tags.map((tag) => (
-                <MenuItem
-                  key={tag.name}
-                  value={tag.name}
-                  sx={{ fontFamily: "monospace" }}
-                >
-                  {tag.name}
-                </MenuItem>
-              ))}
-            </TextField>
+      title={null}
+      subtitle={
+        <Box sx={{ display: "inline-flex", alignItems: "baseline", gap: 0.5 }}>
+          <span>{`${total} commits on the ${branch} branch, synced`}</span>
+          {lastSyncedAt && (
+            <span>
+              <RelativeTime date={lastSyncedAt} />.
+            </span>
           )}
         </Box>
       }
     >
       {error && <Alert severity="error">{error}</Alert>}
-      <Table size="small" sx={{ opacity: loading ? 0.5 : 1 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ width: 150 }}>Commit</TableCell>
-            <TableCell>Message</TableCell>
-            <TableCell sx={{ width: 200 }}>Author</TableCell>
-            <TableCell sx={{ width: 160 }}>Date</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {commits.map((commit) => {
-            const highlighted = commit.sha === highlightedSha;
-            return (
-              <TableRow
-                key={commit.sha}
-                ref={highlighted ? highlightedRowRef : undefined}
-                selected={highlighted}
-              >
-                <TableCell sx={{ fontFamily: "monospace" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    {commit.url ? (
-                      <Link
-                        href={commit.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {commit.shortSha}
-                      </Link>
-                    ) : (
-                      commit.shortSha
-                    )}
-                    <CopyButton value={commit.sha} label="Copy SHA" />
-                    <CopyButton
-                      value={() => commitLink(commit.sha)}
-                      label="Copy link to this commit"
-                      variant="link"
-                      onCopied={() => setHighlightedSha(commit.sha)}
-                    />
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ wordBreak: "break-word" }}>
-                  <SourceCodeCommitMessage
-                    commit={commit}
-                    adornments={tagsBySha.get(commit.sha)?.map((tag) => (
-                      <Chip
-                        key={tag}
-                        icon={<LocalOfferOutlinedIcon />}
-                        label={tag}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ fontFamily: "monospace" }}
-                      />
-                    ))}
-                  />
-                </TableCell>
-                <TableCell>
-                  {commit.author ? (
-                    <Entity
-                      entity={{
-                        ...commit.author,
-                        entityType: "user",
-                        name: commit.authorName,
-                      }}
-                      hideName
-                    />
-                  ) : (
-                    <Tooltip title={commit.authorEmail}>
-                      <span>{commit.authorName}</span>
-                    </Tooltip>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <RelativeTime date={commit.authoredAt} />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-      <TablePagination
-        component="div"
-        count={count}
-        page={page}
-        onPageChange={(_, newPage) => setPage(newPage)}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => {
-          setRowsPerPage(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
-        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-        sx={{ borderTop: 1, borderColor: "divider", mt: 1 }}
-      />
+      <Box sx={{ opacity: loading ? 0.5 : 1 }}>
+        <DataGrid
+          rows={commits}
+          getRowId={(row) => row.sha}
+          columns={columns}
+          loading={loading}
+          pagination
+          paginationMode="server"
+          rowCount={count}
+          disableRowSelectionOnClick
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={ROWS_PER_PAGE_OPTIONS}
+          {...dataGridDefaultProps}
+          sx={{
+            ...dataGridSx,
+            minHeight: "auto",
+          }}
+          slotProps={dataGridPaginationSlotProps("commits-pagination-label")}
+        />
+      </Box>
     </PropertyCard>
   );
 };

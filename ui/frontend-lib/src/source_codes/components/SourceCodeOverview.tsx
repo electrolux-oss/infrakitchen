@@ -11,6 +11,7 @@ import {
   CommonField,
   getRemoteUrlValue,
 } from "../../common/components/fields/CommonField";
+import { PlaceholderText } from "../../common/components/fields/PlaceholderDescription";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import ReferenceInput from "../../common/components/inputs/ReferenceInput";
 import { useConfig } from "../../common/context";
@@ -109,7 +110,13 @@ export const SourceCodeOverview = ({ sourceCode }: SourceCodeOverviewProps) => {
       />
       <CommonField
         name={"Default Branch"}
-        value={sourceCode.defaultBranch || "Not synced"}
+        value={
+          sourceCode.defaultBranch ? (
+            sourceCode.defaultBranch
+          ) : (
+            <PlaceholderText text="Not synced" />
+          )
+        }
       />
       <CommonField
         name={"Created"}
