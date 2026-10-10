@@ -99,7 +99,7 @@ export const providers: Provider[] = [
       </>,
       <>
         If you need to create pull requests, also grant{" "}
-        <strong>Pull requests: Write</strong>
+        <strong>Pull requests: Write</strong> and <strong>Contents: Write</strong>
       </>,
       <>
         Click <strong>Generate token</strong>

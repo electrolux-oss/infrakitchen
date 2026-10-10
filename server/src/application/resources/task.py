@@ -160,6 +160,11 @@ class ResourceTask:
             if not self.source_code_instance:
                 raise CannotProceed("Source Code is not defined")
 
+        self.logger.add_result(
+            source_code_version=self.source_code_version_instance.source_code_version
+            or self.source_code_version_instance.source_code_branch
+        )
+
         integrations = self.resource_instance.integration_ids
 
         # get integrations and set environment variables
@@ -305,6 +310,7 @@ class ResourceTask:
         if self.tf_client is None and code_language == "opentofu":
             tool = await self.get_tool()
             self.logger.info(f"Initiating {tool.label}...")
+            self.logger.add_result(tool=tool.label)
             assert self.resource_instance.storage_path is not None, "Storage path is not defined"
             assert self.resource_instance.storage_id is not None, "Storage ID is not defined"
             storage = await self.session.get(Storage, self.resource_instance.storage_id)
@@ -386,6 +392,7 @@ class ResourceTask:
                     )
                 )
             self.resource_instance.outputs = [output.model_dump() for output in outputs]
+            self.logger.add_result(outputs=len(outputs))
 
     async def post_destroy_task_run(self):
         assert self.source_code_instance is not None, "Source Code instance is not defined"
@@ -524,6 +531,7 @@ class ResourceTask:
 
     async def create_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="create")
         await self.change_entity_status(event_type=ModelActions.CREATE)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -535,6 +543,7 @@ class ResourceTask:
 
     async def update_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="update")
         await self.change_entity_status(event_type=ModelActions.UPDATE)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -547,6 +556,7 @@ class ResourceTask:
 
     async def destroy_state(self):
         make_in_progress(self.resource_instance)
+        self.logger.add_result(operation="destroy")
         await self.change_entity_status(event_type=ModelActions.DESTROY)
         await self.init_workspace()
         await self.init_provision_tool()
@@ -557,6 +567,9 @@ class ResourceTask:
         await self.clean_workspace()
 
     async def dry_run(self):
+        self.logger.add_result(
+            operation="destroy_plan" if self.resource_instance.state == ModelState.DESTROY else "plan",
+        )
         # dry run should not change the state of the resource
         if hasattr(self.logger, "add_dry_run"):
             self.logger.add_dry_run()

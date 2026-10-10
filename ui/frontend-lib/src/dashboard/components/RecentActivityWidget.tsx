@@ -6,6 +6,7 @@ import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PendingOutlinedIcon from "@mui/icons-material/PendingOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import {
   Box,
   Button,
@@ -18,6 +19,11 @@ import { useTheme } from "@mui/material/styles";
 import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
 import {
+  AuditExecutionResult,
+  getAuditExecution,
+} from "../../audit_logs/components/AuditExecutionResult";
+
+import {
   Entity,
   humanizeEntityType,
 } from "../../common/components/entities/Entity";
@@ -26,10 +32,6 @@ import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import {
-  RELATIVE_TIME_COLUMN_WIDTH,
-  USER_AVATAR_COLUMN_WIDTH,
-} from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels/Label";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -77,12 +79,25 @@ function humanizeAction(action?: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-type ActivityStatus = "success" | "failure" | "pending";
+type ActivityStatus = "success" | "failure" | "warning" | "pending";
+
+const EXECUTION_STATUS: Record<string, ActivityStatus> = {
+  success: "success",
+  failed: "failure",
+  warning: "warning",
+  retry: "pending",
+  running: "pending",
+};
 
 function activityStatus(
   action?: string,
   entityStatus?: string,
+  executionStatus?: string,
 ): ActivityStatus {
+  // the result of the task triggered by this event, the entity status is its current one
+  if (executionStatus && EXECUTION_STATUS[executionStatus]) {
+    return EXECUTION_STATUS[executionStatus];
+  }
   if (entityStatus) {
     if (["error"].includes(entityStatus)) return "failure";
     if (
@@ -112,17 +127,23 @@ function activityStatus(
 const STATUS_ICONS = {
   success: CheckCircleOutlinedIcon,
   failure: ErrorOutlinedIcon,
+  warning: WarningAmberOutlinedIcon,
   pending: PendingOutlinedIcon,
 } as const;
 
 const STATUS_COLORS = {
   success: "success.main",
   failure: "error.main",
+  warning: "warning.main",
   pending: "warning.main",
 } as const;
 
 const ActivityEvent = ({ activity }: { activity: ActivityLogEntry }) => {
-  const status = activityStatus(activity.action, activity.entityData?.status);
+  const status = activityStatus(
+    activity.action,
+    activity.entityData?.status,
+    getAuditExecution(activity)?.status,
+  );
   const Icon = STATUS_ICONS[status];
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -215,6 +236,7 @@ const ActivityCardList = ({
           >
             <ActivityEvent activity={activity} />
             {typeLabel && <Label label={typeLabel} />}
+            <AuditExecutionResult log={activity} />
             <Box
               sx={{
                 display: "flex",
@@ -282,23 +304,38 @@ export const RecentActivityWidget = ({
         ),
       },
       {
-        field: "creator",
-        headerName: "User",
-        // Avatar-only cell, so the column only needs to fit the avatar.
-        width: USER_AVATAR_COLUMN_WIDTH,
-        valueGetter: (_value, row) =>
-          row.creator?.displayName ?? row.creator?.identifier ?? "System",
+        field: "result",
+        headerName: "Result",
+        flex: 2.5,
+        sortable: false,
+        valueGetter: (_value, row) => getAuditExecution(row)?.status ?? "",
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <ActivityCreator activity={params.row} />
+          <AuditExecutionResult log={params.row} />
         ),
       },
       {
-        field: "createdAt",
-        headerName: "When",
-        width: RELATIVE_TIME_COLUMN_WIDTH,
-        valueGetter: (_value, row) => new Date(row.createdAt).getTime(),
+        field: "creator",
+        headerName: "User",
+        width: 150,
+        valueGetter: (_value, row) =>
+          row.creator?.displayName ?? row.creator?.identifier ?? "System",
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <RelativeTime date={params.row.createdAt} sx={{ display: "flex" }} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1.5,
+              width: "100%",
+            }}
+          >
+            <RelativeTime
+              date={params.row.createdAt}
+              compact
+              sx={{ display: "flex" }}
+            />
+            <ActivityCreator activity={params.row} />
+          </Box>
         ),
       },
     ],
@@ -393,18 +430,17 @@ export const RecentActivityWidget = ({
             columns={columns}
             autoHeight
             disableRowSelectionOnClick
-            // Rows arrive in small backend batches, so the default pagination
-            // footer is misleading.
+            columnHeaderHeight={0}
             hideFooter
             onRowClick={handleRowClick}
             {...dataGridDefaultProps}
             sx={{
               ...dataGridSx,
               ...dataGridClickableRowSx,
-              // Compact widget list: hug rows instead of the shared min-height.
               minHeight: "auto",
               border: "none",
               bgcolor: "background.paper",
+              "& .MuiDataGrid-columnHeaders": { display: "none" },
             }}
           />
         )}

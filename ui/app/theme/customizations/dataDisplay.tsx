@@ -203,7 +203,6 @@ export const dataDisplayCustomizations: Components<Theme> = {
         borderColor: (theme.vars || theme).palette.divider,
         borderRadius: (theme.vars || theme).shape.borderRadius,
         fontSize: theme.typography.caption.fontSize,
-        fontWeight: 500,
         lineHeight: 1.4,
         padding: "6px 10px",
         boxShadow: theme.shadows[4],

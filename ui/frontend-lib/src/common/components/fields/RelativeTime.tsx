@@ -10,6 +10,8 @@ interface RelativeTimeProps {
   date: string | Date;
   component?: React.ElementType;
   variant?: TypographyProps["variant"];
+  /** Dense table cells show "1h ago" instead of "1 hour ago". */
+  compact?: boolean;
   sx?: any;
 }
 
@@ -17,6 +19,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
   date,
   component = "span",
   variant,
+  compact = false,
   sx,
 }) => {
   const dateObj = date instanceof Date ? date : new Date(date);
@@ -29,7 +32,7 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
     );
   }
 
-  const timeAgoText = formatTimeAgo(date);
+  const timeAgoText = formatTimeAgo(date, compact);
   const exactTimestamp = getDateValue(date);
 
   return (

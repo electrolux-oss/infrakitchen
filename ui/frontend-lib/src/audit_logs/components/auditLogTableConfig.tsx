@@ -9,6 +9,8 @@ import {
 import { GqlAuditLog } from "../graphql";
 import { getAuditLogEntity } from "../utils/auditLogEntity";
 
+import { AuditExecutionResult } from "./AuditExecutionResult";
+
 const AUDIT_LOG_ACTION_OPTIONS = [
   "approve",
   "cascade_destroy",
@@ -70,6 +72,18 @@ export const auditLogColumns: EntityTableColumn[] = [
       options: AUDIT_LOG_ACTION_OPTIONS,
     },
     renderCell: (params: GridRenderCellParams) => params.value,
+  },
+  {
+    field: "result",
+    fetchFields: ["metadata"],
+    headerName: "Result",
+    flex: 2,
+    sortable: false,
+    valueGetter: (_value: unknown, row: GqlAuditLog) =>
+      row.metadata?.execution ?? null,
+    renderCell: (params: GridRenderCellParams<GqlAuditLog>) => (
+      <AuditExecutionResult log={params.row} />
+    ),
   },
   relativeTimeColumn("createdAt", "Time", { sortField: "created_at" }),
 ];

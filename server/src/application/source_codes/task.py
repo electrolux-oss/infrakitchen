@@ -110,6 +110,13 @@ class SourceCodeTask:
         git_branches = await self.git_client.get_repo_branches()
         git_branch_messages = await self.git_client.get_repo_branch_messages()
 
+        self.logger.add_result(
+            tags=len(git_tags),
+            branches=len(git_branches),
+            new_tags=sorted(set(git_tags) - set(self.source_code_instance.git_tags or [])),
+            new_branches=sorted(set(git_branches) - set(self.source_code_instance.git_branches or [])),
+        )
+
         self.source_code_instance.git_tags = git_tags
         self.source_code_instance.git_tag_messages = git_tag_messages
         self.source_code_instance.git_branches = git_branches

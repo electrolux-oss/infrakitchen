@@ -26,6 +26,7 @@ from application.workers.utils import (
 )
 from application.workflows.task import WorkflowTask
 from application.workspaces.task import WorkspaceTask
+from core.audit_logs.handler import set_audit_log_execution
 from core.tools.task import ToolTask, get_tool_task
 from core.config import Settings
 from core.constants.model import EventType, ModelActions
@@ -315,13 +316,45 @@ class TaskWorker:
         task_controller = await self.build_task_controller(session, item)
         action = item.action
 
+        audit_log_id = item.payload.get("audit_log_id")
+        execution: dict[str, Any] = {
+            "status": "running",
+            "entity": item.entity,
+            "action": action,
+            "worker": self.worker.host,
+            "attempt": item.retries + 1,
+            "started_at": datetime.now(UTC).isoformat(),
+        }
+        await self._update_audit_log_execution(audit_log_id, execution)
+
+        # Main task flow
+        status = "failed"
         try:
             await task_controller.start_pipeline()
+            status = "success"
             await self._send_success_notification(task_controller, action)
             prometheus_counter.labels(item.entity, "success").inc()
         except Exception as e:
+            status = "failed"
+            execution["error"] = f"{type(e).__name__}: {e}"
             prometheus_counter.labels(item.entity, "error").inc()
-            await self.handle_exception(e, item, task_controller, action)
+            try:
+                await self.handle_exception(e, item, task_controller, action)
+            except RequeueTask:
+                status = "retry"
+                raise
+        finally:
+            if status == "failed" and await self._entity_is_healthy(task_controller):
+                status = "warning"
+            await self._add_log_footer(task_controller, status)
+            finished_at = datetime.now(UTC)
+            execution.update(
+                status=status,
+                finished_at=finished_at.isoformat(),
+                duration_seconds=int(finished_at.timestamp()) - task_controller.logger.execution_start,
+                details=getattr(task_controller.logger, "result", {}),
+            )
+            await self._update_audit_log_execution(audit_log_id, execution)
 
     async def build_task_controller(self, session: AsyncSession, item: TaskQueueItemDTO) -> TaskController:
         action = item.action
@@ -587,6 +620,33 @@ class TaskWorker:
             event_type=EventType.EXECUTE,
         )
         await publish_notification_event(event_message)
+
+    async def _add_log_footer(self, task_controller, status: str):
+        if not hasattr(task_controller.logger, "add_log_footer"):
+            return
+        try:
+            task_controller.logger.add_log_footer(status)
+            await task_controller.logger.save_log()
+        except Exception as e:
+            logger.error(f"Failed to save log footer: {e}", exc_info=True)
+
+    async def _entity_is_healthy(self, task_controller) -> bool:
+        """Task failed only in a side effect (e.g. workspace sync), the entity itself is fine"""
+        if not hasattr(task_controller, "entity_is_healthy"):
+            return False
+        try:
+            return await task_controller.entity_is_healthy()
+        except Exception as e:
+            logger.error(f"Failed to check entity state: {e}", exc_info=True)
+            return False
+
+    async def _update_audit_log_execution(self, audit_log_id: str | None, execution: dict[str, Any]):
+        if not audit_log_id:
+            return
+        try:
+            await set_audit_log_execution(audit_log_id, execution)
+        except Exception as e:
+            logger.error(f"Failed to save execution result to audit log {audit_log_id}: {e}", exc_info=True)
 
     async def _send_success_notification(self, task_controller, action):
         entity_name = task_controller.logger.entity_name
