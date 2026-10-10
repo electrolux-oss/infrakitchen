@@ -249,10 +249,26 @@ export const Audit = ({
       {
         field: "result",
         headerName: "Result",
-        flex: 2,
+        flex: 3,
         sortable: false,
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
-          <AuditExecutionResult log={params.row} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              height: "100%",
+              minWidth: 0,
+            }}
+          >
+            <AuditExecutionResult log={params.row} />
+            <LogActionButtons
+              action={params.row.action}
+              sourceCodeLanguage={sourceCodeLanguage}
+              onOpenSummary={() => openDialog(params.row.id, "summary")}
+              onOpenLogs={() => openDialog(params.row.id, "logs")}
+            />
+          </Box>
         ),
       },
       {
@@ -274,22 +290,10 @@ export const Audit = ({
         field: "createdAt",
         headerName: "Time",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        align: "right",
+        headerAlign: "right",
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
-          <RelativeTime date={params.value} />
-        ),
-      },
-      {
-        field: "userActions",
-        headerName: "",
-        flex: 1,
-        sortable: false,
-        renderCell: (params) => (
-          <LogActionButtons
-            action={params.row.action}
-            sourceCodeLanguage={sourceCodeLanguage}
-            onOpenSummary={() => openDialog(params.row.id, "summary")}
-            onOpenLogs={() => openDialog(params.row.id, "logs")}
-          />
+          <RelativeTime date={params.value} compact />
         ),
       },
     ],

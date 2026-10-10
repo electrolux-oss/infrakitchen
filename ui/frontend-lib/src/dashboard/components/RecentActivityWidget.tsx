@@ -32,10 +32,6 @@ import {
   dataGridDefaultProps,
   dataGridSx,
 } from "../../common/components/entity_table/dataGridStyles";
-import {
-  RELATIVE_TIME_COLUMN_WIDTH,
-  USER_AVATAR_COLUMN_WIDTH,
-} from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels/Label";
 import { useConfig } from "../../common/context/ConfigContext";
@@ -310,7 +306,7 @@ export const RecentActivityWidget = ({
       {
         field: "result",
         headerName: "Result",
-        flex: 1.8,
+        flex: 2.5,
         sortable: false,
         valueGetter: (_value, row) => getAuditExecution(row)?.status ?? "",
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
@@ -320,21 +316,26 @@ export const RecentActivityWidget = ({
       {
         field: "creator",
         headerName: "User",
-        // Avatar-only cell, so the column only needs to fit the avatar.
-        width: USER_AVATAR_COLUMN_WIDTH,
+        width: 150,
         valueGetter: (_value, row) =>
           row.creator?.displayName ?? row.creator?.identifier ?? "System",
         renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <ActivityCreator activity={params.row} />
-        ),
-      },
-      {
-        field: "createdAt",
-        headerName: "When",
-        width: RELATIVE_TIME_COLUMN_WIDTH,
-        valueGetter: (_value, row) => new Date(row.createdAt).getTime(),
-        renderCell: (params: GridRenderCellParams<ActivityLogEntry>) => (
-          <RelativeTime date={params.row.createdAt} sx={{ display: "flex" }} />
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1.5,
+              width: "100%",
+            }}
+          >
+            <RelativeTime
+              date={params.row.createdAt}
+              compact
+              sx={{ display: "flex" }}
+            />
+            <ActivityCreator activity={params.row} />
+          </Box>
         ),
       },
     ],
@@ -429,18 +430,17 @@ export const RecentActivityWidget = ({
             columns={columns}
             autoHeight
             disableRowSelectionOnClick
-            // Rows arrive in small backend batches, so the default pagination
-            // footer is misleading.
+            columnHeaderHeight={0}
             hideFooter
             onRowClick={handleRowClick}
             {...dataGridDefaultProps}
             sx={{
               ...dataGridSx,
               ...dataGridClickableRowSx,
-              // Compact widget list: hug rows instead of the shared min-height.
               minHeight: "auto",
               border: "none",
               bgcolor: "background.paper",
+              "& .MuiDataGrid-columnHeaders": { display: "none" },
             }}
           />
         )}
