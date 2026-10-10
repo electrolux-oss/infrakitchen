@@ -47,6 +47,8 @@ class SourceCodeResponse(BaseModel):
     git_branches: list[str] = Field(default_factory=list)
     git_branch_messages: dict[str, str] | None = Field(default_factory=dict)
     git_folders_map: list[RefFolders] = Field(default_factory=list)
+    default_branch: str | None = Field(default=None)
+    git_tag_shas: dict[str, str] | None = Field(default=None)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -84,6 +86,18 @@ class SourceCodeUpdate(BaseModel):
         if not any(values.get(field) not in (None, [], "") for field in SourceCodeUpdate.model_fields):
             raise ValueError("At least one field must be provided in Source Code update.")
         return values
+
+
+class SourceCodeCommitResponse(BaseModel):
+    sha: str
+    short_sha: str
+    message: str
+    description: str = Field(default="")
+    author_name: str
+    author_email: str
+    authored_at: datetime
+    url: str | None = Field(default=None)
+    author: UserShort | None = Field(default=None)
 
 
 class SourceCodeShort(BaseModel):

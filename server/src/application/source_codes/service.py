@@ -13,10 +13,12 @@ from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
 from core.utils.event_sender import EventSender
 from core.utils.model_tools import has_field_changes, model_db_dump
-from .crud import SourceCodeCRUD
+from .crud import CommitFilter, SourceCodeCRUD
 from .functions import get_source_code_actions
-from .schema import SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
+from .repository import commit_web_url
+from .schema import SourceCodeCommitResponse, SourceCodeCreate, SourceCodeResponse, SourceCodeUpdate
 from core.users.model import UserDTO
+from core.users.schema import UserShort
 
 from core.constants import ModelStatus
 
@@ -205,6 +207,55 @@ class SourceCodeService:
         response = SourceCodeResponse.model_validate(existing_source_code)
         await self.event_sender.send_event(response, body.action)
         return existing_source_code
+
+    async def get_commits(
+        self,
+        source_code_id: str | UUID,
+        branch: str | None = None,
+        range: tuple[int, int] | None = None,
+    ) -> list[SourceCodeCommitResponse]:
+        source_code = await self.crud.get_by_id(source_code_id, fields={"sourceCodeUrl": None})
+        if not source_code:
+            raise EntityNotFound("SourceCode not found")
+        repository_url = source_code.source_code_url
+
+        commit_filter = CommitFilter(branch=branch)
+        commits = await self.crud.get_commits(source_code_id, commit_filter, range=range)
+        users = await self.crud.get_users_by_emails({commit.author_email for commit in commits if commit.author_email})
+        authors = {email: UserShort.model_validate(user) for email, user in users.items()}
+        responses: list[SourceCodeCommitResponse] = []
+        for commit in commits:
+            responses.append(
+                SourceCodeCommitResponse(
+                    sha=commit.sha,
+                    short_sha=commit.sha[:7],
+                    message=commit.message,
+                    description=commit.description,
+                    author_name=commit.author_name,
+                    author_email=commit.author_email,
+                    authored_at=commit.authored_at,
+                    url=commit_web_url(repository_url, commit.sha),
+                    author=authors.get(commit.author_email.lower()),
+                )
+            )
+        return responses
+
+    async def count_commits(
+        self,
+        source_code_id: str | UUID,
+        branch: str | None = None,
+    ) -> int:
+        commit_filter = CommitFilter(branch=branch)
+        return await self.crud.count_commits(source_code_id, commit_filter)
+
+    async def get_commit_index(
+        self,
+        source_code_id: str | UUID,
+        sha: str,
+        branch: str | None = None,
+    ) -> int | None:
+        commit_filter = CommitFilter(branch=branch)
+        return await self.crud.get_commit_index(source_code_id, sha, commit_filter)
 
     async def delete(self, source_code_id: str, requester: UserDTO) -> None:
         existing_source_code = await self.crud.get_by_id(source_code_id)

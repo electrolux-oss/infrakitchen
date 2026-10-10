@@ -23,6 +23,9 @@ from ..source_codes.model import RefFolders, SourceCode
 logger = logging.getLogger(__name__)
 
 
+INCREMENTAL_FETCH_DEPTH = 50
+
+
 class SourceCodeTask:
     def __init__(
         self,
@@ -168,5 +171,73 @@ class SourceCodeTask:
     async def sync_state(self):
         await self.change_entity_status(ModelStatus.IN_PROGRESS)
         await self.get_source_code_data()
+        await self.sync_default_branch()
         self.logger.info("Sync task is done")
         await self.change_entity_status(ModelStatus.DONE)
+
+    async def sync_default_branch(self):
+        if not self.git_client:
+            raise CannotProceed("Git client is not initialized. Cannot fetch commits.")
+
+        default_branch = await self.git_client.get_remote_default_branch()
+        tags = await self.git_client.get_remote_tags()
+        self.source_code_instance.default_branch = default_branch
+        self.source_code_instance.git_tag_shas = {tag.name: tag.sha for tag in tags}
+        if not default_branch:
+            self.logger.info("The repository has no default branch, so there are no commits to store")
+            await self.crud_source_code.delete_commits(self.source_code_instance.id)
+            return
+        self.logger.info(f"Default branch: {default_branch}")
+
+        await self.crud_source_code.delete_commits_except(self.source_code_instance.id, default_branch)
+        try:
+            await self.sync_commits(default_branch)
+        finally:
+            await self.git_client.delete_workspace()
+
+    async def sync_commits(self, branch: str):
+        if not self.git_client:
+            raise CannotProceed("Git client is not initialized. Cannot fetch commits.")
+        source_code_id = self.source_code_instance.id
+
+        remote_head = await self.git_client.get_remote_branch_head(branch)
+        if not remote_head:
+            self.logger.info(f"{branch} no longer exists, so there are no commits to store")
+            await self.crud_source_code.delete_commits(source_code_id, branch=branch)
+            return
+        stored_head = await self.crud_source_code.get_head_commit_sha(source_code_id, branch)
+        if remote_head == stored_head:
+            self.logger.info(f"{branch} is up to date at {remote_head[:7]}")
+            return
+
+        if not stored_head:
+            await self.git_client.fetch_branch(branch)
+            commits = await self.git_client.get_fetched_commits(first_parent=True)
+            await self.crud_source_code.replace_commits(source_code_id, branch, commits)
+            self.logger.info(f"Stored {len(commits)} commits of {branch}")
+            return
+
+        depth = INCREMENTAL_FETCH_DEPTH
+        await self.git_client.fetch_branch(branch, depth=depth)
+        while True:
+            # On the first-parent history, so every commit above it is fetched too.
+            if stored_head in await self.git_client.get_fetched_shas(first_parent=True):
+                return await self._prepend_commits(branch, stored_head)
+            if not await self.git_client.is_fetched_shallow():
+                break
+            await self.git_client.deepen_fetched(branch, by=depth)
+            depth *= 2
+
+        if stored_head in await self.git_client.get_fetched_shas():
+            return await self._prepend_commits(branch, stored_head)
+
+        self.logger.info(f"History of {branch} was rewritten, storing it again")
+        commits = await self.git_client.get_fetched_commits(first_parent=True)
+        await self.crud_source_code.replace_commits(source_code_id, branch, commits)
+        self.logger.info(f"Stored {len(commits)} commits of {branch}")
+
+    async def _prepend_commits(self, branch: str, stored_head: str) -> None:
+        assert self.git_client is not None
+        commits = await self.git_client.get_fetched_commits(since=stored_head, first_parent=True)
+        await self.crud_source_code.prepend_commits(self.source_code_instance.id, branch, commits)
+        self.logger.info(f"Added {len(commits)} new commits of {branch}")
