@@ -23,13 +23,19 @@ import { InlineCode } from "../code/InlineCode";
 interface MarkdownViewerProps {
   content: string;
   sx?: SxProps<Theme>;
+  /** Hide the copy affordance on inline code (e.g. read-only contexts). */
+  disableInlineCodeCopy?: boolean;
 }
 
 /**
  * Renders Markdown content using MUI typography components.
  * Supports GitHub Flavored Markdown (tables, strikethrough, task lists).
  */
-export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
+export const MarkdownViewer: FC<MarkdownViewerProps> = ({
+  content,
+  sx,
+  disableInlineCodeCopy = false,
+}) => {
   return (
     <Box
       sx={{
@@ -42,23 +48,27 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <Typography variant="h4" component="h1" sx={{ mt: 3, mb: 1.5 }}>
+            <Typography variant="h5" component="h1" sx={{ mt: 3, mb: 1.5 }}>
               {children}
             </Typography>
           ),
           h2: ({ children }) => (
-            <Typography variant="h5" component="h2" sx={{ mt: 3, mb: 1.25 }}>
+            <Typography variant="h6" component="h2" sx={{ mt: 3, mb: 1.25 }}>
               {children}
             </Typography>
           ),
           h3: ({ children }) => (
-            <Typography variant="h6" component="h3" sx={{ mt: 2.5, mb: 1 }}>
+            <Typography
+              variant="subtitle1"
+              component="h3"
+              sx={{ mt: 2.5, mb: 1, fontWeight: 600 }}
+            >
               {children}
             </Typography>
           ),
           h4: ({ children }) => (
             <Typography
-              variant="subtitle1"
+              variant="subtitle2"
               component="h4"
               sx={{ mt: 2, mb: 0.75, fontWeight: 600 }}
             >
@@ -84,7 +94,7 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
             </Typography>
           ),
           p: ({ children }) => (
-            <Typography variant="body1" sx={{ mb: 1.5, lineHeight: 1.7 }}>
+            <Typography variant="body2" sx={{ mb: 1.5, lineHeight: 1.7 }}>
               {children}
             </Typography>
           ),
@@ -146,7 +156,11 @@ export const MarkdownViewer: FC<MarkdownViewerProps> = ({ content, sx }) => {
                 </Box>
               );
             }
-            return <InlineCode>{children}</InlineCode>;
+            return (
+              <InlineCode disableCopy={disableInlineCodeCopy}>
+                {children}
+              </InlineCode>
+            );
           },
           pre: ({ children }) => <>{children}</>,
           table: ({ children }) => (

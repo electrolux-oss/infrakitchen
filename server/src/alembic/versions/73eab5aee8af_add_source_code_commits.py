@@ -1,7 +1,7 @@
 """add_source_code_commits
 
 Revision ID: 73eab5aee8af
-Revises: 3890388593d8
+Revises: 17b2fb67c776
 Create Date: 2026-10-09 12:27:27.252318
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "73eab5aee8af"
-down_revision: str | None = "3890388593d8"
+down_revision: str | None = "17b2fb67c776"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
