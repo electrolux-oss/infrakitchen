@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     TASK_QUEUE_CANCEL_DELAY_SECONDS: int = 5  # user actions wait this long in the queue so they can be cancelled
     NOTIFICATION_DISPATCHERS: int = 4  # notification outbox items routed concurrently per API process
     NOTIFICATION_LEASE_SECONDS: int = 120  # a claimed outbox item is retried by another dispatcher after this
+    WORKER_NAME: str = "task_worker"  # name the standalone worker registers with
+    WORKER_IDLE_EXIT_SECONDS: int = 0  # exit after this long without work and an empty queue; 0 runs forever
+    WORKER_TEMPLATE_ID: str = ""  # set on workers spawned on demand from a worker template
+    # On-demand workers
+    WORKER_AUTOSCALER_ENABLED: bool = False  # spawn workers from enabled worker templates when tasks wait
+    WORKER_AUTOSCALER_INTERVAL_SECONDS: int = 15  # how often the scheduler reconciles on-demand workers
+    WORKER_START_TIMEOUT_SECONDS: int = 600  # a spawned worker still pending after this is deleted
 
     class ConfigDict:
         env_file = ".env"

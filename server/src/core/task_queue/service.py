@@ -169,6 +169,9 @@ class TaskQueueService:
             return WaitingReason.WORKERS_BUSY
         return WaitingReason.PENDING_PICKUP
 
+    async def count_claimable(self) -> int:
+        return await self.crud.count_claimable()
+
     async def stats(self, worker_alive_seconds: int) -> TaskQueueStats:
         counts = await self.crud.queue_counts()
         oldest: datetime | None = counts["oldest"]

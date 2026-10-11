@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import socket
+import time
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from datetime import datetime, UTC
@@ -128,6 +129,8 @@ class TaskWorker:
 
     async def register(self) -> None:
         self.worker.host_metadata = await get_host_metadata()
+        if self.settings.WORKER_TEMPLATE_ID:
+            self.worker.host_metadata["worker_template_id"] = self.settings.WORKER_TEMPLATE_ID
         async with self.workers() as worker_service:
             self.worker = await worker_service.save_worker(self.worker)
 
@@ -138,6 +141,7 @@ class TaskWorker:
             asyncio.create_task(self.heartbeat_loop()),
             asyncio.create_task(self.listen_loop()),
         ]
+        last_work_at = time.monotonic()
         try:
             while not self._stopping.is_set():
                 try:
@@ -147,13 +151,30 @@ class TaskWorker:
                 except Exception as e:
                     logger.error(f"Worker loop error: {e}", exc_info=True)
                     did_work = False
-                if not did_work:
+                if did_work:
+                    last_work_at = time.monotonic()
+                elif await self.idle_expired(last_work_at):
+                    logger.info(f"Worker {self.name} idle for {self.settings.WORKER_IDLE_EXIT_SECONDS}s, exiting")
+                    self.stop()
+                else:
                     await self.wait_for_work()
         finally:
             for task in background:
                 _ = task.cancel()
             await self.set_status("offline")
             logger.info(f"Worker {self.name} stopped")
+
+    async def idle_expired(self, last_work_at: float) -> bool:
+        """On-demand workers exit once idle long enough and no task is waiting for a worker."""
+        idle_exit_seconds = self.settings.WORKER_IDLE_EXIT_SECONDS
+        if idle_exit_seconds <= 0 or time.monotonic() - last_work_at < idle_exit_seconds:
+            return False
+        try:
+            async with self.queue() as queue:
+                return await queue.count_claimable() == 0
+        except Exception as e:
+            logger.error(f"Failed to check the task queue before idle exit: {e}")
+            return False
 
     def stop(self) -> None:
         """Stop claiming new tasks; the current task is finished first."""
@@ -232,10 +253,9 @@ class TaskWorker:
         try:
             async with self.workers() as worker_service:
                 await worker_service.change_worker_status(self.worker.id, status)
+                # current_task is kept after the task ends so the worker still shows its last task
                 if status == "busy":
                     await worker_service.set_current_task(self.worker.id, task_info)
-                else:
-                    await worker_service.set_current_task(self.worker.id, None)
             self.worker.status = status
         except Exception as e:
             logger.error(f"Failed to set worker status {status}: {e}")

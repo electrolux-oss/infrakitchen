@@ -64,6 +64,12 @@ class WorkerService:
 
         return WorkerDTO.model_validate(response)
 
+    async def delete_by_host(self, host: str) -> int:
+        """Remove the rows of workers that ran on ``host``, e.g. a deleted on-demand worker pod."""
+        deleted = await self.crud.delete_by_host(host)
+        await self.crud.commit()
+        return deleted
+
     async def change_worker_status(self, worker_id: str | UUID, status: Literal["free", "busy", "offline"]) -> None:
         worker = await self.crud.get_by_id(str(worker_id))
         if not worker:

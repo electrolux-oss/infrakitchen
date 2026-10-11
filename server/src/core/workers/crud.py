@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import (
@@ -67,6 +67,10 @@ class WorkerCRUD:
             setattr(existing_worker, key, value)
 
         return existing_worker
+
+    async def delete_by_host(self, host: str) -> int:
+        result = await self.session.execute(delete(Worker).where(Worker.host == host))
+        return getattr(result, "rowcount", 0) or 0
 
     async def commit(self) -> None:
         await self.session.commit()

@@ -16,7 +16,14 @@ from application.logger import change_logger, get_uvicorn_log_config
 from build_info import write_build_info
 from core.config import setup_service_environment
 from core.utils.event_sender import EventSender
-from scheduler import schedule_jobs, schedule_polling_job, schedule_task_queue_cleanup_job, start_reload_consumer
+from scheduler import (
+    schedule_jobs,
+    schedule_polling_job,
+    schedule_task_queue_cleanup_job,
+    schedule_worker_autoscaler_job,
+    start_reload_consumer,
+    start_worker_autoscaler_listener,
+)
 from worker import run_task_worker
 
 from src.app import app
@@ -78,7 +85,7 @@ async def start_task_workers(count: int):
     _ = await asyncio.gather(*(run_task_worker(handle_signals=False, name=name) for name in names))
 
 
-async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
+async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Future[tuple[None, None]]"]:
     """Initializes and configures the AsyncIOScheduler.
 
     Returns the scheduler and the background task running its reload consumer so
@@ -91,10 +98,14 @@ async def setup_scheduler() -> tuple[AsyncIOScheduler, "asyncio.Task[None]"]:
     await schedule_jobs(scheduler=scheduler, event_sender=event_sender)
     await schedule_polling_job(scheduler=scheduler, event_sender=event_sender)
     schedule_task_queue_cleanup_job(scheduler=scheduler)
+    schedule_worker_autoscaler_job(scheduler=scheduler)
 
     scheduler.start()
 
-    reload_task = asyncio.create_task(start_reload_consumer(scheduler=scheduler, event_sender=event_sender))
+    reload_task = asyncio.gather(
+        start_reload_consumer(scheduler=scheduler, event_sender=event_sender),
+        start_worker_autoscaler_listener(scheduler=scheduler),
+    )
 
     return scheduler, reload_task
 

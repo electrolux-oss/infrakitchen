@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, exists, func, select, update
+from sqlalchemy import ColumnElement, delete, exists, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -91,8 +91,9 @@ class TaskQueueCRUD:
         """Wake up listening workers. Delivered by Postgres when the transaction commits."""
         _ = await self.session.execute(NOTIFY_STATEMENT)
 
-    async def claim(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItem | None:
-        """Atomically take the next claimable task and lease it to ``worker_id``.
+    @staticmethod
+    def _claimable() -> tuple[ColumnElement[bool], ...]:
+        """Queued tasks a free worker could take right now.
 
         Tasks whose entity already has a running task are skipped, so work on a
         single entity is serialized across all workers.
@@ -103,13 +104,26 @@ class TaskQueueCRUD:
             running.entity == TaskQueueItem.entity,
             running.entity_id == TaskQueueItem.entity_id,
         )
+        return (
+            TaskQueueItem.status == TaskQueueStatus.QUEUED,
+            TaskQueueItem.available_at <= func.now(),
+            ~entity_is_busy,
+        )
+
+    async def count_claimable(self) -> int:
+        """Number of workers that could be busy right now: queued tasks of one entity run one at a time."""
+        statement = select(
+            func.count(func.distinct(TaskQueueItem.entity_id)),
+            func.count().filter(TaskQueueItem.entity_id.is_(None)),
+        ).where(*self._claimable())
+        per_entity, without_entity = (await self.session.execute(statement)).one()
+        return (per_entity or 0) + (without_entity or 0)
+
+    async def claim(self, worker_id: UUID, lease_seconds: int) -> TaskQueueItem | None:
+        """Atomically take the next claimable task and lease it to ``worker_id``."""
         next_id = (
             select(TaskQueueItem.id)
-            .where(
-                TaskQueueItem.status == TaskQueueStatus.QUEUED,
-                TaskQueueItem.available_at <= func.now(),
-                ~entity_is_busy,
-            )
+            .where(*self._claimable())
             .order_by(TaskQueueItem.priority.desc(), TaskQueueItem.available_at, TaskQueueItem.seq)
             .limit(1)
             .with_for_update(skip_locked=True, of=TaskQueueItem)

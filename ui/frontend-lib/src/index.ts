@@ -11,6 +11,7 @@ export * from "./tools";
 export * from "./secrets";
 export * from "./users";
 export * from "./auth_providers";
+export * from "./worker_templates";
 export * from "./workspaces";
 export * from "./workers";
 export * from "./tasks";

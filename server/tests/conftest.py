@@ -104,6 +104,11 @@ from .fixtures.test_storage_fixtures import (
     storage_response,
     mocked_storage,
 )
+from .fixtures.test_worker_template_fixtures import (
+    mock_worker_template_crud,
+    mock_worker_template_service,
+    mocked_worker_template,
+)
 from .fixtures.test_secret_fixtures import (
     mock_secret_crud,
     mock_secret_service,
@@ -197,6 +202,9 @@ __all__ = [
     "mock_storage_service",
     "storage_response",
     "mocked_storage",
+    "mock_worker_template_crud",
+    "mock_worker_template_service",
+    "mocked_worker_template",
     "mock_secret_crud",
     "mock_secret_service",
     "mocked_secret_response",

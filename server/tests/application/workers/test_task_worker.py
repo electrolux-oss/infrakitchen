@@ -457,3 +457,43 @@ class TestNotifications:
                     event_type=EventType.EXECUTE,
                 )
             )
+
+
+class TestIdleExit:
+    async def test_disabled_by_default(self, task_worker, mock_queue):
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=0) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_exits_when_idle_and_queue_is_empty(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is True
+
+    async def test_stays_while_tasks_are_waiting(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=2)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic() - 61) is False
+
+    async def test_stays_before_timeout(self, task_worker, mock_queue):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 60
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+
+        assert await task_worker.idle_expired(last_work_at=tw_mod.time.monotonic()) is False
+        mock_queue.count_claimable.assert_not_awaited()
+
+    async def test_run_stops_after_idle_timeout(self, task_worker, mock_queue, mock_worker_service, monkeypatch):
+        task_worker.settings.WORKER_IDLE_EXIT_SECONDS = 1
+        task_worker.settings.WORKER_POLL_INTERVAL = 0.01
+        mock_queue.count_claimable = AsyncMock(return_value=0)
+        mock_worker_service.save_worker = AsyncMock(return_value=task_worker.worker)
+        monkeypatch.setattr(tw_mod, "get_host_metadata", AsyncMock(return_value={}))
+        monkeypatch.setattr(task_worker, "listen_loop", AsyncMock())
+
+        await asyncio.wait_for(task_worker.run(), timeout=5)
+
+        assert task_worker._stopping.is_set()
+        mock_worker_service.change_worker_status.assert_awaited_with(task_worker.worker_id, "offline")

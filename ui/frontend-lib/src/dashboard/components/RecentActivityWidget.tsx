@@ -22,7 +22,6 @@ import {
   AuditExecutionResult,
   getAuditExecution,
 } from "../../audit_logs/components/AuditExecutionResult";
-
 import {
   Entity,
   humanizeEntityType,

@@ -60,7 +60,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends nginx git opens
   useradd --create-home --shell /bin/bash infrakitchen && \
   mkdir -p /home/infrakitchen/.aws
 
-COPY ./aws_config /home/infrakitchen/.aws/config
 
 COPY ./docs/examples/docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./docs/examples/docker/websocket-map.conf /etc/nginx/conf.d/websocket-map.conf
