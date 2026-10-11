@@ -34,6 +34,8 @@ function createLog(log: GqlLog[]) {
       logMessage = `\u001b[1m\u001b[36m${logMessage}\u001b[22m\u001b[30m`;
     } else if (l.level === "error") {
       logMessage = `\u001b[1m\u001b[31m${logMessage}\u001b[22m\u001b[30m`;
+    } else if (l.level === "footer") {
+      logMessage = `\u001b[1m\u001b[32m${logMessage}\u001b[22m\u001b[30m`;
     }
     const s = `${createdAtStr}. ${logMessage}`;
     result.push({ id: l.id, data: s });

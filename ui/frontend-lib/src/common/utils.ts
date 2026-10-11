@@ -117,56 +117,76 @@ export const STATUS_CHIP_COLOR: Record<
   rejected: "error",
 };
 
-export const formatTimeAgo = (dateInput: string | Date) => {
+/**
+ * Relative-time text between a date and now. Long form (default) reads like
+ * prose, e.g. "1 hour ago"; compact form suits dense table cells, e.g.
+ * "1h ago", "3d ago", "2w ago", "4mo ago", "1y ago".
+ */
+export const formatTimeAgo = (dateInput: string | Date, compact = false) => {
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
 
   if (isNaN(date.getTime())) {
     return "Invalid date";
   }
 
-  const now = new Date();
-  const diffInMs = date.getTime() - now.getTime();
+  const diffInMs = date.getTime() - new Date().getTime();
   const isFuture = diffInMs > 0;
   const absDiffInMs = Math.abs(diffInMs);
   const diffInMinutes = Math.floor(absDiffInMs / (1000 * 60));
   const diffInHours = Math.floor(absDiffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(absDiffInMs / (1000 * 60 * 60 * 24));
+  const ago = (n: number, unit: string) =>
+    isFuture ? `in ${n}${unit}` : `${n}${unit} ago`;
 
-  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 1) return compact ? "now" : "Just now";
 
   if (diffInMinutes < 60) {
-    return isFuture
-      ? `in ${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"}`
-      : `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
+    return compact
+      ? ago(diffInMinutes, "m")
+      : isFuture
+        ? `in ${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"}`
+        : `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`;
   }
 
   if (diffInHours < 24) {
-    return isFuture
-      ? `in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`
-      : `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
+    return compact
+      ? ago(diffInHours, "h")
+      : isFuture
+        ? `in ${diffInHours} hour${diffInHours === 1 ? "" : "s"}`
+        : `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`;
   }
 
-  if (diffInDays === 1) return isFuture ? "in 1 day" : "1 day ago";
+  if (diffInDays === 1)
+    return compact ? ago(1, "d") : isFuture ? "in 1 day" : "1 day ago";
 
-  if (diffInDays < 7)
-    return isFuture ? `in ${diffInDays} days` : `${diffInDays} days ago`;
+  if (diffInDays < 7) {
+    return compact
+      ? ago(diffInDays, "d")
+      : isFuture
+        ? `in ${diffInDays} days`
+        : `${diffInDays} days ago`;
+  }
 
   if (diffInDays < 30) {
-    const weeks = Math.floor(diffInDays / 7);
+    const n = Math.floor(diffInDays / 7);
+    if (compact) return ago(n, "w");
     if (isFuture) {
-      return weeks === 1 ? "in 1 week" : `in ${weeks} weeks`;
+      return n === 1 ? "in 1 week" : `in ${n} weeks`;
     }
-    return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+    return n === 1 ? "1 week ago" : `${n} weeks ago`;
   }
 
   if (diffInDays < 365) {
-    const months = Math.floor(diffInDays / 30);
+    const n = Math.floor(diffInDays / 30);
+    if (compact) return ago(n, "mo");
     if (isFuture) {
-      return months === 1 ? "in 1 month" : `in ${months} months`;
+      return n === 1 ? "in 1 month" : `in ${n} months`;
     }
-    return months === 1 ? "1 month ago" : `${months} months ago`;
+    return n === 1 ? "1 month ago" : `${n} months ago`;
   }
+
   const years = Math.floor(diffInDays / 365);
+  if (compact) return ago(years, "y");
   if (isFuture) {
     return years === 1 ? "in 1 year" : `in ${years} years`;
   }

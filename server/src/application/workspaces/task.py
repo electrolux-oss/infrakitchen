@@ -3,8 +3,10 @@ import os
 import tempfile
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.resources.model import Resource
 from application.resources.task import ResourceTask
 from application.workspaces.model import Workspace, WorkspaceDTO
 from application.workspaces.schema import WorkspaceResponse
@@ -15,6 +17,7 @@ from core.tools.git_client import GitClient
 from core.utils.event_sender import EventSender
 
 from core.custom_entity_log_controller import EntityLogger
+from core.dependencies import get_async_session
 from core.errors import CannotProceed, EntityExistsError
 from core.users.model import UserDTO
 
@@ -162,6 +165,18 @@ class WorkspaceTask:
         if self.workspace_instance.status == ModelStatus.IN_PROGRESS:
             await self.change_state(ModelStatus.ERROR)
 
+    async def entity_is_healthy(self) -> bool:
+        """
+        Workspace sync is a side effect of the resource action,
+        the action itself is fine while the resource is not failed.
+        """
+        # separate session, the task session can be in a failed state
+        async with get_async_session() as session:
+            status = await session.scalar(
+                select(Resource.status).where(Resource.id == self.resource_task_controller.resource_instance.id)
+            )
+        return status is not None and status != ModelStatus.ERROR
+
     # sync source code with workspace and create PR
     async def change_state(self, new_state: ModelStatus, event_type: str = ModelActions.SYNC) -> None:
         self.workspace_instance.status = new_state
@@ -225,6 +240,10 @@ class WorkspaceTask:
         resource_instance = self.resource_task_controller.resource_instance
         destination_path = f"{self.git_client.destination_dir}/{resource_instance.template.template}/{resource_instance.name.replace(' ', '_').lower()}"  # noqa: E501
         new_branch = self.get_new_branch_name()
+        self.logger.add_result(
+            repository=f"{workspace_pydantic.configuration.organization}/{workspace_pydantic.name}",
+            branch=new_branch,
+        )
 
         await self.git_client.checkout_to_new_branch(
             new_branch,
@@ -241,6 +260,7 @@ class WorkspaceTask:
             commit_message, user_email=self.user.email, user_name=self.user.display_name or self.user.identifier
         )
 
+        self.logger.add_result(changes_committed=changes_committed)
         if not changes_committed:
             self.logger.info("No changes detected, skipping push and pull request creation")
             return
@@ -257,12 +277,16 @@ class WorkspaceTask:
                     head=new_branch,
                     base=workspace_pydantic.configuration.default_branch,
                 )
+                self.logger.add_result(pull_request="created")
             except ValueError as e:
                 self.logger.warning(f"Failed to create pull request: {e}")
+                self.logger.add_result(pull_request="failed")
             except EntityExistsError:
                 self.logger.warning("Pull request already exists, skipping creation")
+                self.logger.add_result(pull_request="exists")
         else:
             self.logger.warning("Git API client is not initialized, cannot create pull request")
+            self.logger.add_result(pull_request="skipped")
 
     def get_new_branch_name(self) -> str:
         resource_instance = self.resource_task_controller.resource_instance
@@ -297,6 +321,10 @@ class WorkspaceTask:
         resource_instance = self.resource_task_controller.resource_instance
         destination_path = f"{self.git_client.destination_dir}/{resource_instance.template.template}/{resource_instance.name.replace(' ', '_').lower()}"  # noqa: E501
         new_branch = self.get_new_branch_name()
+        self.logger.add_result(
+            repository=f"{workspace_pydantic.configuration.organization}/{workspace_pydantic.name}",
+            branch=new_branch,
+        )
 
         await self.git_client.checkout_to_new_branch(
             new_branch,
@@ -313,6 +341,7 @@ class WorkspaceTask:
             commit_message, user_email=self.user.email, user_name=self.user.display_name or self.user.identifier
         )
 
+        self.logger.add_result(changes_committed=changes_committed)
         if not changes_committed:
             self.logger.info("No changes detected, skipping push and pull request creation")
             return
@@ -329,12 +358,16 @@ class WorkspaceTask:
                     head=new_branch,
                     base=workspace_pydantic.configuration.default_branch,
                 )
+                self.logger.add_result(pull_request="created")
             except ValueError as e:
                 self.logger.warning(f"Failed to create pull request: {e}")
+                self.logger.add_result(pull_request="failed")
             except EntityExistsError:
                 self.logger.warning("Pull request already exists, skipping creation")
+                self.logger.add_result(pull_request="exists")
         else:
             self.logger.warning("Git API client is not initialized, cannot create pull request")
+            self.logger.add_result(pull_request="skipped")
 
     # approve entity merges branch to main
     async def approve_state(self):
@@ -361,8 +394,10 @@ class WorkspaceTask:
             head=head_branch,
         )
 
+        self.logger.add_result(branch=head_branch)
         if not pr:
             self.logger.warning(f"No pull request found for branch {head_branch}")
+            self.logger.add_result(pull_request="not_found")
             return
 
         merged = await self.git_api.merge_pull_request(
@@ -373,6 +408,7 @@ class WorkspaceTask:
         )
         if merged:
             self.logger.info("Pull request merged successfully")
+            self.logger.add_result(pull_request="merged")
         else:
             self.logger.error("Failed to merge pull request")
             raise CannotProceed("Failed to merge pull request")
@@ -402,8 +438,10 @@ class WorkspaceTask:
             head=head_branch,
         )
 
+        self.logger.add_result(branch=head_branch)
         if not pr:
             self.logger.warning(f"No pull request found for branch {head_branch}")
+            self.logger.add_result(pull_request="not_found")
             return
 
         closed = await self.git_api.close_pull_request(
@@ -413,6 +451,7 @@ class WorkspaceTask:
         )
         if closed:
             self.logger.info("Pull request closed successfully")
+            self.logger.add_result(pull_request="closed")
         else:
             self.logger.error("Failed to close pull request")
             raise CannotProceed("Failed to close pull request")

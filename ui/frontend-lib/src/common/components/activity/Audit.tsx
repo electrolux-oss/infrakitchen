@@ -21,6 +21,7 @@ import {
   GridSortModel,
 } from "@mui/x-data-grid";
 
+import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
 import { buildAuditLogsQuery, GqlAuditLog } from "../../../audit_logs/graphql";
 import { CommonDialog, useConfig } from "../../../common";
 import GradientCircularProgress from "../../../common/GradientCircularProgress";
@@ -190,6 +191,7 @@ export const Audit = ({
           "creator",
           "created_at",
           "revision_number",
+          "metadata",
         ]),
         {
           filter: { entity_id: entityId },
@@ -245,6 +247,31 @@ export const Audit = ({
         flex: 1,
       },
       {
+        field: "result",
+        headerName: "Result",
+        flex: 3,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              height: "100%",
+              minWidth: 0,
+            }}
+          >
+            <AuditExecutionResult log={params.row} />
+            <LogActionButtons
+              action={params.row.action}
+              sourceCodeLanguage={sourceCodeLanguage}
+              onOpenSummary={() => openDialog(params.row.id, "summary")}
+              onOpenLogs={() => openDialog(params.row.id, "logs")}
+            />
+          </Box>
+        ),
+      },
+      {
         field: "creator",
         headerName: "User",
         // Avatar-only cell, so the column only needs to fit the avatar.
@@ -263,22 +290,10 @@ export const Audit = ({
         field: "createdAt",
         headerName: "Time",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        align: "right",
+        headerAlign: "right",
         renderCell: (params: GridRenderCellParams<AuditLogEntity>) => (
-          <RelativeTime date={params.value} />
-        ),
-      },
-      {
-        field: "userActions",
-        headerName: "",
-        flex: 1,
-        sortable: false,
-        renderCell: (params) => (
-          <LogActionButtons
-            action={params.row.action}
-            sourceCodeLanguage={sourceCodeLanguage}
-            onOpenSummary={() => openDialog(params.row.id, "summary")}
-            onOpenLogs={() => openDialog(params.row.id, "logs")}
-          />
+          <RelativeTime date={params.value} compact />
         ),
       },
     ],

@@ -74,6 +74,8 @@ class EntityLogger:
         self.audit_log_id: str | UUID | None = audit_log_id
         self.trace_id: str | None = trace_id
         self._save_lock = asyncio.Lock()
+        # execution result details stored in the audit log metadata when the task is done
+        self.result: dict[str, Any] = {}
         # setup ttl for logs to be expired ex. dry run logs
         self.expire_at: datetime.datetime | None = None
         if should_be_expired:
@@ -82,13 +84,23 @@ class EntityLogger:
     def make_expired(self):
         self.expire_at = datetime.datetime.now() + datetime.timedelta(days=5)
 
+    def add_result(self, **data: Any):
+        self.result.update({key: value for key, value in data.items() if value is not None})
+
     def add_log_header(self, data: str):
+        self._add_marker_log(data, "header")
+
+    def add_log_footer(self, status: str):
+        duration = int(datetime.datetime.now().timestamp()) - self.execution_start
+        self._add_marker_log(f"Status: {status} Duration: {duration}s", "footer")
+
+    def _add_marker_log(self, data: str, level: Literal["header", "footer"]):
         log = Log(
             entity=self.entity_name,
             entity_id=self.entity_id,
             revision=self.revision_number,
             data=data,
-            level="header",
+            level=level,
             created_at=datetime.datetime.now(datetime.UTC),
             execution_start=self.execution_start,
             audit_log_id=self.audit_log_id,

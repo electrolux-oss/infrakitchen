@@ -10,6 +10,8 @@ from core.errors import ShellExecutionError
 
 from core.tools.shell_client import ShellScriptClient
 
+from .tf_summary import parse_apply_summary, parse_plan_summary
+
 logger = logging.getLogger(__name__)
 
 
@@ -106,14 +108,16 @@ class OtfClient:
         Apply Tofu configuration.
         """
         self.logger.info("Applying Tofu...")
-        await self._run_command(f"apply {command_args}")
+        output = await self._run_command(f"apply {command_args}")
+        self.logger.add_result(apply=parse_apply_summary(output))
 
     async def destroy(self, command_args: str = "-auto-approve=true"):
         """
         Destroy Tofu configuration.
         """
         self.logger.info("Destroying Tofu...")
-        await self._run_command(f"destroy {command_args}")
+        output = await self._run_command(f"destroy {command_args}")
+        self.logger.add_result(destroy=parse_apply_summary(output))
 
     async def dry_run(self, command_args: str = "", destroy: bool = False):
         """
@@ -121,9 +125,10 @@ class OtfClient:
         """
         if destroy:
             self.logger.info("Planning Tofu destroy...")
-            await self._run_command(f"plan -destroy {command_args}")
+            output = await self._run_command(f"plan -destroy {command_args}")
         else:
-            await self._run_command(f"plan {command_args}")
+            output = await self._run_command(f"plan {command_args}")
+        self.logger.add_result(plan=parse_plan_summary(output))
 
     async def get_output(self) -> dict[str, Any]:
         """

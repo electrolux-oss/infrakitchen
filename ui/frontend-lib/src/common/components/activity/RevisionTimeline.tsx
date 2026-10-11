@@ -2,6 +2,7 @@ import { Icon } from "@iconify/react";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
+import { AuditExecutionResult } from "../../../audit_logs/components/AuditExecutionResult";
 import { AuditLogEntity } from "../../../types";
 import { RelativeTime } from "../fields/RelativeTime";
 import { RevisionChip } from "../labels/RevisionChip";
@@ -58,6 +59,9 @@ export const RevisionTimeline = ({
                 {log.action}
               </Typography>
               <RelativeTime date={log.createdAt} sx={{ fontSize: "0.7rem" }} />
+              <Box sx={{ mt: 0.5 }}>
+                <AuditExecutionResult log={log} hideSummary />
+              </Box>
               {actionsWithLogs.includes(log.action) && (
                 <Stack
                   direction="row"
