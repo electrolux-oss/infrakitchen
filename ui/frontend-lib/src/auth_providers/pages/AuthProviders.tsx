@@ -9,6 +9,7 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { PermissionWrapper, useConfig } from "../../common";
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
+import type { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
 import {
   RELATIVE_TIME_COLUMN_WIDTH,
   userColumn,
@@ -23,7 +24,7 @@ export const AuthProvidersPage = () => {
 
   const navigate = useNavigate();
 
-  const columns = useMemo(
+  const columns = useMemo<EntityTableColumn[]>(
     () => [
       {
         field: "name",
@@ -65,9 +66,11 @@ export const AuthProvidersPage = () => {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        align: "right",
+        headerAlign: "right",
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime date={params.value} />
+          <RelativeTime date={params.value} compact />
         ),
       },
       userColumn({ disableFilter: true }),

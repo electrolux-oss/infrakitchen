@@ -22,7 +22,6 @@ import {
   AuditExecutionResult,
   getAuditExecution,
 } from "../../audit_logs/components/AuditExecutionResult";
-
 import {
   Entity,
   humanizeEntityType,
@@ -369,7 +368,7 @@ export const RecentActivityWidget = ({
           mb: 1.5,
         }}
       >
-        <HistoryIcon sx={{ color: "info.main", fontSize: 20 }} />
+        <HistoryIcon sx={{ color: "primary.main", fontSize: 20 }} />
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Recent Activities
         </Typography>

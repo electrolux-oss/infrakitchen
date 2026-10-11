@@ -351,6 +351,7 @@ export const EntityTable = ({
               rowCount={totalRows}
               autoHeight
               paginationMode="server"
+              sortingMode="server"
               loading={loading}
               columns={columns}
               pagination

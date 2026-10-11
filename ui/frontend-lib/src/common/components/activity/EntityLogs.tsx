@@ -120,7 +120,9 @@ export const EntityLogs = ({
         field: "createdAt",
         headerName: "Started",
         width: RELATIVE_TIME_COLUMN_WIDTH,
-        renderCell: (params) => <RelativeTime date={params.value} />,
+        align: "right",
+        headerAlign: "right",
+        renderCell: (params) => <RelativeTime date={params.value} compact />,
       },
 
       {

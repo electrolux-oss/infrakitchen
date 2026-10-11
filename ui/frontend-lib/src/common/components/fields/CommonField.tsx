@@ -116,7 +116,9 @@ export const getDateValue = (date: Date | string) => {
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      second: "2-digit",
       hour12: true,
+      timeZoneName: "short",
     });
   } catch (_) {
     return "Invalid Date";

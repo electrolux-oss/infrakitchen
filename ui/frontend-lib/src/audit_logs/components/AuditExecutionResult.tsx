@@ -1,8 +1,14 @@
-import { Box, Chip, ChipProps, Divider, Tooltip, Typography } from "@mui/material";
-
-import type { GqlAuditLog } from "../graphql";
+import {
+  Box,
+  Chip,
+  ChipProps,
+  Divider,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import type { GqlAuditLog } from "../graphql";
 
 // Counts of a plan ("add") or apply ("added") with the affected resource addresses.
 type ChangeCounts = {
@@ -193,10 +199,7 @@ const ResourceActionGroup = ({
         </Typography>
       ))}
       {hidden > 0 && (
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", ml: 1 }}
-        >
+        <Typography variant="caption" sx={{ color: "text.secondary", ml: 1 }}>
           {`+${hidden} more`}
         </Typography>
       )}

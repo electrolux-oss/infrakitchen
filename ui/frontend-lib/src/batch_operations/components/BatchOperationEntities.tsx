@@ -390,12 +390,20 @@ export const BatchOperationEntities = ({
       },
       {
         field: "updated_at",
-        headerName: "Last Updated",
+        headerName: "Updated",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        align: "right",
+        headerAlign: "right",
         renderCell: (params: GridRenderCellParams) => (
           <RelativeTime
             date={params.value}
-            sx={{ display: "flex", alignItems: "center", height: "100%" }}
+            compact
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              height: "100%",
+            }}
           />
         ),
       },

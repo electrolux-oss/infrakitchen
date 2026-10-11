@@ -145,16 +145,24 @@ export default function WorkerList() {
         width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "created_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime date={params.value} sx={{ display: "flex" }} />
+          <RelativeTime
+            date={params.value}
+            compact
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          />
         ),
       },
       {
         field: "updatedAt",
-        headerName: "Last Updated",
+        headerName: "Updated",
         width: RELATIVE_TIME_COLUMN_WIDTH,
         sortField: "updated_at",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime date={params.value} sx={{ display: "flex" }} />
+          <RelativeTime
+            date={params.value}
+            compact
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          />
         ),
       },
       HostInfoField,
