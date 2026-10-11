@@ -138,7 +138,7 @@ export function EntityTreeViewItems(props: TreeViewItemProps) {
   };
 
   return (
-    <Box sx={{ px: 1.5, pt: 4, pb: 0.75 }}>
+    <Box sx={{ px: 1.5, pt: 1, pb: 0.75 }}>
       <SimpleTreeView
         expandedItems={expanded}
         selectedItems={selected}

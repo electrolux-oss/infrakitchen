@@ -79,6 +79,7 @@ export const BlueprintContent = () => {
                     wiring={[...blueprint.wiring, ...constantWires]}
                     externalTemplates={externalTemplates}
                     constants={constants}
+                    allowFullscreen
                   />
                 )}
               </PropertyCard>

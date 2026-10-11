@@ -1275,6 +1275,51 @@ class TestGetTree:
         with pytest.raises(EntityNotFound, match="Resource not found"):
             await mock_resource_service.get_tree(resource_id=RESOURCE_ID, direction="parents")
 
+    @pytest.mark.asyncio
+    async def test_get_tree_shared_dependency(self, mock_resource_service, mock_resource_crud):
+        # Diamond A -> B -> D, A -> C -> D, D -> E. The recursive query returns one row per path,
+        # so D and E show up more than once.
+        a, b, c, d, e = (uuid4() for _ in range(5))
+        names = {a: "A", b: "B", c: "C", d: "D", e: "E"}
+
+        def row(node_id, link_id):
+            return {
+                "id": node_id,
+                "child_id": link_id,
+                "name": names[node_id],
+                "state": "state",
+                "status": "status",
+                "template_name": "template1",
+            }
+
+        mock_resource_crud.get_tree_to_children.return_value = [
+            row(a, None),
+            row(b, a),
+            row(c, a),
+            row(d, b),
+            row(d, c),
+            row(e, d),
+            row(e, d),
+        ]
+
+        result = await mock_resource_service.get_tree(resource_id=RESOURCE_ID, direction="children")
+
+        assert result.name == "A"
+        assert [child.name for child in result.children] == ["B", "C"]
+        for branch in result.children:
+            assert [child.name for child in branch.children] == ["D"]
+            assert [child.name for child in branch.children[0].children] == ["E"]
+
+        node_ids = []
+
+        def collect(node):
+            node_ids.append(node.node_id)
+            for child in node.children:
+                collect(child)
+
+        collect(result)
+        assert len(node_ids) == len(set(node_ids)) == 7
+
 
 class TestParentConfigs:
     @pytest.mark.asyncio

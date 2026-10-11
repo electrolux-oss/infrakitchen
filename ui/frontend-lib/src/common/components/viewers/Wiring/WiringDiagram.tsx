@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import {
@@ -7,16 +8,22 @@ import {
   Dialog,
   DialogContent,
   IconButton,
+  Tooltip,
   useColorScheme,
   useTheme,
 } from "@mui/material";
-import { Background, Controls, ReactFlow } from "@xyflow/react";
+import {
+  Background,
+  Controls,
+  ReactFlow,
+  type ReactFlowInstance,
+} from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useShallow } from "zustand/react/shallow";
 
 import { ConstantNode } from "./ConstantNode";
 import { ExternalNode } from "./ExternalNode";
-import { useCanvasPalette } from "./helpers";
+import { DiagramNode, useCanvasPalette } from "./helpers";
 import { TemplateNode } from "./TemplateNode";
 import { GenericStep, GenericTemplate, WiringRule } from "./types";
 import {
@@ -88,12 +95,79 @@ function derivePorts(
 }
 
 /**
+ * Groups templates into columns by dependency: a template that consumes
+ * another template's output is placed one column after its deepest
+ * dependency (longest path). Within a column templates are ordered by the
+ * average row of their dependencies to reduce edge crossings. Wiring cycles
+ * are ignored.
+ */
+function computeDependencyColumns(
+  templates: GenericTemplate[],
+  wiring: WiringRule[],
+): GenericTemplate[][] {
+  const index = new Map(templates.map((t, i) => [t.id, i]));
+  const dependencies = new Map<string, Set<string>>(
+    templates.map((t) => [t.id, new Set()]),
+  );
+  for (const w of wiring) {
+    if (
+      w.source_template_id !== w.target_template_id &&
+      index.has(w.source_template_id) &&
+      index.has(w.target_template_id)
+    ) {
+      dependencies.get(w.target_template_id)!.add(w.source_template_id);
+    }
+  }
+
+  const column = new Map<string, number>();
+  const visiting = new Set<string>();
+  const columnOf = (id: string): number => {
+    const known = column.get(id);
+    if (known !== undefined) return known;
+    visiting.add(id);
+    let col = 0;
+    for (const dep of dependencies.get(id)!) {
+      if (!visiting.has(dep)) col = Math.max(col, columnOf(dep) + 1);
+    }
+    visiting.delete(id);
+    column.set(id, col);
+    return col;
+  };
+
+  const columns: GenericTemplate[][] = [];
+  for (const t of templates) {
+    const col = columnOf(t.id);
+    (columns[col] ??= []).push(t);
+  }
+
+  const row = new Map<string, number>();
+  for (const group of columns) {
+    if (!group) continue;
+    const weight = (t: GenericTemplate) => {
+      const rows = [...dependencies.get(t.id)!]
+        .map((dep) => row.get(dep))
+        .filter((r): r is number => r !== undefined);
+      return rows.length
+        ? rows.reduce((a, b) => a + b, 0) / rows.length
+        : index.get(t.id)!;
+    };
+    group.sort(
+      (a, b) => weight(a) - weight(b) || index.get(a.id)! - index.get(b.id)!,
+    );
+    group.forEach((t, i) => row.set(t.id, i));
+  }
+
+  return columns.filter(Boolean);
+}
+
+/**
  * Pre-computes grid positions for the read-only diagram layout.
  */
 function computeDiagramLayout(
   templates: GenericTemplate[],
   externalTemplates: Array<{ id: string; name: string }>,
   constants: Array<{ id: string; name: string }>,
+  wiring: WiringRule[],
   stepByTemplate?: Map<string, GenericStep>,
 ): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
@@ -134,9 +208,14 @@ function computeDiagramLayout(
       }
     }
   } else {
-    for (let i = 0; i < templates.length; i++) {
-      positions[templates[i].id] = { x: xOffset + i * COL_WIDTH, y: 40 };
-    }
+    computeDependencyColumns(templates, wiring).forEach((group, col) => {
+      group.forEach((t, row) => {
+        positions[t.id] = {
+          x: xOffset + col * COL_WIDTH,
+          y: 40 + row * ROW_HEIGHT,
+        };
+      });
+    });
   }
 
   return positions;
@@ -156,11 +235,11 @@ export interface WiringDiagramProps {
   height?: number;
   /**
    * Workflow steps - when provided, enables workflow mode:
-   * status-coloured nodes/edges, resource links, draggable nodes,
+   * status-coloured nodes/edges, resource links, selectable nodes,
    * and external templates are auto-derived from the wiring.
    */
   steps?: GenericStep[];
-  /** Show a fullscreen toggle button (useful in workflow mode). */
+  /** Show a fullscreen toggle button. */
   allowFullscreen?: boolean;
 }
 
@@ -177,6 +256,7 @@ export const WiringDiagram = ({
   const palette = useCanvasPalette();
   const { mode } = useColorScheme();
   const [fullscreen, setFullscreen] = useState(false);
+  const [flow, setFlow] = useState<ReactFlowInstance<DiagramNode>>();
 
   const isWorkflowMode = steps !== undefined;
 
@@ -201,9 +281,10 @@ export const WiringDiagram = ({
         templates,
         externalTemplates,
         constants,
+        wiring,
         stepByTemplate,
       ),
-    [templates, externalTemplates, constants, stepByTemplate],
+    [templates, externalTemplates, constants, wiring, stepByTemplate],
   );
 
   const computedNodes = useMemo(
@@ -253,6 +334,21 @@ export const WiringDiagram = ({
     useStore.setState({ nodes: computedNodes, edges: computedEdges });
   }, [computedNodes, computedEdges, useStore]);
 
+  // Put dragged nodes back into the dependency layout and re-fit the view
+  // once React Flow has measured the reset positions.
+  const autoArrange = () => {
+    useStore.setState({ nodes: computedNodes });
+    requestAnimationFrame(() =>
+      flow?.fitView({ maxZoom: 1, padding: 0.2, duration: 300 }),
+    );
+  };
+
+  const toolbarButtonSx = {
+    bgcolor: "background.paper",
+    border: `1px solid ${palette.divider}`,
+    "&:hover": { bgcolor: "action.hover" },
+  };
+
   const canvas = (
     <Box
       sx={{
@@ -267,12 +363,14 @@ export const WiringDiagram = ({
       <ReactFlow
         nodes={nodes}
         onNodesChange={onNodesChange}
+        onInit={setFlow}
         edges={edges}
         nodeTypes={NODE_TYPES}
         fitView
         // Cap at 1: React Flow's fitView otherwise upscales to 2x.
         fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
-        nodesDraggable={isWorkflowMode}
+        // Dragging only moves nodes locally; the layout is never saved.
+        nodesDraggable
         nodesConnectable={false}
         elementsSelectable={isWorkflowMode}
         proOptions={{ hideAttribution: true }}
@@ -282,28 +380,41 @@ export const WiringDiagram = ({
         <Controls showInteractive={false} />
       </ReactFlow>
 
-      {allowFullscreen && (
-        <IconButton
-          size="small"
-          aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          onClick={() => setFullscreen((v) => !v)}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 10,
-            bgcolor: "background.paper",
-            border: `1px solid ${palette.divider}`,
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          {fullscreen ? (
-            <CloseFullscreenIcon fontSize="small" />
-          ) : (
-            <FullscreenIcon fontSize="small" />
-          )}
-        </IconButton>
-      )}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          zIndex: 10,
+          display: "flex",
+          gap: 1,
+        }}
+      >
+        <Tooltip title="Auto arrange">
+          <IconButton
+            size="small"
+            aria-label="Auto arrange nodes"
+            onClick={autoArrange}
+            sx={toolbarButtonSx}
+          >
+            <AccountTreeIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        {allowFullscreen && (
+          <IconButton
+            size="small"
+            aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            onClick={() => setFullscreen((v) => !v)}
+            sx={toolbarButtonSx}
+          >
+            {fullscreen ? (
+              <CloseFullscreenIcon fontSize="small" />
+            ) : (
+              <FullscreenIcon fontSize="small" />
+            )}
+          </IconButton>
+        )}
+      </Box>
     </Box>
   );
 

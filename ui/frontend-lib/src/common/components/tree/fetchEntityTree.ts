@@ -1,6 +1,6 @@
 import { InfraKitchenApi } from "../../..";
 import {
-  RESOURCE_TREE_QUERY,
+  buildResourceTreeQuery,
   GqlResourceTreeNode,
 } from "../../../resources/graphql";
 import {
@@ -10,14 +10,27 @@ import {
 
 import { TreeResponse } from "./types";
 
+// Levels below the root entity fetched when no depth is chosen ("all").
+export const MAX_TREE_DEPTH = 100;
+
 export async function fetchEntityTree(
   ikApi: InfraKitchenApi,
   entityName: string,
   entityId: string,
   direction: "parents" | "children",
-  depth: number = 5,
+  depth: number = MAX_TREE_DEPTH,
 ): Promise<TreeResponse> {
+  // The query builders count the root as the first level.
+  const queryDepth = depth + 1;
+
   if (entityName === "resource") {
+    const RESOURCE_TREE_QUERY = `
+      query ResourceTree($id: UUID!, $direction: String!) {
+        resourceTree(id: $id, direction: $direction) {
+          ${buildResourceTreeQuery(queryDepth)}
+        }
+      }
+    `;
     const response = await ikApi.graphqlRequest<{
       resourceTree: GqlResourceTreeNode | null;
     }>(RESOURCE_TREE_QUERY, {
@@ -33,7 +46,7 @@ export async function fetchEntityTree(
   }
 
   if (entityName === "template") {
-    const TEMPLATE_TREE_FIELDS = buildTemplateTreeQuery(depth);
+    const TEMPLATE_TREE_FIELDS = buildTemplateTreeQuery(queryDepth);
     const TEMPLATE_TREE_QUERY = `
       query TemplateTree($id: UUID!, $direction: String!) {
         templateTree(id: $id, direction: $direction) {

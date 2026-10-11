@@ -977,40 +977,39 @@ class ResourceService:
         if not tree:
             raise EntityNotFound("Resource not found")
 
-        root = None
-        node_map = {}
-        children_map = defaultdict(list)
-        # First pass: wrap raw dicts into Pydantic nodes and map by ID
+        link_key = "parent_id" if direction == "parents" else "child_id"
+        # The recursive query returns one row per path, so a shared dependency (and its
+        # whole subtree) appears multiple times. Collapse rows into unique nodes and edges.
+        root_id: Any = None
+        info_by_id: dict[Any, dict[str, Any]] = {}
+        children_of: dict[Any, list[Any]] = defaultdict(list)
         for raw_node in tree:
-            node = ResourceTreeResponse(
+            info_by_id.setdefault(raw_node["id"], raw_node)
+            link_id = raw_node[link_key]
+            if link_id is None:
+                root_id = raw_node["id"]
+            elif raw_node["id"] not in children_of[link_id]:
+                children_of[link_id].append(raw_node["id"])
+
+        if root_id is None:
+            return None
+
+        def build_node(node_id: Any, ancestors: frozenset[Any]) -> ResourceTreeResponse:
+            raw_node = info_by_id[node_id]
+            ancestors = ancestors | {node_id}
+            return ResourceTreeResponse(
                 id=raw_node["id"],
                 node_id=uuid4(),
                 name=raw_node["name"],
                 state=raw_node["state"],
                 status=raw_node["status"],
                 template_name=raw_node["template_name"],
-                children=[],
+                children=[
+                    build_node(child_id, ancestors) for child_id in children_of[node_id] if child_id not in ancestors
+                ],
             )
-            node_map[node.id] = node
-            parent_id: str | None = None
-            if direction == "parents":
-                parent_id = raw_node["parent_id"]
-            else:
-                parent_id = raw_node["child_id"]
 
-            if parent_id is None:
-                root = node
-            else:
-                children_map[parent_id].append(node)
-
-        # Second pass: assign children to parents
-        for parent_id, children in children_map.items():
-            if parent_id in node_map:
-                node_map[parent_id].children.extend(children)
-
-        if root is None:
-            return None
-        return root
+        return build_node(root_id, frozenset())
 
     async def get_parent_ids(self, resource_id: str | UUID) -> list[UUID]:
         """

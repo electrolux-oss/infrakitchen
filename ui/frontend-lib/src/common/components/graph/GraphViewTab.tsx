@@ -23,6 +23,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useConfig } from "../../context";
 import { fetchEntityTree } from "../tree/fetchEntityTree";
+import { DEFAULT_TREE_DEPTH, TreeDepthSelect } from "../tree/TreeDepthSelect";
 import { TreeResponse } from "../tree/types";
 
 import { GraphNode, GraphViewNode } from "./GraphViewNode";
@@ -44,32 +45,41 @@ function buildGraph(
   entity_name: string,
 ): { nodes: GraphNode[]; edges: Edge[] } {
   const nodes: GraphNode[] = [];
-  const edges: Edge[] = [];
-  const levels: TreeResponse[][] = [];
+  const edges = new Map<string, Edge>();
+  // The tree repeats shared dependencies under every parent; the graph shows
+  // each entity once, placed at its deepest occurrence so edges flow forward.
+  const entities = new Map<string, { node: TreeResponse; depth: number }>();
 
   const visit = (node: TreeResponse, depth: number, parentId?: string) => {
-    if (!levels[depth]) levels[depth] = [];
-    levels[depth].push(node);
+    const seen = entities.get(node.id);
+    if (!seen || seen.depth < depth) entities.set(node.id, { node, depth });
 
     if (parentId) {
-      edges.push({
-        id: `${parentId}->${node.nodeId}`,
+      const edgeId = `${parentId}->${node.id}`;
+      edges.set(edgeId, {
+        id: edgeId,
         source: parentId,
-        target: node.nodeId,
+        target: node.id,
         type: "default",
       });
     }
 
-    node.children?.forEach((child) => visit(child, depth + 1, node.nodeId));
+    node.children?.forEach((child) => visit(child, depth + 1, node.id));
   };
 
   visit(root, 0);
+
+  const levels: TreeResponse[][] = [];
+  entities.forEach(({ node, depth }) => {
+    if (!levels[depth]) levels[depth] = [];
+    levels[depth].push(node);
+  });
 
   levels.forEach((levelNodes, depth) => {
     const columnHeight = levelNodes.length * NODE_HEIGHT;
     levelNodes.forEach((node, index) => {
       nodes.push({
-        id: node.nodeId,
+        id: node.id,
         type: "graphNode",
         position: {
           x: depth * LEVEL_WIDTH,
@@ -86,7 +96,7 @@ function buildGraph(
     });
   });
 
-  return { nodes, edges };
+  return { nodes, edges: [...edges.values()] };
 }
 
 export interface GraphViewProps {
@@ -102,10 +112,13 @@ export const EntityGraphViewTab = ({
   const { mode } = useColorScheme();
   const [tree, setTree] = useState<TreeResponse>();
   const [fullscreen, setFullscreen] = useState(false);
+  const [depth, setDepth] = useState<number>(DEFAULT_TREE_DEPTH);
 
   useEffect(() => {
-    fetchEntityTree(ikApi, entity_name, entity_id, "children").then(setTree);
-  }, [entity_id, entity_name, ikApi]);
+    fetchEntityTree(ikApi, entity_name, entity_id, "children", depth).then(
+      setTree,
+    );
+  }, [entity_id, entity_name, ikApi, depth]);
 
   const { nodes: computedNodes, edges } = useMemo(
     () => (tree ? buildGraph(tree, entity_name) : { nodes: [], edges: [] }),
@@ -166,6 +179,11 @@ export const EntityGraphViewTab = ({
           )}
         </ReactFlow>
       )}
+      <TreeDepthSelect
+        value={depth}
+        onChange={setDepth}
+        sx={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}
+      />
       <Tooltip title={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
         <IconButton
           size="small"
