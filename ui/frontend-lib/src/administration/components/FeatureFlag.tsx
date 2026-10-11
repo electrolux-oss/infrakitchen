@@ -25,6 +25,7 @@ const FEATURE_FLAG_DESCRIPTIONS: Record<string, string> = {
     "When enabled, real-time events and logs stream over WebSocket subscriptions.",
   Services:
     "When enabled, the Services catalog appears in the sidebar and on project pages.",
+  MCP: "When enabled, AI agents can connect to InfraKitchen via MCP.",
 };
 
 const EXPERIMENTAL_FEATURE_FLAGS = new Set(["Services"]);

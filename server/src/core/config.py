@@ -39,7 +39,6 @@ class Settings(BaseSettings):
     CACHE_DISABLED: str = "false"
     JWT_KEY: str = "supersecret"
     SESSION_EXPIRATION: str = "3600"
-    MCP_ENABLED: bool = False
     # Local directory where workers unpack IaC tools (tofu/terraform) stored in the database
     TOOL_CACHE_DIR: str = os.path.join(tempfile.gettempdir(), "infrakitchen", "tools")
     # Task queue / worker settings
@@ -69,6 +68,7 @@ class InfrakitchenConfig(metaclass=SingletonMeta):
     demo_mode: bool = False
     websocket: bool = True
     services: bool = False
+    mcp: bool = False
     server_version: str = BUILD_INFO["version"]
     git_commit: str = BUILD_INFO["git_commit"]
     git_commit_short: str = BUILD_INFO["git_commit_short"]

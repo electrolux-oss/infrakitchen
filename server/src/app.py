@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import json
-from contextlib import asynccontextmanager, nullcontext
+from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from application.tools.notification_manager import start_notification_dispatcher
 from infrakitchen_mcp import setup_mcp_server
@@ -23,7 +23,7 @@ from core.utils.event_stream_manager import start_event_consumer
 from application.init_app import init_app
 from fastapi import FastAPI, Request
 from prometheus_fastapi_instrumentator import Instrumentator
-from core.config import Settings, setup_service_environment
+from core.config import setup_service_environment
 from application.views import main_router
 from application.oidc import oidc_router
 from graphql_api.helpers import mask_sensitive_values
@@ -56,10 +56,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    mcp_context = nullcontext()
-    if Settings().MCP_ENABLED:
-        mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
-        mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
+    mcp_http_app = setup_mcp_server(app, mount_path="/api/mcp")
+    mcp_context = mcp_http_app.router.lifespan_context(mcp_http_app)
 
     loop = asyncio.get_running_loop()
     background = [
