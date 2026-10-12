@@ -17,11 +17,19 @@ def mock_session():
     return Mock(spec=AsyncSession)
 
 
+@pytest.fixture(autouse=True)
+def mock_deliver_in_app(monkeypatch):
+    deliver = AsyncMock()
+    monkeypatch.setattr(notification_manager_module, "deliver_in_app_notifications", deliver)
+    return deliver
+
+
 class TestRouteNotificationEvent:
     @pytest.mark.asyncio
     async def test_route_notification_sends_in_app_and_slack_messages_for_subscribed_user(
         self,
         mock_session,
+        mock_deliver_in_app,
         mock_subscription_service,
         mock_notification_preference_service,
         mocked_subscription,
@@ -112,10 +120,9 @@ class TestRouteNotificationEvent:
             "channel": "U123",
         }
 
-        # Both channels go through _dispatch_notification
-        assert mock_dispatch_notification.await_count == 2
-        mock_dispatch_notification.assert_any_await(in_app_body)
-        mock_dispatch_notification.assert_any_await(slack_body)
+        # In-app is always delivered; the SLACK preference adds Slack
+        mock_deliver_in_app.assert_awaited_once_with([in_app_body])
+        mock_dispatch_notification.assert_awaited_once_with(slack_body)
 
     @pytest.mark.asyncio
     async def test_route_notification_no_subscriptions_sends_nothing(
@@ -223,6 +230,7 @@ class TestRouteNotificationEvent:
     async def test_route_notification_skips_slack_when_no_slack_id(
         self,
         mock_session,
+        mock_deliver_in_app,
         mock_subscription_service,
         mock_notification_preference_service,
         mocked_subscription,
@@ -272,5 +280,47 @@ class TestRouteNotificationEvent:
 
         await _route_notification_event(event, mock_session)
 
-        mock_send_message.assert_not_awaited()
+        mock_deliver_in_app.assert_awaited_once()
+        mock_dispatch_notification.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_route_notification_delivers_in_app_without_preferences(
+        self,
+        mock_session,
+        mock_deliver_in_app,
+        mock_subscription_service,
+        mock_notification_preference_service,
+        mocked_subscription,
+        mock_resource_crud,
+        mocked_resource,
+        monkeypatch,
+    ):
+        mock_resource_crud.get_by_id = AsyncMock(return_value=mocked_resource)
+        mock_subscription_service.query_all = AsyncMock(side_effect=[[mocked_subscription], []])
+        mock_notification_preference_service.query_all = AsyncMock(return_value=[])
+        monkeypatch.setattr(notification_manager_module, "get_resource_service", lambda session: mock_resource_crud)
+        monkeypatch.setattr(
+            notification_manager_module, "get_subscription_service", lambda session: mock_subscription_service
+        )
+        monkeypatch.setattr(
+            notification_manager_module,
+            "get_notification_preference_service",
+            lambda session: mock_notification_preference_service,
+        )
+        mock_dispatch_notification = AsyncMock()
+        monkeypatch.setattr(notification_manager_module, "_dispatch_notification", mock_dispatch_notification)
+
+        event = NotificationEvent(
+            event_type=EventType.EXECUTE,
+            entity_type="resource",
+            title="Resource dryrun succeeded",
+            status="success",
+            message="done",
+            entity_id=str(mocked_subscription.entity_id),
+        )
+
+        await _route_notification_event(event, mock_session)
+
+        [messages] = mock_deliver_in_app.await_args.args
+        assert [(m["user_id"], m["provider"]) for m in messages] == [(str(mocked_subscription.user_id), "in_app")]
         mock_dispatch_notification.assert_not_awaited()

@@ -91,6 +91,21 @@ class NotificationMutation:
         )
 
     @strawberry.mutation(permission_classes=[IsAuthenticated])
+    async def upsert_notification_preference(
+        self, info: Info, input: NotificationPreferenceCreateInput
+    ) -> NotificationPreferenceType:
+        session = info.context["session"]
+        requester = info.context["request"].state.user
+        service = get_notification_preference_service(session)
+
+        return await service.upsert(
+            requester=requester,
+            event_type=input.event_type,
+            channels=[NotificationChannel(c.value) for c in input.channels],
+            user_id=input.user_id,
+        )
+
+    @strawberry.mutation(permission_classes=[IsAuthenticated])
     async def delete_notification_preference(self, info: Info, id: uuid.UUID) -> bool:
         session = info.context["session"]
         requester = info.context["request"].state.user

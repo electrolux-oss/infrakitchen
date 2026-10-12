@@ -40,6 +40,7 @@ export const GlobalNotificationPopup = () => {
       linkPrefix,
       entityType,
       entityId,
+      notification.eventType,
     );
     const notificationId = notification.id;
     const link =

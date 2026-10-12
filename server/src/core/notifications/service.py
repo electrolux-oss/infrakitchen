@@ -9,6 +9,7 @@ from core.users.model import UserDTO
 
 from .crud import SubscriptionCRUD, NotificationPreferenceCRUD, UserNotificationCRUD
 from .model import (
+    NotificationChannel,
     Subscription,
     NotificationPreference,
     SubscriptionDTO,
@@ -111,6 +112,22 @@ class NotificationPreferenceService:
     async def count(self, filter: dict[str, Any] | None = None) -> int:
         return await self.crud.count(filter=filter)
 
+    async def _build_body(
+        self, requester: UserDTO, event_type: str, channels: list[Any], user_id: str | None
+    ) -> dict[str, Any]:
+        target_user_id = str(requester.id)
+        if user_id and user_id != str(requester.id):
+            if not await user_is_super_admin(requester):
+                raise AccessDenied("Only super admins can manage notification preferences for other users")
+            target_user_id = user_id
+
+        # In-app delivery is always on, so a preference only selects external channels
+        external_channels = [c for c in channels if NotificationChannel(c) != NotificationChannel.IN_APP]
+        if not external_channels:
+            raise ValueError("Select at least one external channel")
+
+        return {"user_id": target_user_id, "event_type": event_type, "channels": external_channels}
+
     async def create(
         self,
         requester: UserDTO,
@@ -118,20 +135,25 @@ class NotificationPreferenceService:
         channels: list[Any],
         user_id: str | None = None,
     ) -> NotificationPreference:
-        target_user_id = str(requester.id)
-        if user_id and user_id != str(requester.id):
-            if not await user_is_super_admin(requester):
-                raise AccessDenied("Only super admins can create notification preferences for other users")
-            target_user_id = user_id
-
-        body = {
-            "user_id": target_user_id,
-            "event_type": event_type,
-            "channels": channels,
-        }
+        body = await self._build_body(requester, event_type, channels, user_id)
         created_preference = await self.crud.create(body)
         dto = NotificationPreferenceDTO.model_validate(created_preference)
         preference = await self.query_by_id(dto.id)
+        if not preference:
+            raise EntityNotFound("Notification preference not found")
+        return preference
+
+    async def upsert(
+        self,
+        requester: UserDTO,
+        event_type: str,
+        channels: list[Any],
+        user_id: str | None = None,
+    ) -> NotificationPreference:
+        """Create the user's preference for the event type, or replace its channels if it exists."""
+        body = await self._build_body(requester, event_type, channels, user_id)
+        preference_id = await self.crud.upsert(body)
+        preference = await self.query_by_id(preference_id)
         if not preference:
             raise EntityNotFound("Notification preference not found")
         return preference

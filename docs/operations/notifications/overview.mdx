@@ -6,20 +6,20 @@ The **Notifications** system keeps you informed about infrastructure events acro
 
 ## Notification Components
 
-| Component                                   | Purpose                                                               | Configured by |
-| ------------------------------------------- | --------------------------------------------------------------------- | ------------- |
-| **[Subscriptions](subscriptions)**          | Follow specific resources to receive their events                     | Any user      |
-| **[Notification Preferences](preferences)** | Choose which event types trigger notifications and via which channels | Any user      |
+| Component                                   | Purpose                                                            | Configured by |
+| ------------------------------------------- | ------------------------------------------------------------------ | ------------- |
+| **[Subscriptions](subscriptions)**          | Follow specific resources to receive their events                  | Any user      |
+| **[Notification Preferences](preferences)** | Also receive an event type through external channels such as Slack | Any user      |
 
 ## How Notifications Work
 
 When an event occurs on an entity (e.g., a resource is provisioned, a workflow completes), InfraKitchen:
 
-1. Identifies all users subscribed to that entity
-2. Checks each user's **Notification Preferences** to find which channels are enabled for that event type
-3. Delivers the notification to each enabled channel (In-App, Slack, etc.)
+1. Identifies the recipients: users subscribed to the entity (or its project), or, for [approval notifications](#approval-notifications), the approvers and the author of the change
+2. Delivers the notification **in-app** to every recipient
+3. Also delivers it to each external channel (Slack, ...) that the recipient's **Notification Preference** enables for that event type
 
-A user only receives a notification if **both** conditions are met: they have an active subscription to the entity, and they have a preference that matches the event type with at least one channel enabled. [Approval notifications](#approval-notifications) are the exception.
+If you have linked accounts, notifications are delivered to your primary account.
 
 ## Approval Notifications
 
@@ -30,9 +30,21 @@ When a resource needs approval — it was created while the approval flow is ena
 
 The user who requested the change is never notified. Super admins are only notified when nobody else can approve the resource.
 
-Approval notifications are always delivered in-app. To also receive them in Slack, add a [preference](preferences) for the `approval_required` event type with the **SLACK** channel.
+Approval notifications are delivered in-app. To also receive them in Slack, add a [preference](preferences) for the `approval_required` event type with the **SLACK** channel.
 
-When the change is approved or rejected, the user who requested it is notified (unless they made the decision themselves). These notifications are also always delivered in-app; add an `approval_result` preference with the **SLACK** channel to receive them in Slack too.
+When the change is approved or rejected, the user who requested it is notified (unless they made the decision themselves); add an `approval_result` preference with the **SLACK** channel to receive these in Slack too.
+
+### One notification per change
+
+Each change to a resource notifies every user at most once, and never the user who made it:
+
+| Action                   | Change requester         | Approvers         | Other subscribers |
+| ------------------------ | ------------------------ | ----------------- | ----------------- |
+| Edit (needs approval)    | —                        | Approval required | —                 |
+| Edit (applied directly)  | —                        | —                 | Updated           |
+| Approve                  | Your change was approved | —                 | Approved          |
+| Reject                   | Your change was rejected | —                 | Rejected          |
+| Destroy (needs approval) | —                        | Approval required | Destroy requested |
 
 ## Notification Inbox
 
@@ -45,10 +57,10 @@ Notifications are kept for **30 days** (configurable with the `NOTIFICATION_RETE
 
 ## Delivery Channels
 
-| Channel    | Description                                                                                                                                                          |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **IN_APP** | Notifications appear in the InfraKitchen UI and are stored in your [inbox](#notification-inbox)                                                                      |
-| **SLACK**  | Notifications are delivered to Slack via a configured [Slack integration](../../integrations/notification#slack), including the entity's name, type and a link to it |
+| Channel    | Description                                                                                                                                                               |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IN_APP** | Always on. Notifications appear in the InfraKitchen UI and are stored in your [inbox](#notification-inbox)                                                                |
+| **SLACK**  | Opt-in per event type. Delivered to Slack via a configured [Slack integration](../../integrations/notification#slack), including the entity's name, type and a link to it |
 
 :::info[Setting up Slack notifications]
 Slack delivery requires a Slack integration to be configured in your workspace. See the [Slack Integration Guide](../../integrations/notification#slack) for setup instructions.

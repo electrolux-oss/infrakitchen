@@ -23,7 +23,9 @@ class NotificationChannel(enum.Enum):
 class Subscription(Base):
     __tablename__: str = "subscriptions"
 
-    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     user: Mapped[User] = relationship("User", lazy="raise")
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -40,7 +42,9 @@ class Subscription(Base):
 class NotificationPreference(Base):
     __tablename__: str = "notification_preferences"
 
-    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     user: Mapped[User] = relationship("User", lazy="raise")
     event_type: Mapped[str] = mapped_column(String(150), nullable=False)
     channels: Mapped[list[str]] = mapped_column(
@@ -59,7 +63,9 @@ class UserNotification(Base):
 
     __tablename__: str = "user_notifications"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     event_type: Mapped[str] = mapped_column(String(150), nullable=False)
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

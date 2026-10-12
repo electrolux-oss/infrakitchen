@@ -41,10 +41,12 @@ class NotificationSubscription:
             raise PermissionError("WebSocket subscriptions are disabled")
 
         user = await _authenticate_subscription(info)
+        # Notifications are addressed to the primary account of linked accounts
+        recipient_id = user.primary_account[0].id if user.primary_account else user.id
 
-        logger.info("GraphQL subscription: listening for notifications for user %s", user.id)
+        logger.info("GraphQL subscription: listening for notifications for user %s", recipient_id)
         try:
-            async with pubsub.hub.subscribe(pubsub.in_app_notifications_topic(user.id)) as messages:
+            async with pubsub.hub.subscribe(pubsub.in_app_notifications_topic(recipient_id)) as messages:
                 async for msg in messages:
                     yield NotificationStreamMessage(
                         msg=msg.get("msg", ""),

@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
 import pytest
 
@@ -89,17 +91,37 @@ class TestDispatchOnce:
         assert outbox.finish.await_args_list[0].args[1] == OutboxStatus.FAILED
 
 
-class TestInAppDispatch:
-    async def test_in_app_is_stored_and_streamed_to_the_users_topic(self, monkeypatch):
-        publish = AsyncMock()
-        store = AsyncMock(side_effect=lambda msg: {**msg, "id": "n1", "created_at": "2026-10-08T00:00:00+00:00"})
-        monkeypatch.setattr(in_app.pubsub, "publish", publish)
-        monkeypatch.setattr(in_app, "store_in_app_notification", store)
-        body = {"provider": "in_app", "user_id": "u1", "msg": "hi"}
-
-        await notification_manager._dispatch_notification(body)
-
-        store.assert_awaited_once_with(body)
-        publish.assert_awaited_once_with(
-            "notifications.in_app.u1", {**body, "id": "n1", "created_at": "2026-10-08T00:00:00+00:00"}
+class TestInAppDelivery:
+    async def test_batch_is_stored_once_per_primary_account_and_streamed(self, monkeypatch):
+        primary, secondary, other = uuid4(), uuid4(), uuid4()
+        created_at = datetime(2026, 10, 12, tzinfo=UTC)
+        session = Mock(commit=AsyncMock())
+        session.execute = AsyncMock(
+            return_value=Mock(all=lambda: [SimpleNamespace(id="n1", created_at=created_at)] * 2)
         )
+
+        @asynccontextmanager
+        async def fake_session(_engine):
+            yield session
+
+        published = []
+
+        async def publish_many(messages):
+            published.extend(messages)
+
+        monkeypatch.setattr(in_app, "AsyncSession", fake_session)
+        monkeypatch.setattr(in_app, "_primary_account_ids", AsyncMock(return_value={secondary: primary}))
+        monkeypatch.setattr(in_app.pubsub, "publish_many", publish_many)
+
+        await in_app.deliver_in_app_notifications(
+            [{"user_id": str(u), "msg": "hi", "provider": "in_app"} for u in (primary, secondary, other)]
+        )
+
+        rows = session.execute.await_args.args[1]
+        assert [row["user_id"] for row in rows] == [primary, other]
+        assert [topic for topic, _ in published] == [
+            f"notifications.in_app.{primary}",
+            f"notifications.in_app.{other}",
+        ]
+        assert published[0][1]["id"] == "n1"
+        assert published[0][1]["created_at"] == created_at.isoformat()

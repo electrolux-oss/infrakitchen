@@ -99,12 +99,17 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
         msg = kwargs.get("msg")
 
         url: str | None = None
-        if Settings().INFRAKITCHEN_URL:
-            url = (
-                f"{Settings().INFRAKITCHEN_URL}/{kwargs.get('entity_type')}s/{kwargs.get('entity_id')}"
-                if kwargs.get("entity_id") and kwargs.get("entity_type")
-                else Settings().INFRAKITCHEN_URL
-            )
+        base_url = Settings().INFRAKITCHEN_URL.rstrip("/")
+        entity_type = kwargs.get("entity_type")
+        entity_id = kwargs.get("entity_id")
+        if not base_url:
+            log.warning("INFRAKITCHEN_URL is not set, Slack notifications are sent without a link")
+        elif entity_type and entity_id:
+            # Plan/apply results of a resource open its Audit tab, like the in-app notification link
+            tab = "/audit" if entity_type == "resource" and kwargs.get("event_type") == "execute" else ""
+            url = f"{base_url}/{entity_type}s/{entity_id}{tab}"
+        else:
+            url = base_url
 
         payload = {
             "msg": msg,

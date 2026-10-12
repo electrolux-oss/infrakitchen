@@ -3,6 +3,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import ColumnElement, Select, delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import (
@@ -114,6 +115,19 @@ class NotificationPreferenceCRUD:
         self.session.add(db_preference)
         await self.session.flush()
         return db_preference
+
+    async def upsert(self, body: dict[str, Any]) -> UUID:
+        statement = (
+            pg_insert(NotificationPreference)
+            .values(**body)
+            .on_conflict_do_update(
+                index_elements=[NotificationPreference.user_id, NotificationPreference.event_type],
+                set_={"channels": body["channels"], "updated_at": func.now()},
+            )
+            .returning(NotificationPreference.id)
+        )
+        result = await self.session.execute(statement)
+        return result.scalar_one()
 
     async def delete(self, preference: NotificationPreference) -> None:
         await self.session.delete(preference)

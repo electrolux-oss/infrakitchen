@@ -42,8 +42,11 @@ export const UserContent = () => {
       label: "Notifications",
       content: (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <UserNotificationPreferencesCard
+            user_id={entity.id}
+            slackId={entity.meta?.slackId}
+          />
           <UserNotificationSubscriptionsCard user_id={entity.id} />
-          <UserNotificationPreferencesCard user_id={entity.id} />
         </Box>
       ),
     },

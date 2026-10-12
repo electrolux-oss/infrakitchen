@@ -18,7 +18,7 @@ from core.dependencies import get_async_session
 from application.providers import NotificationProviderAdapter
 from application.integrations.dependencies import get_integration_service
 from core.notifications.dependencies import get_notification_preference_service, get_subscription_service
-from core.notifications.in_app import deliver_in_app_notification
+from core.notifications.in_app import deliver_in_app_notifications
 from core.notifications.model import NotificationChannel, NotificationEvent, NotificationOutboxItem, OutboxStatus
 from core.notifications.outbox import NotificationOutboxCRUD
 from core.users.dependencies import get_user_service
@@ -45,17 +45,13 @@ async def _get_provider_integration(provider: str) -> Integration | None:
 
 
 async def _dispatch_notification(msg: dict[str, Any]) -> None:
-    """Dispatch a single notification message to the appropriate provider adapter."""
+    """Send a single notification message through an external provider adapter (e.g. Slack)."""
 
     provider = msg.get("provider")
     user_id = msg.get("user_id")
 
     if not provider or not user_id:
         logger.warning(f"Message missing provider or user_id: {msg}")
-        return
-
-    if provider == "in_app":
-        await deliver_in_app_notification(msg)
         return
 
     adapter_cls: type[NotificationProviderAdapter] | None = NotificationProviderAdapter.notification_adapters.get(
@@ -91,16 +87,45 @@ def _build_message(
     }
 
 
-def _get_slack_id(user_meta: Any) -> str | None:
-    return user_meta.get("slack_id") if isinstance(user_meta, dict) else getattr(user_meta, "slack_id", None)
+def _get_provider_address(user_meta: Any, channel: NotificationChannel) -> str | None:
+    """The user's address on an external provider, stored in user meta as ``<provider>_id`` (e.g. ``slack_id``)."""
+    key = f"{channel.value.lower()}_id"
+    return user_meta.get(key) if isinstance(user_meta, dict) else getattr(user_meta, key, None)
 
 
-async def _deliver(body: dict[str, Any]) -> None:
-    try:
-        await _dispatch_notification(body)
-        logger.info(f"Notification dispatched to user {body['user_id']} via {body['provider']}")
-    except Exception as e:
-        logger.error(f"Failed to notify user {body['user_id']} via {body['provider']}: {e}", exc_info=True)
+async def _notify_users(
+    event: NotificationEvent, session: AsyncSession, users: list[Any], entity_name: str | None
+) -> None:
+    """Deliver the event to the users: always in-app, plus every external channel (Slack, ...) that
+    their preference for this event type enables."""
+    users = list({str(user.id): user for user in users}.values())
+    if not users:
+        return
+
+    await deliver_in_app_notifications(
+        [_build_message(event, user.id, NotificationChannel.IN_APP, entity_name) for user in users]
+    )
+
+    preferences = await get_notification_preference_service(session=session).query_all(
+        filter={"user_id__in": [user.id for user in users], "event_type": event.event_type},
+        fields={"user_id": None, "channels": None},
+    )
+    users_by_id = {str(user.id): user for user in users}
+    for preference in preferences:
+        user = users_by_id[str(preference.user_id)]
+        for channel in [NotificationChannel(c) for c in preference.channels]:
+            if channel == NotificationChannel.IN_APP:
+                continue
+            address = _get_provider_address(user.meta, channel)
+            if not address:
+                logger.debug(f"User {user.id} enabled {channel.value} but has no address for it, skipping")
+                continue
+            body = {**_build_message(event, user.id, channel, entity_name), "channel": address}
+            try:
+                await _dispatch_notification(body)
+                logger.info(f"Notification dispatched to user {user.id} via {channel.value}")
+            except Exception as e:
+                logger.error(f"Failed to notify user {user.id} via {channel.value}: {e}", exc_info=True)
 
 
 async def _active_users(session: AsyncSession, user_ids: set[str], exclude_id: str = "") -> list[Any]:
@@ -113,107 +138,40 @@ async def _active_users(session: AsyncSession, user_ids: set[str], exclude_id: s
     return [user for user in users if not user.deactivated]
 
 
-async def _notify_users_directly(
-    event: NotificationEvent, session: AsyncSession, users: list[Any], entity_name: str | None
-) -> None:
-    """Deliver to the given users regardless of subscriptions: in-app always, Slack only if they opted in
-    with a preference for this event type."""
-    preferences = await get_notification_preference_service(session=session).query_all(
-        filter={"user_id__in": [user.id for user in users], "event_type": event.event_type},
-        fields={"user_id": None, "channels": None},
-    )
-    slack_opted_in = {
-        str(preference.user_id)
-        for preference in preferences
-        if NotificationChannel.SLACK in [NotificationChannel(c) for c in preference.channels]
-    }
-
-    for user in users:
-        await _deliver(_build_message(event, user.id, NotificationChannel.IN_APP, entity_name))
-        if str(user.id) not in slack_opted_in:
-            continue
-        slack_id = _get_slack_id(user.meta)
-        if not slack_id:
-            logger.debug(f"User {user.id} prefers Slack but has no slack_id, skipping")
-            continue
-        await _deliver({**_build_message(event, user.id, NotificationChannel.SLACK, entity_name), "channel": slack_id})
-
-
-async def _route_approval_event(
-    event: NotificationEvent, session: AsyncSession, resource: ResourceResponse, entity_name: str | None
-) -> None:
-    """Notify the users who can approve the resource, falling back to super admins when there are none.
-
-    The requester is never notified.
-    """
-    requester_id = str((event.metadata or {}).get("requester_id") or "")
-
+async def _approval_recipients(session: AsyncSession, resource: ResourceResponse, requester_id: str) -> list[Any]:
+    """The users who can approve the resource, or super admins when there are none. Never the requester."""
     approvers = await _active_users(session, await get_resource_approver_ids(resource), exclude_id=requester_id)
     if not approvers:
         approvers = await _active_users(session, await get_super_admin_user_ids(), exclude_id=requester_id)
     if not approvers:
         logger.warning(f"No approvers found for resource {resource.id}, approval notification not sent")
-        return
-
-    await _notify_users_directly(event, session, approvers, entity_name)
+    return approvers
 
 
-async def _route_approval_result_event(
-    event: NotificationEvent, session: AsyncSession, entity_name: str | None
-) -> None:
-    """Tell the user who requested the change about the decision, unless they made it themselves."""
+async def _approval_result_recipients(event: NotificationEvent, session: AsyncSession) -> list[Any]:
+    """The user who requested the change, unless they made the decision themselves."""
     metadata = event.metadata or {}
-    recipient_id = str(metadata.get("recipient_id") or "")
-    recipients = await _active_users(session, {recipient_id}, exclude_id=str(metadata.get("approver_id") or ""))
-    if recipients:
-        await _notify_users_directly(event, session, recipients, entity_name)
+    return await _active_users(
+        session, {str(metadata.get("recipient_id") or "")}, exclude_id=str(metadata.get("approver_id") or "")
+    )
 
 
-async def _route_notification_event(event: NotificationEvent, session: AsyncSession) -> None:
-    """Resolve subscriptions and preferences for an event and dispatch per-user-per-channel messages.
-
-    - IN_APP: stored in the user's inbox and published to the ``notifications.in_app.<user_id>`` pubsub topic.
-    - External providers (e.g. Slack): dispatches directly via the registered adapter.
-    - APPROVAL_REQUIRED events go to the resource's approvers, APPROVAL_RESULT events to the user who
-      requested the change, instead of to subscribers.
-    """
+async def _subscriber_recipients(
+    event: NotificationEvent, session: AsyncSession, resource: ResourceResponse | None
+) -> list[Any]:
+    """Active users subscribed to the entity, to every entity of its type, or to the resource's project."""
     subscription_service = get_subscription_service(session)
-    preference_service = get_notification_preference_service(session=session)
-    resource_service = get_resource_service(session=session)
-
     sub_fields: FieldSpec = {
         "entity_type": None,
         "entity_id": None,
         "user": cast(FieldSpec, {"id": None, "meta": None, "deactivated": None}),
     }
 
-    resource: ResourceResponse | None = None
-    if event.entity_type == "resource" and event.entity_id is not None:
-        resource = await resource_service.get_by_id(event.entity_id)
-        if not resource:
-            logger.warning(f"Resource with ID {event.entity_id} not found, cannot route notification")
-            return
-
-    entity_name = event.entity_name or (resource.name if resource else None)
-
-    if event.event_type == EventType.APPROVAL_REQUIRED:
-        if resource is None:
-            logger.warning(f"Approval notifications are not supported for {event.entity_type}:{event.entity_id}")
-            return
-        await _route_approval_event(event, session, resource, entity_name)
-        return
-
-    if event.event_type == EventType.APPROVAL_RESULT:
-        await _route_approval_result_event(event, session, entity_name)
-        return
-
-    # project subscriptions
     project_specific = []
     if resource and resource.project_id:
         project_specific = await subscription_service.query_all(
             filter={"entity_type": "project", "entity_id": resource.project_id}, fields=sub_fields
         )
-
     specific = await subscription_service.query_all(
         filter={"entity_type": event.entity_type, "entity_id": event.entity_id}, fields=sub_fields
     )
@@ -221,45 +179,47 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
         filter={"entity_type": event.entity_type, "entity_id": None}, fields=sub_fields
     )
 
-    seen_user_ids: set[str] = set()
-    subscriptions = []
-    for sub in specific + wildcard + project_specific:
-        uid = str(sub.user_id)
-        if uid not in seen_user_ids:
-            seen_user_ids.add(uid)
-            if sub.user.deactivated:
-                logger.debug(f"Skipping deactivated user {uid} for subscription {sub.id}")
-                continue
-            subscriptions.append(sub)
-
-    if not subscriptions:
+    users = [sub.user for sub in specific + wildcard + project_specific if not sub.user.deactivated]
+    if not users:
         logger.debug(f"No subscriptions found for {event.entity_type}:{event.entity_id}")
-        return
+    return users
 
-    user_ids: set[UUID] = {sub.user_id for sub in subscriptions if sub.user_id is not None}
 
-    pref_fields: FieldSpec = {
-        "user": cast(FieldSpec, {"id": None, "meta": None}),
-        "channels": None,
-    }
-    all_preferences = await preference_service.query_all(
-        filter={"user_id__in": list(user_ids), "event_type": event.event_type},
-        fields=pref_fields,
-    )
+async def _route_notification_event(event: NotificationEvent, session: AsyncSession) -> None:
+    """Resolve the recipients of an event and deliver it to them.
 
-    for preference in all_preferences:
-        user_id = preference.user_id
-        for channel in [NotificationChannel(c) for c in preference.channels]:
-            body = _build_message(event, user_id, channel, entity_name)
+    - APPROVAL_REQUIRED goes to the resource's approvers, APPROVAL_RESULT to the user who requested
+      the change; every other event goes to the entity's subscribers, except the users the event
+      excludes (the actor, and whoever gets a more specific notification about the same change).
+    - Every recipient gets the event in-app; preferences add external channels such as Slack.
+    """
+    resource: ResourceResponse | None = None
+    if event.entity_type == "resource" and event.entity_id is not None:
+        resource = await get_resource_service(session=session).get_by_id(event.entity_id)
+        if not resource:
+            logger.warning(f"Resource with ID {event.entity_id} not found, cannot route notification")
+            return
 
-            if channel == NotificationChannel.SLACK:
-                slack_id = _get_slack_id(preference.user.meta)
-                if not slack_id:
-                    logger.debug(f"User {user_id} prefers Slack but has no slack_id, skipping")
-                    continue
-                body["channel"] = slack_id
+    entity_name = event.entity_name or (resource.name if resource else None)
+    metadata = event.metadata or {}
 
-            await _deliver(body)
+    if event.event_type == EventType.APPROVAL_REQUIRED:
+        if resource is None:
+            logger.warning(f"Approval notifications are not supported for {event.entity_type}:{event.entity_id}")
+            return
+        recipients = await _approval_recipients(session, resource, str(metadata.get("requester_id") or ""))
+    elif event.event_type == EventType.APPROVAL_RESULT:
+        recipients = await _approval_result_recipients(event, session)
+    else:
+        excluded = {str(user_id) for user_id in metadata.get("exclude_user_ids") or []}
+        if metadata.get("exclude_approvers") and resource is not None:
+            approvers = await _approval_recipients(session, resource, str(metadata.get("actor_id") or ""))
+            excluded |= {str(user.id) for user in approvers}
+        recipients = [
+            user for user in await _subscriber_recipients(event, session, resource) if str(user.id) not in excluded
+        ]
+
+    await _notify_users(event, session, recipients, entity_name)
 
 
 class NotificationDispatcher:

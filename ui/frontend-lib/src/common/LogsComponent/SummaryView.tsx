@@ -632,7 +632,12 @@ export const SummaryView = (props: {
               sx={{ mb: 2 }}
               action={
                 onOpenLogs && (
-                  <Button color="inherit" size="small" onClick={onOpenLogs}>
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={onOpenLogs}
+                    sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+                  >
                     View full logs
                   </Button>
                 )

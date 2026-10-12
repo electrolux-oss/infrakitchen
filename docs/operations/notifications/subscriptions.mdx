@@ -6,10 +6,10 @@ Subscriptions allow you to follow specific entities in InfraKitchen and receive 
 
 ## Overview
 
-A **Subscription** ties a user to an entity. InfraKitchen checks subscriptions every time an event occurs to determine who should be notified. Subscriptions are scoped to a single entity and are independent of notification preferences — you need both to receive a notification.
+A **Subscription** ties a user to an entity. InfraKitchen checks subscriptions every time an event occurs to determine who should be notified.
 
 :::tip[Subscriptions and Preferences work together]
-Subscribing to an entity is necessary but not sufficient. You also need a [Notification Preference](preferences) that covers the event type. Without a matching preference, no notification is sent even if you are subscribed.
+Subscribing is enough to receive the entity's notifications in-app. Add a [Notification Preference](preferences) for an event type to also receive it in Slack.
 :::
 
 ## Viewing Your Subscriptions
@@ -97,9 +97,9 @@ Platform engineers can see who is subscribed to a specific resource: open the re
 
 ## Subscription Properties
 
-| Property | Description |
-|---|---|
+| Property        | Description                                          |
+| --------------- | ---------------------------------------------------- |
 | **Entity Type** | The type of entity being followed (e.g., `resource`) |
-| **Entity ID** | The unique identifier of the subscribed entity |
-| **User** | The user who owns this subscription |
-| **Created At** | When the subscription was created |
+| **Entity ID**   | The unique identifier of the subscribed entity       |
+| **User**        | The user who owns this subscription                  |
+| **Created At**  | When the subscription was created                    |

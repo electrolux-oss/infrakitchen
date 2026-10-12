@@ -104,22 +104,15 @@ export const userNotificationColumns = (
       options: NOTIFICATION_ENTITY_TYPE_OPTIONS,
     },
     renderCell: (params: GridRenderCellParams<GqlUserNotification>) => {
-      const { entityId, entityType, entityName, readAt } = params.row;
+      const { entityId, entityType, entityName } = params.row;
       if (!entityId) return null;
+      // The row click opens the entity (on the right tab) and marks the notification read
       return (
-        <Box
-          sx={{ display: "contents" }}
-          onClick={(event) => {
-            if (!readAt && (event.target as Element).closest("a")) {
-              onToggleRead(params.row);
-            }
-          }}
-        >
-          <Entity
-            entity={{ id: entityId, entityType, name: entityName ?? entityId }}
-            showLabel
-          />
-        </Box>
+        <Entity
+          entity={{ id: entityId, entityType, name: entityName ?? entityId }}
+          showLabel
+          disableLink
+        />
       );
     },
   },

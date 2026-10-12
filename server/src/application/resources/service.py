@@ -10,6 +10,7 @@ from application.projects.service import ProjectService
 from core.notifications.controller import NotificationEvent
 from core.notifications.model import Subscription
 from core.notifications.service import SubscriptionService
+from core.notifications.text import action_label, entity_reference, notification_message, notification_title
 from application.resources.functions import (
     add_resource_parent_policy,
     add_resource_parent_subscriptions,
@@ -72,6 +73,15 @@ from .schema import (
 )
 
 logger = logging.getLogger(__name__)
+
+# action -> (title event, message verb, status) for subscriber notifications
+_RESOURCE_NOTIFICATION_TEXT: dict[str, tuple[str, str, str]] = {
+    ModelActions.UPDATE: ("updated", "was updated", "info"),
+    ModelActions.APPROVE: ("approved", "was approved", "success"),
+    ModelActions.REJECT: ("rejected", "was rejected", "warning"),
+    ModelActions.DESTROY: ("destroy requested", "is scheduled to be destroyed", "warning"),
+    ModelActions.RECREATE: ("recreate requested", "is scheduled to be recreated", "info"),
+}
 
 
 class ResourceService:
@@ -622,6 +632,7 @@ class ResourceService:
             existing_resource = await self.crud.get_by_id(existing_resource.id)
             if not existing_resource:
                 raise EntityNotFound("Resource not found after update")
+            await self.publish_notification_event(existing_resource, ModelActions.UPDATE, requester)
 
         elif (
             existing_resource_pydantic.status == ModelStatus.APPROVAL_PENDING
@@ -632,6 +643,7 @@ class ResourceService:
             existing_resource = await self.crud.get_by_id(existing_resource.id)
             if not existing_resource:
                 raise EntityNotFound("Resource not found after update")
+            await self.publish_notification_event(existing_resource, ModelActions.UPDATE, requester)
 
         elif body is not None:
             full_body = model_db_dump(
@@ -645,7 +657,6 @@ class ResourceService:
 
         response_pydantic = ResourceResponse.model_validate(existing_resource)
         await self.event_sender.send_event(response_pydantic, ModelActions.UPDATE)
-        await self.publish_notification_event(existing_resource, ModelActions.UPDATE, status="info")
 
         await self._trigger_workspace_sync(existing_resource, ModelActions.UPDATE, requester=requester)
 
@@ -848,7 +859,9 @@ class ResourceService:
         match body.action:
             case ModelActions.REJECT:
                 change_requester_id = await self.action_reject(existing_resource, pydantic_resource, requester)
-                await self.publish_notification_event(existing_resource, "rejected")
+                await self.publish_notification_event(
+                    existing_resource, ModelActions.REJECT, requester, change_requester_id=change_requester_id
+                )
                 await self.publish_approval_result_event(
                     existing_resource, requester, change_requester_id, approved=False
                 )
@@ -868,14 +881,19 @@ class ResourceService:
             case ModelActions.APPROVE:
                 # Apply temp state changes to existing_resource if values differ
                 change_requester_id = await self.action_approve(existing_resource, pydantic_resource, requester)
-                await self.publish_notification_event(existing_resource, "approve")
+                await self.publish_notification_event(
+                    existing_resource, ModelActions.APPROVE, requester, change_requester_id=change_requester_id
+                )
                 await self.publish_approval_result_event(
                     existing_resource, requester, change_requester_id, approved=True
                 )
             case ModelActions.DESTROY:
                 await self.action_destroy(existing_resource, pydantic_resource, requester)
-                await self.publish_notification_event(existing_resource, "destroy")
-                if existing_resource.status == ModelStatus.APPROVAL_PENDING:
+                needs_approval = existing_resource.status == ModelStatus.APPROVAL_PENDING
+                await self.publish_notification_event(
+                    existing_resource, ModelActions.DESTROY, requester, approval_requested=needs_approval
+                )
+                if needs_approval:
                     await self.publish_approval_required_event(existing_resource, requester, ModelActions.DESTROY)
             case ModelActions.EXECUTE:
                 if existing_resource.abstract is True:
@@ -938,8 +956,11 @@ class ResourceService:
                 )
             case ModelActions.RECREATE:
                 await self.action_recreate(existing_resource, requester)
-                await self.publish_notification_event(existing_resource, "recreate")
-                if existing_resource.status == ModelStatus.APPROVAL_PENDING:
+                needs_approval = existing_resource.status == ModelStatus.APPROVAL_PENDING
+                await self.publish_notification_event(
+                    existing_resource, ModelActions.RECREATE, requester, approval_requested=needs_approval
+                )
+                if needs_approval:
                     await self.publish_approval_required_event(existing_resource, requester, ModelActions.RECREATE)
 
             case _:
@@ -1439,24 +1460,37 @@ class ResourceService:
     async def publish_notification_event(
         self,
         resource: Resource,
-        title: str,
-        event_type: EventType = EventType.UPDATE,
-        status: Literal[
-            "info",
-            "warning",
-            "error",
-            "success",
-        ] = "warning",
+        action: ModelActions,
+        actor: UserDTO,
+        change_requester_id: UUID | str | None = None,
+        approval_requested: bool = False,
     ) -> None:
+        """Notify the resource's subscribers that the actor changed it.
+
+        The actor, the change requester and (when approval is requested) the approvers are left out:
+        they get a more specific notification, or none at all.
+        """
+        title_event, verb, status = _RESOURCE_NOTIFICATION_TEXT[action]
+        resource_ref = entity_reference("resource", resource.name)
+        actor_id = actor.primary_account[0].id if actor.primary_account else actor.id
+        excluded = {str(actor.id), str(actor_id)}
+        if change_requester_id is not None:
+            excluded.add(str(change_requester_id))
         event = NotificationEvent(
-            event_type=event_type,
+            event_type=EventType.UPDATE,
             entity_type="resource",
             entity_id=str(resource.id),
             entity_name=resource.name,
-            title=f"Resource {resource.name}",
+            title=notification_title("resource", title_event),
             status=status,
-            message=f"Resource {resource.name} status has been changed ({title.upper()})\n"
-            f"New status: {resource.status}, new state: {resource.state}",
+            message=notification_message(
+                f"{resource_ref} {verb} by {actor.identifier}. Status: {resource.status}, state: {resource.state}"
+            ),
+            metadata={
+                "actor_id": str(actor_id),
+                "exclude_user_ids": sorted(excluded),
+                "exclude_approvers": approval_requested,
+            },
         )
         # Buffered until the request commits, so a rolled-back change notifies nobody
         await self.event_sender.send_notification(event)
@@ -1469,9 +1503,12 @@ class ResourceService:
             entity_type="resource",
             entity_id=str(resource.id),
             entity_name=resource.name,
-            title="Approval required",
+            title=notification_title("resource", "approval required"),
             status="warning",
-            message=f"{requester.identifier} requested to {action} resource {resource.name}.",
+            message=notification_message(
+                f"{requester.identifier} requested to {action_label(action)} "
+                f"{entity_reference('resource', resource.name)}"
+            ),
             metadata={"requester_id": str(requester_id)},
         )
         await self.event_sender.send_notification(event)
@@ -1501,9 +1538,11 @@ class ResourceService:
             entity_type="resource",
             entity_id=str(resource.id),
             entity_name=resource.name,
-            title=f"Change {decision}",
+            title=notification_title("resource", f"change {decision}"),
             status="success" if approved else "warning",
-            message=f"{approver.identifier} {decision} your change to resource {resource.name}.",
+            message=notification_message(
+                f"{approver.identifier} {decision} your change to {entity_reference('resource', resource.name)}"
+            ),
             metadata={"recipient_id": str(change_requester_id), "approver_id": str(approver_id)},
         )
         await self.event_sender.send_notification(event)

@@ -35,6 +35,7 @@ from core.db_engine import engine
 from core.dependencies import get_async_session
 from core.utils.event_sender import flush_all_pending_senders
 from core.notifications.controller import NotificationEvent, publish_notification_event
+from core.notifications.text import action_label, entity_reference, notification_message, notification_title
 from core.errors import (
     CannotProceed,
     ChildrenIsNotReady,
@@ -431,14 +432,7 @@ class TaskWorker:
                     await task_controller.make_failed()
                     await task_controller.logger.save_log()
                     await session.commit()
-                    entity_name = task_controller.logger.entity_name or item.entity
-                    entity_label = entity_name.replace("_", " ").capitalize()
-                    await self.send_task_notification(
-                        task_controller,
-                        f"Task {item.action or ''} failed for {task_controller.logger.entity_id}: {error}",
-                        title=f"{entity_label} {item.action or 'task'} failed",
-                        status="error",
-                    )
+                    await self.send_task_notification(task_controller, item.action, "failed", reason=error)
             except Exception as e:
                 logger.error(f"Failed to mark entity of reaped task {item.id} as failed: {e}")
 
@@ -546,14 +540,7 @@ class TaskWorker:
         task_controller.logger.error("Task is timed out")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: Task is timed out".strip(),
-            title=f"{entity_label} {action or 'task'} timed out".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "timed out")
         raise TaskFailure("Task is timed out") from e
 
     async def handle_is_not_ready_exception(self, e, item: TaskQueueItemDTO, task_controller, action=None):
@@ -576,28 +563,14 @@ class TaskWorker:
         task_controller.logger.error(f"{error_type}: {e}")
         await task_controller.make_failed()
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_type}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_type)
         raise TaskFailure(f"{error_type}: {e}") from e
 
     async def handle_exit_without_state_exception(self, e, task_controller, action=None):
         error_message = f"ExitWithoutSave: {e}"
         task_controller.logger.error(error_message)
         await task_controller.logger.save_log()
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_message)
         raise TaskFailure(error_message) from e
 
     async def handle_unexpected_exception(self, e, task_controller, action=None):
@@ -607,31 +580,30 @@ class TaskWorker:
         await task_controller.logger.save_log()
 
         error_message = f"UnhandledException: {e}"
-        entity_name = task_controller.logger.entity_name
-        entity_label = entity_name.replace("_", " ").capitalize()
-        await self.send_task_notification(
-            task_controller,
-            f"Task {action or ''} failed for {task_controller.logger.entity_id}: {error_message}".strip(),
-            title=f"{entity_label} {action or 'task'} failed".strip(),
-            status="error",
-        )
+        await self.send_task_notification(task_controller, action, "failed", reason=error_message)
         raise TaskFailure(error_message) from e
 
     async def send_task_notification(
         self,
         task_controller,
-        message: str,
-        title: str | None = None,
-        status: str = "info",
+        action: str | None,
+        outcome: Literal["succeeded", "failed", "timed out"],
+        reason: str | None = None,
     ):
         logger.debug(f"Preparing to send notification - entity_id: {task_controller.logger.entity_id}")
+        entity_type = task_controller.logger.entity_name
+        entity_name = _loaded_entity_name(task_controller)
+        action_text = action_label(action)
+        entity = entity_reference(entity_type, entity_name, task_controller.logger.entity_id)
+        outcome_text = "completed successfully" if outcome == "succeeded" else outcome
+        message = f"{action_text} for {entity} {outcome_text}"
         event_message = NotificationEvent(
-            message=message,
-            title=title or "Task Update",
-            status=status,
+            message=notification_message(f"{message}: {reason}" if reason else message),
+            title=notification_title(entity_type, f"{action_text} {outcome}"),
+            status="success" if outcome == "succeeded" else "error",
             entity_id=task_controller.logger.entity_id,
-            entity_type=task_controller.logger.entity_name,
-            entity_name=_loaded_entity_name(task_controller),
+            entity_type=entity_type,
+            entity_name=entity_name,
             event_type=EventType.EXECUTE,
         )
         await publish_notification_event(event_message)
@@ -664,10 +636,7 @@ class TaskWorker:
             logger.error(f"Failed to save execution result to audit log {audit_log_id}: {e}", exc_info=True)
 
     async def _send_success_notification(self, task_controller, action):
-        entity_name = task_controller.logger.entity_name
-        title = f"{entity_name.replace('_', ' ').capitalize()} {action} succeeded"
-        notification_message = f"Task {action} for {entity_name} completed successfully."
-        await self.send_task_notification(task_controller, notification_message, title=title, status="success")
+        await self.send_task_notification(task_controller, action, "succeeded")
 
     async def handle_exception(self, e, item: TaskQueueItemDTO, task_controller, action=None):
         if isinstance(e, ParentIsNotReady) or isinstance(e, ChildrenIsNotReady):

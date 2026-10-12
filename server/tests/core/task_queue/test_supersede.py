@@ -100,8 +100,8 @@ class TestNotifySuperseded:
         assert body["user_id"] == str(user)
         assert body["entity_type"] == "resource"
         assert body["status"] == "warning"
-        assert body["title"] == "Resource action already queued"
-        assert "'execute'" in body["msg"] and "'dryrun'" in body["msg"]
+        assert body["title"] == "Resource action replaced"
+        assert "execute" not in body["msg"] and "apply" in body["msg"] and "plan" in body["msg"]
 
     async def test_notifies_both_users_when_different(self, monkeypatch):
         send = AsyncMock()

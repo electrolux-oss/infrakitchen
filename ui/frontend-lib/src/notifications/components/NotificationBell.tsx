@@ -56,6 +56,7 @@ export const NotificationBell = () => {
       linkPrefix,
       notification.entityType,
       notification.entityId,
+      notification.eventType,
     );
     navigate(link?.to ?? notificationsPath);
     if (!notification.readAt) {

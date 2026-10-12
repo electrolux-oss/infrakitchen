@@ -110,6 +110,8 @@ class TestPatch:
         assert event.entity_id == str(mocked_resource.id)
         assert event.entity_name == mocked_resource.name
         assert event.metadata == {"requester_id": str(mocked_user_response.id)}
+        # Subscribers aren't told about an edit until it is approved
+        mock_resource_service.publish_notification_event.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_patch_resource_does_not_exist(self, mock_resource_service, mock_resource_crud, mock_user_dto):
@@ -461,8 +463,11 @@ class TestPatchAction:
         events = [c.args[0] for c in mock_event_sender.send_notification.await_args_list]
         [event] = [e for e in events if e.event_type == EventType.APPROVAL_RESULT]
         assert event.metadata == {"recipient_id": str(creator_id), "approver_id": str(mocked_user.id)}
-        assert event.title == ("Change approved" if approved else "Change rejected")
+        assert event.title == ("Resource change approved" if approved else "Resource change rejected")
         assert event.entity_name == mocked_resource.name
+        mock_resource_service.publish_notification_event.assert_awaited_once_with(
+            mocked_resource, action, mocked_user, change_requester_id=creator_id
+        )
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(

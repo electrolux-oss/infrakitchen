@@ -54,6 +54,7 @@ export const NotificationsPage = () => {
         linkPrefix,
         notification.entityType,
         notification.entityId,
+        notification.eventType,
       );
       if (!link) return;
       if (event && (event.metaKey || event.ctrlKey || event.button === 1)) {

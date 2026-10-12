@@ -72,6 +72,16 @@ export const DELETE_NOTIFICATION_PREFERENCE_MUTATION = `
   }
 `;
 
+export const UPSERT_NOTIFICATION_PREFERENCE_MUTATION = `
+  mutation UpsertNotificationPreference($input: NotificationPreferenceCreateInput!) {
+    upsertNotificationPreference(input: $input) {
+      id
+      eventType
+      channels
+    }
+  }
+`;
+
 export const CREATE_RESOURCE_SUBSCRIPTION_MUTATION = `
   mutation CreateResourceSubscription($input: ResourceSubscriptionCreateInput!) {
     createResourceSubscription(input: $input) {

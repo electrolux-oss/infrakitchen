@@ -22,9 +22,16 @@ def resource():
 @pytest.fixture
 def routing(monkeypatch, resource):
     """Wire the router to in-memory users, approvers, super admins and preferences."""
-    state = SimpleNamespace(users=[], approver_ids=set(), super_admin_ids=set(), preferences=[], sent=[])
+    state = SimpleNamespace(
+        users=[], approver_ids=set(), super_admin_ids=set(), preferences=[], subscribers=[], sent=[]
+    )
 
     resource_service = Mock(get_by_id=AsyncMock(return_value=resource))
+
+    async def query_subscriptions(filter, fields=None):
+        if filter["entity_type"] == "resource" and str(filter["entity_id"]) == str(resource.id):
+            return [SimpleNamespace(user=u) for u in state.subscribers]
+        return []
 
     async def query_users(filter, fields=None):
         ids = set(filter["id__in"])
@@ -43,6 +50,9 @@ def routing(monkeypatch, resource):
     async def dispatch(body):
         state.sent.append(body)
 
+    async def deliver_in_app(messages):
+        state.sent.extend(messages)
+
     monkeypatch.setattr(notification_manager_module, "get_resource_service", lambda session: resource_service)
     monkeypatch.setattr(
         notification_manager_module,
@@ -55,8 +65,14 @@ def routing(monkeypatch, resource):
         lambda session: Mock(query_all=AsyncMock(side_effect=query_preferences)),
     )
     monkeypatch.setattr(notification_manager_module, "get_resource_approver_ids", approver_ids)
+    monkeypatch.setattr(
+        notification_manager_module,
+        "get_subscription_service",
+        lambda session: Mock(query_all=AsyncMock(side_effect=query_subscriptions)),
+    )
     monkeypatch.setattr(notification_manager_module, "get_super_admin_user_ids", super_admin_ids)
     monkeypatch.setattr(notification_manager_module, "_dispatch_notification", dispatch)
+    monkeypatch.setattr(notification_manager_module, "deliver_in_app_notifications", deliver_in_app)
     return state
 
 
@@ -167,3 +183,41 @@ class TestApprovalResultRouting:
         await _route_notification_event(approval_result_event(resource, requester.id, requester.id), Mock())
 
         assert routing.sent == []
+
+
+def subscriber_event(resource, actor_id, exclude_ids, exclude_approvers=False):
+    return NotificationEvent(
+        event_type=EventType.UPDATE,
+        entity_type="resource",
+        entity_id=str(resource.id),
+        title="Resource approved",
+        status="success",
+        message="approved",
+        metadata={
+            "actor_id": str(actor_id),
+            "exclude_user_ids": [str(i) for i in exclude_ids],
+            "exclude_approvers": exclude_approvers,
+        },
+    )
+
+
+class TestSubscriberRouting:
+    async def test_skips_the_actor_and_the_change_requester(self, routing, resource):
+        approver, requester, other = user(), user(), user()
+        routing.subscribers = [approver, requester, other]
+
+        await _route_notification_event(subscriber_event(resource, approver.id, [approver.id, requester.id]), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+    async def test_skips_approvers_when_approval_is_requested(self, routing, resource):
+        actor, approver, other = user(), user(), user()
+        routing.users = [actor, approver, other]
+        routing.approver_ids = {approver.id}
+        routing.subscribers = [actor, approver, other]
+
+        await _route_notification_event(
+            subscriber_event(resource, actor.id, [actor.id], exclude_approvers=True), Mock()
+        )
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}

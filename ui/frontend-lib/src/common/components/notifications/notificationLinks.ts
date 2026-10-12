@@ -27,18 +27,22 @@ export interface NotificationEntityLink {
   label: string;
 }
 
-/** Link to the entity a notification is about, or undefined when it has no detail page. */
+/** Link to the entity a notification is about, or undefined when it has no detail page.
+ * Plan/apply results of a resource open its Audit tab, where the run is listed. */
 export const getNotificationEntityLink = (
   linkPrefix: string,
   entityType?: string | null,
   entityId?: string | null,
+  eventType?: string | null,
 ): NotificationEntityLink | undefined => {
   const segment = entityType ? ENTITY_PATHS[entityType] : undefined;
   if (!segment || !entityId) {
     return undefined;
   }
+  const tab =
+    entityType === "resource" && eventType === "execute" ? "/audit" : "";
   return {
-    to: `${linkPrefix}${segment}/${entityId}`,
+    to: `${linkPrefix}${segment}/${entityId}${tab}`,
     label: ENTITY_LABELS[entityType!] ?? "View",
   };
 };
