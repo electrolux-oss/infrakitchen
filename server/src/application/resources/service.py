@@ -49,6 +49,7 @@ from application.resource_temp_state.model import ResourceTempState
 from application.favorites.service import FavoriteService
 from core.revisions.handler import RevisionHandler
 from core.tasks.service import TaskEntityService
+from core.users.accounts import primary_user_id
 from core.users.functions import user_entity_permissions
 from core.users.model import UserDTO
 from core.utils.entity_state_handler import (
@@ -1472,10 +1473,6 @@ class ResourceService:
         """
         title_event, verb, status = _RESOURCE_NOTIFICATION_TEXT[action]
         resource_ref = entity_reference("resource", resource.name)
-        actor_id = actor.primary_account[0].id if actor.primary_account else actor.id
-        excluded = {str(actor.id), str(actor_id)}
-        if change_requester_id is not None:
-            excluded.add(str(change_requester_id))
         event = NotificationEvent(
             event_type=EventType.UPDATE,
             entity_type="resource",
@@ -1486,18 +1483,15 @@ class ResourceService:
             message=notification_message(
                 f"{resource_ref} {verb} by {actor.identifier}. Status: {resource.status}, state: {resource.state}"
             ),
-            metadata={
-                "actor_id": str(actor_id),
-                "exclude_user_ids": sorted(excluded),
-                "exclude_approvers": approval_requested,
-            },
+            actor_id=str(primary_user_id(actor)),
+            exclude_user_ids=[str(change_requester_id)] if change_requester_id is not None else [],
+            exclude_approvers=approval_requested,
         )
         # Buffered until the request commits, so a rolled-back change notifies nobody
         await self.event_sender.send_notification(event)
 
     async def publish_approval_required_event(self, resource: Resource, requester: UserDTO, action: str) -> None:
         """Notify the resource's approvers that the requester's change is waiting for their approval."""
-        requester_id = requester.primary_account[0].id if requester.primary_account else requester.id
         event = NotificationEvent(
             event_type=EventType.APPROVAL_REQUIRED,
             entity_type="resource",
@@ -1509,7 +1503,7 @@ class ResourceService:
                 f"{requester.identifier} requested to {action_label(action)} "
                 f"{entity_reference('resource', resource.name)}"
             ),
-            metadata={"requester_id": str(requester_id)},
+            actor_id=str(primary_user_id(requester)),
         )
         await self.event_sender.send_notification(event)
 
@@ -1531,7 +1525,6 @@ class ResourceService:
         """Tell the user who requested the change that it was approved or rejected."""
         if change_requester_id is None:
             return
-        approver_id = approver.primary_account[0].id if approver.primary_account else approver.id
         decision = "approved" if approved else "rejected"
         event = NotificationEvent(
             event_type=EventType.APPROVAL_RESULT,
@@ -1543,6 +1536,7 @@ class ResourceService:
             message=notification_message(
                 f"{approver.identifier} {decision} your change to {entity_reference('resource', resource.name)}"
             ),
-            metadata={"recipient_id": str(change_requester_id), "approver_id": str(approver_id)},
+            actor_id=str(primary_user_id(approver)),
+            recipient_id=str(change_requester_id),
         )
         await self.event_sender.send_notification(event)

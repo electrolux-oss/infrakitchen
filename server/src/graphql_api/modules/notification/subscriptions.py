@@ -6,6 +6,7 @@ from strawberry.types import Info
 
 import core.pubsub as pubsub
 from core.config import InfrakitchenConfig
+from core.users.accounts import primary_user_id
 from graphql_api.modules.log.subscriptions import _authenticate_subscription
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class NotificationSubscription:
 
         user = await _authenticate_subscription(info)
         # Notifications are addressed to the primary account of linked accounts
-        recipient_id = user.primary_account[0].id if user.primary_account else user.id
+        recipient_id = primary_user_id(user)
 
         logger.info("GraphQL subscription: listening for notifications for user %s", recipient_id)
         try:
@@ -60,4 +61,4 @@ class NotificationSubscription:
                         created_at=msg.get("created_at"),
                     )
         finally:
-            logger.debug("GraphQL subscription: cleaned up notification stream for user %s", user.id)
+            logger.debug("GraphQL subscription: cleaned up notification stream for user %s", recipient_id)

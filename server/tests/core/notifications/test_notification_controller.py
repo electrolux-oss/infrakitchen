@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.constants.model import EventType
 from core.notifications.controller import NotificationEvent
 import application.tools.notification_manager as notification_manager_module
+import core.users.accounts as accounts_module
 from application.tools.notification_manager import _route_notification_event
 
 
@@ -22,6 +23,11 @@ def mock_deliver_in_app(monkeypatch):
     deliver = AsyncMock()
     monkeypatch.setattr(notification_manager_module, "deliver_in_app_notifications", deliver)
     return deliver
+
+
+@pytest.fixture(autouse=True)
+def no_linked_accounts(monkeypatch):
+    monkeypatch.setattr(accounts_module, "get_primary_account_ids", AsyncMock(return_value={}))
 
 
 class TestRouteNotificationEvent:

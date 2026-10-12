@@ -109,7 +109,7 @@ class TestPatch:
         event = approval_events[0]
         assert event.entity_id == str(mocked_resource.id)
         assert event.entity_name == mocked_resource.name
-        assert event.metadata == {"requester_id": str(mocked_user_response.id)}
+        assert event.actor_id == str(mocked_user_response.id)
         # Subscribers aren't told about an edit until it is approved
         mock_resource_service.publish_notification_event.assert_not_awaited()
 
@@ -462,7 +462,7 @@ class TestPatchAction:
 
         events = [c.args[0] for c in mock_event_sender.send_notification.await_args_list]
         [event] = [e for e in events if e.event_type == EventType.APPROVAL_RESULT]
-        assert event.metadata == {"recipient_id": str(creator_id), "approver_id": str(mocked_user.id)}
+        assert (event.recipient_id, event.actor_id) == (str(creator_id), str(mocked_user.id))
         assert event.title == ("Resource change approved" if approved else "Resource change rejected")
         assert event.entity_name == mocked_resource.name
         mock_resource_service.publish_notification_event.assert_awaited_once_with(

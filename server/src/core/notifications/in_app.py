@@ -1,14 +1,14 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import core.pubsub as pubsub
 from core.constants.model import EventType
 from core.db_engine import engine
-from core.users.model import user_account_associations
+from core.users.accounts import get_primary_account_ids
 from core.utils.model_tools import is_valid_uuid
 
 from .model import UserNotification
@@ -29,14 +29,6 @@ def _to_row(msg: dict[str, Any], user_id: UUID, outbox_id: UUID | None) -> dict[
     }
 
 
-async def _primary_account_ids(session: AsyncSession, user_ids: set[UUID]) -> dict[UUID, UUID]:
-    """Map linked secondary accounts to their primary account."""
-    statement = select(
-        user_account_associations.c.secondary_user_id, user_account_associations.c.primary_user_id
-    ).where(user_account_associations.c.secondary_user_id.in_(user_ids))
-    return {secondary: primary for secondary, primary in (await session.execute(statement)).all()}
-
-
 async def deliver_in_app_notifications(messages: list[dict[str, Any]], outbox_id: UUID | None = None) -> None:
     """Store one event's notifications in the recipients' inboxes, then stream them to their open sessions.
 
@@ -50,7 +42,7 @@ async def deliver_in_app_notifications(messages: list[dict[str, Any]], outbox_id
         return
 
     async with AsyncSession(engine) as session:
-        primary_ids = await _primary_account_ids(session, {UUID(str(msg["user_id"])) for msg in messages})
+        primary_ids = await get_primary_account_ids(session, {UUID(str(msg["user_id"])) for msg in messages})
 
         by_recipient: dict[UUID, dict[str, Any]] = {}
         for msg in messages:

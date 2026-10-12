@@ -137,7 +137,7 @@ class TestInAppDelivery:
     async def test_batch_is_stored_once_per_primary_account_and_streamed(self, monkeypatch, in_app_delivery):
         primary, secondary, other = uuid4(), uuid4(), uuid4()
         in_app_delivery.inserted = [primary, other]
-        monkeypatch.setattr(in_app, "_primary_account_ids", AsyncMock(return_value={secondary: primary}))
+        monkeypatch.setattr(in_app, "get_primary_account_ids", AsyncMock(return_value={secondary: primary}))
 
         await in_app.deliver_in_app_notifications(
             [{"user_id": str(u), "msg": "hi", "provider": "in_app"} for u in (primary, secondary, other)]
@@ -158,7 +158,7 @@ class TestInAppDelivery:
         outbox_id = uuid4()
         # The unique (outbox_id, user_id) index drops the row stored by the previous attempt
         in_app_delivery.inserted = [missed]
-        monkeypatch.setattr(in_app, "_primary_account_ids", AsyncMock(return_value={}))
+        monkeypatch.setattr(in_app, "get_primary_account_ids", AsyncMock(return_value={}))
 
         await in_app.deliver_in_app_notifications(
             [{"user_id": str(u), "msg": "hi", "provider": "in_app"} for u in (reached, missed)], outbox_id=outbox_id

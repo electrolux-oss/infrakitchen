@@ -1,6 +1,6 @@
 import enum
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, UTC
 from enum import StrEnum
 from typing import Any
@@ -139,6 +139,13 @@ class NotificationEvent:
     message: str
     entity_id: str | None = None
     entity_name: str | None = None
+    # Who caused the event; never notified about it
+    actor_id: str | None = None
+    # APPROVAL_RESULT only: the user whose change was approved or rejected
+    recipient_id: str | None = None
+    # Subscribers left out because they get a more specific notification about the same change
+    exclude_user_ids: list[str] = field(default_factory=list)
+    exclude_approvers: bool = False
     metadata: dict[str, Any] | None = None
 
     def to_payload(self) -> dict[str, Any]:

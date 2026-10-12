@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 import application.tools.notification_manager as notification_manager_module
+import core.users.accounts as accounts_module
 from application.tools.notification_manager import _route_notification_event
 from core.constants.model import EventType
 from core.notifications.controller import NotificationEvent
@@ -21,10 +22,15 @@ def resource():
 
 @pytest.fixture
 def routing(monkeypatch, resource):
-    """Wire the router to in-memory users, approvers, super admins and preferences."""
+    """Wire the router to in-memory users, approvers, super admins, preferences and linked accounts."""
     state = SimpleNamespace(
-        users=[], approver_ids=set(), super_admin_ids=set(), preferences=[], subscribers=[], sent=[]
+        users=[], approver_ids=set(), super_admin_ids=set(), preferences=[], subscribers=[], sent=[], linked={}
     )
+
+    async def primary_account_ids(_session, user_ids):
+        return {i: state.linked[i] for i in user_ids if i in state.linked}
+
+    monkeypatch.setattr(accounts_module, "get_primary_account_ids", primary_account_ids)
 
     resource_service = Mock(get_by_id=AsyncMock(return_value=resource))
 
@@ -84,7 +90,7 @@ def approval_event(resource, requester_id):
         title=f"Approval required: {resource.name}",
         status="warning",
         message="waiting for approval",
-        metadata={"requester_id": str(requester_id)},
+        actor_id=str(requester_id),
     )
 
 
@@ -158,7 +164,8 @@ def approval_result_event(resource, recipient_id, approver_id):
         title="Change approved",
         status="success",
         message="approved",
-        metadata={"recipient_id": str(recipient_id), "approver_id": str(approver_id)},
+        actor_id=str(approver_id),
+        recipient_id=str(recipient_id),
     )
 
 
@@ -184,6 +191,16 @@ class TestApprovalResultRouting:
 
         assert routing.sent == []
 
+    async def test_self_approval_through_a_linked_account_notifies_nobody(self, routing, resource):
+        primary, secondary = user(), user()
+        routing.users = [primary, secondary]
+        routing.linked = {secondary.id: primary.id}
+
+        # The change was made with the secondary account, the approval with the primary one
+        await _route_notification_event(approval_result_event(resource, secondary.id, primary.id), Mock())
+
+        assert routing.sent == []
+
 
 def subscriber_event(resource, actor_id, exclude_ids, exclude_approvers=False):
     return NotificationEvent(
@@ -193,11 +210,9 @@ def subscriber_event(resource, actor_id, exclude_ids, exclude_approvers=False):
         title="Resource approved",
         status="success",
         message="approved",
-        metadata={
-            "actor_id": str(actor_id),
-            "exclude_user_ids": [str(i) for i in exclude_ids],
-            "exclude_approvers": exclude_approvers,
-        },
+        actor_id=str(actor_id),
+        exclude_user_ids=[str(i) for i in exclude_ids],
+        exclude_approvers=exclude_approvers,
     )
 
 
@@ -206,7 +221,17 @@ class TestSubscriberRouting:
         approver, requester, other = user(), user(), user()
         routing.subscribers = [approver, requester, other]
 
-        await _route_notification_event(subscriber_event(resource, approver.id, [approver.id, requester.id]), Mock())
+        await _route_notification_event(subscriber_event(resource, approver.id, [requester.id]), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+    async def test_linked_accounts_of_excluded_users_are_skipped(self, routing, resource):
+        actor, requester_primary, requester_secondary, other = user(), user(), user(), user()
+        routing.subscribers = [actor, requester_primary, other]
+        routing.linked = {requester_secondary.id: requester_primary.id}
+
+        # The change requester is recorded with the account they used, the subscription is on the primary one
+        await _route_notification_event(subscriber_event(resource, actor.id, [requester_secondary.id]), Mock())
 
         assert recipients(routing.sent, "in_app") == {str(other.id)}
 
@@ -216,8 +241,6 @@ class TestSubscriberRouting:
         routing.approver_ids = {approver.id}
         routing.subscribers = [actor, approver, other]
 
-        await _route_notification_event(
-            subscriber_event(resource, actor.id, [actor.id], exclude_approvers=True), Mock()
-        )
+        await _route_notification_event(subscriber_event(resource, actor.id, [], exclude_approvers=True), Mock())
 
         assert recipients(routing.sent, "in_app") == {str(other.id)}

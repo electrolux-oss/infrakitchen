@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from collections.abc import Iterable
 from typing import Any, cast
 from uuid import UUID
 
@@ -21,6 +22,7 @@ from core.notifications.dependencies import get_notification_preference_service,
 from core.notifications.in_app import deliver_in_app_notifications
 from core.notifications.model import NotificationChannel, NotificationEvent, NotificationOutboxItem, OutboxStatus
 from core.notifications.outbox import NotificationOutboxCRUD
+from core.users.accounts import resolve_primary_ids
 from core.users.dependencies import get_user_service
 from core.users.functions import get_super_admin_user_ids
 from core.utils.model_tools import is_valid_uuid
@@ -133,8 +135,8 @@ async def _notify_users(
                 logger.error(f"Failed to notify user {user.id} via {channel.value}: {e}", exc_info=True)
 
 
-async def _active_users(session: AsyncSession, user_ids: set[str], exclude_id: str = "") -> list[Any]:
-    ids = [UUID(uid) for uid in user_ids if uid != exclude_id and is_valid_uuid(uid)]
+async def _active_users(session: AsyncSession, user_ids: set[str]) -> list[Any]:
+    ids = [UUID(uid) for uid in user_ids if is_valid_uuid(uid)]
     if not ids:
         return []
     users = await get_user_service(session=session).query_all(
@@ -143,22 +145,28 @@ async def _active_users(session: AsyncSession, user_ids: set[str], exclude_id: s
     return [user for user in users if not user.deactivated]
 
 
-async def _approval_recipients(session: AsyncSession, resource: ResourceResponse, requester_id: str) -> list[Any]:
+async def _without(session: AsyncSession, users: list[Any], excluded_ids: Iterable[UUID | str | None]) -> list[Any]:
+    """The users not among ``excluded_ids``, comparing primary accounts so linked accounts count as one user."""
+    excluded_ids = list(excluded_ids)
+    primary_ids = await resolve_primary_ids(session, [*(user.id for user in users), *excluded_ids])
+    excluded = {primary_ids[UUID(str(i))] for i in excluded_ids if i and is_valid_uuid(str(i))}
+    return [user for user in users if primary_ids[UUID(str(user.id))] not in excluded]
+
+
+async def _approval_recipients(
+    session: AsyncSession, resource: ResourceResponse, requester_id: str | None
+) -> list[Any]:
     """The users who can approve the resource, or super admins when there are none. Never the requester."""
-    approvers = await _active_users(session, await get_resource_approver_ids(resource), exclude_id=requester_id)
+    approvers = await _without(
+        session, await _active_users(session, await get_resource_approver_ids(resource)), [requester_id]
+    )
     if not approvers:
-        approvers = await _active_users(session, await get_super_admin_user_ids(), exclude_id=requester_id)
+        approvers = await _without(
+            session, await _active_users(session, await get_super_admin_user_ids()), [requester_id]
+        )
     if not approvers:
         logger.warning(f"No approvers found for resource {resource.id}, approval notification not sent")
     return approvers
-
-
-async def _approval_result_recipients(event: NotificationEvent, session: AsyncSession) -> list[Any]:
-    """The user who requested the change, unless they made the decision themselves."""
-    metadata = event.metadata or {}
-    return await _active_users(
-        session, {str(metadata.get("recipient_id") or "")}, exclude_id=str(metadata.get("approver_id") or "")
-    )
 
 
 async def _subscriber_recipients(
@@ -208,23 +216,20 @@ async def _route_notification_event(
             return
 
     entity_name = event.entity_name or (resource.name if resource else None)
-    metadata = event.metadata or {}
 
     if event.event_type == EventType.APPROVAL_REQUIRED:
         if resource is None:
             logger.warning(f"Approval notifications are not supported for {event.entity_type}:{event.entity_id}")
             return
-        recipients = await _approval_recipients(session, resource, str(metadata.get("requester_id") or ""))
+        recipients = await _approval_recipients(session, resource, event.actor_id)
     elif event.event_type == EventType.APPROVAL_RESULT:
-        recipients = await _approval_result_recipients(event, session)
+        # Nobody is told about their own decision
+        recipients = await _without(session, await _active_users(session, {event.recipient_id or ""}), [event.actor_id])
     else:
-        excluded = {str(user_id) for user_id in metadata.get("exclude_user_ids") or []}
-        if metadata.get("exclude_approvers") and resource is not None:
-            approvers = await _approval_recipients(session, resource, str(metadata.get("actor_id") or ""))
-            excluded |= {str(user.id) for user in approvers}
-        recipients = [
-            user for user in await _subscriber_recipients(event, session, resource) if str(user.id) not in excluded
-        ]
+        excluded: list[UUID | str | None] = [event.actor_id, *event.exclude_user_ids]
+        if event.exclude_approvers and resource is not None:
+            excluded += [user.id for user in await _approval_recipients(session, resource, event.actor_id)]
+        recipients = await _without(session, await _subscriber_recipients(event, session, resource), excluded)
 
     await _notify_users(event, session, recipients, entity_name, outbox_id)
 
