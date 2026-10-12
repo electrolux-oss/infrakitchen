@@ -259,3 +259,18 @@ class TestManageDestroyStepPending:
         # IN_PROGRESS does not trigger send_task
         cast(AsyncMock, task.event_sender.send_task).assert_not_called()
         assert step.status == ModelStatus.IN_PROGRESS
+
+
+class TestDestroyEntity:
+    @pytest.mark.asyncio
+    async def test_task_for_already_done_step_completes_workflow(self):
+        """A late task targeting a DONE step must not leave the workflow IN_PROGRESS."""
+        step = _make_step(status=ModelStatus.DONE)
+        task = _make_task(step)
+        task.step_id = str(step.id)
+
+        await task.destroy_entity()
+
+        change_entity_status = cast(AsyncMock, task.change_entity_status)
+        assert change_entity_status.await_args_list[-1].kwargs == {"new_status": ModelStatus.DONE}
+        cast(AsyncMock, task.resource_service.patch_action).assert_not_called()

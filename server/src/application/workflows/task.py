@@ -473,7 +473,7 @@ class WorkflowTask:
 
                 if target_step.status == ModelStatus.DONE:
                     await self._launch_ready_destroy_steps()
-            return
+                return
 
         await self._launch_ready_destroy_steps()
 
