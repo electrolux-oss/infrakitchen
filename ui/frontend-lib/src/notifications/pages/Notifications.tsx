@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { MouseEvent, useCallback, useMemo, useRef } from "react";
 
 import { useNavigate } from "react-router";
 
