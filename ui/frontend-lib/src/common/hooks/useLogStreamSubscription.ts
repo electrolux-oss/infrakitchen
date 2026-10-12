@@ -18,7 +18,7 @@ interface UseLogStreamSubscriptionOptions {
   entityName: string;
   entityId: string;
   enabled: boolean;
-  onMessage: (data: string) => void;
+  onMessage: (data: string, level?: string) => void;
   onError?: (error: unknown) => void;
 }
 
@@ -88,10 +88,11 @@ export function useLogStreamSubscription({
       },
       {
         next: ({ data }) => {
-          const logData = (data as { logStream?: { data?: string } })?.logStream
-            ?.data;
-          if (logData !== undefined) {
-            onMessageRef.current(logData);
+          const log = (
+            data as { logStream?: { data?: string; level?: string } }
+          )?.logStream;
+          if (log?.data !== undefined) {
+            onMessageRef.current(log.data, log.level);
           }
         },
         error: (err) => {

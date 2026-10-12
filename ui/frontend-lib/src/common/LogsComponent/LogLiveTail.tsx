@@ -48,6 +48,8 @@ export const LogLiveTail = () => {
   );
   const [logMessages, setLogMessages] = useState<string[]>([]);
   const [isReceivingLogs, setIsReceivingLogs] = useState<boolean>(false);
+  // Set by the footer row, which the server writes last when a task is done
+  const [isFinished, setIsFinished] = useState<boolean>(false);
 
   // Resizing State
   const [dimensions, setDimensions] = useState({ width: 500, height: 400 });
@@ -166,16 +168,23 @@ export const LogLiveTail = () => {
   const subscriptionEnabled = !!webSocketEnabled && !!globalConfig?.websocket;
 
   const handleLogMessage = useCallback(
-    (data: string) => {
-      pendingMessagesRef.current.push(data);
+    (data: string, level?: string) => {
+      const isFooter = level === "footer";
+      pendingMessagesRef.current.push(
+        isFooter ? `\u001b[1m\u001b[32m${data}\u001b[0m` : data,
+      );
 
-      setIsReceivingLogs(true);
       if (logActivityTimerRef.current) {
         clearTimeout(logActivityTimerRef.current);
+        logActivityTimerRef.current = null;
       }
-      logActivityTimerRef.current = setTimeout(() => {
-        setIsReceivingLogs(false);
-      }, 10000);
+      setIsFinished(isFooter);
+      setIsReceivingLogs(!isFooter);
+      if (!isFooter) {
+        logActivityTimerRef.current = setTimeout(() => {
+          setIsReceivingLogs(false);
+        }, 10000);
+      }
 
       if (batchTimerRef.current === null) {
         batchTimerRef.current = setTimeout(
@@ -410,17 +419,19 @@ export const LogLiveTail = () => {
               }}
             >
               <Ansi>{logMessages.join("\n")}</Ansi>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "8px",
-                  height: "1em",
-                  backgroundColor: "#fff",
-                  marginLeft: "2px",
-                  animation: "log-tail-blink 1s step-end infinite",
-                  verticalAlign: "text-bottom",
-                }}
-              />
+              {!isFinished && (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: "8px",
+                    height: "1em",
+                    backgroundColor: "#fff",
+                    marginLeft: "2px",
+                    animation: "log-tail-blink 1s step-end infinite",
+                    verticalAlign: "text-bottom",
+                  }}
+                />
+              )}
             </pre>
             <style>
               {`

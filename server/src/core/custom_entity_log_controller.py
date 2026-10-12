@@ -95,13 +95,14 @@ class EntityLogger:
         self._add_marker_log(f"Status: {status} Duration: {duration}s", "footer")
 
     def _add_marker_log(self, data: str, level: Literal["header", "footer"]):
+        created_at = datetime.datetime.now(datetime.UTC)
         log = Log(
             entity=self.entity_name,
             entity_id=self.entity_id,
             revision=self.revision_number,
             data=data,
             level=level,
-            created_at=datetime.datetime.now(datetime.UTC),
+            created_at=created_at,
             execution_start=self.execution_start,
             audit_log_id=self.audit_log_id,
             expire_at=self.expire_at,
@@ -109,6 +110,8 @@ class EntityLogger:
         )
 
         self.bulk_logs_operations.append(log)
+        # Streamed too, the footer tells live subscribers the task is done
+        self.pending_lines.append({"data": data, "level": level, "created_at": created_at.isoformat()})
 
     def append_log(self, data: str, level: Literal["info", "warn", "error", "debug"] = "info"):
         if data == "":
