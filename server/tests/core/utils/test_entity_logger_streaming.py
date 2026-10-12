@@ -56,6 +56,24 @@ class TestSendMessages:
         assert [(entry["data"], entry["level"]) for entry in data["lines"]] == [("hello", "info"), ("boom", "error")]
         assert logger.pending_lines == []
 
+    async def test_publishes_header_and_footer_markers(self, monkeypatch):
+        published: list[tuple[str, dict[str, Any]]] = []
+
+        async def publish_many(messages):
+            published.extend(messages)
+
+        monkeypatch.setattr(log_controller_mod.pubsub, "publish_many", publish_many)
+        logger = EntityLogger("resource", "r1")
+        logger.add_log_header("User: u1 Action: create")
+        logger.info("hello")
+        logger.add_log_footer("success")
+
+        await logger.send_messages()
+
+        lines = published[0][1]["lines"]
+        assert [entry["level"] for entry in lines] == ["header", "info", "footer"]
+        assert lines[-1]["data"].startswith("Status: success Duration: ")
+
     async def test_publish_failure_is_not_raised(self, monkeypatch):
         monkeypatch.setattr(log_controller_mod.pubsub, "publish_many", AsyncMock(side_effect=OSError("db down")))
         logger = EntityLogger("resource", "r1")
