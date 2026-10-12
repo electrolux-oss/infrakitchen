@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 import { GridColumnVisibilityModel } from "@mui/x-data-grid";
 
 import { GraphqlFieldMap } from "../../graphql/buildGraphqlFields";
@@ -21,6 +23,8 @@ export interface EntityFetchTableProps {
   defaultSort?: { field: string; sort: "asc" | "desc" };
   /** Set to false for tables whose rows shouldn't offer a click affordance. */
   rowClickable?: boolean;
+  /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
+  quickFilters?: ReactNode;
   /** Called with the rows of every fetched page. */
   onDataChange?: (data: any[]) => void;
 }
