@@ -10,16 +10,11 @@ additional privileges.
 
 ## Enabling MCP
 
-MCP is disabled by default, and the `MCP_ENABLED` flag is only checked once when the server
-starts — a restart is required for changes to take effect. To enable it, set the flag in your
-environment or `.env` file:
+MCP is controlled by the [**MCP** feature flag](/operations/feature_flags#mcp).
 
-```dotenv
-MCP_ENABLED=true
-```
-
-When MCP is enabled, the endpoint is mounted at `/api/mcp`; when it is disabled, the route is
-never registered and requests to `/api/mcp` return `404 Not Found`.
+When the flag is on, the endpoint is served at `/api/mcp`; when it is off, requests to
+`/api/mcp` return a standard `404 Not Found` with no indication that the endpoint exists,
+so InfraKitchen can be deployed without revealing whether MCP is supported.
 
 ## Authentication
 
@@ -191,7 +186,7 @@ storages, integrations, and executors take effect immediately — there is no ap
 
 | Symptom | Cause and fix |
 | ------- | ------------- |
-| `404 Not Found` on `/api/mcp` | MCP is not enabled. Set `MCP_ENABLED=true` and restart the server. |
+| `404 Not Found` on `/api/mcp` | A plain 404 can mean the MCP feature flag is off — toggle the [**MCP** feature flag](/operations/feature_flags#mcp) — or that the path is wrong. Note: an unauthenticated request never gets a 401 when the flag is off, so absence of an auth error confirms the flag is on. |
 | `401 Missing Authorization header` | The client is not sending the bearer header. Configure it as shown in [Authentication](#authentication). |
 | `401 Invalid or expired token` | The token expired or was revoked. Generate a new one and update the client configuration. |
 | `503 Auth service unavailable` | The server could not validate the token against the auth service. Check the server logs. |
