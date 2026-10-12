@@ -66,9 +66,7 @@ class TestReleaseSource:
             source.shasums_url("1.5.7") == "https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_SHA256SUMS"
         )
 
-    @pytest.mark.parametrize(
-        ("os", "executable"), [("linux", "tofu"), ("darwin", "tofu"), ("windows", "tofu.exe")]
-    )
+    @pytest.mark.parametrize(("os", "executable"), [("linux", "tofu"), ("darwin", "tofu"), ("windows", "tofu.exe")])
     def test_executable_name(self, os, executable):
         assert get_release_source("opentofu").executable_name(os) == executable
 

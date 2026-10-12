@@ -8,11 +8,11 @@ import { Labels } from "../labels/Labels";
 import { EntityTableColumn } from "./EntityTable";
 
 /**
- * Shared fixed width for every relative-time column (Created, Last Updated,
- * Time, …). Relative time text (e.g. "5 minutes ago", "12 months ago") is
- * short, so all time columns use one compact width instead of stretching.
+ * Shared fixed width for every relative-time column (Created, Updated, Time,
+ * …). 112px fits the largest short value ("12mo ago") plus the column
+ * header's text + sort icon + resize handle.
  */
-export const RELATIVE_TIME_COLUMN_WIDTH = 160;
+export const RELATIVE_TIME_COLUMN_WIDTH = 112;
 
 /** Options for a relative-time column (renderer = RelativeTime, size small). */
 export interface RelativeTimeColumnOptions {
@@ -51,12 +51,14 @@ export const relativeTimeColumn = (
   field,
   headerName,
   width: options.width ?? RELATIVE_TIME_COLUMN_WIDTH,
+  align: "right",
+  headerAlign: "right",
   ...(options.sortField ? { sortField: options.sortField } : {}),
   renderCell: (params: GridRenderCellParams) => {
     const date = options.value
       ? options.value(params)
       : (params.value as string | Date | null | undefined);
-    return date ? <RelativeTime date={date} /> : null;
+    return date ? <RelativeTime date={date} compact /> : null;
   },
 });
 
@@ -68,7 +70,7 @@ export const createdUpdatedColumns = (
     sortField: options.createdSortField,
     value: options.createdValue,
   }),
-  relativeTimeColumn(options.updatedField ?? "updatedAt", "Last Updated", {
+  relativeTimeColumn(options.updatedField ?? "updatedAt", "Updated", {
     sortField: options.updatedSortField,
     value: options.updatedValue,
   }),

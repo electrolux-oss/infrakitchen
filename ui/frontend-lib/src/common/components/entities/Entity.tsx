@@ -68,6 +68,7 @@ export interface EntityProps {
 // shown when the entity has no template name. Types whose internal name
 // differs from their product name get an explicit override.
 const ENTITY_TYPE_DISPLAY_NAMES: Record<string, string> = {
+  source_code: "Code Repository",
   source_code_version: "Template Version",
 };
 

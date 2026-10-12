@@ -91,7 +91,11 @@ export const FavoriteResourceItem = ({
       </Box>
       {resource.updatedAt && (
         <Typography color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
-          <RelativeTime date={resource.updatedAt} sx={{ display: "flex" }} />
+          <RelativeTime
+            date={resource.updatedAt}
+            compact
+            sx={{ display: "flex" }}
+          />
         </Typography>
       )}
       {(resource.status || resource.state) && (

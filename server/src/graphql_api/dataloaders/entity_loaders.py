@@ -31,10 +31,17 @@ from core.workers.model import Worker
 
 
 async def _load_integrations(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(Integration.id, Integration.name).where(Integration.id.in_(keys))
+    stmt = select(Integration.id, Integration.name, Integration.integration_provider).where(Integration.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "integration"} for row in result
+        str(row.id): {
+            "id": str(row.id),
+            "name": row.name,
+            "entityName": "integration",
+            # Integration detail links include the provider route segment.
+            "integrationProvider": row.integration_provider,
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 
@@ -184,10 +191,16 @@ async def _load_executors(keys: list[str], session: AsyncSession) -> list[dict[s
 
 
 async def _load_workspaces(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
-    stmt = select(Workspace.id, Workspace.name).where(Workspace.id.in_(keys))
+    stmt = select(Workspace.id, Workspace.name, Workspace.workspace_provider).where(Workspace.id.in_(keys))
     result = await session.execute(stmt)
     mapping: dict[str, dict[str, Any]] = {
-        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "workspace"} for row in result
+        str(row.id): {
+            "id": str(row.id),
+            "name": row.name,
+            "entityName": "workspace",
+            "workspaceProvider": row.workspace_provider,
+        }
+        for row in result
     }
     return [mapping.get(key) for key in keys]
 

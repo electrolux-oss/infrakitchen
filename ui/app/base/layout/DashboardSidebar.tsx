@@ -412,7 +412,7 @@ export default function DashboardSidebar({
                   />
                   <DashboardSidebarPageItem
                     id="audit_logs"
-                    title="Audit Log"
+                    title="Audit Logs"
                     icon={<ReceiptLongIcon />}
                     href="/audit_logs"
                     selected={!!matchPath("/audit_logs/*", pathname)}

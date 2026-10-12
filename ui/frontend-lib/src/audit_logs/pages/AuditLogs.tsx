@@ -14,6 +14,7 @@ export const AuditLogsPage = () => {
         entityName="auditLog"
         columns={auditLogColumns}
         entityFieldMap={AUDIT_LOG_FIELD_MAP}
+        defaultSort={{ field: "created_at", sort: "desc" }}
         syncFiltersToUrl
       />
     </PageContainer>

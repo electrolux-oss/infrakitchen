@@ -141,7 +141,11 @@ export const EntityPoliciesBase = ({
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime date={params.value} sx={{ display: "flex" }} />
+          <RelativeTime
+            date={params.value}
+            compact
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          />
         ),
       },
       userColumn({ disableFilter: true, sortable: false, sortField: null }),

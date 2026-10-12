@@ -3,8 +3,10 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { Entity } from "../../common/components/entities/Entity";
 import { EntityTableColumn } from "../../common/components/entity_table/EntityTable";
-import { userColumn } from "../../common/components/entity_table/tableColumns";
-import { getDateValue } from "../../common/components/fields/CommonField";
+import {
+  createdUpdatedColumns,
+  userColumn,
+} from "../../common/components/entity_table/tableColumns";
 import StatusChip from "../../common/StatusChip";
 import { solidChipColorSx } from "../../common/utils/softChip";
 
@@ -81,11 +83,6 @@ export const blueprintColumns: EntityTableColumn[] = [
       <StatusChip status={String(params.row.status).toLowerCase()} />
     ),
   },
-  {
-    field: "updatedAt",
-    headerName: "Last Updated",
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => getDateValue(params.value),
-  },
+  ...createdUpdatedColumns(),
   userColumn(),
 ];

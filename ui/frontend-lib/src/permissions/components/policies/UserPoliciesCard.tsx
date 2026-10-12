@@ -10,6 +10,7 @@ import {
   EntityFetchTable,
   EntityFetchTableRef,
 } from "../../../common/components/entity_table/EntityFetchTable";
+import type { EntityTableColumn } from "../../../common/components/entity_table/EntityTable";
 import {
   RELATIVE_TIME_COLUMN_WIDTH,
   userColumn,
@@ -38,7 +39,7 @@ export const UserPoliciesCard = (props: { userId: string }) => {
     setIsDialogOpen(false);
   };
 
-  const columns = useMemo(
+  const columns = useMemo<EntityTableColumn[]>(
     () => [
       {
         field: "resourceName",
@@ -74,8 +75,14 @@ export const UserPoliciesCard = (props: { userId: string }) => {
         field: "createdAt",
         headerName: "Created",
         width: RELATIVE_TIME_COLUMN_WIDTH,
+        align: "right",
+        headerAlign: "right",
         renderCell: (params: GridRenderCellParams) => (
-          <RelativeTime date={params.value} sx={{ display: "flex" }} />
+          <RelativeTime
+            date={params.value}
+            compact
+            sx={{ display: "flex", justifyContent: "flex-end" }}
+          />
         ),
       },
       userColumn({ disableFilter: true, sortable: false, sortField: null }),

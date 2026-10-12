@@ -67,7 +67,7 @@ export const sourceCodeColumns: EntityTableColumn[] = [
       <StatusChip status={params.row.status} />
     ),
   },
-  relativeTimeColumn("updatedAt", "Last Updated", {
+  relativeTimeColumn("updatedAt", "Updated", {
     sortField: "updated_at",
   }),
   userColumn(),

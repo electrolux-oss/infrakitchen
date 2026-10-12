@@ -65,8 +65,10 @@ export const taskColumns = (): EntityTableColumn[] => [
     sortField: "run_at",
     // Same fixed width as the Created / Last Updated time columns.
     width: RELATIVE_TIME_COLUMN_WIDTH,
+    align: "right",
+    headerAlign: "right",
     renderCell: (params: GridRenderCellParams) =>
-      params.value ? <RelativeTime date={params.value} /> : null,
+      params.value ? <RelativeTime date={params.value} compact /> : null,
   },
   userColumn(),
 ];
