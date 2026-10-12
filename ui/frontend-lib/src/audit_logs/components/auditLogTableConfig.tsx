@@ -23,8 +23,8 @@ import { DeletedEntityCell } from "./DeletedEntityCell";
 
 /**
  * Merges the actor avatar with the relative time: an audit row reads as
- * "who, when" pairs in one narrow cell. Sorting stays on `created_at` and
- * filtering on the user reference — reusing userColumn() preserves both.
+ * "who, when" pairs in one narrow cell. Reusing userColumn() preserves the
+ * user-reference filter.
  */
 const userTimeColumn = (): EntityTableColumn => ({
   ...userColumn({ headerName: "Date", filterField: "user_id" }),
@@ -40,6 +40,8 @@ const userTimeColumn = (): EntityTableColumn => ({
       labelField: "identifier",
     }),
   },
+  sortable: false,
+  hideSortIcons: true,
   // 112px (time column) + ~38px avatar.
   width: RELATIVE_TIME_COLUMN_WIDTH + 38,
   align: "right",
@@ -90,8 +92,8 @@ export const auditLogColumns: EntityTableColumn[] = [
     fetchFields: ["model", "entityId", "entityData", "action", "metadata"],
     headerName: "Entity",
     flex: 2.5,
-    sortable: true,
-    sortField: "entity_id",
+    sortable: false,
+    hideSortIcons: true,
     hideable: false,
     valueGetter: (value: string) => value,
     renderCell: (params: GridRenderCellParams<GqlAuditLog>) => {
@@ -154,6 +156,8 @@ export const auditLogColumns: EntityTableColumn[] = [
     field: "action",
     headerName: "Event",
     flex: 1,
+    sortable: false,
+    hideSortIcons: true,
     filter: {
       field: "action",
       operators: ["eq", "in"],
@@ -169,6 +173,7 @@ export const auditLogColumns: EntityTableColumn[] = [
     headerName: "Result",
     flex: 2,
     sortable: false,
+    hideSortIcons: true,
     valueGetter: (_value: unknown, row: GqlAuditLog) =>
       row.metadata?.execution ?? null,
     renderCell: (params: GridRenderCellParams<GqlAuditLog>) => (

@@ -48,6 +48,7 @@ export const EntityFetchTable = forwardRef<
     syncFiltersToUrl,
     defaultSort,
     rowClickable,
+    quickFilters,
     onDataChange,
   } = props;
 
@@ -76,13 +77,13 @@ export const EntityFetchTable = forwardRef<
       sort: "desc" as const,
     };
     const normalizedDefaultField = effectiveDefault.field.replaceAll("_", "");
-    const column = columns.find(
-      ({ field, sortField, sortable }) =>
-        sortable !== false &&
-        (field === effectiveDefault.field ||
+    const column = columns.find(({ field, sortField, sortable }) =>
+      sortable !== false || sortField !== undefined
+        ? field === effectiveDefault.field ||
           sortField === effectiveDefault.field ||
           field.replaceAll("_", "").toLowerCase() ===
-            normalizedDefaultField.toLowerCase()),
+            normalizedDefaultField.toLowerCase()
+        : false,
     );
 
     return column ? [{ field: column.field, sort: effectiveDefault.sort }] : [];
@@ -181,6 +182,7 @@ export const EntityFetchTable = forwardRef<
         columnsRef={columnsRef}
         defaultSort={defaultSort}
         rowClickable={rowClickable}
+        quickFilters={quickFilters}
         onDataChange={onDataChange}
         loading={loading}
         setLoading={setLoading}

@@ -1,6 +1,7 @@
 import {
   Dispatch,
   MutableRefObject,
+  ReactNode,
   SetStateAction,
   forwardRef,
   useEffect,
@@ -39,6 +40,8 @@ interface EntityFetchTableContentProps {
   entityFieldMap?: GraphqlFieldMap;
   transformFn?: (data: any) => any;
   rowClickable?: boolean;
+  /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
+  quickFilters?: ReactNode;
   onDataChange?: (data: any[]) => void;
   buildApiFiltersRef: MutableRefObject<
     ((filterValues: Record<string, any>) => Record<string, any>) | undefined
@@ -79,6 +82,7 @@ export const EntityFetchTableContent = forwardRef<
     entityFieldMap,
     transformFn,
     rowClickable,
+    quickFilters,
     onDataChange,
     buildApiFiltersRef,
     defaultFilterRef,
@@ -266,6 +270,7 @@ export const EntityFetchTableContent = forwardRef<
         handleColumnVisibilityModelChange={handleColumnVisibilityModelChange}
         onRefresh={fetchFilteredData}
         rowClickable={rowClickable}
+        quickFilters={quickFilters}
       />
     </Box>
   );

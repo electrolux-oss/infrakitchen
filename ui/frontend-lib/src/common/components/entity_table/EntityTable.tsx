@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useMemo } from "react";
+import { MouseEvent, ReactNode, useCallback, useMemo } from "react";
 
 import { useNavigate } from "react-router";
 
@@ -72,6 +72,8 @@ export interface ResourceTableProps {
   onRefresh?: () => void;
   /** Set false to remove the row hover affordance (e.g. no detail page). */
   rowClickable?: boolean;
+  /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
+  quickFilters?: ReactNode;
 }
 
 type GridPreferencePanelValue = Parameters<
@@ -93,6 +95,7 @@ export const EntityTable = ({
   handleColumnVisibilityModelChange,
   onRefresh,
   rowClickable = true,
+  quickFilters,
 }: ResourceTableProps) => {
   const apiRef = useGridApiRef();
   const { linkPrefix } = useConfig();
@@ -200,13 +203,26 @@ export const EntityTable = ({
         maxWidth: "100%",
       }}
     >
+      {quickFilters && (
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            mt: 1,
+            mb: 0.5,
+          }}
+        >
+          {quickFilters}
+        </Box>
+      )}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
           gap: 0.25,
-          mt: 1,
+          mt: quickFilters ? 0.5 : 1,
           mb: 0.5,
         }}
       >
