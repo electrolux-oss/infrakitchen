@@ -1,7 +1,8 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import insert, select
+from sqlalchemy import select, text
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import core.pubsub as pubsub
@@ -13,10 +14,11 @@ from core.utils.model_tools import is_valid_uuid
 from .model import UserNotification
 
 
-def _to_row(msg: dict[str, Any], user_id: UUID) -> dict[str, Any]:
+def _to_row(msg: dict[str, Any], user_id: UUID, outbox_id: UUID | None) -> dict[str, Any]:
     entity_id = msg.get("entity_id")
     return {
         "user_id": user_id,
+        "outbox_id": outbox_id,
         "event_type": msg.get("event_type") or EventType.UPDATE,
         "entity_type": msg.get("entity_type") or "",
         "entity_id": UUID(str(entity_id)) if entity_id and is_valid_uuid(entity_id) else None,
@@ -35,11 +37,12 @@ async def _primary_account_ids(session: AsyncSession, user_ids: set[UUID]) -> di
     return {secondary: primary for secondary, primary in (await session.execute(statement)).all()}
 
 
-async def deliver_in_app_notifications(messages: list[dict[str, Any]]) -> None:
+async def deliver_in_app_notifications(messages: list[dict[str, Any]], outbox_id: UUID | None = None) -> None:
     """Store one event's notifications in the recipients' inboxes, then stream them to their open sessions.
 
     Recipients are resolved to their primary account, so a user reached through several linked
     accounts gets the event once, on the topic the UI listens to.
+    With ``outbox_id``, a retried outbox item skips the recipients it already reached.
     Uses a plain ``AsyncSession``, like ``enqueue_notifications``, so task queue code can
     call it without importing the request-scoped session machinery.
     """
@@ -54,20 +57,25 @@ async def deliver_in_app_notifications(messages: list[dict[str, Any]]) -> None:
             user_id = UUID(str(msg["user_id"]))
             recipient_id = primary_ids.get(user_id, user_id)
             _ = by_recipient.setdefault(recipient_id, {**msg, "user_id": str(recipient_id)})
-        to_store = list(by_recipient.values())
 
-        statement = insert(UserNotification).returning(
-            UserNotification.id, UserNotification.created_at, sort_by_parameter_order=True
+        statement = (
+            pg_insert(UserNotification)
+            .values([_to_row(msg, recipient_id, outbox_id) for recipient_id, msg in by_recipient.items()])
+            .on_conflict_do_nothing(
+                index_elements=[UserNotification.outbox_id, UserNotification.user_id],
+                index_where=text("outbox_id IS NOT NULL"),
+            )
+            .returning(UserNotification.id, UserNotification.user_id, UserNotification.created_at)
         )
-        rows = (await session.execute(statement, [_to_row(msg, UUID(msg["user_id"])) for msg in to_store])).all()
+        rows = (await session.execute(statement)).all()
         await session.commit()
 
     await pubsub.publish_many(
         (
-            pubsub.in_app_notifications_topic(msg["user_id"]),
-            {**msg, "id": str(row.id), "created_at": row.created_at.isoformat()},
+            pubsub.in_app_notifications_topic(row.user_id),
+            {**by_recipient[row.user_id], "id": str(row.id), "created_at": row.created_at.isoformat()},
         )
-        for msg, row in zip(to_store, rows, strict=True)
+        for row in rows
     )
 
 

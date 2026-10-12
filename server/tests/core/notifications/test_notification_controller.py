@@ -121,7 +121,7 @@ class TestRouteNotificationEvent:
         }
 
         # In-app is always delivered; the SLACK preference adds Slack
-        mock_deliver_in_app.assert_awaited_once_with([in_app_body])
+        mock_deliver_in_app.assert_awaited_once_with([in_app_body], outbox_id=None)
         mock_dispatch_notification.assert_awaited_once_with(slack_body)
 
     @pytest.mark.asyncio

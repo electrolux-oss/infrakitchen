@@ -94,7 +94,11 @@ def _get_provider_address(user_meta: Any, channel: NotificationChannel) -> str |
 
 
 async def _notify_users(
-    event: NotificationEvent, session: AsyncSession, users: list[Any], entity_name: str | None
+    event: NotificationEvent,
+    session: AsyncSession,
+    users: list[Any],
+    entity_name: str | None,
+    outbox_id: UUID | None,
 ) -> None:
     """Deliver the event to the users: always in-app, plus every external channel (Slack, ...) that
     their preference for this event type enables."""
@@ -103,7 +107,8 @@ async def _notify_users(
         return
 
     await deliver_in_app_notifications(
-        [_build_message(event, user.id, NotificationChannel.IN_APP, entity_name) for user in users]
+        [_build_message(event, user.id, NotificationChannel.IN_APP, entity_name) for user in users],
+        outbox_id=outbox_id,
     )
 
     preferences = await get_notification_preference_service(session=session).query_all(
@@ -185,7 +190,9 @@ async def _subscriber_recipients(
     return users
 
 
-async def _route_notification_event(event: NotificationEvent, session: AsyncSession) -> None:
+async def _route_notification_event(
+    event: NotificationEvent, session: AsyncSession, outbox_id: UUID | None = None
+) -> None:
     """Resolve the recipients of an event and deliver it to them.
 
     - APPROVAL_REQUIRED goes to the resource's approvers, APPROVAL_RESULT to the user who requested
@@ -219,7 +226,7 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
             user for user in await _subscriber_recipients(event, session, resource) if str(user.id) not in excluded
         ]
 
-    await _notify_users(event, session, recipients, entity_name)
+    await _notify_users(event, session, recipients, entity_name, outbox_id)
 
 
 class NotificationDispatcher:
@@ -292,7 +299,7 @@ class NotificationDispatcher:
         try:
             event = NotificationEvent(**item.payload)
             async with get_async_session() as session:
-                await _route_notification_event(event, session)
+                await _route_notification_event(event, session, outbox_id=item.id)
         except Exception as e:
             error = f"{type(e).__name__}: {e}"
             if item.attempts >= item.max_attempts:

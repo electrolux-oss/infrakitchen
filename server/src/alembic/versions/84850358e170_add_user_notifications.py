@@ -40,6 +40,7 @@ def upgrade() -> None:
         sa.Column("message", sa.Text(), nullable=False),
         sa.Column("status", sa.String(length=16), nullable=False),
         sa.Column("read_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("outbox_id", sa.UUID(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
@@ -54,6 +55,13 @@ def upgrade() -> None:
         postgresql_where=sa.text("read_at IS NULL"),
     )
     op.create_index("ix_user_notifications_user_created", "user_notifications", ["user_id", "created_at"], unique=False)
+    op.create_index(
+        "ux_user_notifications_outbox_user",
+        "user_notifications",
+        ["outbox_id", "user_id"],
+        unique=True,
+        postgresql_where=sa.text("outbox_id IS NOT NULL"),
+    )
     op.alter_column("notification_preferences", "user_id", existing_type=sa.UUID(), nullable=False)
     op.drop_constraint(op.f("notification_preferences_user_id_fkey"), "notification_preferences", type_="foreignkey")
     op.create_foreign_key(
@@ -83,6 +91,11 @@ def downgrade() -> None:
         op.f("notification_preferences_user_id_fkey"), "notification_preferences", "users", ["user_id"], ["id"]
     )
     op.alter_column("notification_preferences", "user_id", existing_type=sa.UUID(), nullable=True)
+    op.drop_index(
+        "ux_user_notifications_outbox_user",
+        table_name="user_notifications",
+        postgresql_where=sa.text("outbox_id IS NOT NULL"),
+    )
     op.drop_index("ix_user_notifications_user_created", table_name="user_notifications")
     op.drop_index(
         "ix_user_notifications_unread", table_name="user_notifications", postgresql_where=sa.text("read_at IS NULL")

@@ -74,12 +74,21 @@ class UserNotification(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="info")
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Outbox item that produced the notification; no FK because the outbox is purged sooner
+    outbox_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         Index("ix_user_notifications_user_created", "user_id", "created_at"),
         Index("ix_user_notifications_unread", "user_id", postgresql_where=text("read_at IS NULL")),
         Index("ix_user_notifications_created", "created_at"),
+        Index(
+            "ux_user_notifications_outbox_user",
+            "outbox_id",
+            "user_id",
+            unique=True,
+            postgresql_where=text("outbox_id IS NOT NULL"),
+        ),
     )
 
 

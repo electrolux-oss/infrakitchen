@@ -50,7 +50,7 @@ def routing(monkeypatch, resource):
     async def dispatch(body):
         state.sent.append(body)
 
-    async def deliver_in_app(messages):
+    async def deliver_in_app(messages, outbox_id=None):
         state.sent.extend(messages)
 
     monkeypatch.setattr(notification_manager_module, "get_resource_service", lambda session: resource_service)
