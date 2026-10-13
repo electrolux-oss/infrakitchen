@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -36,6 +36,14 @@ CREATE_NOTIFICATION_PREFERENCE_MUTATION = """
 DELETE_NOTIFICATION_PREFERENCE_MUTATION = """
     mutation DeleteNotificationPreference($id: UUID!) {
         deleteNotificationPreference(id: $id)
+    }
+"""
+
+UPSERT_NOTIFICATION_PREFERENCE_MUTATION = """
+    mutation UpsertNotificationPreference($input: NotificationPreferenceCreateInput!) {
+        upsertNotificationPreference(input: $input) {
+            id
+        }
     }
 """
 
@@ -290,10 +298,11 @@ class TestNotificationPreferenceMutations:
         assert result.data is not None
         assert result.data["createNotificationPreference"] == {"id": str(mocked_notification_preference.id)}
         mock_notification_preference_crud.create.assert_awaited_once()
+        # IN_APP is always on, so it is not stored
         assert mock_notification_preference_crud.create.call_args.args[0] == {
             "user_id": str(mocked_user.id),
             "event_type": "update",
-            "channels": [NotificationChannel.SLACK, NotificationChannel.IN_APP],
+            "channels": [NotificationChannel.SLACK],
         }
         mock_notification_preference_crud.get_by_id.assert_awaited_once_with(created_preference.id, fields=None)
 
@@ -327,11 +336,58 @@ class TestNotificationPreferenceMutations:
         assert result.data is None or result.data["createNotificationPreference"] is None
         assert result.errors is not None
         assert any(
-            "Only super admins can create notification preferences for other users" in error.message
+            "Only super admins can manage notification preferences for other users" in error.message
             for error in result.errors
         )
         mock_notification_preference_crud.create.assert_not_awaited()
         mock_notification_preference_crud.get_by_id.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.notification.mutations.get_notification_preference_service")
+    async def test_create_notification_preference_rejects_in_app_only(
+        self,
+        mock_get_service,
+        mock_notification_preference_service,
+        mock_notification_preference_crud,
+        mocked_user,
+    ):
+        mock_get_service.return_value = mock_notification_preference_service
+
+        result = await schema.execute(
+            CREATE_NOTIFICATION_PREFERENCE_MUTATION,
+            variable_values={"input": {"eventType": "update", "channels": ["IN_APP"]}},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is not None
+        assert any("Select at least one external channel" in error.message for error in result.errors)
+        mock_notification_preference_crud.create.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    @patch("graphql_api.modules.notification.mutations.get_notification_preference_service")
+    async def test_upsert_notification_preference_replaces_channels(
+        self,
+        mock_get_service,
+        mock_notification_preference_service,
+        mock_notification_preference_crud,
+        mocked_notification_preference,
+        mocked_user,
+    ):
+        mock_notification_preference_crud.upsert = AsyncMock(return_value=mocked_notification_preference.id)
+        mock_notification_preference_crud.get_by_id.return_value = mocked_notification_preference
+        mock_get_service.return_value = mock_notification_preference_service
+
+        result = await schema.execute(
+            UPSERT_NOTIFICATION_PREFERENCE_MUTATION,
+            variable_values={"input": {"eventType": "execute", "channels": ["SLACK", "IN_APP"]}},
+            context_value=make_context(mocked_user),
+        )
+
+        assert result.errors is None
+        assert result.data == {"upsertNotificationPreference": {"id": str(mocked_notification_preference.id)}}
+        mock_notification_preference_crud.upsert.assert_awaited_once_with(
+            {"user_id": str(mocked_user.id), "event_type": "execute", "channels": [NotificationChannel.SLACK]}
+        )
 
     @pytest.mark.asyncio
     @patch("graphql_api.modules.notification.mutations.get_notification_preference_service")

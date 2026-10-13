@@ -1,0 +1,309 @@
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
+from uuid import UUID, uuid4
+
+import pytest
+
+import application.tools.notification_manager as notification_manager_module
+import core.users.accounts as accounts_module
+from application.tools.notification_manager import _route_notification_event
+from core.constants.model import EventType
+from core.notifications.controller import NotificationEvent
+
+
+def user(slack_id: str | None = None, deactivated: bool = False):
+    return SimpleNamespace(id=uuid4(), meta={"slack_id": slack_id} if slack_id else {}, deactivated=deactivated)
+
+
+@pytest.fixture
+def resource():
+    return SimpleNamespace(id=uuid4(), name="orders-db", project_id=None, project=None)
+
+
+@pytest.fixture
+def routing(monkeypatch, resource):
+    """Wire the router to in-memory users, approvers, super admins, preferences and linked accounts."""
+    state = SimpleNamespace(
+        users=[], approver_ids=set(), super_admin_ids=set(), preferences=[], subscribers=[], sent=[], linked={}
+    )
+
+    async def primary_account_ids(_session, user_ids):
+        return {i: state.linked[i] for i in user_ids if i in state.linked}
+
+    async def linked_account_ids(_session, primary_ids):
+        linked: dict[UUID, list[UUID]] = {}
+        for secondary, primary in state.linked.items():
+            if primary in primary_ids:
+                linked.setdefault(primary, []).append(secondary)
+        return linked
+
+    monkeypatch.setattr(accounts_module, "get_primary_account_ids", primary_account_ids)
+    monkeypatch.setattr(notification_manager_module, "get_linked_account_ids", linked_account_ids)
+
+    resource_service = Mock(get_by_id=AsyncMock(return_value=resource))
+
+    async def query_subscriptions(filter, fields=None):
+        if filter["entity_type"] == "resource" and str(filter["entity_id"]) == str(resource.id):
+            return [SimpleNamespace(user=u) for u in state.subscribers]
+        return []
+
+    async def query_users(filter, fields=None):
+        ids = set(filter["id__in"])
+        return [u for u in state.users if u.id in ids]
+
+    async def query_preferences(filter, fields=None):
+        ids = set(filter["user_id__in"])
+        return [p for p in state.preferences if p.user_id in ids and p.event_type == filter["event_type"]]
+
+    async def approver_ids(_resource):
+        return {str(i) for i in state.approver_ids}
+
+    async def super_admin_ids():
+        return {str(i) for i in state.super_admin_ids}
+
+    async def dispatch(body):
+        state.sent.append(body)
+
+    async def deliver_in_app(messages, outbox_id=None):
+        state.sent.extend(messages)
+
+    monkeypatch.setattr(notification_manager_module, "get_resource_service", lambda session: resource_service)
+    monkeypatch.setattr(
+        notification_manager_module,
+        "get_user_service",
+        lambda session: Mock(query_all=AsyncMock(side_effect=query_users)),
+    )
+    monkeypatch.setattr(
+        notification_manager_module,
+        "get_notification_preference_service",
+        lambda session: Mock(query_all=AsyncMock(side_effect=query_preferences)),
+    )
+    monkeypatch.setattr(notification_manager_module, "get_resource_approver_ids", approver_ids)
+    monkeypatch.setattr(
+        notification_manager_module,
+        "get_subscription_service",
+        lambda session: Mock(query_all=AsyncMock(side_effect=query_subscriptions)),
+    )
+    monkeypatch.setattr(notification_manager_module, "get_super_admin_user_ids", super_admin_ids)
+    monkeypatch.setattr(notification_manager_module, "_dispatch_notification", dispatch)
+    monkeypatch.setattr(notification_manager_module, "deliver_in_app_notifications", deliver_in_app)
+    return state
+
+
+def approval_event(resource, requester_id):
+    return NotificationEvent(
+        event_type=EventType.APPROVAL_REQUIRED,
+        entity_type="resource",
+        entity_id=str(resource.id),
+        title=f"Approval required: {resource.name}",
+        status="warning",
+        message="waiting for approval",
+        actor_id=str(requester_id),
+    )
+
+
+def recipients(sent, provider):
+    return {body["user_id"] for body in sent if body["provider"] == provider}
+
+
+class TestApprovalRouting:
+    async def test_notifies_approvers_in_app_but_not_the_requester(self, routing, resource):
+        requester, owner, admin = user(), user(), user()
+        routing.users = [requester, owner, admin]
+        routing.approver_ids = {requester.id, owner.id, admin.id}
+
+        await _route_notification_event(approval_event(resource, requester.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(owner.id), str(admin.id)}
+        assert recipients(routing.sent, "slack") == set()
+        assert all(body["entity_name"] == "orders-db" for body in routing.sent)
+        assert all(body["event_type"] == "approval_required" for body in routing.sent)
+
+    async def test_super_admins_are_not_notified_when_other_approvers_exist(self, routing, resource):
+        requester, owner, super_admin = user(), user(), user()
+        routing.users = [requester, owner, super_admin]
+        routing.approver_ids = {owner.id}
+        routing.super_admin_ids = {super_admin.id}
+
+        await _route_notification_event(approval_event(resource, requester.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(owner.id)}
+
+    async def test_falls_back_to_super_admins_when_requester_is_the_only_approver(self, routing, resource):
+        requester, super_admin = user(), user()
+        routing.users = [requester, super_admin]
+        routing.approver_ids = {requester.id}
+        routing.super_admin_ids = {requester.id, super_admin.id}
+
+        await _route_notification_event(approval_event(resource, requester.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(super_admin.id)}
+
+    async def test_deactivated_approvers_are_skipped(self, routing, resource):
+        requester, active, inactive = user(), user(), user(deactivated=True)
+        routing.users = [requester, active, inactive]
+        routing.approver_ids = {active.id, inactive.id}
+
+        await _route_notification_event(approval_event(resource, requester.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(active.id)}
+
+    async def test_slack_only_for_approvers_who_opted_in(self, routing, resource):
+        requester, opted_in, not_opted_in = user(), user(slack_id="U1"), user(slack_id="U2")
+        routing.users = [requester, opted_in, not_opted_in]
+        routing.approver_ids = {opted_in.id, not_opted_in.id}
+        routing.preferences = [
+            SimpleNamespace(user_id=opted_in.id, event_type=EventType.APPROVAL_REQUIRED, channels=["SLACK"]),
+            SimpleNamespace(user_id=not_opted_in.id, event_type=EventType.APPROVAL_REQUIRED, channels=["IN_APP"]),
+        ]
+
+        await _route_notification_event(approval_event(resource, requester.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(opted_in.id), str(not_opted_in.id)}
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(opted_in.id), "U1")]
+
+
+def approval_result_event(resource, recipient_id, approver_id):
+    return NotificationEvent(
+        event_type=EventType.APPROVAL_RESULT,
+        entity_type="resource",
+        entity_id=str(resource.id),
+        title="Change approved",
+        status="success",
+        message="approved",
+        actor_id=str(approver_id),
+        recipient_id=str(recipient_id),
+    )
+
+
+class TestApprovalResultRouting:
+    async def test_notifies_the_change_requester(self, routing, resource):
+        requester, approver, other_approver = user(slack_id="U1"), user(), user()
+        routing.users = [requester, approver, other_approver]
+        routing.approver_ids = {approver.id, other_approver.id}
+        routing.preferences = [
+            SimpleNamespace(user_id=requester.id, event_type=EventType.APPROVAL_RESULT, channels=["SLACK"]),
+        ]
+
+        await _route_notification_event(approval_result_event(resource, requester.id, approver.id), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(requester.id)}
+        assert recipients(routing.sent, "slack") == {str(requester.id)}
+
+    async def test_self_approval_notifies_nobody(self, routing, resource):
+        requester = user()
+        routing.users = [requester]
+
+        await _route_notification_event(approval_result_event(resource, requester.id, requester.id), Mock())
+
+        assert routing.sent == []
+
+    async def test_self_approval_through_a_linked_account_notifies_nobody(self, routing, resource):
+        primary, secondary = user(), user()
+        routing.users = [primary, secondary]
+        routing.linked = {secondary.id: primary.id}
+
+        # The change was made with the secondary account, the approval with the primary one
+        await _route_notification_event(approval_result_event(resource, secondary.id, primary.id), Mock())
+
+        assert routing.sent == []
+
+
+def subscriber_event(resource, actor_id, exclude_ids, exclude_approvers=False):
+    return NotificationEvent(
+        event_type=EventType.UPDATE,
+        entity_type="resource",
+        entity_id=str(resource.id),
+        title="Resource approved",
+        status="success",
+        message="approved",
+        actor_id=str(actor_id),
+        exclude_user_ids=[str(i) for i in exclude_ids],
+        exclude_approvers=exclude_approvers,
+    )
+
+
+class TestSubscriberRouting:
+    async def test_skips_the_actor_and_the_change_requester(self, routing, resource):
+        approver, requester, other = user(), user(), user()
+        routing.subscribers = [approver, requester, other]
+
+        await _route_notification_event(subscriber_event(resource, approver.id, [requester.id]), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+    async def test_linked_accounts_of_excluded_users_are_skipped(self, routing, resource):
+        actor, requester_primary, requester_secondary, other = user(), user(), user(), user()
+        routing.subscribers = [actor, requester_primary, other]
+        routing.linked = {requester_secondary.id: requester_primary.id}
+
+        # The change requester is recorded with the account they used, the subscription is on the primary one
+        await _route_notification_event(subscriber_event(resource, actor.id, [requester_secondary.id]), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+    async def test_skips_approvers_when_approval_is_requested(self, routing, resource):
+        actor, approver, other = user(), user(), user()
+        routing.users = [actor, approver, other]
+        routing.approver_ids = {approver.id}
+        routing.subscribers = [actor, approver, other]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, [], exclude_approvers=True), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+
+def slack_preference(user_id, event_type=EventType.UPDATE):
+    return SimpleNamespace(user_id=user_id, event_type=event_type, channels=["SLACK"])
+
+
+class TestLinkedAccountDelivery:
+    async def test_secondary_subscriber_is_notified_as_its_primary_account(self, routing, resource):
+        actor, primary, secondary = user(), user(slack_id="U-PRIMARY"), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(primary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(primary.id)}
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-PRIMARY")]
+
+    async def test_linked_accounts_both_subscribed_get_one_message_per_channel(self, routing, resource):
+        actor, primary, secondary = user(), user(slack_id="U-PRIMARY"), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [primary, secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(primary.id), slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert [body["provider"] for body in routing.sent].count("in_app") == 1
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-PRIMARY")]
+
+    async def test_preference_and_address_of_a_linked_account_count(self, routing, resource):
+        actor, primary, secondary = user(), user(), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [primary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-SECONDARY")]
+
+    async def test_secondary_of_a_deactivated_primary_is_not_notified(self, routing, resource):
+        actor, primary, secondary = user(), user(deactivated=True), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert routing.sent == []

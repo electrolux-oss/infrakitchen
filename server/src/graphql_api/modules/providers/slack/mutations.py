@@ -47,6 +47,12 @@ class SlackMutation:
             raise ValueError("User ID is required for mapping Slack ID")
 
         slack_client = await get_slack_client(integration_id, info.context["session"])
-        slack_user = await slack_client.users_lookup_by_email(email=email)
+        try:
+            slack_user = await slack_client.users_lookup_by_email(email=email)
+        except EntityNotFound as e:
+            raise EntityNotFound(
+                f"No Slack user found with the email {email}. "
+                "Make sure your Slack profile uses the same email in the workspace connected to InfraKitchen."
+            ) from e
 
         return await user_service.update_user_meta(user_id, UserMetadata(slack_id=slack_user.id))

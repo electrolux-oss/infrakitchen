@@ -49,6 +49,7 @@ export const EntityFetchTable = forwardRef<
     defaultSort,
     rowClickable,
     quickFilters,
+    onRowClick,
     onDataChange,
   } = props;
 
@@ -183,6 +184,7 @@ export const EntityFetchTable = forwardRef<
         defaultSort={defaultSort}
         rowClickable={rowClickable}
         quickFilters={quickFilters}
+        onRowClick={onRowClick}
         onDataChange={onDataChange}
         loading={loading}
         setLoading={setLoading}

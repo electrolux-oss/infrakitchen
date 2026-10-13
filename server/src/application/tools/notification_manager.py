@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Any, cast
 from uuid import UUID
 
@@ -7,16 +9,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.integrations.model import Integration
 from application.resources.dependencies import get_resource_service
+from application.resources.functions import get_resource_approver_ids
+from application.resources.schema import ResourceResponse
 import core.pubsub as pubsub
 from core.config import Settings
+from core.constants.model import EventType
 from core.database import FieldSpec
 from core.dependencies import get_async_session
 
 from application.providers import NotificationProviderAdapter
 from application.integrations.dependencies import get_integration_service
 from core.notifications.dependencies import get_notification_preference_service, get_subscription_service
+from core.notifications.in_app import deliver_in_app_notifications
 from core.notifications.model import NotificationChannel, NotificationEvent, NotificationOutboxItem, OutboxStatus
 from core.notifications.outbox import NotificationOutboxCRUD
+from core.users.accounts import get_linked_account_ids, resolve_primary_ids
+from core.users.dependencies import get_user_service
+from core.users.functions import get_super_admin_user_ids
+from core.utils.model_tools import is_valid_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +48,13 @@ async def _get_provider_integration(provider: str) -> Integration | None:
 
 
 async def _dispatch_notification(msg: dict[str, Any]) -> None:
-    """Dispatch a single notification message to the appropriate provider adapter."""
+    """Send a single notification message through an external provider adapter (e.g. Slack)."""
 
     provider = msg.get("provider")
     user_id = msg.get("user_id")
 
     if not provider or not user_id:
         logger.warning(f"Message missing provider or user_id: {msg}")
-        return
-
-    if provider == "in_app":
-        await pubsub.publish(pubsub.in_app_notifications_topic(user_id), msg)
         return
 
     adapter_cls: type[NotificationProviderAdapter] | None = NotificationProviderAdapter.notification_adapters.get(
@@ -68,34 +74,157 @@ async def _dispatch_notification(msg: dict[str, Any]) -> None:
     await adapter_instance.send_notification(**msg)
 
 
-async def _route_notification_event(event: NotificationEvent, session: AsyncSession) -> None:
-    """Resolve subscriptions and preferences for an event and dispatch per-user-per-channel messages.
+def _build_message(
+    event: NotificationEvent, user_id: UUID | str | None, channel: NotificationChannel, entity_name: str | None
+) -> dict[str, Any]:
+    return {
+        "msg": event.message,
+        "title": event.title,
+        "status": event.status,
+        "event_type": str(event.event_type),
+        "entity_type": event.entity_type,
+        "entity_id": str(event.entity_id) if event.entity_id is not None else None,
+        "entity_name": entity_name,
+        "provider": channel.value.lower(),
+        "user_id": str(user_id),
+    }
 
-    - IN_APP: publishes to the user's ``notifications.in_app.<user_id>`` pubsub topic.
-    - External providers (e.g. Slack): dispatches directly via the registered adapter.
-    """
-    subscription_service = get_subscription_service(session)
-    preference_service = get_notification_preference_service(session=session)
-    resource_service = get_resource_service(session=session)
 
-    # project subscriptions
-    project_specific = []
-    if event.entity_type == "resource" and event.entity_id is not None:
-        resource = await resource_service.get_by_id(event.entity_id)
-        if not resource:
-            logger.warning(f"Resource with ID {event.entity_id} not found, cannot route notification")
-            return
+def _get_provider_address(user_meta: Any, channel: NotificationChannel) -> str | None:
+    """The user's address on an external provider, stored in user meta as ``<provider>_id`` (e.g. ``slack_id``)."""
+    key = f"{channel.value.lower()}_id"
+    return user_meta.get(key) if isinstance(user_meta, dict) else getattr(user_meta, key, None)
 
-        if resource.project_id:
-            project_specific = await subscription_service.query_all(
-                filter={"entity_type": "project", "entity_id": resource.project_id},
+
+@dataclass
+class _Recipient:
+    primary: Any
+    # The primary account first, then its linked secondary accounts
+    accounts: list[Any]
+
+
+async def _as_recipients(session: AsyncSession, users: list[Any]) -> list[_Recipient]:
+    """One recipient per person: each user resolved to their active primary account, plus the active
+    accounts linked to it, whose preferences and provider addresses also count."""
+    primary_of = await resolve_primary_ids(session, [user.id for user in users])
+    primary_ids = list(dict.fromkeys(primary_of[UUID(str(user.id))] for user in users))
+    linked = await get_linked_account_ids(session, set(primary_ids))
+
+    accounts_by_id = {UUID(str(user.id)): user for user in users}
+    missing = {str(i) for i in [*primary_ids, *(s for ids in linked.values() for s in ids)] if i not in accounts_by_id}
+    accounts_by_id.update({UUID(str(user.id)): user for user in await _active_users(session, missing)})
+
+    recipients: list[_Recipient] = []
+    for primary_id in primary_ids:
+        # Missing when the primary account is deactivated, which disables its linked accounts too
+        primary = accounts_by_id.get(primary_id)
+        if primary is None:
+            continue
+        secondaries = [accounts_by_id[i] for i in linked.get(primary_id, []) if i in accounts_by_id]
+        recipients.append(_Recipient(primary=primary, accounts=[primary, *secondaries]))
+    return recipients
+
+
+async def _notify_users(
+    event: NotificationEvent,
+    session: AsyncSession,
+    users: list[Any],
+    entity_name: str | None,
+    outbox_id: UUID | None,
+) -> None:
+    """Deliver the event to the users: always in-app, plus every external channel (Slack, ...) that
+    their preference for this event type enables. Linked accounts are one person and get it once."""
+    recipients = await _as_recipients(session, users)
+    if not recipients:
+        return
+
+    await deliver_in_app_notifications(
+        [_build_message(event, r.primary.id, NotificationChannel.IN_APP, entity_name) for r in recipients],
+        outbox_id=outbox_id,
+    )
+
+    recipient_by_account = {str(account.id): r for r in recipients for account in r.accounts}
+    preferences = await get_notification_preference_service(session=session).query_all(
+        filter={
+            "user_id__in": [account.id for r in recipients for account in r.accounts],
+            "event_type": event.event_type,
+        },
+        fields={"user_id": None, "channels": None},
+    )
+    channels: dict[str, set[NotificationChannel]] = {}
+    for preference in preferences:
+        recipient = recipient_by_account[str(preference.user_id)]
+        channels.setdefault(str(recipient.primary.id), set()).update(
+            NotificationChannel(c) for c in preference.channels
+        )
+
+    for recipient in recipients:
+        user_id = recipient.primary.id
+        for channel in sorted(channels.get(str(user_id), set()) - {NotificationChannel.IN_APP}, key=lambda c: c.value):
+            address = next(
+                (a for account in recipient.accounts if (a := _get_provider_address(account.meta, channel))), None
             )
+            if not address:
+                logger.debug(f"User {user_id} enabled {channel.value} but has no address for it, skipping")
+                continue
+            body = {**_build_message(event, user_id, channel, entity_name), "channel": address}
+            try:
+                await _dispatch_notification(body)
+                logger.info(f"Notification dispatched to user {user_id} via {channel.value}")
+            except Exception as e:
+                logger.error(f"Failed to notify user {user_id} via {channel.value}: {e}", exc_info=True)
 
+
+async def _active_users(session: AsyncSession, user_ids: set[str]) -> list[Any]:
+    ids = [UUID(uid) for uid in user_ids if is_valid_uuid(uid)]
+    if not ids:
+        return []
+    users = await get_user_service(session=session).query_all(
+        filter={"id__in": ids}, fields={"id": None, "meta": None, "deactivated": None}
+    )
+    return [user for user in users if not user.deactivated]
+
+
+async def _without(session: AsyncSession, users: list[Any], excluded_ids: Iterable[UUID | str | None]) -> list[Any]:
+    """The users not among ``excluded_ids``, comparing primary accounts so linked accounts count as one user."""
+    excluded_ids = list(excluded_ids)
+    primary_ids = await resolve_primary_ids(session, [*(user.id for user in users), *excluded_ids])
+    excluded = {primary_ids[UUID(str(i))] for i in excluded_ids if i and is_valid_uuid(str(i))}
+    return [user for user in users if primary_ids[UUID(str(user.id))] not in excluded]
+
+
+async def _approval_recipients(
+    session: AsyncSession, resource: ResourceResponse, requester_id: str | None
+) -> list[Any]:
+    """The users who can approve the resource, or super admins when there are none. Never the requester."""
+    approvers = await _without(
+        session, await _active_users(session, await get_resource_approver_ids(resource)), [requester_id]
+    )
+    if not approvers:
+        approvers = await _without(
+            session, await _active_users(session, await get_super_admin_user_ids()), [requester_id]
+        )
+    if not approvers:
+        logger.warning(f"No approvers found for resource {resource.id}, approval notification not sent")
+    return approvers
+
+
+async def _subscriber_recipients(
+    event: NotificationEvent, session: AsyncSession, resource: ResourceResponse | None
+) -> list[Any]:
+    """Active users subscribed to the entity, to every entity of its type, or to the resource's project."""
+    subscription_service = get_subscription_service(session)
     sub_fields: FieldSpec = {
         "entity_type": None,
         "entity_id": None,
         "user": cast(FieldSpec, {"id": None, "meta": None, "deactivated": None}),
     }
+
+    project_specific = []
+    if resource and resource.project_id:
+        project_specific = await subscription_service.query_all(
+            filter={"entity_type": "project", "entity_id": resource.project_id}, fields=sub_fields
+        )
     specific = await subscription_service.query_all(
         filter={"entity_type": event.entity_type, "entity_id": event.entity_id}, fields=sub_fields
     )
@@ -103,60 +232,46 @@ async def _route_notification_event(event: NotificationEvent, session: AsyncSess
         filter={"entity_type": event.entity_type, "entity_id": None}, fields=sub_fields
     )
 
-    seen_user_ids: set[str] = set()
-    subscriptions = []
-    for sub in specific + wildcard + project_specific:
-        uid = str(sub.user_id)
-        if uid not in seen_user_ids:
-            seen_user_ids.add(uid)
-            if sub.user.deactivated:
-                logger.debug(f"Skipping deactivated user {uid} for subscription {sub.id}")
-                continue
-            subscriptions.append(sub)
-
-    if not subscriptions:
+    users = [sub.user for sub in specific + wildcard + project_specific if not sub.user.deactivated]
+    if not users:
         logger.debug(f"No subscriptions found for {event.entity_type}:{event.entity_id}")
-        return
+    return users
 
-    user_ids: set[UUID] = {sub.user_id for sub in subscriptions if sub.user_id is not None}
 
-    pref_fields: FieldSpec = {
-        "user": cast(FieldSpec, {"id": None, "meta": None}),
-        "channels": None,
-    }
-    all_preferences = await preference_service.query_all(
-        filter={"user_id__in": list(user_ids), "event_type": event.event_type},
-        fields=pref_fields,
-    )
+async def _route_notification_event(
+    event: NotificationEvent, session: AsyncSession, outbox_id: UUID | None = None
+) -> None:
+    """Resolve the recipients of an event and deliver it to them.
 
-    for preference in all_preferences:
-        user_id = preference.user_id
-        for channel in [NotificationChannel(c) for c in preference.channels]:
-            body: dict[str, Any] = {
-                "msg": event.message,
-                "title": event.title,
-                "status": event.status,
-                "entity_id": str(event.entity_id) if event.entity_id is not None else None,
-                "entity_name": event.entity_type,
-                "provider": channel.value.lower(),
-                "user_id": str(user_id),
-            }
+    - APPROVAL_REQUIRED goes to the resource's approvers, APPROVAL_RESULT to the user who requested
+      the change; every other event goes to the entity's subscribers, except the users the event
+      excludes (the actor, and whoever gets a more specific notification about the same change).
+    - Every recipient gets the event in-app; preferences add external channels such as Slack.
+    """
+    resource: ResourceResponse | None = None
+    if event.entity_type == "resource" and event.entity_id is not None:
+        resource = await get_resource_service(session=session).get_by_id(event.entity_id)
+        if not resource:
+            logger.warning(f"Resource with ID {event.entity_id} not found, cannot route notification")
+            return
 
-            if channel == NotificationChannel.SLACK:
-                user_meta = preference.user.meta
-                slack_id = (
-                    user_meta.get("slack_id") if isinstance(user_meta, dict) else getattr(user_meta, "slack_id", None)
-                )
-                if not slack_id:
-                    logger.debug(f"User {user_id} prefers Slack but has no slack_id, skipping")
-                    continue
-                body["channel"] = slack_id
+    entity_name = event.entity_name or (resource.name if resource else None)
 
-            try:
-                await _dispatch_notification(body)
-                logger.info(f"Notification dispatched to user {user_id} via {channel.value}")
-            except Exception as e:
-                logger.error(f"Failed to notify user {user_id} via {channel.value}: {e}", exc_info=True)
+    if event.event_type == EventType.APPROVAL_REQUIRED:
+        if resource is None:
+            logger.warning(f"Approval notifications are not supported for {event.entity_type}:{event.entity_id}")
+            return
+        recipients = await _approval_recipients(session, resource, event.actor_id)
+    elif event.event_type == EventType.APPROVAL_RESULT:
+        # Nobody is told about their own decision
+        recipients = await _without(session, await _active_users(session, {event.recipient_id or ""}), [event.actor_id])
+    else:
+        excluded: list[UUID | str | None] = [event.actor_id, *event.exclude_user_ids]
+        if event.exclude_approvers and resource is not None:
+            excluded += [user.id for user in await _approval_recipients(session, resource, event.actor_id)]
+        recipients = await _without(session, await _subscriber_recipients(event, session, resource), excluded)
+
+    await _notify_users(event, session, recipients, entity_name, outbox_id)
 
 
 class NotificationDispatcher:
@@ -229,7 +344,7 @@ class NotificationDispatcher:
         try:
             event = NotificationEvent(**item.payload)
             async with get_async_session() as session:
-                await _route_notification_event(event, session)
+                await _route_notification_event(event, session, outbox_id=item.id)
         except Exception as e:
             error = f"{type(e).__name__}: {e}"
             if item.attempts >= item.max_attempts:

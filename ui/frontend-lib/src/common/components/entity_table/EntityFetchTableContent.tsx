@@ -1,5 +1,6 @@
 import {
   Dispatch,
+  MouseEvent,
   MutableRefObject,
   ReactNode,
   SetStateAction,
@@ -42,6 +43,7 @@ interface EntityFetchTableContentProps {
   rowClickable?: boolean;
   /** Content rendered between the filter panel and the grid (e.g. quick filter chips). */
   quickFilters?: ReactNode;
+  onRowClick?: (row: any, event?: MouseEvent) => void;
   onDataChange?: (data: any[]) => void;
   buildApiFiltersRef: MutableRefObject<
     ((filterValues: Record<string, any>) => Record<string, any>) | undefined
@@ -83,6 +85,7 @@ export const EntityFetchTableContent = forwardRef<
     transformFn,
     rowClickable,
     quickFilters,
+    onRowClick,
     onDataChange,
     buildApiFiltersRef,
     defaultFilterRef,
@@ -271,6 +274,7 @@ export const EntityFetchTableContent = forwardRef<
         onRefresh={fetchFilteredData}
         rowClickable={rowClickable}
         quickFilters={quickFilters}
+        onRowClick={onRowClick}
       />
     </Box>
   );

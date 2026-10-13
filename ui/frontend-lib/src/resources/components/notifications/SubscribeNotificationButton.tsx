@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 
+import { useNavigate } from "react-router";
+
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
+import TuneIcon from "@mui/icons-material/Tune";
 import {
   Box,
   Button,
@@ -13,6 +16,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+
+import { useConfig } from "../../../common/context/ConfigContext";
 
 interface SubscribeNotificationButtonProps {
   isSubscribed: boolean;
@@ -32,6 +37,11 @@ export const SubscribeNotificationButton = ({
   showIncludeChildren = true,
 }: SubscribeNotificationButtonProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const { linkPrefix, currentUser } = useConfig();
+  const navigate = useNavigate();
+  const preferencesPath = currentUser?.id
+    ? `${linkPrefix}users/${currentUser.id}/notifications`
+    : undefined;
   const [inheritChildren, setInheritChildren] = useState(false);
   const [action, setAction] = useState<"subscribe" | "unsubscribe">(
     "subscribe",
@@ -92,7 +102,7 @@ export const SubscribeNotificationButton = ({
         transformOrigin={{ vertical: "top", horizontal: "right" }}
         slotProps={{ paper: { sx: { borderRadius: 2, mt: 1 } } }}
       >
-        <Stack sx={{ width: 320, p: 2, gap: 1.5 }}>
+        <Stack sx={{ width: 400, p: 2, gap: 1.5 }}>
           <Stack direction="row" sx={{ gap: 1.5, alignItems: "center" }}>
             <Box
               sx={{
@@ -147,20 +157,37 @@ export const SubscribeNotificationButton = ({
           <Stack
             direction="row"
             sx={{
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
+              alignItems: "center",
               gap: 1,
             }}
           >
-            <Button onClick={handleClose} color="inherit">
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleConfirm}
-              color={action === "subscribe" ? "primary" : "error"}
-            >
-              {action === "subscribe" ? "Subscribe" : "Unsubscribe"}
-            </Button>
+            {preferencesPath ? (
+              <Button
+                size="small"
+                startIcon={<TuneIcon />}
+                onClick={() => {
+                  handleClose();
+                  navigate(preferencesPath);
+                }}
+              >
+                Preferences
+              </Button>
+            ) : (
+              <Box />
+            )}
+            <Stack direction="row" sx={{ gap: 1 }}>
+              <Button onClick={handleClose} color="inherit">
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleConfirm}
+                color={action === "subscribe" ? "primary" : "error"}
+              >
+                {action === "subscribe" ? "Subscribe" : "Unsubscribe"}
+              </Button>
+            </Stack>
           </Stack>
         </Stack>
       </Popover>

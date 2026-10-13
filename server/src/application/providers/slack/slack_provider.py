@@ -26,7 +26,8 @@ DEFAULT_SLACK_NOTIFICATION_TEMPLATE = """*{{ title or 'InfraKitchen Alert' }}* \
 > {{ (msg or '') | replace('\n', '\n> ') }}
 
 *Details*
-• *Entity:* `{{ entity_name or 'unknown' }}`
+• *Entity:* `{{ entity_name or '-' }}`
+• *Type:* `{{ entity_type or 'unknown' }}`
 • *ID:* `{% if entity_id %}{{ entity_id }}{% else %}-{% endif %}`
 {% if infrakitchen_url %}• *Link:* <{{ infrakitchen_url }}|Open in InfraKitchen>{% endif %}
 """
@@ -98,18 +99,24 @@ class SlackProvider(IntegrationProvider, NotificationProviderAdapter, SlackAuthe
         msg = kwargs.get("msg")
 
         url: str | None = None
-        if Settings().INFRAKITCHEN_URL:
-            url = (
-                f"{Settings().INFRAKITCHEN_URL}/{kwargs.get('entity_name')}s/{kwargs.get('entity_id')}"
-                if kwargs.get("entity_id")
-                else Settings().INFRAKITCHEN_URL
-            )
+        base_url = Settings().INFRAKITCHEN_URL.rstrip("/")
+        entity_type = kwargs.get("entity_type")
+        entity_id = kwargs.get("entity_id")
+        if not base_url:
+            log.warning("INFRAKITCHEN_URL is not set, Slack notifications are sent without a link")
+        elif entity_type and entity_id:
+            # Plan/apply results of a resource open its Audit tab, like the in-app notification link
+            tab = "/audit" if entity_type == "resource" and kwargs.get("event_type") == "execute" else ""
+            url = f"{base_url}/{entity_type}s/{entity_id}{tab}"
+        else:
+            url = base_url
 
         payload = {
             "msg": msg,
             "title": kwargs.get("title"),
             "status": kwargs.get("status"),
             "entity_id": kwargs.get("entity_id"),
+            "entity_type": kwargs.get("entity_type"),
             "entity_name": kwargs.get("entity_name"),
             "infrakitchen_url": url,
         }

@@ -18,6 +18,20 @@ export const NOTIFICATION_GRAPHQL_FIELDS = {
       user: "user",
     } as const,
   },
+  userNotification: {
+    base: [
+      "id",
+      "eventType",
+      "entityType",
+      "entityId",
+      "entityName",
+      "title",
+      "message",
+      "status",
+      "readAt",
+      "createdAt",
+    ] as const,
+  },
 };
 
 export type NotificationSubscriptionGraphqlBaseField =
@@ -32,6 +46,8 @@ export type NotificationSubscriptionGraphqlRelationField =
   (typeof NOTIFICATION_GRAPHQL_FIELDS.subscription.relations)[NotificationSubscriptionGraphqlRelationKey];
 export type NotificationPreferenceGraphqlRelationField =
   (typeof NOTIFICATION_GRAPHQL_FIELDS.preference.relations)[NotificationPreferenceGraphqlRelationKey];
+export type UserNotificationGraphqlBaseField =
+  (typeof NOTIFICATION_GRAPHQL_FIELDS.userNotification.base)[number];
 
 export const NOTIFICATION_SUBSCRIPTION_FIELDS = `
   ${buildSelection(NOTIFICATION_GRAPHQL_FIELDS.subscription.base)}
@@ -42,6 +58,10 @@ export const NOTIFICATION_PREFERENCE_FIELDS = `
   ${buildSelection(NOTIFICATION_GRAPHQL_FIELDS.preference.base)}
   ${buildNestedSelection(NOTIFICATION_GRAPHQL_FIELDS.preference.relations.user, USER_SHORT_FIELDS)}
 `;
+
+export const USER_NOTIFICATION_FIELDS = buildSelection(
+  NOTIFICATION_GRAPHQL_FIELDS.userNotification.base,
+);
 
 /** Maps snake_case table column fields to their GraphQL selection strings. */
 export const NOTIFICATION_SUBSCRIPTION_FIELD_MAP: GraphqlFieldMap = {
@@ -63,4 +83,13 @@ export const NOTIFICATION_PREFERENCE_FIELD_MAP: GraphqlFieldMap = {
     NOTIFICATION_GRAPHQL_FIELDS.preference.relations.user,
     USER_SHORT_FIELDS,
   ),
+};
+
+export const USER_NOTIFICATION_FIELD_MAP: GraphqlFieldMap = {
+  event_type: "eventType",
+  entity_type: "entityType",
+  entity_id: "entityId",
+  entity_name: "entityName",
+  read_at: "readAt",
+  created_at: "createdAt",
 };

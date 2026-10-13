@@ -5,43 +5,53 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import {
   Box,
   Button,
-  Checkbox,
   FormControl,
-  FormControlLabel,
-  FormGroup,
-  InputLabel,
+  IconButton,
   MenuItem,
   Select,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { GridRenderCellParams } from "@mui/x-data-grid";
 
 import { useConfig } from "../../common";
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { EntityFetchTable } from "../../common/components/entity_table/EntityFetchTable";
 import { RELATIVE_TIME_COLUMN_WIDTH } from "../../common/components/entity_table/tableColumns";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { notify, notifyError } from "../../common/hooks/useNotification";
+import { SlackLinkHint } from "../../common/providers/slack/SlackLinkHint";
 import {
-  CREATE_NOTIFICATION_PREFERENCE_MUTATION,
+  SlackLinkState,
+  useSlackLink,
+} from "../../common/providers/slack/useSlackLink";
+import {
   DELETE_NOTIFICATION_PREFERENCE_MUTATION,
   GqlNotificationPreference,
   NOTIFICATION_PREFERENCE_FIELD_MAP,
+  UPSERT_NOTIFICATION_PREFERENCE_MUTATION,
 } from "../../notifications";
 import { NotificationChannel } from "../../notifications/types";
 import { EVENT_TYPE } from "../../utils";
 
-const CHANNEL_OPTIONS: NotificationChannel[] = ["IN_APP", "SLACK"];
+// In-app delivery is always on, so preferences only pick additional channels
+const EXTERNAL_CHANNEL_OPTIONS: NotificationChannel[] = ["SLACK"];
+
+const externalChannels = (channels: NotificationChannel[] = []) =>
+  channels.filter((channel) => channel !== "IN_APP");
 
 interface NotificationPreferenceDialogProps {
   userId: string;
   open: boolean;
   initialPreference: GqlNotificationPreference | null;
+  slackLink: SlackLinkState;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -50,6 +60,7 @@ const NotificationPreferenceDialog = ({
   userId,
   open,
   initialPreference,
+  slackLink,
   onClose,
   onSaved,
 }: NotificationPreferenceDialogProps) => {
@@ -59,7 +70,9 @@ const NotificationPreferenceDialog = ({
     initialPreference?.eventType ?? "execute",
   );
   const [channels, setChannels] = useState<NotificationChannel[]>(
-    initialPreference?.channels ?? ["IN_APP"],
+    initialPreference
+      ? externalChannels(initialPreference.channels)
+      : ["SLACK"],
   );
 
   useEffect(() => {
@@ -68,34 +81,22 @@ const NotificationPreferenceDialog = ({
     }
 
     setEventType(initialPreference?.eventType ?? "execute");
-    setChannels(initialPreference?.channels ?? ["IN_APP"]);
+    setChannels(
+      initialPreference
+        ? externalChannels(initialPreference.channels)
+        : ["SLACK"],
+    );
   }, [initialPreference, open]);
-
-  const handleToggleChannel = (channel: NotificationChannel) => {
-    setChannels((previousChannels) => {
-      if (previousChannels.includes(channel)) {
-        return previousChannels.filter((entry) => entry !== channel);
-      }
-
-      return [...previousChannels, channel];
-    });
-  };
 
   const handleSave = async () => {
     if (channels.length === 0) {
-      notifyError(new Error("Select at least one integration type."));
+      notifyError(new Error("Select at least one additional channel."));
       return;
     }
 
     setIsLoading(true);
     try {
-      if (initialPreference?.id) {
-        await ikApi.graphqlRequest(DELETE_NOTIFICATION_PREFERENCE_MUTATION, {
-          id: initialPreference.id,
-        });
-      }
-
-      await ikApi.graphqlRequest(CREATE_NOTIFICATION_PREFERENCE_MUTATION, {
+      await ikApi.graphqlRequest(UPSERT_NOTIFICATION_PREFERENCE_MUTATION, {
         input: {
           userId,
           eventType,
@@ -129,13 +130,17 @@ const NotificationPreferenceDialog = ({
       content={
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           <FormControl fullWidth>
-            <InputLabel id="user-notification-event-type-label">
-              Event Type
-            </InputLabel>
+            <Typography
+              id="user-notification-event-type-label"
+              variant="subtitle2"
+              sx={{ mb: 1 }}
+            >
+              Event type
+            </Typography>
             <Select
               labelId="user-notification-event-type-label"
-              label="Event Type"
               value={eventType}
+              disabled={!!initialPreference}
               onChange={(event) => setEventType(event.target.value)}
             >
               {Object.values(EVENT_TYPE).map((eventOption) => (
@@ -146,32 +151,54 @@ const NotificationPreferenceDialog = ({
             </Select>
           </FormControl>
 
-          <FormControl component="fieldset">
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Integration Type
+          <FormControl fullWidth>
+            <Typography
+              id="user-notification-channels-label"
+              variant="subtitle2"
+            >
+              Additional channels
             </Typography>
-            <FormGroup>
-              {CHANNEL_OPTIONS.map((channel) => (
-                <FormControlLabel
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", mb: 1 }}
+            >
+              In-app notifications are always delivered. Choose where else you
+              want to receive this event.
+            </Typography>
+            <Select
+              labelId="user-notification-channels-label"
+              multiple
+              value={channels}
+              onChange={(event) =>
+                setChannels(event.target.value as NotificationChannel[])
+              }
+              renderValue={(selected) => selected.join(", ")}
+              sx={{ mb: 1 }}
+            >
+              {EXTERNAL_CHANNEL_OPTIONS.map((channel) => (
+                <MenuItem
                   key={channel}
-                  control={
-                    <Checkbox
-                      checked={channels.includes(channel)}
-                      onChange={() => handleToggleChannel(channel)}
-                    />
+                  value={channel}
+                  disabled={
+                    channel === "SLACK" &&
+                    !slackLink.integrationAvailable &&
+                    !channels.includes(channel)
                   }
-                  label={channel}
-                />
+                >
+                  {channel}
+                </MenuItem>
               ))}
-            </FormGroup>
+            </Select>
+            <SlackLinkHint
+              userId={userId}
+              slackLink={slackLink}
+              pendingNote="Slack messages start once the account is linked."
+            />
           </FormControl>
         </Box>
       }
       actions={
         <Stack direction="row" spacing={1}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
           <Button variant="contained" onClick={handleSave} disabled={isLoading}>
             {initialPreference ? "Save" : "Create"}
           </Button>
@@ -181,11 +208,13 @@ const NotificationPreferenceDialog = ({
   );
 };
 
-const DeleteNotificationPreferenceButton = ({
-  id,
+const NotificationPreferenceActions = ({
+  preference,
+  onEdit,
   onDeleted,
 }: {
-  id: string;
+  preference: GqlNotificationPreference;
+  onEdit: (preference: GqlNotificationPreference) => void;
   onDeleted: () => void;
 }) => {
   const { ikApi } = useConfig();
@@ -196,7 +225,7 @@ const DeleteNotificationPreferenceButton = ({
     setIsLoading(true);
     try {
       await ikApi.graphqlRequest(DELETE_NOTIFICATION_PREFERENCE_MUTATION, {
-        id,
+        id: preference.id,
       });
       notify("Preference deleted", "success");
       setIsConfirming(false);
@@ -208,55 +237,58 @@ const DeleteNotificationPreferenceButton = ({
     }
   };
 
-  if (!isConfirming) {
+  if (isConfirming) {
     return (
-      <Button
-        color="error"
-        startIcon={<DeleteOutlineIcon />}
-        onClick={() => setIsConfirming(true)}
-      >
-        Delete
-      </Button>
+      <Stack direction="row">
+        <IconButton
+          title="Confirm delete"
+          size="small"
+          onClick={() => void handleDelete()}
+          disabled={isLoading}
+          sx={deleteIconButtonStyle}
+        >
+          <CheckIcon fontSize="small" />
+        </IconButton>
+        <IconButton
+          title="Cancel"
+          size="small"
+          onClick={() => setIsConfirming(false)}
+          disabled={isLoading}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Stack>
     );
   }
 
   return (
-    <Stack direction="row" spacing={1}>
-      <Button
-        startIcon={<CheckIcon />}
-        onClick={handleDelete}
-        disabled={isLoading}
+    <Stack direction="row">
+      <IconButton
+        title="Edit Preference"
+        size="small"
+        onClick={() => onEdit(preference)}
       >
-        Confirm
-      </Button>
-      <Button
-        color="inherit"
-        startIcon={<CloseIcon />}
-        onClick={() => setIsConfirming(false)}
-        disabled={isLoading}
+        <EditOutlinedIcon fontSize="small" />
+      </IconButton>
+      <IconButton
+        title="Delete Preference"
+        size="small"
+        onClick={() => setIsConfirming(true)}
+        sx={deleteIconButtonStyle}
       >
-        Cancel
-      </Button>
+        <DeleteOutlineIcon fontSize="small" />
+      </IconButton>
     </Stack>
   );
 };
 
-const EditNotificationPreferenceButton = ({
-  preference,
-  onEdit,
-}: {
-  preference: GqlNotificationPreference;
-  onEdit: (preference: GqlNotificationPreference) => void;
+export const UserNotificationPreferencesCard = (props: {
+  user_id: string;
+  slackId?: string | null;
 }) => {
-  return (
-    <Button startIcon={<EditOutlinedIcon />} onClick={() => onEdit(preference)}>
-      Edit
-    </Button>
-  );
-};
-
-export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
-  const { user_id } = props;
+  const { user_id, slackId } = props;
+  const slackLink = useSlackLink(user_id, slackId);
+  const slackLinked = slackLink.isLinked;
   const [refreshKey, setRefreshKey] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPreference, setSelectedPreference] =
@@ -291,8 +323,25 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
         headerName: "Integration Types",
         flex: 1,
         sortable: false,
-        renderCell: (params: GridRenderCellParams) =>
-          (params.row.channels || []).join(", "),
+        renderCell: (params: GridRenderCellParams) => (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            {externalChannels(params.row.channels).map((channel, index) => (
+              <Box key={channel} component="span">
+                {index > 0 && ", "}
+                {channel}
+                {channel === "SLACK" && !slackLinked && (
+                  <Tooltip title="Not delivered: Slack account not linked">
+                    <WarningAmberIcon
+                      color="warning"
+                      fontSize="inherit"
+                      sx={{ ml: 0.5, verticalAlign: "middle" }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
+            ))}
+          </Stack>
+        ),
       },
       {
         field: "createdAt",
@@ -307,39 +356,27 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
         ),
       },
       {
-        field: "edit",
-        fetchFields: [],
-        headerName: "Edit",
+        field: "id",
+        headerName: "Actions",
         sortable: false,
         hideable: false,
         renderCell: (params: GridRenderCellParams) => (
-          <EditNotificationPreferenceButton
+          <NotificationPreferenceActions
             preference={params.row}
             onEdit={handleOpenEdit}
-          />
-        ),
-      },
-      {
-        field: "id",
-        headerName: "Delete",
-        sortable: false,
-        hideable: false,
-        renderCell: (params: GridRenderCellParams) => (
-          <DeleteNotificationPreferenceButton
-            id={params.value}
             onDeleted={handleRefresh}
           />
         ),
       },
     ],
-    [handleOpenEdit, handleRefresh],
+    [handleOpenEdit, handleRefresh, slackLinked],
   );
 
   return (
     <>
       <BaseCard
         name="Notification Preferences"
-        description="Manage your event preferences and delivery channels."
+        description="In-app notifications are always on. Add a preference to also receive an event type in Slack."
         actions={
           <Button
             variant="contained"
@@ -364,6 +401,7 @@ export const UserNotificationPreferencesCard = (props: { user_id: string }) => {
         userId={user_id}
         open={dialogOpen}
         initialPreference={selectedPreference}
+        slackLink={slackLink}
         onClose={() => setDialogOpen(false)}
         onSaved={handleRefresh}
       />

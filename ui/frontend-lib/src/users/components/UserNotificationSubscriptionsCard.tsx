@@ -116,7 +116,10 @@ export const UserNotificationSubscriptionsCard = (props: {
   );
 
   return (
-    <BaseCard>
+    <BaseCard
+      name="Subscriptions"
+      description="Entities you follow. You receive their notifications in-app; add a preference above to also get them in Slack."
+    >
       <EntityFetchTable
         ref={tableRef}
         title="User Subscriptions"

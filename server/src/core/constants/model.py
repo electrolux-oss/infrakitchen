@@ -71,6 +71,8 @@ class WorkflowAction(StrEnum):
 class EventType(StrEnum):
     UPDATE = "update"
     EXECUTE = "execute"
+    APPROVAL_REQUIRED = "approval_required"
+    APPROVAL_RESULT = "approval_result"
 
 
 @unique

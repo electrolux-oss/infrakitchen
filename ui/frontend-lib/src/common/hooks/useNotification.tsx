@@ -7,7 +7,15 @@ import { ApiClientError } from "../../errors";
 import { SnackbarVariant, DependencyError } from "../components/notifications";
 import { ErrorWithStatusCode } from "../components/notifications/ErrorWithStatusCode";
 
-const NotifyLinkButton = ({ to, label }: { to: string; label: string }) => {
+const NotifyLinkButton = ({
+  to,
+  label,
+  onClick,
+}: {
+  to: string;
+  label: string;
+  onClick?: () => void;
+}) => {
   const navigate = useNavigate();
   return (
     <Button
@@ -28,6 +36,7 @@ const NotifyLinkButton = ({ to, label }: { to: string; label: string }) => {
       }}
       onClick={() => {
         toast.dismiss();
+        onClick?.();
         navigate(to);
       }}
     >
@@ -39,6 +48,7 @@ const NotifyLinkButton = ({ to, label }: { to: string; label: string }) => {
 interface NotifyLink {
   to: string;
   label?: string;
+  onClick?: () => void;
 }
 
 interface NotifyOptions {
@@ -93,6 +103,7 @@ export const notify = (
     <NotifyLinkButton
       to={options.link.to}
       label={options.link.label ?? "View"}
+      onClick={options.link.onClick}
     />
   ) : undefined;
   toastForVariant(variant)(messageStr, {
