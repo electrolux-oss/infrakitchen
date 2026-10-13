@@ -29,6 +29,7 @@ import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { Label } from "../../common/components/labels/Label";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
+import { copyToClipboard } from "../../common/utils/clipboard";
 import { GqlUser } from "../graphql";
 import {
   CREATE_PERSONAL_ACCESS_TOKEN_MUTATION,
@@ -311,7 +312,7 @@ const TokenValueDialog = ({
   const handleCopy = async () => {
     if (!token) return;
     try {
-      await navigator.clipboard.writeText(token);
+      await copyToClipboard(token);
       notify("Token copied to clipboard", "success");
     } catch (error) {
       notifyError(error);
