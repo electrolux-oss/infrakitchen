@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import Any, cast
 from uuid import UUID
 
@@ -22,7 +23,7 @@ from core.notifications.dependencies import get_notification_preference_service,
 from core.notifications.in_app import deliver_in_app_notifications
 from core.notifications.model import NotificationChannel, NotificationEvent, NotificationOutboxItem, OutboxStatus
 from core.notifications.outbox import NotificationOutboxCRUD
-from core.users.accounts import resolve_primary_ids
+from core.users.accounts import get_linked_account_ids, resolve_primary_ids
 from core.users.dependencies import get_user_service
 from core.users.functions import get_super_admin_user_ids
 from core.utils.model_tools import is_valid_uuid
@@ -95,6 +96,35 @@ def _get_provider_address(user_meta: Any, channel: NotificationChannel) -> str |
     return user_meta.get(key) if isinstance(user_meta, dict) else getattr(user_meta, key, None)
 
 
+@dataclass
+class _Recipient:
+    primary: Any
+    # The primary account first, then its linked secondary accounts
+    accounts: list[Any]
+
+
+async def _as_recipients(session: AsyncSession, users: list[Any]) -> list[_Recipient]:
+    """One recipient per person: each user resolved to their active primary account, plus the active
+    accounts linked to it, whose preferences and provider addresses also count."""
+    primary_of = await resolve_primary_ids(session, [user.id for user in users])
+    primary_ids = list(dict.fromkeys(primary_of[UUID(str(user.id))] for user in users))
+    linked = await get_linked_account_ids(session, set(primary_ids))
+
+    accounts_by_id = {UUID(str(user.id)): user for user in users}
+    missing = {str(i) for i in [*primary_ids, *(s for ids in linked.values() for s in ids)] if i not in accounts_by_id}
+    accounts_by_id.update({UUID(str(user.id)): user for user in await _active_users(session, missing)})
+
+    recipients: list[_Recipient] = []
+    for primary_id in primary_ids:
+        # Missing when the primary account is deactivated, which disables its linked accounts too
+        primary = accounts_by_id.get(primary_id)
+        if primary is None:
+            continue
+        secondaries = [accounts_by_id[i] for i in linked.get(primary_id, []) if i in accounts_by_id]
+        recipients.append(_Recipient(primary=primary, accounts=[primary, *secondaries]))
+    return recipients
+
+
 async def _notify_users(
     event: NotificationEvent,
     session: AsyncSession,
@@ -103,36 +133,46 @@ async def _notify_users(
     outbox_id: UUID | None,
 ) -> None:
     """Deliver the event to the users: always in-app, plus every external channel (Slack, ...) that
-    their preference for this event type enables."""
-    users = list({str(user.id): user for user in users}.values())
-    if not users:
+    their preference for this event type enables. Linked accounts are one person and get it once."""
+    recipients = await _as_recipients(session, users)
+    if not recipients:
         return
 
     await deliver_in_app_notifications(
-        [_build_message(event, user.id, NotificationChannel.IN_APP, entity_name) for user in users],
+        [_build_message(event, r.primary.id, NotificationChannel.IN_APP, entity_name) for r in recipients],
         outbox_id=outbox_id,
     )
 
+    recipient_by_account = {str(account.id): r for r in recipients for account in r.accounts}
     preferences = await get_notification_preference_service(session=session).query_all(
-        filter={"user_id__in": [user.id for user in users], "event_type": event.event_type},
+        filter={
+            "user_id__in": [account.id for r in recipients for account in r.accounts],
+            "event_type": event.event_type,
+        },
         fields={"user_id": None, "channels": None},
     )
-    users_by_id = {str(user.id): user for user in users}
+    channels: dict[str, set[NotificationChannel]] = {}
     for preference in preferences:
-        user = users_by_id[str(preference.user_id)]
-        for channel in [NotificationChannel(c) for c in preference.channels]:
-            if channel == NotificationChannel.IN_APP:
-                continue
-            address = _get_provider_address(user.meta, channel)
+        recipient = recipient_by_account[str(preference.user_id)]
+        channels.setdefault(str(recipient.primary.id), set()).update(
+            NotificationChannel(c) for c in preference.channels
+        )
+
+    for recipient in recipients:
+        user_id = recipient.primary.id
+        for channel in sorted(channels.get(str(user_id), set()) - {NotificationChannel.IN_APP}, key=lambda c: c.value):
+            address = next(
+                (a for account in recipient.accounts if (a := _get_provider_address(account.meta, channel))), None
+            )
             if not address:
-                logger.debug(f"User {user.id} enabled {channel.value} but has no address for it, skipping")
+                logger.debug(f"User {user_id} enabled {channel.value} but has no address for it, skipping")
                 continue
-            body = {**_build_message(event, user.id, channel, entity_name), "channel": address}
+            body = {**_build_message(event, user_id, channel, entity_name), "channel": address}
             try:
                 await _dispatch_notification(body)
-                logger.info(f"Notification dispatched to user {user.id} via {channel.value}")
+                logger.info(f"Notification dispatched to user {user_id} via {channel.value}")
             except Exception as e:
-                logger.error(f"Failed to notify user {user.id} via {channel.value}: {e}", exc_info=True)
+                logger.error(f"Failed to notify user {user_id} via {channel.value}: {e}", exc_info=True)
 
 
 async def _active_users(session: AsyncSession, user_ids: set[str]) -> list[Any]:

@@ -28,6 +28,7 @@ def mock_deliver_in_app(monkeypatch):
 @pytest.fixture(autouse=True)
 def no_linked_accounts(monkeypatch):
     monkeypatch.setattr(accounts_module, "get_primary_account_ids", AsyncMock(return_value={}))
+    monkeypatch.setattr(notification_manager_module, "get_linked_account_ids", AsyncMock(return_value={}))
 
 
 class TestRouteNotificationEvent:

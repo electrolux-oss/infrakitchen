@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -30,7 +30,15 @@ def routing(monkeypatch, resource):
     async def primary_account_ids(_session, user_ids):
         return {i: state.linked[i] for i in user_ids if i in state.linked}
 
+    async def linked_account_ids(_session, primary_ids):
+        linked: dict[UUID, list[UUID]] = {}
+        for secondary, primary in state.linked.items():
+            if primary in primary_ids:
+                linked.setdefault(primary, []).append(secondary)
+        return linked
+
     monkeypatch.setattr(accounts_module, "get_primary_account_ids", primary_account_ids)
+    monkeypatch.setattr(notification_manager_module, "get_linked_account_ids", linked_account_ids)
 
     resource_service = Mock(get_by_id=AsyncMock(return_value=resource))
 
@@ -244,3 +252,58 @@ class TestSubscriberRouting:
         await _route_notification_event(subscriber_event(resource, actor.id, [], exclude_approvers=True), Mock())
 
         assert recipients(routing.sent, "in_app") == {str(other.id)}
+
+
+def slack_preference(user_id, event_type=EventType.UPDATE):
+    return SimpleNamespace(user_id=user_id, event_type=event_type, channels=["SLACK"])
+
+
+class TestLinkedAccountDelivery:
+    async def test_secondary_subscriber_is_notified_as_its_primary_account(self, routing, resource):
+        actor, primary, secondary = user(), user(slack_id="U-PRIMARY"), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(primary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert recipients(routing.sent, "in_app") == {str(primary.id)}
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-PRIMARY")]
+
+    async def test_linked_accounts_both_subscribed_get_one_message_per_channel(self, routing, resource):
+        actor, primary, secondary = user(), user(slack_id="U-PRIMARY"), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [primary, secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(primary.id), slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert [body["provider"] for body in routing.sent].count("in_app") == 1
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-PRIMARY")]
+
+    async def test_preference_and_address_of_a_linked_account_count(self, routing, resource):
+        actor, primary, secondary = user(), user(), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [primary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        slack = [body for body in routing.sent if body["provider"] == "slack"]
+        assert [(body["user_id"], body["channel"]) for body in slack] == [(str(primary.id), "U-SECONDARY")]
+
+    async def test_secondary_of_a_deactivated_primary_is_not_notified(self, routing, resource):
+        actor, primary, secondary = user(), user(deactivated=True), user(slack_id="U-SECONDARY")
+        routing.users = [actor, primary, secondary]
+        routing.subscribers = [secondary]
+        routing.linked = {secondary.id: primary.id}
+        routing.preferences = [slack_preference(secondary.id)]
+
+        await _route_notification_event(subscriber_event(resource, actor.id, []), Mock())
+
+        assert routing.sent == []
