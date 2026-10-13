@@ -6,6 +6,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import { Button } from "@mui/material";
 
 import { LogLiveTail, PermissionWrapper, useConfig } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { notify, notifyError } from "../../common/hooks/useNotification";
@@ -57,21 +58,23 @@ export const IntegrationPage = () => {
       entityFields={INTEGRATION_DETAILS_FIELDS}
     >
       <EntityContainer
-        title={"Integration Details"}
         actions={
-          <PermissionWrapper
-            requiredPermission={"api:integration"}
-            permissionAction="write"
-          >
-            <Button
-              startIcon={<TaskAltIcon />}
-              variant="outlined"
-              onClick={handleValidation}
-              loading={loading}
+          <>
+            <PermissionWrapper
+              requiredPermission={"api:integration"}
+              permissionAction="write"
             >
-              Validate
-            </Button>
-          </PermissionWrapper>
+              <Button
+                startIcon={<TaskAltIcon />}
+                variant="outlined"
+                onClick={handleValidation}
+                loading={loading}
+              >
+                Validate
+              </Button>
+            </PermissionWrapper>
+            <EntityRefreshButton />
+          </>
         }
       >
         <IntegrationContent />
