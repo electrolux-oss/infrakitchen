@@ -36,13 +36,13 @@ export interface SourceCodeConfigEditorProps {
 }
 
 /**
- * Editable "Source Code Configuration" field for the executor overview.
+ * Editable "Source Code Configuration" field for the executor configuration tab.
  *
  * The git tag, branch and directory path are interdependent (the available
  * folders depend on the preselected tag or branch, and tag/branch are mutually
  * exclusive), so they are edited together in a single dialog rather than as
  * separate inline fields. The source code repository itself is frozen and is
- * shown read-only elsewhere on the overview.
+ * shown read-only next to it.
  */
 export const SourceCodeConfigEditor = ({
   executor,
