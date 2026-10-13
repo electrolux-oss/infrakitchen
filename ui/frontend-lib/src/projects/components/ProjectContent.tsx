@@ -4,6 +4,7 @@ import { Box } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -19,9 +20,9 @@ import { ProjectServices } from "../../services/components/ProjectServices";
 import { UPDATE_PROJECT_MUTATION } from "../graphql/mutations";
 
 import { ProjectNotificationSubscribersTable } from "./ProjectNotificationSubscribersTable";
-import { ProjectOverview } from "./ProjectOverview";
 import { ProjectPermissions } from "./ProjectPermissions";
 import { ProjectSettings } from "./ProjectSettings";
+import { ProjectSidebar } from "./ProjectSidebar";
 
 export const ProjectContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
@@ -124,19 +125,20 @@ export const ProjectContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    <EntitySidebarLayout
+      sidebar={
+        <ProjectSidebar
+          project={entity}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
+        />
+      }
     >
-      <ProjectOverview
-        project={entity}
-        onSubscriptionChange={() =>
-          setSubscribersRefreshKey((currentKey) => currentKey + 1)
-        }
-      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}
       />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { ProjectContent } from "../components/ProjectContent";
@@ -14,7 +15,7 @@ export const ProjectPage = () => {
       entity_id={project_id || ""}
       entityFields={PROJECT_DETAIL_FIELDS}
     >
-      <EntityContainer title={"Project Details"}>
+      <EntityContainer actions={<EntityRefreshButton />}>
         <ProjectContent />
       </EntityContainer>
     </EntityProvider>
