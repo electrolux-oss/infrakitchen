@@ -1,6 +1,7 @@
 import { useParams } from "react-router";
 
 import { LogLiveTail } from "../../common";
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
@@ -19,7 +20,7 @@ export const StoragePage = () => {
       entity_id={storage_id || ""}
       entityFields={PAGE_FIELDS}
     >
-      <EntityContainer title={"Storage Details"}>
+      <EntityContainer actions={<EntityRefreshButton />}>
         <StorageContent />
         <LogLiveTail />
       </EntityContainer>

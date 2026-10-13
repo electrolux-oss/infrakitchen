@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -16,7 +15,7 @@ import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
 
 import { StorageConfiguration } from "./StorageConfiguration";
-import { StorageOverview } from "./StorageOverview";
+import { StorageSidebar } from "./StorageSidebar";
 
 export const StorageContent = () => {
   const { entity } = useEntityProvider();
@@ -74,12 +73,9 @@ export const StorageContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <EntitySidebarLayout sidebar={<StorageSidebar storage={entity} />}>
       <EntityTaskQueueStatus />
-      <StorageOverview storage={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

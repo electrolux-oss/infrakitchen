@@ -1,8 +1,14 @@
 import { useCallback } from "react";
 
-import { OverviewCard } from "../../common/components/cards/OverviewCard";
+import { Grid } from "@mui/material";
+
+import {
+  EntitySidebar,
+  SidebarSection,
+} from "../../common/components/cards/EntitySidebar";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
+import { Entity } from "../../common/components/entities/Entity";
 import { CommonField } from "../../common/components/fields/CommonField";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
 import { useConfig } from "../../common/context";
@@ -16,11 +22,16 @@ import {
   UPDATE_STORAGE_MUTATION,
 } from "../graphql/mutations";
 
-export interface StorageAboutProps {
+export interface StorageSidebarProps {
   storage: GqlStorage;
 }
 
-export const StorageOverview = ({ storage }: StorageAboutProps) => {
+/**
+ * GitHub-style right sidebar for the storage detail page: groups the
+ * storage's description, status and history so the main column can focus on
+ * its configuration and the entities that use it.
+ */
+export const StorageSidebar = ({ storage }: StorageSidebarProps) => {
   const { ikApi } = useConfig();
   const { refreshEntity } = useEntityProvider();
   const { checkActionPermission } = usePermissionProvider();
@@ -44,31 +55,50 @@ export const StorageOverview = ({ storage }: StorageAboutProps) => {
   );
 
   return (
-    <OverviewCard name={storage.name}>
-      <CommonField
-        name={"State"}
-        value={<StatusChip status={storage.status} state={storage.state} />}
-      />{" "}
-      <EditableDescriptionField
-        value={storage.description}
-        canEdit={canEdit}
-        onSave={(value) => saveField({ description: value })}
-      />
-      <CommonField
-        name={"Created"}
-        value={<RelativeTime date={storage.createdAt} />}
-      />
-      <CommonField
-        name={"Last Updated"}
-        value={<RelativeTime date={storage.updatedAt} />}
-      />{" "}
-      <EditableTagsField
-        name="Storage Tags"
-        value={storage.labels || []}
-        canEdit={canEdit}
-        onSave={(value) => saveField({ labels: value })}
-        helperText="Press Enter to add a tag"
-      />
-    </OverviewCard>
+    <EntitySidebar ariaLabel="Storage details">
+      <SidebarSection title="About">
+        <EditableDescriptionField
+          value={storage.description}
+          canEdit={canEdit}
+          onSave={(value) => saveField({ description: value })}
+        />
+        <EditableTagsField
+          name="Storage Tags"
+          value={storage.labels || []}
+          canEdit={canEdit}
+          onSave={(value) => saveField({ labels: value })}
+          helperText="Press Enter to add a tag"
+        />
+      </SidebarSection>
+
+      <SidebarSection title="Status">
+        <Grid size={12}>
+          <StatusChip status={storage.status} state={storage.state} />
+        </Grid>
+      </SidebarSection>
+
+      <SidebarSection title="Details">
+        <CommonField
+          name="Created by"
+          value={
+            storage.creator ? (
+              <Entity entity={{ ...storage.creator, entityType: "user" }} />
+            ) : null
+          }
+          size={12}
+        />
+        <CommonField
+          name="Created"
+          value={<RelativeTime date={storage.createdAt} />}
+          size={6}
+        />
+        <CommonField
+          name="Last Updated"
+          value={<RelativeTime date={storage.updatedAt} />}
+          size={6}
+        />
+        <CommonField name="Revision" value={storage.revisionNumber} size={12} />
+      </SidebarSection>
+    </EntitySidebar>
   );
 };
