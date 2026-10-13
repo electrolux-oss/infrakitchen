@@ -1,9 +1,8 @@
-import { ReactNode, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import SyncIcon from "@mui/icons-material/Sync";
 import {
   Box,
-  Card,
   Grid,
   IconButton,
   TextField,
@@ -14,6 +13,10 @@ import {
 import { Entity, PermissionWrapper, UserAvatarList } from "../../common";
 import { DownloadSourceCodeButton } from "../../common/components/buttons/DownloadSourceCodeButton";
 import { FavoriteButton } from "../../common/components/buttons/FavoriteButton";
+import {
+  EntitySidebar,
+  SidebarSection,
+} from "../../common/components/cards/EntitySidebar";
 import { CommonEditableField } from "../../common/components/editors/CommonEditableField";
 import { EditableDescriptionField } from "../../common/components/editors/EditableDescriptionField";
 import { EditableTagsField } from "../../common/components/editors/EditableTagsField";
@@ -54,78 +57,6 @@ export interface ResourceSidebarProps {
   onEditVariables: () => void;
   onSubscriptionChange?: () => void;
 }
-
-interface SidebarSectionProps {
-  title: string;
-  count?: number;
-  /** Optional control rendered flush to the right of the section title. */
-  action?: ReactNode;
-  children: ReactNode;
-}
-
-/** Titled group of sidebar fields, separated from the next by a divider. */
-const SidebarSection = ({
-  title,
-  count,
-  action,
-  children,
-}: SidebarSectionProps) => (
-  <Box
-    component="section"
-    sx={{
-      p: 2,
-      "&:not(:last-of-type)": {
-        borderBottom: 1,
-        borderColor: "divider",
-      },
-    }}
-  >
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 1,
-        // Keep the title baseline steady whether or not an action is present.
-        minHeight: 32,
-        mb: 1.5,
-      }}
-    >
-      <Typography
-        component="h3"
-        sx={{
-          fontWeight: 600,
-          fontSize: "0.875rem",
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-        }}
-      >
-        {title}
-        {count !== undefined && (
-          <Box
-            component="span"
-            sx={{
-              fontSize: "0.75rem",
-              fontWeight: 500,
-              color: "text.secondary",
-              bgcolor: "action.hover",
-              borderRadius: "999px",
-              px: 0.75,
-              lineHeight: 1.6,
-            }}
-          >
-            {count}
-          </Box>
-        )}
-      </Typography>
-      {action}
-    </Box>
-    <Grid container spacing={1.5}>
-      {children}
-    </Grid>
-  </Box>
-);
 
 type Permissions = ReturnType<typeof usePermissionProvider>["permissions"];
 
@@ -280,7 +211,7 @@ export const ResourceSidebar = ({
   const children = resource.children ?? [];
 
   return (
-    <Card component="aside" aria-label="Resource details" sx={{ p: 0 }}>
+    <EntitySidebar ariaLabel="Resource details">
       <SidebarSection title="About">
         <CommonEditableField<string>
           name="Name"
@@ -785,6 +716,6 @@ export const ResourceSidebar = ({
           </Box>
         </Grid>
       </SidebarSection>
-    </Card>
+    </EntitySidebar>
   );
 };

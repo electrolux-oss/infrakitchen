@@ -26,30 +26,6 @@ export const sourceCodeVersionDefaultColumnVisibilityModel: GridColumnVisibility
 
 export const sourceCodeVersionColumns: EntityTableColumn[] = [
   {
-    field: "template",
-    headerName: "Template",
-    flex: 1,
-    fetchFields: ["template"],
-    sortField: "template.name",
-    filter: {
-      field: "template_id",
-      operators: ["eq", "in"],
-      valueType: "reference",
-      defaultOperator: "eq",
-      defaultSelected: true,
-      makeReferenceLoader: serverSearchReference({
-        entityPlural: "templates",
-        labelField: "name",
-        baseFilter: { abstract: false },
-      }),
-    },
-    valueGetter: (value: any) => value?.name || "",
-    renderCell: (params: GridRenderCellParams) => {
-      const template = params.row.template;
-      return <Entity entity={template} />;
-    },
-  },
-  {
     field: "identifier",
     headerName: "Version",
     fetchFields: [
@@ -86,6 +62,30 @@ export const sourceCodeVersionColumns: EntityTableColumn[] = [
           noWrap
         />
       ) : null;
+    },
+  },
+  {
+    field: "template",
+    headerName: "Template",
+    flex: 1,
+    fetchFields: ["template"],
+    sortField: "template.name",
+    filter: {
+      field: "template_id",
+      operators: ["eq", "in"],
+      valueType: "reference",
+      defaultOperator: "eq",
+      defaultSelected: true,
+      makeReferenceLoader: serverSearchReference({
+        entityPlural: "templates",
+        labelField: "name",
+        baseFilter: { abstract: false },
+      }),
+    },
+    valueGetter: (value: any) => value?.name || "",
+    renderCell: (params: GridRenderCellParams) => {
+      const template = params.row.template;
+      return <Entity entity={template} />;
     },
   },
   {

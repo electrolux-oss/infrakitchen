@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 
-import { Box } from "@mui/material";
+import { Box, Chip, Grid, Typography } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
+import { BaseCard } from "../../common/components/cards/BaseCard";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -11,6 +13,7 @@ import {
 } from "../../common/components/cards/TabbedContent";
 import { HclItemList } from "../../common/components/hcl/HclItemList";
 import { useEntityProvider } from "../../common/context/EntityContext";
+import { solidChipColorSx } from "../../common/utils/softChip";
 import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { EntityTaskQueueStatus } from "../../workers/components";
@@ -19,7 +22,19 @@ import { GqlSourceCodeVersion } from "../graphql";
 import { CodeSnapshotTab } from "./CodeSnapshotTab";
 import { InputTab } from "./InputTab";
 import { ConfigurationTabContent } from "./SourceCodeRefRow";
-import { SourceCodeVersionOverview } from "./SourceCodeVersionOverview";
+import { SourceCodeVersionSidebar } from "./SourceCodeVersionSidebar";
+
+/** Card title with an info-tinted count chip, e.g. "Input Variables" + [4]. */
+const CardCountTitle = ({ title, count }: { title: string; count: number }) => (
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+    {/* Inherit the card-title styling so this header matches the
+        plain-string titles used by the other cards. */}
+    <Typography component="span" variant="inherit">
+      {title}
+    </Typography>
+    <Chip label={String(count)} sx={solidChipColorSx("info")} />
+  </Box>
+);
 
 export const SourceCodeVersionContent = () => {
   const { entity } = useEntityProvider();
@@ -32,30 +47,48 @@ export const SourceCodeVersionContent = () => {
 
   const tabs: TabDefinition[] = [
     {
-      label: "Inputs",
-      tabLabel: (
-        <TabCountLabel
-          label="Inputs"
-          count={source_code_version.variables?.length ?? 0}
-        />
-      ),
-      content: <InputTab source_code_version={source_code_version} />,
-    },
-    {
-      label: "Outputs",
-      tabLabel: (
-        <TabCountLabel
-          label="Outputs"
-          count={source_code_version.outputs?.length ?? 0}
-        />
-      ),
+      // Inputs and outputs share one tab: the cards stack in a column and sit
+      // side by side in equal columns from xl up.
+      label: "Variables",
       content: (
-        <Box sx={{ pt: 0.5 }}>
-          {source_code_version.outputs ? (
-            <HclItemList items={source_code_version.outputs} type="outputs" />
-          ) : (
-            "No outputs defined."
-          )}
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            alignItems: "start",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gridAutoFlow: { xs: "row", xl: "column" },
+            gridAutoColumns: "minmax(0, 1fr)",
+          }}
+        >
+          <BaseCard
+            name={
+              <CardCountTitle
+                title="Input Variables"
+                count={source_code_version.variables?.length ?? 0}
+              />
+            }
+          >
+            <Grid size={12}>
+              <InputTab source_code_version={source_code_version} />
+            </Grid>
+          </BaseCard>
+          <BaseCard
+            name={
+              <CardCountTitle
+                title="Output Values"
+                count={source_code_version.outputs?.length ?? 0}
+              />
+            }
+          >
+            <Grid size={12}>
+              <HclItemList
+                items={source_code_version.outputs ?? []}
+                type="outputs"
+                emptyMessage="No output values."
+              />
+            </Grid>
+          </BaseCard>
         </Box>
       ),
     },
@@ -112,12 +145,13 @@ export const SourceCodeVersionContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    <EntitySidebarLayout
+      sidebar={
+        <SourceCodeVersionSidebar source_code_version={source_code_version} />
+      }
     >
       <EntityTaskQueueStatus />
-      <SourceCodeVersionOverview source_code_version={source_code_version} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

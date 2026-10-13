@@ -5,6 +5,7 @@ import { Box } from "@mui/material";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -131,40 +132,21 @@ export const ResourceContent = () => {
   ];
 
   return (
-    <Box
-      sx={{
-        display: "grid",
-        // GitHub-style layout: content on the left, context sidebar on the
-        // right; collapses to a single column (sidebar last) on small screens.
-        gridTemplateColumns: {
-          xs: "minmax(0, 1fr)",
-          lg: "minmax(0, 1fr) 360px",
-        },
-        alignItems: "start",
-        gap: 2,
-        width: "100%",
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          minWidth: 0,
-        }}
-      >
-        <EntityTaskQueueStatus />
-        <TabbedContent
-          tabs={tabs}
-          userEntityPermissions={userEntityPermissions}
+    <EntitySidebarLayout
+      sidebar={
+        <ResourceSidebar
+          resource={entity}
+          onEditVariables={openVariablesDialog}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
         />
-      </Box>
-      <ResourceSidebar
-        resource={entity}
-        onEditVariables={openVariablesDialog}
-        onSubscriptionChange={() =>
-          setSubscribersRefreshKey((currentKey) => currentKey + 1)
-        }
+      }
+    >
+      <EntityTaskQueueStatus />
+      <TabbedContent
+        tabs={tabs}
+        userEntityPermissions={userEntityPermissions}
       />
       {/* Lives outside the tabs so the sidebar can open it from any tab. */}
       <ResourceVariablesEditor
@@ -172,6 +154,6 @@ export const ResourceContent = () => {
         open={variablesDialogOpen}
         onClose={() => setVariablesDialogOpen(false)}
       />
-    </Box>
+    </EntitySidebarLayout>
   );
 };
