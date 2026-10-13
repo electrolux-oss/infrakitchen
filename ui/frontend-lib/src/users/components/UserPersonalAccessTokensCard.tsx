@@ -134,7 +134,6 @@ const TokenDialog = ({
 
     const input: PersonalAccessTokenInput = {
       name: trimmedName,
-      tokenType: "developer",
       scopes:
         selectedScopes.size > 0 ? Array.from(selectedScopes).sort() : null,
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,

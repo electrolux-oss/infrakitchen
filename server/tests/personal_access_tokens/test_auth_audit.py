@@ -8,7 +8,7 @@ let an auditing failure block authentication.
 
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 from core.personal_access_tokens.service import _audit_token_authentication, PersonalAccessTokenService
 from core.request_context import set_current_user_agent
@@ -37,11 +37,11 @@ def _make_token(**overrides):
 
 
 def _make_service(token):
-    crud = SimpleNamespace(
+    crud = MagicMock(
         get_by_id=AsyncMock(return_value=token),
         update=AsyncMock(),
     )
-    return PersonalAccessTokenService(crud=crud)
+    return PersonalAccessTokenService(crud=crud), crud
 
 
 async def test_audit_metadata_carries_token_identity_and_reason():
@@ -122,7 +122,7 @@ async def test_audit_metadata_success_has_no_reason():
 
 async def test_successful_authentication_is_audited():
     token = _make_token()
-    service = _make_service(token)
+    service, crud = _make_service(token)
 
     with (
         patch("core.personal_access_tokens.service.is_correct_password", return_value=True),
@@ -146,12 +146,12 @@ async def test_successful_authentication_is_audited():
         token_prefix=token.token_prefix,
         token_name=token.name,
     )
-    service.crud.update.assert_awaited_once_with(token, {"last_used_at": ANY})
+    crud.update.assert_awaited_once_with(token, {"last_used_at": ANY})
 
 
 async def test_expired_token_is_audited_as_failure():
     token = _make_token(expires_at=datetime.now(UTC) - timedelta(days=1))
-    service = _make_service(token)
+    service, crud = _make_service(token)
 
     with (
         patch("core.personal_access_tokens.service.is_correct_password", return_value=True),
@@ -168,12 +168,12 @@ async def test_expired_token_is_audited_as_failure():
         token_name=token.name,
     )
     # last_used_at must not move on rejected attempts.
-    service.crud.update.assert_not_awaited()
+    crud.update.assert_not_awaited()
 
 
 async def test_revoked_token_is_audited_as_failure():
     token = _make_token(revoked_at=datetime.now(UTC) - timedelta(days=1))
-    service = _make_service(token)
+    service, crud = _make_service(token)
 
     with patch("core.personal_access_tokens.service._audit_token_authentication") as audit:
         result = await service.get_valid_token(RAW_TOKEN)
@@ -186,12 +186,12 @@ async def test_revoked_token_is_audited_as_failure():
         token_prefix=token.token_prefix,
         token_name=token.name,
     )
-    service.crud.update.assert_not_awaited()
+    crud.update.assert_not_awaited()
 
 
 async def test_wrong_secret_is_audited_as_failure():
     token = _make_token()
-    service = _make_service(token)
+    service, crud = _make_service(token)
 
     with (
         patch("core.personal_access_tokens.service.is_correct_password", return_value=False),
@@ -210,7 +210,7 @@ async def test_wrong_secret_is_audited_as_failure():
         token_prefix=token.token_prefix,
         token_name=token.name,
     )
-    service.crud.update.assert_not_awaited()
+    crud.update.assert_not_awaited()
 
 
 async def test_audit_metadata_includes_request_user_agent():
@@ -297,7 +297,7 @@ async def test_audit_metadata_omits_user_agent_when_absent():
 
 async def test_unknown_token_is_not_audited():
     """No token row: the attempt cannot be attributed to a user, so no audit."""
-    crud = SimpleNamespace(get_by_id=AsyncMock(return_value=None), update=AsyncMock())
+    crud = MagicMock(get_by_id=AsyncMock(return_value=None), update=AsyncMock())
     service = PersonalAccessTokenService(crud=crud)
 
     with patch("core.personal_access_tokens.service._audit_token_authentication") as audit:
@@ -305,13 +305,13 @@ async def test_unknown_token_is_not_audited():
 
     assert result is None
     audit.assert_not_awaited()
-    service.crud.update.assert_not_awaited()
+    crud.update.assert_not_awaited()
 
 
 async def test_auditing_failure_does_not_break_authentication():
     """Audit errors are swallowed (logged as warnings), auth still succeeds."""
     token = _make_token()
-    service = _make_service(token)
+    service, crud = _make_service(token)
 
     with (
         patch("core.personal_access_tokens.service.is_correct_password", return_value=True),

@@ -1,9 +1,9 @@
-"""Tests for scoped agent tokens: validation, subset enforcement, and clamping."""
+"""Tests for PAT scopes: validation, subset enforcement, and clamping."""
 
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from core.errors import AccessDenied
@@ -51,73 +51,23 @@ def test_scoped_token_other_entity_denied():
 # --- create-time validation ---
 
 
-def test_agent_token_requires_expiry():
-    with pytest.raises(ValueError, match="Agent tokens require an expiry"):
-        PersonalAccessTokenCreate(name="agent", token_type="agent", scopes=["read:resource"], expires_at=None)
-
-
-def test_agent_token_requires_at_least_one_scope():
-    """Agent tokens must be scoped: None, missing, or empty scopes are invalid."""
-    with pytest.raises(ValueError, match="at least one granted scope"):
-        PersonalAccessTokenCreate(
-            name="agent",
-            token_type="agent",
-            scopes=None,
-            expires_at=datetime.now(UTC) + timedelta(hours=23),
-        )
-    with pytest.raises(ValueError, match="at least one granted scope"):
-        PersonalAccessTokenCreate(
-            name="agent",
-            token_type="agent",
-            expires_at=datetime.now(UTC) + timedelta(hours=23),
-        )
-    with pytest.raises(ValueError, match="at least one granted scope"):
-        PersonalAccessTokenCreate(
-            name="agent",
-            token_type="agent",
-            scopes=[],
-            expires_at=datetime.now(UTC) + timedelta(hours=23),
-        )
-
-
-def test_agent_token_max_24h_expiry():
-    """Agent tokens are capped at 24h from creation."""
-    with pytest.raises(ValueError, match="24 hours"):
-        PersonalAccessTokenCreate(
-            name="agent",
-            token_type="agent",
-            scopes=["read:resource"],
-            expires_at=datetime.now(UTC) + timedelta(hours=24, seconds=1),
-        )
-
-
-def test_agent_token_24h_expiry_allowed():
-    body = PersonalAccessTokenCreate(
-        name="agent",
-        token_type="agent",
-        scopes=["read:resource"],
-        expires_at=datetime.now(UTC) + timedelta(hours=24) - timedelta(seconds=30),
-    )
-    assert body.expires_at is not None
-
-
-def test_scoped_developer_token_allows_no_expiry():
-    """Scopes are optional for developer tokens too, and do not force expiry."""
-    body = PersonalAccessTokenCreate(name="dev", token_type="developer", scopes=["read:resource"], expires_at=None)
+def test_scoped_token_allows_no_expiry():
+    """Scopes do not force an expiry; unscoped tokens never do either."""
+    body = PersonalAccessTokenCreate(name="dev", scopes=["read:resource"], expires_at=None)
     assert body.scopes == ["read:resource"]
-    assert body.token_type == "developer"
+    assert body.expires_at is None
+
+    unscoped = PersonalAccessTokenCreate(name="dev", scopes=None, expires_at=None)
+    assert unscoped.scopes is None
 
 
-def test_agent_token_validates_token_type_normalization():
-    body = PersonalAccessTokenCreate(
-        name="agent",
-        tokenType="agent",
-        scopes=["read:resource"],
-        expires_at=datetime.now(UTC) + timedelta(hours=23),
-    )
-    assert body.token_type == "agent"
-    garbage = PersonalAccessTokenCreate(name="x", token_type="bogus")
-    assert garbage.token_type == "developer"
+def test_token_future_expiry_required_and_normalized():
+    tz = datetime.now(UTC) + timedelta(days=7)
+    body = PersonalAccessTokenCreate(name="t", scopes=None, expires_at=tz)
+    assert body.expires_at is not None and body.expires_at.tzinfo is UTC
+
+    with pytest.raises(ValueError, match="must be in the future"):
+        PersonalAccessTokenCreate(name="t", expires_at=datetime.now(UTC) - timedelta(days=1))
 
 
 def test_scoped_token_valid_format():
@@ -156,9 +106,9 @@ def test_unscoped_token_allows_no_expiry():
 async def test_create_token_rejects_scope_beyond_owner():
     from core.personal_access_tokens.service import PersonalAccessTokenService
 
-    service = PersonalAccessTokenService(crud=SimpleNamespace())
-    requester = SimpleNamespace(id="user-1")
-    body = SimpleNamespace(name="agent", scopes=["write:resource"], expires_at="2027-01-01")
+    service = PersonalAccessTokenService(crud=MagicMock())
+    requester = MagicMock(id="user-1")
+    body = MagicMock(name="agent", scopes=["write:resource"], expires_at="2027-01-01")
 
     with patch(
         "core.personal_access_tokens.service.user_apis_permissions",
@@ -186,14 +136,13 @@ async def test_create_token_accepts_scope_within_owner():
         revoked_at=None,
         created_at=datetime.now(UTC),
     )
-    service = PersonalAccessTokenService(
-        crud=SimpleNamespace(
-            create=AsyncMock(return_value=fake_created),
-            refresh=AsyncMock(),
-        )
+    crud = MagicMock(
+        create=AsyncMock(return_value=fake_created),
+        refresh=AsyncMock(),
     )
-    requester = SimpleNamespace(id="user-1")
-    body = SimpleNamespace(
+    service = PersonalAccessTokenService(crud=crud)
+    requester = MagicMock(id="user-1")
+    body = MagicMock(
         name="agent",
         scopes=["read:resource"],
         expires_at=datetime.now(UTC) + timedelta(days=7),
@@ -211,8 +160,8 @@ async def test_create_token_accepts_scope_within_owner():
             create_resp_cls.return_value = "sentinel"
             result = await service.create_token("user-1", body, requester)
             assert result == "sentinel"
-            service.crud.create.assert_awaited_once()
-            passed_body = service.crud.create.await_args.args[0]
+            crud.create.assert_awaited_once()
+            passed_body = crud.create.await_args.args[0]
             assert passed_body["scopes"] == ["read:resource"]
 
 
@@ -235,14 +184,13 @@ async def test_create_token_allows_scope_for_super_admin_owner():
         revoked_at=None,
         created_at=datetime.now(UTC),
     )
-    service = PersonalAccessTokenService(
-        crud=SimpleNamespace(
-            create=AsyncMock(return_value=fake_created),
-            refresh=AsyncMock(),
-        )
+    crud = MagicMock(
+        create=AsyncMock(return_value=fake_created),
+        refresh=AsyncMock(),
     )
-    requester = SimpleNamespace(id="user-1")
-    body = SimpleNamespace(
+    service = PersonalAccessTokenService(crud=crud)
+    requester = MagicMock(id="user-1")
+    body = MagicMock(
         name="agent",
         scopes=["write:whatever"],
         expires_at=datetime.now(UTC) + timedelta(days=7),

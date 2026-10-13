@@ -49,8 +49,6 @@ export interface GqlPersonalAccessTokenCreate extends GqlPersonalAccessToken {
 
 export interface PersonalAccessTokenInput {
   name: string;
-  // The Agent token type was removed from the UI; agents use scoped personal access tokens.
-  tokenType: "developer";
   scopes: string[] | null;
   expiresAt: string | null;
 }
