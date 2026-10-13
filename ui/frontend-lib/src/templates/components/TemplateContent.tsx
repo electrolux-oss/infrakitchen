@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 
-import { Box, Card, CardContent, Chip } from "@mui/material";
+import { Card, CardContent, Chip } from "@mui/material";
 
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabCountLabel,
@@ -17,7 +18,7 @@ import { EntityResources } from "../../resources/components/EntityResources";
 import { Revision } from "../../revision/Revision";
 import { EntitySourceCodeVersions } from "../../source_code_versions/components/EntitySourceCodeVersions";
 
-import { TemplateOverview } from "./TemplateOverview";
+import { TemplateSidebar } from "./TemplateSidebar";
 
 export const TemplateContent = () => {
   const { entity } = useEntityProvider();
@@ -119,16 +120,8 @@ export const TemplateContent = () => {
   ];
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        width: "100%",
-      }}
-    >
-      <TemplateOverview template={entity} />
+    <EntitySidebarLayout sidebar={<TemplateSidebar template={entity} />}>
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };
