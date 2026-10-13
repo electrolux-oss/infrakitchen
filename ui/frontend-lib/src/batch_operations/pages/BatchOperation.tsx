@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
 import { EntityProvider } from "../../common/context/EntityContext";
 import { BatchOperationContent } from "../components/BatchOperationContent";
@@ -14,7 +15,7 @@ export const BatchOperationPage = () => {
       entity_id={batch_operation_id || ""}
       entityFields={BATCH_OPERATION_FIELDS}
     >
-      <EntityContainer title={"Batch Operation Details"}>
+      <EntityContainer actions={<EntityRefreshButton />}>
         <BatchOperationContent />
       </EntityContainer>
     </EntityProvider>

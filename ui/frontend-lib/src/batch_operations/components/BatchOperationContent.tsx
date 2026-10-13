@@ -1,7 +1,6 @@
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -9,7 +8,7 @@ import {
 import { useEntityProvider } from "../../common/context/EntityContext";
 
 import { BatchOperationEntities } from "./BatchOperationEntities";
-import { BatchOperationOverview } from "./BatchOperationOverview";
+import { BatchOperationSidebar } from "./BatchOperationSidebar";
 
 export const BatchOperationContent = () => {
   const { entity } = useEntityProvider();
@@ -33,11 +32,10 @@ export const BatchOperationContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    <EntitySidebarLayout
+      sidebar={<BatchOperationSidebar batchOperation={entity} />}
     >
-      <BatchOperationOverview batchOperation={entity} />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };
