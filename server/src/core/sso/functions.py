@@ -15,6 +15,13 @@ from core.casbin.enforcer import CasbinEnforcer
 from core.config import Settings
 from core.dependencies import get_async_session
 from core.errors import AccessUnauthorized, EntityExistsError
+from core.audit_logs.functions import audit_permission_denial
+from core.personal_access_tokens.scopes import (
+    get_current_token_scopes,
+    set_current_token_identity,
+    set_current_token_scopes,
+)
+from core.request_context import set_current_user_agent
 from core.permissions.dependencies import get_permission_service
 from core.sso.dependencies import get_sso_service
 from core.sso.service import SSOService
@@ -89,13 +96,30 @@ async def check_api_permission(request: Request):
         if await user_has_access_to_api(user, "workspace", "read"):
             return
 
+    token_scopes = get_current_token_scopes()
+    limited_by = "token_scopes" if token_scopes is not None else "user_permissions"
+
     if request.method not in request_action_mapping:
+        await audit_permission_denial(
+            None,
+            user.id,
+            entity_name=entity,
+            policies=[request.method.lower()],
+            limited_by=limited_by,
+        )
         raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden for {entity}")
 
     for method in request_action_mapping[request.method]:
         if await user_has_access_to_api(user, entity, method):
             return
 
+    await audit_permission_denial(
+        None,
+        user.id,
+        entity_name=entity,
+        policies=request_action_mapping[request.method],
+        limited_by=limited_by,
+    )
     raise HTTPException(status_code=403, detail=f"{request.method} method is forbidden")
 
 
@@ -210,14 +234,20 @@ async def get_user_from_token(service: SSOService, token: str | None = Security(
         if personal_token is None:
             raise AccessUnauthorized("Invalid authentication credentials")
 
+        set_current_token_identity(personal_token.token_prefix, personal_token.name)
+
         user = await service.user_service.get_dto_by_id(personal_token.user_id)
         if user is None:
             raise AccessUnauthorized("Invalid authentication credentials")
 
+        # Agent tokens (scoped) advertise their granted scopes for the rest of
+        # the request; scope_allows() clamps at the permission-check layer.
+        set_current_token_scopes(personal_token.scopes)
+
         return user
 
+    # get audience of token to choose the right validation
     try:
-        # get audience of token to choose the right validation
         token_headers = jwt.get_unverified_header(token)
         alg = token_headers["alg"]
         token_type = token_headers["typ"]
@@ -291,6 +321,7 @@ async def get_logged_user(
     if not token:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
+    set_current_user_agent(request.headers.get("user-agent"))
     user = await get_user_from_token(service, token.credentials)
     request.state.user = user
     if user is None:

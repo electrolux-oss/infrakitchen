@@ -26,6 +26,10 @@ class AuditLogType:
             return None
         return await loader.load(str(self.entity_id))
 
+    @strawberry.field
+    def entity_loader_missing(self, info: Info) -> bool:
+        return self.model not in info.context["loaders"]
+
     @strawberry.field(name="metadata")
     def resolve_metadata(self) -> JSON | None:
         return cast(JSON | None, getattr(self, "action_metadata", None))

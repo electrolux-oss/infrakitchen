@@ -21,6 +21,7 @@ export const AuditLogsPage = () => {
         title="Audit Log"
         entityName="auditLog"
         columns={auditLogColumns}
+        rowClickable={false}
         entityFieldMap={AUDIT_LOG_FIELD_MAP}
         defaultSort={{ field: "created_at", sort: "desc" }}
         quickFilters={

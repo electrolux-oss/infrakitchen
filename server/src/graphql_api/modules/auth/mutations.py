@@ -48,6 +48,7 @@ class AuthMutation:
         token = await service.create_token(
             requester.id,
             input.to_pydantic(),
+            requester,
         )
         return PersonalAccessTokenCreateType(**token.model_dump())
 

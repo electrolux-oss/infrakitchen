@@ -8,6 +8,8 @@ from strawberry.permission import BasePermission
 from strawberry.types import Info
 from strawberry.types.nodes import SelectedField, Selection
 
+from core.audit_logs.functions import audit_permission_denial
+from core.personal_access_tokens.scopes import get_current_token_scopes, scope_allows
 from core.users.functions import user_has_access_to_api, user_is_super_admin
 from core.users.model import UserDTO
 
@@ -35,6 +37,25 @@ async def check_api_permission(info: Info, entity_name: str, policies: list[str]
     if user is None:
         raise AccessUnauthorized("Not authenticated.")
 
+    # Agent tokens (scoped PATs) clamp the effective permission set: every
+    # requested policy must be covered by the token's granted scopes.
+    token_scopes = get_current_token_scopes()
+    entity = entity_name.removesuffix("s")
+    if token_scopes is not None:
+        if not any(scope_allows(token_scopes, policy, entity) for policy in policies):
+            await audit_permission_denial(
+                None,
+                user.id,
+                entity_name=entity_name,
+                policies=policies,
+                limited_by="token_scopes",
+            )
+            raise AccessDenied(
+                f"Access denied. The token's granted scopes do not allow {', '.join(policies)} {entity_name}."
+            )
+        # Fall through to the normal Casbin check so entity-level, project-
+        # scoped and deactivated-user rules still apply.
+
     casbin_enforcer = CasbinEnforcer()
     if casbin_enforcer.enforcer is None:
         _ = await casbin_enforcer.get_enforcer()
@@ -43,8 +64,6 @@ async def check_api_permission(info: Info, entity_name: str, policies: list[str]
 
     if user.deactivated is True:
         raise AccessUnauthorized("Not authenticated.")
-
-    entity = entity_name.removesuffix("s")
 
     if entity in (
         "resource",
@@ -62,6 +81,14 @@ async def check_api_permission(info: Info, entity_name: str, policies: list[str]
         if await user_has_access_to_api(user, entity, method):
             return
 
+    limited_by = "owner_permissions" if token_scopes is not None else "user_permissions"
+    await audit_permission_denial(
+        None,
+        user.id,
+        entity_name=entity_name,
+        policies=policies,
+        limited_by=limited_by,
+    )
     raise AccessDenied(f"Access denied. You do not have permission to {', '.join(policies)} {entity_name}.")
 
 

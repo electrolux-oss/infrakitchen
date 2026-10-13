@@ -7,6 +7,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { Label } from "../../common/components/labels/Label";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import type { GqlAuditLog } from "../graphql";
 
@@ -60,14 +61,6 @@ const chunkColor = (chunk: string): string | null => {
     if (re.test(chunk)) return color;
   }
   return null;
-};
-
-const STATUS_COLOR: Record<AuditExecution["status"], ChipProps["color"]> = {
-  running: "info",
-  success: "success",
-  failed: "error",
-  warning: "warning",
-  retry: "warning",
 };
 
 export const getAuditExecution = (
@@ -367,11 +360,27 @@ export const AuditExecutionResult = ({
             minWidth: 0,
           }}
         >
-          <Chip
-            label={execution.status.toUpperCase()}
-            size="small"
-            color={STATUS_COLOR[execution.status] ?? "default"}
-            variant="outlined"
+          <Label
+            label={
+              execution.status === "failed"
+                ? "Failure"
+                : execution.status === "warning"
+                  ? "Warning"
+                  : execution.status === "running" ||
+                      execution.status === "retry"
+                    ? "Running"
+                    : "Success"
+            }
+            tone={
+              execution.status === "failed"
+                ? "error"
+                : execution.status === "warning"
+                  ? "warning"
+                  : execution.status === "running" ||
+                      execution.status === "retry"
+                    ? "info"
+                    : "success"
+            }
           />
           {segments.length > 0 && (
             <Typography
