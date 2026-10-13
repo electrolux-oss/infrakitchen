@@ -16,5 +16,6 @@ export default defineMeta({
     "executor",
     "blueprint",
     "workflow",
+    "kubernetes-crd",
   ],
 });
