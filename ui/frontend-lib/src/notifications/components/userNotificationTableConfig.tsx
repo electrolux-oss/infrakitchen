@@ -12,13 +12,15 @@ import { ReadToggleButton } from "./ReadToggleButton";
 
 const NOTIFICATION_STATUS_OPTIONS = ["info", "success", "warning", "error"];
 
-// Entity types that can have admins/owners (those with a Permissions tab)
+// Entity types that can produce inbox notifications
 const NOTIFICATION_ENTITY_TYPE_OPTIONS = [
   "executor",
-  "integration",
-  "project",
   "resource",
-  "service",
+  "source_code",
+  "source_code_version",
+  "storage",
+  "tool",
+  "workflow",
   "workspace",
 ];
 
