@@ -21,6 +21,8 @@ from application.templates.model import Template
 from application.workspaces.model import Workspace
 from application.workflows.model import Workflow
 from core.auth_providers.model import AuthProvider
+from core.feature_flags.model import FeatureFlag
+from core.personal_access_tokens.model import PersonalAccessToken
 from core.tools.model import Tool
 from core.task_queue.crud import TaskQueueCRUD
 from core.task_queue.model import EntityQueueStatus
@@ -280,6 +282,34 @@ async def _load_workflows(keys: list[str], session: AsyncSession) -> list[dict[s
     return [mapping.get(key) for key in keys]
 
 
+async def _load_personal_access_tokens(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    """Resolve personal access tokens for entity links (e.g. audit log rows).
+
+    Tokens are named, managed on the owner's user page, and have no detail
+    route of their own, so they surface like any other named entity.
+    """
+    stmt = select(PersonalAccessToken.id, PersonalAccessToken.name).where(PersonalAccessToken.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "personal_access_token"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
+async def _load_feature_flags(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
+    """Resolve feature flags for entity links (e.g. audit log rows).
+
+    Flags have a name but no detail route of their own — they are managed in
+    the admin panel's Feature Flags tab — so they surface named but unlinked.
+    """
+    stmt = select(FeatureFlag.id, FeatureFlag.name).where(FeatureFlag.id.in_(keys))
+    result = await session.execute(stmt)
+    mapping: dict[str, dict[str, Any]] = {
+        str(row.id): {"id": str(row.id), "name": row.name, "entityName": "feature_flag"} for row in result
+    }
+    return [mapping.get(key) for key in keys]
+
+
 async def _load_users(keys: list[str], session: AsyncSession) -> list[dict[str, Any] | None]:
     stmt = select(User.id, User.identifier).where(User.id.in_(keys))
     result = await session.execute(stmt)
@@ -385,4 +415,10 @@ def entity_loaders(session: AsyncSession) -> dict[str, DataLoader[str, dict[str,
         "secret": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_secrets(list(keys), session)),
         "workflow": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_workflows(list(keys), session)),
         "user": DataLoader[str, dict[str, Any] | None](load_fn=lambda keys: _load_users(list(keys), session)),
+        "personal_access_token": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_personal_access_tokens(list(keys), session)
+        ),
+        "feature_flag": DataLoader[str, dict[str, Any] | None](
+            load_fn=lambda keys: _load_feature_flags(list(keys), session)
+        ),
     }

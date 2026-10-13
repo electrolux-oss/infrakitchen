@@ -6,6 +6,7 @@ import time
 import json
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import RedirectResponse
 from application.tools.notification_manager import start_notification_dispatcher
 from infrakitchen_mcp import setup_mcp_server
 from sqlalchemy.exc import IntegrityError
@@ -90,6 +91,20 @@ app = FastAPI(
 setup_service_environment()
 
 Instrumentator().instrument(app).expose(app)
+
+
+@app.api_route("/api/mcp", methods=["GET", "POST", "DELETE"])
+async def _mcp_root_redirect():
+    """Redirect slash-less /api/mcp to the mounted MCP app.
+
+    The app is mounted at /api/mcp, so the bare path falls through to the
+    router's default redirect_slashes behavior, which composes an absolute
+    Location from the proxied Host header (e.g. port 8000 even when the client
+    came via the frontend on 7777). That cross-origin redirect breaks MCP
+    clients during initialize. A relative Location keeps the client on its
+    original origin, so both 7777 and 8000 work with or without the slash.
+    """
+    return RedirectResponse(url="/api/mcp/", status_code=307)
 
 
 @app.middleware("http")

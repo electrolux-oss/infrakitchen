@@ -2,6 +2,7 @@ export const PERSONAL_ACCESS_TOKEN_FIELDS = `
   id
   name
   tokenPrefix
+  scopes
   expiresAt
   lastUsedAt
   revokedAt
@@ -35,6 +36,7 @@ export interface GqlPersonalAccessToken {
   id: string;
   name: string;
   tokenPrefix: string;
+  scopes: string[] | null;
   expiresAt: string | null;
   lastUsedAt: string | null;
   revokedAt: string | null;
@@ -47,5 +49,6 @@ export interface GqlPersonalAccessTokenCreate extends GqlPersonalAccessToken {
 
 export interface PersonalAccessTokenInput {
   name: string;
+  scopes: string[] | null;
   expiresAt: string | null;
 }

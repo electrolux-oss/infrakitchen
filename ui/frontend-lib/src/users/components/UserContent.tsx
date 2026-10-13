@@ -24,7 +24,14 @@ export const UserContent = () => {
     {
       label: "Configuration",
       content: (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
           <UserConfiguration user={entity} />
           <UserPersonalAccessTokensCard user={entity} />
         </Box>

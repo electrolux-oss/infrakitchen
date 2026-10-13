@@ -14,6 +14,7 @@ export const AUDIT_LOG_GRAPHQL_FIELDS = {
     "entityId",
     "createdAt",
     "revisionNumber",
+    "entityLoaderMissing",
   ] as const,
   relations: {
     creator: "creator",

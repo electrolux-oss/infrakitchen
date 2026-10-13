@@ -375,9 +375,12 @@ export const inputsCustomizations: Components<Theme> = {
           },
         },
         ...theme.applyStyles("dark", {
-          borderColor: alpha(grey[700], 0.8),
+          // Unchecked boxes sit on dark surfaces (dialogs, dark cards): the
+          // light-mode grey-100 fill reads as a void, so go transparent and
+          // let the divider border carry the outline.
+          borderColor: "var(--mui-palette-divider)",
           boxShadow: "0 0 0 1.5px hsl(210, 0%, 0%) inset",
-          backgroundColor: alpha(grey[900], 0.8),
+          backgroundColor: "transparent",
           "&:hover": {
             borderColor: brand[300],
           },

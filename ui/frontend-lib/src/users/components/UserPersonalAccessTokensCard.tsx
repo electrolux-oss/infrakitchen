@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
@@ -10,7 +10,8 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   Stack,
   TextField,
@@ -20,10 +21,12 @@ import {
 import { addDays, format, parseISO } from "date-fns";
 
 import { useConfig } from "../../common";
+import { deleteIconButtonStyle } from "../../common/components/buttons/deleteIconButtonStyle";
 import { BaseCard } from "../../common/components/cards/BaseCard";
 import { InlineCode } from "../../common/components/code/InlineCode";
 import { CommonDialog } from "../../common/components/dialogs/CommonDialog";
 import { RelativeTime } from "../../common/components/fields/RelativeTime";
+import { Label } from "../../common/components/labels/Label";
 import { notify, notifyError } from "../../common/hooks/useNotification";
 import { CODE_FONT_FAMILY } from "../../common/theme";
 import { GqlUser } from "../graphql";
@@ -36,11 +39,6 @@ import {
   PersonalAccessTokenInput,
 } from "../graphql";
 
-const formatExpirySummary = (value: string | null) => {
-  if (!value) return "Never";
-  return format(parseISO(value), "MMM dd, yyyy HH:mm");
-};
-
 const isExpired = (value: string | null) => {
   if (!value) return false;
   return parseISO(value).getTime() <= Date.now();
@@ -48,6 +46,19 @@ const isExpired = (value: string | null) => {
 
 const formatDateTimeLocal = (value: Date) => {
   return format(value, "yyyy-MM-dd'T'HH:mm");
+};
+
+// Entity/action pairs offered for scoped tokens, derived from the owner's own
+// bootstrap permissions. Admin is intentionally excluded: scoped tokens never
+// carry admin authority.
+const SCOPE_ACTIONS = ["read", "write"] as const;
+
+const normalizeAction = (action: string | undefined) => {
+  // "admin" implies both read and write for scoping purposes.
+  if (action === "admin") return SCOPE_ACTIONS;
+  if (action === "write") return ["write"];
+  if (action === "read") return ["read"];
+  return [];
 };
 
 interface TokenDialogProps {
@@ -63,14 +74,49 @@ const TokenDialog = ({
   onClose,
   onSave,
 }: TokenDialogProps) => {
+  const { bootstrapPermissions, entities } = useConfig();
   const [name, setName] = useState("");
+  const [selectedScopes, setSelectedScopes] = useState<Set<string>>(new Set());
   const [expiresAt, setExpiresAt] = useState("");
   const minExpiresAt = formatDateTimeLocal(new Date());
   const expirationOptions = [7, 30, 90, 180];
 
+  // Entities the owner can act on, with the actions scoping permits. Keys
+  // arrive as "api:<entity>" (and "*" for super admins); a super admin's
+  // wildcard implies read+write on every entity the server knows about.
+  const availableScopes = useMemo(() => {
+    if (!bootstrapPermissions)
+      return [] as { entity: string; actions: string[] }[];
+    const stripApiPrefix = (key: string) => key.replace(/^api:/, "");
+
+    if (bootstrapPermissions["*"] === "admin") {
+      const entityNames = new Set<string>([
+        ...Object.keys(bootstrapPermissions)
+          .filter((key) => key !== "*")
+          .map(stripApiPrefix),
+        ...(entities ?? []),
+      ]);
+      return Array.from(entityNames)
+        .sort((a, b) => a.localeCompare(b))
+        .map((entity) => ({
+          entity,
+          actions: SCOPE_ACTIONS.slice() as string[],
+        }));
+    }
+
+    return Object.entries(bootstrapPermissions)
+      .filter(([key]) => key !== "*")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, action]) => ({
+        entity: stripApiPrefix(key),
+        actions: normalizeAction(action).slice(),
+      }));
+  }, [bootstrapPermissions, entities]);
+
   useEffect(() => {
     if (!open) return;
     setName("");
+    setSelectedScopes(new Set());
     setExpiresAt("");
   }, [open]);
 
@@ -86,8 +132,10 @@ const TokenDialog = ({
       return;
     }
 
-    const input = {
+    const input: PersonalAccessTokenInput = {
       name: trimmedName,
+      scopes:
+        selectedScopes.size > 0 ? Array.from(selectedScopes).sort() : null,
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
     };
 
@@ -101,15 +149,108 @@ const TokenDialog = ({
       title="Create Personal Access Token"
       maxWidth="sm"
       content={
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            // the Name field's floating label sits above the input's top
+            // border, so the top needs more room to avoid clipping (see
+            // ToolDownloadDialog's pt: 3 for the same pattern)
+            pt: 3,
+            pb: 0.5,
+          }}
+        >
           <TextField
-            label="Name"
+            label="Name *"
             value={name}
             onChange={(event) => setName(event.target.value)}
             fullWidth
             autoFocus
             helperText="Use a descriptive label so you can tell tokens apart later."
           />
+          {availableScopes.length > 0 && (
+            <Box>
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", display: "block", mb: 0.5 }}
+              >
+                Permissions
+              </Typography>
+              <Box
+                sx={{
+                  border: (theme) => `1px solid ${theme.palette.divider}`,
+                  borderRadius: "var(--template-surface-radius)",
+                  p: 1,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                }}
+              >
+                {availableScopes.map(({ entity, actions }) => (
+                  <Stack
+                    key={entity}
+                    direction="row"
+                    spacing={2}
+                    sx={{ alignItems: "center", px: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ minWidth: 110 }}>
+                      {entity}
+                    </Typography>
+                    {SCOPE_ACTIONS.map((action) => {
+                      const scope = `${action}:${entity}`;
+                      const allowed = actions.includes(action);
+                      const checked = selectedScopes.has(scope);
+                      const checkbox = (
+                        <Checkbox
+                          size="small"
+                          disabled={!allowed}
+                          checked={checked}
+                          onChange={(_, next) => {
+                            setSelectedScopes((previous) => {
+                              const updated = new Set(previous);
+                              if (next) {
+                                updated.add(scope);
+                              } else {
+                                updated.delete(scope);
+                              }
+                              return updated;
+                            });
+                          }}
+                        />
+                      );
+                      return (
+                        <FormControlLabel
+                          key={scope}
+                          sx={{ ml: 0 }}
+                          // Disabled here too: MUI keys the wrapper's
+                          // cursor:default + greyed label off this prop, not
+                          // off the inner Checkbox's.
+                          disabled={!allowed}
+                          control={
+                            allowed ? (
+                              checkbox
+                            ) : (
+                              <Tooltip
+                                title={`You don't have ${action} permission on ${entity}.`}
+                                placement="top"
+                              >
+                                <span>{checkbox}</span>
+                              </Tooltip>
+                            )
+                          }
+                          label={action}
+                        />
+                      );
+                    })}
+                  </Stack>
+                ))}
+              </Box>
+              <Alert severity="info" variant="outlined" sx={{ mt: 1 }}>
+                Optionally restrict this token to specific permissions — it
+                cannot exceed your own.
+              </Alert>
+            </Box>
+          )}
           <TextField
             label="Expiration"
             type="datetime-local"
@@ -120,7 +261,11 @@ const TokenDialog = ({
               inputLabel: { shrink: true },
               htmlInput: { min: minExpiresAt },
             }}
-            helperText="Leave blank for a token that does not expire."
+            helperText={
+              selectedScopes.size > 0
+                ? "Scoped personal access token — leave blank to never expire."
+                : "Leave blank for a token that does not expire."
+            }
           />
           <Stack
             direction="row"
@@ -130,15 +275,15 @@ const TokenDialog = ({
               flexWrap: "wrap",
             }}
           >
-            {expirationOptions.map((days) => (
+            {expirationOptions.map((hours) => (
               <Button
-                key={days}
+                key={hours}
                 disabled={isLoading}
                 onClick={() =>
-                  setExpiresAt(formatDateTimeLocal(addDays(new Date(), days)))
+                  setExpiresAt(formatDateTimeLocal(addDays(new Date(), hours)))
                 }
               >
-                {days} days
+                {`${hours} days`}
               </Button>
             ))}
           </Stack>
@@ -155,13 +300,14 @@ const TokenDialog = ({
 
 const TokenValueDialog = ({
   open,
-  token,
+  createdToken,
   onClose,
 }: {
   open: boolean;
-  token: string | null;
+  createdToken: GqlPersonalAccessTokenCreate | null;
   onClose: () => void;
 }) => {
+  const token = createdToken?.token ?? null;
   const handleCopy = async () => {
     if (!token) return;
     try {
@@ -215,8 +361,9 @@ const TokenValueDialog = ({
             </Box>
           </Stack>
           <Alert severity="warning" variant="outlined">
-            Anyone with this token can access your account through the CLI and
-            API until the token is deleted or expires.
+            {createdToken?.scopes
+              ? "Anyone with this token can perform the granted actions on your behalf until the token is deleted or expires."
+              : "Anyone with this token can access your account through the CLI and API until the token is deleted or expires."}
           </Alert>
           <Box>
             <Typography
@@ -303,35 +450,49 @@ const DeleteTokenButton = ({
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
 
+  // Two-step confirm lives in a compact menu-style popover row to the left of
+  // the shared delete icon button, so it doesn't stretch the card row.
   if (!isConfirming) {
     return (
-      <Button
-        color="error"
-        startIcon={<DeleteOutlineIcon />}
+      <IconButton
+        title={"Delete Token"}
+        aria-label="Delete token"
+        size="small"
         onClick={() => setIsConfirming(true)}
+        disabled={isLoading}
+        sx={deleteIconButtonStyle}
       >
-        Delete
-      </Button>
+        <DeleteOutlineIcon fontSize="small" />
+      </IconButton>
     );
   }
 
   return (
-    <Stack direction="row" spacing={1}>
-      <Button
-        startIcon={<CheckIcon />}
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+      <IconButton
+        title="Confirm delete"
+        aria-label="Confirm delete token"
+        size="small"
         disabled={isLoading}
         onClick={() => onDelete(token.id)}
+        sx={{
+          color: "error.main",
+          border: "none",
+          backgroundColor: "transparent",
+        }}
       >
-        Confirm
-      </Button>
-      <Button
-        color="inherit"
-        startIcon={<CloseIcon />}
+        <CheckIcon fontSize="small" />
+      </IconButton>
+      <IconButton
+        title="Cancel"
+        aria-label="Cancel delete"
+        size="small"
         disabled={isLoading}
         onClick={() => setIsConfirming(false)}
+        sx={deleteIconButtonStyle}
       >
-        Cancel
-      </Button>
+        <CloseIcon fontSize="small" />
+      </IconButton>
     </Stack>
   );
 };
@@ -342,9 +503,8 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [createdTokenValue, setCreatedTokenValue] = useState<string | null>(
-    null,
-  );
+  const [createdToken, setCreatedToken] =
+    useState<GqlPersonalAccessTokenCreate | null>(null);
 
   const isOwnUserPage = currentUser?.id === user.id;
 
@@ -383,9 +543,9 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
       }>(CREATE_PERSONAL_ACCESS_TOKEN_MUTATION, {
         input,
       });
-      const createdToken = response.createPersonalAccessToken;
-      setTokens((previous) => [createdToken, ...previous]);
-      setCreatedTokenValue(createdToken.token);
+      const created = response.createPersonalAccessToken;
+      setTokens((previous) => [created, ...previous]);
+      setCreatedToken(created);
       notify("Token created", "success");
       setDialogOpen(false);
     } catch (error) {
@@ -417,10 +577,11 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         description="Create and delete tokens for CLI and API access on your account."
         actions={
           <Stack direction="row" spacing={1}>
-            <Button onClick={loadTokens} disabled={isLoading}>
+            <Button size="small" onClick={loadTokens} disabled={isLoading}>
               Refresh
             </Button>
             <Button
+              size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setDialogOpen(true)}
@@ -432,6 +593,7 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
       >
         <Box
           sx={{
+            width: "100%",
             gridColumn: "1 / -1",
             display: "flex",
             flexDirection: "column",
@@ -485,10 +647,19 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                       useFlexGap
                       sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
                     >
-                      <Typography variant="h6">{token.name}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {token.name}
+                      </Typography>
+                      {token.scopes ? (
+                        <Label tone="info" label="Scoped" />
+                      ) : (
+                        <Label tone="warning" label="Full access" />
+                      )}
                       {isExpired(token.expiresAt) ? (
-                        <Chip label="Expired" color="error" />
-                      ) : null}
+                        <Label label="Expired" tone="error" />
+                      ) : token.expiresAt ? null : (
+                        <Label label="Never expires" tone="error" />
+                      )}
                     </Stack>
                     <Typography
                       variant="body2"
@@ -498,39 +669,72 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
                     >
                       Prefix: <InlineCode>{token.tokenPrefix}</InlineCode>
                     </Typography>
+                    {token.scopes ? (
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        useFlexGap
+                        sx={{ flexWrap: "wrap", alignItems: "center" }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          Scopes:
+                        </Typography>
+                        {token.scopes.map((scope) => (
+                          <Label key={scope} tone="default" label={scope} />
+                        ))}
+                      </Stack>
+                    ) : null}
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
                       spacing={2}
                       useFlexGap
                     >
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
                           color: "text.secondary",
                         }}
                       >
-                        Expires: {formatExpirySummary(token.expiresAt)}
+                        Expires:{" "}
+                        {token.expiresAt ? (
+                          <RelativeTime
+                            date={token.expiresAt}
+                            variant="inherit"
+                          />
+                        ) : (
+                          "Never"
+                        )}
                       </Typography>
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
                           color: "text.secondary",
                         }}
                       >
                         Last used:{" "}
                         {token.lastUsedAt ? (
-                          <RelativeTime date={token.lastUsedAt} />
+                          <RelativeTime
+                            date={token.lastUsedAt}
+                            variant="inherit"
+                          />
                         ) : (
                           "Never"
                         )}
                       </Typography>
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
                           color: "text.secondary",
                         }}
                       >
-                        Created: <RelativeTime date={token.createdAt} />
+                        Created:{" "}
+                        <RelativeTime
+                          date={token.createdAt}
+                          variant="inherit"
+                        />
                       </Typography>
                     </Stack>
                   </Box>
@@ -554,9 +758,9 @@ export const UserPersonalAccessTokensCard = ({ user }: { user: GqlUser }) => {
         onSave={handleCreate}
       />
       <TokenValueDialog
-        open={Boolean(createdTokenValue)}
-        token={createdTokenValue}
-        onClose={() => setCreatedTokenValue(null)}
+        open={Boolean(createdToken)}
+        createdToken={createdToken}
+        onClose={() => setCreatedToken(null)}
       />
     </>
   );

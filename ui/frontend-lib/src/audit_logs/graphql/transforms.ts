@@ -13,6 +13,7 @@ type GqlAuditLogBaseFieldTypes = {
   entityId: string;
   createdAt: string;
   revisionNumber: number | null;
+  entityLoaderMissing?: boolean;
 };
 
 type GqlAuditLogRelationFieldTypes = {
