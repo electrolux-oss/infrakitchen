@@ -37,7 +37,7 @@ const OPERATOR_LABELS: Record<FilterOperator, string> = {
   is_none: "is None",
   in: "is any of",
   contains_all: "has all of",
-  contains_tag: "has tags",
+  contains_entries: "has entries",
   any: "matches any",
 };
 
@@ -52,7 +52,7 @@ function isMultiValueOperator(op: FilterOperator): boolean {
   return (
     op === "in" ||
     op === "contains_all" ||
-    op === "contains_tag" ||
+    op === "contains_entries" ||
     op === "any"
   );
 }

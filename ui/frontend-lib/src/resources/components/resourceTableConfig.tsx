@@ -13,6 +13,7 @@ import {
   labelsColumn,
   userColumn,
 } from "../../common/components/entity_table/tableColumns";
+import { ColumnFilterSpec } from "../../common/components/filter_panel/FilterConfig";
 import { serverSearchReference } from "../../common/components/filter_panel/referenceLoaders";
 import StatusChip from "../../common/StatusChip";
 import VersionLifecycleStateChip from "../../common/VersionLifecycleStateChip";
@@ -46,6 +47,15 @@ export const resourceDefaultColumnVisibilityModel: GridColumnVisibilityModel = {
   dependency_config: false,
   sourceCodeVersion: true,
 };
+
+// Filter for JSON lists of { name, value } entries.
+const nameValueFilter = (field: string): ColumnFilterSpec => ({
+  field,
+  operators: ["contains_entries"],
+  valueType: "text",
+  defaultOperator: "contains_entries",
+  placeholder: "Type name or name:value, press Enter...",
+});
 
 export const resourceColumns: EntityTableColumn[] = [
   {
@@ -493,6 +503,7 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Variables",
     flex: 1,
     sortable: false,
+    filter: nameValueFilter("variables"),
     valueGetter: (_value: any, row: any) =>
       (row.variables || []).map((v: { name: string }) => v.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -505,6 +516,7 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Outputs",
     flex: 1,
     sortable: false,
+    filter: nameValueFilter("outputs"),
     valueGetter: (_value: any, row: any) =>
       (row.outputs || []).map((o: { name: string }) => o.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -518,13 +530,7 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Dependency Tags",
     flex: 1,
     sortable: false,
-    filter: {
-      field: "dependency_tags",
-      operators: ["contains_tag"],
-      valueType: "text",
-      defaultOperator: "contains_tag",
-      placeholder: "Type name or name:value, press Enter...",
-    },
+    filter: nameValueFilter("dependency_tags"),
     valueGetter: (_value: any, row: any) =>
       (row.dependencyTags || [])
         .map(
@@ -545,6 +551,7 @@ export const resourceColumns: EntityTableColumn[] = [
     headerName: "Dependency Config",
     flex: 1,
     sortable: false,
+    filter: nameValueFilter("dependency_config"),
     valueGetter: (_value: any, row: any) =>
       (row.dependencyConfig || [])
         .map(

@@ -170,39 +170,54 @@ class TestEvaluateSqlalchemyFilters:
         "value",
         [["env:prod"], [{"name": "env", "value": "prod"}]],
     )
-    def test_contains_tag_name_and_value(self, value):
-        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"dependency_tags__contains_tag": value})
+    def test_contains_entries_name_and_value(self, value):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_entries": value}
+        )
+        sql, params = _compile_with_params(statement)
+        assert "jsonb_path_exists(CAST(mock_model.dependency_tags AS JSONB)" in sql
+        assert params == [
+            "$[*] ? (@.name == $name && !(@.sensitive == true) && (@.value == $v0))",
+            {"name": "env", "v0": "prod"},
+        ]
+
+    def test_contains_entries_name_only(self):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_entries": ["env"]}
+        )
         sql, params = _compile_with_params(statement)
         assert "CAST(mock_model.dependency_tags AS JSONB) @>" in sql
-        assert params == [[{"name": "env", "value": "prod"}]]
-
-    def test_contains_tag_name_only(self):
-        statement = evaluate_sqlalchemy_filters(
-            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["env"]}
-        )
-        _, params = _compile_with_params(statement)
         assert params == [[{"name": "env"}]]
 
-    def test_contains_tag_numeric_value_matches_both_types(self):
+    def test_contains_entries_numeric_value_matches_both_types(self):
         statement = evaluate_sqlalchemy_filters(
-            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["port:5432"]}
+            MockModel, select(MockModel), {"dependency_tags__contains_entries": ["port:5432"]}
         )
-        sql, params = _compile_with_params(statement)
-        assert params == [[{"name": "port", "value": "5432"}], [{"name": "port", "value": 5432}]]
-        assert " OR " in sql
+        _, params = _compile_with_params(statement)
+        assert "(@.value == $v0 || @.value == $v1)" in params[0]
+        assert params[1] == {"name": "port", "v0": "5432", "v1": 5432}
 
-    def test_contains_tag_multiple_tags_are_anded(self):
+    def test_contains_entries_never_matches_sensitive_values(self):
         statement = evaluate_sqlalchemy_filters(
-            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["env:prod", "team"]}
+            MockModel, select(MockModel), {"dependency_tags__contains_entries": ["password:hunter2"]}
+        )
+        _, params = _compile_with_params(statement)
+        assert "!(@.sensitive == true)" in params[0]
+        assert "hunter2" not in params[0]
+
+    def test_contains_entries_multiple_entries_are_anded(self):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_entries": ["env:prod", "team"]}
         )
         sql, params = _compile_with_params(statement)
-        assert params == [[{"name": "env", "value": "prod"}], [{"name": "team"}]]
+        assert params[1] == {"name": "env", "v0": "prod"}
+        assert params[2] == [{"name": "team"}]
         assert " AND " in sql
 
     @pytest.mark.parametrize("value", [[":prod"], [{"value": "x"}], [{"name": 1}], [123], [""]])
-    def test_contains_tag_invalid(self, value):
-        with pytest.raises(ValueError, match="Tag filter"):
-            evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"dependency_tags__contains_tag": value})
+    def test_contains_entries_invalid(self, value):
+        with pytest.raises(ValueError, match="Entry filter"):
+            evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"dependency_tags__contains_entries": value})
 
 
 class TestEvaluateSqlalchemySorting:

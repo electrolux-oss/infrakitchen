@@ -17,7 +17,7 @@ export type FilterOperator =
   | "is_none"
   | "in"
   | "contains_all"
-  | "contains_tag"
+  | "contains_entries"
   | "any";
 
 export type ValueInputType =
