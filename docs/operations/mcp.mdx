@@ -223,6 +223,6 @@ storages, integrations, and executors take effect immediately — there is no ap
 | `401 Missing Authorization header` | The client is not sending the bearer header. Configure it as shown in [Authentication](#authentication). |
 | `401 Invalid or expired token` | The token expired or was revoked. Generate a new one and update the client configuration. |
 | `503 Auth service unavailable` | The server could not validate the token against the auth service. Check the server logs. |
-| `list_docs` returns an empty list | The documentation directory is not bundled in the deployment (for example the Docker image). The docs tools are available in source/dev deployments. |
+| `list_docs` returns an empty list | The documentation directory is not bundled in the deployment (for example the container image). The docs tools are available in source/dev deployments. |
 | Repeated GraphQL errors when composing queries | Call `list_schema_types` and `get_schema` first to discover exact field names — field names are `camelCase` and some fields are JSON scalars rather than objects. |
 | `patch_action_*` reports no allowed actions | The entity's current state does not permit the action. Query the entity's `*Actions` query to see what is currently allowed. |

@@ -1,5 +1,10 @@
 FROM node:26.7.0-bookworm-slim
 
+# Node 25+ no longer bundles corepack, which provides yarn
+RUN npm install -g corepack && corepack enable
+
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
 WORKDIR /app
 
 COPY VERSION /VERSION

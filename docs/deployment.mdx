@@ -17,26 +17,26 @@ To successfully deploy InfraKitchen, ensure that your system meets the following
 - **Yarn**: Version 1.22
 - **Git Client**: Latest stable version
 
-## Docker Image
+## Container Image
 
-InfraKitchen provides a multi-stage Dockerfile that builds the backend (Python + OpenTofu/Terraform + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
+InfraKitchen provides a multi-stage Containerfile that builds the backend (Python + OpenTofu/Terraform + AWS CLI) and the frontend (Node.js), and serves the UI through the bundled Nginx.
 
 The example file also references the Nginx configs and entrypoint script shipped in the same directory:
 
-- [`docs/examples/docker/Dockerfile`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/Dockerfile)
-- [`docs/examples/docker/nginx.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/nginx.conf)
-- [`docs/examples/docker/websocket-map.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/websocket-map.conf)
-- [`docs/examples/docker/entrypoint.sh`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/entrypoint.sh)
+- [`docs/examples/podman/Containerfile`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/Containerfile)
+- [`docs/examples/podman/nginx.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/nginx.conf)
+- [`docs/examples/podman/websocket-map.conf`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/websocket-map.conf)
+- [`docs/examples/podman/entrypoint.sh`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/entrypoint.sh)
 
-To build the docker image, run the following command from the root directory of the project:
+To build the container image, run the following command from the root directory of the project:
 
 ```bash
-docker build -f docs/examples/docker/Dockerfile -t your-image-name:tag .
+podman build -f docs/examples/podman/Containerfile -t your-image-name:tag .
 ```
 
 ## Kubernetes
 
-InfraKitchen provides an example manifest: [`docs/examples/docker/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/docker/k8s-manifest.yaml).
+InfraKitchen provides an example manifest: [`docs/examples/podman/k8s-manifest.yaml`](https://github.com/electrolux-oss/infrakitchen/blob/main/docs/examples/podman/k8s-manifest.yaml).
 
 It contains an Nginx Ingress, a Service, and backend, scheduler, and worker
 Deployments, wired to PostgreSQL:
@@ -117,7 +117,7 @@ kubectl create secret generic infrakitchen-secrets \
 The manifest references the secret created in the previous step:
 
 ```bash
-kubectl apply -f docs/examples/docker/k8s-manifest.yaml
+kubectl apply -f docs/examples/podman/k8s-manifest.yaml
 ```
 
 </Step>

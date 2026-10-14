@@ -3,6 +3,7 @@
 ik_data/
 erl_crash.dump
 /docker-compose.yml
+/compose.yml
 .claude/
 .opencode/
 server/build-info.json

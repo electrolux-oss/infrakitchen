@@ -39,6 +39,10 @@ RUN pip install --no-cache-dir uv && \
 
 RUN uv run --project server /app/server/generate_build_info.py
 
+# aws_config is optional; COPY alone would fail when it's missing
+RUN mkdir -p /aws-home && \
+  if [ -f /app/aws_config ]; then cp /app/aws_config /aws-home/config; fi
+
 RUN find /app/.venv -type d -name "__pycache__" -prune -exec rm -rf {} + && \
   find /app/.venv -type d -name "tests" -prune -exec rm -rf {} + && \
   find /app/.venv -type d -name "test" -prune -exec rm -rf {} + && \
@@ -60,7 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends nginx git opens
   useradd --create-home --shell /bin/bash infrakitchen && \
   mkdir -p /home/infrakitchen/.aws
 
-COPY ./aws_config /home/infrakitchen/.aws/config
+COPY --from=python_builder /aws-home/ /home/infrakitchen/.aws/
 
 COPY ./docs/examples/docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY ./docs/examples/docker/websocket-map.conf /etc/nginx/conf.d/websocket-map.conf

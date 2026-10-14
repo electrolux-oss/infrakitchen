@@ -1,0 +1,14 @@
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+.blume
+dist
+ik_data
+erl_crash.dump
+server/.venv
+server/.coverage
+server/.env_local
+ui/.yarn/cache
+ui/.yarn/install-state.gz
+ui/dist

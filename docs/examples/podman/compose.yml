@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:17.6-trixie
+    restart: always
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: infrakitchen
+    # ports:
+    #   - 5432:5432
+    networks:
+      - iknetwork
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./docs/examples/podman/Frontend
+    environment:
+      BACKEND_HOST: python-backend-server
+    command: >
+      bash -c "yarn install && yarn dev"
+    ports:
+      - "7777:7777"
+    networks:
+      - iknetwork
+    volumes:
+      - ./ui/:/app:z
+  python-backend-server:
+    environment:
+      POSTGRES_HOST: postgres
+    build:
+      context: ./
+      dockerfile: ./docs/examples/podman/Backend
+    command: >
+      bash -c "/venvs/.venv/bin/watchmedo auto-restart -d ./ -p '*.py' --recursive -- /venvs/.venv/bin/python dev_server.py"
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - iknetwork
+    volumes:
+      - ./server/:/app:z
+    depends_on:
+      - "postgres"
+volumes:
+  db_data:
+  pg-data:
+  pg-test-data:
+
+networks:
+  iknetwork:
+    name: iknetwork
