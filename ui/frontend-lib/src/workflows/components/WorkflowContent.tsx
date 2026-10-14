@@ -2,12 +2,13 @@ import { useState } from "react";
 
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import ListIcon from "@mui/icons-material/List";
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 import { useLocalStorage } from "../../common";
 import { Audit } from "../../common/components/activity/Audit";
 import { EntityLogs } from "../../common/components/activity/EntityLogs";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import { PropertyCard } from "../../common/components/cards/PropertyCard";
 import {
   TabbedContent,
@@ -17,8 +18,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { EntityTaskQueueStatus } from "../../workers/components";
 import { GqlWorkflow } from "../graphql";
 
-import { WorkflowOverview } from "./WorkflowOverview";
 import { WorkflowResolvedVariables } from "./WorkflowResolvedVariables";
+import { WorkflowSidebar } from "./WorkflowSidebar";
 import { WorkflowSteps } from "./WorkflowSteps";
 import { WorkflowWiringViewer } from "./WorkflowWiringViewer";
 
@@ -129,12 +130,9 @@ export const WorkflowContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
-    >
+    <EntitySidebarLayout sidebar={<WorkflowSidebar workflow={workflow} />}>
       <EntityTaskQueueStatus />
-      <WorkflowOverview />
       <TabbedContent tabs={tabs} />
-    </Box>
+    </EntitySidebarLayout>
   );
 };

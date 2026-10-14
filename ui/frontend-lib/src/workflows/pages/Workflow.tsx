@@ -1,7 +1,11 @@
 import { useParams } from "react-router";
 
+import { EntityRefreshButton } from "../../common/components/buttons/EntityRefreshButton";
 import { EntityContainer } from "../../common/components/cards/EntityContainer";
-import { EntityProvider } from "../../common/context/EntityContext";
+import {
+  EntityProvider,
+  useEntityProvider,
+} from "../../common/context/EntityContext";
 import { TASK_QUEUE_STATUS_SELECTION } from "../../workers/graphql";
 import { WorkflowContent } from "../components/WorkflowContent";
 import { WORKFLOW_FIELDS } from "../graphql";
@@ -20,10 +24,24 @@ export const WorkflowPage = () => {
       // workflow events carry every step and are cut down for the live stream
       refetchOnEvent
     >
-      <EntityContainer title="Workflow" showEditAction>
-        <WorkflowContent />
-      </EntityContainer>
+      <WorkflowPageContent />
     </EntityProvider>
+  );
+};
+
+const WorkflowPageContent = () => {
+  const { entity } = useEntityProvider();
+
+  return (
+    // Workflows have no name, so they are headed by their short id, as the
+    // overview card was.
+    <EntityContainer
+      title={entity ? `Workflow ${entity.id.slice(0, 8)}…` : "Workflow"}
+      actions={<EntityRefreshButton />}
+      showEditAction
+    >
+      <WorkflowContent />
+    </EntityContainer>
   );
 };
 
