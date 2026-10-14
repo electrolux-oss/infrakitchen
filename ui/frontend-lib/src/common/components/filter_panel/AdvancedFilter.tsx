@@ -220,10 +220,12 @@ const ClauseRow = ({
   };
 
   // Available field options (filter out fields where ALL operators are taken)
-  const availableFields = fields.filter((f) => {
-    if (f.field === clause.field) return true;
-    return !usedFields.has(f.field);
-  });
+  const availableFields = fields
+    .filter((f) => {
+      if (f.field === clause.field) return true;
+      return !usedFields.has(f.field);
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   // Render value input
   const renderValueInput = () => {
