@@ -17,6 +17,7 @@ export type FilterOperator =
   | "is_none"
   | "in"
   | "contains_all"
+  | "contains_tag"
   | "any";
 
 export type ValueInputType =
@@ -54,6 +55,8 @@ export interface FilterableField {
   defaultOperator?: FilterOperator;
   /** Whether this field should seed the first empty filter row */
   defaultSelected?: boolean;
+  /** Placeholder for the value input */
+  placeholder?: string;
   /** Options for autocomplete-multiple / select value inputs */
   options?: string[] | (() => Promise<string[]>);
   /** Static select options (for state/status fields) */
@@ -94,6 +97,8 @@ export interface ColumnFilterSpec {
   defaultOperator?: FilterOperator;
   /** Whether this field should seed the first empty filter row */
   defaultSelected?: boolean;
+  /** Placeholder for the value input */
+  placeholder?: string;
   /** Static select options (for state/status fields) */
   selectOptions?: Array<{ label: string; value: string }>;
   /** Custom rendering for a select option's value (e.g. a colored chip), used in the dropdown list and the selected value. */

@@ -37,6 +37,7 @@ const OPERATOR_LABELS: Record<FilterOperator, string> = {
   is_none: "is None",
   in: "is any of",
   contains_all: "has all of",
+  contains_tag: "has tags",
   any: "matches any",
 };
 
@@ -48,7 +49,12 @@ function generateClauseId(): string {
 }
 
 function isMultiValueOperator(op: FilterOperator): boolean {
-  return op === "in" || op === "contains_all" || op === "any";
+  return (
+    op === "in" ||
+    op === "contains_all" ||
+    op === "contains_tag" ||
+    op === "any"
+  );
 }
 
 function isValuelessOperator(op: FilterOperator): boolean {
@@ -338,7 +344,9 @@ const ClauseRow = ({
           onChange={(newVal) => onUpdate(clause.id, { value: newVal })}
           multiple
           freeSolo
-          placeholder={`Type values, press Enter...`}
+          placeholder={
+            selectedField.placeholder ?? `Type values, press Enter...`
+          }
           sx={MULTI_VALUE_AUTOCOMPLETE_SX}
         />
       );

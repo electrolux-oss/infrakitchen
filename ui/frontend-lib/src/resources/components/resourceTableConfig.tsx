@@ -381,6 +381,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "integrationIds",
     headerName: "Integrations",
     flex: 1,
+    sortable: false,
     filter: {
       field: "integration_ids",
       operators: ["any"],
@@ -491,6 +492,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "variables",
     headerName: "Variables",
     flex: 1,
+    sortable: false,
     valueGetter: (_value: any, row: any) =>
       (row.variables || []).map((v: { name: string }) => v.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -502,6 +504,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "outputs",
     headerName: "Outputs",
     flex: 1,
+    sortable: false,
     valueGetter: (_value: any, row: any) =>
       (row.outputs || []).map((o: { name: string }) => o.name).join(", "),
     renderCell: (params: GridRenderCellParams) =>
@@ -514,6 +517,14 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "dependencyTags",
     headerName: "Dependency Tags",
     flex: 1,
+    sortable: false,
+    filter: {
+      field: "dependency_tags",
+      operators: ["contains_tag"],
+      valueType: "text",
+      defaultOperator: "contains_tag",
+      placeholder: "Type name or name:value, press Enter...",
+    },
     valueGetter: (_value: any, row: any) =>
       (row.dependencyTags || [])
         .map(
@@ -533,6 +544,7 @@ export const resourceColumns: EntityTableColumn[] = [
     field: "dependencyConfig",
     headerName: "Dependency Config",
     flex: 1,
+    sortable: false,
     valueGetter: (_value: any, row: any) =>
       (row.dependencyConfig || [])
         .map(

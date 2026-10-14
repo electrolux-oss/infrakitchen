@@ -84,6 +84,7 @@ export const labelsColumn = (labelsEntity: string): EntityTableColumn => ({
   field: "labels",
   headerName: "Labels",
   flex: 1,
+  sortable: false,
   filter: {
     field: "labels",
     operators: ["contains_all"],

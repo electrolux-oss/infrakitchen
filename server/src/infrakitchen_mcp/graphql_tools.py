@@ -44,6 +44,8 @@ Filters are passed as a JSON object. Use double-underscore suffixes for operator
   - `{integration_ids__any: ["uuid"]}` — for relationship collections, matches
     if ANY related record's ID is in the provided list
   - `{labels__contains_all: ["label1"]}` — JSONB array contains all values
+  - `{dependency_tags__contains_tag: ["env:prod", "team"]}` — has all given
+    dependency tags; `name:value` matches name and value, `name` matches name only
   - Nested relationships: `{template__name__like: "%redis%"}` — filter by
     related object's field
 

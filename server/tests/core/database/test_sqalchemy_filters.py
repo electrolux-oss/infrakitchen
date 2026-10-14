@@ -2,15 +2,17 @@ from typing import Any
 import uuid
 import pytest
 from sqlalchemy import (
+    JSON,
     Column,
     String,
     select,
 )
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql.selectable import Select
 
-from core.database import evaluate_sqlalchemy_filters
+from core.database import evaluate_sqlalchemy_filters, evaluate_sqlalchemy_sorting
 
 Base = declarative_base()
 TEST_UUID_1 = uuid.uuid4()
@@ -24,6 +26,7 @@ class MockModel(Base):
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String)
     tags = Column(JSONB)
+    dependency_tags = Column(JSON)
     template_id = Column(PG_UUID(as_uuid=True))
 
 
@@ -38,6 +41,12 @@ def _get_compiled_filter_str(statement: Select[Any]) -> str:
         return full_sql.split("WHERE ", 1)[1].strip()
 
     return ""
+
+
+def _compile_with_params(statement: Select[Any]) -> tuple[str, list[Any]]:
+    """JSONB literals can't be rendered inline, so return the SQL and bound params in order."""
+    compiled = statement.compile(dialect=postgresql.dialect())
+    return str(compiled), [compiled.params[name] for name in compiled.positiontup or compiled.params]
 
 
 class TestEvaluateSqlalchemyFilters:
@@ -156,3 +165,52 @@ class TestEvaluateSqlalchemyFilters:
         """Should reject "or" values that are not a list of non-empty filter objects."""
         with pytest.raises(ValueError, match="Filter 'or' must be a list"):
             evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"or": value})
+
+    @pytest.mark.parametrize(
+        "value",
+        [["env:prod"], [{"name": "env", "value": "prod"}]],
+    )
+    def test_contains_tag_name_and_value(self, value):
+        statement = evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"dependency_tags__contains_tag": value})
+        sql, params = _compile_with_params(statement)
+        assert "CAST(mock_model.dependency_tags AS JSONB) @>" in sql
+        assert params == [[{"name": "env", "value": "prod"}]]
+
+    def test_contains_tag_name_only(self):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["env"]}
+        )
+        _, params = _compile_with_params(statement)
+        assert params == [[{"name": "env"}]]
+
+    def test_contains_tag_numeric_value_matches_both_types(self):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["port:5432"]}
+        )
+        sql, params = _compile_with_params(statement)
+        assert params == [[{"name": "port", "value": "5432"}], [{"name": "port", "value": 5432}]]
+        assert " OR " in sql
+
+    def test_contains_tag_multiple_tags_are_anded(self):
+        statement = evaluate_sqlalchemy_filters(
+            MockModel, select(MockModel), {"dependency_tags__contains_tag": ["env:prod", "team"]}
+        )
+        sql, params = _compile_with_params(statement)
+        assert params == [[{"name": "env", "value": "prod"}], [{"name": "team"}]]
+        assert " AND " in sql
+
+    @pytest.mark.parametrize("value", [[":prod"], [{"value": "x"}], [{"name": 1}], [123], [""]])
+    def test_contains_tag_invalid(self, value):
+        with pytest.raises(ValueError, match="Tag filter"):
+            evaluate_sqlalchemy_filters(MockModel, select(MockModel), {"dependency_tags__contains_tag": value})
+
+
+class TestEvaluateSqlalchemySorting:
+    @pytest.mark.parametrize("field", ["dependency_tags", "dependencyTags", "tags"])
+    def test_json_columns_are_not_sorted(self, field):
+        statement = select(MockModel)
+        assert evaluate_sqlalchemy_sorting(MockModel, statement, (field, "ASC")) is statement
+
+    def test_regular_column_is_sorted(self):
+        statement = evaluate_sqlalchemy_sorting(MockModel, select(MockModel), ("name", "DESC"))
+        assert "ORDER BY mock_model.name DESC" in str(statement)
