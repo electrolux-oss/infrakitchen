@@ -60,6 +60,11 @@ class SourceCodeVersionCRUD:
         return result.scalar_one() or 0
 
     async def create(self, body: dict[str, Any]) -> SourceCodeVersion:
+        if "index" not in body and body.get("template_id"):
+            statement = select(func.coalesce(func.max(SourceCodeVersion.index) + 1, 0)).where(
+                SourceCodeVersion.template_id == body["template_id"]
+            )
+            body = {**body, "index": (await self.session.execute(statement)).scalar_one()}
         db_source_code_version = SourceCodeVersion(**body)
         self.session.add(db_source_code_version)
         await self.session.flush()

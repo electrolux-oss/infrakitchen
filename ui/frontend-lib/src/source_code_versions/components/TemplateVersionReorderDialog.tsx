@@ -79,6 +79,11 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Highest index is the newest version and is shown first.
+function toIndex(position: number, total: number) {
+  return total - 1 - position;
+}
+
 function normalizeLifecycleState(lifecycleState: string | null | undefined) {
   return (
     lifecycleState || VERSION_LIFECYCLE_STATE.UNKNOWN
@@ -120,25 +125,16 @@ export const TemplateVersionReorderDialog = ({
         sourceCodeVersions: GqlSourceCodeVersionShort[];
       }>(SOURCE_CODE_VERSIONS_BY_TEMPLATE_QUERY, {
         filter: { template_id: [templateId] },
-        sort: ["index", "ASC"],
+        sort: ["index", "DESC"],
         range: [0, 1000],
       });
-      const storedItems = (response.sourceCodeVersions || [])
-        .map((item) => ({
-          ...item,
-          lifecycleState: normalizeLifecycleState(item.lifecycleState),
-        }))
-        // Stored indexes may tie (default 0), so break ties deterministically.
-        .sort(
-          (a, b) =>
-            a.index - b.index ||
-            a.identifier.localeCompare(b.identifier, undefined, {
-              numeric: true,
-            }),
-        );
-      const loadedItems = storedItems.map((item, index) => ({
+      const storedItems = (response.sourceCodeVersions || []).map((item) => ({
         ...item,
-        index,
+        lifecycleState: normalizeLifecycleState(item.lifecycleState),
+      }));
+      const loadedItems = storedItems.map((item, position) => ({
+        ...item,
+        index: toIndex(position, storedItems.length),
       }));
       setStoredById(
         new Map(
@@ -231,9 +227,9 @@ export const TemplateVersionReorderDialog = ({
       if (normalizedToIndex === fromIndex) return current;
 
       return moveItem(current, fromIndex, normalizedToIndex).map(
-        (item, index) => ({
+        (item, position) => ({
           ...item,
-          index,
+          index: toIndex(position, current.length),
         }),
       );
     });

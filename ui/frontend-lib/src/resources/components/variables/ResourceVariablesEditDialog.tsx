@@ -341,7 +341,7 @@ export const ResourceVariablesEditDialog = ({
               "breakingChanges",
             ]}
             buffer={buffer}
-            sort={["index", "ASC"]}
+            sort={["index", "DESC"]}
             setBuffer={setBuffer}
             getOptionDisabled={(option: any) => option.status !== "done"}
             filter={scvFilter}
