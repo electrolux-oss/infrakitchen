@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17.6-trixie
+    image: docker.io/library/postgres:17.6-trixie
     restart: always
     environment:
       POSTGRES_USER: dev_user
@@ -15,7 +15,7 @@ services:
   frontend:
     build:
       context: ./
-      dockerfile: ./docs/examples/docker/Frontend
+      dockerfile: ./docs/examples/podman/Frontend
     environment:
       BACKEND_HOST: python-backend-server
     command: >
@@ -25,13 +25,13 @@ services:
     networks:
       - iknetwork
     volumes:
-      - ./ui/:/app
+      - ./ui/:/app:z
   python-backend-server:
     environment:
       POSTGRES_HOST: postgres
     build:
       context: ./
-      dockerfile: ./docs/examples/docker/Backend
+      dockerfile: ./docs/examples/podman/Backend
     command: >
       bash -c "/venvs/.venv/bin/watchmedo auto-restart -d ./ -p '*.py' --recursive -- /venvs/.venv/bin/python dev_server.py"
     # ports:
@@ -39,7 +39,7 @@ services:
     networks:
       - iknetwork
     volumes:
-      - ./server/:/app
+      - ./server/:/app:z
     depends_on:
       - "postgres"
 volumes:
