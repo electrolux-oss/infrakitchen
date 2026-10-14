@@ -1,9 +1,8 @@
 import { useState } from "react";
 
-import { Box } from "@mui/material";
-
 import { Audit } from "../../common/components/activity/Audit";
 import { DangerZoneCard } from "../../common/components/cards/DangerZoneCard";
+import { EntitySidebarLayout } from "../../common/components/cards/EntitySidebar";
 import {
   TabbedContent,
   TabDefinition,
@@ -12,8 +11,8 @@ import { useEntityProvider } from "../../common/context/EntityContext";
 import { Revision } from "../../revision/Revision";
 
 import { ServiceNotificationSubscribersTable } from "./ServiceNotificationSubscribersTable";
-import { ServiceOverview } from "./ServiceOverview";
 import { ServicePermissions } from "./ServicePermissions";
+import { ServiceSidebar } from "./ServiceSidebar";
 
 export const ServiceContent = () => {
   const [subscribersRefreshKey, setSubscribersRefreshKey] = useState(0);
@@ -54,19 +53,20 @@ export const ServiceContent = () => {
   ];
 
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 2, width: "100%" }}
+    <EntitySidebarLayout
+      sidebar={
+        <ServiceSidebar
+          service={entity}
+          onSubscriptionChange={() =>
+            setSubscribersRefreshKey((currentKey) => currentKey + 1)
+          }
+        />
+      }
     >
-      <ServiceOverview
-        service={entity}
-        onSubscriptionChange={() =>
-          setSubscribersRefreshKey((currentKey) => currentKey + 1)
-        }
-      />
       <TabbedContent
         tabs={tabs}
         userEntityPermissions={userEntityPermissions}
       />
-    </Box>
+    </EntitySidebarLayout>
   );
 };
