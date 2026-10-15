@@ -76,10 +76,7 @@ export default function UserSidebar() {
         <UserAvatar
           identifier={user.identifier}
           sx={{
-            fontSize: 14,
-            height: 30,
-            width: 30,
-            flexShrink: 0,
+            fontSize: "0.875rem",
             border: "1px solid",
             borderColor: "divider",
           }}

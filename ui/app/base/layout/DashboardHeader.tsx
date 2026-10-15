@@ -106,7 +106,13 @@ export default function DashboardHeader({
 
   return (
     <AppBar color="inherit" position="absolute" sx={{ displayPrint: "none" }}>
-      <Toolbar sx={{ backgroundColor: "inherit", mx: { xs: -0.75, sm: -1 } }}>
+      <Toolbar
+        variant="dense"
+        sx={{
+          backgroundColor: "inherit",
+          mx: { xs: -0.75, sm: -1 },
+        }}
+      >
         <Stack
           direction="row"
           sx={{
@@ -142,7 +148,7 @@ export default function DashboardHeader({
                     sx={{
                       color: "text.primary",
                       fontWeight: 600,
-                      fontSize: { xs: "1.375rem", sm: "1.875rem" }, // 22px / 30px
+                      fontSize: { xs: "1.125rem", sm: "1.375rem" }, // 18px / 22px
                       letterSpacing: "-0.02em",
                       ml: 0,
                       whiteSpace: "nowrap",
@@ -186,7 +192,7 @@ export default function DashboardHeader({
           </Stack>
           <Stack
             direction="row"
-            spacing={1}
+            spacing={0.25}
             sx={{
               alignItems: "center",
               marginLeft: "auto",
@@ -195,7 +201,7 @@ export default function DashboardHeader({
           >
             <Stack
               direction="row"
-              spacing={0.5}
+              spacing={-0.5}
               sx={{
                 alignItems: "center",
               }}
